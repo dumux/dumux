@@ -240,56 +240,43 @@ private:
             // fill the element map with seeds
             auto eIdx = this->elementMapper().index(element);
 
-            // count
-            numScv_ += element.subEntities(dim) + 1;
-            numScvf_ += element.subEntities(dim-1) + element.subEntities(dim);
-
             // get the element geometry
             auto elementGeometry = element.geometry();
             const auto refElement = referenceElement(elementGeometry);
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
-
+            // count
+            numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
-            scvs_[eIdx].resize(elementGeometry.corners() + 1);
-            for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
+            scvs_[eIdx].resize(geometryHelper.numScv());
+            for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
                 scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.getScvCorners(scvLocalIdx),
                                                             scvLocalIdx,
                                                             eIdx,
-                                                            this->dofMapper().subIndex(element, scvLocalIdx, dim),
-                                                            elementGeometry.corner(scvLocalIdx),
+                                                            geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
+                                                            geometryHelper.dofPosition(scvLocalIdx),
                                                             geometryHelper.getScvGeometryType(scvLocalIdx));
             }
-            auto scvLocalIdx = elementGeometry.corners();
-            scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.getScvCorners(scvLocalIdx),
-                                                        scvLocalIdx,
-                                                        eIdx,
-                                                        this->dofMapper().index(element),
-                                                        elementGeometry.center(),
-                                                        geometryHelper.getScvGeometryType(scvLocalIdx));
 
             // construct the sub control volume faces
+            numScvf_ += geometryHelper.numInteriorScvf();
+            scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
             LocalIndexType scvfLocalIdx = 0;
-            scvfs_[eIdx].resize(element.subEntities(dim));
-            for (LocalIndexType vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
+            for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
             {
-                // find the global and local scv indices this scvf is belonging to
-                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(scvs_[eIdx].size()-1),
-                                                             static_cast<LocalIndexType>(vIdx)});
-
+                auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
-                auto normal = geometryHelper.normal(corners, elementGeometry.center());
+                auto normal = geometryHelper.normal(corners, scvPair);
                 scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(std::move(corners),
                                                                   std::move(normal),
                                                                   element,
                                                                   elementGeometry,
                                                                   scvfLocalIdx,
-                                                                  std::move(localScvIndices),
-                                                                  geometryHelper.getScvfGeometryType(scvLocalIdx),
+                                                                  std::move(scvPair),
+                                                                  geometryHelper.getScvfGeometryType(scvfLocalIdx),
                                                                   false);
-                scvfLocalIdx++;
             }
 
 
@@ -302,27 +289,28 @@ private:
                     hasBoundaryScvf_[eIdx] = true;
 
                     // count
-                    numScvf_ += isGeometry.corners();
-                    numBoundaryScvf_ += isGeometry.corners();
+                    numScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
+                    numBoundaryScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
 
-                    for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
+                    for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < geometryHelper.numBoundaryIsScvf(intersection); ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
-                        std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
+                        auto scvPair = geometryHelper.getScvPairForBoundaryScvf(intersection, isScvfLocalIdx);
 
                         scvfs_[eIdx].emplace_back(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
                                                   intersection,
                                                   isGeometry,
                                                   isScvfLocalIdx,
                                                   scvfLocalIdx,
-                                                  std::move(localScvIndices),
+                                                  std::move(scvPair),
                                                   intersection.geometry().type(),
                                                   true);
 
                         // increment local counter
                         scvfLocalIdx++;
                     }
+
+                    // TODO also move thos to helper class
 
                     // add all vertices on the intersection to the set of
                     // boundary vertices

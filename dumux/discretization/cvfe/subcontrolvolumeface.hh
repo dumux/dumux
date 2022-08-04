@@ -94,7 +94,7 @@ public:
                              const Element& element,
                              const typename Element::Geometry& elemGeometry,
                              GridIndexType scvfIndex,
-                             std::vector<LocalIndexType>&& scvIndices,
+                             std::array<LocalIndexType, 2>&& scvIndices,
                              Dune::GeometryType geomType,
                              bool boundary = false)
     : corners_(corners),
@@ -115,13 +115,13 @@ public:
                              const typename Intersection::Geometry& isGeometry,
                              LocalIndexType indexInIntersection,
                              GridIndexType scvfIndex,
-                             std::vector<LocalIndexType>&& scvIndices,
+                             std::array<LocalIndexType, 2>&& scvIndices,
                              Dune::GeometryType geomType,
                              bool boundary = false)
     : corners_(corners),
       unitOuterNormal_(intersection.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
-      scvIndices_(std:: move(scvIndices)),
+      scvIndices_(std::move(scvIndices)),
       boundary_(boundary),
       boundaryFlag_{intersection},
       geometry_(std::make_unique<Geometry>(geomType, corners)), center_(0.0)
@@ -206,7 +206,7 @@ private:
     CornerStorage corners_;
     GlobalPosition unitOuterNormal_;
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
+    std::array<LocalIndexType, 2> scvIndices_;
     bool boundary_;
     BoundaryFlag boundaryFlag_;
     std::unique_ptr<Geometry> geometry_;

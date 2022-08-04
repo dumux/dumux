@@ -101,6 +101,38 @@ struct ScvCorners<Dune::GeometryTypes::quadrilateral>
     }
 };
 
+// template<>
+// struct ScvCorners<Dune::GeometryTypes::tetrahedron>
+// {
+//     static constexpr Dune::GeometryType type()
+//     { return Dune::GeometryTypes::tetrahedron; }
+
+//     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
+//     static constexpr std::array<std::array<Key, 6>, 5> keys = {{
+//         { Key{0, 3}, Key{0, 2}, Key{1, 2}, Key{3, 2}, Key{1, 1}, Key{2, 1} },
+//         { Key{1, 3}, Key{2, 2}, Key{0, 2}, Key{4, 2}, Key{3, 1}, Key{1, 1} },
+//         { Key{2, 3}, Key{1, 2}, Key{2, 2}, Key{5, 2}, Key{2, 1}, Key{3, 1} },
+//         { Key{3, 3}, Key{3, 2}, Key{5, 2}, Key{4, 2}, Key{1, 1}, Key{3, 1} }
+//     }};
+// };
+
+// template<>
+// struct ScvCorners<Dune::GeometryTypes::hexahedron>
+// {
+//     static constexpr Dune::GeometryType type()
+//     { return Dune::GeometryTypes::pyramid; }
+
+//     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
+//     static constexpr std::array<std::array<Key, 5>, 6> keys = {{
+//         { Key{4, 3}, Key{0, 3}, Key{6, 3}, Key{2, 3}, Key{0, 0} },
+//         { Key{1, 3}, Key{5, 3}, Key{3, 3}, Key{7, 3}, Key{0, 0} },
+//         { Key{4, 3}, Key{5, 3}, Key{0, 3}, Key{1, 3}, Key{0, 0} },
+//         { Key{2, 3}, Key{3, 3}, Key{6, 3}, Key{7, 3}, Key{0, 0} },
+//         { Key{0, 3}, Key{1, 3}, Key{2, 3}, Key{3, 3}, Key{0, 0} },
+//         { Key{6, 3}, Key{7, 3}, Key{4, 3}, Key{5, 3}, Key{0, 0} }
+//     }};
+// };
+
 template<Dune::GeometryType::Id gt>
 struct ScvfCorners;
 
@@ -201,6 +233,7 @@ class CvfeGeometryHelper<GridView, 2, ScvType, ScvfType>
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
     using ScvCornerStorage = typename ScvType::Traits::CornerStorage;
     using ScvfCornerStorage = typename ScvfType::Traits::CornerStorage;
+    using LocalIndexType = typename ScvType::Traits::LocalIndexType;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
@@ -288,43 +321,60 @@ public:
         return Detail::Cvfe::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys()[indexInFacet]);
     }
 
-    //! get scvf normal vector for dim == 2, dimworld == 2
-    template <int w = dimWorld>
-    typename std::enable_if<w == 2, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const std::vector<unsigned int>& scvIndices) const
+    // //! get scvf normal vector for dim == 2, dimworld == 2
+    // template <int w = dimWorld>
+    // typename std::enable_if<w == 2, GlobalPosition>::type
+    // normal(const ScvfCornerStorage& scvfCorners,
+    //        const std::vector<unsigned int>& scvIndices) const
+    // {
+    //     //! obtain normal vector by 90° counter-clockwise rotation of t
+    //     const auto t = scvfCorners[1] - scvfCorners[0];
+    //     GlobalPosition normal({-t[1], t[0]});
+    //     normal /= normal.two_norm();
+
+    //     //! ensure the right direction of the normal
+    //     const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
+    //     const auto s = v*normal;
+    //     if (std::signbit(s))
+    //         normal *= -1;
+
+    //     return normal;
+    // }
+
+    // template <int w = dimWorld>
+    // typename std::enable_if<w == 2, GlobalPosition>::type
+    // normal(const ScvfCornerStorage& scvfCorners,
+    //        const GlobalPosition& insidePoint) const
+    // {
+    //     //! obtain normal vector by 90° counter-clockwise rotation of t
+    //     const auto t = scvfCorners[1] - scvfCorners[0];
+    //     GlobalPosition normal({-t[1], t[0]});
+    //     normal /= normal.two_norm();
+
+    //     GlobalPosition center(0.0);
+    //     for(auto p : scvfCorners)
+    //         center += p;
+    //     center /= scvfCorners.size();
+
+    //     //! ensure the right direction of the normal
+    //     const auto v = center - insidePoint;
+    //     const auto s = v*normal;
+    //     if (std::signbit(s))
+    //         normal *= -1;
+
+    //     return normal;
+    // }
+
+    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
+    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
     {
         //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = scvfCorners[1] - scvfCorners[0];
+        const auto t = p[1] - p[0];
         GlobalPosition normal({-t[1], t[0]});
         normal /= normal.two_norm();
 
-        //! ensure the right direction of the normal
-        const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
+        GlobalPosition v = dofPosition(scvPair[1]) - dofPosition(scvPair[0]);
 
-        return normal;
-    }
-
-    template <int w = dimWorld>
-    typename std::enable_if<w == 2, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const GlobalPosition& insidePoint) const
-    {
-        //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = scvfCorners[1] - scvfCorners[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
-
-        GlobalPosition center(0.0);
-        for(auto p : scvfCorners)
-            center += p;
-        center /= scvfCorners.size();
-
-        //! ensure the right direction of the normal
-        const auto v = center - insidePoint;
         const auto s = v*normal;
         if (std::signbit(s))
             normal *= -1;
@@ -352,6 +402,56 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
+
+    //! number of interior sub control volume faces (number of codim-2 entities)
+    std::size_t numInteriorScvf() const
+    {
+        return referenceElement(geo_).size(dim);
+    }
+
+    //! number of sub control volumes (number of codim-1 entities)
+    std::size_t numScv() const
+    {
+        return referenceElement(geo_).size(dim) + 1;
+    }
+
+    //! number of boundary sub control volume faces for intersection
+    template<class Is>
+    std::size_t numBoundaryIsScvf(const Is& is) const
+    {
+        return is.geometry().corners();
+    }
+
+    template<class DofMapper>
+    auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localScvIdx) const
+    {
+        if (localScvIdx < numScv()-1)
+            return dofMapper.subIndex(element, localScvIdx, dim);
+        else
+            return dofMapper.index(element);
+    }
+
+    GlobalPosition dofPosition(unsigned int localScvIdx) const
+    {
+        if (localScvIdx < numScv()-1)
+            return geo_.corner(localScvIdx);
+        else
+            return geo_.center();
+    }
+
+    std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
+    {
+        return std::array{static_cast<LocalIndexType>(numScv()-1),
+                          static_cast<LocalIndexType>(localScvfIndex)};
+    }
+
+    template<class Is>
+    std::array<LocalIndexType, 2> getScvPairForBoundaryScvf(const Is& is, unsigned int localIsScvfIndex) const
+    {
+        const LocalIndexType insideScvIdx
+            = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(is.indexInInside(), 1, localIsScvfIndex, dim));
+        return std::array{insideScvIdx, insideScvIdx};
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
