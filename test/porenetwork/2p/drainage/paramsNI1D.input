@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 MaxTimeStepSize = 1e1
-TEnd = 1.5e3 # [s]
+TEnd = 7.83e0 # [s]
 
 [Grid]
 File = ./grids/pnm_grid1D.dgf
@@ -27,14 +27,14 @@ ThroatCrossSectionShape = Square
 #DeletionRandomNumberSeed = 33
 
 [Problem]
-Name = test_pnm_ni_2p_1d
+Name = test_pnm_ni_2p_1d_withAll5e8
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
 Source = 5e-15
 InletTemperature = 283.15
-OutletTemperature = 298.15
+OutletTemperature = 288.15
 
 [Vtk]
 AddVelocity = 1
@@ -58,6 +58,7 @@ RegularizationLowSw = 0.1
 
 [Regularization]
 IntervalPc = 1e1
+SwPercentage = 1e-2
 
 [Component]
 SolidHeatCapacity = 1.0 # for compatibility

@@ -85,7 +85,7 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
-        return IdealGas::density(molarMass(), temperature, pressure);
+        return 1.2;//IdealGas::density(molarMass(), temperature, pressure);
     }
 
     /*!
@@ -101,7 +101,7 @@ public:
      * \brief Returns true, the gas phase is assumed to be compressible
      */
     static constexpr bool gasIsCompressible()
-    { return true; }
+    { return false;}//true; }
 
     /*!
      * \brief Returns true, the gas phase is assumed to be ideal
@@ -113,7 +113,7 @@ public:
      * \brief Returns true if the gas phase viscosity is constant
      */
     static constexpr bool gasViscosityIsConstant()
-    { return false; }
+    { return true; }
 
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of gaseous Air at a given density and temperature.
@@ -198,8 +198,8 @@ public:
         const Scalar pressureCorrectionFactor = 9.7115e-9*tempCelsius*tempCelsius - 5.5e-6*tempCelsius + 0.0010809;
 
         using std::sqrt;
-        const Scalar mu = 1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0)
-                          * (1.0 + (pressure/1.0e5 - 1.0)*pressureCorrectionFactor);
+        const Scalar mu = 1.7e-5;//1.496e-6 * sqrt(temperature * temperature * temperature) / (temperature + 120.0)
+                          //* (1.0 + (pressure/1.0e5 - 1.0)*pressureCorrectionFactor);
         return mu;
     }
 

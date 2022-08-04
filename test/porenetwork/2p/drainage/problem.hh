@@ -148,6 +148,8 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        if (isOutletPore_(scv))
+            values[snIdx] = 0.1;
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
@@ -194,11 +196,13 @@ public:
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
             values[snIdx] = 0.5;
+        if (isOutletPore_(dofIdxGlobal))
+            values[snIdx] = 0.1;
         else
             values[snIdx] = 0.0;
 
 #if !ISOTHERMAL
-        values[temperatureIdx] = inletTemperature_;
+        values[temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
@@ -234,6 +238,11 @@ private:
     bool isOutletPore_(const SubControlVolume& scv) const
     {
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+    }
+
+    bool isOutletPore_(const std::size_t dofIdxGlobal) const
+    {
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::outlet;
     }
 
     int vtpOutputFrequency_;

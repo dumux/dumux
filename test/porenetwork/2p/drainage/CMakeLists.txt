@@ -23,6 +23,16 @@ dumux_add_test(NAME test_pnm_2pDraigangeNI_1d_regularized
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00107.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d")
 
+dumux_add_test(NAME test_pnm_2pDraigangeNI_1d_regularized_with_pressure
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS REGULARIZEWITHPRESSURE=1 ISOTHERMAL=0 DIM=2 REGULARIZED=1 DRAINAGE=1
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00107.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d")
 
 dumux_add_test(NAME test_pnm_2pDraigange_2d_regularized_with_pressure
                SOURCES main.cc

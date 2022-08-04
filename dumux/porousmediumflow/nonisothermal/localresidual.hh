@@ -199,7 +199,7 @@ public:
     static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
-        flux[energyEqIdx] += fluxVars.heatConductionFlux();
+        flux[energyEqIdx] += 0.0;//fluxVars.heatConductionFlux();
     }
 
     /*!
