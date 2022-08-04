@@ -96,11 +96,13 @@ public:
                              GridIndexType scvfIndex,
                              std::array<LocalIndexType, 2>&& scvIndices,
                              Dune::GeometryType geomType,
+                             bool overlapping = false,
                              bool boundary = false)
     : corners_(corners),
       unitOuterNormal_(normal),
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices)),
+      overlapping_(overlapping),
       boundary_(boundary),
       boundaryFlag_{},
       geometry_(std::make_unique<Geometry>(geomType, corners))
@@ -117,11 +119,13 @@ public:
                              GridIndexType scvfIndex,
                              std::array<LocalIndexType, 2>&& scvIndices,
                              Dune::GeometryType geomType,
+                             bool overlapping = false,
                              bool boundary = false)
     : corners_(corners),
       unitOuterNormal_(intersection.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices)),
+      overlapping_(overlapping),
       boundary_(boundary),
       boundaryFlag_{intersection},
       geometry_(std::make_unique<Geometry>(geomType, corners)), center_(0.0)
@@ -145,6 +149,12 @@ public:
     Scalar area() const
     {
         return geometry_->volume();
+    }
+
+    //! returns true if the sub control volume face is overlapping with a scv
+    bool isOverlapping() const
+    {
+        return overlapping_;
     }
 
     //! returns true if the sub control volume face is on the boundary
@@ -207,6 +217,7 @@ private:
     GlobalPosition unitOuterNormal_;
     GridIndexType scvfIndex_;
     std::array<LocalIndexType, 2> scvIndices_;
+    bool overlapping_;
     bool boundary_;
     BoundaryFlag boundaryFlag_;
     std::unique_ptr<Geometry> geometry_;

@@ -110,9 +110,7 @@ class CvfeFVGridGeometry<Scalar, GV, true, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = CvfeGeometryHelper<GV, dim,
-                                             typename Traits::SubControlVolume,
-                                             typename Traits::SubControlVolumeFace>;
+    using GeometryHelper = CvfeGeometryHelper<GV, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
 
 public:
     //! export the discretization method this geometry belongs to
@@ -276,6 +274,7 @@ private:
                                                                   scvfLocalIdx,
                                                                   std::move(scvPair),
                                                                   geometryHelper.getScvfGeometryType(scvfLocalIdx),
+                                                                  geometryHelper.isOverlapping(scvfLocalIdx),
                                                                   false);
             }
 
@@ -304,6 +303,7 @@ private:
                                                   scvfLocalIdx,
                                                   std::move(scvPair),
                                                   intersection.geometry().type(),
+                                                  false,
                                                   true);
 
                         // increment local counter
