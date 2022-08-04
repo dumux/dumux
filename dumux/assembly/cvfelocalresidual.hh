@@ -100,7 +100,8 @@ public:
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
             residual[insideScv.localDofIndex()] += flux;
-            residual[outsideScv.localDofIndex()] -= flux;
+            if(!scvf.isOverlapping())
+                residual[outsideScv.localDofIndex()] -= flux;
         }
         else
         {
