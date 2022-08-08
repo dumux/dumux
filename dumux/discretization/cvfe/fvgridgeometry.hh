@@ -82,25 +82,16 @@ struct CvfeDefaultGridGeometryTraits
  * \ingroup CvfeDiscretization
  * \brief Base class for the finite volume geometry vector for cvfe schemes
  *        This builds up the sub control volumes and sub control volume faces
- * \note This class is specialized for versions with and without caching the fv geometries on the grid view
- */
-template<class Scalar,
-         class GridView,
-         bool enableGridGeometryCache = false,
-         class Traits = CvfeDefaultGridGeometryTraits<GridView> >
-class CvfeFVGridGeometry;
-
-/*!
- * \ingroup CvfeDiscretization
- * \brief Base class for the finite volume geometry vector for cvfe schemes
- *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
-template<class Scalar, class GV, class Traits>
-class CvfeFVGridGeometry<Scalar, GV, true, Traits>
+template<class Scalar,
+         class GV,
+         bool enableCaching = true,
+         class Traits = CvfeDefaultGridGeometryTraits<GV>>
+class CvfeFVGridGeometry
 : public BaseGridGeometry<GV, Traits>
 {
-    using ThisType = CvfeFVGridGeometry<Scalar, GV, true, Traits>;
+    using ThisType = CvfeFVGridGeometry<Scalar, GV, enableCaching, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -111,6 +102,8 @@ class CvfeFVGridGeometry<Scalar, GV, true, Traits>
     static const int dimWorld = GV::dimensionworld;
 
     using GeometryHelper = CvfeGeometryHelper<GV, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
+
+    static_assert(dim > 1, "Only implemented for dim > 1");
 
 public:
     //! export the discretization method this geometry belongs to
@@ -128,7 +121,6 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    //ToDo -- Own Basis
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
@@ -140,21 +132,19 @@ public:
         update_();
     }
 
-    //! the vertex mapper is the dofMapper
-    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    //! The dofMapper
     const DofMapper& dofMapper() const
     { return dofMapper_; }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
-    {  return numScv_; }
+    { return numScv_; }
 
-    //! The total number of sun control volume faces
+    //! The total number of sub control volume faces
     std::size_t numScvf() const
     { return numScvf_; }
 
     //! The total number of boundary sub control volume faces
-    //! For compatibility reasons with cc methods
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
@@ -162,22 +152,14 @@ public:
     std::size_t numDofs() const
     { return this->dofMapper().size(); }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-    void update()
-    {
-        ParentType::update();
-        update_();
-    }
-
-    //! update all fvElementGeometries (call this after grid adaption)
+    //! update all geometries (call this after grid adaption)
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
         update_();
     }
 
-    //! update all fvElementGeometries (call this after grid adaption)
+    //! update all geometries (call this after grid adaption)
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
@@ -221,6 +203,7 @@ private:
     {
         scvs_.clear();
         scvfs_.clear();
+        dofMapper_.update(this->gridView());
 
         auto numElements = this->gridView().size(0);
         scvs_.resize(numElements);
@@ -232,10 +215,10 @@ private:
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
-        // Build the SCV and SCV faces
+
+        // Build the scvs and scv faces
         for (const auto& element : elements(this->gridView()))
         {
-            // fill the element map with seeds
             auto eIdx = this->elementMapper().index(element);
 
             // get the element geometry
@@ -244,18 +227,20 @@ private:
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
-            // count
+
             numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
             scvs_[eIdx].resize(geometryHelper.numScv());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
-                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.getScvCorners(scvLocalIdx),
+                auto corners = geometryHelper.getScvCorners(scvLocalIdx);
+                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.scvVolume(scvLocalIdx, corners),
+                                                            geometryHelper.dofPosition(scvLocalIdx),
+                                                            geometryHelper.scvCenter(scvLocalIdx, corners),
                                                             scvLocalIdx,
                                                             eIdx,
-                                                            geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
-                                                            geometryHelper.dofPosition(scvLocalIdx),
-                                                            geometryHelper.getScvGeometryType(scvLocalIdx));
+                                                            geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx)
+                                                            );
             }
 
             // construct the sub control volume faces
@@ -266,28 +251,27 @@ private:
             {
                 auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
-                auto normal = geometryHelper.normal(corners, scvPair);
-                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(std::move(corners),
-                                                                  std::move(normal),
-                                                                  element,
-                                                                  elementGeometry,
-                                                                  scvfLocalIdx,
-                                                                  std::move(scvPair),
-                                                                  geometryHelper.getScvfGeometryType(scvfLocalIdx),
-                                                                  geometryHelper.isOverlapping(scvfLocalIdx),
-                                                                  false);
-            }
 
+                // the sub control volume face
+                typename SubControlVolumeFace::Traits::Geometry scvfGeo{
+                    geometryHelper.getScvfGeometryType(scvfLocalIdx), corners
+                };
+
+                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(scvfGeo.center(),
+                                                                  scvfGeo.volume(),
+                                                                  geometryHelper.normal(corners, scvPair),
+                                                                  std::move(scvPair),
+                                                                  scvfLocalIdx,
+                                                                  geometryHelper.isOverlapping(scvfLocalIdx));
+            }
 
             // construct the sub control volume faces on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 if (intersection.boundary() && !intersection.neighbor())
                 {
-                    const auto isGeometry = intersection.geometry();
                     hasBoundaryScvf_[eIdx] = true;
 
-                    // count
                     numScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
                     numBoundaryScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
 
@@ -295,22 +279,25 @@ private:
                     {
                         // find the scvs this scvf is belonging to
                         auto scvPair = geometryHelper.getScvPairForBoundaryScvf(intersection, isScvfLocalIdx);
+                        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx);
 
-                        scvfs_[eIdx].emplace_back(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
-                                                  intersection,
-                                                  isGeometry,
-                                                  isScvfLocalIdx,
-                                                  scvfLocalIdx,
+                        // the sub control volume face
+                        typename SubControlVolumeFace::Traits::Geometry scvfGeo{
+                            geometryHelper.getBoundaryScvfGeometryType(scvfLocalIdx), corners
+                        };
+
+                        scvfs_[eIdx].emplace_back(scvfGeo.center(),
+                                                  scvfGeo.volume(),
+                                                  intersection.centerUnitOuterNormal(),
                                                   std::move(scvPair),
-                                                  intersection.geometry().type(),
-                                                  false,
-                                                  true);
+                                                  scvfLocalIdx,
+                                                  typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection });
 
                         // increment local counter
                         scvfLocalIdx++;
                     }
 
-                    // TODO also move thos to helper class
+                    // TODO also move this to helper class
 
                     // add all vertices on the intersection to the set of
                     // boundary vertices
@@ -376,7 +363,7 @@ private:
 
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
-    // TODO do we need those?
+
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
@@ -388,217 +375,6 @@ private:
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
 };
-
-// /*!
-//  * \ingroup CvfeDiscretization
-//  * \brief Base class for the finite volume geometry vector for cvfe schemes
-//  *        This builds up the sub control volumes and sub control volume faces
-//  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
-//  *       the corresponding FVElementGeometry
-//  */
-// template<class Scalar, class GV, class Traits>
-// class CvfeFVGridGeometry<Scalar, GV, false, Traits>
-// : public BaseGridGeometry<GV, Traits>
-// {
-//     using ThisType = CvfeFVGridGeometry<Scalar, GV, false, Traits>;
-//     using ParentType = BaseGridGeometry<GV, Traits>;
-//     using GridIndexType = typename IndexTraits<GV>::GridIndex;
-
-//     static const int dim = GV::dimension;
-//     static const int dimWorld = GV::dimensionworld;
-
-//     using Element = typename GV::template Codim<0>::Entity;
-//     using CoordScalar = typename GV::ctype;
-
-// public:
-//     //! export the discretization method this geometry belongs to
-//     using DiscretizationMethod = DiscretizationMethods::Cvfe;
-//     static constexpr DiscretizationMethod discMethod{};
-
-//     //! export the type of the fv element geometry (the local view type)
-//     using LocalView = typename Traits::template LocalView<ThisType, false>;
-//     //! export the type of sub control volume
-//     using SubControlVolume = typename Traits::SubControlVolume;
-//     //! export the type of sub control volume
-//     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
-//     //! export the type of extrusion
-//     using Extrusion = Extrusion_t<Traits>;
-//     //! export dof mapper type
-//     using DofMapper = typename Traits::VertexMapper;
-//     //! export the finite element cache type
-//     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-//     //! export the grid view type
-//     using GridView = GV;
-
-//     //! Constructor
-//     CvfeFVGridGeometry(const GridView gridView)
-//     : ParentType(gridView)
-//     {
-//         update_();
-//     }
-
-//     //! the vertex mapper is the dofMapper
-//     //! this is convenience to have better chance to have the same main files for cvfe/tpfa/mpfa...
-//     const DofMapper& dofMapper() const
-//     { return this->vertexMapper(); }
-
-//     //! The total number of sub control volumes
-//     std::size_t numScv() const
-//     {  return numScv_; }
-
-//     //! The total number of sun control volume faces
-//     std::size_t numScvf() const
-//     { return numScvf_; }
-
-//     //! The total number of boundary sub control volume faces
-//     //! For compatibility reasons with cc methods
-//     std::size_t numBoundaryScvf() const
-//     { return numBoundaryScvf_; }
-
-//     //! The total number of degrees of freedom
-//     std::size_t numDofs() const
-//     { return this->vertexMapper().size(); }
-
-//     //! update all fvElementGeometries (do this again after grid adaption)
-//     [[deprecated("Use update(gridView) instead! Will be removed after release 3.5.")]]
-//     void update()
-//     {
-//         ParentType::update();
-//         update_();
-//     }
-
-//     //! update all fvElementGeometries (call this after grid adaption)
-//     void update(const GridView& gridView)
-//     {
-//         ParentType::update(gridView);
-//         update_();
-//     }
-
-//     //! update all fvElementGeometries (call this after grid adaption)
-//     void update(GridView&& gridView)
-//     {
-//         ParentType::update(std::move(gridView));
-//         update_();
-//     }
-
-//     //! The finite element cache for creating local FE bases
-//     const FeCache& feCache() const
-//     { return feCache_; }
-
-//     //! If a vertex / d.o.f. is on the boundary
-//     bool dofOnBoundary(GridIndexType dofIdx) const
-//     { return boundaryDofIndices_[dofIdx]; }
-
-//     //! If a vertex / d.o.f. is on a periodic boundary
-//     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-//     { return periodicVertexMap_.count(dofIdx); }
-
-//     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
-//     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-//     { return periodicVertexMap_.at(dofIdx); }
-
-//     //! Returns the map between dofs across periodic boundaries
-//     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
-//     { return periodicVertexMap_; }
-
-// private:
-
-//     void update_()
-//     {
-//         boundaryDofIndices_.assign(numDofs(), false);
-
-//         // save global data on the grid's scvs and scvfs
-//         // TODO do we need those information?
-//         numScv_ = 0;
-//         numScvf_ = 0;
-//         numBoundaryScvf_ = 0;
-//         for (const auto& element : elements(this->gridView()))
-//         {
-//             numScv_ += element.subEntities(dim);
-//             numScvf_ += element.subEntities(dim-1);
-
-//             const auto elementGeometry = element.geometry();
-//             const auto refElement = referenceElement(elementGeometry);
-
-//             // store the sub control volume face indices on the domain boundary
-//             for (const auto& intersection : intersections(this->gridView(), element))
-//             {
-//                 if (intersection.boundary() && !intersection.neighbor())
-//                 {
-//                     const auto isGeometry = intersection.geometry();
-//                     numScvf_ += isGeometry.corners();
-//                     numBoundaryScvf_ += isGeometry.corners();
-
-//                     // add all vertices on the intersection to the set of
-//                     // boundary vertices
-//                     const auto fIdx = intersection.indexInInside();
-//                     const auto numFaceVerts = refElement.size(fIdx, 1, dim);
-//                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
-//                     {
-//                         const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
-//                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
-//                         boundaryDofIndices_[vIdxGlobal] = true;
-//                     }
-//                 }
-
-//                 // inform the grid geometry if we have periodic boundaries
-//                 else if (intersection.boundary() && intersection.neighbor())
-//                 {
-//                     this->setPeriodic();
-
-//                     // find the mapped periodic vertex of all vertices on periodic boundaries
-//                     const auto fIdx = intersection.indexInInside();
-//                     const auto numFaceVerts = refElement.size(fIdx, 1, dim);
-//                     const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
-//                     for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
-//                     {
-//                         const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
-//                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
-//                         const auto vPos = elementGeometry.corner(vIdx);
-
-//                         const auto& outside = intersection.outside();
-//                         const auto outsideGeometry = outside.geometry();
-//                         for (const auto& isOutside : intersections(this->gridView(), outside))
-//                         {
-//                             // only check periodic vertices of the periodic neighbor
-//                             if (isOutside.boundary() && isOutside.neighbor())
-//                             {
-//                                 const auto fIdxOutside = isOutside.indexInInside();
-//                                 const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
-//                                 for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
-//                                 {
-//                                     const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
-//                                     const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
-//                                     const auto shift = std::abs((this->bCvfeMax()-this->bCvfeMin())*intersection.centerUnitOuterNormal());
-//                                     if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
-//                                         periodicVertexMap_[vIdxGlobal] = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         // error check: periodic boundaries currently don't work for cvfe in parallel
-//         if (this->isPeriodic() && this->gridView().comm().size() > 1)
-//             DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for cvfe method for parallel simulations!");
-//     }
-
-//     const FeCache feCache_;
-
-//     // Information on the global number of geometries
-//     // TODO do we need those information?
-//     std::size_t numScv_;
-//     std::size_t numScvf_;
-//     std::size_t numBoundaryScvf_;
-
-//     // vertices on the boudary
-//     std::vector<bool> boundaryDofIndices_;
-
-//     // a map for periodic boundary vertices
-//     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
-// };
 
 } // end namespace Dumux
 

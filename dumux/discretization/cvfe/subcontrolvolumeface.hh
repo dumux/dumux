@@ -88,140 +88,92 @@ public:
     CvfeSubControlVolumeFace() = default;
 
     //! Constructor for inner scvfs
-    template<class Element>
-    CvfeSubControlVolumeFace(CornerStorage corners,
-                             GlobalPosition normal,
-                             const Element& element,
-                             const typename Element::Geometry& elemGeometry,
-                             GridIndexType scvfIndex,
-                             std::array<LocalIndexType, 2>&& scvIndices,
-                             Dune::GeometryType geomType,
-                             bool overlapping = false,
-                             bool boundary = false)
-    : corners_(corners),
-      unitOuterNormal_(normal),
-      scvfIndex_(scvfIndex),
-      scvIndices_(std::move(scvIndices)),
-      overlapping_(overlapping),
-      boundary_(boundary),
-      boundaryFlag_{},
-      geometry_(std::make_unique<Geometry>(geomType, corners))
-    {
-        center_ = geometry_->center();
-    }
+    CvfeSubControlVolumeFace(const GlobalPosition& center,
+                             const Scalar area,
+                             const GlobalPosition& normal,
+                             const std::array<LocalIndexType, 2>& scvIndices,
+                             const LocalIndexType localScvfIdx,
+                             bool overlapping = false)
+    : center_(center)
+    , unitOuterNormal_(normal)
+    , area_(area)
+    , localScvfIdx_(localScvfIdx)
+    , scvIndices_(scvIndices)
+    , boundary_(false)
+    , overlapping_(overlapping)
+    , boundaryFlag_{}
+    { }
 
     //! Constructor for boundary scvfs
-    template<class Intersection>
-    CvfeSubControlVolumeFace(CornerStorage corners,
-                             const Intersection& intersection,
-                             const typename Intersection::Geometry& isGeometry,
-                             LocalIndexType indexInIntersection,
-                             GridIndexType scvfIndex,
-                             std::array<LocalIndexType, 2>&& scvIndices,
-                             Dune::GeometryType geomType,
-                             bool overlapping = false,
-                             bool boundary = false)
-    : corners_(corners),
-      unitOuterNormal_(intersection.centerUnitOuterNormal()),
-      scvfIndex_(scvfIndex),
-      scvIndices_(std::move(scvIndices)),
-      overlapping_(overlapping),
-      boundary_(boundary),
-      boundaryFlag_{intersection},
-      geometry_(std::make_unique<Geometry>(geomType, corners)), center_(0.0)
-    {
-        center_ = geometry_->center();
-    }
+    CvfeSubControlVolumeFace(const GlobalPosition& center,
+                             const Scalar area,
+                             const GlobalPosition& normal,
+                             const std::array<LocalIndexType, 2>& scvIndices,
+                             const LocalIndexType localScvfIdx,
+                             const BoundaryFlag& bFlag,
+                             bool overlapping = false)
+    : center_(center)
+    , unitOuterNormal_(normal)
+    , area_(area)
+    , localScvfIdx_(localScvfIdx)
+    , scvIndices_(scvIndices)
+    , boundary_(true)
+    , overlapping_(overlapping)
+    , boundaryFlag_(bFlag)
+    {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The integration point for flux evaluations in global coordinates
     const GlobalPosition& ipGlobal() const
-    {
-        return center_;
-    }
+    { return center_; }
 
     //! The area of the sub control volume face
     Scalar area() const
-    {
-        return geometry_->volume();
-    }
+    { return area_; }
 
-    //! returns true if the sub control volume face is overlapping with a scv
+    //! returns true if the sub control volume face is overlapping with another scv
     bool isOverlapping() const
-    {
-        return overlapping_;
-    }
+    { return overlapping_; }
 
-    //! returns true if the sub control volume face is on the boundary
     bool boundary() const
-    {
-        return boundary_;
-    }
+    { return boundary_; }
 
-    const GlobalPosition& unitOuterNormal() const
-    {
-        return unitOuterNormal_;
-    }
+    //! The unit outer normal
+    const GlobalPosition unitOuterNormal() const
+    { return unitOuterNormal_; }
 
-    //! index of the inside sub control volume
-    LocalIndexType insideScvIdx() const
-    {
-        return scvIndices_[0];
-    }
+    //! Index of the inside sub control volume
+    GridIndexType insideScvIdx() const
+    { return scvIndices_[0]; }
 
-    //! Index of the i-th outside sub control volume or boundary scv index.
-    // Results in undefined behaviour if i >= numOutsideScvs()
-    LocalIndexType outsideScvIdx(int i = 0) const
-    {
-        assert(!boundary());
-        return scvIndices_[1];
-    }
+    //! index of the outside sub control volume
+    GridIndexType outsideScvIdx() const
+    { return scvIndices_[1]; }
 
     //! The number of scvs on the outside of this face
     std::size_t numOutsideScvs() const
-    {
-        return static_cast<std::size_t>(!boundary());
-    }
+    { return static_cast<std::size_t>(!boundary()); }
 
     //! The local index of this sub control volume face
-    GridIndexType index() const
-    {
-        return scvfIndex_;
-    }
-
-    const GlobalPosition& corner(unsigned int localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
-
-    //! The geometry of the sub control volume face
-    const Geometry& geometry() const
-    {
-        return *geometry_;
-    }
+    LocalIndexType index() const
+    { return localScvfIdx_; }
 
     //! Return the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
-    {
-        return boundaryFlag_.get();
-    }
+    { return boundaryFlag_.get(); }
 
 private:
-    CornerStorage corners_;
-    GlobalPosition unitOuterNormal_;
-    GridIndexType scvfIndex_;
-    std::array<LocalIndexType, 2> scvIndices_;
-    bool overlapping_;
-    bool boundary_;
-    BoundaryFlag boundaryFlag_;
-    std::unique_ptr<Geometry> geometry_;
     GlobalPosition center_;
+    GlobalPosition unitOuterNormal_;
+    Scalar area_;
+    LocalIndexType localScvfIdx_;
+    std::array<LocalIndexType, 2> scvIndices_;
+    bool boundary_;
+    bool overlapping_;
+    BoundaryFlag boundaryFlag_;
 };
 
 } // end namespace Dumux

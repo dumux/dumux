@@ -62,138 +62,65 @@ struct CvfeDefaultScvGeometryTraits
  * \tparam GV the type of the grid view
  * \tparam T the scvf geometry traits
  */
-template<class GV,
-         class T = CvfeDefaultScvGeometryTraits<GV> >
+template<class GridView, class T = CvfeDefaultScvGeometryTraits<GridView>>
 class CvfeSubControlVolume
-: public SubControlVolumeBase<CvfeSubControlVolume<GV, T>, T>
 {
-    using ThisType = CvfeSubControlVolume<GV, T>;
-    using ParentType = SubControlVolumeBase<ThisType, T>;
-    using Geometry = typename T::Geometry;
+    using GlobalPosition = typename T::GlobalPosition;
+    using Scalar = typename T::Scalar;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
-    using Scalar = typename T::Scalar;
-    using CornerStorage = typename T::CornerStorage;
-    enum { dim = Geometry::mydimension };
 
 public:
-    //! export the type used for global coordinates
-    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 
-    //! The default constructor
     CvfeSubControlVolume() = default;
 
-    // the contructor in the cvfe case
-    CvfeSubControlVolume(CornerStorage corners,
-                         LocalIndexType scvIdx,
-                         GridIndexType elementIndex,
-                         GridIndexType dofIndex,
-                         GlobalPosition dofPosition,
-                         Dune::GeometryType geomType)
-    : corners_(corners),
-      elementIndex_(elementIndex),
-      localDofIdx_(scvIdx),
-      dofIndex_(dofIndex),
-      dofPosition_(dofPosition),
-      geometry_(std::make_unique<Geometry>(geomType, corners))
-    { }
+    CvfeSubControlVolume(const Scalar& volume,
+                         const GlobalPosition& dofPosition,
+                         const GlobalPosition& center,
+                         const LocalIndexType indexInElement,
+                         const GridIndexType eIdx,
+                         const GridIndexType dofIdx)
 
-    //! The copy constrcutor
-    CvfeSubControlVolume(const CvfeSubControlVolume& other)
-    { deepCopy_(other); }
-
-    //! The move constrcutor
-    CvfeSubControlVolume(CvfeSubControlVolume&& other) = default;
-
-    //! The copy assignment operator
-    CvfeSubControlVolume& operator=(const CvfeSubControlVolume& other)
-    {
-        deepCopy_(other);
-        return *this;
-    }
-
-    //! The move assignment operator
-    CvfeSubControlVolume& operator=(CvfeSubControlVolume&& other) = default;
+    : center_(center)
+    , dofPosition_(dofPosition)
+    , volume_(volume)
+    , indexInElement_(indexInElement)
+    , eIdx_(eIdx)
+    , dofIdx_(dofIdx)
+    {}
 
     //! The center of the sub control volume
-    GlobalPosition center() const
-    {
-        return geometry_->center();
-    }
+    const GlobalPosition& center() const
+    { return center_; }
 
-    //! The volume of the sub control volume
-    Scalar volume() const
-    {
-        return geometry_->volume();
-    }
-
-    //! The geometry of the sub control volume
-    // e.g. for integration
-    const Geometry& geometry() const
-    {
-        return *geometry_;
-    }
-
-    //! The element-local index of the dof this scv is embedded in
-    LocalIndexType localDofIndex() const
-    {
-        return localDofIdx_;
-    }
-
-    //! The element-local index of this scv.
-    //! For the standard cvfe scheme this is the local dof index.
-    LocalIndexType indexInElement() const
-    {
-        return localDofIdx_;
-    }
-
-    //! The index of the dof this scv is embedded in
-    GridIndexType dofIndex() const
-    {
-        return dofIndex_;
-    }
-
-    // The position of the dof this scv is embedded in
+    //! The position of the degree of freedom
     const GlobalPosition& dofPosition() const
-    {
-        return dofPosition_;
-    }
+    { return dofPosition_; }
 
-    //! The global index of the element this scv is embedded in
+    Scalar volume() const
+    { return volume_; }
+
+    GridIndexType dofIndex() const
+    { return dofIdx_; }
+
+    LocalIndexType indexInElement() const
+    { return indexInElement_; }
+
     GridIndexType elementIndex() const
-    {
-        return elementIndex_;
-    }
+    { return eIdx_; }
 
-    //! Return the corner for the given local index
-    const GlobalPosition& corner(LocalIndexType localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
+    LocalIndexType localDofIndex() const
+    { return indexInElement_; }
 
 private:
-    void deepCopy_(const CvfeSubControlVolume& other)
-    {
-        corners_ = other.corners_;
-        localDofIdx_ = other.localDofIdx_;
-        elementIndex_ = other.elementIndex_;
-        dofIndex_ = other.dofIndex_;
-        dofPosition_ = other.dofPosition_;
-        if (other.geometry_)
-            geometry_ = std::make_unique<Geometry>(other.geometry_->type(), corners_);
-        else
-            geometry_.reset();
-    }
-
-    CornerStorage corners_;
-    GridIndexType elementIndex_;
-    LocalIndexType localDofIdx_;
-    GridIndexType dofIndex_;
+    GlobalPosition center_;
     GlobalPosition dofPosition_;
-    std::unique_ptr<Geometry> geometry_;
+    Scalar volume_;
+    LocalIndexType indexInElement_;
+    GridIndexType eIdx_;
+    GridIndexType dofIdx_;
 };
 
 } // end namespace Dumux
