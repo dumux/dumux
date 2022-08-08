@@ -24,7 +24,6 @@
 #ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_HH
 #define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
 #include "couplingmanager_staggered.hh"
@@ -35,12 +34,7 @@ namespace Dumux::Detail {
 
 template<class Traits>
 struct MomentumDiscMethod
-{
-    template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
-    using type = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
-};
+{ using type = typename Traits::template SubDomain<0>::GridGeometry::DiscretizationMethod; };
 
 // declaration (specialize for different discretization types)
 template<class Traits, class DiscretizationMethod = typename MomentumDiscMethod<Traits>::type>
