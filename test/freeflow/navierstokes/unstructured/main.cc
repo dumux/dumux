@@ -56,6 +56,8 @@ int main(int argc, char** argv)
     initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance();
 
+    Dune::Timer timer;
+
     // print dumux start message
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
@@ -74,6 +76,8 @@ int main(int argc, char** argv)
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
+    std::cout << "Grid overlap size: " << leafGridView.overlapSize(0) << std::endl;
+    std::cout << "Grid ghost size: " << leafGridView.ghostSize(0) << std::endl;
 
     // create the finite volume grid geometry
     using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
@@ -99,7 +103,7 @@ int main(int argc, char** argv)
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
-    std::cout << "Total number of dofs: "
+    std::cout << "Total number of dofs on rank " << mpiHelper.rank() << ": "
         << massGridGeometry->numDofs() + momentumGridGeometry->numDofs()*MomentumGridGeometry::GridView::dimension
         << std::endl;
 
@@ -128,36 +132,42 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // the linear solver
-    using M = typename Assembler::JacobianMatrix; using V = typename Assembler::ResidualType;
-    using LinearSolver = IncompressibleStokesSolver<M, V, MassGridGeometry, LinearSolverTraits<MomentumGridGeometry>>;
-    //using LinearSolver = UMFPackBackend;
-    V dirichletDofs;
-    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
-    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
-    for (const auto& element : elements(leafGridView))
+    if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
     {
-        const auto fvGeometry = localView(*momentumGridGeometry).bind(element);
-        for (const auto& scvf : scvfs(fvGeometry))
+        using M = typename Assembler::JacobianMatrix; using V = typename Assembler::ResidualType;
+        using LinearSolver = IncompressibleStokesSolver<M, V, MomentumGridGeometry, MassGridGeometry>;
+        V dirichletDofs;
+        dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+        dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+        for (const auto& element : elements(leafGridView))
         {
-            if (scvf.boundary())
+            const auto fvGeometry = localView(*momentumGridGeometry).bind(element);
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
-                for (int i = 0; i < bcTypes.size(); ++i)
-                    if (bcTypes.isDirichlet(i))
-                        dirichletDofs[momentumIdx][fvGeometry.scv(scvf.insideScvIdx()).dofIndex()][i] = 1.0;
+                if (scvf.boundary())
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][fvGeometry.scv(scvf.insideScvIdx()).dofIndex()][i] = 1.0;
+                }
             }
         }
+
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dirichletDofs);
+
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
     }
-
-    auto linearSolver = std::make_shared<LinearSolver>(massGridGeometry, dirichletDofs);
-
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-
-    // linearize & solve
-    Dune::Timer timer;
-    nonLinearSolver.solve(x);
+    else
+    {
+        using LinearSolver = UMFPackBackend;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
 
     // write vtk output
     vtkWriter.write(1.0);
