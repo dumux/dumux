@@ -29,6 +29,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/geometry/volume.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -75,7 +76,7 @@ class BoxSubControlVolume
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
     using CornerStorage = typename T::CornerStorage;
-    enum { dim = Geometry::mydimension };
+    static constexpr int dim = Geometry::mydimension;
 
 public:
     //! export the type used for global coordinates
@@ -94,11 +95,15 @@ public:
                         GridIndexType dofIndex)
     : corners_(geometryHelper.getScvCorners(scvIdx)),
       center_(0.0),
-      volume_(geometryHelper.scvVolume(corners_)),
       elementIndex_(elementIndex),
       localDofIdx_(scvIdx),
       dofIndex_(dofIndex)
     {
+        volume_ = Dumux::convexPolytopeVolume<dim>(
+            Dune::GeometryTypes::cube(dim),
+            [&](unsigned int i){ return corners_[i]; }
+        );
+
         // compute center point
         for (const auto& corner : corners_)
             center_ += corner;
