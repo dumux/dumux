@@ -707,7 +707,7 @@ namespace Dumux {
  * \tparam Y Type of the defect.
  * \tparam l Preconditioner block level (for compatibility reasons, unused).
  */
-template<class M, class X, class Y, int l = 1>
+template<class M, class X, class Y, class Comm, int l = 1>
 class IncompressibleStokesPreconditioner : public Dune::Preconditioner<X,Y>
 {
     static_assert(Dumux::isMultiTypeBlockMatrix<M>::value && M::M() == 2 && M::N() == 2, "SeqUzawa expects a 2x2 MultiTypeBlockMatrix.");
@@ -718,8 +718,6 @@ class IncompressibleStokesPreconditioner : public Dune::Preconditioner<X,Y>
 
     using P = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>;
     using V = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
-
-    using Comm = Dune::Amg::SequentialInformation;
 
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -733,7 +731,7 @@ public:
     //! \brief Scalar type underlying the field_type.
     using scalar_field_type = Dune::Simd::Scalar<field_type>;
     //! \brief the type of the pressure operator
-    using PressureLinearOperator = Dune::MatrixAdapter<P,V,V>;
+    using PressureLinearOperator = Dune::OverlappingSchwarzOperator<P,V,V,Comm>;
 
     /*!
      * \brief Constructor
@@ -744,9 +742,10 @@ public:
     IncompressibleStokesPreconditioner(
         const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op,
         const std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>>& pop,
+        const std::array<std::shared_ptr<const Comm>, 2>& comms,
         const Dune::ParameterTree& params
     )
-    : IncompressibleStokesPreconditioner(op, pop, pop, params)
+    : IncompressibleStokesPreconditioner(op, pop, pop, comms, params)
     {
         useMultiOperator_ = false;
     }
@@ -755,12 +754,14 @@ public:
         const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op,
         const std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>>& pop,
         const std::shared_ptr<const Dune::AssembledLinearOperator<P,V,V>>& pop2,
+        const std::array<std::shared_ptr<const Comm>, 2>& comms,
         const Dune::ParameterTree& params
     )
     : matrix_(op->getmat())
     , pmatrix_(pop->getmat())
     , p2matrix_(pop2->getmat())
     , verbosity_(params.get<int>("verbosity"))
+    , comms_(comms)
     , paramGroup_(params.get<std::string>("ParameterGroup"))
     {
         initPreconditioner_(params);
@@ -776,6 +777,11 @@ public:
      *
      * \param update The update to be computed.
      * \param currentDefect The current defect.
+     *
+     * The currentDefect has be be in a consistent representation,
+     * Definition 2.3 Blatt and Bastian (2009) https://doi.org/10.1504/IJCSE.2008.021112
+     * The update is initially zero. At exit the update has to be
+     * in a consistent representation. This usually requires communication.
      */
     virtual void apply(X& update, const Y& currentDefect)
     {
@@ -818,8 +824,15 @@ public:
         // instead we only do a projection
         // project velocity into divergence-free space
         // u_k+2 = u_k+1 + Bp_k+1
-        // auto uHalf = u;
+        auto uHalf = u;
+        // when using this in parallel:
+        // uHalf is already consistent
+        // we have to make u consistent after applying B
+        // i.e. sum up over the border entities
+        u = 0.0;
         B.umv(p, u);
+        comms_[0]->addOwnerCopyToOwnerCopy(u, u);
+        u += uHalf;
 
         // // update pressure
         // // p_k+2 = p_k+1 + Cu_k+1 - g
@@ -835,7 +848,8 @@ public:
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
     {
-        return Dune::SolverCategory::sequential;
+        // return Dune::SolverCategory::sequential;
+        return Dune::SolverCategory::overlapping;
     }
 
 private:
@@ -845,44 +859,53 @@ private:
 
         if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForVelocity", false))
         {
-            directSolver_ = std::make_unique<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
-            using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<U, U>>;
-            preconditionerForA_ = std::make_unique<Wrap>(*directSolver_);
+            // directSolver_ = std::make_shared<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
+            // using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<U, U>>;
+            // preconditionerForA_ = std::make_shared<Wrap>(*directSolver_);
         }
         else
         {
-            using VelLinearOperator = Dune::MatrixAdapter<A, U, U>;
-            auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0]);
-            using AMGForA = Dune::Amg::AMG<VelLinearOperator, U, Dumux::ParMTSOR<A, U, U>, Comm>;
-            preconditionerForA_ = std::make_unique<AMGForA>(lopV, params);
+            // using VelLinearOperator = Dune::MatrixAdapter<A, U, U>;
+            // auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0]);
+            // using AMGForA = Dune::Amg::AMG<VelLinearOperator, U, Dumux::ParMTSOR<A, U, U>, Comm>;
+            using VelLinearOperator = Dune::NonoverlappingSchwarzOperator<A, U, U, Comm>;
+            auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0], *comms_[0]);
+            auto creator = Dune::AMGCreator();
+            preconditionerForA_ = creator.makeAMG(lopV, "sor", params);
         }
 
         if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.AmgForPressure", false))
         {
-            using PressLinearOperator = Dune::MatrixAdapter<P, V, V>;
-            auto lopP = std::make_shared<PressLinearOperator>(pmatrix_);
-            using AMGForP = Dune::Amg::AMG<PressLinearOperator, V, Dune::SeqSSOR<P, V, V>, Comm>;
-            preconditionerForP_ = std::make_unique<AMGForP>(lopP, params);
+            using PressLinearOperator = Dune::OverlappingSchwarzOperator<P, V, V, Comm>;
+            auto lopP = std::make_shared<PressLinearOperator>(pmatrix_, *comms_[1]);
+            auto creator = Dune::AMGCreator();
+            preconditionerForP_ = creator.makeAMG(lopP, "ssor", params);
 
             if (useMultiOperator_)
             {
-                auto lopP2 = std::make_shared<PressLinearOperator>(p2matrix_);
+                auto lopP2 = std::make_shared<PressLinearOperator>(p2matrix_, *comms_[1]);
                 using PressJacobi = Dune::SeqJac<P, V, V>;
-                preconditionerForP2_ = std::make_unique<PressJacobi>(lopP2, params);
+                using ParPressJacobi = Dune::BlockPreconditioner<V, V, Comm, PressJacobi>;
+                auto seqPre = std::make_shared<PressJacobi>(lopP2, params);
+                preconditionerForP2_ = std::make_shared<ParPressJacobi>(seqPre, *comms_[1]);
             }
         }
         else
         {
-            using PressLinearOperator = Dune::MatrixAdapter<P, V, V>;
-            auto lopP = std::make_shared<PressLinearOperator>(pmatrix_);
+            using PressLinearOperator = Dune::OverlappingSchwarzOperator<P, V, V, Comm>;
+            auto lopP = std::make_shared<PressLinearOperator>(pmatrix_, *comms_[1]);
             using PressJacobi = Dune::SeqJac<P, V, V>;
-            preconditionerForP_ = std::make_unique<PressJacobi>(lopP, params);
+            using ParPressJacobi = Dune::BlockPreconditioner<V, V, Comm, PressJacobi>;
+            auto seqPre = std::make_shared<PressJacobi>(lopP, params);
+            preconditionerForP_ = std::make_shared<ParPressJacobi>(seqPre, *comms_[1]);
 
             if (useMultiOperator_)
             {
-                auto lopP2 = std::make_shared<PressLinearOperator>(p2matrix_);
+                auto lopP2 = std::make_shared<PressLinearOperator>(p2matrix_, *comms_[1]);
                 using PressJacobi = Dune::SeqJac<P, V, V>;
-                preconditionerForP2_ = std::make_unique<PressJacobi>(lopP2, params);
+                using ParPressJacobi = Dune::BlockPreconditioner<V, V, Comm, PressJacobi>;
+                auto seqPre2 = std::make_shared<PressJacobi>(lopP2, params);
+                preconditionerForP2_ = std::make_shared<ParPressJacobi>(seqPre2, *comms_[1]);
             }
         }
     }
@@ -921,10 +944,12 @@ private:
     //! \brief The verbosity level
     const int verbosity_;
 
-    std::unique_ptr<Dune::Preconditioner<U, U>> preconditionerForA_;
-    std::unique_ptr<Dune::Preconditioner<V, V>> preconditionerForP_;
-    std::unique_ptr<Dune::Preconditioner<V, V>> preconditionerForP2_;
-    std::unique_ptr<Dune::InverseOperator<U, U>> directSolver_;
+    std::array<std::shared_ptr<const Comm>, 2> comms_;
+
+    std::shared_ptr<Dune::Preconditioner<U, U>> preconditionerForA_;
+    std::shared_ptr<Dune::Preconditioner<V, V>> preconditionerForP_;
+    std::shared_ptr<Dune::Preconditioner<V, V>> preconditionerForP2_;
+    std::shared_ptr<Dune::InverseOperator<U, U>> directSolver_;
     const std::string paramGroup_;
     bool useMultiOperator_ = true;
 };
