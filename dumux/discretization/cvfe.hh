@@ -44,6 +44,7 @@
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/fvgridgeometry.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -78,6 +79,17 @@ private:
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 public:
     using type = CvfeGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+};
+
+//! The flux variables cache class
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::CvfeModel>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = CvfeFluxVariablesCache<Scalar, GridGeometry>;
 };
 
 //! The grid flux variables cache vector class
