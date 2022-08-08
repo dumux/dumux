@@ -177,6 +177,11 @@ public:
     bool hasChanged() const
     { return hasChangedComparedToPreviousTimestep_; }
 
+    bool outputThroatIsInvaded() const
+    {
+        return outputThroatInvaded_;
+    }
+
     //! Return whether an invasion or snap-off occurred anywhere during the current Newton iteration.
     bool hasChangedInCurrentIteration() const
     { return hasChangedInCurrentIteration_; }
@@ -289,6 +294,8 @@ private:
            invadedAfterSwitch = false;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
+        if (gridGeometry.throatLabel(eIdx) == Labels::outlet)
+            outputThroatInvaded_ = invadedAfterSwitch;
 
         if (invadedBeforeSwitch == invadedAfterSwitch)
             return Result{}; // nothing happened
@@ -338,6 +345,7 @@ private:
     std::vector<bool> invadedCurrentIteration_;
     std::vector<bool> invadedPreviousTimeStep_;
     bool hasChangedInCurrentIteration_ = false;
+    bool outputThroatInvaded_ = false;
     bool hasChangedComparedToPreviousTimestep_ = false;
     std::size_t numThroatsInvaded_;
     bool verbose_;

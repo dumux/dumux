@@ -27,7 +27,7 @@ ThroatCrossSectionShape = Square
 #DeletionRandomNumberSeed = 33
 
 [Problem]
-Name = test_pnm_ni_2p_1d_withAll5e8
+Name = test_pnm_ni_2p_1d_withAll1e2
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000

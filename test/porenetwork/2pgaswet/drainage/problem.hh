@@ -149,7 +149,7 @@ public:
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             values[sIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
         else if (isOutletPore_(scv))
-            values[sIdx] = 0.2;
+            values[sIdx] = 1.0;
 
 #if !ISOTHERMAL
         if (isInletPore_(scv))
@@ -197,12 +197,12 @@ public:
         if (isInletPore_(dofIdxGlobal))
             values[sIdx] = 0.5;
         else if (isOutletPore_(dofIdxGlobal))
-            values[sIdx] = 0.2;
+            values[sIdx] = 1.0;
         else
             values[sIdx] = 1.0;
 
 #if !ISOTHERMAL
-        values[temperatureIdx] = inletTemperature_;
+        values[temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
