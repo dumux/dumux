@@ -21,11 +21,42 @@
  * \ingroup MultiDomain
  * \brief Freeflow coupling managers (Navier-Stokes mass-momentum coupling)
  */
-#ifndef DUMUX_MULTIDOMAIN_STAGGERED_FREEFLOW_COUPLING_MANAGER_HH
-#define DUMUX_MULTIDOMAIN_STAGGERED_FREEFLOW_COUPLING_MANAGER_HH
+#ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_HH
+#define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_HH
 
-#warning "This header is deprecated and will be removed after release 3.6"
-#include <dumux/multidomain/freeflow/couplingmanager.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/method.hh>
+
+#include "couplingmanager_staggered.hh"
+#include "couplingmanager_diamond.hh"
+
+#ifndef DOXYGEN
+namespace Dumux::Detail {
+
+template<class Traits>
+struct MomentumDiscMethod
+{
+    template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
+    using type = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
+};
+
+// declaration (specialize for different discretization types)
+template<class Traits, class DiscretizationMethod = typename MomentumDiscMethod<Traits>::type>
+struct FreeFlowCouplingManagerSelector;
+
+template<class Traits>
+struct FreeFlowCouplingManagerSelector<Traits, DiscretizationMethods::FCStaggered>
+{ using type = FCStaggeredFreeFlowCouplingManager<Traits>; };
+
+template<class Traits>
+struct FreeFlowCouplingManagerSelector<Traits, DiscretizationMethods::FCDiamond>
+{ using type = FCDiamondFreeFlowCouplingManager<Traits>; };
+
+} // end namespace Dumux::Detail
+#endif
+
 
 namespace Dumux {
 
@@ -34,7 +65,7 @@ namespace Dumux {
  * \brief The interface of the coupling manager for free flow systems
  */
 template<class Traits>
-using StaggeredFreeFlowCouplingManager [[deprecated("Will be removed after release 3.6. Use FreeFlowCouplingManager.")]] = FreeFlowCouplingManager<Traits>;
+using FreeFlowCouplingManager = typename Detail::FreeFlowCouplingManagerSelector<Traits>::type;
 
 } // end namespace Dumux
 
