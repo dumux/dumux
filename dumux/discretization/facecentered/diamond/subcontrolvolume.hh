@@ -68,12 +68,12 @@ struct FaceCenteredDiamondScvGeometryTraits
 template<class GridView, class T = FaceCenteredDiamondScvGeometryTraits<GridView>>
 class FaceCenteredDiamondSubControlVolume
 {
-    using GlobalPosition = typename T::GlobalPosition;
     using Scalar = typename T::Scalar;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
 
 public:
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 
@@ -85,7 +85,6 @@ public:
                                         const LocalIndexType indexInElement,
                                         const GridIndexType eIdx,
                                         const GridIndexType dofIdx)
-
     : center_(center)
     , dofPosition_(dofPosition)
     , volume_(volume)

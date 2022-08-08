@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FV_GRID_GEOMETRY
 
 #include <memory>
+#include <unordered_map>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/type.hh>
