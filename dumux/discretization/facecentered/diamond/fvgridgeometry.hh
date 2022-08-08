@@ -33,6 +33,8 @@
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
+#include <dumux/geometry/volume.hh>
+#include <dumux/geometry/center.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/method.hh>
@@ -249,14 +251,10 @@ private:
             {
                 const auto dofIndex = dofMapper().subIndex(element, localScvIdx, 1);
                 const auto& corners = geometryHelper.getScvCorners(localScvIdx);
-                typename SubControlVolume::Traits::Geometry scvGeo{
-                    SubControlVolume::Traits::geometryType(), corners
-                };
-
                 cache_.scvs_[eIdx].emplace_back(
-                    scvGeo.volume(),
+                    Dumux::volume<dim>(SubControlVolume::Traits::geometryType(), [&](unsigned int i){ return corners[i]; }),
                     geometryHelper.facetCenter(localScvIdx),
-                    scvGeo.center(),
+                    Dumux::center(corners),
                     localScvIdx,
                     eIdx,
                     dofIndex
@@ -271,14 +269,9 @@ private:
             {
                 const auto& corners = geometryHelper.getScvfCorners(localScvfIdx);
                 const auto& scvPair = geometryHelper.getInsideOutsideScvForScvf(localScvfIdx);
-                // the sub control volume faces
-                typename SubControlVolumeFace::Traits::Geometry scvfGeo{
-                    SubControlVolumeFace::Traits::geometryType(), corners
-                };
-
                 cache_.scvfs_[eIdx].emplace_back(
-                    scvfGeo.center(),
-                    scvfGeo.volume(),
+                    Dumux::center(corners),
+                    Dumux::volume<dim-1>(SubControlVolumeFace::Traits::geometryType(), [&](unsigned int i){ return corners[i]; }),
                     geometryHelper.normal(corners, scvPair),
                     scvPair,
                     localScvfIdx
