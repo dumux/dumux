@@ -250,7 +250,7 @@ private:
                 const auto dofIndex = dofMapper().subIndex(element, localScvIdx, 1);
                 const auto& corners = geometryHelper.getScvCorners(localScvIdx);
                 typename SubControlVolume::Traits::Geometry scvGeo{
-                    SubControlVolume::Traits::geometryType(), corners
+                    SubControlVolume::Traits::geometryType(geometry.type()), corners
                 };
 
                 cache_.scvs_[eIdx].emplace_back(
@@ -273,7 +273,7 @@ private:
                 const auto& scvPair = geometryHelper.getInsideOutsideScvForScvf(localScvfIdx);
                 // the sub control volume faces
                 typename SubControlVolumeFace::Traits::Geometry scvfGeo{
-                    SubControlVolumeFace::Traits::geometryType(), corners
+                    SubControlVolumeFace::Traits::interiorGeometryType(geometry.type()), corners
                 };
 
                 cache_.scvfs_[eIdx].emplace_back(

@@ -60,8 +60,8 @@ struct FaceCenteredDiamondScvfGeometryTraits
     using GlobalPosition = typename CornerStorage::value_type;
     using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 
-    static constexpr Dune::GeometryType geometryType()
-    {  return Dune::GeometryTypes::simplex(dim-1); }
+    static constexpr Dune::GeometryType interiorGeometryType(Dune::GeometryType)
+    { return Dune::GeometryTypes::simplex(dim-1); }
 };
 
 /*!
