@@ -42,6 +42,8 @@
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
 #include <dumux/linear/symmetrizedirichlet.hh>
+#include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 
 #include "tpfalaplaceproblem.hh"
 
@@ -52,28 +54,55 @@ namespace Dumux {
  * \brief Preconditioned iterative solver for the incompressible Stokes problem
  * \note Uses IncompressibleStokesPreconditioner as preconditioner
  */
-template<class Matrix, class Vector, class PressureGG, class LinearSolverTraits>
+template<class Matrix, class Vector, class VelocityGG, class PressureGG>
 class IncompressibleStokesSolver
 : public LinearSolver
 {
-    using Preconditioner = IncompressibleStokesPreconditioner<Matrix, Vector, Vector>;
+    // "[Scalar and matrix-vector products] are easy to compute in a non-overlapping distributed setting,
+    // if matrix and residuals are kept in _additive [unique]_ representation,
+    // and iterates and directions are kept in _consistent_ representation." (Sander 2020 Dune)
+    // "The consistent representation of a vector is obtained from its additive representation by taking the latter,
+    // and for each vertex[/face] in the border partition, add the corresponding entries from the other subdomains" (Sander 2020 Dune)
+    using Communication = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+    using Preconditioner = IncompressibleStokesPreconditioner<Matrix, Vector, Vector, Communication>;
 public:
     /*!
      * \brief Constructor
+     * \param vGridGeometry grid geometry of the velocity discretization
      * \param pGridGeometry grid geometry of the pressure discretization
      * \param params a parameter tree passed along to the iterative solvers
      *
      * The parameter tree requires the (constant) viscosity in the key "Component.LiquidDynamicViscosity"
      * and the (constant) density in the key "Component.LiquidDensity"
      */
-    IncompressibleStokesSolver(std::shared_ptr<const PressureGG> pGridGeometry, const Vector& dirichletDofs)
-    : LinearSolver(), pGridGeometry_(std::move(pGridGeometry)), dirichletDofs_(dirichletDofs)
+    IncompressibleStokesSolver(std::shared_ptr<const VelocityGG> vGridGeometry,
+                               std::shared_ptr<const PressureGG> pGridGeometry,
+                               const Vector& dirichletDofs)
+    : LinearSolver()
+    , vGridGeometry_(std::move(vGridGeometry))
+    , pGridGeometry_(std::move(pGridGeometry))
+    , dirichletDofs_(dirichletDofs)
     {
-        params_ = LinearSolverParameters<LinearSolverTraits>::createParameterTree(this->paramGroup());
+        params_ = LinearSolverParameters<LinearSolverTraits<VelocityGG>>::createParameterTree(this->paramGroup());
         density_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDensity");
         viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDynamicViscosity");
         weight_ = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
         solverType_ = getParamFromGroup<std::string>(this->paramGroup(), "LinearSolver.Type", "gmres");
+
+        pHelperVelocity_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits<VelocityGG>>>(
+            vGridGeometry_->gridView(), vGridGeometry_->dofMapper()
+        );
+        pHelperPressure_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits<PressureGG>>>(
+            pGridGeometry_->gridView(), pGridGeometry_->dofMapper()
+        );
+
+        commVelocity_ = std::make_shared<Communication>(pHelperVelocity_->gridView().comm(), Dune::SolverCategory::nonoverlapping);
+        pHelperVelocity_->createParallelIndexSet(*commVelocity_);
+        commPressure_ = std::make_shared<Communication>(pHelperPressure_->gridView().comm(), Dune::SolverCategory::overlapping);
+        pHelperPressure_->createParallelIndexSet(*commPressure_);
+
+        const auto comms = std::array<std::shared_ptr<const Communication>, 2>({ commVelocity_, commPressure_ });
+        scalarProduct_ = std::make_shared<Dumux::ParallelScalarProduct<Vector, Communication, Vector::size()>>(comms);
     }
 
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -81,19 +110,12 @@ public:
         auto bTmp = b;
         auto ATmp = A;
 
-        // make Dirichlet boundary conditions symmetric
-        if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", false))
-            symmetrizeDirichlet(ATmp, bTmp, dirichletDofs_);
-
-        using namespace Dune::Indices;
-        ATmp[_1] *= -1.0/density_;
-        bTmp[_1] *= -1.0/density_;
-
-        if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.CheckSymmetry", false))
-            std::cout << "Matrix is symmetric? "
-                      << std::boolalpha << matrixIsSymmetric(ATmp) << std::endl;
-
         return applyIterativeSolver_(ATmp, x, bTmp);
+    }
+
+    Scalar norm(const Vector& b) const
+    {
+        return scalarProduct_->norm(b);
     }
 
     std::string name() const
@@ -107,32 +129,53 @@ public:
     }
 
 private:
-    bool applyIterativeSolver_(const Matrix& A, Vector& x, const Vector& b)
+    bool applyIterativeSolver_(Matrix& A, Vector& x, Vector& b)
     {
-        auto op = std::make_shared<Dumux::ParallelMatrixAdapter<Matrix, Vector, Vector>>(A);
-        auto pop = makeTpfaLaplaceOperator<typename Preconditioner::PressureLinearOperator>(pGridGeometry_->gridView());
-        auto pop2 = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
+        // make Dirichlet boundary conditions symmetric
+        // do this first because its easier if the operator is still purely local
+        // otherwise we might sum up wrong contributions at border face dofs adjacent to the domain boundary
+        if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", false))
+            symmetrizeDirichlet(A, b, dirichletDofs_);
 
-        auto preconditioner = std::make_shared<Preconditioner>(op, pop, pop2, params_.sub("preconditioner"));
+        // make matrix and right-hand side consistent
+        {
+            using namespace Dune::Indices;
+            using M = std::decay_t<decltype(std::declval<Matrix>()[_0][_0])>;
+            using U = std::decay_t<decltype(std::declval<Vector>()[_0])>;
+            using PTraits = typename LinearSolverTraits<VelocityGG>::template ParallelNonoverlapping<M, U>;
+            prepareLinearAlgebraParallel<LinearSolverTraits<VelocityGG>, PTraits>(A[_0][_0], b[_0], *pHelperVelocity_);
+        }
 
+        // make Matrix symmetric
+        using namespace Dune::Indices;
+        A[_1] *= -1.0/density_;
+        b[_1] *= -1.0/density_;
+
+        const auto comms = std::array<std::shared_ptr<const Communication>, 2>({ commVelocity_, commPressure_ });
+        auto op = std::make_shared<Dumux::ParallelStokesOperator<Matrix, Vector, Vector, Communication>>(A, comms);
+
+        auto pop = makeTpfaLaplaceOperator<typename Preconditioner::PressureLinearOperator>(pGridGeometry_->gridView(), *commPressure_);
+        auto pop2 = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>(*commPressure_);
+        auto preconditioner = std::make_shared<Preconditioner>(op, pop, pop2, comms, params_.sub("preconditioner"));
+
+        params_["verbose"] = pGridGeometry_->gridView().comm().rank() == 0 ? params_["verbose"] : "0";
         std::unique_ptr<Dune::InverseOperator<Vector, Vector>> solver;
         if (solverType_ == "minres")
-            solver = std::make_unique<Dune::MINRESSolver<Vector>>(op, preconditioner, params_);
+            solver = std::make_unique<Dune::MINRESSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
         else if (solverType_ == "bicgstab")
-            solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, preconditioner, params_);
+            solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
         else if (solverType_ == "cg")
-            solver = std::make_unique<Dune::CGSolver<Vector>>(op, preconditioner, params_);
+            solver = std::make_unique<Dune::CGSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
         else
-            solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, preconditioner, params_);
+            solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
 
-        auto bTmp = b;
-        solver->apply(x, bTmp, result_);
+        solver->apply(x, b, result_);
 
         return result_.converged;
     }
 
-    template<class LinearOperator>
-    std::shared_ptr<LinearOperator> makePressureLinearOperator_()
+    template<class LinearOperator, class C>
+    std::shared_ptr<LinearOperator> makePressureLinearOperator_(const C& comm)
     {
         using M = typename LinearOperator::matrix_type;
 
@@ -150,18 +193,53 @@ private:
         for (const auto& element : elements(gv))
         {
             const auto eIdx = pGridGeometry_->elementMapper().index(element);
-            (*massMatrix)[eIdx][eIdx] = weight_*element.geometry().volume()/viscosity_;
+            // do not modify ghosts
+            if (element.partitionType() == Dune::GhostEntity)
+                (*massMatrix)[eIdx][eIdx] = 1.0;
+            else
+                (*massMatrix)[eIdx][eIdx] = weight_*element.geometry().volume()/viscosity_;
         }
 
-        return std::make_shared<LinearOperator>(massMatrix);
+        return std::make_shared<LinearOperator>(massMatrix, comm);
+    }
+
+    void printOutMatrix_(const Matrix& A) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<Matrix::N()>(), [&](const auto i) {
+            forEach(std::make_index_sequence<Matrix::M()>(), [&](const auto j) {
+                if (A[i][j].nonzeroes() > 0)
+                    Dune::printmatrix(std::cout, A[i][j], "A" + std::to_string(i()) + std::to_string(j()), "");
+                else
+                    std::cout << "A" << i() << j() << ": 0" << std::endl;
+            });
+        });
+    }
+
+    void printOutResidual_(const Vector& b) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<Vector::size()>(), [&](const auto i) {
+            Dune::printvector(std::cout, b[i], "b" + std::to_string(i()), "");
+        });
     }
 
     double density_, viscosity_, weight_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
+    std::shared_ptr<const VelocityGG> vGridGeometry_;
     std::shared_ptr<const PressureGG> pGridGeometry_;
     const Vector& dirichletDofs_;
     std::string solverType_;
+
+#if HAVE_MPI
+    std::unique_ptr<ParallelISTLHelper<LinearSolverTraits<VelocityGG>>> pHelperVelocity_;
+    std::unique_ptr<ParallelISTLHelper<LinearSolverTraits<PressureGG>>> pHelperPressure_;
+
+    std::shared_ptr<Communication> commVelocity_;
+    std::shared_ptr<Communication> commPressure_;
+#endif
+    std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
 };
 
 } // end namespace Dumux
