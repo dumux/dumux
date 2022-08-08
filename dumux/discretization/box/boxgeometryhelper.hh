@@ -333,12 +333,14 @@ public:
     }
 
     //! get scv volume
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     Scalar scvVolume(const ScvCornerStorage& scvCorners) const
     {
         return (scvCorners[1] - scvCorners[0]).two_norm();
     }
 
     //! get scvf area
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     Scalar scvfArea(const ScvfCornerStorage& scvfCorners) const
     {
         return 1.0;
@@ -479,6 +481,7 @@ public:
 
     //! get scv volume for dim == 2, dimworld == 3
     template <int w = dimWorld>
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     typename std::enable_if<w == 3, Scalar>::type
     scvVolume(const ScvCornerStorage& p) const
     {
@@ -487,6 +490,7 @@ public:
 
     //! get scv volume for dim == 2, dimworld == 2
     template <int w = dimWorld>
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     typename std::enable_if<w == 2, Scalar>::type
     scvVolume(const ScvCornerStorage& p) const
     {
@@ -497,6 +501,7 @@ public:
     }
 
     //! get scvf area
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     Scalar scvfArea(const ScvfCornerStorage& p) const
     {
         return (p[1]-p[0]).two_norm();
@@ -633,6 +638,7 @@ public:
     }
 
     //! get scv volume
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     Scalar scvVolume(const ScvCornerStorage& p) const
     {
         // after Grandy 1997, Efficient computation of volume of hexahedron
@@ -643,6 +649,7 @@ public:
     }
 
     //! get scvf area
+    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
     Scalar scvfArea(const ScvfCornerStorage& p) const
     {
         // after Wolfram alpha quadrilateral area
