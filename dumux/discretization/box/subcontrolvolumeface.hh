@@ -78,6 +78,7 @@ class BoxSubControlVolumeFace
     using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
+    static constexpr int dim = Geometry::mydimension;
 
 public:
     //! export the type used for global coordinates
@@ -99,12 +100,16 @@ public:
     : corners_(geometryHelper.getScvfCorners(scvfIndex)),
       center_(0.0),
       unitOuterNormal_(geometryHelper.normal(corners_, scvIndices)),
-      area_(geometryHelper.scvfArea(corners_)),
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices)),
       boundary_(boundary)
     , boundaryFlag_{}
     {
+        area_ = Dumux::convexPolytopeVolume<dim>(
+            Dune::GeometryTypes::cube(dim),
+            [&](unsigned int i){ return corners_[i]; }
+        );
+
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();
@@ -122,12 +127,16 @@ public:
     : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection)),
       center_(0.0),
       unitOuterNormal_(intersection.centerUnitOuterNormal()),
-      area_(geometryHelper.scvfArea(corners_)),
       scvfIndex_(scvfIndex),
       scvIndices_(std:: move(scvIndices)),
       boundary_(boundary)
     , boundaryFlag_{intersection}
     {
+        area_ = Dumux::convexPolytopeVolume<dim>(
+            Dune::GeometryTypes::cube(dim),
+            [&](unsigned int i){ return corners_[i]; }
+        );
+
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();
@@ -197,7 +206,7 @@ public:
     //! The geometry of the sub control volume face
     Geometry geometry() const
     {
-        return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
+        return Geometry(Dune::GeometryTypes::cube(dim), corners_);
     }
 
     //! Return the boundary flag
