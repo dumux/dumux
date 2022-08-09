@@ -35,7 +35,7 @@ UseFixedPressureAndSaturationBoundary = false
 Source = 5e-3
 InletPressure = 1e5
 InletTemperature = 283.15
-OutletTemperature = 298.15
+OutletTemperature = 283.15
 
 [Vtk]
 AddVelocity = 1
@@ -59,6 +59,7 @@ RegularizationLowSw = 0.1
 
 [Regularization]
 IntervalPc = 1e1
+SwPercentage = 1e-2
 
 [Component]
 SolidHeatCapacity = 1.0 # for compatibility

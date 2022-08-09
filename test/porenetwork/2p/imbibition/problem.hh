@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetwork/common/labels.hh>
 
 namespace Dumux {
 
@@ -213,7 +214,12 @@ public:
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return true; }
+    {
+        const auto eIdx = this->gridGeometry().elementMapper().index(element);
+        if (this->gridGeometry().throatLabel(eIdx) == Labels::inlet)
+            return false;
+         return true;
+    }
 
     // \}
 

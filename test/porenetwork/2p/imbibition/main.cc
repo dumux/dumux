@@ -160,6 +160,8 @@ int main(int argc, char** argv)
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
+        if (!gridVariables->gridFluxVarsCache().invasionState().outputThroatIsInvaded())
+            timeLoop->setFinished();
     } while (!timeLoop->finished());
 
     ////////////////////////////////////////////////////////////
