@@ -81,17 +81,6 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
-
-// We introduce the coupling manager to the properties system
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
-{
-private:
-    using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
-public:
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
-};
-
 // This sets the grid type used for the simulation. Here, we use a structured 2D grid.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid<2>; };
@@ -99,6 +88,8 @@ struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid
 // This sets our problem class (see problem.hh) containing initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::LidDrivenCavityExample> { using type = Dumux::LidDrivenCavityExampleProblem<TypeTag> ; };
+
+
 // [[/codeblock]]
 
 // We also set some properties related to memory management
@@ -122,8 +113,17 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::LidDrivenCavityExample> { sta
 // This enables grid-wide caching for the finite volume grid geometry
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::LidDrivenCavityExample> { static constexpr bool value = true; };
-} // end namespace Dumux::Properties
 // [[/codeblock]]
 // [[/details]]
+
+// Finally, we introduce the coupling manager to the properties system
+// We do this at the end so that all specialized properties are defined
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
+{
+    using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
+    using type = StaggeredFreeFlowCouplingManager<Traits>;
+};
+} // end namespace Dumux::Properties
 // [[/content]]
 #endif
