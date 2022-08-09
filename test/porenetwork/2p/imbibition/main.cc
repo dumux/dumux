@@ -39,6 +39,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
+#include <dumux/porenetwork/2p/newtonconsistencychecks.hh>
 
 #include "properties.hh"
 
@@ -131,7 +132,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver, true>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
