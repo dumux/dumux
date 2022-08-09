@@ -33,6 +33,8 @@
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
+#include <dumux/geometry/volume.hh>
+#include <dumux/geometry/center.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/method.hh>
@@ -249,14 +251,15 @@ private:
             {
                 const auto dofIndex = dofMapper().subIndex(element, localScvIdx, 1);
                 const auto& corners = geometryHelper.getScvCorners(localScvIdx);
-                typename SubControlVolume::Traits::Geometry scvGeo{
-                    SubControlVolume::Traits::geometryType(geometry.type()), corners
-                };
+                const auto volume = Dumux::convexPolytopeVolume<dim>(
+                    SubControlVolume::Traits::geometryType(geometry.type()),
+                    [&](unsigned int i){ return corners[i]; }
+                );
 
                 cache_.scvs_[eIdx].emplace_back(
-                    scvGeo.volume(),
+                    volume,
                     geometryHelper.facetCenter(localScvIdx),
-                    scvGeo.center(),
+                    Dumux::center(corners),
                     localScvIdx,
                     eIdx,
                     dofIndex
@@ -271,14 +274,14 @@ private:
             {
                 const auto& corners = geometryHelper.getScvfCorners(localScvfIdx);
                 const auto& scvPair = geometryHelper.getInsideOutsideScvForScvf(localScvfIdx);
-                // the sub control volume faces
-                typename SubControlVolumeFace::Traits::Geometry scvfGeo{
-                    SubControlVolumeFace::Traits::interiorGeometryType(geometry.type()), corners
-                };
+                const auto area = Dumux::convexPolytopeVolume<dim-1>(
+                    SubControlVolumeFace::Traits::interiorGeometryType(geometry.type()),
+                    [&](unsigned int i){ return corners[i]; }
+                );
 
                 cache_.scvfs_[eIdx].emplace_back(
-                    scvfGeo.center(),
-                    scvfGeo.volume(),
+                    Dumux::center(corners),
+                    area,
                     geometryHelper.normal(corners, scvPair),
                     scvPair,
                     localScvfIdx
