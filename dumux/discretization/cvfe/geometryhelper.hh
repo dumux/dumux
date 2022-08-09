@@ -509,12 +509,13 @@ public:
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
-        if(localScvfIndex < referenceElement(geo_).size(dim-1))
+        const auto numEdges = referenceElement(geo_).size(dim-1);
+        if(localScvfIndex < numEdges)
             return std::array{static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 0, dim)),
                               static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 1, dim))};
         else
             return std::array{static_cast<LocalIndexType>(numScv()-1),
-                              static_cast<LocalIndexType>(localScvfIndex-numScv()+1)};
+                              static_cast<LocalIndexType>(localScvfIndex-numEdges)};
     }
 
     template<class Is>
