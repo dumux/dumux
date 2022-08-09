@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver,  REGULARIZED>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop

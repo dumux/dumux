@@ -36,9 +36,11 @@ namespace Dumux::PoreNetwork {
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
-template<class Assembler, class LinearSolver,
-         template<class, class> class NewtonConsistencyChecks = TwoPNewtonConsistencyChecks>
-class TwoPNewtonSolver : public Dumux::NewtonSolver<Assembler, LinearSolver>
+template<class Assembler, class LinearSolver, bool useRegularization = true>
+class TwoPNewtonSolver;
+
+template<class Assembler, class LinearSolver>
+class TwoPNewtonSolver<Assembler, LinearSolver, true>: public Dumux::NewtonSolver<Assembler, LinearSolver>
 {
     using ParentType =  Dumux::NewtonSolver<Assembler, LinearSolver>;
     using ConstSolutionVector = typename Assembler::ResidualType;
@@ -84,7 +86,7 @@ public:
         // with a decreased time step size if necessary.
         if (newtonConverged())
         {
-            NewtonConsistencyChecks<typename Assembler::GridVariables, SolutionVector> checks;
+            TwoPNewtonConsistencyChecks<typename Assembler::GridVariables, SolutionVector> checks;
             checks.performChecks(gridVariables, uCurrentIter, this->assembler().prevSol());
         }
     }
@@ -199,6 +201,81 @@ private:
     bool switchedInLastIteration_{false};
     std::vector<bool> preIndex_; // return the pore indicies which are predicted to be invaded
 };
+
+
+
+template<class Assembler, class LinearSolver>
+class TwoPNewtonSolver<Assembler, LinearSolver, false> : public Dumux::NewtonSolver<Assembler, LinearSolver>
+{
+    using ParentType =  Dumux::NewtonSolver<Assembler, LinearSolver>;
+    using SolutionVector = typename Assembler::ResidualType;
+
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Called after each Newton update
+     *
+     * \param uCurrentIter The current global solution vector
+     * \param uLastIter The previous global solution vector
+     */
+     void newtonEndStep(SolutionVector &uCurrentIter,
+                        const SolutionVector &uLastIter) final
+    {
+        // call the method of the base class
+        ParentType::newtonEndStep(uCurrentIter, uLastIter);
+
+        auto& gridVariables = this->assembler().gridVariables();
+        auto& invasionState = gridVariables.gridFluxVarsCache().invasionState();
+        switchedInLastIteration_ = invasionState.update(uCurrentIter, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+
+        // If the solution is about to be accepted, check for accuracy and trigger a retry
+        // with a decreased time step size if necessary.
+        if (newtonConverged())
+        {
+            TwoPNewtonConsistencyChecks<typename Assembler::GridVariables, SolutionVector> checks;
+            checks.performChecks(gridVariables, uCurrentIter, this->assembler().prevSol());
+        }
+    }
+
+    /*!
+     * \brief Returns true if the current solution can be considered to
+     *        be accurate enough. We enforce an additional Newton iteration if the invasion
+     *        switch was triggered in the last iteration.
+     */
+    bool newtonConverged() const final
+    {
+        if (switchedInLastIteration_)
+            return false;
+
+        return ParentType::newtonConverged();
+    }
+
+    /*!
+     * \brief Called if the Newton method broke down.
+     * This method is called _after_ newtonEnd() and resets the invasion state.
+     */
+    void newtonFail(SolutionVector& u) final
+    {
+        ParentType::newtonFail(u);
+        auto& gridVariables = this->assembler().gridVariables();
+        gridVariables.gridFluxVarsCache().invasionState().reset();
+    }
+
+    /*!
+     * \brief Called if the Newton method ended successfully
+     * This method is called _after_ newtonEnd() and advances the invasion state.
+     */
+    void newtonSucceed() final
+    {
+        auto& gridVariables = this->assembler().gridVariables();
+        gridVariables.gridFluxVarsCache().invasionState().advance();
+    }
+
+private:
+    bool switchedInLastIteration_{false};
+};
+
 
 } // end namespace Dumux::PoreNetwork
 
