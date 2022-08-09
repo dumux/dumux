@@ -24,6 +24,10 @@
 
 #include <config.h>
 
+#ifndef LINEARSOLVER
+#define LINEARSOLVER SSORCGBackend
+#endif
+
 #include <ctime>
 #include <iostream>
 
@@ -140,7 +144,7 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = SSORCGBackend;
+    using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // solver the linear problem
