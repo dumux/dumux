@@ -4,6 +4,7 @@ add_subdirectory(staggered)
 add_subdirectory(box)
 add_subdirectory(projection)
 add_subdirectory(rotationsymmetry)
+add_subdirectory(cvfe)
 add_input_file_links()
 
 add_executable(test_walldistance EXCLUDE_FROM_ALL test_walldistance.cc)
