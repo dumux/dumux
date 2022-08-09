@@ -10,7 +10,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -18,23 +18,28 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
- * \brief Freeflow coupling managers (Navier-Stokes mass-momentum coupling)
+ * \ingroup Geometry
+ * \brief Compute the center point of a convex polytope geometry or a random-access container of corner points
  */
-#ifndef DUMUX_MULTIDOMAIN_STAGGERED_FREEFLOW_COUPLING_MANAGER_HH
-#define DUMUX_MULTIDOMAIN_STAGGERED_FREEFLOW_COUPLING_MANAGER_HH
+#ifndef DUMUX_GEOMETRY_CENTER_HH
+#define DUMUX_GEOMETRY_CENTER_HH
 
-#warning "This header is deprecated and will be removed after release 3.6"
-#include <dumux/multidomain/freeflow/couplingmanager.hh>
+#include <algorithm>
 
 namespace Dumux {
 
 /*!
- * \ingroup MultiDomain
- * \brief The interface of the coupling manager for free flow systems
+ * \ingroup Geometry
+ * \brief The center of a given list of corners
  */
-template<class Traits>
-using StaggeredFreeFlowCouplingManager [[deprecated("Will be removed after release 3.6. Use FreeFlowCouplingManager.")]] = FreeFlowCouplingManager<Traits>;
+template<class Corners>
+typename Corners::value_type center(const Corners& corners)
+{
+    using Pos = typename Corners::value_type;
+    auto center = std::accumulate(corners.begin(), corners.end(), Pos(0.0));
+    center /= corners.size();
+    return center;
+}
 
 } // end namespace Dumux
 

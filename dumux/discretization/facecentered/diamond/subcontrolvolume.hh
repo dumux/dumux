@@ -56,9 +56,9 @@ struct FaceCenteredDiamondScvGeometryTraits
     using CornerStorage = typename FCDiamondMLGeometryTraits<Scalar>::template CornerStorage<dim, dimWorld>::Type;
     using GlobalPosition = typename CornerStorage::value_type;
 
-    static constexpr Dune::GeometryType geometryType()
+    static constexpr Dune::GeometryType geometryType(Dune::GeometryType elementType)
     {
-        if constexpr (dim == 3)
+        if (elementType == Dune::GeometryTypes::hexahedron)
             return Dune::GeometryTypes::pyramid;
         else
             return Dune::GeometryTypes::simplex(dim);
