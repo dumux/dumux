@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/components/air.hh>
 
 namespace Dumux {
 
@@ -116,11 +117,13 @@ public:
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
+        {
             bcTypes.setAllDirichlet();
-
 #if !ISOTHERMAL
-        bcTypes.setDirichlet(Indices::temperatureIdx);
+            bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
+        }
+
         return bcTypes;
     }
 
@@ -178,7 +181,11 @@ public:
         // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
         // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        {
             values[Indices::conti0EqIdx + 1] = source_/scv.volume();
+            const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, 1e5);
+            values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
+        }
 
         return values;
     }
@@ -204,7 +211,7 @@ public:
         }
 
 #if !ISOTHERMAL
-        values[Indices::temperatureIdx] = 273.15 + 10;
+        values[Indices::temperatureIdx] = outletTemperature_;
 #endif
         return values;
     }
