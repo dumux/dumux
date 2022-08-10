@@ -30,7 +30,7 @@
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/box/elementvolumevariables.hh>
+#include <dumux/discretization/cvfe/elementvolumevariables.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
@@ -42,7 +42,7 @@ struct BoxDefaultGridVolumeVariablesTraits
     using VolumeVariables = VV;
 
     template<class GridVolumeVariables, bool cachingEnabled>
-    using LocalView = BoxElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+    using LocalView = CVFEElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
 };
 
 /*!

@@ -32,7 +32,7 @@
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/facecentered/diamond/elementsolution.hh>
-#include <dumux/discretization/facecentered/diamond/elementvolumevariables.hh>
+#include <dumux/discretization/cvfe/elementvolumevariables.hh>
 
 namespace Dumux {
 
@@ -43,7 +43,7 @@ struct FaceCenteredDiamondDefaultGridVolumeVariablesTraits
     using VolumeVariables = VV;
 
     template<class GridVolumeVariables, bool cachingEnabled>
-    using LocalView = FaceCenteredDiamondElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+    using LocalView = CVFEElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
 };
 
 /*!
