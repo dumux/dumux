@@ -85,6 +85,8 @@ public:
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
         else if constexpr (MomGG::discMethod == DiscretizationMethods::fcdiamond)
             calculateVelocityForDiamondSchemes_(velocity, element, fvGeometry, elemVolVars);
+        else if constexpr (MomGG::discMethod == DiscretizationMethods::cvfe)
+            calculateVelocityForCvfeSchemes_(velocity, element, fvGeometry, elemVolVars);
     }
 
 private:
@@ -116,6 +118,22 @@ private:
         for (const auto& scvf : scvfs(fvGeometry))
             velocity[eIdx] += getFaceVelocity(fvGeometry, scvf) / fvGeometry.numScvf();
     }
+
+    void calculateVelocityForCvfeSchemes_(VelocityVector& velocity,
+                                          const Element& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVolumeVariables& elemVolVars) const
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
+        {
+            return elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
+        };
+
+        for (const auto& scvf : scvfs(fvGeometry))
+            velocity[eIdx] += getFaceVelocity(fvGeometry, scvf) / fvGeometry.numScvf();
+    }
+
 
     bool enableOutput_;
 };
