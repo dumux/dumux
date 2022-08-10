@@ -36,7 +36,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
-#include <dumux/flux/box/darcyslaw.hh>
+#include <dumux/flux/cvfe/darcyslaw.hh>
 
 namespace Dumux {
 
@@ -49,7 +49,7 @@ namespace Dumux {
 template<class Scalar, class GridGeometry>
 class BoxFacetCouplingDarcysLaw
 {
-    using DefaultBoxDarcysLaw = BoxDarcysLaw<Scalar, GridGeometry>;
+    using DefaultDarcysLaw = CVFEDarcysLaw<Scalar, GridGeometry>;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -76,7 +76,7 @@ public:
     {
         // if this scvf is not on an interior boundary, use the standard law
         if (!scvf.interiorBoundary())
-            return DefaultBoxDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
+            return DefaultDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
 
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
         if ( !Dune::FloatCmp::eq(xi, 1.0, 1e-6) )
