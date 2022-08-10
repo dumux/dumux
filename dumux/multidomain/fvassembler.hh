@@ -49,6 +49,7 @@
 #include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
 #include "subdomainfcdiamondlocalassembler.hh"
+#include "subdomainpq1bubblelocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -174,6 +175,12 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethods::FCDiamond, id>
     {
         using type = SubDomainFaceCenteredDiamondLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::PQ1Bubble, id>
+    {
+        using type = SubDomainPQ1BubbleLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
