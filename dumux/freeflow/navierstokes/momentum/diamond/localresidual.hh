@@ -31,7 +31,7 @@
 
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/assembly/fcdiamondlocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual.hh>
 
 #include "flux.hh"
 
@@ -43,9 +43,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class NavierStokesMomentumDiamondResidual
-: public FaceCenteredDiamondLocalResidual<TypeTag>
+: public CVFELocalResidual<TypeTag>
 {
-    using ParentType = FaceCenteredDiamondLocalResidual<TypeTag>;
+    using ParentType = CVFELocalResidual<TypeTag>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 

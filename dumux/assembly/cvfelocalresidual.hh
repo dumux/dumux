@@ -19,11 +19,11 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
- * \brief Calculates the element-wise residual for the diamond scheme
+ * \ingroup CVFE
+ * \brief Calculates the element-wise residual for control-volume finite element schemes
  */
-#ifndef DUMUX_FC_DIAMOND_LOCAL_RESIDUAL_HH
-#define DUMUX_FC_DIAMOND_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_CVFE_LOCAL_RESIDUAL_HH
+#define DUMUX_CVFE_LOCAL_RESIDUAL_HH
 
 #include <dune/common/std/type_traits.hh>
 #include <dune/geometry/type.hh>
@@ -37,15 +37,24 @@
 namespace Dumux::Detail {
 
 template<class Imp, class P, class G, class S, class V>
-using TimeInfoInterfaceDiamondDetector = decltype(
+using TimeInfoInterfaceCVFEDetector = decltype(
     std::declval<Imp>().computeStorage(
         std::declval<P>(), std::declval<G>(), std::declval<S>(), std::declval<V>(), true
     )
 );
 
 template<class Imp, class P, class G, class S, class V>
-constexpr inline bool hasTimeInfoInterfaceDiamond()
-{ return Dune::Std::is_detected<TimeInfoInterfaceDiamondDetector, Imp, P, G, S, V>::value; }
+constexpr inline bool hasTimeInfoInterfaceCVFE()
+{ return Dune::Std::is_detected<TimeInfoInterfaceCVFEDetector, Imp, P, G, S, V>::value; }
+
+template<class Imp>
+using SCVFIsOverlappingDetector = decltype(
+    std::declval<Imp>().isOverlapping()
+);
+
+template<class Imp>
+constexpr inline bool hasScvfIsOverlapping()
+{ return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
 
 } // end namespace Dumux::Detail
 
@@ -54,12 +63,12 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
- * \brief The element-wise residual for the diamond scheme
+ * \ingroup CVFE
+ * \brief The element-wise residual for control-volume finite element schemes
  * \tparam TypeTag the TypeTag
  */
 template<class TypeTag>
-class FaceCenteredDiamondLocalResidual : public FVLocalResidual<TypeTag>
+class CVFELocalResidual : public FVLocalResidual<TypeTag>
 {
     using ParentType = FVLocalResidual<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
@@ -100,7 +109,15 @@ public:
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
             residual[insideScv.localDofIndex()] += flux;
-            residual[outsideScv.localDofIndex()] -= flux;
+
+            // for control-volume finite element schemes with overlapping control volumes
+            if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
+            {
+                if (!scvf.isOverlapping())
+                    residual[outsideScv.localDofIndex()] -= flux;
+            }
+            else
+                residual[outsideScv.localDofIndex()] -= flux;
         }
         else
         {
@@ -200,7 +217,7 @@ private:
                                     const VolumeVariables& volVars,
                                     [[maybe_unused]] bool isPreviousTimeStep) const
     {
-        if constexpr (Detail::hasTimeInfoInterfaceDiamond<Implementation, Problem, FVElementGeometry, SubControlVolume, VolumeVariables>())
+        if constexpr (Detail::hasTimeInfoInterfaceCVFE<Implementation, Problem, FVElementGeometry, SubControlVolume, VolumeVariables>())
             return this->asImp().computeStorage(problem, fvGeometry, scv, volVars, isPreviousTimeStep);
         else
             return this->asImp().computeStorage(problem, scv, volVars);

@@ -29,7 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/problem.hh>
 
-#include <dumux/assembly/fcdiamondlocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -100,10 +100,10 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to DiamondLocalResidual
+//! Set the BaseLocalResidual to CVFELocalResidual
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
-{ using type = FaceCenteredDiamondLocalResidual<TypeTag>; };
+{ using type = CVFELocalResidual<TypeTag>; };
 
 //! The flux variables cache class for models involving flow in porous media
 template<class TypeTag>

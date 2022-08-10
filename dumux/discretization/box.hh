@@ -34,7 +34,7 @@
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/typetraits/problem.hh>
 
-#include <dumux/assembly/boxlocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
@@ -107,9 +107,10 @@ public:
     using type = BoxElementBoundaryTypes<BoundaryTypes>;
 };
 
-//! Set the BaseLocalResidual to BoxLocalResidual
+//! Set the BaseLocalResidual to CVFELocalResidual
 template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::BoxModel> { using type = BoxLocalResidual<TypeTag>; };
+struct BaseLocalResidual<TypeTag, TTag::BoxModel>
+{ using type = CVFELocalResidual<TypeTag>; };
 
 } // namespace Properties
 

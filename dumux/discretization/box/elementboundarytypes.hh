@@ -55,7 +55,7 @@ public:
         using GridGeometry = typename FVElementGeometry::GridGeometry;
         using GridView = typename GridGeometry::GridView;
 
-        vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
+        bcTypes_.resize( element.subEntities(GridView::dimension) );
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
@@ -63,14 +63,14 @@ public:
         for (const auto& scv : scvs(fvGeometry))
         {
             int scvIdxLocal = scv.localDofIndex();
-            vertexBCTypes_[scvIdxLocal].reset();
+            bcTypes_[scvIdxLocal].reset();
 
             if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
-                vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
+                bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
 
-                hasDirichlet_ = hasDirichlet_ || vertexBCTypes_[scvIdxLocal].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || vertexBCTypes_[scvIdxLocal].hasNeumann();
+                hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || bcTypes_[scvIdxLocal].hasNeumann();
             }
         }
     }
@@ -95,12 +95,39 @@ public:
      */
     const BoundaryTypes& operator[] (std::size_t i) const
     {
-        assert(i < vertexBCTypes_.size());
-        return vertexBCTypes_[i];
+        assert(i < bcTypes_.size());
+        return bcTypes_[i];
+    }
+
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     * \note yields undefined behaviour of the scv is not on the boundary
+     */
+    template<class FVElementGeometry>
+    const BoundaryTypes& get(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolumeFace& scvf) const
+    {
+        assert(scvf.boundary());
+        const auto localDofIdx = fvGeometry.scv(scvf.insideScvIdx()).localDofIndex();
+        assert(localDofIdx < bcTypes_.size());
+        return bcTypes_[localDofIdx];
+    }
+
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     * \note yields undefined behaviour of the scv is not on the boundary
+     */
+    template<class FVElementGeometry>
+    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::SubControlVolume& scv) const
+    {
+        const auto localDofIdx = scv.localDofIndex();
+        assert(localDofIdx < bcTypes_.size());
+        return bcTypes_[localDofIdx];
     }
 
 protected:
-    std::vector< BoundaryTypes > vertexBCTypes_;
+    std::vector< BoundaryTypes > bcTypes_;
     bool hasDirichlet_ = false;
     bool hasNeumann_ = false;
 };
