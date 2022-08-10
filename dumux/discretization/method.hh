@@ -41,10 +41,43 @@ struct CCMpfa : public Utility::Tag<CCMpfa> {
 };
 
 
-struct Box : public Utility::Tag<Box> {
+/*
+ * \brief Control-volume finite element methods
+ * This is a group of discretization methods that share certain properties.
+ * Therefore there is a single meta-tag parametrized in terms of the actual
+ * discretization method in the group. Having a common tag allows to specialize
+ * template agnostic of the underlying discretization type
+ */
+template<class DM>
+struct CVFE : public Utility::Tag<CVFE<DM>> {
+    static std::string name() { return DM::name(); }
+};
+
+namespace CVFEMethods {
+
+struct PQ1 {
     static std::string name() { return "box"; }
 };
 
+struct CR_RT {
+    static std::string name() { return "fcdiamond"; }
+};
+
+} // end namespace CVFEMethods
+
+
+/*
+ * \brief Vertex-centered finite volume scheme
+ * or control-volume finite element scheme based on a P1 (simplices) or Q1 (quads) basis
+ */
+using Box = CVFE<CVFEMethods::PQ1>;
+
+/*
+ * \brief Face-centered finite volume scheme
+ * or control-volume finite element scheme based on
+ * Crouzeix-Raviart (simplices) or Rannacher-Turek (quads) basis
+ */
+using FCDiamond = CVFE<CVFEMethods::CR_RT>;
 
 
 struct Staggered : public Utility::Tag<Staggered> {
@@ -52,22 +85,14 @@ struct Staggered : public Utility::Tag<Staggered> {
 };
 
 
-
 struct FEM : public Utility::Tag<FEM> {
     static std::string name() { return "fem"; }
 };
 
 
-
 struct FCStaggered : public Utility::Tag<FCStaggered> {
     static std::string name() { return "fcstaggered"; }
 };
-
-
-
-struct FCDiamond : public Utility::Tag<FCDiamond>
-{ static std::string name() { return "fcdiamond"; } };
-
 
 
 struct None : public Utility::Tag<None> {
