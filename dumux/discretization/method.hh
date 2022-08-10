@@ -31,11 +31,17 @@
 
 namespace Dumux::DiscretizationMethods {
 
+/*
+ * \brief Cell-centered finite volume scheme with two-point flux approximation
+ */
 struct CCTpfa : public Utility::Tag<CCTpfa> {
     static std::string name() { return "cctpfa"; }
 };
 
 
+/*
+ * \brief Cell-centered finite volume scheme with multi-point flux approximation
+ */
 struct CCMpfa : public Utility::Tag<CCMpfa> {
     static std::string name() { return "ccmpfa"; }
 };
@@ -80,21 +86,35 @@ using Box = CVFE<CVFEMethods::PQ1>;
 using FCDiamond = CVFE<CVFEMethods::CR_RT>;
 
 
+/*
+ * \brief Staggered-grid finite volume scheme (old)
+ */
 struct Staggered : public Utility::Tag<Staggered> {
     static std::string name() { return "staggered"; }
 };
 
 
+/*
+ * \brief Finite element method
+ */
 struct FEM : public Utility::Tag<FEM> {
     static std::string name() { return "fem"; }
 };
 
 
+/*
+ * \brief Staggered-grid finite volume scheme
+ */
 struct FCStaggered : public Utility::Tag<FCStaggered> {
     static std::string name() { return "fcstaggered"; }
 };
 
 
+/*
+ * \brief Tag used for defaults not depending on the discretization
+ * or in situations where a discretization tag is needed but none
+ * can be provided (the implementation has to support this of course)
+ */
 struct None : public Utility::Tag<None> {
     static std::string name() { return "none"; }
 };
