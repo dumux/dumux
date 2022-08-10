@@ -42,7 +42,7 @@
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/box/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -76,8 +76,9 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
-    using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+    using type = CVFEGridVolumeVariables<Traits, enableCache>;
 };
 
 //! The grid flux variables cache vector class
