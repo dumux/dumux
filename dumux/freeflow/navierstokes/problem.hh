@@ -1330,6 +1330,37 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 
+template<class TypeTag>
+class NavierStokesProblemImpl<TypeTag, DiscretizationMethods::Box> : public NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
+{
+    using ParentType = NavierStokesProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+
+public:
+    /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param couplingManager The coupling manager (couples mass and momentum equations)
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            std::shared_ptr<CouplingManager> couplingManager,
+                            const std::string& paramGroup = "")
+    : ParentType(gridGeometry, couplingManager, paramGroup)
+    {}
+
+    /*!
+     * \brief The constructor for usage without a coupling manager
+     * \param gridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
+                            const std::string& paramGroup = "")
+    : NavierStokesProblemImpl(gridGeometry, {}, paramGroup)
+    {}
+};
+
 /*!
  * \ingroup NavierStokesModel
  * \brief Navier-Stokes problem base class.
