@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup OnePModel
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
+ * \brief Class to encapsulate the quantities required by the single-phase
+ *        porous medium flow model per sub-control volume.
  */
 
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
@@ -35,9 +36,9 @@ namespace Dumux {
 /*!
  * \ingroup OnePModel
  * \brief Contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ *        sub-control volume in the one-phase model.
  *
- * \tparam Traits Class encapsulating types to be used by the vol vars
+ * \tparam Traits Class encapsulating types to be used
  */
 template<class Traits>
 class OnePVolumeVariables
