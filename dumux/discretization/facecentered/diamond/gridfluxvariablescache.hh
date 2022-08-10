@@ -28,7 +28,7 @@
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/facecentered/diamond/elementfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/elementfluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -45,7 +45,7 @@ struct FaceCenteredDiamondDefaultGridFVCTraits
     using FluxVariablesCacheFiller = FVCF;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
-    using LocalView = FaceCenteredDiamondElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+    using LocalView = CVFEElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
 };
 
 /*!

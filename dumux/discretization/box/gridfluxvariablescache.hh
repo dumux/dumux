@@ -26,7 +26,7 @@
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/box/elementfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/elementfluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -41,7 +41,7 @@ struct BoxDefaultGridFVCTraits
     using FluxVariablesCache = FVC;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
-    using LocalView = BoxElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+    using LocalView = CVFEElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
 };
 
 /*!
