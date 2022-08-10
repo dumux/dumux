@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using TypeTag = Properties::TTag::PipeFlow;
+    using TypeTag = Properties::TTag::TYPETAG;;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -74,8 +74,17 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
+    auto vtkOutputType = [&] ()
+    {
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcdiamond)
+            return Dune::VTK::nonconforming;
+        else
+            return Dune::VTK::conforming;
+    };
+
     using VTKOut = VtkOutputModule<GridVariables, SolutionVector>;
-    VTKOut vtkWriter(*gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
+    VTKOut vtkWriter(*gridVariables, x, problem->name(), "", vtkOutputType());
+
     vtkWriter.addVolumeVariable([](const auto& v){ return v.velocity(); }, "velocity");
     std::vector<double> pressure(gridGeometry->gridView().size(0));
     for (const auto& e : elements(gridGeometry->gridView()))

@@ -28,9 +28,11 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
+#include <dumux/discretization/cvfe.hh>
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -42,7 +44,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct PipeFlow { using InheritsFrom = std::tuple<NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct PipeFlow { };
+struct PipeFlowDiamond { using InheritsFrom = std::tuple<NavierStokesMomentumDiamond, FaceCenteredDiamondModel, PipeFlow>; };
+struct PipeFlowCvfe { using InheritsFrom = std::tuple<NavierStokesMomentumCvfe, CvfeModel, PipeFlow>; };
 } // end namespace TTag
 
 // the fluid system
@@ -72,7 +76,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeFlow> { static constexp
 
 // rotation-symmetric grid geometry forming a cylinder channel
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PipeFlow>
+struct GridGeometry<TypeTag, TTag::PipeFlowDiamond>
 {
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
@@ -81,6 +85,20 @@ struct GridGeometry<TypeTag, TTag::PipeFlow>
     { using Extrusion = RotationalExtrusion<0>; };
 
     using type = FaceCenteredDiamondFVGridGeometry<GridView, enableCache, GGTraits>;
+};
+
+// rotation-symmetric grid geometry forming a cylinder channel
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PipeFlowCvfe>
+{
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    struct GGTraits : public CvfeDefaultGridGeometryTraits<GridView>
+    { using Extrusion = RotationalExtrusion<0>; };
+
+    using type = CvfeFVGridGeometry<Scalar, GridView, enableCache, GGTraits>;
 };
 
 } // end namespace Dumux::Properties
