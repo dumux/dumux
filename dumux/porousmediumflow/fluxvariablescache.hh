@@ -27,8 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
-#include <dumux/discretization/box/fluxvariablescache.hh>
-#include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -53,22 +52,11 @@ class PorousMediumFluxVariablesCacheImplementation;
 template<class TypeTag>
 using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
-//! We only store discretization-related quantities for the box method. Thus, we need no
+//! We only store discretization-related quantities for control-volume finite element methods. Thus, we need no
 //! physics-dependent specialization and simply inherit from the physics-independent implementation.
-template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
-: public BoxFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
-{
-public:
-    //! export type used for scalar values
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-};
-
-//! We only store discretization-related quantities for the fcdiamond method. Thus, we need no
-//! physics-dependent specialization and simply inherit from the physics-independent implementation.
-template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::FCDiamond>
-: public FaceCenteredDiamondFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
+template<class TypeTag, class DM>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CVFE<DM>>
+: public CVFEFluxVariablesCache<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
 public:
     //! export type used for scalar values

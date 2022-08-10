@@ -37,7 +37,7 @@
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/facecentered/diamond/elementboundarytypes.hh>
 
 namespace Dumux::Properties {
@@ -70,16 +70,6 @@ private:
     using Traits = FaceCenteredDiamondDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
     using type = FaceCenteredDiamondGridVolumeVariables<Traits, enableCache>;
-};
-
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>;
 };
 
 //! Set the global flux variables cache vector class
