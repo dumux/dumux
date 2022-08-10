@@ -28,6 +28,7 @@
 
 #include "couplingmanager_staggered.hh"
 #include "couplingmanager_diamond.hh"
+#include "couplingmanager_cvfe.hh"
 
 #ifndef DOXYGEN
 namespace Dumux::Detail {
@@ -47,6 +48,10 @@ struct FreeFlowCouplingManagerSelector<Traits, DiscretizationMethods::FCStaggere
 template<class Traits>
 struct FreeFlowCouplingManagerSelector<Traits, DiscretizationMethods::FCDiamond>
 { using type = FCDiamondFreeFlowCouplingManager<Traits>; };
+
+template<class Traits>
+struct FreeFlowCouplingManagerSelector<Traits, DiscretizationMethods::Cvfe>
+{ using type = CvfeFreeFlowCouplingManager<Traits>; };
 
 } // end namespace Dumux::Detail
 #endif
