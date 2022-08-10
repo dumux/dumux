@@ -41,7 +41,7 @@
 
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
-#include <dumux/discretization/box/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/box/gridvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
@@ -93,7 +93,7 @@ private:
         Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
     >;
 public:
-    using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+    using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the default for the ElementBoundaryTypes

@@ -36,7 +36,7 @@
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/gridvolumevariables.hh>
-#include <dumux/discretization/facecentered/diamond/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
 #include <dumux/discretization/facecentered/diamond/elementboundarytypes.hh>
 
@@ -88,17 +88,14 @@ struct GridFluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluxVariablesCache = GetPropTypeOr<TypeTag,
         Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
     >;
-    using FluxVariablesCacheFiller = GetPropTypeOr<TypeTag,
-        Properties::FluxVariablesCacheFiller, FluxVariablesCaching::EmptyCacheFiller
-    >;
 public:
-    using type = FaceCenteredDiamondGridFluxVariablesCache<Problem, GridGeometry, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+    using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the grid variables (volume, flux and face variables)
