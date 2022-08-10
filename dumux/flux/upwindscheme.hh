@@ -67,9 +67,9 @@ Scalar upwindSchemeMultiplier(const ElemVolVars& elemVolVars,
 
 } // end namespace Detail
 
-//! Upwind scheme for the box method (uses the standard scheme)
-template<class GridGeometry>
-class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box>
+//! Upwind scheme for control-volume finite element methods (uses the standard scheme)
+template<class GridGeometry, class DM>
+class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CVFE<DM>>
 {
 public:
     //! applies a simple upwind scheme to the precalculated advective flux
@@ -207,11 +207,6 @@ public:
 template<class GridGeometry>
 class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCMpfa>
 : public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::CCTpfa> {};
-
-//! Upwind scheme for face-centered diamond schemes
-template<class GridGeometry>
-class UpwindSchemeImpl<GridGeometry, DiscretizationMethods::FCDiamond>
-: public UpwindSchemeImpl<GridGeometry, DiscretizationMethods::Box> {};
 
 } // end namespace Dumux
 
