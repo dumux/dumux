@@ -51,7 +51,7 @@ public:
     {
         analyticalPressure_.resize(problem_->gridGeometry().numCellCenterDofs());
         analyticalVelocity_.resize(problem_->gridGeometry().numCellCenterDofs());
-        analyticalVelocityOnFace_.resize(problem_->gridGeometry().numFaceDofs());
+        analyticalVelocityAtDofs_.resize(problem_->gridGeometry().numFaceDofs());
 
         auto fvGeometry = localView(problem_->gridGeometry());
 
@@ -63,7 +63,7 @@ public:
                 // velocities on faces
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
-                    analyticalVelocityOnFace_[scvf.dofIndex()][scvf.directionIndex()] = problem_->analyticalSolution(scvf.center(), time)[Indices::velocity(scvf.directionIndex())];
+                    analyticalVelocityAtDofs_[scvf.dofIndex()][scvf.directionIndex()] = problem_->analyticalSolution(scvf.center(), time)[Indices::velocity(scvf.directionIndex())];
                 }
 
                 analyticalPressure_[scv.dofIndex()] = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
@@ -93,9 +93,9 @@ public:
    /*!
      * \brief Returns the analytical solution for the velocity at the faces
      */
-    const std::vector<VelocityVector>& getAnalyticalVelocitySolutionOnFace() const
+    const std::vector<VelocityVector>& getAnalyticalVelocitySolutionAtDofs() const
     {
-        return analyticalVelocityOnFace_;
+        return analyticalVelocityAtDofs_;
     }
 
 private:
@@ -103,7 +103,7 @@ private:
 
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
+    std::vector<VelocityVector> analyticalVelocityAtDofs_;
 };
 
 template<class Problem>
@@ -147,7 +147,7 @@ public:
     {
         analyticalPressure_.resize(massProblem_->gridGeometry().numDofs());
         analyticalVelocity_.resize(massProblem_->gridGeometry().gridView().size(0));
-        analyticalVelocityOnFace_.resize(momentumProblem_->gridGeometry().numDofs());
+        analyticalVelocityAtDofs_.resize(momentumProblem_->gridGeometry().numDofs());
 
         // cell-centers (pressure + velocity)
         {
@@ -170,7 +170,7 @@ public:
             }
         }
 
-        // face-centers (velocity)
+        // dof positions (velocity)
         {
             auto fvGeometry = localView(momentumProblem_->gridGeometry());
             const auto gridView = momentumProblem_->gridGeometry().gridView();
@@ -180,13 +180,14 @@ public:
 
                 if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcstaggered)
                     for (const auto& scv : scvs(fvGeometry))
-                        analyticalVelocityOnFace_[scv.dofIndex()][scv.dofAxis()]
+                        analyticalVelocityAtDofs_[scv.dofIndex()][scv.dofAxis()]
                             = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
 
-                else if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                else if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond
+                                   || MomentumGridGeometry::discMethod == DiscretizationMethods::pq1bubble)
                     for (const auto& scv : scvs(fvGeometry))
                         for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-                            analyticalVelocityOnFace_[scv.dofIndex()][dirIdx]
+                            analyticalVelocityAtDofs_[scv.dofIndex()][dirIdx]
                                 = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[MomIndices::velocity(dirIdx)];
 
                 else
@@ -214,9 +215,9 @@ public:
     /*!
      * \brief Returns the analytical solution for the velocity at the faces
      */
-    const std::vector<VelocityVector>& analyticalVelocitySolutionOnFace() const
+    const std::vector<VelocityVector>& analyticalVelocitySolutionAtDofs() const
     {
-        return analyticalVelocityOnFace_;
+        return analyticalVelocityAtDofs_;
     }
 
 private:
@@ -225,7 +226,7 @@ private:
 
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
+    std::vector<VelocityVector> analyticalVelocityAtDofs_;
 };
 
 template<class MomentumProblem, class MassProblem>
