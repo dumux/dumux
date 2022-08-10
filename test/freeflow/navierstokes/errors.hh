@@ -417,6 +417,28 @@ private:
                             sumReference[dirIdx] += vReference * vReference * Extrusion::volume(scv);
                         }
                     }
+                    else if (GridGeometry::discMethod == DiscretizationMethods::cvfe)
+                    {
+                        // TODO we currently also add overlapping volumes, maybe only calculate for vertices
+                        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                        {
+                            const auto analyticalSolution
+                                = problem_->analyticalSolution(scv.dofPosition(), time)[dirIdx];
+                            const auto numericalSolution
+                                = curSol[scv.dofIndex()][dirIdx];
+
+                            const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                            const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+
+                            maxError[dirIdx] = std::max(maxError[dirIdx], vError);
+                            maxReference[dirIdx] = std::max(maxReference[dirIdx], vReference);
+                            sumError[dirIdx] += vError * vError * Extrusion::volume(scv);
+                            sumReference[dirIdx] += vReference * vReference * Extrusion::volume(scv);
+                        }
+                    }
+                    else
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Unkown momentum discretization scheme in Navier-Stokes error calculation");
                 }
                 // pressure errors
                 else
