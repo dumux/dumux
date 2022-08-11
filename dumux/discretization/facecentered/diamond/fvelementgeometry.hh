@@ -178,14 +178,36 @@ public:
     { return eIdx_; }
 
     //! Geometry of a sub control volume
-    typename SubControlVolume::Traits::Geometry geometry(const Element& element, const SubControlVolume& scv) const
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element.geometry();
+        const auto geo = element().geometry();
         return {
-            SubControlVolume::Traits::geometryType(),
+            SubControlVolume::Traits::geometryType(geo.type()),
             GeometryHelper(geo).getScvCorners(scv.indexInElement())
         };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        if (scvf.boundary())
+        {
+            const auto localFacetIndex = scvf.insideScvIdx();
+            return {
+                referenceElement(geo).type(localFacetIndex, 1),
+                GeometryHelper(geo).getBoundaryScvfCorners(localFacetIndex)
+            };
+        }
+        else
+        {
+            return {
+                SubControlVolumeFace::Traits::interiorGeometryType(geo.type()),
+                GeometryHelper(geo).getScvfCorners(scvf.index())
+            };
+        }
     }
 
 private:

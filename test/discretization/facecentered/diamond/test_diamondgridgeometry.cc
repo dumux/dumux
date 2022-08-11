@@ -100,6 +100,9 @@ int main (int argc, char *argv[])
         for (auto&& scv : scvs(fvGeometry))
         {
             std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
+            const auto geo = fvGeometry.geometry(scv);
+            if ((geo.center()-scv.center()).two_norm() > 1e-14)
+                DUNE_THROW(Dune::Exception, "Center of scv-geometry and scv do not match! " << geo.center() << ", " << scv.center());
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -111,6 +114,10 @@ int main (int argc, char *argv[])
         for (auto&& scvf : scvfs(fvGeometry))
         {
             std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
+            const auto geo = fvGeometry.geometry(scvf);
+            if ((geo.center()-scvf.center()).two_norm() > 1e-14)
+                DUNE_THROW(Dune::Exception, "Center of scvf-geometry and scvf do not match! " << geo.center() << ", " << scvf.center());
+
             if (scvf.boundary())
             {
                 ++boundaryCount;
