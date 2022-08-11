@@ -527,6 +527,7 @@ public:
             // is capable of handling MultiType matrices or not
             bool converged = solveLinearSystem_(deltaU);
 
+
             // make sure all processes converged
             int convergedRemote = converged;
             if (comm_.size() > 1)
@@ -670,13 +671,15 @@ public:
         // When the Newton iterations are done: ask the model to check whether it makes sense
         // TODO: how do we realize this? -> do this here in the Newton solver
         // model_().checkPlausibility();
+
     }
 
     /*!
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
+     *        (for pore-network model the invasion status will be updated here)
      */
-    virtual void newtonEnd()  {}
+    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {}
 
     /*!
      * \brief Returns true if the error of the solution is below the
@@ -1028,7 +1031,7 @@ private:
             }
 
             // tell solver we are done
-            newtonEnd();
+            newtonEnd(vars, uLastIter);
 
             // reset state if Newton failed
             if (!newtonConverged())
