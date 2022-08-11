@@ -261,13 +261,14 @@ public:
             localBasis.evaluateFunction(ipLocal, shapeValues);
 
             Scalar rho = 0.0;
-            for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            for (const auto& scvI : scvs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                rho += volVars.density()*shapeValues[scv.indexInElement()][0];
+                    this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
+                rho += volVars.density()*shapeValues[scvI.indexInElement()][0];
             }
+            return rho;
         }
         else
             DUNE_THROW(Dune::NotImplemented,
@@ -324,7 +325,8 @@ public:
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
 
-        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, scvf.insideScvIdx()/*eIdx*/);
+        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(element);
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, eIdx);
 
         const auto& fvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
         const auto& localBasis = fvGeometry.feLocalBasis();
