@@ -107,6 +107,42 @@ public:
     }
 
     /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scv The sub control volume
+     */
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const SubControlVolume& scv) const
+    {
+        BoundaryTypes values;
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex() && scvf.boundary())
+                {
+                    if (isOutlet_(scvf) || isInlet_(scvf))
+                        values.setAllNeumann();
+                    else
+                        values.setAllDirichlet();
+
+                    break;
+                }
+            }
+        }
+        else
+            values.setNeumann(Indices::conti0EqIdx);
+
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.

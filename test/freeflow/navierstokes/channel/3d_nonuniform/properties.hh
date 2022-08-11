@@ -28,14 +28,20 @@
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/fcdiamond.hh>
+#include <dumux/discretization/cvfe.hh>
 #include <dumux/discretization/facecentered/diamond/subcontrolvolumeface.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
-#include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/subcontrolvolumeface.hh>
+#include <dumux/discretization/cvfe/fvgridgeometry.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/box/subcontrolvolumeface.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 
 #include <dumux/material/components/constant.hh>
@@ -49,8 +55,10 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct ThreeDChannelTest {};
-struct ThreeDChannelTestMomentum { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct ThreeDChannelTestMass { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct ThreeDChannelTestMomentumDiamond { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct ThreeDChannelTestMomentumCvfe { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCvfe, CvfeModel>; };
+struct ThreeDChannelTestMassTpfa { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -70,7 +78,7 @@ struct Grid<TypeTag, TTag::ThreeDChannelTest>
 
 // Set the grid type
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentum>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumDiamond>
 {
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -85,8 +93,27 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentum>
     using type = FaceCenteredDiamondFVGridGeometry<GridView, enableCache, MyGGTraits>;
 };
 
+// Set the grid type
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumCvfe>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    struct MyScvfTraits : public CvfeDefaultScvfGeometryTraits<GridView>
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    struct MyGGTraits : public CvfeDefaultGridGeometryTraits<GridView>
+    { using SubControlVolumeFace = CvfeSubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    using type = CvfeFVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
+};
+
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMassTpfa>
 {
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -102,13 +129,20 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
 };
 
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::ThreeDChannelTestMomentum>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMassBox>
 {
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    struct MyScvfTraits : public BoxDefaultScvfGeometryTraits<GridView>
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    struct MyGGTraits : public BoxDefaultGridGeometryTraits<GridView>
+    { using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
 };
 
 // Set the problem property
@@ -125,7 +159,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::ThreeDChannelTest>
 {
-    using Traits = MultiDomainTraits<TTag::ThreeDChannelTestMomentum, TTag::ThreeDChannelTestMass>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
     using type = FreeFlowCouplingManager<Traits>;
 };
 
