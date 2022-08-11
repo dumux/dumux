@@ -38,7 +38,7 @@
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
-#include <dumux/discretization/facecentered/diamond/elementboundarytypes.hh>
+#include <dumux/discretization/cvfe/elementboundarytypes.hh>
 
 namespace Dumux::Properties {
 
@@ -123,9 +123,8 @@ struct ElementBoundaryTypes<TypeTag, TTag::FaceCenteredDiamondModel>
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
-    using FVGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 public:
-    using type = FaceCenteredDiamondElementBoundaryTypes<BoundaryTypes, FVGeometry>;
+    using type = CVFEElementBoundaryTypes<BoundaryTypes>;
 };
 
 } // namespace Dumux::Properties

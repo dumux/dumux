@@ -18,65 +18,89 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup DiamondDiscretization
+ * \ingroup CVFE
  * \brief Boundary types gathered on an element
  */
-#ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_ELEMENT_BOUNDARY_TYPES_HH
-#define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_ELEMENT_BOUNDARY_TYPES_HH
+#ifndef DUMUX_CVFE_ELEMENT_BOUNDARY_TYPES_HH
+#define DUMUX_CVFE_ELEMENT_BOUNDARY_TYPES_HH
 
+#include <cassert>
 #include <vector>
+
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup DiamondDiscretization
+ * \ingroup CVFE
  * \brief This class stores an array of BoundaryTypes objects
  */
-template<class BTypes, class FVElementGeometry>
-class FaceCenteredDiamondElementBoundaryTypes
+template<class BTypes>
+class CVFEElementBoundaryTypes
 {
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 public:
     using BoundaryTypes = BTypes;
 
-    FaceCenteredDiamondElementBoundaryTypes() = default;
-
     /*!
-     * \brief Update the boundary types for all faces of an element.
+     * \brief Update the boundary types for all vertices of an element.
      *
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
      * \param fvGeometry The element's finite volume geometry
      */
-    template<class Problem>
+    template<class Problem, class FVElementGeometry>
     void update(const Problem& problem,
                 const typename FVElementGeometry::Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-        if (!fvGeometry.hasBoundaryScvf())
-            return;
+        using GridGeometry = typename FVElementGeometry::GridGeometry;
+
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+            if (!fvGeometry.hasBoundaryScvf())
+                return;
 
         bcTypes_.resize(fvGeometry.numScv());
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        for (const auto& scvf : scvfs(fvGeometry))
+        // boundary dofs always have boundary corresponding faces
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
         {
-            if (scvf.boundary())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                const auto localIndex = fvGeometry.scv(scvf.insideScvIdx()).localDofIndex();
-                bcTypes_[localIndex] = problem.boundaryTypes(element, scvf);
-                hasDirichlet_ = hasDirichlet_ || bcTypes_[localIndex].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || bcTypes_[localIndex].hasNeumann();
+                if (scvf.boundary())
+                {
+                    const auto localIndex = fvGeometry.scv(scvf.insideScvIdx()).localDofIndex();
+                    bcTypes_[localIndex] = problem.boundaryTypes(element, scvf);
+                    hasDirichlet_ = hasDirichlet_ || bcTypes_[localIndex].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || bcTypes_[localIndex].hasNeumann();
+                }
+            }
+        }
+
+        // generally, single vertices maybe on the boundary even if the face is not
+        // in this case we need a different mechanism
+        else
+        {
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto scvIdxLocal = scv.localDofIndex();
+                bcTypes_[scvIdxLocal].reset();
+
+                if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+                {
+                    bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
+                    hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || bcTypes_[scvIdxLocal].hasNeumann();
+                }
             }
         }
     }
 
     /*!
-     * \brief Returns whether the element has a face which contains
+     * \brief Returns whether the element has a vertex which contains
      *        a Dirichlet value.
      */
     bool hasDirichlet() const
@@ -92,9 +116,21 @@ public:
     /*
      * \brief Access operator
      * \return BoundaryTypes
+     */
+    [[deprecated("This operator is deprecated use get function")]]
+    const BoundaryTypes& operator[] (std::size_t i) const
+    {
+        assert(i < bcTypes_.size());
+        return bcTypes_[i];
+    }
+
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
      * \note yields undefined behaviour of the scv is not on the boundary
      */
-    const BoundaryTypes& get(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
+    template<class FVElementGeometry>
+    const BoundaryTypes& get(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolumeFace& scvf) const
     {
         assert(scvf.boundary());
         const auto localDofIdx = fvGeometry.scv(scvf.insideScvIdx()).localDofIndex();
@@ -107,7 +143,8 @@ public:
      * \return BoundaryTypes
      * \note yields undefined behaviour of the scv is not on the boundary
      */
-    const BoundaryTypes& get(const FVElementGeometry&, const SubControlVolume& scv) const
+    template<class FVElementGeometry>
+    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::SubControlVolume& scv) const
     {
         const auto localDofIdx = scv.localDofIndex();
         assert(localDofIdx < bcTypes_.size());
@@ -120,6 +157,6 @@ private:
     bool hasNeumann_ = false;
 };
 
-} // end namespace Dumux
+} // namespace Dumux
 
 #endif
