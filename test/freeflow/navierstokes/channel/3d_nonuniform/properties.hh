@@ -24,17 +24,32 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROPERTIES_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROPERTIES_HH
 
+#ifndef TYPETAG_MOMENTUM
+#define TYPETAG_MOMENTUM ThreeDChannelTestMomentumDiamond
+#endif
+
+#ifndef TYPETAG_MASS
+#define TYPETAG_MASS ThreeDChannelTestMassTpfa
+#endif
+
 #include <dune/grid/uggrid.hh>
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/facecentered/diamond/subcontrolvolumeface.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
+#include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq1bubble/subcontrolvolumeface.hh>
+#include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/box/subcontrolvolumeface.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -50,8 +65,10 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct ThreeDChannelTest {};
-struct ThreeDChannelTestMomentum { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct ThreeDChannelTestMass { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct ThreeDChannelTestMomentumDiamond { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct ThreeDChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumPQ1Bubble, PQ1BubbleModel>; };
+struct ThreeDChannelTestMassTpfa { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -71,7 +88,7 @@ struct Grid<TypeTag, TTag::ThreeDChannelTest>
 
 // Set the grid type
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentum>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumDiamond>
 {
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -86,8 +103,27 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentum>
     using type = FaceCenteredDiamondFVGridGeometry<GridView, enableCache, MyGGTraits>;
 };
 
+// Set the grid type
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumPQ1Bubble>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    struct MyScvfTraits : public PQ1BubbleDefaultScvfGeometryTraits<GridView>
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    struct MyGGTraits : public PQ1BubbleDefaultGridGeometryTraits<GridView>
+    { using SubControlVolumeFace = PQ1BubbleSubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
+};
+
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMassTpfa>
 {
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -102,18 +138,31 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMass>
     using type = CCTpfaFVGridGeometry<GridView, enableCache, MyGGTraits>;
 };
 
-// Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreeDChannelTestMomentum>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMassBox>
 {
-    using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>> ;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    struct MyScvfTraits : public BoxDefaultScvfGeometryTraits<GridView>
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    struct MyGGTraits : public BoxDefaultGridGeometryTraits<GridView>
+    { using SubControlVolumeFace = BoxSubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
 };
 
+// Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreeDChannelTestMass>
-{
-    using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>> ;
-};
+struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
+{ using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TYPETAG_MASS>
+{ using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = true; };
@@ -125,7 +174,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::ThreeDChannelTest> { static
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::ThreeDChannelTest>
 {
-    using Traits = MultiDomainTraits<TTag::ThreeDChannelTestMomentum, TTag::ThreeDChannelTestMass>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
     using type = FreeFlowCouplingManager<Traits>;
 };
 
