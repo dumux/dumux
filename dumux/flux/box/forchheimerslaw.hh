@@ -34,7 +34,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
-#include <dumux/flux/box/darcyslaw.hh>
+#include <dumux/flux/cvfe/darcyslaw.hh>
 #include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
@@ -83,7 +83,7 @@ class BoxForchheimersLaw
     using DimWorldVector = typename ForchheimerVelocity::DimWorldVector;
     using DimWorldMatrix = typename ForchheimerVelocity::DimWorldMatrix;
 
-    using DarcysLaw = BoxDarcysLaw<ScalarType, GridGeometry>;
+    using DarcysLaw = CVFEDarcysLaw<ScalarType, GridGeometry>;
 
 public:
     //! state the scalar type of the law

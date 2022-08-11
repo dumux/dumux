@@ -18,17 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxFlux
- * \brief Specialization of Darcy's Law for the box method.
+ * \ingroup CVFE
+ * \brief Specialization of Darcy's Law for control-volume finite element schemes
  *
  * This file contains the data which is required to calculate
  * volume and mass fluxes of fluid phases over a face of a finite volume by means
  * of the Darcy approximation.
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
-#define DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
-
-#warning "This header is deprecated and will be removed after release 3.6. Use flux/cvfe/darcyslaw.hh"
+#ifndef DUMUX_DISCRETIZATION_CVFE_DARCYS_LAW_HH
+#define DUMUX_DISCRETIZATION_CVFE_DARCYS_LAW_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -39,31 +37,14 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class TypeTag, class DiscretizationMethod>
-class DarcysLawImplementation;
-
-// forward declaration
-template<class Scalar, class GridGeometry>
-class BoxDarcysLaw;
-
 /*!
- * \ingroup BoxFlux
- * \brief Specialization of Darcy's Law for the box method.
- */
-template<class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
-: public BoxDarcysLaw<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
-{ };
-
-/*!
- * \ingroup BoxFlux
- * \brief Darcy's law for the box scheme
+ * \ingroup CVFE
+ * \brief Darcy's law for control-volume finite element schemes
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
  */
 template<class Scalar, class GridGeometry>
-class BoxDarcysLaw
+class CVFEDarcysLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -71,8 +52,8 @@ class BoxDarcysLaw
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { dim = GridView::dimension};
-    enum { dimWorld = GridView::dimensionworld};
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
 
@@ -134,7 +115,7 @@ public:
         return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(scvf);
     }
 
-    // compute transmissibilities ti for analytical jacobians
+    // compute transmissibilities ti for analytical Jacobians
     template<class Problem, class ElementVolumeVariables, class FluxVarCache>
     static std::vector<Scalar> calculateTransmissibilities(const Problem& problem,
                                                            const Element& element,
@@ -165,6 +146,19 @@ public:
         return ti;
     }
 };
+
+// forward declaration
+template<class TypeTag, class DiscretizationMethod>
+class DarcysLawImplementation;
+
+/*!
+ * \ingroup CVFE
+ * \brief Specialization of Darcy's Law for control-volume finite element schemes
+ */
+template<class TypeTag, class DM>
+class DarcysLawImplementation<TypeTag, DiscretizationMethods::CVFE<DM>>
+: public CVFEDarcysLaw<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::GridGeometry>>
+{};
 
 } // end namespace Dumux
 
