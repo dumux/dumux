@@ -69,6 +69,10 @@ struct CR_RT {
     static std::string name() { return "fcdiamond"; }
 };
 
+struct PQ1Bubble {
+    static std::string name() { return "pq1bubble"; }
+};
+
 } // end namespace CVFEMethods
 
 
@@ -84,6 +88,13 @@ using Box = CVFE<CVFEMethods::PQ1>;
  * Crouzeix-Raviart (simplices) or Rannacher-Turek (quads) basis
  */
 using FCDiamond = CVFE<CVFEMethods::CR_RT>;
+
+/*
+ * \brief Vertex- and cell-centered finite volume scheme
+ * or control-volume finite element scheme based on
+ * linear Lagrangian elements with bubble function
+ */
+using PQ1Bubble = CVFE<CVFEMethods::PQ1Bubble>;
 
 
 /*
@@ -123,6 +134,7 @@ struct None : public Utility::Tag<None> {
 inline constexpr CCTpfa cctpfa{};
 inline constexpr CCMpfa ccmpfa{};
 inline constexpr Box box{};
+inline constexpr PQ1Bubble pq1bubble{};
 inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
 inline constexpr FCStaggered fcstaggered{};
