@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 MaxTimeStepSize = 1e1
-TEnd = 3e3 # [s]
+TEnd = 2.5e-2 # [s]
 
 [Grid]
 File = ./grids/pnm_grid1D.dgf
@@ -57,4 +57,5 @@ RegularizationLowSw = 0.1
 
 [Regularization]
 IntervalPc = 1e1
+SwPercentage = 5e-1
 

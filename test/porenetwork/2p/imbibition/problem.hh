@@ -215,9 +215,9 @@ public:
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
     {
-        const auto eIdx = this->gridGeometry().elementMapper().index(element);
-        if (this->gridGeometry().throatLabel(eIdx) == Labels::inlet)
-            return false;
+        // const auto eIdx = this->gridGeometry().elementMapper().index(element);
+        // if (this->gridGeometry().throatLabel(eIdx) == Labels::inlet)
+        //     return false;
          return true;
     }
 

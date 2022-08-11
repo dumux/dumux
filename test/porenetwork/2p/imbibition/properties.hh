@@ -39,6 +39,7 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
+#include "iofields.hh"
 
 //////////
 // Specify the properties
@@ -75,6 +76,15 @@ private:
 public:
     using type = PoreNetwork::TwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
+
+#if ISOTHERMAL
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ImbibitionProblem> { using type = PoreNetwork::TwoPIOFieldsImbibition; };
+#else
+//! Set the vtk output fields specific to the non-isothermal two-phase model
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::ImbibitionProblem> { using type = EnergyIOFields<PoreNetwork::TwoPIOFieldsImbibition>; };
+#endif
 
 // Set the grid type
 template<class TypeTag>

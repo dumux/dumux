@@ -133,20 +133,26 @@ public:
             const double Kw1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
             // regulariztaion interval for invasion event
             const double invasionLeft = fluxVarsCache.regularizationPcEntry(0);
+            const Scalar pcEntry = fluxVarsCache.pcEntry();
             const double invasionRight = fluxVarsCache.regularizationPcEntry(1);
             // regularization interval for snapoff event
             const double snapoffLeft = fluxVarsCache.regularizationPcSnapoff(0);
             const double snapoffRight = fluxVarsCache.regularizationPcSnapoff(1);
-
+            const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
+            const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+            const int throatLabel = problem.gridGeometry().throatLabel(eIdx);
             if (phaseIdx == wPhaseIdx)
             {
-                if (fluxVarsCache.saturationEpsilon(phaseIdx))
-                    return 0.0;
+                // if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                //     return 0.0;
                 if (!invaded) // not invaded in last time step
                 {
-                    if ( pc < invasionLeft )
-                        return Kw1p;
                     // the regularization interval is [pce, pce + reg]
+                    if ( pc < pcEntry )
+                    {
+                        std::cout<<std::endl<<"  not invaded wett, pc < pcEntry, "<<"  "<<throatLabel<<"  "<<pc<<"  "<<pcEntry<<"   "<<invasionRight<<std::endl;
+                        return Kw1p;
+                    }
                     else if ( pc < invasionRight )
                     {
                         auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
@@ -156,39 +162,56 @@ public:
                         auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight,// x0, x1
                                                                 Kw1p, entryKw, // y0, y1
                                                                 slopes[0], slopes[1]); // m0, m1
+                        std::cout<<std::endl<<"  not invaded wett, pc < invasionRight "<<"  "<<throatLabel<<"  "<<pc<<"   "<<pcEntry<<"   "<<invasionRight<<std::endl;
                         return optionalKnSpline_.eval(pc);
                     }
                     else
+                    {
+                        std::cout<<std::endl<<"  not invaded wett, else "<<"  "<<throatLabel<<std::endl;
                         return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    }
                 }
                 else // invaded in last time step
                 {
                     // the regularization interval is [pcs - reg, pcs]
-                    if (pc < snapoffLeft)
-                        return Kw1p;    // snapoff occurs
-                    else if (pc < snapoffRight) // reg interval
+                    if (pc <= pcSnapoff)
                     {
-                        auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                        auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                        const auto slopes =  std::array{0.0, slopeSnapoff};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
-                                                                Kw1p, snapoffKw, // y0, y1
-                                                                slopes[0], slopes[1]); // m0, m1
-                        return optionalKnSpline_.eval(pc);
+                        std::cout<<std::endl<<"  invaded wett, pc <= pcSnapoff, "<<"  "<<throatLabel<<"  "<<pc<<"  "<<snapoffLeft<<"  "<<pcSnapoff<<std::endl;
 
+                        return Kw1p;    // snapoff occurs
                     }
                     else
+                    {
+                        std::cout<<std::endl<<"  invaded wett, else "<<"  "<<throatLabel<<"  "<<pc<<std::endl;
                         return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                    }
+                    // else if (pc < pcSnapoff) // reg interval
+                    // {
+                    //     auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    //     auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                    //     const auto slopes =  std::array{0.0, slopeSnapoff};
+                    //     auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
+                    //                                             Kw1p, snapoffKw, // y0, y1
+                    //                                             slopes[0], slopes[1]); // m0, m1
+                    //     std::cout<<std::endl<<"  invaded wett, pc < pcSnapoff "<<"  "<<throatLabel<<"  "<<pc<<"  "<<snapoffLeft<<"  "<<pcSnapoff<<std::endl;
+                    //     return optionalKnSpline_.eval(pc);
+
+                    // }
+                    // else
+                    // {
+                    //     std::cout<<std::endl<<"  invaded wett, else "<<"  "<<throatLabel<<"  "<<pc<<std::endl;
+                    //     return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                    // }
                 }
             }
             else // non-wetting phase
             {
-                if (fluxVarsCache.saturationEpsilon(phaseIdx))
-                    return 0.0;
+                // if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                //     return 0.0;
                 if (!invaded)
                 {
                     // the regularization interval is [pce, pce + reg]
-                    if (pc < invasionLeft)
+                    if (pc < pcEntry)
                         return 0.0;
                     else if (pc < invasionRight)
                     {
@@ -206,22 +229,37 @@ public:
                 else
                 {
                     // the regularzazion interval is [pcs - reg, pcs]
-                    if (pc < snapoffLeft)
+                    if (pc <= pcSnapoff)
                         return 0.0;
-                    else if (pc < snapoffRight)
-                    {
-                        auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                        auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                        const auto slopes =  std::array{slopeSnapoff, 0.0};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
-                                                                0.0, snapoffKn, // y0, y1
-                                                                slopes[1], slopes[0]); // m0, m1
-                        return optionalKnSpline_.eval(pc);
-                    }
                     else
                         return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    // else if (pc < pcSnapoff)
+                    // {
+                    //     auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    //     auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                    //     const auto slopes =  std::array{slopeSnapoff, 0.0};
+                    //     auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
+                    //                                             0.0, snapoffKn, // y0, y1
+                    //                                             slopes[1], slopes[0]); // m0, m1
+                    //     // std::cout<<std::endl<<"  invaded non-wett  "<<std::endl;
+
+                    //     return optionalKnSpline_.eval(pc);
+                    // }
+                    // else
+                    //     return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
             }
+
+            // if (phaseIdx == wPhaseIdx)
+            // {
+            //     return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+            //                    : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+            // }
+            // else // non-wetting phase
+            // {
+            //     return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+            //                    : 0.0;
+            // }
         }
     }
 

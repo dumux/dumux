@@ -321,7 +321,7 @@ private:
                 else
                 {
                     std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
-                    std::cout << " pc: " << *pcMax;
+                    std::cout << " pc: " << *pcMin;
                     std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
                     std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
                 }

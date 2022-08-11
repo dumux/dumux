@@ -21,8 +21,8 @@
  * \ingroup PNMTwoPModel
  * \copydoc Dumux::PoreNetwork::TwoPIOFields
  */
-#ifndef DUMUX_PNM_TWOP_IO_FIELDS_HH
-#define DUMUX_PNM_TWOP_IO_FIELDS_HH
+#ifndef DUMUX_PNM_TWOP_IO_FIELDS_IMB_HH
+#define DUMUX_PNM_TWOP_IO_FIELDS_IMB_HH
 
 #include <dumux/porousmediumflow/2p/iofields.hh>
 #include <dumux/porenetwork/common/iofields.hh>
@@ -33,7 +33,7 @@ namespace Dumux::PoreNetwork {
  * \ingroup PNMTwoPModel
  * \brief Adds output fields specific to the PNM 2p model
  */
-class TwoPIOFields
+class TwoPIOFieldsImbibition
 {
 public:
     template <class OutputModule>
@@ -52,6 +52,8 @@ public:
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                               { return fluxVarsCache.pcEntry(); }, "pcEntry");
+        out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
+                              { return fluxVarsCache.pcSnapoff(); }, "pcSnapoff");
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                               { return fluxVarsCache.transmissibility(FS::phase0Idx); }, "transmissibilityW");
