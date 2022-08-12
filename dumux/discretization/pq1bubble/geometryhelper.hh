@@ -30,118 +30,84 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/typeindex.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
 namespace Dumux {
 
+//! Traits for an efficient corner storage for the PQ1Bubble method
 template <class ct>
-using PQ1BubbleMLGeometryTraits = Dune::MultiLinearGeometryTraits<ct>;
-
+struct PQ1BubbleMLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
+{
+    // we use static vectors to store the corners as we know
+    // the maximum number of corners in advance (2^dim)
+    template< int mydim, int cdim >
+    struct CornerStorage
+    {
+        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<mydim)+1>;
+    };
+};
 
 namespace Detail::PQ1Bubble {
 
 template<Dune::GeometryType::Id gt>
-struct ScvCorners
+struct OverlappingScvCorners;
+
+template<>
+struct OverlappingScvCorners<Dune::GeometryTypes::line>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::array<Key, 4>, 5> keys();
+    static constexpr std::array<std::array<Key, 2>, 1> keys = {{
+        { Key{0, 1}, Key{1, 1} }
+    }};
 };
 
 template<>
-struct ScvCorners<Dune::GeometryTypes::line>
+struct OverlappingScvCorners<Dune::GeometryTypes::triangle>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::array<Key, 2>, 2> keys()
-    {
-        return
-        {{
-            { Key{0, 1}, Key{0, 0} },
-            { Key{1, 1}, Key{0, 0} }
-        }};
-    }
+    static constexpr std::array<std::array<Key, 3>, 1> keys = {{
+        { Key{0, 1}, Key{1, 1}, Key{2, 1} }
+    }};
 };
 
 template<>
-struct ScvCorners<Dune::GeometryTypes::triangle>
+struct OverlappingScvCorners<Dune::GeometryTypes::quadrilateral>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::vector<Key>, 4> keys()
-    {
-        return
-        {{
-            { Key{0, 2}, Key{0, 1}, Key{1, 1}, Key{0, 0} },
-            { Key{1, 2}, Key{2, 1}, Key{0, 1}, Key{0, 0} },
-            { Key{2, 2}, Key{1, 1}, Key{2, 1}, Key{0, 0} },
-            { Key{0, 1}, Key{1, 1}, Key{2, 1} }
-        }};
-    }
+    static constexpr std::array<std::array<Key, 4>, 1> keys = {{
+        { Key{2, 1}, Key{1, 1}, Key{0, 1}, Key{3, 1} }
+    }};
 };
 
 template<>
-struct ScvCorners<Dune::GeometryTypes::quadrilateral>
+struct OverlappingScvCorners<Dune::GeometryTypes::tetrahedron>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::vector<Key>, 5> keys()
-    {
-        return
-        {{
-            { Key{0, 2}, Key{2, 1}, Key{0, 1}, Key{0, 0} },
-            { Key{1, 2}, Key{1, 1}, Key{2, 1}, Key{0, 0} },
-            { Key{2, 2}, Key{0, 1}, Key{3, 1}, Key{0, 0} },
-            { Key{3, 2}, Key{3, 1}, Key{1, 1}, Key{0, 0} },
-            { Key{2, 1}, Key{1, 1}, Key{0, 1}, Key{3, 1} }
-        }};
-    }
+    static constexpr std::array<std::array<Key, 4>, 1> keys = {{
+        { Key{0, 1}, Key{1, 1}, Key{2, 1}, Key{3, 1} }
+    }};
 };
 
 template<>
-struct ScvCorners<Dune::GeometryTypes::tetrahedron>
+struct OverlappingScvCorners<Dune::GeometryTypes::hexahedron>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::vector<Key>, 5> keys()
-    {
-        return
-        {{
-            { Key{0, 3}, Key{0, 2}, Key{1, 2}, Key{0, 1}, Key{3, 2}, Key{1, 1}, Key{2, 1}, Key{0, 0} },
-            { Key{1, 3}, Key{2, 2}, Key{0, 2}, Key{0, 1}, Key{4, 2}, Key{3, 1}, Key{1, 1}, Key{0, 0} },
-            { Key{2, 3}, Key{1, 2}, Key{2, 2}, Key{0, 1}, Key{5, 2}, Key{2, 1}, Key{3, 1}, Key{0, 0} },
-            { Key{3, 3}, Key{3, 2}, Key{5, 2}, Key{2, 1}, Key{4, 2}, Key{1, 1}, Key{3, 1}, Key{0, 0} },
-            { Key{0, 1}, Key{1, 1}, Key{2, 1}, Key{3, 1} }
-        }};
-    }
-};
-
-template<>
-struct ScvCorners<Dune::GeometryTypes::hexahedron>
-{
-    using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static const std::array<std::vector<Key>, 9> keys()
-    {
-        return
-        {{
-        { Key{0, 3}, Key{6, 2}, Key{4, 2}, Key{4, 1}, Key{0, 2}, Key{2, 1}, Key{0, 1}, Key{0, 0} },
-        { Key{1, 3}, Key{5, 2}, Key{6, 2}, Key{4, 1}, Key{1, 2}, Key{1, 1}, Key{2, 1}, Key{0, 0} },
-        { Key{2, 3}, Key{4, 2}, Key{7, 2}, Key{4, 1}, Key{2, 2}, Key{0, 1}, Key{3, 1}, Key{0, 0} },
-        { Key{3, 3}, Key{7, 2}, Key{5, 2}, Key{4, 1}, Key{3, 2}, Key{3, 1}, Key{1, 1}, Key{0, 0} },
-        { Key{4, 3}, Key{8, 2}, Key{10, 2}, Key{5, 1}, Key{0, 2}, Key{0, 1}, Key{2, 1}, Key{0, 0} },
-        { Key{5, 3}, Key{10, 2}, Key{9, 2}, Key{5, 1}, Key{1, 2}, Key{2, 1}, Key{1, 1}, Key{0, 0} },
-        { Key{6, 3}, Key{11, 2}, Key{8, 2}, Key{5, 1}, Key{2, 2}, Key{3, 1}, Key{0, 1}, Key{0, 0} },
-        { Key{7, 3}, Key{9, 2}, Key{11, 2}, Key{5, 1}, Key{3, 2}, Key{1, 1}, Key{3, 1}, Key{0, 0} },
+    static constexpr std::array<std::array<Key, 6>, 1> keys = {{
         { Key{0, 1}, Key{2, 1}, Key{3, 1}, Key{1, 1}, Key{4, 1}, Key{5, 1} }
-        }};
-    }
+    }};
 };
+
 
 template<Dune::GeometryType::Id gt>
-struct ScvfCorners;
+struct OverlappingScvfCorners;
 
 template<>
-struct ScvfCorners<Dune::GeometryTypes::line>
+struct OverlappingScvfCorners<Dune::GeometryTypes::line>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
     static constexpr std::array<std::array<Key, 1>, 1> keys = {{
@@ -150,13 +116,10 @@ struct ScvfCorners<Dune::GeometryTypes::line>
 };
 
 template<>
-struct ScvfCorners<Dune::GeometryTypes::triangle>
+struct OverlappingScvfCorners<Dune::GeometryTypes::triangle>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static constexpr std::array<std::array<Key, 2>, 6> keys = {{
-        { Key{0, 0}, Key{0, 1} },
-        { Key{1, 1}, Key{0, 0} },
-        { Key{0, 0}, Key{2, 1} },
+    static constexpr std::array<std::array<Key, 2>, 3> keys = {{
         { Key{0, 1}, Key{1, 1} },
         { Key{0, 1}, Key{2, 1} },
         { Key{1, 1}, Key{2, 1} }
@@ -164,14 +127,10 @@ struct ScvfCorners<Dune::GeometryTypes::triangle>
 };
 
 template<>
-struct ScvfCorners<Dune::GeometryTypes::quadrilateral>
+struct OverlappingScvfCorners<Dune::GeometryTypes::quadrilateral>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static constexpr std::array<std::array<Key, 2>, 8> keys = {{
-        { Key{0, 1}, Key{0, 0} },
-        { Key{0, 0}, Key{1, 1} },
-        { Key{0, 0}, Key{2, 1} },
-        { Key{3, 1}, Key{0, 0} },
+    static constexpr std::array<std::array<Key, 2>, 4> keys = {{
         { Key{0, 1}, Key{2, 1} },
         { Key{2, 1}, Key{1, 1} },
         { Key{0, 1}, Key{3, 1} },
@@ -180,16 +139,10 @@ struct ScvfCorners<Dune::GeometryTypes::quadrilateral>
 };
 
 template<>
-struct ScvfCorners<Dune::GeometryTypes::tetrahedron>
+struct OverlappingScvfCorners<Dune::GeometryTypes::tetrahedron>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static constexpr std::array<std::array<Key, 4>, 10> keys = {{
-        { Key{0, 2}, Key{0, 1}, Key{1, 1}, Key{0, 0} },
-        { Key{0, 1}, Key{1, 2}, Key{0, 0}, Key{2, 1} },
-        { Key{2, 2}, Key{0, 1}, Key{3, 1}, Key{0, 0} },
-        { Key{2, 1}, Key{3, 2}, Key{0, 0}, Key{1, 1} },
-        { Key{3, 1}, Key{0, 0}, Key{4, 2}, Key{1, 1} },
-        { Key{5, 2}, Key{2, 1}, Key{3, 1}, Key{0, 0} },
+    static constexpr std::array<std::array<Key, 3>, 10> keys = {{
         { Key{0, 1}, Key{1, 1}, Key{2, 1} },
         { Key{0, 1}, Key{1, 1}, Key{3, 1} },
         { Key{0, 1}, Key{2, 1}, Key{3, 1} },
@@ -198,22 +151,10 @@ struct ScvfCorners<Dune::GeometryTypes::tetrahedron>
 };
 
 template<>
-struct ScvfCorners<Dune::GeometryTypes::hexahedron>
+struct OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static constexpr std::array<std::array<Key, 4>, 20> keys = {{
-        { Key{0, 1}, Key{0, 2}, Key{0, 0}, Key{2, 1} },
-        { Key{1, 1}, Key{0, 0}, Key{1, 2}, Key{2, 1} },
-        { Key{3, 1}, Key{2, 2}, Key{0, 0}, Key{0, 1} },
-        { Key{3, 2}, Key{3, 1}, Key{1, 1}, Key{0, 0} },
-        { Key{4, 1}, Key{4, 2}, Key{0, 0}, Key{0, 1} },
-        { Key{5, 2}, Key{4, 1}, Key{1, 1}, Key{0, 0} },
-        { Key{6, 2}, Key{4, 1}, Key{2, 1}, Key{0, 0} },
-        { Key{4, 1}, Key{7, 2}, Key{0, 0}, Key{3, 1} },
-        { Key{0, 0}, Key{0, 1}, Key{5, 1}, Key{8, 2} },
-        { Key{9, 2}, Key{1, 1}, Key{5, 1}, Key{0, 0} },
-        { Key{10, 2}, Key{2, 1}, Key{5, 1}, Key{0, 0} },
-        { Key{11, 2}, Key{5, 1}, Key{3, 1}, Key{0, 0} },
+    static constexpr std::array<std::array<Key, 4>, 8> keys = {{
         { Key{4, 1}, Key{0, 1}, Key{2, 1} },
         { Key{4, 1}, Key{2, 1}, Key{1, 1} },
         { Key{4, 1}, Key{0, 1}, Key{3, 1} },
@@ -224,37 +165,6 @@ struct ScvfCorners<Dune::GeometryTypes::hexahedron>
         { Key{5, 1}, Key{1, 1}, Key{3, 1} }
     }};
 };
-
-// convert key array to global corner storage
-template<class S, class Geo, class KeyArray, std::size_t... I>
-S keyToCornerStorageImpl(const Geo& geo, const KeyArray& key, std::index_sequence<I...>)
-{
-    using Dune::referenceElement;
-    const auto ref = referenceElement(geo);
-    // key is a pair of a local sub-entity index (first) and the sub-entity's codim (second)
-    return { geo.global(ref.position(key[I].first, key[I].second))... };
-}
-
-// convert key array to global corner storage
-template<class S, class Geo, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
-S keyToCornerStorage(const Geo& geo, const std::array<T, N>& key)
-{
-    return keyToCornerStorageImpl<S>(geo, key, Indices{});
-}
-
-// convert key array to global corner storage
-template<class S, class Geo, class T>
-S keyToCornerStorage(const Geo& geo, const std::vector<T>& key)
-{
-    using Dune::referenceElement;
-    const auto ref = referenceElement(geo);
-
-    S storage(key.size());
-    for(int i=0; i<key.size(); i++)
-        storage[i] = geo.global(ref.position(key[i].first, key[i].second));
-
-    return storage;
-}
 
 } // end namespace Detail::PQ1Bubble
 
@@ -277,6 +187,7 @@ public:
 
     PQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
+    , boxHelper_(geometry)
     {}
 
     //! Create a vector with the scv corners
@@ -284,25 +195,31 @@ public:
     {
         // proceed according to number of corners of the element
         const auto type = geo_.type();
+        const auto numBoxScv = boxHelper_.numScv();
+        // reuse box geometry helper for the corner scvs
+        if (localScvIdx < numBoxScv)
+            return boxHelper_.getScvCorners(numBoxScv);
+
+        const auto localOverlappingScvIdx = localScvIdx-numBoxScv;
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::PQ1Bubble::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys()[localScvIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::PQ1Bubble::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys()[localScvIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::tetrahedron)
         {
-            using Corners = Detail::PQ1Bubble::ScvCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys()[localScvIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::tetrahedron>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
-            using Corners = Detail::PQ1Bubble::ScvCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys()[localScvIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::hexahedron>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv geometries for dim=" << dim
@@ -314,11 +231,15 @@ public:
     {
         // proceed according to number of corners of the element
         const auto type = geo_.type();
-        const auto numCorners = geo_.corners();
-        if (type == Dune::GeometryTypes::simplex(dim))
-            return (localScvIdx < numCorners) ? Dune::GeometryTypes::cube(dim) : Dune::GeometryTypes::simplex(dim);
+        const auto numBoxScv = boxHelper_.numScv();
+        if (localScvIdx < numBoxScv)
+            return Dune::GeometryTypes::cube(dim);
+        else if (type == Dune::GeometryTypes::simplex(dim))
+            return Dune::GeometryTypes::simplex(dim);
         else if (type == Dune::GeometryTypes::quadrilateral)
-            Dune::GeometryTypes::cube(dim);
+            return Dune::GeometryTypes::quadrilateral;
+        else if (type == Dune::GeometryTypes::hexahedron)
+            return Dune::GeometryTypes::none(dim); // octahedron
         else
             DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
@@ -330,25 +251,31 @@ public:
     {
         // proceed according to number of corners
         const auto type = geo_.type();
+        const auto numBoxScvf = boxHelper_.numInteriorScvf();
+        // reuse box geometry helper for the corner scvs
+        if (localScvfIdx < numBoxScvf)
+            return boxHelper_.getScvfCorners(localScvfIdx);
+
+        const auto localOverlappingScvfIdx = localScvfIdx-numBoxScvf;
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::PQ1Bubble::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::PQ1Bubble::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::tetrahedron)
         {
-            using Corners = Detail::PQ1Bubble::ScvfCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::tetrahedron>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
-            using Corners = Detail::PQ1Bubble::ScvfCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::PQ1Bubble::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scvf geometries for dim=" << dim
@@ -356,58 +283,20 @@ public:
                                                             << " type=" << type);
     }
 
-    Dune::GeometryType getScvfGeometryType(unsigned int localScvfIdx) const
+    Dune::GeometryType getInteriorScvfGeometryType(unsigned int localScvfIdx) const
     {
-        const auto type = geo_.type();
-        if (type == Dune::GeometryTypes::simplex(dim))
-            return (localScvfIdx < referenceElement(geo_).size(dim-1)) ? Dune::GeometryTypes::cube(dim-1) : Dune::GeometryTypes::simplex(dim-1);
-        else if (type == Dune::GeometryTypes::cube(dim))
-            return (localScvfIdx < referenceElement(geo_).size(dim-1)) ? Dune::GeometryTypes::cube(dim-1) : Dune::GeometryTypes::simplex(dim-1);
+        const auto numBoxScvf = boxHelper_.numInteriorScvf();
+        if (localScvfIdx < numBoxScvf)
+            return Dune::GeometryTypes::cube(dim-1);
         else
-            DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scvf geometries for dim=" << dim
-                                                            << " dimWorld=" << dimWorld
-                                                            << " type=" << type);
-    }
-
-    Dune::GeometryType getBoundaryScvfGeometryType(unsigned int localScvfIdx) const
-    {
-        return Dune::GeometryTypes::cube(dim-1);
+            return Dune::GeometryTypes::simplex(dim-1);
     }
 
     //! Create the sub control volume face geometries on the boundary
     ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
                                              unsigned int indexInFacet) const
     {
-        // We do the same as for the Box method (note: we do use the implementation namespace Detail::Box)
-        if constexpr (dim == 2)
-        {
-            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::line>;
-            constexpr int facetCodim = 1;
-            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
-        }
-        else if constexpr (dim == 3)
-        {
-            constexpr int facetCodim = 1;
-            using Dune::referenceElement;
-            const auto type = referenceElement(geo_).type(localFacetIndex, facetCodim);
-            if (type == Dune::GeometryTypes::triangle)
-            {
-                using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::triangle>;
-                return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
-            }
-            else if (type == Dune::GeometryTypes::quadrilateral)
-            {
-                using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-                return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
-            }
-            else
-                DUNE_THROW(Dune::NotImplemented, "PQ1Bubble boundary scvf corners for dim=" << dim
-                                                                << " dimWorld=" << dimWorld
-                                                                << " type=" << type);
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented, "PQ1Bubble boundary scvf corners for dim=" << dim
-                                                            << " dimWorld=" << dimWorld);
+        return boxHelper_.getBoundaryScvfCorners(localFacetIndex, indexInFacet);
     }
 
     template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
@@ -449,45 +338,33 @@ public:
     //! number of interior sub control volume faces
     std::size_t numInteriorScvf() const
     {
-        return referenceElement(geo_).size(dim-1) + referenceElement(geo_).size(dim);
+        return boxHelper_.numInteriorScvf() + referenceElement(geo_).size(dim);
+    }
+
+    //! number of boundary sub control volume faces for face localFacetIndex
+    std::size_t numBoundaryScvf(unsigned int localFacetIndex) const
+    {
+        return referenceElement(geo_).size(localFacetIndex, 1, dim);
     }
 
     //! number of sub control volumes (number of codim-1 entities)
     std::size_t numScv() const
     {
-        return referenceElement(geo_).size(dim) + 1;
+        return boxHelper_.numScv() + 1;
     }
 
     //! get scv volume
     Scalar scvVolume(unsigned int localScvIdx, const ScvCornerStorage& p) const
     {
-        const auto type = geo_.type();
-        if (type == Dune::GeometryTypes::simplex(dim))
-            return (localScvIdx < numScv()-1) ?  cubeVolume(p) : simplexVolume(p);
-        else if (type == Dune::GeometryTypes::cube(dim))
-            return (localScvIdx < numScv()-1) ?  cubeVolume(p) : rhombusVolume(p);
-        else
-            DUNE_THROW(Dune::NotImplemented, "Cvfe scv volume for dim=" << dim
-                                                            << " dimWorld=" << dimWorld
-                                                            << " type=" << type);
-    }
+        const auto scvType = getScvGeometryType(localScvIdx);
+        if constexpr (dim == 3)
+            if (scvType == Dune::GeometryTypes::none(dim))
+                return octahedronVolume_(p);
 
-    GlobalPosition scvCenter(unsigned int localScvIdx, const ScvCornerStorage& p) const
-    {
-        GlobalPosition center(0.0);
-        // compute center point
-        for (const auto& corner : p)
-            center += corner;
-        center /= p.size();
-
-        return center;
-    }
-
-    //! number of boundary sub control volume faces for intersection
-    template<class Is>
-    std::size_t numBoundaryIsScvf(const Is& is) const
-    {
-        return is.geometry().corners();
+        return Dumux::convexPolytopeVolume<dim>(
+            scvType,
+            [&](unsigned int i){ return p[i]; }
+        );
     }
 
     template<class DofMapper>
@@ -510,86 +387,45 @@ public:
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
         const auto numEdges = referenceElement(geo_).size(dim-1);
-        if(localScvfIndex < numEdges)
-            return std::array{static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 0, dim)),
-                              static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 1, dim))};
+        if (localScvfIndex < numEdges)
+            return {
+                static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 0, dim)),
+                static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 1, dim))
+            };
         else
-            return std::array{static_cast<LocalIndexType>(numScv()-1),
-                              static_cast<LocalIndexType>(localScvfIndex-numEdges)};
+            return {
+                static_cast<LocalIndexType>(numScv()-1),
+                static_cast<LocalIndexType>(localScvfIndex-numEdges)
+            };
     }
 
-    template<class Is>
-    std::array<LocalIndexType, 2> getScvPairForBoundaryScvf(const Is& is, unsigned int localIsScvfIndex) const
+    std::array<LocalIndexType, 2> getScvPairForBoundaryScvf(unsigned int localFacetIndex, unsigned int localIsScvfIndex) const
     {
         const LocalIndexType insideScvIdx
-            = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(is.indexInInside(), 1, localIsScvfIndex, dim));
-        return std::array{insideScvIdx, insideScvIdx};
+            = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localFacetIndex, 1, localIsScvfIndex, dim));
+        return { insideScvIdx, insideScvIdx };
     }
 
     bool isOverlapping(unsigned int localScvfIndex) const
     {
-        if(localScvfIndex < referenceElement(geo_).size(dim-1))
+        if (localScvfIndex < boxHelper_.numInteriorScvf())
             return false;
         else
             return true;
     }
 
 private:
-    Scalar cubeVolume(const ScvCornerStorage& p) const
+    Scalar octahedronVolume_(const ScvCornerStorage& p) const
     {
-        if constexpr (dim == 2)
-        {
-            //! make sure we are using positive volumes
-            //! Cross product of diagonals might be negative, depending on element orientation
-            using std::abs;
-            return 0.5*abs(Dumux::crossProduct(p[3]-p[0], p[2]-p[1]));
-        }
-        else if constexpr (dim == 3)
-        {
-            // after Grandy 1997, Efficient computation of volume of hexahedron
-            const auto v = p[7]-p[0];
-            return 1.0/6.0 * ( Dumux::tripleProduct(v, p[1]-p[0], p[3]-p[5])
-                            + Dumux::tripleProduct(v, p[4]-p[0], p[5]-p[6])
-                            + Dumux::tripleProduct(v, p[2]-p[0], p[6]-p[3]));
-        }
-    }
-
-    Scalar simplexVolume(const ScvCornerStorage& p) const
-    {
-        if constexpr (dim == 2)
-        {
-            //! make sure we are using positive volumes
-            //! Cross product of diagonals might be negative, depending on element orientation
-            using std::abs;
-            return 0.5*abs(Dumux::crossProduct(p[1]-p[0], p[2]-p[0]));
-        }
-        else if constexpr (dim == 3)
-        {
-            // after Grandy 1997, Efficient computation of volume of hexahedron
-            const auto v = p[3]-p[0];
-            using std::abs;
-            return 1.0/6.0 * abs( Dumux::tripleProduct(v, p[1]-p[0], p[2]-p[0]));
-        }
-    }
-
-    Scalar rhombusVolume(const ScvCornerStorage& p) const
-    {
-        if constexpr (dim == 2)
-        {
-            return cubeVolume(p);
-        }
-        else if constexpr (dim == 3)
-        {
-            // after Grandy 1997, Efficient computation of volume of hexahedron
-            const auto v1 = p[4]-p[0];
-            const auto v2 = p[5]-p[0];
-            using std::abs;
-            return 1.0/3.0 * (  abs( Dumux::tripleProduct(v1, p[1]-p[0], p[2]-p[0]))
-                              + abs( Dumux::tripleProduct(v2, p[1]-p[0], p[2]-p[0])));
-        }
+        using std::abs;
+        return 1.0/6.0 * (
+            abs(Dumux::tripleProduct(p[4]-p[0], p[1]-p[0], p[2]-p[0]))
+            + abs(Dumux::tripleProduct(p[5]-p[0], p[1]-p[0], p[2]-p[0]))
+        );
     }
 
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
+    Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
 };
 
 } // end namespace Dumux

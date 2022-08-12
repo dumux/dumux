@@ -32,8 +32,13 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/discretization/method.hh>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
+
+#include <dumux/geometry/center.hh>
+#include <dumux/geometry/volume.hh>
+
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
@@ -236,13 +241,14 @@ private:
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
-                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.scvVolume(scvLocalIdx, corners),
-                                                            geometryHelper.dofPosition(scvLocalIdx),
-                                                            geometryHelper.scvCenter(scvLocalIdx, corners),
-                                                            scvLocalIdx,
-                                                            eIdx,
-                                                            geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx)
-                                                            );
+                scvs_[eIdx][scvLocalIdx] = SubControlVolume(
+                    geometryHelper.scvVolume(scvLocalIdx, corners),
+                    geometryHelper.dofPosition(scvLocalIdx),
+                    Dumux::center(corners),
+                    scvLocalIdx,
+                    eIdx,
+                    geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx)
+                );
             }
 
             // construct the sub control volume faces
@@ -251,20 +257,21 @@ private:
             LocalIndexType scvfLocalIdx = 0;
             for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
             {
-                auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
-                auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
+                const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
+                const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
+                const auto area = Dumux::convexPolytopeVolume<dim-1>(
+                    geometryHelper.getInteriorScvfGeometryType(scvfLocalIdx),
+                    [&](unsigned int i){ return corners[i]; }
+                );
 
-                // the sub control volume face
-                typename SubControlVolumeFace::Traits::Geometry scvfGeo{
-                    geometryHelper.getScvfGeometryType(scvfLocalIdx), corners
-                };
-
-                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(scvfGeo.center(),
-                                                                  scvfGeo.volume(),
-                                                                  geometryHelper.normal(corners, scvPair),
-                                                                  std::move(scvPair),
-                                                                  scvfLocalIdx,
-                                                                  geometryHelper.isOverlapping(scvfLocalIdx));
+                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
+                    Dumux::center(corners),
+                    area,
+                    geometryHelper.normal(corners, scvPair),
+                    std::move(scvPair),
+                    scvfLocalIdx,
+                    geometryHelper.isOverlapping(scvfLocalIdx)
+                );
             }
 
             // construct the sub control volume faces on the domain boundary
@@ -274,26 +281,28 @@ private:
                 {
                     hasBoundaryScvf_[eIdx] = true;
 
-                    numScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
-                    numBoundaryScvf_ += geometryHelper.numBoundaryIsScvf(intersection);
+                    const auto localFacetIndex = intersection.indexInInside();
+                    const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
+                    numScvf_ += numBoundaryScvf;
+                    numBoundaryScvf_ += numBoundaryScvf;
 
-                    for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < geometryHelper.numBoundaryIsScvf(intersection); ++isScvfLocalIdx)
+                    for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < numBoundaryScvf; ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        auto scvPair = geometryHelper.getScvPairForBoundaryScvf(intersection, isScvfLocalIdx);
-                        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx);
-
-                        // the sub control volume face
-                        typename SubControlVolumeFace::Traits::Geometry scvfGeo{
-                            geometryHelper.getBoundaryScvfGeometryType(scvfLocalIdx), corners
-                        };
-
-                        scvfs_[eIdx].emplace_back(scvfGeo.center(),
-                                                  scvfGeo.volume(),
-                                                  intersection.centerUnitOuterNormal(),
-                                                  std::move(scvPair),
-                                                  scvfLocalIdx,
-                                                  typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection });
+                        const auto scvPair = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
+                        const auto corners = geometryHelper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx);
+                        const auto area = Dumux::convexPolytopeVolume<dim-1>(
+                            Dune::GeometryTypes::cube(dim-1),
+                            [&](unsigned int i){ return corners[i]; }
+                        );
+                        scvfs_[eIdx].emplace_back(
+                            Dumux::center(corners),
+                            area,
+                            intersection.centerUnitOuterNormal(),
+                            std::move(scvPair),
+                            scvfLocalIdx,
+                            typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection }
+                        );
 
                         // increment local counter
                         scvfLocalIdx++;
@@ -301,13 +310,10 @@ private:
 
                     // TODO also move this to helper class
 
-                    // add all vertices on the intersection to the set of
-                    // boundary vertices
-                    const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
-                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    // add all vertices on the intersection to the set of boundary vertices
+                    for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
                     {
-                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdx = refElement.subEntity(localFacetIndex, 1, localVIdx, dim);
                         const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
@@ -352,9 +358,9 @@ private:
             }
         }
 
-        // error check: periodic boundaries currently don't work for cvfe in parallel
+        // error check: periodic boundaries currently don't work for pq1bubble in parallel
         if (this->isPeriodic() && this->gridView().comm().size() > 1)
-            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for cvfe method for parallel simulations!");
+            DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for pq1bubble method for parallel simulations!");
     }
 
     DofMapper dofMapper_;
