@@ -118,6 +118,17 @@ template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
 { using type = FaceCenteredDiamondLocalResidual<TypeTag>; };
 
+//! The flux variables cache class for models involving flow in porous media
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
+{
+private:
+    using S = GetPropType<TypeTag, Properties::Scalar>;
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+public:
+    using type = CVFEFluxVariablesCache<S, GG>;
+};
+
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::FaceCenteredDiamondModel>
