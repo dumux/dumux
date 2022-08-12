@@ -77,20 +77,6 @@ struct FluidSystem<TypeTag, TTag::DoneaTestMomentum>
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::DoneaTestMomentum>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = std::conditional_t<
-        GridGeometry::discMethod == DiscretizationMethods::fcdiamond,
-        FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>,
-        FluxVariablesCaching::EmptyCache<Scalar>
-    >;
-};
-
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTestMomentum> { using type = GRIDTYPE; };
