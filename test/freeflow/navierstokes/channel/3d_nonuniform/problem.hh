@@ -251,7 +251,8 @@ public:
         using Grid = Dune::FoamGrid<dim-1, dimWorld>;
         Dune::GridFactory<Grid> factory;
         {
-            std::vector<std::vector<std::vector<unsigned int>>> elms(gg.numBoundaryScvf());
+            std::vector<std::vector<std::vector<unsigned int>>> elems;
+            elems.reserve(gg.numBoundaryScvf());
             std::vector<bool> insertedVertex(gv.size(dim), false);
             std::vector<int> vertexIndexMap(gv.size(dim), -1);
             std::vector<Dune::FieldVector<double, 3>> points;
@@ -267,9 +268,10 @@ public:
                         const auto refElement = referenceElement(element);
                         const auto numVertices = refElement.size(insideIdx, 1, dim);
                         if (numVertices == 3)
-                            elms[boundaryElementIndex].resize(1);
+                            elems.push_back({std::vector<unsigned int>{}});
                         else if (numVertices == 4)
-                            elms[boundaryElementIndex].resize(2); // add two triangles
+                            elems.push_back({std::vector<unsigned int>{},
+                                             std::vector<unsigned int>{}}); // add two triangles
                         else
                                 DUNE_THROW(Dune::NotImplemented,
                                     "Wall shear stress for boundary type with " << numVertices << " corners"
@@ -290,20 +292,20 @@ public:
 
 
                             if (numVertices == 3)
-                                elms[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+                                elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
 
                             else if (numVertices == 4)
                             {
                                 // add two triangles
                                 if (i == 0)
-                                    elms[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+                                    elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
                                 else if (i == 1 || i == 2)
                                 {
-                                    elms[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
-                                    elms[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
+                                    elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+                                    elems[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
                                 }
                                 else
-                                    elms[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
+                                    elems[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
                             }
                             else
                                 DUNE_THROW(Dune::NotImplemented,
@@ -316,12 +318,9 @@ public:
                 }
             }
 
-            if (boundaryElementIndex != gg.numBoundaryScvf())
-                DUNE_THROW(Dune::InvalidStateException, "Wrong number of boundary segments");
-
             for (const auto& p : points)
                 factory.insertVertex(p);
-            for (const auto& e : elms)
+            for (const auto& e : elems)
                 for (const auto& ee : e)
                     factory.insertElement(Dune::GeometryTypes::simplex(dim-1), ee);
         }
