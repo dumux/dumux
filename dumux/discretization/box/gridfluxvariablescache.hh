@@ -24,9 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 
-// make the local view function available whenever we use this class
-#include <dumux/discretization/localview.hh>
-#include <dumux/discretization/box/elementfluxvariablescache.hh>
+#warning "This header is deprecated and will be removed after 3.6"
+
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -41,7 +41,7 @@ struct BoxDefaultGridFVCTraits
     using FluxVariablesCache = FVC;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
-    using LocalView = BoxElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+    using LocalView = CVFEElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
 };
 
 /*!
@@ -52,110 +52,9 @@ struct BoxDefaultGridFVCTraits
 template<class Problem,
          class FluxVariablesCache,
          bool cachingEnabled = false,
-         class Traits = BoxDefaultGridFVCTraits<Problem, FluxVariablesCache> >
-class BoxGridFluxVariablesCache;
-
-/*!
- * \ingroup BoxDiscretization
- * \brief Flux variable caches on a gridview with grid caching enabled
- * \note The flux caches of the gridview are stored which is memory intensive but faster
- */
-template<class P, class FVC, class Traits>
-class BoxGridFluxVariablesCache<P, FVC, true, Traits>
-{
-    using Problem = typename Traits::Problem;
-    using ThisType = BoxGridFluxVariablesCache<P, FVC, true, Traits>;
-
-public:
-    //! export the flux variable cache type
-    using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! make it possible to query if caching is enabled
-    static constexpr bool cachingEnabled = true;
-
-    //! export the type of the local view
-    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
-
-    BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
-
-    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const GridGeometry& gridGeometry,
-                const GridVolumeVariables& gridVolVars,
-                const SolutionVector& sol,
-                bool forceUpdate = false)
-    {
-        // Here, we do not do anything unless it is a forced update
-        if (forceUpdate)
-        {
-            fluxVarsCache_.resize(gridGeometry.gridView().size(0));
-            auto fvGeometry = localView(gridGeometry);
-            auto elemVolVars = localView(gridVolVars);
-            for (const auto& element : elements(gridGeometry.gridView()))
-            {
-                auto eIdx = gridGeometry.elementMapper().index(element);
-
-                // bind the geometries and volume variables to the element (all the elements in stencil)
-                fvGeometry.bind(element);
-                elemVolVars.bind(element, fvGeometry, sol);
-
-                fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
-                for (auto&& scvf : scvfs(fvGeometry))
-                    cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf);
-            }
-        }
-    }
-
-    const Problem& problem() const
-    { return *problemPtr_; }
-
-    // access operator
-    const FluxVariablesCache& cache(std::size_t eIdx, std::size_t scvfIdx) const
-    { return fluxVarsCache_[eIdx][scvfIdx]; }
-
-    // access operator
-    FluxVariablesCache& cache(std::size_t eIdx, std::size_t scvfIdx)
-    { return fluxVarsCache_[eIdx][scvfIdx]; }
-
-private:
-    // currently bound element
-    const Problem* problemPtr_;
-    std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
-};
-
-/*!
- * \ingroup BoxDiscretization
- * \brief Flux variable caches on a gridview with grid caching disabled
- */
-template<class P, class FVC, class Traits>
-class BoxGridFluxVariablesCache<P, FVC, false, Traits>
-{
-    using Problem = typename Traits::Problem;
-    using ThisType = BoxGridFluxVariablesCache<P, FVC, false, Traits>;
-
-public:
-    //! export the flux variable cache type
-    using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! make it possible to query if caching is enabled
-    static constexpr bool cachingEnabled = false;
-
-    //! export the type of the local view
-    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
-
-    BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
-
-    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
-    void update(const GridGeometry& gridGeometry,
-                const GridVolumeVariables& gridVolVars,
-                const SolutionVector& sol,
-                bool forceUpdate = false) {}
-
-    const Problem& problem() const
-    { return *problemPtr_; }
-
-private:
-    const Problem* problemPtr_;
-};
+         class Traits = CVFEDefaultGridFVCTraits<Problem, FluxVariablesCache> >
+using BoxGridFluxVariablesCache [[deprecated("Will be removed after 3.6")]]
+    = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, cachingEnabled, Traits>;
 
 } // end namespace Dumux
 

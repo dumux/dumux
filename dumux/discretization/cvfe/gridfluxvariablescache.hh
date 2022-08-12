@@ -18,63 +18,59 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup DiamondDiscretization
- * \copydoc Dumux::FaceCenteredDiamondGridFluxVariablesCache
+ * \ingroup CVFE
+ * \brief Global flux variable cache
  */
-#ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GRID_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GRID_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_CVFE_GRID_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_CVFE_GRID_FLUXVARSCACHE_HH
 
 #include <dumux/parallel/parallel_for.hh>
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/facecentered/diamond/elementfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/elementfluxvariablescache.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup DiamondDiscretization
- * \brief Default traits for the diamond discretization
+ * \ingroup CVFE
+ * \brief Flux variable caches traits
  */
-template<class P, class GG, class FVC, class FVCF>
-struct FaceCenteredDiamondDefaultGridFVCTraits
+template<class P, class FVC>
+struct CVFEDefaultGridFVCTraits
 {
     using Problem = P;
-    using GridGeometry = GG;
     using FluxVariablesCache = FVC;
-    using FluxVariablesCacheFiller = FVCF;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
-    using LocalView = FaceCenteredDiamondElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+    using LocalView = CVFEElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
 };
 
 /*!
- * \ingroup DiamondDiscretization
+ * \ingroup CVFE
  * \brief Flux variable caches on a gridview
+ * \note The class is specialized for a version with and without grid caching
  */
-template<class P, class GG, class FVC, class FVCF, bool enableCaching,
-         class Traits = FaceCenteredDiamondDefaultGridFVCTraits<P, GG, FVC, FVCF>>
-class FaceCenteredDiamondGridFluxVariablesCache
+template<class Problem,
+         class FluxVariablesCache,
+         bool cachingEnabled = false,
+         class Traits = CVFEDefaultGridFVCTraits<Problem, FluxVariablesCache> >
+class CVFEGridFluxVariablesCache;
+
+/*!
+ * \ingroup CVFE
+ * \brief Flux variable caches on a gridview with grid caching enabled
+ * \note The flux caches of the gridview are stored which is memory intensive but faster
+ */
+template<class P, class FVC, class Traits>
+class CVFEGridFluxVariablesCache<P, FVC, true, Traits>
 {
     using Problem = typename Traits::Problem;
-    using ThisType = FaceCenteredDiamondGridFluxVariablesCache<P, GG, FVC, FVCF, enableCaching, Traits>;
-    using GridGeometry = typename Traits::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using Element = typename GridGeometry::GridView::Grid::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    static constexpr int dim = GridGeometry::GridView::dimension;
-    using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-    using ShapeValue = typename Dune::FieldVector<double, 1>;
-    using Tensor = Dune::FieldMatrix<double, dim>;
-    using Scalar = double;
+    using ThisType = CVFEGridFluxVariablesCache<P, FVC, true, Traits>;
 
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
-
-    //! export the sub control volume face type
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
@@ -82,15 +78,15 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    FaceCenteredDiamondGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CVFEGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    template<class GridVolumeVariables, class SolutionVector>
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const GridGeometry& gridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false)
     {
-        // only do the update if fluxes are solution dependent or if update is forced
+        // Here, we do not do anything unless it is a forced update
         if (forceUpdate)
         {
             fluxVarsCache_.resize(gridGeometry.gridView().size(0));
@@ -124,6 +120,41 @@ private:
     // currently bound element
     const Problem* problemPtr_;
     std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
+};
+
+/*!
+ * \ingroup CVFE
+ * \brief Flux variable caches on a gridview with grid caching disabled
+ */
+template<class P, class FVC, class Traits>
+class CVFEGridFluxVariablesCache<P, FVC, false, Traits>
+{
+    using Problem = typename Traits::Problem;
+    using ThisType = CVFEGridFluxVariablesCache<P, FVC, false, Traits>;
+
+public:
+    //! export the flux variable cache type
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
+
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
+    CVFEGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
+    template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const GridGeometry& gridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol,
+                bool forceUpdate = false) {}
+
+    const Problem& problem() const
+    { return *problemPtr_; }
+
+private:
+    const Problem* problemPtr_;
 };
 
 } // end namespace Dumux

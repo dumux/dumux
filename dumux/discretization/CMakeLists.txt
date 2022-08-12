@@ -1,5 +1,6 @@
 add_subdirectory(box)
 add_subdirectory(cellcentered)
+add_subdirectory(cvfe)
 add_subdirectory(facecentered)
 add_subdirectory(fem)
 add_subdirectory(porenetwork)

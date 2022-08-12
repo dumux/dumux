@@ -223,7 +223,7 @@ public:
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
             {
-                const auto bcTypes = this->elemBcTypes()[scvI.localDofIndex()];
+                const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
                 if (bcTypes.hasDirichlet())
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
@@ -599,7 +599,7 @@ public:
             else
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                if (this->elemBcTypes()[insideScv.localDofIndex()].hasNeumann())
+                if (this->elemBcTypes().get(fvGeometry, insideScv).hasNeumann())
                 {
                     // add flux term derivatives
                     this->localResidual().addRobinFluxDerivatives(A[insideScv.dofIndex()],

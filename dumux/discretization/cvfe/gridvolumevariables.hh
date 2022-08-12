@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup DiamondDiscretization
- * \brief The grid volume variables class for cell centered models
+ * \ingroup CVFE
+ * \brief The grid volume variables class for box models
  */
-#ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GRID_VOLUMEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GRID_VOLUMEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_CVFE_GRID_VOLUMEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_CVFE_GRID_VOLUMEVARIABLES_HH
 
 #include <vector>
 #include <type_traits>
@@ -31,32 +31,33 @@
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
-#include <dumux/discretization/facecentered/diamond/elementvolumevariables.hh>
+#include <dumux/discretization/cvfe/elementvolumevariables.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
 
 template<class P, class VV>
-struct FaceCenteredDiamondDefaultGridVolumeVariablesTraits
+struct CVFEDefaultGridVolumeVariablesTraits
 {
     using Problem = P;
     using VolumeVariables = VV;
 
     template<class GridVolumeVariables, bool cachingEnabled>
-    using LocalView = FaceCenteredDiamondElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+    using LocalView = CVFEElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
 };
 
 /*!
- * \ingroup DiamondDiscretization
+ * \ingroup CVFE
  * \brief Base class for the grid volume variables
- * \note This class has a cached version and a non-cached version
- * \tparam Traits the traits class injecting the problem, volVar and elemVolVars type
- * \tparam cachingEnabled if the cache is enabled
  */
-template<class Traits, bool enableCaching = true>
-class FaceCenteredDiamondGridVolumeVariables
+template<class Traits, bool enableCaching>
+class CVFEGridVolumeVariables;
+
+// specialization in case of storing the volume variables
+template<class Traits>
+class CVFEGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
-    using ThisType = FaceCenteredDiamondGridVolumeVariables<Traits, enableCaching>;
+    using ThisType = CVFEGridVolumeVariables<Traits, true>;
 
 public:
     //! export the problem type
@@ -71,7 +72,7 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    FaceCenteredDiamondGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+    CVFEGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     template<class GridGeometry, class SolutionVector>
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol)
@@ -81,38 +82,69 @@ public:
         {
             const auto element = gridGeometry.element(eIdx);
             const auto fvGeometry = localView(gridGeometry).bindElement(element);
+
+            // get the element solution
+            auto elemSol = elementSolution(element, sol, gridGeometry);
+
+            // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (const auto& scv : scvs(fvGeometry))
-            {
-                const auto elemSol = elementSolution(element, sol, gridGeometry);
                 volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem, element, scv);
-            }
         });
     }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& volVars(const SubControlVolume scv) const
+    const VolumeVariables& volVars(const SubControlVolume& scv) const
     { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& volVars(const SubControlVolume scv)
+    VolumeVariables& volVars(const SubControlVolume& scv)
     { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
-    // required for compatibility with the box method
-    const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t localIdx) const
-    { return volumeVariables_[eIdx][localIdx]; }
+    const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx) const
+    { return volumeVariables_[eIdx][scvIdx]; }
 
-    // required for compatibility with the box method
-    VolumeVariables& volVars(const std::size_t eIdx, const std::size_t localIdx)
-    { return volumeVariables_[eIdx][localIdx]; }
+    VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx)
+    { return volumeVariables_[eIdx][scvIdx]; }
 
-    //! The problem we are solving
     const Problem& problem() const
     { return *problemPtr_; }
 
 private:
     const Problem* problemPtr_;
     std::vector<std::vector<VolumeVariables>> volumeVariables_;
+};
+
+
+// Specialization when the current volume variables are not stored
+template<class Traits>
+class CVFEGridVolumeVariables<Traits, /*cachingEnabled*/false>
+{
+    using ThisType = CVFEGridVolumeVariables<Traits, false>;
+
+public:
+    //! export the problem type
+    using Problem = typename Traits::Problem;
+
+    //! export the volume variables type
+    using VolumeVariables = typename Traits::VolumeVariables;
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
+
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
+    CVFEGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    template<class GridGeometry, class SolutionVector>
+    void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
+
+    const Problem& problem() const
+    { return *problemPtr_;}
+
+private:
+    const Problem* problemPtr_;
 };
 
 } // end namespace Dumux

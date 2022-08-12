@@ -103,7 +103,7 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to BoxLocalResidual
+//! Set the BaseLocalResidual to FaceCenteredLocalResidual
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::FaceCenteredStaggeredModel> { using type = FaceCenteredLocalResidual<TypeTag>; };
 

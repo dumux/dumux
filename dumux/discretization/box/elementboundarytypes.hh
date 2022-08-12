@@ -24,8 +24,8 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <cassert>
-#include <vector>
+#warning "This header is deprecated and will be removed after 3.6"
+#include <dumux/discretization/cvfe/elementboundarytypes.hh>
 
 namespace Dumux {
 
@@ -34,76 +34,7 @@ namespace Dumux {
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class BTypes>
-class BoxElementBoundaryTypes
-{
-public:
-    using BoundaryTypes = BTypes;
-
-    /*!
-     * \brief Update the boundary types for all vertices of an element.
-     *
-     * \param problem The problem object which needs to be simulated
-     * \param element The DUNE Codim<0> entity for which the boundary
-     *                types should be collected
-     * \param fvGeometry The element's finite volume geometry
-     */
-    template<class Problem, class Element, class FVElementGeometry>
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry)
-    {
-        using GridGeometry = typename FVElementGeometry::GridGeometry;
-        using GridView = typename GridGeometry::GridView;
-
-        vertexBCTypes_.resize( element.subEntities(GridView::dimension) );
-
-        hasDirichlet_ = false;
-        hasNeumann_ = false;
-
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            int scvIdxLocal = scv.localDofIndex();
-            vertexBCTypes_[scvIdxLocal].reset();
-
-            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
-            {
-                vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
-
-                hasDirichlet_ = hasDirichlet_ || vertexBCTypes_[scvIdxLocal].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || vertexBCTypes_[scvIdxLocal].hasNeumann();
-            }
-        }
-    }
-
-    /*!
-     * \brief Returns whether the element has a vertex which contains
-     *        a Dirichlet value.
-     */
-    bool hasDirichlet() const
-    { return hasDirichlet_; }
-
-    /*!
-     * \brief Returns whether the element potentially features a
-     *        Neumann boundary segment.
-     */
-    bool hasNeumann() const
-    { return hasNeumann_; }
-
-    /*
-     * \brief Access operator
-     * \return BoundaryTypes
-     */
-    const BoundaryTypes& operator[] (std::size_t i) const
-    {
-        assert(i < vertexBCTypes_.size());
-        return vertexBCTypes_[i];
-    }
-
-protected:
-    std::vector< BoundaryTypes > vertexBCTypes_;
-    bool hasDirichlet_ = false;
-    bool hasNeumann_ = false;
-};
+using BoxElementBoundaryTypes [[deprecated("Will be removed after 3.6")]] = CVFEElementBoundaryTypes<BTypes>;
 
 } // namespace Dumux
 

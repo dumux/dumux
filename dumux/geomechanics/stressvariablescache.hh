@@ -28,7 +28,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
-#include <dumux/discretization/box/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -43,7 +43,7 @@ class StressVariablesCache;
 //! We only store discretization-related quantities for the box method.
 template< class Scalar, class GridGeometry >
 class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::Box>
-: public BoxFluxVariablesCache< Scalar, GridGeometry >
+: public CVFEFluxVariablesCache< Scalar, GridGeometry >
 {};
 
 // specialization for the cell centered tpfa method

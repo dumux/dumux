@@ -62,16 +62,6 @@ struct Grid<TypeTag, TTag::DFGChannelTest>
     using type = Dune::UGGrid<2>;
 };
 
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::DFGChannelTestMomentum>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>;
-};
-
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DFGChannelTest> { using type = DFGChannelTestProblem<TypeTag> ; };

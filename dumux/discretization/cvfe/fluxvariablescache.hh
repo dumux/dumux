@@ -18,22 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FCDiamondDiscretization
- * \brief Flux variables cache class for the fcdiamond scheme
+ * \ingroup CVFE
+ * \brief Flux variables cache class for control-volume finite element schemes
  */
-#ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FLUXVARIABLES_CACHE_HH
-#define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FLUXVARIABLES_CACHE_HH
+#ifndef DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
+#define DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
 
 #include <dune/common/fvector.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup FCDiamondDiscretization
- * \brief DOC ME
+ * \ingroup CVFE
+ * \brief Flux variables cache class for control-volume finite element schemes.
+ *        For control-volume finite element schemes, this class does not contain any physics-/process-dependent
+ *        data. It solely stores disretization-/grid-related data.
  */
 template< class Scalar, class GridGeometry >
-class FaceCenteredDiamondFluxVariablesCache
+class CVFEFluxVariablesCache
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -46,8 +48,7 @@ class FaceCenteredDiamondFluxVariablesCache
     static const int dimWorld = GridView::dimensionworld;
 
     using CoordScalar = typename GridView::ctype;
-    using FeCache = typename GridGeometry::FeCache;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
@@ -85,7 +86,7 @@ public:
 
         // compute the gradN at for every scv/dof
         gradN_.resize(fvGeometry.numScv());
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& scv: scvs(fvGeometry))
             jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
     }
 
@@ -97,8 +98,8 @@ public:
     const std::vector<ShapeValue>& shapeValues() const { return shapeValues_; }
     //! returns inverse transposed jacobian at the integration point
     const JacobianInverseTransposed& jacInvT() const { return jacInvT_; }
-    //! returns the shape function gradients in global coordinates at the local dof location
-    const GlobalPosition& gradN(unsigned int localDofIndex) const { return gradN_[localDofIndex]; }
+    //! returns the shape function gradients in global coordinates at the integration point
+    const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:
     GlobalPosition ipGlobal_;

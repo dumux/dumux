@@ -29,16 +29,16 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/problem.hh>
 
-#include <dumux/assembly/fcdiamondlocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
-#include <dumux/discretization/facecentered/diamond/gridvolumevariables.hh>
-#include <dumux/discretization/facecentered/diamond/gridfluxvariablescache.hh>
-#include <dumux/discretization/facecentered/diamond/fluxvariablescache.hh>
-#include <dumux/discretization/facecentered/diamond/elementboundarytypes.hh>
+#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/elementboundarytypes.hh>
 
 namespace Dumux::Properties {
 
@@ -67,19 +67,9 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = FaceCenteredDiamondDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
-    using type = FaceCenteredDiamondGridVolumeVariables<Traits, enableCache>;
-};
-
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FaceCenteredDiamondFluxVariablesCache<Scalar, GridGeometry>;
+    using type = CVFEGridVolumeVariables<Traits, enableCache>;
 };
 
 //! Set the global flux variables cache vector class
@@ -88,17 +78,14 @@ struct GridFluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluxVariablesCache = GetPropTypeOr<TypeTag,
         Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
     >;
-    using FluxVariablesCacheFiller = GetPropTypeOr<TypeTag,
-        Properties::FluxVariablesCacheFiller, FluxVariablesCaching::EmptyCacheFiller
-    >;
 public:
-    using type = FaceCenteredDiamondGridFluxVariablesCache<Problem, GridGeometry, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+    using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the grid variables (volume, flux and face variables)
@@ -113,10 +100,21 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to DiamondLocalResidual
+//! Set the BaseLocalResidual to CVFELocalResidual
 template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
-{ using type = FaceCenteredDiamondLocalResidual<TypeTag>; };
+{ using type = CVFELocalResidual<TypeTag>; };
+
+//! The flux variables cache class for models involving flow in porous media
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
+{
+private:
+    using S = GetPropType<TypeTag, Properties::Scalar>;
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+public:
+    using type = CVFEFluxVariablesCache<S, GG>;
+};
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
@@ -125,9 +123,8 @@ struct ElementBoundaryTypes<TypeTag, TTag::FaceCenteredDiamondModel>
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
-    using FVGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 public:
-    using type = FaceCenteredDiamondElementBoundaryTypes<BoundaryTypes, FVGeometry>;
+    using type = CVFEElementBoundaryTypes<BoundaryTypes>;
 };
 
 } // namespace Dumux::Properties
