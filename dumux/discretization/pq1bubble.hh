@@ -44,7 +44,7 @@
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq1bubble/elementsolution.hh>
-#include <dumux/discretization/pq1bubble/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -89,7 +89,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = PQ1BubbleFluxVariablesCache<Scalar, GridGeometry>;
+    using type = CVFEFluxVariablesCache<Scalar, GridGeometry>;
 };
 
 //! The grid flux variables cache vector class

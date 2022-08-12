@@ -29,7 +29,6 @@
 #include <utility>
 #include <unordered_map>
 
-#include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/discretization/method.hh>
@@ -40,6 +39,7 @@
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
 #include <dumux/discretization/pq1bubble/subcontrolvolume.hh>
 #include <dumux/discretization/pq1bubble/subcontrolvolumeface.hh>
+#include <dumux/discretization/pq1bubble/pq1bubblefecache.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
@@ -123,7 +123,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
     //! export the grid view type
     using GridView = GV;
 
