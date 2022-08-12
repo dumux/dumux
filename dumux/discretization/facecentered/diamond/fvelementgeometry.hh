@@ -195,6 +195,7 @@ public:
         const auto geo = element().geometry();
         if (scvf.boundary())
         {
+            // use the information that each boundary scvf corresponds to one scv constructed around the same facet
             const auto localFacetIndex = scvf.insideScvIdx();
             return {
                 referenceElement(geo).type(localFacetIndex, 1),
