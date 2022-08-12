@@ -282,6 +282,8 @@ private:
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
+
+    static constexpr int dim = 1;
 public:
 
     BoxGeometryHelper(const typename Element::Geometry& geometry)
@@ -344,6 +346,18 @@ public:
     Scalar scvfArea(const ScvfCornerStorage& scvfCorners) const
     {
         return 1.0;
+    }
+
+    //! number of sub control volume faces (number of edges)
+    std::size_t numInteriorScvf() const
+    {
+        return referenceElement(geo_).size(dim-1);
+    }
+
+    //! number of sub control volumes (number of vertices)
+    std::size_t numScv() const
+    {
+        return referenceElement(geo_).size(dim);
     }
 
     //! the wrapped element geometry
@@ -507,6 +521,18 @@ public:
         return (p[1]-p[0]).two_norm();
     }
 
+    //! number of sub control volume faces (number of edges)
+    std::size_t numInteriorScvf() const
+    {
+        return referenceElement(geo_).size(dim-1);
+    }
+
+    //! number of sub control volumes (number of vertices)
+    std::size_t numScv() const
+    {
+        return referenceElement(geo_).size(dim);
+    }
+
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
@@ -654,6 +680,18 @@ public:
     {
         // after Wolfram alpha quadrilateral area
         return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
+    }
+
+    //! number of sub control volume faces (number of edges)
+    std::size_t numInteriorScvf() const
+    {
+        return referenceElement(geo_).size(dim-1);
+    }
+
+    //! number of sub control volumes (number of vertices)
+    std::size_t numScv() const
+    {
+        return referenceElement(geo_).size(dim);
     }
 
     //! the wrapped element geometry
