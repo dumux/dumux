@@ -59,7 +59,7 @@ struct BoxMLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
     };
 };
 
-namespace Detail {
+namespace Detail::Box {
 
 template<Dune::GeometryType::Id gt>
 struct ScvCorners;
@@ -262,7 +262,7 @@ S subEntityKeyToCornerStorage(const Geo& geo, unsigned int i, unsigned int c, co
     return subEntityKeyToCornerStorageImpl<S>(geo, i, c, key, Indices{});
 }
 
-} // end namespace Detail
+} // end namespace Detail::Box
 
 //! Create sub control volumes and sub control volume face geometries
 template<class GridView, int dim, class ScvType, class ScvfType>
@@ -291,8 +291,8 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
-        using Corners = Detail::ScvCorners<Dune::GeometryTypes::line>;
-        return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+        using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::line>;
+        return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
     }
 
     ScvGeometry scvGeometry(unsigned int localScvIdx) const
@@ -303,8 +303,8 @@ public:
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
-        using Corners = Detail::ScvfCorners<Dune::GeometryTypes::line>;
-        return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+        using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::line>;
+        return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
     }
 
     //! Create the sub control volume face geometries on the boundary
@@ -381,13 +381,13 @@ public:
         const auto type = geo_.type();
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -402,13 +402,13 @@ public:
         const auto type = geo_.type();
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
@@ -423,9 +423,9 @@ public:
         // we have to use the corresponding facet geometry as the intersection geometry
         // might be rotated or flipped. This makes sure that the corners (dof location)
         // and corresponding scvfs are sorted in the same way
-        using Corners = Detail::ScvCorners<Dune::GeometryTypes::line>;
+        using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::line>;
         constexpr int facetCodim = 1;
-        return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+        return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
     }
 
     //! Create the sub control volume face geometries on the boundary
@@ -541,18 +541,18 @@ public:
         const auto type = geo_.type();
         if (type == Dune::GeometryTypes::tetrahedron)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::tetrahedron>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::prism)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::prism>;
-            return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::prism>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::hexahedron>;
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -567,18 +567,18 @@ public:
         const auto type = geo_.type();
         if (type == Dune::GeometryTypes::tetrahedron)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::tetrahedron>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::prism)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::prism>;
-            return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::prism>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::hexahedron>;
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
@@ -599,13 +599,13 @@ public:
         const auto type = referenceElement(geo_).type(localFacetIndex, facetCodim);
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box boundary scvf geometries for dim=" << dim

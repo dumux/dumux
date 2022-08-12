@@ -142,13 +142,13 @@ public:
         const auto type = referenceElement(geo).type(localFacetIndex, facetCodim);
         if (type == Dune::GeometryTypes::triangle)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::triangle>;
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
-            using Corners = Detail::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box fracture scvf geometries for dim=" << dim
