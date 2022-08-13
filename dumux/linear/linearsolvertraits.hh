@@ -24,6 +24,8 @@
 #ifndef DUMUX_LINEAR_SOLVER_TRAITS_HH
 #define DUMUX_LINEAR_SOLVER_TRAITS_HH
 
+#include <bitset>
+
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/istl/owneroverlapcopy.hh>
@@ -122,6 +124,20 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
     { return gridView.overlapSize(0) == 0; }
+};
+
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ1Bubble>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
+{
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+    using DofMapper = typename GridGeometry::DofMapper;
+
+    static constexpr int dofCodim = Grid::dimension;
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{ (1UL << Grid::dimension) + 1UL };
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
 };
 
 //! Cell-centered tpfa: use overlapping model
