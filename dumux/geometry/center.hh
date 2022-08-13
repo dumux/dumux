@@ -24,7 +24,7 @@
 #ifndef DUMUX_GEOMETRY_CENTER_HH
 #define DUMUX_GEOMETRY_CENTER_HH
 
-#include <algorithm>
+#include <numeric>
 
 namespace Dumux {
 
