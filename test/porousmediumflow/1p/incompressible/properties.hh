@@ -38,6 +38,7 @@
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/fcdiamond.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
@@ -124,6 +125,7 @@ struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressib
 struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
 struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
 struct OnePIncompressibleFCDiamond { using InheritsFrom = std::tuple<OnePIncompressible, FaceCenteredDiamondModel>; };
+struct OnePIncompressiblePQ1Bubble { using InheritsFrom = std::tuple<OnePIncompressible, PQ1BubbleModel>; };
 } // end namespace TTag
 
 // Set the grid type

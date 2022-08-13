@@ -328,8 +328,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
 
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
-    // this refers to dofs of the output basis
-    static constexpr int dofCodim = (isBox || isDiamond) ? dim : 0;
+    static constexpr bool isPQ1Bubble = GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
@@ -516,14 +515,25 @@ private:
             //////////////////////////////////////////////////////////////
 
             // volume variables if any
-            if (isBox)
+            if constexpr (isBox || isPQ1Bubble)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarScalarData[i],
+                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
                                                          volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm, this->precision()).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), volVarVectorData[i],
+                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
                                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()).get() );
+
+                if constexpr (isPQ1Bubble)
+                {
+                    for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
+                                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()).get() );
+                    for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
+                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()).get() );
+                }
+
             }
             else
             {
@@ -776,9 +786,12 @@ private:
     //! return the number of dofs, we only support vertex and cell data
     std::size_t numDofs_() const
     {
-        return dofCodim == dim ?
-            gridGeometry().vertexMapper().size()
-            : gridGeometry().elementMapper().size();
+        // TODO this should actually always be dofMapper.size()
+        // maybe some discretizations needs special treatment (?)
+        if constexpr (isBox || isDiamond || isPQ1Bubble)
+            return gridGeometry().dofMapper().size();
+        else
+            return gridGeometry().elementMapper().size();
     }
 
     const GridVariables& gridVariables_;
