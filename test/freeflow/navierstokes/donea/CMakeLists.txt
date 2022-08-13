@@ -145,3 +145,31 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex_parallel
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_simplex_fcdiamond_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex params.input
                              -Problem.Name donea_momentum_simplex -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumPQ1Bubble
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_quad-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_quad_pq1bubble_1.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_pq1bubble_quad params.input
+                             -Problem.Name donea_momentum_quad -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumPQ1Bubble
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_simplex-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_simplex_pq1bubble_1.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_pq1bubble_simplex params.input
+                             -Problem.Name donea_momentum_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")

@@ -11,6 +11,7 @@ Name = test_donea
 EnableGravity = false
 EnableInertiaTerms = false
 UseNeumann = true
+PrintErrors = true
 
 [Component]
 LiquidDensity = 1.0
@@ -21,15 +22,15 @@ MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [LinearSolver]
-Type = cgsolver
-ResidualReduction = 1e-13
+Type = bicgstabsolver
+ResidualReduction = 1e-15
 
 [LinearSolver.Preconditioner]
-Type = amg
+Type = ilu
 AmgAccumulationMode = atOnce
 
 [Assembly]
-NumericDifference.BaseEpsilon = 1e-8
+NumericDifference.BaseEpsilon = 1e-1
 
 [SpatialParams]
 Temperature = 298.0

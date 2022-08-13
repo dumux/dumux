@@ -54,6 +54,9 @@
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/discretization/fcdiamond.hh>
 
+#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
+#include <dumux/discretization/pq1bubble.hh>
+
 #include "problem.hh"
 
 namespace Dumux::Properties {
