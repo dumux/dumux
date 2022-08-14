@@ -5,9 +5,9 @@ import numpy as np
 import subprocess
 
 # Run benchmark M2.1 infiltration scenarios
-subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_sand.input"])
-subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_loam.input"])
-subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_clay.input"])
+#subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_sand.input", "-Grid.Refinement", "2"])
+#subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_loam.input", "-Grid.Refinement", "2"])
+#subprocess.run(["./test_richards_benchmark_tpfa", "params_infiltration_clay.input", "-Grid.Refinement", "2"])
 
 try:
     import matplotlib.pyplot as plt
@@ -57,3 +57,42 @@ axes[2].legend()
 
 fig.tight_layout()
 plt.savefig("benchmark_infiltration.png")
+
+# Create Fig. of Schnepf et al 2020
+fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 5), dpi=72, sharey=True)
+textOutput = ""
+
+# set labels
+axes[0].set_title(r"$\theta$")
+axes[0].set_ylabel(r"depth (cm)")
+axes[0].set_ylim([-200.0, 0.0])
+
+# first plot
+for i, (t, marker) in enumerate(zip([0.1, 0.2, 0.3], ["x", "D", "o"])):
+    theta, depth = np.genfromtxt("theta_depth_num_sand_{}.dat".format(i+1)).T
+    textOutput += ",".join(f"{i:.10e}" for i in depth) + "\n"
+    textOutput += ",".join(f"{i:.10e}" for i in theta) + "\n"
+    axes[0].plot(theta, depth, linestyle='none', fillstyle='none', marker=marker, label="{:.1f} days".format(t))
+axes[0].legend()
+
+# second plot
+for i, (t, marker) in enumerate(zip([0.2, 0.5, 1.0], ["x", "D", "o"])):
+    theta, depth = np.genfromtxt("theta_depth_num_loam_{}.dat".format(i+1)).T
+    textOutput += ",".join(f"{i:.10e}" for i in depth) + "\n"
+    textOutput += ",".join(f"{i:.10e}" for i in theta) + "\n"
+    axes[1].plot(theta, depth, linestyle='none', fillstyle='none', marker=marker, label="{:.1f} days".format(t))
+axes[1].legend()
+
+# third plot
+for i, (t, marker) in enumerate(zip([0.1, 0.2, 0.5], ["x", "D", "o"])):
+    theta, depth = np.genfromtxt("theta_depth_num_clay_{}.dat".format(i+1)).T
+    textOutput += ",".join(f"{i:.10e}" for i in depth) + "\n"
+    textOutput += ",".join(f"{i:.10e}" for i in theta) + "\n"
+    axes[2].plot(theta, depth, linestyle='none', fillstyle='none', marker=marker, label="{:.1f} days".format(t))
+axes[2].legend()
+
+with open("benchmark_infiltration_depth.txt", "w") as out:
+    out.write(textOutput)
+
+fig.tight_layout()
+plt.savefig("benchmark_infiltration_depth.png")

@@ -39,6 +39,7 @@
 #if HAVE_GNUPLOT
 #include <dumux/io/gnuplotinterface.hh>
 #endif
+#include <dumux/io/container.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
@@ -105,6 +106,22 @@ int main(int argc, char** argv)
     // solve & write output
     solver.solve(x);
     vtkWriter.write(1.0);
+
+    std::vector<double> pos(leafGridView.size(0)), pressureHead(leafGridView.size(0));
+    for (const auto& element : elements(leafGridView))
+    {
+        const auto eIdx = leafGridView.indexSet().index(element);
+        pos[eIdx] = element.geometry().center()[GridGeometry::GridView::dimensionworld-1]*100;
+        pressureHead[eIdx] = 100*(x[eIdx][0] - 1e5)/(1000*9.81);
+    }
+    // Add Dirichlet BC
+    const auto pCollar = getParam<double>("Problem.RootCollarPressure");
+    const auto psiCollar = 100*(pCollar - 1e5)/(1000*9.81);
+    pos.push_back(0.0);
+    pressureHead.push_back(psiCollar);
+
+    writeContainerToFile(pos, "depth.txt", 15);
+    writeContainerToFile(pressureHead, "pressure_head.txt", 15);
 
     // write more output for benchmark plot
     problem->outputL2Norm(x);

@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES params.input convergencetest.py)
+dune_symlink_to_source_files(FILES params.input convergencetest.py run_plot_m31.py)
 
 dumux_add_test(NAME test_1p_rootbenchmark_tpfa
                LABELS porousmediumflow 1p

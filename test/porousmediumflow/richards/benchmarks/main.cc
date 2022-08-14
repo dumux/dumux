@@ -155,7 +155,7 @@ int main(int argc, char** argv)
         }
     };
 
-    const auto updateDeltaEtaOutput = [&](auto& deltaEtaNum, auto& thetaNum)
+    const auto updateDeltaEtaOutput = [&](auto& deltaEtaNum, auto& depthNum, auto& thetaNum)
     {
         const auto t = timeLoop->time()/86400.0;
         auto fvGeometry = localView(*gridGeometry);
@@ -164,6 +164,7 @@ int main(int argc, char** argv)
         {
             const auto eIdx = leafGridView.indexSet().index(element);
             const auto pos = element.geometry().center()[GridGeometry::GridView::dimensionworld -1];
+            depthNum[eIdx] = pos*100;
             deltaEtaNum[eIdx] = solutionInfiltration->deltaEta(pos*100, t);
 
             fvGeometry.bindElement(element);
@@ -180,7 +181,9 @@ int main(int argc, char** argv)
 
     GnuplotInterface<double> gnuplotInfilt(openGnuplotWindow);
     gnuplotInfilt.setOpenPlotWindow(openGnuplotWindow);
-    std::vector<double> deltaEtaNum(leafGridView.size(0)), thetaNum(leafGridView.size(0));
+    GnuplotInterface<double> gnuplotInfilt2(openGnuplotWindow);
+    gnuplotInfilt2.setOpenPlotWindow(openGnuplotWindow);
+    std::vector<double> deltaEtaNum(leafGridView.size(0)), thetaNum(leafGridView.size(0)), depthNum(leafGridView.size(0));
 
     std::vector<double> analyticalWaterContent;
     if (scenario == BenchmarkScenario::infiltration)
@@ -230,7 +233,7 @@ int main(int argc, char** argv)
             updateAnalyticalWaterContent(analyticalWaterContent);
             vtkWriter->write(timeLoop->time());
 
-            updateDeltaEtaOutput(deltaEtaNum, thetaNum);
+            updateDeltaEtaOutput(deltaEtaNum, depthNum, thetaNum);
 
             const auto posRef = interpolate<InterpolationPolicy::LinearTable>(solutionInfiltration->refWaterContent(), thetaNum, pos);
             std::cout << Fmt::format("Simulated x_a: {}cm\n", posRef);
@@ -241,6 +244,12 @@ int main(int argc, char** argv)
             );
 
             gnuplotInfilt.plot(Fmt::format("infiltration_{}_{:d}", soilType, checkPointCounter));
+
+            gnuplotInfilt2.addDataSetToPlot(thetaNum, depthNum,
+                Fmt::format("theta_depth_num_{}_{:d}.dat", soilType, checkPointCounter),
+                Fmt::format("w p t 'DuMux {:.1f} days'", timeLoop->time()/86400.0)
+            );
+            gnuplotInfilt2.plot(Fmt::format("infiltration_depth_{}_{:d}", soilType, checkPointCounter));
         }
 
         ///////////////////////////////////////
