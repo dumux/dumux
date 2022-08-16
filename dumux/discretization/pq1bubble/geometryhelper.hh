@@ -198,7 +198,7 @@ public:
         const auto numBoxScv = boxHelper_.numScv();
         // reuse box geometry helper for the corner scvs
         if (localScvIdx < numBoxScv)
-            return boxHelper_.getScvCorners(numBoxScv);
+            return boxHelper_.getScvCorners(localScvIdx);
 
         const auto localOverlappingScvIdx = localScvIdx-numBoxScv;
         if (type == Dune::GeometryTypes::triangle)
