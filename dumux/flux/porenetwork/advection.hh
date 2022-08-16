@@ -124,16 +124,46 @@ public:
             using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             const bool invaded = fluxVarsCache.invaded();
+            const Scalar pc = fluxVarsCache.pc();
+            const Scalar pcEntry = fluxVarsCache.pcEntry();
+            const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
+            const Scalar Kw1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
 
             if (phaseIdx == wPhaseIdx)
             {
-                return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                if (!invaded) // not invaded in last time step, drainage curve sohuld be used
+                {
+                    if (pc < pcEntry)
+                        return Kw1p;
+                    else // invasion happens
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                }
+                else // invaded in last time step, imbibition curve should be used
+                {
+                    if (pc < pcSnapoff) // snapoff happens
+                        return Kw1p;
+                    else
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                }
             }
             else // non-wetting phase
             {
-                return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : 0.0;
+                if (!invaded)   // last time step not invaded, drainage curve is used
+                {
+                    // the regularization interval is [pce, pce + reg]
+                    if (pc < pcEntry)
+                        return 0.0;
+                    else
+                        return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                }
+                else    // last time step is invaded, imbibition curve is used
+                {
+                    // the regularzazion interval is [pcs - reg, pcs]
+                    if (pc < pcSnapoff)
+                        return 0.0;
+                    else
+                        return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                }
             }
         }
     }
