@@ -59,6 +59,15 @@ public:
         throatShapeFactor_ = fvGeometry.gridGeometry().throatShapeFactor(eIdx);
         pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
         pcEntry_ = problem.spatialParams().pcEntry(element, elemVolVars);
+
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& spatialParams = problem.spatialParams();
+        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
+        // open a file to write the analytical pcEntry and Sw for comparison purposes   
+        std::ofstream file("analytical_SwEntry");
+        file << std::setprecision(15) << "pcEntry: " << pcEntry_ << " Sw: " << fluidMatrixInteraction.sw(pcEntry_) << std::endl;
+
         pcSnapoff_ = problem.spatialParams().pcSnapoff(element, elemVolVars);
         throatInscribedRadius_ = problem.spatialParams().throatInscribedRadius(element, elemVolVars);
         throatLength_ = problem.spatialParams().throatLength(element, elemVolVars);
@@ -67,7 +76,6 @@ public:
 
         // get the non-wetting phase index
         using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
-        const auto& spatialParams = problem.spatialParams();
         nPhaseIdx_ = 1 - spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
 
         // take the average surface tension of both adjacent pores TODO: is this correct?
