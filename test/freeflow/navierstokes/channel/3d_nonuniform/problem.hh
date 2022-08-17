@@ -31,8 +31,6 @@
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/grid/griddata.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
-
 #include <dumux/geometry/diameter.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 
@@ -44,10 +42,10 @@ namespace Dumux {
  * Flow from left to right in a three-dimensional channel is considered. At the inlet (left)
  * and outlet (right) fixed values for pressure are set.
  */
-template <class TypeTag>
-class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class ThreeDChannelTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

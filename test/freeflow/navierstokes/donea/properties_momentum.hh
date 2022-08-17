@@ -48,6 +48,7 @@
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/fcstaggered.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
@@ -66,7 +67,7 @@ struct DoneaTestMomentum { using InheritsFrom = std::tuple<NAVIER_STOKES_MODEL, 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMomentum>
 {
-    using type = Dumux::DoneaTestProblem<TypeTag>;
+    using type = Dumux::DoneaTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>;
 };
 
 // the fluid system

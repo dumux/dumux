@@ -31,8 +31,6 @@
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/grid/griddata.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
-
 namespace Dumux {
 
 /*!
@@ -44,10 +42,10 @@ namespace Dumux {
  *   Notes on Numerical Fluid Mechanics 52, 547-566, Vieweg 1996
  *   https://doi.org/10.1007/978-3-322-89849-4_39
  */
-template <class TypeTag>
-class DFGChannelTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class DFGChannelTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

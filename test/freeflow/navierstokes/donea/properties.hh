@@ -39,6 +39,8 @@
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/material/components/constant.hh>
@@ -56,8 +58,12 @@ struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMa
 } // end namespace TTag
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTest>
-{ using type = DoneaTestProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::DoneaTestMomentum>
+{ using type = DoneaTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DoneaTestMass>
+{ using type = DoneaTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DoneaTest>
