@@ -439,7 +439,7 @@ This only affects users that directly obtain this parameter via `getParam` somew
 - __Sequential linear solver backends__: Remove template argument `precondBlockLevel` from `solve` functions. The preconditioner block level is now determined automatically, assuming a value of
 1 for regular BCRS matrices and a value of 2 for MultiTypeBlock matrices. The respective calls from the `NewtonSolver` and `PDESolver`classes have been adapted.
 
-- __Change matrix block arrangement for staggered models__: The matrix block structure has been adapted such that it complies with the literature standard, i.e., having the velocity block (A) on `M[0][0]`
+- __Change matrix block arrangement for staggered models__: The matrix block structure has been adapted such to comply with the literature standard, i.e., having the velocity block (A) on `M[0][0]`
 rather than on `M[1][1]`. This also requires re-arranging the submodels and properties in dumux-multidomain such that the face-related classes and vector entries now appear before the cell-centered ones.
 
 ```math
@@ -480,7 +480,7 @@ ffSol = partial(sol, ffFaceIdx, ffCellCenterIdx);
 // Not changing the argument will rise a compiler error which makes the MR not fully backwards-compatible.
 ```
 
-Regarding changes made to the effective laws and diffusionCoefficient containters, Backwards-compatibility is maintined for a large extent, barring any volumevariable classes defined externally that inherit from the non-isothermal volumevariables.
+Regarding changes made to the effective laws and diffusionCoefficient containers, Backwards-compatibility is maintined for a large extent, barring any volumevariable classes defined externally that inherit from the non-isothermal volumevariables.
 If you use a self defined volumevariables class that inherits from the non-isothermal volumevariables, please adapt the your volumevariables class to fit to the non-isothermal volumevariables, and include the new methods for accessing the diffusion and effective diffusion coefficients.
 
 - Tracer model: tracer fluid systems do no longer provide a `getMainComponent` function since this simply doesn't make sense -- the main bulk component is not modeled.

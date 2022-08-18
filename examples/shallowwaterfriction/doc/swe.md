@@ -215,7 +215,7 @@ public:
         discharge_ = getParam<Scalar>("Problem.Discharge");
         // We calculate the outflow boundary condition using the Gauckler-Manning-Strickler formula.
         hBoundary_ = this->gaucklerManningStrickler(discharge_,constManningN_,bedSlope_);
-        // We initialize the analytic solution to a verctor of the appropriate size filled with zeros.
+        // We initialize the analytic solution to a vector of the appropriate size filled with zeros.
         exactWaterDepth_.resize(gridGeometry->numDofs(), 0.0);
         exactVelocityX_.resize(gridGeometry->numDofs(), 0.0);
     }

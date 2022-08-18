@@ -243,7 +243,7 @@ public:
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);
 
-        // issue a warning if the caluclation is used in parallel with overlap
+        // issue a warning if the calculation is used in parallel with overlap
         static bool warningIssued = false;
 
         if (gridView().comm().size() > 1 && gridView().overlapSize(0) == 0)

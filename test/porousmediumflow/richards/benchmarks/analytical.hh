@@ -195,7 +195,7 @@ private:
  * \note based on Vanderborght 2005 (see Fig. 5abcd and Eq. 39-47) https://doi.org/10.2113/4.1.206
  * \note Derivation in Lockington 1994 https://doi.org/10.1029/93WR03411
  *
- * The analytical solution is an approximative solution for an inifite domain
+ * The analytical solution is an approximative solution for an infinite domain
  * and is neglects graviational effects. Lockington 1994 estimates less than 1% error
  * against a given exact solution (without gravity) for a simplified pc-sw relationship.
  */

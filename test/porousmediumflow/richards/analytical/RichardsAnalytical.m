@@ -18,9 +18,9 @@ MaxPc=10^10;    %[Pa]
 
 %% Brooks-corey-Modell-Parameter
 p_d=1000;           %Eindringdruck [Pa]
-lambda=2;           %Verteilung der Porengröße 
+lambda=2;           %Verteilung der Porengröße
 
-%% Variablen
+%% Variables
 x=sym('x');                                 %Raum
 globalPos1=sym('globalPos1');               %Raum y
 z=sym('z');                                 %Raum
@@ -52,14 +52,14 @@ p_w=pwBottom+0.5*(pwTop-pwBottom)*(1+tanh(5*globalPos1-15+time/10));            
 %             (sThres+(p_c-pcsweLow)/m) .* (p_c>=pcsweLow) + ...                       % regularization towards zero
 %             (((p_c)/p_d)^(-lambda)) .* ((p_c < pcsweLow) && (p_c > pcsweHigh)) +...         % Brooks-Corey part
 %             (1+(p_c-pcsweHigh)/m)   .* (p_c <=pcsweHigh)   ...                     % regularization towards infinity
-%            ); 
-  
+%            );
+
 p_c=p_n-p_w;
 S_w=@(p_c) ( ...
             (sThres+(p_c-pcsweLow)/m)*heaviside(p_c-pcsweLow) + ...                       % regularization towards zero
             (((p_c)/p_d)^(-lambda))*(heaviside(p_c-pcsweHigh)-heaviside(p_c-pcsweLow))+...         % Brooks-Corey part
             (1+(p_c-pcsweHigh)/m)   .* heaviside((-p_c)+pcsweHigh)   ...                     % regularization towards infinity
-           );            
+           );
 
 
 

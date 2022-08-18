@@ -65,7 +65,7 @@ struct CouplingManagerSupportsMultithreadedAssembly : public std::false_type
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
  *        with multiple domains
- * \tparam MDTraits the multidimension traits
+ * \tparam MDTraits the multidimensional traits
  * \tparam diffMethod the differentiation method to residual compute derivatives
  * \tparam useImplicitAssembly if to use an implicit or explicit time discretization
  */

@@ -238,7 +238,7 @@ public:
      * \brief A parabolic velocity profile.
      *
      * \param y The position where the velocity is evaluated.
-     * \param vMax The profile's maxmium velocity.
+     * \param vMax The profile's maximum velocity.
      */
     Scalar parabolicProfile(const Scalar y, const Scalar vMax) const
     {
@@ -248,11 +248,11 @@ public:
     }
 
     /*!
-     * \brief The partial dervivative of the horizontal velocity (following a parabolic profile for
+     * \brief The partial derivative of the horizontal velocity (following a parabolic profile for
      *         Stokes flow) w.r.t. to the y-coordinate (du/dy).
      *
      * \param y The position where the derivative is evaluated.
-     * \param vMax The profile's maxmium velocity.
+     * \param vMax The profile's maximum velocity.
      */
     Scalar dudy(const Scalar y, const Scalar vMax) const
     {

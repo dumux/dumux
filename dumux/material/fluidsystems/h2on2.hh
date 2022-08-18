@@ -259,7 +259,7 @@ public:
      *
      * Calculate the decreased vapor pressure due to capillarity
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */

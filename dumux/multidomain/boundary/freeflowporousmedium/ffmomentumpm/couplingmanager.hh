@@ -233,7 +233,7 @@ public:
     }
 
     /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the residual of the given sub-control volume of domain i
      *
      * \param domainI the domain index of domain i
