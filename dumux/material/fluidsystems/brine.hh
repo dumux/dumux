@@ -453,7 +453,7 @@ public:
     using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
      * The thermal conductivity of brine is implemented based on the contribution of NaCl (\f$\lambda_{brine}\f$/\f$\lambda_{H_2O}\f$) of \cite Yusufova1975 https://link.springer.com/content/pdf/10.1007/BF00867119.pdf, also discussed in \cite Ozbek1980 https://docecity.com/thermal-conductivity-of-aqueous-sodium-chloride-acs-publicat-5f10766acba00.html
@@ -476,7 +476,7 @@ public:
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
      */

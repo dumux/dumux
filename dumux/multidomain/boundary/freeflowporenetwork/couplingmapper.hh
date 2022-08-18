@@ -176,7 +176,7 @@ public:
     }
 
     /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
      * \param eIdxI the index of the coupled element of domain í
      */
@@ -189,7 +189,7 @@ public:
     }
 
     /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
      * \param eIdxI the index of the coupled element of domain í
      */
@@ -202,7 +202,7 @@ public:
     }
 
         /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
      * \param eIdxI the index of the coupled element of domain i
      */
@@ -215,7 +215,7 @@ public:
     }
 
     /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
      * \param dofIndex the degree of freedom index
      */

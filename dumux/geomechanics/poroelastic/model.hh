@@ -111,7 +111,7 @@ struct LocalResidual<TypeTag, TTag::PoroElastic> { using type = PoroElasticLocal
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::PoroElastic> { using type = PoroElasticIOFields; };
 
-//! The deault model traits of the poro-elastic model
+//! The default model traits of the poro-elastic model
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::PoroElastic>
 {

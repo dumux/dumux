@@ -648,7 +648,7 @@ public:
     using Base::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
      * \note We assume an ideal mixture for the gas-phase thermal conductivity, as a first approximation.
@@ -673,7 +673,7 @@ public:
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/(kg*K)}\f$.
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      *
      * \note We assume an ideal mixture for the gas-phase specific isobaric heat capacity, as a first approximation.

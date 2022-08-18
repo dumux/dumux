@@ -176,7 +176,7 @@ public:
                                               indexSet);
         }
 
-        // set up quantitites related to sub-control volume faces
+        // set up quantities related to sub-control volume faces
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numScvf; ++faceIdxLocal)
         {
             const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));

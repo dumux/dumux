@@ -117,7 +117,7 @@ public:
                   << pressMin << ", max: " << pressMax << ", n: " << nPress << '\n'
                   << "-------------------------------------------------------------------------" << std::endl;
 
-        // resize & initilialize the arrays with NaN
+        // resize & initialize the arrays with NaN
         assert(std::numeric_limits<Scalar>::has_quiet_NaN);
         const auto NaN = std::numeric_limits<Scalar>::quiet_NaN();
 

@@ -224,7 +224,7 @@ private:
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1e5; // water pressure
         values[Indices::switchIdx] = 0.8; // gas saturation
-        values[2] = 5e-4; // xwn higher than equil, equil is 3.4e-5
+        values[2] = 5e-4; // xwn higher than equilibrium, equilibrium is 3.4e-5
         values[3] = 1e-2; // xnw lower than 1.3e-2
         values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);
         values.setState(Indices::bothPhases);

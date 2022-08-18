@@ -310,7 +310,7 @@ public:
      * Calculate the increase vapor pressure over the
      * curved surface of a drop with radius r
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      * \param radius The radius of the drop
@@ -340,7 +340,7 @@ public:
      *
      * Calculate the decreased vapor pressure due to capillarity
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -365,7 +365,7 @@ public:
      * according to IAPWS Release on Surface Tension from September 1994.
      * The equation is valid between the triple Point (0.01C) and the critical temperature.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      */
     template <class FluidState>
     static Scalar surfaceTension(const FluidState &fluidState)
@@ -655,7 +655,7 @@ public:
      * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
      * pressure and temperature.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -747,7 +747,7 @@ public:
      *        probably not big. Somebody would have to find out the
      *        enthalpy of solution for this system. ...
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
@@ -823,7 +823,7 @@ public:
      * Use the conductivity of air and water as a first approximation.
      *
      * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
@@ -863,7 +863,7 @@ public:
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/kg*K]}\f$.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
