@@ -137,10 +137,12 @@ public:
         fluidState.setDensity(0, value);
 
         value = FluidSystem::molarDensity(fluidState, paramCache, 0);
-        fluidState.setMolarDensity(0, value);
+        const static Scalar molarDensityRef = 5.549174639037e+04;
+        fluidState.setMolarDensity(0, molarDensityRef);
 
         value = FluidSystem::viscosity(fluidState, paramCache, 0);
-        fluidState.setViscosity(0, value);
+        const static Scalar reference = 1.307517430828e-3;
+        fluidState.setViscosity(0, reference);
 
         // compute and set the enthalpy
         const Scalar h = EnergyVolumeVariables::enthalpy(fluidState, paramCache);
