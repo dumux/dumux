@@ -179,7 +179,7 @@ public:
         numUnknowns_ = 0;
         numKnowns_ = numLocalScvs;
 
-        // set up quantitites related to sub-control volume faces
+        // set up quantities related to sub-control volume faces
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
         {
             const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));

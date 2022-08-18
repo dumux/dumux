@@ -153,7 +153,7 @@ def sanitizeDualNetwork(net, splitSinglePores):
                     if "diameter" in key:
                         geo[key] = np.append(
                             geo[key], geo[key][vIdx]
-                        )  # use same diamter for both pores
+                        )  # use same diameter for both pores
                         # TODO is this the right approach? # pylint: disable=fixme
                     if "volume" in key:
                         geo[key] = np.append(

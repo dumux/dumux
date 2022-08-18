@@ -1907,7 +1907,7 @@
     },
     "LinearSolver.UMFPackOrdering": {
         "explanation": [
-            "You can chosse from one of the following ordering strategies: 0: UMFPACK_ORDERING_CHOLMOD, 1: UMFPACK_ORDERING_AMD (default), 2: UMFPACK_ORDERING_GIVEN, 3: UMFPACK_ORDERING_METIS, 4: UMFPACK_ORDERING_BEST, 5: UMFPACK_ORDERING_NONE, 6: UMFPACK_ORDERING_USER. See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details."
+            "You can choose from one of the following ordering strategies: 0: UMFPACK_ORDERING_CHOLMOD, 1: UMFPACK_ORDERING_AMD (default), 2: UMFPACK_ORDERING_GIVEN, 3: UMFPACK_ORDERING_METIS, 4: UMFPACK_ORDERING_BEST, 5: UMFPACK_ORDERING_NONE, 6: UMFPACK_ORDERING_USER. See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details."
         ]
     },
     "LinearSolver.Verbosity": {

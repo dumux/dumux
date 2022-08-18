@@ -35,7 +35,7 @@ namespace Dumux {
 
 /*!
  * \ingroup EmbeddedCoupling
- * \brief A point source data class used for integration in multidimension models
+ * \brief A point source data class used for integration in multidimensional models
  * \note The point source and related data are connected via an identifier (id)
  */
 template<class MDTraits>
@@ -139,7 +139,7 @@ private:
 
 /*!
  * \ingroup EmbeddedCoupling
- * \brief A point source data class used for integration in multidimension models
+ * \brief A point source data class used for integration in multidimensional models
  * \note The point source and related data are connected via an identifier (id)
  * When explicitly computing the circle average, i.e. the pressure for
  * the source term is computed as an integral over the circle describing

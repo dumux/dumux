@@ -20,7 +20,7 @@ MaxPc=10^10;    %[Pa]
 p_d=1000;           %Eindringdruck [Pa]
 lambda=2;           %Verteilung der Porengröße 
 
-%% Variablen
+%% Variables
 x=sym('x');                                 %Raum
 globalPos1=sym('globalPos1');               %Raum y
 z=sym('z');                                 %Raum

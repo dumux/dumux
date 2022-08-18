@@ -50,14 +50,14 @@ constexpr auto enumerate(Range&& iterable)
         auto operator * () const { return std::tie(i, *iter); }
     };
 
-    struct Iteratable
+    struct Iterable
     {
         Range iterable;
         auto begin() { return Iterator{ 0, std::begin(iterable) }; }
         auto end() { return Iterator{ 0, std::end(iterable) }; }
     };
 
-    return Iteratable{ std::forward<Range>(iterable) };
+    return Iterable{ std::forward<Range>(iterable) };
 }
 
 } // end namespace Dumux
