@@ -96,8 +96,8 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMomentumProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<CouplingManager> couplingManager,
-                            const std::string& paramGroup = "")
+                                    std::shared_ptr<CouplingManager> couplingManager,
+                                    const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
     , gravity_(0.0)
     , couplingManager_(couplingManager)
@@ -114,7 +114,7 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMomentumProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            const std::string& paramGroup = "")
+                                    const std::string& paramGroup = "")
     : NavierStokesMomentumProblemImpl(gridGeometry, {}, paramGroup)
     {}
 
@@ -590,8 +590,8 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMomentumProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<CouplingManager> couplingManager,
-                            const std::string& paramGroup = "")
+                                    std::shared_ptr<CouplingManager> couplingManager,
+                                    const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
     , gravity_(0.0)
     , couplingManager_(couplingManager)
@@ -608,7 +608,7 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMomentumProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            const std::string& paramGroup = "")
+                                    const std::string& paramGroup = "")
     : NavierStokesMomentumProblemImpl(gridGeometry, {}, paramGroup)
     {}
 
@@ -875,9 +875,9 @@ private:
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Navier-Stokes problem class
+ * \brief Navier-Stokes momentum problem class
  *
- * Inherit from this problem to implement Navier-Stokes problems
+ * Inherit from this problem to implement Navier-Stokes momentum problems
  */
 template<class TypeTag>
 using NavierStokesMomentumProblem = NavierStokesMomentumProblemImpl<

@@ -24,6 +24,8 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
+#warning "This header is deprecated and will be removed after release 3.6. Use the new mass and momemtum problem headers"
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
 #include <dumux/common/properties.hh>
@@ -39,7 +41,7 @@ template<class TypeTag, class DiscretizationMethod> struct NavierStokesParentPro
 
 // compatibility with old-style Navier-Stokes models
 template<class TypeTag>
-struct [[deprecated("Will be removed after 3.6. Use staggered parent problem.")]]
+struct [[deprecated("Will be removed after 3.6. Directly use StaggeredFVProblem.")]]
 NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
 {
     using type = StaggeredFVProblem<TypeTag>;
@@ -47,7 +49,7 @@ NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
 
 //! The actual NavierStokesParentProblem
 template<class TypeTag>
-using NavierStokesParentProblem [[deprecated("Will be removed after 3.6. Use staggered parent problem.")]]
+using NavierStokesParentProblem [[deprecated("Will be removed after 3.6. Directly use StaggeredFVProblem.")]]
 = typename NavierStokesParentProblemImpl<
     TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >::type;

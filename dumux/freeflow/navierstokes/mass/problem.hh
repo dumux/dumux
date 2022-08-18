@@ -59,7 +59,7 @@ class NavierStokesMassProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
 public:
 
     //! These types are used in place of the typical NumEqVector type.
-    //! In the momentum problem, there is a descrepancy between
+    //! In the momentum problem, there is a discrepancy between
     //! the assembly NumEqVector type, and the type used in the residual.
     //! These aliases are used in both problems to differentiate.
     using InitialValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
@@ -80,8 +80,8 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMassProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            std::shared_ptr<CouplingManager> couplingManager,
-                            const std::string& paramGroup = "")
+                                std::shared_ptr<CouplingManager> couplingManager,
+                                const std::string& paramGroup = "")
     : ParentType(gridGeometry, paramGroup)
     , couplingManager_(couplingManager)
     {}
@@ -92,7 +92,7 @@ public:
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     NavierStokesMassProblemImpl(std::shared_ptr<const GridGeometry> gridGeometry,
-                            const std::string& paramGroup = "")
+                                const std::string& paramGroup = "")
     : NavierStokesMassProblemImpl(gridGeometry, {}, paramGroup)
     {}
 
@@ -141,9 +141,9 @@ private:
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Navier-Stokes problem class
+ * \brief Navier-Stokes mass problem class
  *
- * Inherit from this problem to implement Navier-Stokes problems
+ * Inherit from this problem to implement Navier-Stokes mass problems
  */
 template<class TypeTag>
 using NavierStokesMassProblem = NavierStokesMassProblemImpl<
