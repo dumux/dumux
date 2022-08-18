@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::DFGChannelTestMomentum;
-    using MassTypeTag = Properties::TTag::DFGChannelTestMass;
+    using MomentumTypeTag = Properties::TTag::TYPETAG_MOMENTUM;
+    using MassTypeTag = Properties::TTag::TYPETAG_MASS;
 
     // initialize MPI, finalize is done automatically on exit
     initialize(argc, argv);
@@ -124,8 +124,10 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // initialize the vtk output module
+    constexpr bool isDiamond = MassGridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    const auto mode = isDiamond ? Dune::VTK::nonconforming : Dune::VTK::conforming;
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name(), "", mode);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
@@ -149,7 +151,7 @@ int main(int argc, char** argv)
         static constexpr double cDrafReference = 5.57953523384;
         static constexpr double cLiftReference = 0.010618948146;
         static constexpr double pDiffReference = 0.11752016697;
-        const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
+        const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficientWithIntegration(*momentumGridVariables, x[momentumIdx]);
         std::cout << "cDrag: " << cDrag
                 << " (reference: " << cDrafReference << ")"
                 << "\n"
@@ -157,12 +159,13 @@ int main(int argc, char** argv)
                 << " (reference: " << cLiftReference << ")"
                 << std::endl;
 
-        const auto pDiff = massProblem->evalPressureDifference(x[massIdx]);
+        const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, x[massIdx]);
         std::cout << "pDiff: " << pDiff
                 << " (reference: " << pDiffReference << ")"
                 << std::endl;
 
-        if (getParam<bool>("Problem.CheckIndicators", true))
+        // To be close to the reference values the grid needs to be refined
+        if (getParam<bool>("Problem.CheckIndicators", false))
         {
             using std::abs;
             if (abs(cDrag - cDrafReference) > 0.002)

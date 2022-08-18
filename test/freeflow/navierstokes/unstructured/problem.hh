@@ -30,6 +30,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/grid/griddata.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
 
@@ -81,19 +83,17 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
+     *        used for which equation on a given boundary control volume.
      *
-     * \param element The finite element
-     * \param scvf The sub control volume face
+     * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypes(const Element& element,
-                                const SubControlVolumeFace& scvf) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isOutlet_(scvf))
+            if (isOutlet_(globalPos))
                 values.setAllNeumann();
             else
                 values.setAllDirichlet();
@@ -136,10 +136,11 @@ public:
         {
             if (this->enableInertiaTerms())
             {
-                if (isOutlet_(scvf))
+                if (isOutlet_(scvf.ipGlobal()))
                 {
                     // advective term: vv*n
-                    const auto v = elemVolVars[scvf.insideScvIdx()].velocity();
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
                     values.axpy(density_*(v*scvf.unitOuterNormal()), v);
                 }
             }
@@ -173,29 +174,32 @@ public:
 
     //! Computes pressure difference benchmark indicator
     //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
-    template<class SolutionVector, class P = ParentType, typename std::enable_if_t<!P::isMomentumProblem(), int> = 0>
-    Scalar evalPressureDifference(const SolutionVector& p) const
+    template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<!P::isMomentumProblem(), int> = 0>
+    Scalar evalPressureDifference(const GridVariables& gridVariables, const SolutionVector& p) const
     {
-        const auto& tree = this->gridGeometry().boundingBoxTree();
+        const auto& gg = gridVariables.gridGeometry();
+        const auto& tree = gg.boundingBoxTree();
         GlobalPosition evalPoint1({0.15, 0.2});
         GlobalPosition evalPoint2({0.25, 0.2});
         const Scalar stepSize = 0.001;
-        auto entities1 = intersectingEntities(evalPoint1, tree);
-        while (entities1.empty())
-        {
-            evalPoint1[0] -= stepSize;
-            entities1 = intersectingEntities(evalPoint1, tree);
-        }
-        auto entities2 = intersectingEntities(evalPoint2, tree);
-        while (entities2.empty())
-        {
-            evalPoint2[0] += stepSize;
-            entities2 = intersectingEntities(evalPoint2, tree);
-        }
 
-        const auto p1 = p[entities1[0]][0];
-        const auto p2 = p[entities2[0]][0];
-        return p1 - p2;
+        const auto evalPressure = [&](auto pos, bool backwards)
+        {
+            auto entities = intersectingEntities(pos, tree);
+            while (entities.empty())
+            {
+                pos[0] += backwards ? -stepSize : stepSize;
+                entities = intersectingEntities(pos, tree);
+            }
+
+            const auto element = gg.element(entities[0]);
+            const auto fvGeometry = localView(gg).bindElement(element);
+            const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
+            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos);
+        };
+
+        return evalPressure(evalPoint1, true) - evalPressure(evalPoint2, false);
     }
 
     //! Computes drag and lift coefficient benchmark indicator
@@ -230,6 +234,93 @@ public:
                                 stress[dir].axpy(velocity[dir], fluxVarCache.gradN(scv.indexInElement()));
                         }
 
+                        stress *= viscosity_;
+
+                        for (int dir = 0; dir < dim; ++dir)
+                            stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
+
+                        BoundaryFluxes normalStress = mv(stress, scvf.unitOuterNormal());
+                        forces.axpy(scvf.area(), normalStress);
+
+                        cylinderSurface += scvf.area();
+                    }
+                }
+            }
+        }
+
+        const Scalar dragForce = -forces[0];
+        const Scalar liftForce = -forces[1];
+
+        const Scalar uMean = 0.2;
+        const Scalar lChar = 0.1;
+        const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
+
+        // sanity check
+        std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << std::endl;
+        std::cout << "Cylinder surface: " << cylinderSurface
+                  << " (reference: 0.31415926535)"
+                  << std::endl;
+
+        return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
+    }
+
+    //! Computes drag and lift coefficient benchmark indicator
+    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
+    template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<P::isMomentumProblem(), int> = 0>
+    auto evalDragAndLiftCoefficientWithoutBubble(const GridVariables& gridVariables, const SolutionVector& v) const
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
+        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
+
+        BoundaryFluxes forces(0.0);
+        Scalar cylinderSurface = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            if (fvGeometry.hasBoundaryScvf())
+            {
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    if (scvf.boundary() && onCylinderBoundary_(scvf.ipGlobal()))
+                    {
+                        using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
+                        using P1FiniteElement = Dune::LagrangeCubeLocalFiniteElement<CoordScalar, Scalar, dim, 1>;
+                        P1FiniteElement p1FiniteElement;
+
+                        elemVolVars.bind(element, fvGeometry, v);
+                        const auto& localBasis = p1FiniteElement.localBasis();
+
+                        const auto geometry = element.geometry();
+                        Dune::FieldMatrix<Scalar, 2, 2> stress(0.0);
+                        using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+                        using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
+                        using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+                        using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
+                        std::vector<GlobalPosition> gradN;
+                        std::vector<ShapeJacobian> shapeJacobian;
+                        std::vector<ShapeValue> shapeValues;
+                        const auto ipGlobal = scvf.ipGlobal();
+                        const auto ipLocal = geometry.local(ipGlobal);
+                        JacobianInverseTransposed jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+                        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+                        localBasis.evaluateFunction(ipLocal, shapeValues);
+
+                        shapeJacobian.push_back(ShapeJacobian(0.0));
+                        shapeValues.push_back(ShapeValue(0.0));
+
+                        // compute the gradN at for every scv/dof
+                        gradN.resize(fvGeometry.numScv());
+                        for (const auto& scv: scvs(fvGeometry))
+                            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+
+                        for (const auto& scv : scvs(fvGeometry))
+                        {
+                            const auto velocity = elemVolVars[scv].velocity();
+                            for (int dir = 0; dir < dim; ++dir)
+                                stress[dir].axpy(velocity[dir], gradN[scv.indexInElement()]);
+                        }
+
                         stress += getTransposed(stress);
                         stress *= viscosity_;
 
@@ -261,12 +352,104 @@ public:
         return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
     }
 
-private:
-    bool isInlet_(const SubControlVolumeFace& scvf) const
-    { return scvf.ipGlobal()[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
+    //! Computes drag and lift coefficient benchmark indicator
+    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
+    template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<P::isMomentumProblem(), int> = 0>
+    auto evalDragAndLiftCoefficientWithIntegration(const GridVariables& gridVariables, const SolutionVector& v) const
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
 
-    bool isOutlet_(const SubControlVolumeFace& scvf) const
-    { return scvf.ipGlobal()[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
+        BoundaryFluxes forces(0.0);
+        Scalar cylinderSurface = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            if (fvGeometry.hasBoundaryScvf())
+            {
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    if (scvf.boundary() && onCylinderBoundary_(scvf.ipGlobal()))
+                    {
+                        elemVolVars.bind(element, fvGeometry, v);
+                        Dune::FieldMatrix<Scalar, 2, 2> stress(0.0);
+                        const auto& localBasis = fvGeometry.feLocalBasis();
+                        Scalar area = 0.0;
+
+                        const auto geometry = element.geometry();
+                        const auto isgeometry = fvGeometry.geometry(scvf);
+                        const auto& quad = Dune::QuadratureRules<Scalar, std::decay_t<decltype(isgeometry)>::mydimension>::rule(isgeometry.type(), 5);
+                        for (auto&& qp : quad)
+                        {
+                            Dune::FieldMatrix<Scalar, 2, 2> stressLocal(0.0);
+                            using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+                            using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
+                            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+                            using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
+                            std::vector<GlobalPosition> gradN;
+                            std::vector<ShapeJacobian> shapeJacobian;
+                            std::vector<ShapeValue> shapeValues;
+                            const auto ipGlobal = isgeometry.global(qp.position());
+                            const auto ipLocal = geometry.local(ipGlobal);
+                            JacobianInverseTransposed jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+                            localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+                            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+                            // compute the gradN at for every scv/dof
+                            gradN.resize(fvGeometry.numScv());
+                            for (const auto& scv: scvs(fvGeometry))
+                                jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+
+                            for (const auto& scv : scvs(fvGeometry))
+                            {
+                                const auto velocity = elemVolVars[scv].velocity();
+                                for (int dir = 0; dir < dim; ++dir)
+                                    stressLocal[dir].axpy(velocity[dir], gradN[scv.indexInElement()]);
+                            }
+                            area += qp.weight()*isgeometry.integrationElement(qp.position());
+                            stressLocal += getTransposed(stressLocal);
+                            stressLocal *= qp.weight()*isgeometry.integrationElement(qp.position());
+
+                            stress += stressLocal;
+                        }
+                        stress *= viscosity_;
+                        stress /= scvf.area();
+
+                        // Add pressure contribuition
+                        for (int dir = 0; dir < dim; ++dir)
+                            stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
+
+                        BoundaryFluxes normalStress = mv(stress, scvf.unitOuterNormal());
+                        forces.axpy(scvf.area(), normalStress);
+
+                        cylinderSurface += scvf.area();
+                    }
+                }
+            }
+        }
+
+        const Scalar dragForce = -forces[0];
+        const Scalar liftForce = -forces[1];
+
+        const Scalar uMean = 0.2;
+        const Scalar lChar = 0.1;
+        const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
+
+        // sanity check
+        std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << std::endl;
+        std::cout << "Cylinder surface: " << cylinderSurface
+                  << " (reference: 0.31415926535)"
+                  << std::endl;
+
+        return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
+    }
+
+private:
+    bool isInlet_(const GlobalPosition& globalPos) const
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
+
+    bool isOutlet_(const GlobalPosition& globalPos) const
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     bool onCylinderBoundary_(const GlobalPosition& globalPos) const
     { return std::hypot(globalPos[0] - 0.2, globalPos[1] - 0.2) < 0.06; }
