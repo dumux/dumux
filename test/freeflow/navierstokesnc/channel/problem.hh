@@ -194,7 +194,9 @@ public:
         BoundaryFluxes values(0.0);
 
         const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-        values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+        values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) *
+            scvf.area() * insideDensity * scvf.unitOuterNormal();
+
 
         using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
         if (isOutlet_(scvf.ipGlobal()))

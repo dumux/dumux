@@ -154,7 +154,7 @@ struct NavierStokesScalarBoundaryFluxHelper
         using NumEqVector = typename VolumeVariables::PrimaryVariables;
         NumEqVector flux;
         const auto velocity = problem.faceVelocity(element,fvGeometry, scvf);
-        const auto volumeFlux = velocity * scvf.unitOuterNormal();
+        const auto volumeFlux = velocity * scvf.unitOuterNormal() * scvf.area();
         using std::signbit;
         const bool insideIsUpstream = !signbit(volumeFlux);
         const VolumeVariables& insideVolVars = elemVolVars[scvf.insideScvIdx()];
