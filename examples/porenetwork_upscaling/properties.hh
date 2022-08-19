@@ -34,6 +34,13 @@
 // type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
 
+// The class that contains a collection of single-phase flow throat transmissibilities
+// among them the transmisibility model to be used can be specified in AdvectionType class
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+
+// The class that provides specializations for both creeping and non-creeping advection types.
+#include <dumux/flux/porenetwork/advection.hh>
+
 // The local residual for incompressible flow is included.
 // The one-phase flow model (included above) uses a default implementation of the
 // local residual for single-phase flow. However, in this example we are using an
@@ -53,7 +60,8 @@
 //
 // ### `TypeTag` definition
 // Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
-// which inherit properties from the single-phase pore network model.
+// which inherit properties from the single-phase pore network model. The non-creeping flow inherits
+// all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
 namespace Dumux::Properties {
 namespace TTag {
 struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };
@@ -95,7 +103,7 @@ public:
     using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
-//! The advection type for non-creeping flow (includes model for intertia effects)
+//! The advection type for non-creeping flow (includes model for inertia effects)
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::PNMUpscalingNonCreepingFlow>
 {

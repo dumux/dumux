@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include <dune/common/float_cmp.hh> // for floating point comparison
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
@@ -54,8 +55,8 @@
 //
 // ### The driver function
 //
-// It depends on the template argument `TypeTag` if we run the example assuming
-// a creeping flow regime or not. This is decided with the parameter
+// The template argument `TypeTag` determines if we run the example assuming
+// a creeping flow regime or not. Which regime is selected is set with the parameter
 // `Problem.AssumeCreepingFlow` in the input file.
 namespace Dumux {
 
@@ -116,9 +117,9 @@ void runExample()
     VtkOutputFields::initOutputModule(vtkWriter);
     // specify the field type explicitly since it may not be possible
     // to deduce this from the vector size in a pore network
-    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", VtkWriter::FieldType::vertex);
-    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", VtkWriter::FieldType::element);
-    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", VtkWriter::FieldType::element);
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
 
     // ### Prepare the upscaling procedure.
     // Set up a helper class to determine the total mass flux leaving the network
@@ -155,7 +156,7 @@ void runExample()
     const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient", 1e10);
 
     if (!(minPressureGradient < maxPressureGradient))
-        throw std::runtime_error("maximum pressure gradient must be greater than minimum pressure gradient");
+        DUNE_THROW(Dune::InvalidStateException, "Maximum pressure gradient must be greater than minimum pressure gradient");
 
     const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
     // [[/codeblock]]

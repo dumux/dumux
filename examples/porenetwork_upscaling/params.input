@@ -1,11 +1,10 @@
 [Problem]
 EnableGravity = 0 # disable gravity
 Name = upscaling_pnm
-MinimumPressureGradient = 1e5
-MaximumPressureGradient = 1e10
-NumberOfPressureGradients = 5 # the number of sample points for regression process
-Directions = 0  # the directions to be plotet 0 1 2
-Epsilon = 1e-3
+MaximumPressureGradient = 1e10 #Pa/m
+NumberOfPressureGradients = 10 # the number of sample points for regression process
+Directions = 0 # the directions to be plotted 0 1 2
+Epsilon = 1e-13
 AssumeCreepingFlow = false
 ReferencePermeability = 3.326e-12 1.394e-12 7.449e-13
 

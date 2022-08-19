@@ -35,6 +35,19 @@ type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
 ```
 
+The class that contains a collection of single-phase flow throat transmissibilities
+among them the transmisibility model to be used can be specified in AdvectionType class
+
+```cpp
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+```
+
+The class that provides specializations for both creeping and non-creeping advection types.
+
+```cpp
+#include <dumux/flux/porenetwork/advection.hh>
+```
+
 The local residual for incompressible flow is included.
 The one-phase flow model (included above) uses a default implementation of the
 local residual for single-phase flow. However, in this example we are using an
@@ -64,7 +77,8 @@ The classes that define the problem and parameters used in this simulation
 
 ### `TypeTag` definition
 Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
-which inherit properties from the single-phase pore network model.
+which inherit properties from the single-phase pore network model. The non-creeping flow inherits
+all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
 
 ```cpp
 namespace Dumux::Properties {
@@ -110,7 +124,7 @@ public:
     using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
-//! The advection type for non-creeping flow (includes model for intertia effects)
+//! The advection type for non-creeping flow (includes model for inertia effects)
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::PNMUpscalingNonCreepingFlow>
 {
@@ -217,19 +231,18 @@ Fluid properties that depend on temperature will be calculated with this value.
 ```cpp
     Scalar temperature() const
     { return 283.15; }
-    // [[codeblock]]
+```
 
-    // #### Pressure gradient
-    // Set the pressure gradient to be applied to the network
-    // [[codeblock]]
+Set the pressure gradient to be applied to the network
+
+```cpp
     void setPressureGradient(Scalar pressureGradient)
     { pressureGradient_ = pressureGradient; }
 ```
 
 #### Boundary conditions
 This function is used to define the __type of boundary conditions__ used depending on the location.
-Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
-boundary conditions at all remaining boundaries. Note that the PNM does not support Neumann boundaries.
+Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet. Note that the PNM does not support Neumann boundaries.
 To specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
 
 ```cpp
@@ -302,16 +315,23 @@ and the length of the domain at the inlet.
     // Return the applied pressure gradient.
     Scalar pressureGradient() const
     { return pressureGradient_; }
+```
 
+</details>
 
-    // Return the label of inlet pores assuming a previously set direction.
+Return the label of inlet pores assuming a previously set direction.
+
+```cpp
     int inletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {1, 3, 5};
         return label[direction_];
     }
+```
 
-    // Return the label of outlet pores assuming a previously set direction.
+Return the label of outlet pores assuming a previously set direction.
+
+```cpp
     int outletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {2, 4, 6};
@@ -335,8 +355,11 @@ private:
         else
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
+```
 
-    // private data members
+private data members
+
+```cpp
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
@@ -347,7 +370,6 @@ private:
 } // end namespace Dumux
 ```
 
-</details>
 
 </details>
 

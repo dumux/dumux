@@ -7,7 +7,7 @@
 # Part 2: Main program flow
 
 The main program flow is implemented in file `main.cc` described below.
-For each spatial direction x, y and z, flow through the network is simulated using several pressure gradients and the resulting mass flow rate
+For each spatial direction x, y and z, flow through the network is simulated using several pressure gradients and the resulting mass flow rates
 are used to determine the upscaled properties.
 
 The code documentation is structured as follows:
@@ -30,7 +30,10 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 
 #include <iostream>
 
+#include <algorithm>
+
 #include <dune/common/float_cmp.hh> // for floating point comparison
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh> // for GetPropType
 #include <dumux/common/parameters.hh> // for getParam
@@ -56,8 +59,8 @@ Pore-Network-Model to evaluate the upscaled Darcy permeability of a given networ
 
 ### The driver function
 
-It depends on the template argument `TypeTag` if we run the example assuming
-a creeping flow regime or not. This is decided with the parameter
+The template argument `TypeTag` determines if we run the example assuming
+a creeping flow regime or not. Which regime is selected is set with the parameter
 `Problem.AssumeCreepingFlow` in the input file.
 
 ```cpp
@@ -131,9 +134,9 @@ specify the field type explicitly since it may not be possible
 to deduce this from the vector size in a pore network
 
 ```cpp
-    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", VtkWriter::FieldType::vertex);
-    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", VtkWriter::FieldType::element);
-    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", VtkWriter::FieldType::element);
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
 ```
 
 ### Prepare the upscaling procedure.
@@ -170,10 +173,15 @@ determine it automatically based on the network's bounding box.
     problem->setSideLengths(sideLengths);
 ```
 
-Get the maximum pressure gradient and the population of sample points specified in the input file
+Get the maximum and minimum pressure gradient and the population of sample points specified in the input file
 
 ```cpp
-    const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient");
+    const Scalar minPressureGradient = getParam<Scalar>("Problem.MinimumPressureGradient", 1e1);
+    const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient", 1e10);
+
+    if (!(minPressureGradient < maxPressureGradient))
+        DUNE_THROW(Dune::InvalidStateException, "Maximum pressure gradient must be greater than minimum pressure gradient");
+
     const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
 ```
 
@@ -181,7 +189,8 @@ Iterate over all directions specified before, apply several pressure gradient, c
 and finally determine the the upscaled properties.
 
 ```cpp
-    const auto directions = getParam<std::vector<int>>("Problem.Directions", std::vector<int>{0, 1, 2});
+    const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0, 1, 2});
+    upscalingHelper.setDirections(directions);
     for (int dimIdx : directions)
     {
         // set the direction in which the pressure gradient will be applied
@@ -193,7 +202,10 @@ and finally determine the the upscaled properties.
             x = 0;
 
             // set the pressure gradient to be applied
-            Scalar pressureGradient = maxPressureGradient*std::exp(i+1 - numberOfSamples);
+            Scalar pressureGradient = maxPressureGradient * std::exp(i + 1 - numberOfSamples);
+            if (i == 0)
+                pressureGradient = std::min(minPressureGradient, pressureGradient);
+
             problem->setPressureGradient(pressureGradient);
 
             // solve problem
@@ -201,7 +213,7 @@ and finally determine the the upscaled properties.
 
             // set the sample points
             const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
-            upscalingHelper.setSamplePoints(*problem, totalFluidMassFlux);
+            upscalingHelper.setDataPoints(*problem, totalFluidMassFlux);
         }
 
         // write a vtu file for the given direction for the last sample
@@ -210,7 +222,7 @@ and finally determine the the upscaled properties.
 
     // calculate and report the upscaled properties
     constexpr bool isCreepingFlow = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlow>;
-    upscalingHelper.calculateUpscaledProperties(isCreepingFlow);
+    upscalingHelper.calculateUpscaledProperties(*problem, isCreepingFlow);
     upscalingHelper.report(isCreepingFlow);
 
     // compare the Darcy permeability with reference data if provided in input file and report in case of inconsistency

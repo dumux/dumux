@@ -4,15 +4,15 @@ __In this example, you will learn how to__
 
 * simulate creeping/non-creeping flow on a pore network by applying a pressure gradient in a given direction
 * perform an upscaling in order to determine the flow properties of the porous medium such as:
-the Darcy (interinsic) single-phase permeability $`\mathbf{K}`$ [m$`^2`$] using the creeping flow simulation, the Forchheimer permeability $`\mathbf{K}`$ [m$`^2`$] and the Forchheimer coefficient $`\mathbf{\beta}`$ [m$`^{-1}`$] using the non-creeping flow simulation.
+the Darcy (intrinsic) single-phase permeability $`\mathbf{K}`$ [m$`^2`$] using the creeping flow simulation, the Forchheimer permeability $`\mathbf{K}`$ [m$`^2`$] and the Forchheimer coefficient $`\mathbf{\beta}`$ [m$`^{-1}`$] using the non-creeping flow simulation.
 
 
 __Result__.
-As a result of the creeping flow simulation of this example, you will get the Darcy (interinsic) single-phase permeabilities for each spatial direction $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$ [m$`^2`$] as direct output on your terminal as following:
+As a result of the creeping flow simulation of this example, you will get the Darcy (intrinsic) single-phase permeabilities for each spatial direction requested by the user $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$ [m$`^2`$] as a direct output on your terminal as the following example for the x-direction:
 
 ```
 X-direction:
--- Darcy permeability = 3.326e-12 m^2
+-- Darcy (intrinsic) permeability = 3.326e-12 m^2
 
 ```
 
@@ -26,25 +26,34 @@ Figure 1 shows the pressure distribution within the pore network for the case of
     </center>
 </figure>
 
-The non-creeping flow simulation additionally gives you Forchheimer permeability and coefficient for each spatial direction as in the example below for the x-direction:
+The non-creeping flow simulation additionally gives you the Forchheimer permeability and coefficient for each spatial direction as in the example below for the x-direction:
 
 ```
 X-direction:
--- Darcy permeability = 3.326e-12 m^2
--- Forchheimer permeability = 3.270e-12 m^2
--- Forchheimer coefficient = 8.666e+04 m^-1
+-- Darcy (intrinsic) permeability = 3.326e-12 m^2
+-- Forchheimer permeability = 3.196e-12 m^2
+-- Forchheimer coefficient = 8.553e+04 m^-1
 ```
 
-Furthermore, the ratio of apparent permeability to Darcy permeability is plotted versus the Forchheimer number for three spatial dimension as figure 2 shows.
+Furthermore, the ratio of apparent permeability to Darcy permeability is plotted versus the Forchheimer number for the spatial dimensions specified by the user, see Fig. 2.
 
 <figure>
     <center>
         <img src="img/permeability_ratio_versus_forchheimer_number.png" alt="Permeability ratio vs. Forchheimer number" width="60%"/>
-        <figcaption> <b> Fig.2 </b> - Variation of apparent to darcy permeability ratio versus Forchheimer number. </figcaption>
+        <figcaption> <b> Fig.2 </b> - Variation of apparent to Darcy permeability ratio versus Forchheimer number. </figcaption>
     </center>
 </figure>
 
-After building the executable, use the keyword `Problem.AssumeCreepingFlow` in params.input file to select the flow type to be simulated (i.e. set it true for creeping flow and false for non-creeping flow simulations). Then, run the simulation with `./example_pnm1p_upscaling`.
+In addition, in Fig. 3, the inverse of the apparent permeability versus $`\varrho v /\mu`$ is plotted to compare the data from the pore-network model simulation and the data obtained by applying the Forchheimer equation using the Forchheimer permeability and coefficient. As evident in the figure, the Forchheimer equation is not able to accurately predict the flow behavior in the low-velocity regime. 
+<figure>
+    <center>
+        <img src="img/inverse_apppermeability_versus_rhovmu-1.png" alt="Inverse of apparent permeability vs. rhovmu-1" width="60%"/>
+        <figcaption> <b> Fig.3 </b> - Inverse of apparent permeability versus &#961v / &#956. 
+        </figcaption>
+    </center>
+</figure>
+
+After building the executable, use the parameter `Problem.AssumeCreepingFlow` in the `params.input` file to select the flow regime to be simulated (i.e. set it to `true` for creeping flow and to `false` for non-creeping flow simulations). Then, run the simulation with `./example_pnm1p_upscaling`.
 
 __Table of contents__. This description is structured as follows:
 
@@ -55,17 +64,17 @@ __Table of contents__. This description is structured as follows:
 
 We consider a single-phase problem within a randomly generated pore network of 20x20x20 pores cubed from which some of the pore throats were [deleted randomly](https://doi.org/10.1029/2010WR010180).
 The inscribed pore body radii follow a truncated log-normal distribution.
-To calculate the upscaled properties, $`15`$ pressure differences in the range of $`1`$ to $`10^{10}`$ Pa are applied sequentially in every direction, while all lateral sides are closed.
-The resulting mass flow rates are then used  to determine upscaled properties as described [later](upscalinghelper.md).
+To calculate the upscaled properties, $`10`$ pressure differences in the range of $`10`$ to $`10^{10}`$ Pa/m are applied sequentially in directions specified by the user by setting the parameter `Problem.Directions` in the `params.input` file, while all lateral sides are closed.
+The resulting mass flow rates are then used to determine upscaled properties as described [later](upscalinghelper.md).
 
 ## Mathematical and numerical model
 
-In this example we are using the single-phase pore-network model of DuMu<sup>x</sup>. We require mass conservation at each pore body $`i`$:
+In this example, we are using the single-phase pore-network model of DuMu<sup>x</sup>. We require mass conservation at each pore body $`i`$:
 
 ```math
  \sum_j Q_{ij} = 0,
 ```
-where $`Q_{ij}`$ is the discrete volume flow rate in a throat connecting pore bodies $`i`$ and $`j`$. In case of creeping flow, the pore network model considers a Hagen-Poiseuille-type law to relate the volume flow from on pore body to another to discrete pressure drops $`\Delta p = p_i - p_j`$ between the pore bodies usig throat conductance, $`g_{ij}`$.
+where $`Q_{ij}`$ is the discrete volume flow rate in a throat connecting pore bodies $`i`$ and $`j`$. In case of creeping flow, the pore network model considers a Hagen-Poiseuille-type law to relate the volume flow from on pore body to another to discrete pressure drops $`\Delta p = p_i - p_j`$ between the pore bodies using throat conductance, $`g_{ij}`$.
 
 ```math
  Q_{ij} = g_{ij} (p_i - p_j),
@@ -76,13 +85,13 @@ or
  (p_i - p_j) = Q_{ij} / g_{ij} .
 ```
 
-In the simulation of non-creeping flow, to capture inertial effects in fluid flow, an extension of the Hagen-Poiseuille-type law which includes expansion and contraction of flow moving from a throat to a pore and vice versa is used. 
+In the simulation of non-creeping flow, to capture inertial effects in fluid flow, an extension of the Hagen-Poiseuille-type law which includes the expansion and contraction of the pore space when moving from a throat to a pore and vice versa. 
 
 ```math
   (p_i - p_j) = Q_{ij} / g_{ij}  + (C_{exp} + C_{cont})Q^2,
 ```
 
-where $`C_{exp}`$ and $`C_{cont}`$ are expansion and contraction coefficients. 
+where $`C_{exp}`$ and $`C_{cont}`$ are the expansion and the contraction coefficient, respectively. 
 
 # Implementation & Post processing
 

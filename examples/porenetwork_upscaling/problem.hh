@@ -78,19 +78,15 @@ public:
     // [[codeblock]]
     Scalar temperature() const
     { return 283.15; }
-    // [[codeblock]]
+    // [[/codeblock]]
 
-    // #### Pressure gradient
     // Set the pressure gradient to be applied to the network
-    // [[codeblock]]
     void setPressureGradient(Scalar pressureGradient)
     { pressureGradient_ = pressureGradient; }
-    // [[codeblock]]
 
     // #### Boundary conditions
     // This function is used to define the __type of boundary conditions__ used depending on the location.
-    // Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
-    // boundary conditions at all remaining boundaries. Note that the PNM does not support Neumann boundaries.
+    // Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet. Note that the PNM does not support Neumann boundaries.
     // To specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
     // [[codeblock]]
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
@@ -161,8 +157,9 @@ public:
     // Return the applied pressure gradient.
     Scalar pressureGradient() const
     { return pressureGradient_; }
-
-
+    // [[/codeblock]]
+    // [[/details]]
+    //
     // Return the label of inlet pores assuming a previously set direction.
     int inletPoreLabel() const
     {
@@ -204,7 +201,5 @@ private:
 };
 
 } // end namespace Dumux
-// [[/codeblock]]
-// [[/details]]
 // [[/content]]
 #endif

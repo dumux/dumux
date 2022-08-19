@@ -20,6 +20,7 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __Pore-network model__: Pore-network model will no longer prevent non-wetting fluid flowing out by default. Throats  blocking non-wetting fluid can be specified by setting runtime parameter `InvasionState.BlockNonwettingPhaseAtThroatLabel`.
 
+- __Examples__: Extend the porenetwork_upscaling example to include non-creeping flow simulation in pore network. The example is able now to provide not only upscaled Darcy permeability but also Forchheimer permeability and coefficient (employed in Forchheimer equation).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 

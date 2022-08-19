@@ -103,11 +103,8 @@ public:
                     // calculate the Darcy pressure drop.
                     const Scalar darcyPressureDrop = liquidDynamicViscosity * apparentVelocity_[dirIdx][i] * sideLengths[dirIdx] / darcyPermeability_[dirIdx];
 
-                    // claculate the ratio of Dracy to total pressure drop
-
+                    // calculate the ratio of Dracy to total pressure drop
                     const Scalar pressureDropRatio = darcyPressureDrop / totalPressureDrop_[dirIdx][i];
-
-                    std::cout<<std::endl<<"  the ratio  "<<pressureDropRatio<<std::endl;
 
                     // set sample points for upscaling of Forchheimer parameters.
                     // first, check the permability ratio to see if the flow regime is Forchheimer.
@@ -285,6 +282,7 @@ private:
 
             option += "set title \"" + title + "\"\n";
             option += "set logscale x""\n";
+            option += "set format x '10^{%L}'""\n";
 
             gnuplot.setXlabel("Forchheimer Number [-]");
             gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
@@ -326,11 +324,12 @@ private:
 
             option += "set title \"" + title + "\"\n";
             option += "set logscale x""\n";
+            option += "set format x '10^{%L}'""\n";
 
-            gnuplot.setXlabel("{/Symbol r} u / {/Symbol m} [1/m]");
+            gnuplot.setXlabel("{/Symbol r} v / {/Symbol m} [1/m]");
             gnuplot.setYlabel("1/ Apparent permeability [1/m^2]  x 1e12");
             gnuplot.setOption(option);
-            gnuplot.plot("inverse_apppermeability_versus_rhoumu");
+            gnuplot.plot("inverse_apppermeability_versus_rhovmu-1");
         }
     }
     // [[/codeblock]]
