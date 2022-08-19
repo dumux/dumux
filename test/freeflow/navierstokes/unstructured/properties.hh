@@ -31,6 +31,8 @@
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -64,7 +66,12 @@ struct Grid<TypeTag, TTag::DFGChannelTest>
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DFGChannelTest> { using type = DFGChannelTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::DFGChannelTestMomentum>
+{ using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>> ; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DFGChannelTestMass>
+{ using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>> ; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DFGChannelTest> { static constexpr bool value = true; };

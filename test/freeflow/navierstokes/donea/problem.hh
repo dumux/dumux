@@ -28,7 +28,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
 namespace Dumux {
@@ -41,10 +40,10 @@ namespace Dumux {
  * With the source terms as given in Donea 2003 \cite Donea2003, an analytical solution
  * is available and can be compared to the numerical solution.
  */
-template <class TypeTag>
-class DoneaTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class DoneaTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
