@@ -177,13 +177,17 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-    //! Get the local scvs for an element
+    //! Get the local scvs for an element (TODO put into internal cache handed to the localView)
     const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
     { return scvs_[eIdx]; }
 
-    //! Get the local scvfs for an element
+    //! Get the local scvfs for an element  (TODO put into internal cache handed to the localView)
     const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
     { return scvfs_[eIdx]; }
+
+    //! Get the local scvfs for an element  (TODO put into internal cache handed to the localView)
+    const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
+    { return scvfBoundaryGeometryKeys_.at(eIdx); }
 
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
@@ -210,6 +214,7 @@ private:
     {
         scvs_.clear();
         scvfs_.clear();
+        scvfBoundaryGeometryKeys_.clear();
         dofMapper_.update(this->gridView());
 
         auto numElements = this->gridView().size(0);
@@ -305,6 +310,12 @@ private:
                             typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection }
                         );
 
+                        // store look-up map to construct boundary scvf geometries
+                        scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
+                            static_cast<LocalIndexType>(localFacetIndex),
+                            static_cast<LocalIndexType>(isScvfLocalIdx)
+                        }});
+
                         // increment local counter
                         scvfLocalIdx++;
                     }
@@ -368,8 +379,10 @@ private:
 
     const FeCache feCache_;
 
+    // TODO: put this into an internal cache (see diamond grid geometry)
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+    std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
 
     std::size_t numScv_;
     std::size_t numScvf_;

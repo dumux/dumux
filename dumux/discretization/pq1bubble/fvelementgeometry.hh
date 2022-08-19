@@ -29,11 +29,14 @@
 #include <optional>
 #include <utility>
 
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+
+#include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
 
@@ -59,6 +62,7 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GeometryHelper = PQ1BubbleGeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -189,6 +193,47 @@ public:
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }
+
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        if (scv.isOverlapping())
+            DUNE_THROW(Dune::NotImplemented, "Geometry of overlapping scv");
+
+        assert(isBound());
+        const auto geo = element().geometry();
+        const GeometryHelper helper(geo);
+        return {
+            helper.getScvGeometryType(scv.indexInElement()),
+            helper.getScvCorners(scv.indexInElement())
+        };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        if (scvf.boundary())
+        {
+            GeometryHelper helper(geo);
+            const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
+            const auto [localFacetIndex, isScvfLocalIdx]
+                = gridGeometryPtr_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
+            return {
+                Dune::GeometryTypes::cube(dim-1),
+                helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
+            };
+        }
+        else
+        {
+            GeometryHelper helper(geo);
+            return {
+                helper.getInteriorScvfGeometryType(scvf.index()),
+                helper.getScvfCorners(scvf.index())
+            };
+        }
+    }
 
 private:
     const GridGeometry* gridGeometryPtr_;

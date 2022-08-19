@@ -100,6 +100,13 @@ int main (int argc, char *argv[])
         {
             std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()
                       << " , isOverlapping: " << scv.isOverlapping()  << std::endl;
+
+            if (!scv.isOverlapping()) // not implemented for overlapping scvs
+            {
+                const auto geo = fvGeometry.geometry(scv);
+                if ((geo.center()-scv.center()).two_norm() > 1e-14)
+                    DUNE_THROW(Dune::Exception, "Center of scv-geometry and scv do not match! " << geo.center() << ", " << scv.center());
+            }
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -110,8 +117,16 @@ int main (int argc, char *argv[])
         std::size_t boundaryCount = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
+            const auto geo = fvGeometry.geometry(scvf);
             std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal()
-                      << " area: " << scvf.area() << " isOverlapping: " << (scvf.isOverlapping() ? "true" : "false") << " insideScvIdx: " << scvf.insideScvIdx();
+                      << " area: " << scvf.area() << " isOverlapping: " << (scvf.isOverlapping() ? "true" : "false")
+                      << " insideScvIdx: " << scvf.insideScvIdx()
+                      << " geo type: " << geo.type()
+                      << " geo corners: " << geo.corners();
+
+            if ((geo.center()-scvf.center()).two_norm() > 1e-14)
+                DUNE_THROW(Dune::Exception, "Center of scvf-geometry and scvf do not match! " << geo.center() << ", " << scvf.center());
+
             if(!scvf.boundary())
                 std::cout << " outsideScvIdx: " << scvf.outsideScvIdx();
             if (scvf.boundary())
