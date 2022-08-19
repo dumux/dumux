@@ -247,7 +247,8 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx)
+                    geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    geometryHelper.isOverlappingScv(scvLocalIdx)
                 );
             }
 
@@ -270,7 +271,7 @@ private:
                     geometryHelper.normal(corners, scvPair),
                     std::move(scvPair),
                     scvfLocalIdx,
-                    geometryHelper.isOverlapping(scvfLocalIdx)
+                    geometryHelper.isOverlappingScvf(scvfLocalIdx)
                 );
             }
 

@@ -406,9 +406,17 @@ public:
         return { insideScvIdx, insideScvIdx };
     }
 
-    bool isOverlapping(unsigned int localScvfIndex) const
+    bool isOverlappingScvf(unsigned int localScvfIndex) const
     {
         if (localScvfIndex < boxHelper_.numInteriorScvf())
+            return false;
+        else
+            return true;
+    }
+
+    bool isOverlappingScv(unsigned int localScvIndex) const
+    {
+        if (localScvIndex < boxHelper_.numScv())
             return false;
         else
             return true;
