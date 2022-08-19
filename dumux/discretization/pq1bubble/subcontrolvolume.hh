@@ -81,7 +81,8 @@ public:
                               const GlobalPosition& center,
                               const LocalIndexType indexInElement,
                               const GridIndexType eIdx,
-                              const GridIndexType dofIdx)
+                              const GridIndexType dofIdx,
+                              bool overlapping = false)
 
     : center_(center)
     , dofPosition_(dofPosition)
@@ -89,6 +90,7 @@ public:
     , indexInElement_(indexInElement)
     , eIdx_(eIdx)
     , dofIdx_(dofIdx)
+    , overlapping_(overlapping)
     {}
 
     //! The center of the sub control volume
@@ -101,6 +103,10 @@ public:
 
     Scalar volume() const
     { return volume_; }
+
+    //! returns true if the sub control volume is overlapping with another scv
+    bool isOverlapping() const
+    { return overlapping_; }
 
     GridIndexType dofIndex() const
     { return dofIdx_; }
@@ -121,6 +127,7 @@ private:
     LocalIndexType indexInElement_;
     GridIndexType eIdx_;
     GridIndexType dofIdx_;
+    bool overlapping_;
 };
 
 } // end namespace Dumux
