@@ -12,6 +12,8 @@
 #ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
 #define DUMUX_LINEAR_PARALLELHELPERS_HH
 
+#include <bitset>
+
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -25,6 +27,31 @@
 
 namespace Dumux::Detail {
 
+template<class T>
+using DofCodimsDetector = decltype(T::dofCodims);
+
+template<class T>
+inline constexpr std::bitset<T::GridView::dimension+1> getDofCodims()
+{
+    if constexpr (Dune::Std::is_detected_v<DofCodimsDetector, T>)
+        return T::dofCodims;
+    else
+        return { 1UL << T::dofCodim };
+};
+
+// helper to determine whether all codims can be communicated by the grid implementation
+template<class GridView, std::size_t N>
+inline constexpr bool canCommunicateCodims(const std::bitset<N>& dofCodims)
+{
+    bool canCommunicate = true;
+    using namespace Dune::Hybrid;
+    forEach(std::make_index_sequence<N>{}, [&](auto i) {
+        if (dofCodims[i] && !Detail::canCommunicate<typename GridView::Traits::Grid, i>)
+            canCommunicate = false;
+    });
+    return canCommunicate;
+}
+
 template<class LinearSolverTraits, bool canCommunicate = false>
 class ParallelISTLHelperImpl {};
 
@@ -33,7 +60,10 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
 {
     using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
-    static constexpr int dofCodim = LinearSolverTraits::dofCodim;
+    static constexpr int dim = GridView::dimension;
+
+    static constexpr std::bitset<dim+1> dofCodims
+        = getDofCodims<LinearSolverTraits>();
 
     // TODO: this is some large number (replace by limits?)
     static constexpr std::size_t ghostMarker_ = 1<<24;
@@ -49,7 +79,7 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         { return mapper_.index(e); }
 
         bool contains(int dim, int codim) const
-        { return dofCodim == codim; }
+        { return dofCodims[codim]; }
 
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
@@ -281,11 +311,12 @@ public:
     ParallelISTLHelperImpl(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
-        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
+        std::cout << dofCodims << std::endl;
+        if constexpr (canCommunicateCodims<GridView>(dofCodims))
             initGhostsAndOwners_();
         else
             DUNE_THROW(Dune::InvalidStateException,
-                "Cannot initialize parallel helper for a grid that cannot communicate codim-" << dofCodim << "-entities."
+                "Cannot initialize parallel helper for a grid that cannot communicate all entities."
             );
     }
 
@@ -309,7 +340,7 @@ public:
     template<class Comm>
     void createParallelIndexSet(Comm& comm) const
     {
-        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
+        if constexpr (Detail::canCommunicateCodims<GridView>(dofCodims))
         {
             if (gridView_.comm().size() <= 1)
             {
@@ -364,7 +395,7 @@ public:
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
-                "Cannot build parallel index set for a grid that cannot communicate codim-" << dofCodim << "-entities."
+                "Cannot build parallel index set for a grid that cannot communicate all entities."
             );
     }
 
