@@ -98,7 +98,8 @@ int main (int argc, char *argv[])
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
+            std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()
+                      << " , isOverlapping: " << scv.isOverlapping()  << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);
