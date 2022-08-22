@@ -28,3 +28,6 @@ Verbosity = true
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 0.1

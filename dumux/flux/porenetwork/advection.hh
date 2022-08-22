@@ -27,6 +27,7 @@
 
 #include <array>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/spline.hh>
 
 namespace Dumux::PoreNetwork::Detail {
 
@@ -125,42 +126,91 @@ public:
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             const bool invaded = fluxVarsCache.invaded();
             const Scalar pc = fluxVarsCache.pc();
-            const Scalar pcEntry = fluxVarsCache.pcEntry();
-            const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
+            // 1p wetting phase transmissibility
             const Scalar Kw1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+            // regulariztaion interval for invasion event
+            const Scalar invasionLeft = fluxVarsCache.regInvasionInterval(0);
+            const Scalar invasionRight = fluxVarsCache.regInvasionInterval(1);
+            // regularization interval for snapoff event
+            const Scalar snapoffLeft = fluxVarsCache.regSnapoffInterval(0);
+            const Scalar snapoffRight = fluxVarsCache.regSnapoffInterval(1);
 
             if (phaseIdx == wPhaseIdx)
             {
-                if (!invaded) // not invaded in last time step, drainage curve sohuld be used
+                if (!invaded) // not invaded in last time step
                 {
-                    if (pc < pcEntry)
+                    if ( pc < invasionLeft )
                         return Kw1p;
-                    else // invasion happens
-                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                    // the regularization interval is [pce, pce + reg]
+                    else if ( pc < invasionRight )
+                    {
+                        auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeEntry =  Transmissibility::dKwdPcEntry(element, fvGeometry, scvf, fluxVarsCache);
+                        // TODO: only the slope for circlular throat is 0.0!
+                        const auto slopes =  std::array{0.0, slopeEntry};
+                        auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight,// x0, x1
+                                                                Kw1p, entryKw, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
+                    else
+                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
-                else // invaded in last time step, imbibition curve should be used
+                else // invaded in last time step
                 {
-                    if (pc < pcSnapoff) // snapoff happens
-                        return Kw1p;
+                    // the regularization interval is [pcs - reg, pcs]
+                    if (pc < snapoffLeft)
+                        return Kw1p;    // snapoff occurs
+                    else if (pc < snapoffRight) // reg interval
+                    {
+                        auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{0.0, slopeSnapoff};
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
+                                                                Kw1p, snapoffKw, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+
+                    }
                     else
                         return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
                 }
             }
             else // non-wetting phase
             {
-                if (!invaded)   // last time step not invaded, drainage curve is used
+                if (!invaded)
                 {
                     // the regularization interval is [pce, pce + reg]
-                    if (pc < pcEntry)
+                    if (pc < invasionLeft)
                         return 0.0;
+                    else if (pc < invasionRight)
+                    {
+                        auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeEntry = Transmissibility::dKndPcEntry(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{0.0, slopeEntry};
+                        auto optionalKnSpline_ = Spline<Scalar>(invasionLeft, invasionRight, // x0, x1
+                                                                0.0, entryKn, // y0, y1
+                                                                slopes[0], slopes[1]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
                     else
                         return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
-                else    // last time step is invaded, imbibition curve is used
+                else
                 {
                     // the regularzazion interval is [pcs - reg, pcs]
-                    if (pc < pcSnapoff)
+                    if (pc < snapoffLeft)
                         return 0.0;
+                    else if (pc < snapoffRight)
+                    {
+                        auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                        const auto slopes =  std::array{slopeSnapoff, 0.0};
+                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
+                                                                0.0, snapoffKn, // y0, y1
+                                                                slopes[1], slopes[0]); // m0, m1
+                        return optionalKnSpline_.eval(pc);
+                    }
                     else
                         return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
