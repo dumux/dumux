@@ -358,6 +358,19 @@ public:
 
     // \}
 
+    /*!
+     * \brief Extended source stencil (for the bulk domain)
+     */
+    const typename ParentType::template CouplingStencils<bulkIdx>::mapped_type&
+    extendedSourceStencil(std::size_t eIdx) const
+    {
+        const auto& sourceStencils = extendedSourceStencil_.stencil();
+        if (auto stencil = sourceStencils.find(eIdx); stencil != sourceStencils.end())
+            return stencil->second;
+
+        return this->emptyStencil(bulkIdx);
+    }
+
 private:
     //! compute the kernel distributed sources and add stencils
     template<class Line, class CylIntegration>
@@ -579,6 +592,11 @@ private:
     //! the flux scaling factor for the respective source id
     std::vector<Scalar> fluxScalingFactor_;
 };
+
+//! we support multithreaded assembly
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>>
+: public std::true_type {};
 
 } // end namespace Dumux
 

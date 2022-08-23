@@ -45,6 +45,11 @@ public:
     using ParentType::ParentType;
 };
 
+//! we support multithreaded assembly
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<EmbeddedCouplingManager2d3d<MDTraits>>
+: public std::true_type {};
+
 } // end namespace Dumux
 
 #endif

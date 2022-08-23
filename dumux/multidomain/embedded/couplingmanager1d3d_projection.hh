@@ -684,6 +684,11 @@ private:
     }
 };
 
+//! we support multithreaded assembly
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Projection>>
+: public std::true_type {};
+
 } // end namespace Dumux
 
 #endif

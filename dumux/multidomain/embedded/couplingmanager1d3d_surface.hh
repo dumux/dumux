@@ -459,6 +459,19 @@ public:
 
     // \}
 
+    /*!
+     * \brief Extended source stencil (for the bulk domain)
+     */
+    const typename ParentType::template CouplingStencils<bulkIdx>::mapped_type&
+    extendedSourceStencil(std::size_t eIdx) const
+    {
+        const auto& sourceStencils = extendedSourceStencil_.stencil();
+        if (auto stencil = sourceStencils.find(eIdx); stencil != sourceStencils.end())
+            return stencil->second;
+
+        return this->emptyStencil(bulkIdx);
+    }
+
 private:
     //! the extended source stencil object
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
@@ -466,6 +479,11 @@ private:
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
 };
+
+//! we support multithreaded assembly
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>>
+: public std::true_type {};
 
 } // end namespace Dumux
 

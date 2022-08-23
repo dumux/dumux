@@ -32,6 +32,7 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/typetraits/utility.hh>
@@ -569,25 +570,52 @@ private:
      * \brief A method assembling something per element
      * \note Handles exceptions for parallel runs
      * \throws NumericalProblem on all processes if an exception is thrown during assembly
-     * TODO: assemble in parallel
      */
     template<std::size_t i, class AssembleElementFunc>
     void assemble_(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
     {
-        if constexpr (CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value)
+        // a state that will be checked on all processes
+        bool succeeded = false;
+
+        // try assembling using the local assembly function
+        try
         {
-            if (enableMultithreading_)
+            if constexpr (CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value)
             {
-                couplingManager_->assembleMultithreaded(domainId, assembleElement);
-                return;
+                if (enableMultithreading_)
+                {
+                    couplingManager_->assembleMultithreaded(
+                        domainId, std::forward<AssembleElementFunc>(assembleElement)
+                    );
+                    return;
+                }
             }
+
+            // fallback for coupling managers that don't support multithreaded assembly (yet)
+            // or if multithreaded assembly is disabled
+            // let the local assembler add the element contributions
+            for (const auto& element : elements(gridView(domainId)))
+                assembleElement(element);
+
+            // if we get here, everything worked well on this process
+            succeeded = true;
+        }
+        // throw exception if a problem occurred
+        catch (NumericalProblem &e)
+        {
+            std::cout << "rank " << gridView(domainId).comm().rank()
+                      << " caught an exception while assembling:" << e.what()
+                      << "\n";
+            succeeded = false;
         }
 
-        // fallback for coupling managers that don't support multithreaded assembly (yet)
-        // or if multithreaded assembly is disabled
-        // let the local assembler add the element contributions
-        for (const auto& element : elements(gridView(domainId)))
-            assembleElement(element);
+        // make sure everything worked well on all processes
+        if (gridView(domainId).comm().size() > 1)
+            succeeded = gridView(domainId).comm().min(succeeded);
+
+        // if not succeeded rethrow the error on all processes
+        if (!succeeded)
+            DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
     // get diagonal block pattern
