@@ -171,6 +171,10 @@ public:
     typename CouplingManager::template CouplingStencils<bulkIdx>& stencil()
     { return sourceStencils_; }
 
+    //! return a const reference to the stencil
+    const typename CouplingManager::template CouplingStencils<bulkIdx>& stencil() const
+    { return sourceStencils_; }
+
 private:
     //! the extended source stencil due to the source average (always empty for lowdim, but may be filled for bulk)
     template<std::size_t id>

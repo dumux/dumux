@@ -152,6 +152,11 @@ private:
     std::vector<Scalar> lowDimVolumeInBulkElement_;
 };
 
+//! we support multithreaded assembly
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Line>>
+: public std::true_type {};
+
 } // end namespace Dumux
 
 #endif

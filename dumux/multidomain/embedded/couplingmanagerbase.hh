@@ -35,8 +35,10 @@
 #include <dune/common/timer.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/assembly/coloring.hh>
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
@@ -93,6 +95,7 @@ class EmbeddedCouplingManagerBase
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using ElementMapper = typename GridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using ElementSeed = typename GridView<id>::Grid::template Codim<0>::EntitySeed;
     template<std::size_t id> using GridIndex = typename IndexTraits<GridView<id>>::GridIndex;
     template<std::size_t id> using CouplingStencil = std::vector<GridIndex<id>>;
 
@@ -437,6 +440,164 @@ public:
     const auto& curSol(Dune::index_constant<i> domainIdx) const
     { return ParentType::curSol(domainIdx); }
 
+    /*!
+     * \brief Compute colors for multithreaded assembly
+     */
+    void computeColorsForAssembly()
+    {
+        Dune::Timer timer;
+
+        // start with elements connected within the subdomains
+        const auto& bulkGG = asImp_().problem(bulkIdx).gridGeometry();
+        const auto& lowDimGG = asImp_().problem(lowDimIdx).gridGeometry();
+
+        auto connectedElementsBulk = Detail::computeConnectedElements(bulkGG);
+        auto connectedElementsLowDim = Detail::computeConnectedElements(lowDimGG);
+
+        // to the elements from the own domain, we have to add the extended source stencil (non-local couplings)
+        // we consider this only in the bulk domain
+        for (const auto& element : elements(bulkGG.gridView()))
+        {
+            const auto eIdx = bulkGG.elementMapper().index(element);
+            const auto& extendedSourceStencil = asImp_().extendedSourceStencil(eIdx);
+            for (auto dofIdx : extendedSourceStencil)
+            {
+                const auto& elems = connectedElementsBulk[dofIdx];
+                if (std::find(elems.begin(), elems.end(), eIdx) == elems.end())
+                    connectedElementsBulk[dofIdx].push_back(eIdx);
+            }
+        }
+
+        // then we also need a similar container that tells us
+        // which elements _from the other domain_ modify our dofs.
+        // That, we can obtain via the coupling stencils
+        std::array<std::vector<std::vector<std::size_t>>, 2> connectedElementsCoupling;
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::index_constant<MDTraits::numSubDomains>{}), [&](const auto i)
+        {
+            connectedElementsCoupling[i()].resize(asImp_().problem(i).gridGeometry().numDofs());
+            forEach(integralRange(Dune::index_constant<MDTraits::numSubDomains>{}), [&](const auto j)
+            {
+                if constexpr (i != j)
+                {
+                    for (const auto& element : elements(asImp_().problem(j).gridGeometry().gridView()))
+                    {
+                        const auto eIdx = asImp_().problem(j).gridGeometry().elementMapper().index(element);
+                        for (auto dofIdx : asImp_().couplingStencil(j, element, i))
+                        {
+                            const auto& elems = connectedElementsCoupling[i()][dofIdx];
+                            if (std::find(elems.begin(), elems.end(), eIdx) == elems.end())
+                                connectedElementsCoupling[i()][dofIdx].push_back(eIdx);
+                        }
+                    }
+                }
+            });
+        });
+
+        forEach(integralRange(Dune::index_constant<MDTraits::numSubDomains>{}), [&](const auto i)
+        {
+            const auto& gg = asImp_().problem(i).gridGeometry();
+
+            std::vector<int> colors(gg.gridView().size(0), -1);
+
+            // pre-reserve some memory for helper arrays to avoid reallocation
+            std::vector<int> neighborColors; neighborColors.reserve(200);
+            std::vector<bool> colorUsed; colorUsed.reserve(200);
+
+            auto& elementSets = std::get<i>(elementSets_);
+            const auto& connectedElements = std::get<i>(std::tie(connectedElementsBulk, connectedElementsLowDim));
+
+            for (const auto& element : elements(gg.gridView()))
+            {
+                // compute neighbor colors based on discretization-dependent stencil
+                neighborColors.clear();
+                Detail::addNeighborColors(gg, element, colors, connectedElements, neighborColors);
+
+                if constexpr (i == bulkIdx)
+                {
+                    // make sure we also add all elements in the extended source stencil
+                    // Detail::addNeighborColors only adds direct neighbors
+                    // add everyone that also modifies the extended source stencil dofs
+                    const auto eIdx = bulkGG.elementMapper().index(element);
+                    const auto& extendedSourceStencil = asImp_().extendedSourceStencil(eIdx);
+                    for (auto dofIdx : extendedSourceStencil)
+                        for (const auto nIdx : connectedElementsBulk[dofIdx])
+                            neighborColors.push_back(colors[nIdx]);
+                }
+
+                // add neighbor colors based on coupling stencil
+                forEach(integralRange(Dune::index_constant<MDTraits::numSubDomains>{}), [&](const auto j)
+                {
+                    if constexpr (i != j)
+                    {
+                        // add all elements that manipulate the same coupled dofs
+                        for (auto dofIdx : asImp_().couplingStencil(i, element, j))
+                            for (auto eIdx : connectedElementsCoupling[j][dofIdx])
+                                neighborColors.push_back(colors[eIdx]);
+                    }
+                });
+
+                // find smallest color (positive integer) not in neighborColors
+                const auto color = Detail::smallestAvailableColor(neighborColors, colorUsed);
+
+                // assign color to element
+                colors[gg.elementMapper().index(element)] = color;
+
+                // add element to the set of elements with the same color
+                if (color < elementSets.size())
+                    elementSets[color].push_back(element.seed());
+                else
+                    elementSets.push_back(std::vector<ElementSeed<i>>{ element.seed() });
+            }
+        });
+
+        std::cout << Fmt::format("Colored in {} seconds:\n", timer.elapsed());
+        forEach(integralRange(Dune::index_constant<MDTraits::numSubDomains>{}), [&](const auto i)
+        {
+            std::cout << Fmt::format(
+                "-- {} elements in subdomain {} with {} colors\n",
+                asImp_().problem(i).gridGeometry().gridView().size(0),
+                i(), std::get<i>(elementSets_).size()
+            );
+        });
+    }
+
+    /*!
+     * \brief Execute assembly kernel in parallel
+     *
+     * \param domainI the domain index of domain i
+     * \param assembleElement kernel function to execute for one element
+     */
+    template<std::size_t i, class AssembleElementFunc>
+    void assembleMultithreaded(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
+    {
+        if (std::get<i>(elementSets_).empty())
+            DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");
+
+        // make this element loop run in parallel
+        // for this we have to color the elements so that we don't get
+        // race conditions when writing into the global matrix or modifying grid variable caches
+        // each color can be assembled using multiple threads
+        const auto& grid = this->problem(domainId).gridGeometry().gridView().grid();
+        for (const auto& elements : std::get<i>(elementSets_))
+        {
+            Dumux::parallelFor(elements.size(), [&](const std::size_t n)
+            {
+                const auto element = grid.entity(elements[n]);
+                assembleElement(element);
+            });
+        }
+    }
+
+    /*!
+     * \brief Extended source stencil (for the bulk domain)
+     * \note The default returns an empty stencil but some of the embedded
+     *       coupling managers use this
+     */
+    const CouplingStencil<bulkIdx>& extendedSourceStencil(std::size_t eIdx) const
+    { return asImp_().emptyStencil(bulkIdx); }
+
 protected:
     using ParentType::curSol;
 
@@ -558,6 +719,12 @@ private:
 
     //! integration order for coupling source
     int integrationOrder_ = 1;
+
+    //! coloring for multithreaded assembly
+    std::tuple<
+        std::deque<std::vector<ElementSeed<bulkIdx>>>,
+        std::deque<std::vector<ElementSeed<lowDimIdx>>>
+    > elementSets_;
 };
 
 } // end namespace Dumux
