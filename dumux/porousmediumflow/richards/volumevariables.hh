@@ -29,6 +29,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/state.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
@@ -116,7 +118,7 @@ public:
         const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
-        const auto phasePresence = priVars.state();
+        const auto phasePresence = getState_(priVars);
 
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
@@ -518,6 +520,17 @@ protected:
 
     // Effective diffusion coefficients for the phases
     Scalar effectiveDiffCoeff_;
+
+private:
+    //! returns bothPhases in case the priVars don't provide any state
+    template<class PriVars>
+    auto getState_(const PriVars& priVars)
+    {
+        if constexpr (Detail::priVarsHaveState<PriVars>())
+            return priVars.state();
+        else
+            return Indices::bothPhases;
+    }
 
 };
 } // end namespace Dumux

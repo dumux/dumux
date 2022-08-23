@@ -26,6 +26,7 @@
 #define DUMUX_RICHARDS_IO_FIELDS_HH
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/state.hh>
 #include <dumux/io/name.hh>
 
 namespace Dumux {
@@ -74,8 +75,9 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::phase0Idx); },
                               IOName::waterContent());
 
-        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
-                              IOName::phasePresence());
+        if constexpr (Detail::priVarsHaveState<typename VV::PrimaryVariables>())
+            out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
+                                  IOName::phasePresence());
     }
 
     template<class ModelTraits, class FluidSystem, class SolidSystem = void>

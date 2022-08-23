@@ -24,8 +24,9 @@
 #ifndef DUMUX_TYPETRAITS_STATE_HH
 #define DUMUX_TYPETRAITS_STATE_HH
 
-namespace Dumux {
-namespace Detail {
+#include <dune/common/std/type_traits.hh>
+
+namespace Dumux::Detail {
 
 //! helper struct detecting if a PrimaryVariables object has a state() function
 struct hasState
@@ -36,7 +37,13 @@ struct hasState
     {}
 };
 
-} // end namespace Detail
-} // end namespace Dumux
+template<class P>
+using DetectPriVarsHaveState = decltype(std::declval<P>().state());
+
+template<class P>
+constexpr inline bool priVarsHaveState()
+{ return Dune::Std::is_detected<DetectPriVarsHaveState, P>::value; }
+
+} // end namespace Dumux::Detail
 
 #endif
