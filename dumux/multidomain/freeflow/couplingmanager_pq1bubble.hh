@@ -32,6 +32,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
@@ -341,6 +342,27 @@ public:
         localBasis.evaluateFunction(ipLocal, shapeValues);
 
         for (const auto& scv : scvs(fvGeometry))
+            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+
+        return velocity;
+    }
+
+    /*!
+     * \brief Returns the velocity at the element center.
+     */
+    VelocityVector elementVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), fvGeometry.element());
+
+        const auto& momentumFvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
+        const auto& localBasis = momentumFvGeometry.feLocalBasis();
+
+        // interpolate velocity at scvf
+        VelocityVector velocity(0.0);
+        std::vector<ShapeValue> shapeValues;
+        localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
+
+        for (const auto& scv : scvs(momentumFvGeometry))
             velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
         return velocity;

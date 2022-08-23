@@ -112,13 +112,7 @@ private:
                                           const ElementVolumeVariables& elemVolVars) const
     {
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
-        {
-            return elemVolVars.gridVolVars().problem().faceVelocity(element, fvGeometry, scvf);
-        };
-
-        for (const auto& scvf : scvfs(fvGeometry))
-            velocity[eIdx] += getFaceVelocity(fvGeometry, scvf) / fvGeometry.numScvf();
+        velocity[eIdx] = elemVolVars.gridVolVars().problem().elementVelocity(fvGeometry);
     }
 
 
