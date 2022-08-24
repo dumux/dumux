@@ -6,12 +6,16 @@ dumux_add_test(NAME test_pnm_2p
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=1
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )")
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
 
 dumux_add_test(NAME test_pnm_2pni
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=0 REGULARIZATIONWITHPRESSURE=1
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )")
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pni  params_ni.input")
