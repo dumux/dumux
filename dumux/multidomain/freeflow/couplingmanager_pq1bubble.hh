@@ -204,7 +204,8 @@ public:
 
             return volVars.density();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -252,7 +253,8 @@ public:
 
             return volVars.density();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -293,7 +295,8 @@ public:
             const auto& volVars = this->momentumCouplingContext_()[0].curElemVolVars[scv];
             return volVars.viscosity();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -446,7 +449,8 @@ public:
                     momentumCouplingContext_()[0].curElemVolVars[scv].update(std::move(elemSol), problem, deflectedElement, scv);
             }
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
             {
