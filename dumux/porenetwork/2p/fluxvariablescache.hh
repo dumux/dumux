@@ -135,12 +135,17 @@ public:
             std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
             totalThroatCrossSectionalArea
         );
-        throatCrossSectionalArea_[nPhaseIdx()] = std::max( (totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()]), 0.0);
+        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
 
         regBoundaryWettingThroatAreaInvasion_[0] = std::min(std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
         regBoundaryWettingThroatAreaInvasion_[1] = std::min(std::accumulate(epsilonEntryWettingLayerArea_.begin(), epsilonEntryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
-        regBoundaryNonwettingThroatAreaInvasion_[0] = std::max( (totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[0]), 0.0);
-        regBoundaryNonwettingThroatAreaInvasion_[1] = std::max( (totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[1]), 0.0);
+        regBoundaryNonwettingThroatAreaInvasion_[0] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[0];
+        regBoundaryNonwettingThroatAreaInvasion_[1] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[1];
+
+        regBoundaryWettingThroatAreaSnapoff_[0] = std::min(std::accumulate(snapoffWettingLayerArea_.begin(), snapoffWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regBoundaryWettingThroatAreaSnapoff_[1] = std::min(std::accumulate(epsilonSnapoffWettingLayerArea_.begin(), epsilonSnapoffWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+        regBoundaryNonwettingThroatAreaSnapoff_[0] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaSnapoff_[0];
+        regBoundaryNonwettingThroatAreaSnapoff_[1] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaSnapoff_[1];
 
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
