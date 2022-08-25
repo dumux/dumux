@@ -135,12 +135,12 @@ public:
             std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
             totalThroatCrossSectionalArea
         );
-        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+        throatCrossSectionalArea_[nPhaseIdx()] = std::max( (totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()]), 0.0);
 
         regBoundaryWettingThroatAreaInvasion_[0] = std::min(std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
         regBoundaryWettingThroatAreaInvasion_[1] = std::min(std::accumulate(epsilonEntryWettingLayerArea_.begin(), epsilonEntryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
-        regBoundaryNonwettingThroatAreaInvasion_[0] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[0];
-        regBoundaryNonwettingThroatAreaInvasion_[1] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[1];
+        regBoundaryNonwettingThroatAreaInvasion_[0] = std::max( (totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[0]), 0.0);
+        regBoundaryNonwettingThroatAreaInvasion_[1] = std::max( (totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaInvasion_[1]), 0.0);
 
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
