@@ -74,6 +74,7 @@ public:
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
     }
 
     /*!
@@ -158,11 +159,9 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        // If we do not want to use global phase pressure difference with fixed saturations and pressures,
-        // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
-        // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
+        // We fix the mass flux of non-wetting injection at inlet of pore-network
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
+            values[snIdx] = nonWettingMassFlux_/sumInletPoresVolume_;
 
         return values;
     }
@@ -190,8 +189,23 @@ public:
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
     { return false; }
-
     // \}
+
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumInletVolume()
+    {
+        sumInletPoresVolume_ = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (isInletPore_(scv))
+                    sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+            }
+        }
+    }
 
 private:
 
@@ -213,6 +227,8 @@ private:
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
     Scalar pc_;
+    Scalar nonWettingMassFlux_;
+    Scalar sumInletPoresVolume_;
 };
 } //end namespace Dumux
 
