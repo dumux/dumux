@@ -13,6 +13,7 @@ VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
+DistributeByVolume = false
 
 [Vtk]
 AddVelocity = 1

@@ -73,6 +73,7 @@ public:
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
+        distributeByVolume_ = getParam<bool>("Problem.DistributeByVolume", true);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
     }
@@ -160,10 +161,16 @@ public:
         PrimaryVariables values(0.0);
 
         // We fix the mass flux of non-wetting injection at inlet of pore-network
+        // The total inlet mass flux is distributed according to the ratio
+        // of pore volume at inlet to the total volumess
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = nonWettingMassFlux_/sumInletPoresVolume_;
-
-        return values;
+        {
+            if (distributeByVolume_)
+                values[snIdx] = nonWettingMassFlux_ * ( scv.volume()/sumInletPoresVolume_ );
+            else
+                values[snIdx] = nonWettingMassFlux_ * std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
+        }
+        return values / scv.volume();
     }
     // \}
 
@@ -202,7 +209,12 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
                 if (isInletPore_(scv))
-                    sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+                {
+                    if (distributeByVolume_)
+                        sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+                    else
+                        sumInletPoresVolume_ += std::pow(this->gridGeometry().poreInscribedRadius(scv.dofIndex()), 4.0);
+                }
             }
         }
     }
@@ -226,6 +238,7 @@ private:
 
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
+    bool distributeByVolume_;
     Scalar pc_;
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
