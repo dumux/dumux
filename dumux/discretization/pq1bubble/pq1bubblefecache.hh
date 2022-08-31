@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup PQ1BubbleDiscretization
  * \brief A finite element cache for P1/Q1 function with bubble
  */
 #ifndef DUMUX_DISCRETIZATION_PQ1BUBBLE_FECACHE_HH

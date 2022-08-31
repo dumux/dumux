@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief Utilities for template meta programming
  */
 #ifndef DUMUX_COMMON_TYPETRAITS_UTILITY_HH
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief create a variadic template from indexed types
  * \tparam V a variadic template that we want to create
  * \tparam T an indexed type (type that gets an index as template parameter)
@@ -56,7 +56,7 @@ namespace Detail {
 }
 
 /*
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief create an integer sequence from 0 to n-1, omitting one specific number e
  * \tparam n number of integers in complete sequence before omitting
  * \tparam e value of integer to be omitted
@@ -71,7 +71,7 @@ using makeIncompleteIntegerSequence =
         typename Detail::ConcatSeq<decltype(std::make_index_sequence<e>{}), e + 1, decltype(std::make_index_sequence<(n > e) ? (n - e - 1) : 0>{})>::type;
 
 /*
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief add an offset to an index sequence
  * \tparam offset the offset
  * \tparam is the index sequence
@@ -83,7 +83,7 @@ constexpr std::index_sequence<(offset + is)...> addOffsetToIndexSequence(std::in
 { return {}; }
 
 /*
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief create an index sequence starting from an offset
  * \tparam offset the offset
  * \tparam n the length of the sequence

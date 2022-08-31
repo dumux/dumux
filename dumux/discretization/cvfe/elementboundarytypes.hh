@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Boundary types gathered on an element
  */
 #ifndef DUMUX_CVFE_ELEMENT_BOUNDARY_TYPES_HH
@@ -32,7 +32,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class BTypes>

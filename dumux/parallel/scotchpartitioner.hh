@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \ingroup Linear
+ * \ingroup Parallel
  * \brief An interface to the Scotch library for graph partitioning
  * \note You need to have PTSCOTCH installed to use this feature
  */

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup SpatialParameters
+ * \ingroup Material
  * \brief Creating random fields using gstat
  */
 #ifndef DUMUX_MATERIAL_GSTAT_RANDOM_FIELD_HH
@@ -36,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup SpatialParameters
+ * \ingroup Material
  * \brief Creating random fields using gstat
  *
  * gstat is an open source software tool which can (among other things) generate

@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (face-centered diamond methods)
  */
 #ifndef DUMUX_FC_DIAMOND_LOCAL_ASSEMBLER_HH
@@ -56,7 +56,7 @@ using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief A base class for all local face-centered assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
@@ -280,7 +280,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (Face-centered methods)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
@@ -291,7 +291,7 @@ class FaceCenteredDiamondLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamindDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief Face-centered scheme local assembler using numeric differentiation and implicit time discretization
  */
 template<class TypeTag, class Assembler, class Implementation>
@@ -425,7 +425,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
@@ -537,7 +537,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
@@ -657,7 +657,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \brief TODO docme
  */
 template<class TypeTag, class Assembler>

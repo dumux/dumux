@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \ingroup MultiDomain
  * \brief An assembler for Jacobian and residual contribution per element (face-centered diamond methods) for multidomain problems
  */
@@ -41,7 +41,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \ingroup MultiDomain
  * \brief A base class for all face-centered staggered local assemblers
  * \tparam id the id of the sub domain
@@ -229,7 +229,7 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \ingroup MultiDomain
  * \brief The face-centered staggered scheme multidomain local assembler
  * \tparam id the id of the sub domain
@@ -243,7 +243,7 @@ class SubDomainFaceCenteredDiamondLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamondDiscretization
+ * \ingroup FaceCenteredStaggeredDiamondDiscretization
  * \ingroup MultiDomain
  * \brief Face-centered staggered scheme multi domain local assembler using numeric differentiation and implicit time discretization
  */

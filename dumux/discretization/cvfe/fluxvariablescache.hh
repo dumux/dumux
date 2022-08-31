@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variables cache class for control-volume finite element schemes
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variables cache class for control-volume finite element schemes.
  *        For control-volume finite element schemes, this class does not contain any physics-/process-dependent
  *        data. It solely stores disretization-/grid-related data.

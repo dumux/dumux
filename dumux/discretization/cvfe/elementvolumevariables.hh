@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The local volume variables class
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_ELEMENT_VOLUMEVARIABLES_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The local (stencil) volume variables class for control-volume finite element
  * \note The class is specialized for versions with and without caching
  * \tparam GVV the grid volume variables type
@@ -43,7 +43,7 @@ template<class GVV, bool cachingEnabled>
 class CVFEElementVolumeVariables;
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The local (stencil) volume variables class for control-volume finite element with caching
  * \note the volume variables are stored for the whole grid view in the corresponding GridVolumeVariables class
  */
@@ -126,7 +126,7 @@ private:
 
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The local (stencil) volume variables class for control-volume finite element without caching
  */
 template<class GVV>
