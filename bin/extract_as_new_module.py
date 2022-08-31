@@ -38,6 +38,8 @@ from util.installscript import (
     addDependencyPatches,
 )
 
+MAIN_BRANCH_NAME = "main"
+
 
 def readmeFileName():
     """The default readme filename"""
@@ -334,20 +336,9 @@ def runGitCommand(path, cmd):
     callFromPath(path)(runCommand)(cmd)
 
 
-def getActiveBranchName(modulePath):
-    """Converted from https://stackoverflow.com/a/62724213"""
-    headDir = Path(modulePath) / ".git" / "HEAD"
-    with headDir.open("r") as f: content = f.read().splitlines()
-
-    for line in content:
-        if line[0:4] == "ref:":
-            return line.partition("refs/heads/")[2]
-
-
-def pushRepository(modulePath, remoteURL):
+def pushMainBranch(modulePath, remoteURL):
     """Push to the main branch of the new repository"""
-    branchName = getActiveBranchName(modulePath)
-    runGitCommand(modulePath, f"git push -u {remoteURL} {branchName}")
+    runGitCommand(modulePath, f"git push -u {remoteURL} {MAIN_BRANCH_NAME}")
 
 
 def guideRepositoryInitialization(modulePath):
@@ -359,12 +350,13 @@ def guideRepositoryInitialization(modulePath):
     remoteURL = None if not hasRepo else queryEmptyRemoteURL()
 
     runGitCommand(modulePath, "git init")
+    runGitCommand(modulePath, f"git switch -C {MAIN_BRANCH_NAME}")
     runGitCommand(modulePath, "git add .")
     runGitCommand(modulePath, 'git commit -m "Initial commit"')
 
     if hasRepo:
         runGitCommand(modulePath, f"git remote add origin {remoteURL}")
-        pushRepository(modulePath, remoteURL)
+        pushMainBranch(modulePath, remoteURL)
 
     return remoteURL
 
@@ -397,7 +389,7 @@ def guideVersionsReadme(modulePath, dependencies, readme, remoteURL=None):
         runGitCommand(modulePath, f'git commit {readme} -m "[readme] Update version information"')
 
         if remoteURL:
-            pushRepository(modulePath, remoteURL)
+            pushMainBranch(modulePath, remoteURL)
 
 
 def guideInstallScriptGeneration(modulePath, dependencies, scriptNameBody):
@@ -441,7 +433,7 @@ def processInstallScript(script, modulePath, readme, remoteURL=None):
     )
 
     if remoteURL:
-        pushRepository(modulePath, remoteURL)
+        pushMainBranch(modulePath, remoteURL)
     else:
         print(
             "\n"
