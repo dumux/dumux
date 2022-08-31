@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup Experimental
- * \ingroup TimeStepping
  * \brief Class that represents a time level during time integration.
  */
 #ifndef DUMUX_TIMESTEPPING_TIME_LEVEL_HH

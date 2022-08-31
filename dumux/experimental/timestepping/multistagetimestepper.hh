@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup Experimental
- * \ingroup TimeStepping
  * \brief A time stepper performing a single time step of a transient simulation
  */
 #ifndef DUMUX_TIMESTEPPING_MULTISTAGE_TIMESTEPPER_HH
