@@ -55,6 +55,7 @@ namespace Dumux {
 
 /*!
  * \ingroup MultiDomain
+ * \ingroup Assembly
  * \brief trait that is specialized for coupling manager supporting multithreaded assembly
  */
 template<class CM>

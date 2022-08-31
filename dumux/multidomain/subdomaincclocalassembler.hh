@@ -785,6 +785,7 @@ public:
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
+ * \ingroup MultiDomain
  * \brief Cell-centered scheme local assembler using analytic differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
