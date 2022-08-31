@@ -67,15 +67,15 @@ inline Shape shapeFromString(const std::string& s)
 }
 
 /*!
-* \brief Returns the radius of a pore throat
-*
-* \param poreRadiusOne The radius of the first pore
-* \param poreRadiusTwo The radius of the second pore
-* \param centerTocenterDist The center-to-center distance between the pores
-* \param n Fitting parameter
-*
-* Joekar-Niasar et al. (2008) https://doi.org/10.1007/s11242-007-9191-7
-*/
+ * \brief Returns the radius of a pore throat
+ *
+ * \param poreRadiusOne The radius of the first pore
+ * \param poreRadiusTwo The radius of the second pore
+ * \param centerTocenterDist The center-to-center distance between the pores
+ * \param n Fitting parameter
+ *
+ * Joekar-Niasar et al. (2008) https://doi.org/10.1007/s11242-007-9191-7
+ */
 template<class Scalar>
 inline Scalar averagedRadius(const Scalar poreRadiusOne, const Scalar poreRadiusTwo, const Scalar centerTocenterDist, const Scalar n = 0.1)
 {
@@ -115,7 +115,8 @@ inline Dune::ReservedVector<Scalar, 4> cornerHalfAngles(Shape shape)
         }
         case Shape::circle:
         {
-            return Dune::ReservedVector<Scalar, 4>{};
+            const Scalar value = 0.5*M_PI; // we define the (single) corner angle of a circle as 180°
+            return { value };
         }
         case Shape::polygon: DUNE_THROW(Dune::InvalidStateException, "Corner half angles for polygons must be calculated explicitly");
         default: DUNE_THROW(Dune::InvalidStateException, "Unknown shape");
@@ -187,6 +188,22 @@ inline constexpr Shape shape(const Scalar shapeFactor) noexcept
         return Shape::circle;
     else
         return Shape::polygon;
+}
+
+//! Returns if a shape is regular
+inline bool isRegularShape(Shape shape)
+{
+    switch (shape)
+    {
+        case Shape::equilateralTriangle: return true;
+        case Shape::square: return true;
+        case Shape::circle: return true;
+        case Shape::rectangle: return false;
+        case Shape::scaleneTriangle: return false;
+        case Shape::polygon: DUNE_THROW(Dune::InvalidStateException, "Equality of Corner half angles for polygons must be determined explicitly");
+        default:
+            DUNE_THROW(Dune::InvalidStateException, "Unknown shape");
+    }
 }
 
 //! Returns the cross-sectional area of a given geometry

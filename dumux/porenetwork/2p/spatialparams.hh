@@ -190,9 +190,23 @@ public:
     {
         // take the average of both adjacent pores TODO: is this correct?
         const Scalar surfaceTension = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
-        return ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
-                                                      this->asImp_().contactAngle(element, elemVolVars),
-                                                      this->asImp_().throatInscribedRadius(element, elemVolVars));
+        // get the cross section shape of the throat
+        const auto& shape = this->gridGeometry().throatCrossSectionShape(/*eIdx*/ 0);
+
+        // if the cross section of the throat is circular, return a negative value for pc snap-off
+        // to make sure that no snap-off happens in a circular pore
+        if (shape == Throat::Shape::circle)
+        {
+            return std::numeric_limits<Scalar>::lowest();
+        }
+        else if (Throat::hasSameCornerAngles(shape)) // call the pc snap-off calculated for shapes with same corner angles
+            return ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
+                                                          this->asImp_().contactAngle(element, elemVolVars),
+                                                          this->asImp_().throatInscribedRadius(element, elemVolVars),
+                                                          shape);
+        else // currently the shapes with different corner angles are not supported
+            DUNE_THROW(Dune::InvalidStateException, "The shape has not equal corner angles and "
+                                                    "the Pc snap-off is not implemented for this shape");
     }
 
     /*!

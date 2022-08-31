@@ -20,6 +20,8 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __Pore-network model__: Pore-network model will no longer prevent non-wetting fluid flowing out by default. Throats  blocking non-wetting fluid can be specified by setting runtime parameter `InvasionState.BlockNonwettingPhaseAtThroatLabel`.
 
+- __Pore network model__: Fixed a bug in the calculation of pc snap-off. To calculate the pc snap-off, corner half angle of the throat cross section shape is needed. Previous implementation was only based on square cross section. We included corner half angle in the calculation to be able to calculate pc snap-off for other cross sections than square.
+
 - __Examples__: Extend the porenetwork_upscaling example to include non-creeping flow simulation in pore network. The example is able now to provide not only upscaled Darcy permeability but also Forchheimer permeability and coefficient (employed in Forchheimer equation).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
