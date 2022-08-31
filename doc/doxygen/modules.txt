@@ -302,6 +302,11 @@
          */
     /*!
      * \ingroup Discretization
+     * \defgroup CVFEDiscretization CVFE
+     * \brief CVFE.
+     */
+    /*!
+     * \ingroup Discretization
      * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
      */
@@ -330,6 +335,11 @@
      * \defgroup PoreNetworkDiscretization Pore network model discretization
      * \brief The pore-network model discretization.
      */
+    /*!
+     * \ingroup Discretization
+     * \defgroup PQ1BubbleDiscretization PQ1 bubble scheme
+     * \brief PQ1 bubble scheme.
+     */
 /* ***************** Experimental ******************/
 /*!
  * \defgroup Experimental Experimental
@@ -344,6 +354,11 @@
      * \ingroup Flux
      * \defgroup BoxFlux Flux related to the box scheme
      * \brief Flux related to the box scheme
+     */
+    /*!
+     * \ingroup Flux
+     * \defgroup CVFEFlux Flux related to the CVFE scheme
+     * \brief Flux related to the CVFE scheme
      */
     /*!
      * \ingroup Flux
@@ -396,6 +411,7 @@
  *  - __Fluid state:__ <br> @copydoc FluidStates
  *  - __Solid state:__ <br> @copydoc SolidStates
  *  - __Fluid system:__ <br> @copydoc Fluidsystems
+ *  - __Solid system:__ <br> @copydoc Solidsystems
  *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
  */
     /*!
@@ -519,6 +535,13 @@
      *  i.e. all member functions are static. This is a conscious
      *  decision since the thermodynamic state of the system is expressed by
      *  a solid state!
+     */
+    /*!
+     * \ingroup Material
+     * \defgroup SpatialParameters Spatial parameters
+     * \brief Spatial parameters.
+     *
+     * Spatial parameters.
      */
 
 /* ***************** Adaptive ******************/
