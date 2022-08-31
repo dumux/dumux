@@ -4,6 +4,7 @@ from math import *
 import subprocess
 import sys
 import os
+import json
 
 if len(sys.argv) < 3:
     sys.stderr.write("Please provide the following arguments:\n"  \
@@ -21,6 +22,11 @@ if os.path.exists(testName + '.log'):
     subprocess.call(['rm', testName + '.log'])
     print("Removed old log file ({})!".format(testName + '.log'))
 
+# remove the old json files
+if os.path.exists(testName + '.json'):
+    subprocess.call(['rm', testName + '.json'])
+    print("Removed old json file ({})!".format(testName + '.json'))
+
 # do the runs with different refinement
 for i in [0, 1, 2, 3]:
     subprocess.call(['./' + executableName]
@@ -30,34 +36,30 @@ for i in [0, 1, 2, 3]:
 
 def computeRates():
     # check the rates and append them to the log file
-    logFile = open(testName + '.log', "r+")
-
-    errorP = []
-    for line in logFile:
-        line = line.strip("\n")
-        line = line.strip("\[ConvergenceTest\]")
-        line = line.split()
-        errorP.append(float(line[2]))
+    with open(testName + '.json', 'r') as jsonFile:
+        data = json.load(jsonFile)
+        errorP = data["L2errors"]
+        numDofs = data["numDofs"]
 
     resultsP = []
-    logFile.truncate(0)
-    logFile.write("\nConvergence rates computed for {}:\n\n".format(testName))
-    logFile.write("n\terrorP\t\trateP\n")
-    logFile.write("-"*50 + "\n")
-    for i in range(len(errorP)-1):
-        if isnan(errorP[i]) or isinf(errorP[i]):
-            continue
-        if not ((errorP[i] < 1e-12 or errorP[i+1] < 1e-12)):
-            rateP = (log(errorP[i])-log(errorP[i+1]))/log(2)
-            message = "{}\t{:0.4e}\t{:0.4e}\n".format(i, errorP[i], rateP)
-            logFile.write(message)
-            resultsP.append(rateP)
-        else:
-            logFile.write("error: exact solution!?")
-    i = len(errorP)-1
-    message = "{}\t{:0.4e}\n".format(i, errorP[i], "")
-    logFile.write(message)
-    logFile.close()
+    with open(testName + '.log', "w") as logFile:
+        logFile.truncate(0)
+        logFile.write("\nConvergence rates computed for {}:\n\n".format(testName))
+        logFile.write("n\terrorP\t\trateP\n")
+        logFile.write("-"*50 + "\n")
+        for i in range(len(errorP)-1):
+            if isnan(errorP[i]) or isinf(errorP[i]):
+                continue
+            if not ((errorP[i] < 1e-12 or errorP[i+1] < 1e-12)):
+                rateP = (log(errorP[i])-log(errorP[i+1]))/log(sqrt(numDofs[i+1]/numDofs[i]))
+                message = "{}\t{:0.4e}\t{:0.4e}\n".format(i, errorP[i], rateP)
+                logFile.write(message)
+                resultsP.append(rateP)
+            else:
+                logFile.write("error: exact solution!?")
+        i = len(errorP)-1
+        message = "{}\t{:0.4e}\n".format(i, errorP[i], "")
+        logFile.write(message)
 
     subprocess.call(['cat', testName + '.log'])
 
