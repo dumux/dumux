@@ -285,7 +285,7 @@ private:
         // Dune::MultiTypeBlockMatrix does not provide a ColIterator which is needed by Dune::NonoverlappingSchwarzOperator.
         // We therefore can only solve these types of systems sequentially.
         // TODO: This can be adapted once the situation in Dune ISTL changes.
-        if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
+        if constexpr (isMultiTypeBlockMatrix<Matrix>::value || !LinearSolverTraits::canCommunicate)
             return solveSequential_(A, x, b);
         else
         {

@@ -40,6 +40,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/pdesolver.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>

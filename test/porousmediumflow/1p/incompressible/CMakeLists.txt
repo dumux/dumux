@@ -98,6 +98,7 @@ dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff_ug
                LABELS porousmediumflow 1p
                SOURCES main.cc
                CMAKE_GUARD dune-uggrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=ILU0BiCGSTABBackend
                COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleFCDiamond NUMDIFFMETHOD=DiffMethod::numeric
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
