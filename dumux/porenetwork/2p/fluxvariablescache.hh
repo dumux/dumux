@@ -70,10 +70,18 @@ public:
 
         pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
 
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        auto pcOutsidePore = outsideVolVars.capillaryPressure();
+        auto pcInsidePore = insideVolVars.capillaryPressure();
         const auto& elemSol = elementSolution(element, elemVolVars, fvGeometry);
         const auto& spatialParams = problem.spatialParams();
-        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
+        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
+        if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
+            fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
+
         // open a file to write the analytical pcEntry and Sw for comparison purposes   
         std::ofstream file("analytical_SwEntry");
         file << std::setprecision(15) << "pcEntry: " << pcEntry_ << " Sw: " << fluidMatrixInteraction.sw(pcEntry_) << std::endl;
