@@ -193,6 +193,43 @@ struct BlockTypeHelper<S, true>
 template<class SolutionVector>
 using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<SolutionVector>::value>::type;
 
+template<class Scalar, class Residual, class LinearSolver, class Assembler>
+auto normOfResidual(const Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
+-> std::enable_if_t<hasDynamicIndexAccess<Residual>(), Scalar>
+{
+    using HasState = decltype(isValid(Detail::hasState())(residual[0]));
+
+    if constexpr (Detail::hasNorm<LinearSolver, Residual>())
+        return linearSolver.norm(residual);
+    else if constexpr (HasState{})
+    {
+        using OriginalBlockType = Detail::BlockType<Residual>;
+        constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
+
+        using BlockType = Dune::FieldVector<Scalar, blockSize>;
+        using BlockVector = Dune::BlockVector<BlockType>;
+
+        if constexpr (Detail::hasNorm<LinearSolver, BlockVector>())
+        {
+            BlockVector resTmp; resTmp.resize(residual.size());
+            Detail::assign(resTmp, residual);
+            return linearSolver.norm(resTmp);
+        }
+    }
+    else
+        return assembler.normOfResidual(residual);
+}
+
+template<class Scalar, class Residual, class LinearSolver, class Assembler>
+auto normOfResidual(const Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
+-> std::enable_if_t<hasStaticIndexAccess<Residual>() && !hasDynamicIndexAccess<Residual>(), Scalar>
+{
+    if constexpr (Detail::hasNorm<LinearSolver, Residual>())
+        return linearSolver.norm(residual);
+    else
+        return assembler.normOfResidual(residual);
+}
+
 } // end namespace Detail
 
 /*!
@@ -499,26 +536,12 @@ public:
      */
     void solveLinearSystem(SolutionVector& deltaU)
     {
-        auto& b = this->assembler().residual();
         bool converged = false;
 
         try
         {
             if (numSteps_ == 0)
-            {
-                if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-                    initialResidual_ = this->linearSolver().norm(b);
-
-                else
-                {
-                    Scalar norm2 = b.two_norm2();
-                    if (comm_.size() > 1)
-                        norm2 = comm_.sum(norm2);
-
-                    using std::sqrt;
-                    initialResidual_ = sqrt(norm2);
-                }
-            }
+                initialResidual_ = Detail::normOfResidual<Scalar>(this->assembler().residual(), this->linearSolver(), this->assembler());
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
@@ -878,67 +901,14 @@ protected:
 
     void computeResidualReduction_(const Variables& vars)
     {
-        if constexpr (Detail::hasDynamicIndexAccess<SolutionVector>())
-        {
-            using HasState = decltype(isValid(Detail::hasState())(this->assembler().residual()[0]));
-
-            if constexpr (HasState{})
-            {
-                using OriginalBlockType = Detail::BlockType<SolutionVector>;
-                constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
-
-                using BlockType = Dune::FieldVector<Scalar, blockSize>;
-                using BlockVector = Dune::BlockVector<BlockType>;
-
-                if constexpr (Detail::hasNorm<LinearSolver, BlockVector>())
-                {
-                    if constexpr (!assemblerExportsVariables)
-                        this->assembler().assembleResidual(Backend::dofs(vars));
-                    else
-                        this->assembler().assembleResidual(vars);
-
-                    BlockVector resTmp; resTmp.resize(Backend::size(this->assembler().residual()));
-                    Detail::assign(resTmp, this->assembler().residual());
-                    residualNorm_ = this->linearSolver().norm(resTmp);
-                }
-            }
-            else if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-            {
-                // we assume that the assembler works on solution vectors
-                // if it doesn't export the variables type
-                if constexpr (!assemblerExportsVariables)
-                    this->assembler().assembleResidual(Backend::dofs(vars));
-                else
-                    this->assembler().assembleResidual(vars);
-                residualNorm_ = this->linearSolver().norm(this->assembler().residual());
-            }
-            else
-            {
-                if constexpr (!assemblerExportsVariables)
-                    residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
-                else
-                    residualNorm_ = this->assembler().residualNorm(vars);
-            }
-        }
-        else if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-        {
-            // we assume that the assembler works on solution vectors
-            // if it doesn't export the variables type
-            if constexpr (!assemblerExportsVariables)
-                this->assembler().assembleResidual(Backend::dofs(vars));
-            else
-                this->assembler().assembleResidual(vars);
-            residualNorm_ = this->linearSolver().norm(this->assembler().residual());
-        }
+        // we assume that the assembler works on solution vectors
+        // if it doesn't export the variables type
+        if constexpr (!assemblerExportsVariables)
+            this->assembler().assembleResidual(Backend::dofs(vars));
         else
-        {
-            if constexpr (!assemblerExportsVariables)
-                residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
-            else
-                residualNorm_ = this->assembler().residualNorm(vars);
-        }
+            this->assembler().assembleResidual(vars);
 
-        reduction_ = residualNorm_;
+        reduction_ = Detail::normOfResidual<Scalar>(this->assembler().residual(), this->linearSolver(), this->assembler());
         reduction_ /= initialResidual_;
     }
 
