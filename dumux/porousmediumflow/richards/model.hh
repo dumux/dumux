@@ -90,8 +90,11 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
+#include <type_traits>
+
 #include <dune/common/fvector.hh>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -132,7 +135,7 @@ struct RichardsModelTraits
     static constexpr int numFluidComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
-    static constexpr bool enableMolecularDiffusion() { return enableDiff; }
+    static constexpr bool enableMolecularDiffusion() { return Dumux::Deprecated::ExtendedRichardsHelper<enableDiff>::isExtendedRichards(); }
     static constexpr bool enableEnergyBalance() { return false; }
 
     //! The Richards model has some assumptions on the fluid systems
@@ -268,7 +271,10 @@ private:
     using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
                                                      GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
 public:
-    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+    // TODO: After release 3.6, use the default (FieldVector) for Richards and remove the whole property specialization
+    using type = std::conditional_t<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>(),
+                                    SwitchablePrimaryVariables<PrimaryVariablesVector, int>,
+                                    Deprecated::RichardsSwitchablePrimaryVariables<PrimaryVariablesVector, int>>;
 };
 
 /*!

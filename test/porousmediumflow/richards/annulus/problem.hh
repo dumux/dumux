@@ -133,9 +133,7 @@ public:
             return exactSolution(globalPos);
         else
         {
-            PrimaryVariables values(initialPressure_);
-            values.setState(Indices::bothPhases);
-            return values;
+            return { initialPressure_ };
         }
     }
 
@@ -167,9 +165,7 @@ public:
             - A*mu_/(2*M_PI*k_)*std::log(r/innerRadius_)
             + source_*0.25*(r*r - ri2)*mu_/k_;
 
-        PrimaryVariables priVars(applyInverseKirchhoffTransformation_(psi));
-        priVars.setState(Indices::bothPhases);
-        return priVars;
+        return { applyInverseKirchhoffTransformation_(psi) };
     }
 
     PrimaryVariables exactSolution(const GlobalPosition& globalPos) const

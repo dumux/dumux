@@ -103,6 +103,12 @@ struct SpatialParams<TypeTag, TTag::Soil>
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
 
+// TODO: remove after release (3.6)
+// Set the primary variables type
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::Soil>
+{ using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+
 // Create new type tags
 namespace TTag {
 struct Root { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
@@ -148,6 +154,12 @@ struct SpatialParams<TypeTag, TTag::Root>
     using type = RootSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                    GetPropType<TypeTag, Properties::Scalar>>;
 };
+
+// TODO: remove after release (3.6)
+// Set the primary variables type
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::Root>
+{ using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SOILTYPETAG>

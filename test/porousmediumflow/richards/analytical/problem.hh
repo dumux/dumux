@@ -184,7 +184,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(bothPhases);
         const Scalar time = time_;
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
@@ -226,7 +225,6 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(bothPhases);
         analyticalSolution(values, time_, globalPos);
         return values;
     }

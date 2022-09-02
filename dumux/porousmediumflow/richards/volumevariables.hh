@@ -30,14 +30,14 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/typetraits/state.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/constants.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
-#include "primaryvariableswitch.hh"
+#include <dumux/porousmediumflow/richardsextended/primaryvariableswitch.hh>
 
 namespace Dumux {
 
@@ -92,7 +92,7 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
     using Indices = typename Traits::ModelTraits::Indices;
     //! If water diffusion in air is enabled
-    static constexpr bool enableWaterDiffusionInAir() { return ModelTraits::enableMolecularDiffusion(); };
+    static constexpr bool enableWaterDiffusionInAir() { return Dumux::Deprecated::ExtendedRichardsHelper<ModelTraits::enableMolecularDiffusion()>::isExtendedRichards(); }
 
     //! Export phase indices
     static constexpr auto liquidPhaseIdx = Traits::FluidSystem::phase0Idx;
@@ -117,9 +117,6 @@ public:
 
         const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
 
-        const auto& priVars = elemSol[scv.localDofIndex()];
-        const auto phasePresence = getState_(priVars);
-
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
         minPc_ = fluidMatrixInteraction.endPointPc();
@@ -127,102 +124,112 @@ public:
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
 
-        typename FluidSystem::ParameterCache paramCache;
-        auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
+        if constexpr (enableWaterDiffusionInAir())
         {
-            return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-        };
+            const auto& priVars = elemSol[scv.localDofIndex()];
+            const auto phasePresence = priVars.state();
 
-        if (phasePresence == Indices::gasPhaseOnly)
-        {
-            moleFraction_[liquidPhaseIdx] = 1.0;
-            massFraction_[liquidPhaseIdx] = 1.0;
-            moleFraction_[gasPhaseIdx] = priVars[Indices::switchIdx];
-
-            const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
-            ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));
-
-            //X_w = x_w* M_w/ M_avg
-            massFraction_[gasPhaseIdx] = priVars[Indices::switchIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
-
-            fluidState_.setSaturation(liquidPhaseIdx, 0.0);
-            fluidState_.setSaturation(gasPhaseIdx, 1.0);
-
-            EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState_, solidState_);
-
-            // get pc for sw = 0.0
-            const Scalar pc = fluidMatrixInteraction.pc(0.0);
-
-            // set the wetting pressure
-            fluidState_.setPressure(liquidPhaseIdx, problem.nonwettingReferencePressure() - pc);
-            fluidState_.setPressure(gasPhaseIdx, problem.nonwettingReferencePressure());
-
-            // set molar densities
-            if constexpr (enableWaterDiffusionInAir())
+            typename FluidSystem::ParameterCache paramCache;
+            auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
             {
-                molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
-            }
+                return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
+            };
 
-            // density and viscosity
-            paramCache.updateAll(fluidState_);
-            fluidState_.setDensity(liquidPhaseIdx, FluidSystem::density(fluidState_, paramCache, liquidPhaseIdx));
-            fluidState_.setDensity(gasPhaseIdx, FluidSystem::density(fluidState_, paramCache, gasPhaseIdx));
-            fluidState_.setViscosity(liquidPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, liquidPhaseIdx));
-
-            // compute and set the enthalpy
-            fluidState_.setEnthalpy(liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, liquidPhaseIdx));
-            fluidState_.setEnthalpy(gasPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, gasPhaseIdx));
-
-            //binary diffusion coefficients
-            paramCache.updateAll(fluidState_);
-            effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(gasPhaseIdx,
-                                                                   FluidSystem::comp1Idx,
-                                                                   FluidSystem::comp0Idx);
-        }
-        else if (phasePresence == Indices::bothPhases)
-        {
-            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
-
-            // if we want to account for diffusion in the air phase
-            // use Raoult to compute the water mole fraction in air
-            if constexpr (enableWaterDiffusionInAir())
+            if (phasePresence == Indices::gasPhaseOnly)
             {
-                molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
                 moleFraction_[liquidPhaseIdx] = 1.0;
-
-                moleFraction_[gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonwettingReferencePressure();
+                massFraction_[liquidPhaseIdx] = 1.0;
+                moleFraction_[gasPhaseIdx] = priVars[Indices::switchIdx];
 
                 const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
                 ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));
 
                 //X_w = x_w* M_w/ M_avg
-                massFraction_[gasPhaseIdx] = moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
+                massFraction_[gasPhaseIdx] = priVars[Indices::switchIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
 
-                // binary diffusion coefficients
+                fluidState_.setSaturation(liquidPhaseIdx, 0.0);
+                fluidState_.setSaturation(gasPhaseIdx, 1.0);
+
+                EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState_, solidState_);
+
+                // get pc for sw = 0.0
+                const Scalar pc = fluidMatrixInteraction.pc(0.0);
+
+                // set the wetting pressure
+                fluidState_.setPressure(liquidPhaseIdx, problem.nonwettingReferencePressure() - pc);
+                fluidState_.setPressure(gasPhaseIdx, problem.nonwettingReferencePressure());
+
+                // set molar densities
+                if constexpr (enableWaterDiffusionInAir())
+                {
+                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
+                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
+                }
+
+                // density and viscosity
+                paramCache.updateAll(fluidState_);
+                fluidState_.setDensity(liquidPhaseIdx, FluidSystem::density(fluidState_, paramCache, liquidPhaseIdx));
+                fluidState_.setDensity(gasPhaseIdx, FluidSystem::density(fluidState_, paramCache, gasPhaseIdx));
+                fluidState_.setViscosity(liquidPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, liquidPhaseIdx));
+
+                // compute and set the enthalpy
+                fluidState_.setEnthalpy(liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, liquidPhaseIdx));
+                fluidState_.setEnthalpy(gasPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, gasPhaseIdx));
+
+                //binary diffusion coefficients
                 paramCache.updateAll(fluidState_);
                 effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(gasPhaseIdx,
                                                                        FluidSystem::comp1Idx,
                                                                        FluidSystem::comp0Idx);
             }
+            else if (phasePresence == Indices::bothPhases)
+            {
+                completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+
+                // if we want to account for diffusion in the air phase
+                // use Raoult to compute the water mole fraction in air
+                if constexpr (enableWaterDiffusionInAir())
+                {
+                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
+                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
+                    moleFraction_[liquidPhaseIdx] = 1.0;
+
+                    moleFraction_[gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonwettingReferencePressure();
+
+                    const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
+                    ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));
+
+                    //X_w = x_w* M_w/ M_avg
+                    massFraction_[gasPhaseIdx] = moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
+
+                    // binary diffusion coefficients
+                    paramCache.updateAll(fluidState_);
+                    effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(gasPhaseIdx,
+                                                                           FluidSystem::comp1Idx,
+                                                                           FluidSystem::comp0Idx);
+                }
+            }
+            else if (phasePresence == Indices::liquidPhaseOnly)
+            {
+                completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+
+                if constexpr (enableWaterDiffusionInAir())
+                {
+                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
+                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
+                    moleFraction_[liquidPhaseIdx] = 1.0;
+                    moleFraction_[gasPhaseIdx] = 0.0;
+                    massFraction_[liquidPhaseIdx] = 1.0;
+                    massFraction_[gasPhaseIdx] = 0.0;
+
+                    // binary diffusion coefficients (none required for liquid phase only)
+                    effectiveDiffCoeff_ = 0.0;
+                }
+            }
         }
-        else if (phasePresence == Indices::liquidPhaseOnly)
+        else
         {
             completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
-
-            if constexpr (enableWaterDiffusionInAir())
-            {
-                molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
-                moleFraction_[liquidPhaseIdx] = 1.0;
-                moleFraction_[gasPhaseIdx] = 0.0;
-                massFraction_[liquidPhaseIdx] = 1.0;
-                massFraction_[gasPhaseIdx] = 0.0;
-
-                // binary diffusion coefficients (none required for liquid phase only)
-                effectiveDiffCoeff_ = 0.0;
-            }
         }
 
         //////////
