@@ -120,6 +120,7 @@ class IstlIterativeLinearSolver
 #endif
 
 public:
+
     /*!
      * \brief Constructor for sequential solvers
      */

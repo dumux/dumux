@@ -46,6 +46,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/typetraits/state.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/pdesolver.hh>
 #include <dumux/common/variablesbackend.hh>
@@ -877,10 +878,52 @@ protected:
 
     void computeResidualReduction_(const Variables& vars)
     {
-        // we assume that the assembler works on solution vectors
-        // if it doesn't export the variables type
-        if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
+        if constexpr (Detail::hasDynamicIndexAccess<SolutionVector>())
         {
+            using HasState = decltype(isValid(Detail::hasState())(this->assembler().residual()[0]));
+
+            if constexpr (HasState{})
+            {
+                using OriginalBlockType = Detail::BlockType<SolutionVector>;
+                constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
+
+                using BlockType = Dune::FieldVector<Scalar, blockSize>;
+                using BlockVector = Dune::BlockVector<BlockType>;
+
+                if constexpr (Detail::hasNorm<LinearSolver, BlockVector>())
+                {
+                    if constexpr (!assemblerExportsVariables)
+                        this->assembler().assembleResidual(Backend::dofs(vars));
+                    else
+                        this->assembler().assembleResidual(vars);
+
+                    BlockVector resTmp; resTmp.resize(Backend::size(this->assembler().residual()));
+                    Detail::assign(resTmp, this->assembler().residual());
+                    residualNorm_ = this->linearSolver().norm(resTmp);
+                }
+            }
+            else if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
+            {
+                // we assume that the assembler works on solution vectors
+                // if it doesn't export the variables type
+                if constexpr (!assemblerExportsVariables)
+                    this->assembler().assembleResidual(Backend::dofs(vars));
+                else
+                    this->assembler().assembleResidual(vars);
+                residualNorm_ = this->linearSolver().norm(this->assembler().residual());
+            }
+            else
+            {
+                if constexpr (!assemblerExportsVariables)
+                    residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
+                else
+                    residualNorm_ = this->assembler().residualNorm(vars);
+            }
+        }
+        else if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
+        {
+            // we assume that the assembler works on solution vectors
+            // if it doesn't export the variables type
             if constexpr (!assemblerExportsVariables)
                 this->assembler().assembleResidual(Backend::dofs(vars));
             else

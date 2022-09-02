@@ -40,7 +40,6 @@
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/utility.hh>
 #include <dumux/linear/solver.hh>
-#include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
 

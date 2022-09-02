@@ -167,7 +167,8 @@ int main(int argc, char** argv)
     vtkWriter.write(1.0);
 
     // output residual norm (test assembler interface)
-    std::cout << "Residual norm: " << assembler->residualNorm(x) << std::endl;
+    assembler->assembleResidual(x);
+    std::cout << "Residual norm: " << linearSolver->norm(assembler->residual()) << std::endl;
 
     timer.stop();
 
