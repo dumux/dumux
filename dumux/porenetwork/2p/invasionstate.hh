@@ -217,6 +217,7 @@ private:
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
         const auto pcMax = std::max_element(pc.begin(), pc.end());
+        const auto pcMin = std::min_element(pc.begin(), pc.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
@@ -233,11 +234,10 @@ private:
             return Result{}; //nothing happened
         }
 
-        if (*pcMax > pcEntry)
+        if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMax <= pcSnapoff)
+        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff)
            invadedAfterSwitch = false;
-
         invadedCurrentTimeStep_[eIdx] = invadedAfterSwitch;
 
         if (invadedBeforeSwitch == invadedAfterSwitch)

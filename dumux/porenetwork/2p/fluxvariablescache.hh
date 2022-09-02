@@ -82,6 +82,11 @@ public:
         if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
             fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
 
+        if (!invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else
+            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+
         // open a file to write the analytical pcEntry and Sw for comparison purposes   
         std::ofstream file("analytical_SwEntry");
         file << std::setprecision(15) << "pcEntry: " << pcEntry_ << " Sw: " << fluidMatrixInteraction.sw(pcEntry_) << std::endl;
