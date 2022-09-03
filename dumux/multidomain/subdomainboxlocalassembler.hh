@@ -286,7 +286,7 @@ public:
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
             {
-                const auto bcTypes = this->elemBcTypes()[scvI.localDofIndex()];
+                const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
                 if (bcTypes.hasDirichlet())
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
@@ -573,7 +573,7 @@ public:
                         // If the dof is coupled by a Dirichlet condition,
                         // set the derived value only once (i.e. overwrite existing values).
                         // For other dofs, add the contribution of the partial derivative.
-                        const auto bcTypes = this->elemBcTypes()[scv.localDofIndex()];
+                        const auto bcTypes = this->elemBcTypes().get(fvGeometry, scv);
                         if (bcTypes.isCouplingDirichlet(eqIdx))
                             A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
                         else if (bcTypes.isDirichlet(eqIdx))
