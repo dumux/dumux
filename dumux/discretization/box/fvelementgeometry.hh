@@ -366,20 +366,18 @@ public:
     {
         assert(isBound());
         const auto geo = element().geometry();
+        const GeometryHelper geometryHelper(geo);
         if (scvf.boundary())
         {
-            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element());
+            const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
             const auto& key = scvfBoundaryGeometryKeys_[localBoundaryIndex];
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getBoundaryScvfCorners(key[0], key[1]) };
         }
         else
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
     }
 
 private:
-    unsigned int numInnerScvf_(const Element& element) const
-    { return (dim==1) ? 1 : element.subEntities(dim-1); }
-
     void makeElementGeometries_()
     {
         hasBoundaryScvf_ = false;
@@ -407,7 +405,7 @@ private:
         }
 
         // construct the sub control volume faces
-        const auto numInnerScvf = numInnerScvf_(element);
+        const auto numInnerScvf = geometryHelper.numInteriorScvf();
         scvfs_.resize(numInnerScvf);
         scvfBoundaryGeometryKeys_.clear();
 

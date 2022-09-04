@@ -208,14 +208,15 @@ public:
         assert(isBound());
         const auto eIdx = this->elementMapper().index(element);
         const auto geo = element.geometry();
+        const GeometryHelper geometryHelper(geo);
         if (scvf.boundary())
         {
-            const auto localBoundaryIndex = scvf.index() - numInnerScvf_(element);
+            const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
             const auto& key = scvfBoundaryGeometryKeys_.at(eIdx)[localBoundaryIndex];
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getBoundaryScvfCorners(key[0], key[1]) };
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getBoundaryScvfCorners(key[0], key[1]) };
         }
         else
-            return { Dune::GeometryTypes::cube(dim-1), GeometryHelper(geo).getScvfCorners(scvf.index()) };
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
     }
 
 private:
@@ -371,9 +372,6 @@ private:
         if (this->isPeriodic() && this->gridView().comm().size() > 1)
             DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for box method for parallel simulations!");
     }
-
-    unsigned int numInnerScvf_(const Element& element) const
-    { return (dim==1) ? 1 : element.subEntities(dim-1); }
 
     const FeCache feCache_;
 
