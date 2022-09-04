@@ -62,6 +62,7 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GGCache = typename GG::Cache;
     using GeometryHelper = PQ1BubbleGeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
 public:
     //! export the element type
@@ -77,19 +78,20 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim) + 1;
 
     //! Constructor
-    PQ1BubbleFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry) {}
+    PQ1BubbleFVElementGeometry(const GGCache& ggCache)
+    : ggCache_(&ggCache)
+    {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
-        return gridGeometry().scvs(eIdx_)[scvIdx];
+        return ggCache_->scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
-        return gridGeometry().scvfs(eIdx_)[scvfIdx];
+        return ggCache_->scvfs(eIdx_)[scvfIdx];
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -100,9 +102,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -113,9 +115,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! Get a local finite element basis
@@ -127,13 +129,13 @@ public:
     //! The total number of sub control volumes
     std::size_t numScv() const
     {
-        return gridGeometry().scvs(eIdx_).size();
+        return ggCache_->scvs(eIdx_).size();
     }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
     {
-        return gridGeometry().scvfs(eIdx_).size();
+        return ggCache_->scvfs(eIdx_).size();
     }
 
     /*!
@@ -184,11 +186,11 @@ public:
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
+    { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
-    { return gridGeometry().hasBoundaryScvf(eIdx_); }
+    { return ggCache_->hasBoundaryScvf(eIdx_); }
 
     //! The bound element index
     std::size_t elementIndex() const
@@ -219,7 +221,7 @@ public:
             GeometryHelper helper(geo);
             const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
             const auto [localFacetIndex, isScvfLocalIdx]
-                = gridGeometryPtr_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
+                = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {
                 Dune::GeometryTypes::cube(dim-1),
                 helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
@@ -236,7 +238,7 @@ public:
     }
 
 private:
-    const GridGeometry* gridGeometryPtr_;
+    const GGCache* ggCache_;
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
