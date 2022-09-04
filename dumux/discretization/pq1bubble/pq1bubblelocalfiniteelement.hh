@@ -79,7 +79,7 @@ public:
         const auto refElement = Dune::referenceElement<typename Traits::DomainFieldType, dim>(type());
         const auto& center = refElement.position(0, 0);
         p1Basis.evaluateFunction(center, pq1AtCenter_);
-        pq1ProductAtCenter_ = std::accumulate(pq1AtCenter_.begin(), pq1AtCenter_.end(), 1.0, std::multiplies<D>{});
+        bubbleAtCenter_ = evaluateBubble_(center, pq1AtCenter_);
     }
 
     /*!
@@ -94,12 +94,12 @@ public:
     void evaluateFunction(const typename Traits::DomainType& x,
                           std::vector<typename Traits::RangeType>& out) const
     {
-        out.resize(size());
+        out.reserve(size());
         const auto& p1Basis = pq1FiniteElement_.localBasis();
         p1Basis.evaluateFunction(x, out);
+        const auto bubble = evaluateBubble_(x, out);
         out.resize(size());
-        const D pq1Product = std::accumulate(out.begin(), out.begin()+p1Basis.size(), 1.0, std::multiplies<D>{});
-        out.back() = pq1Product/pq1ProductAtCenter_;
+        out.back() = bubble/bubbleAtCenter_;
         for (int i = 0; i < numDofs-1; ++i)
             out[i] -= pq1AtCenter_[i]*out.back();
     }
@@ -110,32 +110,21 @@ public:
     void evaluateJacobian(const typename Traits::DomainType& x,
                           std::vector<typename Traits::JacobianType>& out) const
     {
-        out.resize(size());
+        out.reserve(size());
         const auto& p1Basis = pq1FiniteElement_.localBasis();
         p1Basis.evaluateJacobian(x, out);
-        out.resize(size());
 
         std::vector<typename Traits::RangeType> shapeValues;
         p1Basis.evaluateFunction(x, shapeValues);
 
-        typename Traits::JacobianType normalizedProductJacobian(0.0);
-        for (int k = 0; k < dim; ++k)
-        {
-            for (int i = 0; i < numDofs-1; ++i)
-            {
-                D value(1.0);
-                for (int j = 0; j < numDofs-1; ++j)
-                    value *= i==j ? out[i][0][k] : shapeValues[j][0];
-                normalizedProductJacobian[0][k] += value;
-            }
-        }
-        normalizedProductJacobian /= pq1ProductAtCenter_;
+        const auto bubbleJacobian = evaluateBubbleJacobian_(x, shapeValues, out);
 
         for (int i = 0; i < numDofs-1; ++i)
             for (int k = 0; k < dim; ++k)
-                out[i][0][k] -= pq1AtCenter_[i]*normalizedProductJacobian[0][k];
+                out[i][0][k] -= pq1AtCenter_[i]*bubbleJacobian[0][k];
 
-        out.back() = normalizedProductJacobian;
+        out.resize(size());
+        out.back() = bubbleJacobian;
     }
 
     /** \brief Evaluate partial derivatives of any order of all shape functions
@@ -168,9 +157,39 @@ public:
         return { typeId };
     }
 private:
+    // evaluate bubble function at x
+    // pq1 is the P1/Q1 basis pre-evaluated at x
+    typename Traits::RangeType evaluateBubble_(const typename Traits::DomainType& x,
+                                               const std::vector<typename Traits::RangeType>& pq1) const
+    {
+        return std::accumulate(pq1.begin(), pq1.end(), 1.0, std::multiplies<typename Traits::RangeType>{});
+    }
+
+    // evaluate bubble function at x
+    // pq1 is the P1/Q1 basis pre-evaluated at x
+    // pq1Jacobian is the P1/Q1 basis Jacobian pre-evaluated at x
+    typename Traits::JacobianType evaluateBubbleJacobian_(const typename Traits::DomainType& x,
+                                                          const std::vector<typename Traits::RangeType>& pq1,
+                                                          const std::vector<typename Traits::JacobianType>& pq1Jacobian) const
+    {
+        typename Traits::JacobianType bubbleJacobian(0.0);
+        for (int k = 0; k < dim; ++k)
+        {
+            for (int i = 0; i < numDofs-1; ++i)
+            {
+                typename Traits::RangeType value(1.0);
+                for (int j = 0; j < numDofs-1; ++j)
+                    value *= i==j ? pq1Jacobian[i][0][k] : pq1[j][0];
+                bubbleJacobian[0][k] += value;
+            }
+        }
+        bubbleJacobian /= bubbleAtCenter_;
+        return bubbleJacobian;
+    }
+
     PQ1FiniteElement pq1FiniteElement_;
     std::vector<typename Traits::RangeType> pq1AtCenter_;
-    typename Traits::RangeType pq1ProductAtCenter_;
+    typename Traits::RangeType bubbleAtCenter_;
 };
 
 /*!
