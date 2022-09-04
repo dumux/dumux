@@ -32,7 +32,6 @@
 #include <optional>
 #include <utility>
 
-#include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 

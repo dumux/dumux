@@ -24,7 +24,6 @@
 #ifndef DUMUX_TEST_IO_GRIDMANAGER_TESTS_HH
 #define DUMUX_TEST_IO_GRIDMANAGER_TESTS_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
