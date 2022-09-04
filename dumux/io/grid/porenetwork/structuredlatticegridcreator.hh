@@ -33,7 +33,6 @@
 
 #include <dune/common/concept.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -197,11 +196,7 @@ private:
         for (auto&& vertex : vertexSet_)
             factory.insertVertex(vertex);
         for (auto&& element : elementSet_)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,7)
             factory.insertElement(Dune::GeometryTypes::cube(1), {element.first, element.second});
-#else
-            factory.insertElement(Dune::GeometryType(1), {element.first, element.second});
-#endif
 
         gridPtr_ = std::shared_ptr<Grid>(factory.createGrid());
     }

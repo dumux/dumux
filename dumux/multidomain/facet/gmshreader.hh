@@ -33,7 +33,6 @@
 #include <unordered_map>
 
 #include <dune/common/timer.hh>
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
@@ -339,7 +338,6 @@ private:
     //! obtain Dune::GeometryType from a given gmsh element type
     Dune::GeometryType obtainGeometryType(std::size_t gmshElemType) const
     {
-        // TODO: Version check with Dune 2.5!
         switch (gmshElemType)
         {
             case 15: return Dune::GeometryTypes::vertex;        // points
