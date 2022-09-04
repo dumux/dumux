@@ -134,7 +134,9 @@ public:
 
     //! Constructor
     PQ1BubbleFVGridGeometry(const GridView gridView)
-    : ParentType(gridView), dofMapper_(gridView, Traits::layout())
+    : ParentType(gridView)
+    , dofMapper_(gridView, Traits::layout())
+    , cache_(*this)
     {
         update_();
     }
@@ -177,14 +179,6 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-    //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return scvfs_[eIdx]; }
-
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -201,21 +195,71 @@ public:
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
 
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const PQ1BubbleFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
+private:
+
+    class PQ1BubbleGridGeometryCache
+    {
+        friend class PQ1BubbleFVGridGeometry;
+    public:
+        explicit PQ1BubbleGridGeometryCache(const PQ1BubbleFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const PQ1BubbleFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+        //! Get the global sub control volume indices of an element
+        const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
+        { return scvs_[eIdx]; }
+
+        //! Get the global sub control volume face indices of an element
+        const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
+        { return scvfs_[eIdx]; }
+
+        //! Returns whether one of the geometry's scvfs lies on a boundary
+        bool hasBoundaryScvf(GridIndexType eIdx) const
+        { return hasBoundaryScvf_[eIdx]; }
+
+        //! Local mappings necessary to construct geometries of scvfs
+        const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
+        { return scvfBoundaryGeometryKeys_.at(eIdx); }
+
+    private:
+        void clear_()
+        {
+            scvs_.clear();
+            scvfs_.clear();
+            hasBoundaryScvf_.clear();
+            scvfBoundaryGeometryKeys_.clear();
+        }
+
+        std::vector<std::vector<SubControlVolume>> scvs_;
+        std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+        std::vector<bool> hasBoundaryScvf_;
+        std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
+
+        const PQ1BubbleFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = PQ1BubbleGridGeometryCache;
 
 private:
     void update_()
     {
-        scvs_.clear();
-        scvfs_.clear();
+        cache_.clear_();
         dofMapper_.update(this->gridView());
 
         auto numElements = this->gridView().size(0);
-        scvs_.resize(numElements);
-        scvfs_.resize(numElements);
-        hasBoundaryScvf_.resize(numElements, false);
+        cache_.scvs_.resize(numElements);
+        cache_.scvfs_.resize(numElements);
+        cache_.hasBoundaryScvf_.resize(numElements, false);
 
         boundaryDofIndices_.assign(numDofs(), false);
 
@@ -237,11 +281,11 @@ private:
 
             numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
-            scvs_[eIdx].resize(geometryHelper.numScv());
+            cache_.scvs_[eIdx].resize(geometryHelper.numScv());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
-                scvs_[eIdx][scvLocalIdx] = SubControlVolume(
+                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
                     geometryHelper.scvVolume(scvLocalIdx, corners),
                     geometryHelper.dofPosition(scvLocalIdx),
                     Dumux::center(corners),
@@ -254,7 +298,7 @@ private:
 
             // construct the sub control volume faces
             numScvf_ += geometryHelper.numInteriorScvf();
-            scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
+            cache_.scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
             LocalIndexType scvfLocalIdx = 0;
             for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
             {
@@ -265,7 +309,7 @@ private:
                     [&](unsigned int i){ return corners[i]; }
                 );
 
-                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
+                cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
                     Dumux::center(corners),
                     area,
                     geometryHelper.normal(corners, scvPair),
@@ -280,7 +324,7 @@ private:
             {
                 if (intersection.boundary() && !intersection.neighbor())
                 {
-                    hasBoundaryScvf_[eIdx] = true;
+                    cache_.hasBoundaryScvf_[eIdx] = true;
 
                     const auto localFacetIndex = intersection.indexInInside();
                     const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
@@ -296,7 +340,7 @@ private:
                             Dune::GeometryTypes::cube(dim-1),
                             [&](unsigned int i){ return corners[i]; }
                         );
-                        scvfs_[eIdx].emplace_back(
+                        cache_.scvfs_[eIdx].emplace_back(
                             Dumux::center(corners),
                             area,
                             intersection.centerUnitOuterNormal(),
@@ -304,6 +348,12 @@ private:
                             scvfLocalIdx,
                             typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection }
                         );
+
+                        // store look-up map to construct boundary scvf geometries
+                        cache_.scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
+                            static_cast<LocalIndexType>(localFacetIndex),
+                            static_cast<LocalIndexType>(isScvfLocalIdx)
+                        }});
 
                         // increment local counter
                         scvfLocalIdx++;
@@ -368,19 +418,17 @@ private:
 
     const FeCache feCache_;
 
-    std::vector<std::vector<SubControlVolume>> scvs_;
-    std::vector<std::vector<SubControlVolumeFace>> scvfs_;
-
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
 
     // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
-    std::vector<bool> hasBoundaryScvf_;
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+
+    Cache cache_;
 };
 
 } // end namespace Dumux

@@ -29,11 +29,14 @@
 #include <optional>
 #include <utility>
 
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+
+#include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
 
@@ -59,6 +62,8 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GGCache = typename GG::Cache;
+    using GeometryHelper = PQ1BubbleGeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -73,19 +78,20 @@ public:
     static constexpr std::size_t maxNumElementScvs = (1<<dim) + 1;
 
     //! Constructor
-    PQ1BubbleFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry) {}
+    PQ1BubbleFVElementGeometry(const GGCache& ggCache)
+    : ggCache_(&ggCache)
+    {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
-        return gridGeometry().scvs(eIdx_)[scvIdx];
+        return ggCache_->scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
-        return gridGeometry().scvfs(eIdx_)[scvfIdx];
+        return ggCache_->scvfs(eIdx_)[scvfIdx];
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -96,9 +102,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -109,9 +115,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! Get a local finite element basis
@@ -123,13 +129,13 @@ public:
     //! The total number of sub control volumes
     std::size_t numScv() const
     {
-        return gridGeometry().scvs(eIdx_).size();
+        return ggCache_->scvs(eIdx_).size();
     }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
     {
-        return gridGeometry().scvfs(eIdx_).size();
+        return ggCache_->scvfs(eIdx_).size();
     }
 
     /*!
@@ -180,18 +186,59 @@ public:
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
+    { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
-    { return gridGeometry().hasBoundaryScvf(eIdx_); }
+    { return ggCache_->hasBoundaryScvf(eIdx_); }
 
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        if (scv.isOverlapping())
+            DUNE_THROW(Dune::NotImplemented, "Geometry of overlapping scv");
+
+        assert(isBound());
+        const auto geo = element().geometry();
+        const GeometryHelper helper(geo);
+        return {
+            helper.getScvGeometryType(scv.indexInElement()),
+            helper.getScvCorners(scv.indexInElement())
+        };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        if (scvf.boundary())
+        {
+            GeometryHelper helper(geo);
+            const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
+            const auto [localFacetIndex, isScvfLocalIdx]
+                = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
+            return {
+                Dune::GeometryTypes::cube(dim-1),
+                helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
+            };
+        }
+        else
+        {
+            GeometryHelper helper(geo);
+            return {
+                helper.getInteriorScvfGeometryType(scvf.index()),
+                helper.getScvfCorners(scvf.index())
+            };
+        }
+    }
+
 private:
-    const GridGeometry* gridGeometryPtr_;
+    const GGCache* ggCache_;
     GridIndexType eIdx_;
 
     std::optional<Element> element_;

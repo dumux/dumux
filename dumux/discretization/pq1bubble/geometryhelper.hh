@@ -154,7 +154,7 @@ template<>
 struct OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>
 {
     using Key = std::pair<std::uint8_t, std::uint8_t>; // (i, codim)
-    static constexpr std::array<std::array<Key, 4>, 8> keys = {{
+    static constexpr std::array<std::array<Key, 3>, 8> keys = {{
         { Key{4, 1}, Key{0, 1}, Key{2, 1} },
         { Key{4, 1}, Key{2, 1}, Key{1, 1} },
         { Key{4, 1}, Key{0, 1}, Key{3, 1} },
