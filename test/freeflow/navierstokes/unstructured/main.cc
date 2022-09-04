@@ -184,11 +184,7 @@ int main(int argc, char** argv)
     }
 
     timer.stop();
-#if DUNE_VERSION_GTE(DUNE_COMMON,2,9)
-    const auto& comm = Dune::MPIHelper::getCommunication();
-#else
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-#endif
+    const auto& comm = leafGridView.comm();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
