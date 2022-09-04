@@ -31,6 +31,8 @@
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/geometry/volume.hh>
+#include <dumux/geometry/center.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -97,22 +99,18 @@ public:
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
-    : corners_(geometryHelper.getScvfCorners(scvfIndex)),
-      center_(0.0),
-      unitOuterNormal_(geometryHelper.normal(corners_, scvIndices)),
-      scvfIndex_(scvfIndex),
-      scvIndices_(std::move(scvIndices)),
-      boundary_(boundary)
+    : corners_(geometryHelper.getScvfCorners(scvfIndex))
+    , center_(Dumux::center(corners_))
+    , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
+    , scvfIndex_(scvfIndex)
+    , scvIndices_(std::move(scvIndices))
+    , boundary_(boundary)
     , boundaryFlag_{}
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
             [&](unsigned int i){ return corners_[i]; }
         );
-
-        for (const auto& corner : corners_)
-            center_ += corner;
-        center_ /= corners_.size();
     }
 
     //! Constructor for boundary scvfs
@@ -124,22 +122,18 @@ public:
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
-    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection)),
-      center_(0.0),
-      unitOuterNormal_(intersection.centerUnitOuterNormal()),
-      scvfIndex_(scvfIndex),
-      scvIndices_(std:: move(scvIndices)),
-      boundary_(boundary)
+    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
+    , center_(Dumux::center(corners_))
+    , unitOuterNormal_(intersection.centerUnitOuterNormal())
+    , scvfIndex_(scvfIndex)
+    , scvIndices_(std:: move(scvIndices))
+    , boundary_(boundary)
     , boundaryFlag_{intersection}
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
             [&](unsigned int i){ return corners_[i]; }
         );
-
-        for (const auto& corner : corners_)
-            center_ += corner;
-        center_ /= corners_.size();
     }
 
     //! The center of the sub control volume face
