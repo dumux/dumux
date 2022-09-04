@@ -198,6 +198,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
+    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scvf).")]]
     Geometry geometry() const
     {
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
