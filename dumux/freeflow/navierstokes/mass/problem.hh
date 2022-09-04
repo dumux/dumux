@@ -33,12 +33,9 @@
 
 namespace Dumux {
 
+// default implementation
 template<class TypeTag, class DiscretizationMethod>
-class NavierStokesMassProblemImpl;
-
-template<class TypeTag>
-class NavierStokesMassProblemImpl<TypeTag, DiscretizationMethods::CCTpfa>
-: public FVProblemWithSpatialParams<TypeTag>
+class NavierStokesMassProblemImpl : public FVProblemWithSpatialParams<TypeTag>
 {
     using ParentType = FVProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
