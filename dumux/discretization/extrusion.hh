@@ -28,6 +28,7 @@
 #define DUMUX_DISCRETIZATION_EXTRUSION_HH
 
 #include <dune/common/std/type_traits.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -38,11 +39,21 @@ namespace Dumux {
 struct NoExtrusion
 {
     template<class SCVF>
+    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
     static constexpr auto area(const SCVF& scvf)
     { return scvf.area(); }
 
     template<class SCV>
+    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
     static constexpr auto volume(const SCV& scv)
+    { return scv.volume(); }
+
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    { return scvf.area(); }
+
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
     { return scv.volume(); }
 
     template<class Geometry>
@@ -65,8 +76,21 @@ struct RotationalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class SCVF>
+    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
     static constexpr auto area(const SCVF& scvf)
     {
+        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
+        static_assert(SCVF::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
+        static_assert(radialAxis < int(SCVF::Traits::Geometry::coorddimension), "Illegal radial axis!");
+
+        // Guldinus theorem
+        return scvf.area()*2.0*M_PI*scvf.center()[radialAxis];
+    }
+
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    {
+        using SCVF = typename FVGeo::SubControlVolumeFace;
         static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
         static_assert(SCVF::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
         static_assert(radialAxis < int(SCVF::Traits::Geometry::coorddimension), "Illegal radial axis!");
@@ -80,8 +104,21 @@ struct RotationalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class SCV>
+    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
     static constexpr auto volume(const SCV& scv)
     {
+        static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
+        static_assert(SCV::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
+        static_assert(radialAxis < int(SCV::Traits::Geometry::coorddimension), "Illegal radial axis!");
+
+        // Guldinus theorem
+        return scv.volume()*2.0*M_PI*scv.center()[radialAxis];
+    }
+
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    {
+        using SCV = typename FVGeo::SubControlVolume;
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
         static_assert(SCV::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
         static_assert(radialAxis < int(SCV::Traits::Geometry::coorddimension), "Illegal radial axis!");
@@ -115,8 +152,21 @@ struct SphericalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class SCVF>
+    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
     static constexpr auto area(const SCVF& scvf)
     {
+        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
+        static_assert(SCVF::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
+
+        // sphere surface area
+        const auto radius = scvf.center()[0];
+        return 4.0*M_PI*radius*radius;
+    }
+
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    {
+        using SCVF = typename FVGeo::SubControlVolumeFace;
         static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
         static_assert(SCVF::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
 
@@ -130,6 +180,7 @@ struct SphericalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class SCV>
+    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
     static constexpr auto volume(const SCV& scv)
     {
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
@@ -140,6 +191,33 @@ struct SphericalExtrusion
         const auto radius1 = scv.corner(1)[0];
         using std::abs;
         return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
+    }
+
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    {
+        using SCV = typename FVGeo::SubControlVolume;
+        static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
+        static_assert(SCV::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
+
+        // subtract two balls
+        if constexpr (Deprecated::hasSCVGeometryInterface<FVGeo>())
+        {
+            const auto geo = fvGeometry.geometry(scv);
+            const auto radius0 = geo.corner(0)[0];
+            const auto radius1 = geo.corner(1)[0];
+            using std::abs;
+            return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
+        }
+        else
+        {
+            // fall-back version for old interface (may trigger deprecation warning)
+            const auto geo = scv.geometry();
+            const auto radius0 = geo.corner(0)[0];
+            const auto radius1 = geo.corner(1)[0];
+            using std::abs;
+            return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
+        }
     }
 
     /*!
