@@ -26,7 +26,13 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 - __Stokes/Darcy__: In the coupling manager, the diffusion coefficient coupling type had a mode `Arithmetic` misspelled
   with an additional letter. The spelling has been corrected. The incorrect spelling will lead now lead to an error.
 
+- __Box__: The grid geometry now passes information to the local view via an internal cache (instead of passing a pointer to itself directly). This allows to hide some internal interfaces. This only concerns implementers of FVElementGeometry classes that inherit from the box implementation and don't overload the constructor.
+Then code possibly fails to compile. The fix is to implement the same caching concept. The cache can be a simple wrapper around the grid geometry pointer.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.6:
+
+- __Box__: `scv/scvf.geometry()` have been deprecated, use `fvGeometry.geometry(scv/scvf)` instead
+- __Box__: `scv/scvf.corner(i)` have been deprecated, use `fvGeometry.geometry(scv/scvf).corner(i)` instead
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
