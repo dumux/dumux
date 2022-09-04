@@ -98,6 +98,10 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
                                              typename Traits::SubControlVolume,
                                              typename Traits::SubControlVolumeFace>;
 
+    // Remove this after release 3.6 when the deprecated local view constructor is removed
+    using LV_ = typename Traits::template LocalView<ThisType, true>;
+    friend LV_;
+
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -121,6 +125,7 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
+    , cache_(*this)
     {
         update_();
     }
@@ -167,12 +172,14 @@ public:
     { return feCache_; }
 
     //! Get the local scvs for an element
+    [[deprecated("Will be removed after release 3.6")]]
     const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return scvs_[eIdx]; }
+    { return cache_.scvs_[eIdx]; }
 
     //! Get the local scvfs for an element
+    [[deprecated("Will be removed after release 3.6")]]
     const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return scvfs_[eIdx]; }
+    { return cache_.scvfs_[eIdx]; }
 
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
@@ -191,45 +198,74 @@ public:
     { return periodicVertexMap_; }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
+    [[deprecated("Will be removed after release 3.6")]]
     bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return hasBoundaryScvf_[eIdx]; }
+    { return cache_.hasBoundaryScvf_[eIdx]; }
 
-    //! Geometry of a sub control volume
-    typename SubControlVolume::Traits::Geometry geometry(const Element& element, const SubControlVolume& scv) const
-    {
-        assert(isBound());
-        const auto geo = element.geometry();
-        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
-    }
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxFVGridGeometry& gg)
+    { return { gg.cache_ }; }
 
-    //! Geometry of a sub control volume face
-    typename SubControlVolumeFace::Traits::Geometry geometry(const Element& element, const SubControlVolumeFace& scvf) const
+private:
+
+    class BoxGridGeometryCache
     {
-        assert(isBound());
-        const auto eIdx = this->elementMapper().index(element);
-        const auto geo = element.geometry();
-        const GeometryHelper geometryHelper(geo);
-        if (scvf.boundary())
+        friend class BoxFVGridGeometry;
+    public:
+        explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+        //! Get the global sub control volume indices of an element
+        const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
+        { return scvs_[eIdx]; }
+
+        //! Get the global sub control volume face indices of an element
+        const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
+        { return scvfs_[eIdx]; }
+
+        //! Returns whether one of the geometry's scvfs lies on a boundary
+        bool hasBoundaryScvf(GridIndexType eIdx) const
+        { return hasBoundaryScvf_[eIdx]; }
+
+        //! Returns local mappings for constructing boundary scvf geometries
+        const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
+        { return scvfBoundaryGeometryKeys_.at(eIdx); }
+
+    private:
+        void clear_()
         {
-            const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
-            const auto& key = scvfBoundaryGeometryKeys_.at(eIdx)[localBoundaryIndex];
-            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getBoundaryScvfCorners(key[0], key[1]) };
+            scvs_.clear();
+            scvfs_.clear();
+            hasBoundaryScvf_.clear();
+            scvfBoundaryGeometryKeys_.clear();
         }
-        else
-            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
-    }
+
+        std::vector<std::vector<SubControlVolume>> scvs_;
+        std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+        std::vector<bool> hasBoundaryScvf_;
+        std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
+
+        const BoxFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxGridGeometryCache;
 
 private:
     void update_()
     {
-        scvs_.clear();
-        scvfs_.clear();
-        scvfBoundaryGeometryKeys_.clear();
+        cache_.clear_();
 
-        auto numElements = this->gridView().size(0);
-        scvs_.resize(numElements);
-        scvfs_.resize(numElements);
-        hasBoundaryScvf_.resize(numElements, false);
+        const auto numElements = this->gridView().size(0);
+        cache_.scvs_.resize(numElements);
+        cache_.scvfs_.resize(numElements);
+        cache_.hasBoundaryScvf_.resize(numElements, false);
 
         boundaryDofIndices_.assign(numDofs(), false);
 
@@ -240,7 +276,7 @@ private:
         for (const auto& element : elements(this->gridView()))
         {
             // fill the element map with seeds
-            auto eIdx = this->elementMapper().index(element);
+            const auto eIdx = this->elementMapper().index(element);
 
             // count
             numScv_ += element.subEntities(dim);
@@ -254,32 +290,36 @@ private:
             GeometryHelper geometryHelper(elementGeometry);
 
             // construct the sub control volumes
-            scvs_[eIdx].resize(elementGeometry.corners());
+            cache_.scvs_[eIdx].resize(elementGeometry.corners());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
-                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
-                                                            scvLocalIdx,
-                                                            eIdx,
-                                                            dofIdxGlobal);
+                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
+                    geometryHelper,
+                    scvLocalIdx,
+                    eIdx,
+                    dofIdxGlobal
+                );
             }
 
             // construct the sub control volume faces
             LocalIndexType scvfLocalIdx = 0;
-            scvfs_[eIdx].resize(element.subEntities(dim-1));
+            cache_.scvfs_[eIdx].resize(element.subEntities(dim-1));
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
                 std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                              static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
-                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
-                                                                  element,
-                                                                  elementGeometry,
-                                                                  scvfLocalIdx,
-                                                                  std::move(localScvIndices),
-                                                                  false);
+                cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
+                    geometryHelper,
+                    element,
+                    elementGeometry,
+                    scvfLocalIdx,
+                    std::move(localScvIndices),
+                    false
+                );
             }
 
             // construct the sub control volume faces on the domain boundary
@@ -288,7 +328,7 @@ private:
                 if (intersection.boundary() && !intersection.neighbor())
                 {
                     const auto isGeometry = intersection.geometry();
-                    hasBoundaryScvf_[eIdx] = true;
+                    cache_.hasBoundaryScvf_[eIdx] = true;
 
                     // count
                     numScvf_ += isGeometry.corners();
@@ -300,15 +340,17 @@ private:
                         const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                  intersection,
-                                                  isGeometry,
-                                                  isScvfLocalIdx,
-                                                  scvfLocalIdx,
-                                                  std::move(localScvIndices),
-                                                  true);
+                        cache_.scvfs_[eIdx].emplace_back(
+                            geometryHelper,
+                            intersection,
+                            isGeometry,
+                            isScvfLocalIdx,
+                            scvfLocalIdx,
+                            std::move(localScvIndices),
+                            true
+                        );
 
-                        scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
+                        cache_.scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
                             static_cast<LocalIndexType>(intersection.indexInInside()),
                             static_cast<LocalIndexType>(isScvfLocalIdx)
                         }});
@@ -375,21 +417,17 @@ private:
 
     const FeCache feCache_;
 
-    std::vector<std::vector<SubControlVolume>> scvs_;
-    std::vector<std::vector<SubControlVolumeFace>> scvfs_;
-    std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
-
-    // TODO do we need those?
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
 
     // vertices on the boundary
     std::vector<bool> boundaryDofIndices_;
-    std::vector<bool> hasBoundaryScvf_;
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+
+    Cache cache_;
 };
 
 /*!
@@ -412,6 +450,10 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
+
+    // Remove this after release 3.6 when the deprecated local view constructor is removed
+    using LV_ = typename Traits::template LocalView<ThisType, false>;
+    friend LV_;
 
 public:
     //! export the discretization method this geometry belongs to
@@ -436,6 +478,7 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
+    , cache_(*this)
     {
         update_();
     }
@@ -496,6 +539,32 @@ public:
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
+
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
+private:
+
+    class BoxGridGeometryCache
+    {
+        friend class BoxFVGridGeometry;
+    public:
+        explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+    private:
+        const BoxFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxGridGeometryCache;
 
 private:
 
@@ -594,6 +663,8 @@ private:
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+
+    Cache cache_;
 };
 
 } // end namespace Dumux
