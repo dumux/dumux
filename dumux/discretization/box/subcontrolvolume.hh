@@ -159,6 +159,7 @@ public:
     }
 
     //! Return the corner for the given local index
+    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scv).corner(i).")]]
     const GlobalPosition& corner(LocalIndexType localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");

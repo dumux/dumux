@@ -191,6 +191,7 @@ public:
         return scvfIndex_;
     }
 
+    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scvf).corner(i).")]]
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
