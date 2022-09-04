@@ -123,7 +123,8 @@ public:
         {
             // get the index of the element in which the point source falls
             const auto eIdx = source.elementIndex();
-            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
+                || GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
             {
                 auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are
@@ -138,7 +139,7 @@ public:
                     constexpr int dim = GridGeometry::GridView::dimension;
                     Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, scv.geometry()))
+                        if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
 
                     // for all scvs that where tested positive add the point sources
