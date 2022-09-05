@@ -32,7 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/ffmassporenetwork/couplingmanager.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/ffmomentumporenetwork/couplingmanager.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/multidomain/multibinarycouplingmanager.hh>
 
 #include "couplingconditions.hh"
@@ -134,7 +134,7 @@ struct CouplingManagers
     >;
 
     using FreeFlowCouplingManager
-        = Dumux::StaggeredFreeFlowCouplingManager<FreeFlowTraits>;
+        = Dumux::FreeFlowCouplingManager<FreeFlowTraits>;
     using FreeFlowMomentumPoreNetworkCouplingManager
         = Dumux::FreeFlowMomentumPoreNetworkCouplingManager<FreeFlowMomentumPoreNetworkTraits>;
     using FreeFlowMassPoreNetworkCouplingManager
