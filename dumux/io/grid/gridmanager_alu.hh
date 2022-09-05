@@ -35,6 +35,7 @@
 #endif
 
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 namespace Dumux {
 
@@ -247,6 +248,20 @@ public:
 private:
     int flag_;
 };
+
+namespace Grid::Capabilities {
+
+// To the best of our knowledge ALUGrid is view thread-safe
+// This specialization can be removed after we depend on Dune release 2.9 in which this is guaranteed by ALUGrid itself
+template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
+struct MultithreadingSupported<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
+{
+    template<class GV>
+    static bool eval(const GV&) // default is independent of the grid view
+    { return true; }
+};
+
+} // end namespace Grid::Capabilities
 
 #endif // HAVE_DUNE_ALUGRID
 

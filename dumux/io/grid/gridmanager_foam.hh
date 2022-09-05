@@ -34,6 +34,8 @@
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
 
+#include <dumux/common/gridcapabilities.hh>
+
 namespace Dumux {
 
 #if HAVE_DUNE_FOAMGRID
@@ -162,6 +164,20 @@ public:
         ParentType::loadBalance();
     }
 };
+
+namespace Grid::Capabilities {
+
+// To the best of our knowledge FoamGrid is view thread-safe
+// This specialization can be removed after we depend on Dune release 2.9 in which this is guaranteed by FoamGrid itself
+template<int dim, int dimworld>
+struct MultithreadingSupported<Dune::FoamGrid<dim, dimworld>>
+{
+    template<class GV>
+    static bool eval(const GV&) // default is independent of the grid view
+    { return true; }
+};
+
+} // end namespace Grid::Capabilities
 
 #endif // HAVE_DUNE_FOAMGRID
 
