@@ -48,7 +48,7 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/loadsolution.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -121,7 +121,7 @@ private:
     static constexpr auto nComp = MTraits::numFluidComponents();
     static constexpr auto numEq = MTraits::numEq();
 
-    using BaseProblem = std::conditional_t<MTraits::usesTurbulenceModel(), RANSProblemImpl<TypeTag, MTraits::turbulenceModel()>, NavierStokesProblem<TypeTag>>;
+    using BaseProblem = std::conditional_t<MTraits::usesTurbulenceModel(), RANSProblemImpl<TypeTag, MTraits::turbulenceModel()>, NavierStokesStaggeredProblem<TypeTag>>;
 
     template<class TTag>
     class MockProblem : public BaseProblem
