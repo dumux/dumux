@@ -33,7 +33,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/walldistance.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 #include "model.hh"
 
 namespace Dumux {
@@ -55,9 +55,9 @@ using RANSProblem = RANSProblemImpl<TypeTag, GetPropType<TypeTag, Properties::Mo
  * by the volumevariables.
  */
 template<class TypeTag>
-class RANSProblemBase : public NavierStokesProblem<TypeTag>
+class RANSProblemBase : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
