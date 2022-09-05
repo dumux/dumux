@@ -108,7 +108,7 @@ public:
         else
         {
             const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
+            const auto& bcTypes = elemBcTypes.get(fvGeometry, scv);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             if (bcTypes.hasNeumann())

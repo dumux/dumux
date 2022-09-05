@@ -34,7 +34,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/discretization/box/elementboundarytypes.hh>
+#include <dumux/discretization/cvfe/elementboundarytypes.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -53,7 +53,7 @@ class BoundaryFlux
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
-    using ElementBoundaryTypes = BoxElementBoundaryTypes<BoundaryTypes>;
+    using ElementBoundaryTypes = CVFEElementBoundaryTypes<BoundaryTypes>;
 
     using NumEqVector = typename SolutionVector::block_type;
     static constexpr auto numEq = NumEqVector::dimension;
@@ -230,7 +230,7 @@ private:
                 isConsidered_[scv.dofIndex()] = true;
 
                 // get the type of the boundary condition on the scv
-                const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
+                const auto& bcTypes = elemBcTypes.get(fvGeometry, scv);
 
                 NumEqVector flux(0.0);
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
