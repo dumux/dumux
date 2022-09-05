@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/typetraits/utility.hh>
+#include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -52,6 +53,26 @@
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
+
+namespace Grid::Capabilities {
+
+namespace Detail {
+// helper for multi-domain models
+template<class T, std::size_t... I>
+bool allGridsSupportsMultithreadingImpl(const T& gridGeometries, std::index_sequence<I...>)
+{
+    return (... && supportsMultithreading(std::get<I>(gridGeometries)->gridView()));
+}
+} // end namespace Detail
+
+// helper for multi-domain models (all grids have to support multithreading)
+template<class... GG>
+bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
+{
+    return Detail::allGridsSupportsMultithreadingImpl<std::tuple<GG...>>(gridGeometries, std::make_index_sequence<sizeof...(GG)>());
+}
+
+} // end namespace Grid::Capabilities
 
 /*!
  * \ingroup MultiDomain
@@ -182,6 +203,7 @@ public:
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
 
         enableMultithreading_ = CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value
+            && Grid::Capabilities::allGridsSupportsMultithreading(gridGeometryTuple_)
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -211,6 +233,7 @@ public:
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
 
         enableMultithreading_ = CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value
+            && Grid::Capabilities::allGridsSupportsMultithreading(gridGeometryTuple_)
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
