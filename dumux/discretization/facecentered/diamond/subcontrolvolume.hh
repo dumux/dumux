@@ -65,6 +65,10 @@ struct FaceCenteredDiamondScvGeometryTraits
     }
 };
 
+/*!
+ * \ingroup DiamondDiscretization
+ * \brief Face centered diamond subcontrolvolume face
+ */
 template<class GridView, class T = FaceCenteredDiamondScvGeometryTraits<GridView>>
 class FaceCenteredDiamondSubControlVolume
 {

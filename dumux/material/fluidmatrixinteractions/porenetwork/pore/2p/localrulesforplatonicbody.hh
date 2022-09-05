@@ -234,6 +234,11 @@ private:
     }
 };
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetworkModels
+ * \brief Two-phase rules for regularizing the pc-SW for platonic bodies.
+ */
 template<class Scalar, class BaseLaw>
 class TwoPLocalRulesPlatonicBodyRegularization
 {
