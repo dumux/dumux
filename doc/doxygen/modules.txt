@@ -313,7 +313,7 @@
      */
         /*!
          * \ingroup FaceCenteredStaggeredDiscretization
-         * \defgroup FaceCenteredStaggeredDiamondDiscretization
+         * \defgroup DiamondDiscretization
          * \brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
          */
         /*!
