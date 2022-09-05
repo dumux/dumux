@@ -303,7 +303,8 @@
     /*!
      * \ingroup Discretization
      * \defgroup CVFEDiscretization CVFE
-     * \brief CVFE.
+     * \brief Control-volume finite element schemes (e.g. box method)
+     * Control-volume finite element schemes are based on finite element basis functions for interpolation but define control volumes to construct a finite volume scheme. They can be interpreted both as finite volume or as (Petrov-Galerkin) finite element scheme.
      */
     /*!
      * \ingroup Discretization
@@ -338,7 +339,7 @@
     /*!
      * \ingroup Discretization
      * \defgroup PQ1BubbleDiscretization PQ1 bubble scheme
-     * \brief PQ1 bubble scheme.
+     * \brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
      */
 /* ***************** Experimental ******************/
 /*!
