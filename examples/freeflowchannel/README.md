@@ -87,6 +87,7 @@ type tag, which we want to modify or for which no meaningful default can be set.
 
 ```cpp
 #include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 ```
 
 We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -206,11 +207,11 @@ conditions for the Navier-Stokes single-phase flow simulation.
 
 ### Include files
 
-Include the `NavierStokesProblem` class, the base
+Include the `NavierStokesStaggeredProblem` class, the base
 class from which we will derive.
 
 ```cpp
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 ```
 
 Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
@@ -221,16 +222,16 @@ Include the `NavierStokesBoundaryTypes` class which specifies the boundary types
 
 ### The problem class
 We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-As we are solving a problem related to free flow, we inherit from the base class `NavierStokesProblem`.
+As we are solving a problem related to free flow, we inherit from the base class `NavierStokesStaggeredProblem`.
 
 ```cpp
 namespace Dumux {
 
 template <class TypeTag>
-class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
+class ChannelExampleProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
     // A few convenience aliases used throughout this class.
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;

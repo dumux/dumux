@@ -35,6 +35,7 @@
 // respective properties and subsequently specialize those properties for our
 // type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>

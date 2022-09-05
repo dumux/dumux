@@ -29,8 +29,10 @@ The single-phase flow Navier-Stokes equations are solved by coupling a momentum 
 ```cpp
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 ```
 
 We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -97,9 +99,15 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid<2>; };
 
-// This sets our problem class (see problem.hh) containing initial and boundary conditions.
+// This sets our problem class (see problem.hh) containing initial and boundary conditions for the
+// momentum and mass subproblem.
 template<class TypeTag>
-struct Problem<TypeTag, TTag::LidDrivenCavityExample> { using type = Dumux::LidDrivenCavityExampleProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::LidDrivenCavityExampleMomentum>
+{ using type = LidDrivenCavityExampleProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::LidDrivenCavityExampleMass>
+{ using type = LidDrivenCavityExampleProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 ```
 
 We also set some properties related to memory management
@@ -135,7 +143,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
 {
     using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 } // end namespace Dumux::Properties
 ```
@@ -163,13 +171,6 @@ conditions for the Navier-Stokes single-phase flow simulation.
 #include <dumux/common/parameters.hh>
 ```
 
-Include the `NavierStokesProblem` class, the base
-class from which we will derive.
-
-```cpp
-#include <dumux/freeflow/navierstokes/problem.hh>
-```
-
 Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
 
 ```cpp
@@ -178,14 +179,14 @@ Include the `NavierStokesBoundaryTypes` class which specifies the boundary types
 
 ### The problem class
 As we are solving a problem related to free flow, we create a new class called `LidDrivenCavityExampleProblem`
-and let it inherit from the class `NavierStokesProblem`.
+and let it inherit from a base class for the momentum and mass subproblems (selected in properties.hh).
 
 ```cpp
 namespace Dumux {
-template <class TypeTag>
-class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class LidDrivenCavityExampleProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -379,7 +380,6 @@ systems arising from the staggered-grid discretization.
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 ```
 
@@ -501,8 +501,7 @@ This is done for both the momentum and mass grid geometries
 We introduce the multidomain coupling manager, which will coupled the mass and the momentum problems
 
 ```cpp
-    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 ```
 
@@ -523,6 +522,7 @@ We initialize the solution vector by what was defined as the initial solution of
 ```cpp
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     momentumProblem->applyInitialSolution(x[momentumIdx]);

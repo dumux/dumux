@@ -33,8 +33,10 @@
 // The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
@@ -85,9 +87,15 @@ struct FluidSystem<TypeTag, TTag::LidDrivenCavityExample>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::LidDrivenCavityExample> { using type = Dune::YaspGrid<2>; };
 
-// This sets our problem class (see problem.hh) containing initial and boundary conditions.
+// This sets our problem class (see problem.hh) containing initial and boundary conditions for the
+// momentum and mass subproblem.
 template<class TypeTag>
-struct Problem<TypeTag, TTag::LidDrivenCavityExample> { using type = Dumux::LidDrivenCavityExampleProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::LidDrivenCavityExampleMomentum>
+{ using type = LidDrivenCavityExampleProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::LidDrivenCavityExampleMass>
+{ using type = LidDrivenCavityExampleProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 
 // [[/codeblock]]
@@ -122,7 +130,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::LidDrivenCavityExample>
 {
     using Traits = MultiDomainTraits<TTag::LidDrivenCavityExampleMomentum, TTag::LidDrivenCavityExampleMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 } // end namespace Dumux::Properties
 // [[/content]]
