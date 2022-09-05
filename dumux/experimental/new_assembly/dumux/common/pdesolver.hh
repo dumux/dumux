@@ -19,42 +19,34 @@
 /*!
  * \file
  * \ingroup Common
- * \brief A Python-like enumerate function
+ * \brief A high-level interface for solvers of PDEs.
  */
-
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#ifndef DUMUX_COMMON_PDE_SOLVER_HH
+#define DUMUX_COMMON_PDE_SOLVER_HH
 
 namespace Dumux {
 
 /*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
+ * \ingroup Common
+ * \brief A high-level interface for solvers of PDEs.
+ * \tparam V The variables of the system of equations
  */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename V>
+class PDESolver
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+public:
+    using Variables = V;
 
-} // end namespace Dumux
+    virtual ~PDESolver() = default;
+
+    //! Solve the system and store the result in the given variables object.
+    bool solve(Variables& vars)
+    { return solve_(vars); }
+
+private:
+    virtual bool solve_(Variables&) = 0;
+};
+
+} // namespace Dumux
 
 #endif

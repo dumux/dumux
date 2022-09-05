@@ -31,6 +31,10 @@ dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)
 # option for enabling Python bindings
 option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
 
+# optional external libraries
+find_package(Eigen3)
+set(HAVE_EIGEN3 ${Eigen3_FOUND})
+
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)

@@ -18,43 +18,36 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup TimeStepping
+ * \brief Concepts in the context of multi-stage time integration.
  */
+#ifndef DUMUX_TIMESTEPPING_MULTISTAGE_CONCEPTS_HH
+#define DUMUX_TIMESTEPPING_MULTISTAGE_CONCEPTS_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <memory>
+#include <type_traits>
+#include <concepts>
 
-#include <tuple>
-#include <ranges>
+#include <dumux/experimental/new_assembly/dumux/common/variables.hh>
 
-namespace Dumux {
+namespace Dumux::Concepts {
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
-{
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+//! Concept for multi-stage variables, usable in multi-stage time integration steps.
+template<typename T>
+concept MultiStageVariables
+    = TimeDependentVariables<T>
+    and requires(T& t, const T& tConst) {
+        typename T::StageVariables;
+        typename T::StageParams;
+        std::convertible_to<const T&, const typename T::StageVariables&>;
 
-} // end namespace Dumux
+        { t.clearStages() };
+        { t.setStageParams(std::shared_ptr<const typename T::StageParams>{}) };
+        { tConst.stageParams() } -> std::same_as<const typename T::StageParams&>;
+        { tConst.stageVariables(std::size_t{}) } -> std::same_as<const typename T::StageVariables&>;
+        { tConst.numStages() } -> std::integral;
+};
+
+} // namespace Dumux::Concepts
 
 #endif

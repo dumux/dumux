@@ -1,4 +1,6 @@
+add_subdirectory(assembly)
 add_subdirectory(common)
 add_subdirectory(discretization)
+add_subdirectory(linear)
+add_subdirectory(nonlinear)
 add_subdirectory(timestepping)
-add_subdirectory(new_assembly)

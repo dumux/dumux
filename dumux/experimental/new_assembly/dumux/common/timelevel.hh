@@ -19,42 +19,56 @@
 /*!
  * \file
  * \ingroup Common
- * \brief A Python-like enumerate function
+ * \copydoc Dumux::TimeLevel
  */
-
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#ifndef DUMUX_COMMON_TIME_LEVEL_HH
+#define DUMUX_COMMON_TIME_LEVEL_HH
 
 namespace Dumux {
 
 /*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
+ * \ingroup Common
+ * \brief Class that represents a time level, possibly within a time integration step.
  */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename S>
+class TimeLevel
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+public:
+    using Scalar = S;
 
-} // end namespace Dumux
+    /*!
+     * \brief Construct a time level with information on an ongoing time step.
+     * \param curTime The current time level
+     * \param prevTime The previous time level
+     * \param dtFraction The fraction of the ongoing time step this level corresponds to.
+     */
+    TimeLevel(Scalar curTime, Scalar prevTime, Scalar dtFraction)
+    : curTime_(curTime)
+    , prevTime_(prevTime)
+    , timeStepFraction_(dtFraction)
+    {}
+
+    /*!
+     * \brief Construct a time level.
+     * \param curTime The current time level
+     */
+    explicit TimeLevel(Scalar curTime)
+    : TimeLevel(curTime, curTime, 1.0)
+    {}
+
+    //! Return the current time
+    Scalar current() const { return curTime_; }
+    //! Return the time at the beginning of the time step
+    Scalar previous() const { return prevTime_; }
+    //! Return the fraction of the ongoing time step this level corresponds to
+    Scalar timeStepFraction() const { return timeStepFraction_; }
+
+private:
+    Scalar curTime_;
+    Scalar prevTime_;
+    Scalar timeStepFraction_;
+};
+
+} // namespace Dumux
 
 #endif

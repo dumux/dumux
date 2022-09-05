@@ -18,43 +18,38 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Linear
+ * \brief Traits related to linear operators
  */
+#ifndef DUMUX_LINEAR_OPERATOR_HH
+#define DUMUX_LINEAR_OPERATOR_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <dumux/experimental/new_assembly/dumux/common/typetraits.hh>
+#include <dumux/experimental/new_assembly/dumux/linear/concepts.hh>
 
-#include <tuple>
-#include <ranges>
+namespace Dumux::Linear {
+namespace Traits {
 
-namespace Dumux {
+template<typename T>
+struct Operator;
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
-{
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+template<typename Matrix, typename Vector>
+struct MatrixOperator;
 
-} // end namespace Dumux
+//! Specialization for extraction of the linear operator from
+//! a linear algebra backend, which defaults to the matrix operator.
+template<Concepts::LinearAlgebraBackend T>
+struct Operator<T>
+: public MatrixOperator<typename T::Matrix, typename T::Vector>
+{};
+
+} // namespace Traits
+
+
+//! Convenience alias for the linear operator defined for a type `T`
+template<typename T>
+using OperatorType = typename Traits::Operator<T>::type;
+
+} // namespace Dumux::Linear
 
 #endif

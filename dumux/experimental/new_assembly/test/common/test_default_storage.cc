@@ -18,43 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \brief Tests for the size helpers
  */
+#include <iostream>
+#include <type_traits>
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <dune/common/exceptions.hh>
 
-#include <tuple>
-#include <ranges>
+#include <dumux/experimental/new_assembly/dumux/common/typetraits.hh>
+#include <dumux/experimental/new_assembly/dumux/common/storage.hh>
 
-namespace Dumux {
-
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+int main (int argc, char *argv[])
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
+    Dumux::DefaultStorage<int, 3> staticFromInt{};
+    Dumux::DefaultStorage<int, Dumux::Size::dynamic> fromDynamic{};
+
+    static_assert(std::is_same_v<decltype(staticFromInt), Dune::ReservedVector<int, 3>>);
+    static_assert(std::is_same_v<decltype(fromDynamic), std::vector<int>>);
+
+    std::cout << "\nAll tests passed" << std::endl;
+    return 0;
 }
-
-} // end namespace Dumux
-
-#endif

@@ -18,43 +18,48 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup PorousMediumFlow
+ * \brief Model for single-phase flow in porous-media.
  */
+#ifndef DUMUX_POROUS_MEDIUM_FLOW_ONEP_MODEL_HH
+#define DUMUX_POROUS_MEDIUM_FLOW_ONEP_MODEL_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#include <utility>
+#include <concepts>
+#include <type_traits>
 
 namespace Dumux {
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename Scalar,
+         typename FluidSystem>
+class OnePModel
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+public:
+    static constexpr int numEq = 1;
 
-} // end namespace Dumux
+    using VolumeVariables = SomeVolVars<FluidSystem, ...>;
+
+    struct Indices
+    {
+        static constexpr int pressureIdx = 0;
+        static constexpr int conti0EqIdx = 0;
+    };
+
+    auto storageOperator() const
+    { ... }
+
+    auto fluxOperator() const
+    {
+        // TODO: Some flux thing that sums up all fluxes?
+        // But also allow extracting single ones? (see advectiveFluxoperator())
+        // Also, the flux thing should be as efficient as possible, e.g. by caching
+        // KgradP once and then only apply different upwind terms...
+        ...
+    }
+
+    auto advectiveFluxOperator() const { ... }
+};
+
+} // namespace Dumux
 
 #endif

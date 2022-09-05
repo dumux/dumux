@@ -27,6 +27,7 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
@@ -35,6 +36,11 @@
 #include <dumux/common/math.hh>
 
 namespace Dumux {
+
+// TODO: properly define the concept of a vector (subset of Dune::FieldVector)
+//       that we rely upon here!
+// TODO: maybe provide an overload with the geometry id as template argument
+//       such that one can avoid the ifs in case the type is known at compile-time
 
 /*!
  * \ingroup Geometry
@@ -49,7 +55,7 @@ namespace Dumux {
  * \return volume of the geometry or NaN signalling not implemented
  * \note This is only correct for convex polytopes (flat sides)
  */
-template<int dim, class CornerF>
+template<int dim, std::invocable<unsigned int> CornerF>
 auto convexPolytopeVolume(Dune::GeometryType type, const CornerF& c)
 {
     using ctype = typename std::decay_t<decltype(c(0))>::value_type;
@@ -146,6 +152,14 @@ auto convexPolytopeVolume(Dune::GeometryType type, const CornerF& c)
     else
         return std::numeric_limits<ctype>::quiet_NaN();
 }
+
+/*!
+ * \ingroup Geometry
+ * \brief Overload for random access containers storing the corners
+ */
+template<int dim, std::ranges::random_access_range Corners>
+auto convexPolytopeVolume(Dune::GeometryType type, const Corners& c)
+{ return convexPolytopeVolume<dim>(type, [&] (unsigned int i) { return c[i]; }); }
 
 /*!
  * \ingroup Geometry

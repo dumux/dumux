@@ -18,43 +18,46 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Assembly
+ * \brief Free functions to get the jacobian patterns of discretization schemes.
  */
+#ifndef DUMUX_ASSEMBLY_JACOBIAN_PATTERN_HH
+#define DUMUX_ASSEMBLY_JACOBIAN_PATTERN_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#include <dumux/discretization/method.hh>
+#include <dumux/experimental/new_assembly/dumux/assembly/matrixpattern.hh>
 
 namespace Dumux {
 
 /*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
+ * \ingroup Assembly
+ * \brief Get the matrix pattern for a grid geometry using TPFA discretization.
  */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename GridGeometry>
+MatrixPattern getJacobianPattern(const GridGeometry& gridGeometry,
+                                 const DiscretizationMethods::CCTpfa&)
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
+    MatrixPattern pattern(gridGeometry.numDofs(), gridGeometry.numDofs());
+    for (const auto& element : elements(gridGeometry.gridView()))
     {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
+        const auto fvGeometry = localView(gridGeometry).bind(element);
+        for (const auto& scv : scvs(fvGeometry))
+            pattern.add(scv.dofIndex(), scv.dofIndex());
+        for (const auto& scvf : scvfs(fvGeometry))
+            if (!scvf.boundary())
+                pattern.add(scvf.insideScvIdx(), scvf.outsideScvIdx());
     }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
+    return pattern;
 }
 
-} // end namespace Dumux
+/*!
+ * \ingroup Assembly
+ * \brief Get the matrix pattern for a grid geometry.
+ */
+template<typename GridGeometry>
+MatrixPattern getJacobianPattern(const GridGeometry& gridGeometry)
+{ return getJacobianPattern(gridGeometry, GridGeometry::discMethod); }
+
+} // namespace Dumux
 
 #endif

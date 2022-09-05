@@ -18,43 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Assembly
+ * \copydoc Dumux::FVEntityStorage
  */
+#ifndef DUMUX_DISCRETIZATION_CCFV_ENTITY_STORAGE_HH
+#define DUMUX_DISCRETIZATION_CCFV_ENTITY_STORAGE_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#include <dune/common/reservedvector.hh>
 
 namespace Dumux {
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename GridGeometry>
+class FVEntityStorage
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
+    using
+public:
+    void clear()
     {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
+        scvs_.clear();
+        scvfs_.clear();
     }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
 
-} // end namespace Dumux
+    void addScv()
+
+private:
+    std::vector<SubControlVolume> scvs_;
+    std::vector<SubControlVolumeFace> scvfs_;
+};
+
+} // namespace Dumux
 
 #endif

@@ -19,41 +19,56 @@
 /*!
  * \file
  * \ingroup Common
- * \brief A Python-like enumerate function
+ * \copydoc Dumux::Linearization
  */
+#ifndef DUMUX_COMMON_LINEARIZATION_HH
+#define DUMUX_COMMON_LINEARIZATION_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#include <type_traits>
+#include <concepts>
 
 namespace Dumux {
 
 /*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
+ * \ingroup Common
+ * \brief Class to represent a linearized function, storing
+ *        references to the derivative and function value.
  */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<typename D, typename V>
+class Linearization
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+    template<typename Arg, typename Member>
+    static constexpr bool isValidConstructorArg = std::is_lvalue_reference_v<Arg> &&
+                                                  std::convertible_to<Arg, Member&>;
+
+public:
+    using Derivative = D;
+    using Value = V;
+
+    /*!
+    * \brief Constructor from derivative and function value
+    * \note This is templated such that we can check at compile-time that
+    *       l-value references are passed in. If we made this simply const
+    *       refs, then one may pass in temporaries and cause segfaults.
+    */
+    template<typename _D, typename _R> requires(
+        isValidConstructorArg<_D, const Derivative> and
+        isValidConstructorArg<_R, const V>)
+    Linearization(_D&& derivative, _R&& value)
+    : derivative_(derivative)
+    , value_(value)
+    {}
+
+    const Derivative& derivative() const { return derivative_; }
+    const Value& value() const { return value_; }
+
+private:
+    const Derivative& derivative_;
+    const Value& value_;
+};
+
+template<typename D, typename R>
+Linearization(D&&, R&&) -> Linearization<std::decay_t<D>, std::decay_t<R>>;
 
 } // end namespace Dumux
 

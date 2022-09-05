@@ -18,43 +18,43 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Linear
+ * \brief Concepts related to linear solvers
  */
+#ifndef DUMUX_LINEAR_CONCEPTS_HH
+#define DUMUX_LINEAR_CONCEPTS_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <dumux/experimental/new_assembly/dumux/common/concepts.hh>
+#include <dumux/experimental/new_assembly/dumux/assembly/matrixpattern.hh>
 
-#include <tuple>
-#include <ranges>
+namespace Dumux::Concepts {
 
-namespace Dumux {
+template<typename T>
+concept LinearAlgebraBackend = requires (const T& t) {
+    typename T::Vector;
+    typename T::Matrix;
+    typename T::IndexStrategy;
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
-{
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+    { t.makeIndexStrategy(std::size_t{}) };
+    { t.setSparsityPattern(std::declval<typename T::Matrix&>(), MatrixPattern{}) };
+    { t.setSize(std::declval<typename T::Vector&>(), std::size_t{}) };
+};
 
-} // end namespace Dumux
+template<typename Solver,
+         typename Domain,
+         typename Range,
+         typename LinearOperator>
+concept LinearSolver
+    = requires(Solver& solver,
+               const Solver& constSolver,
+               Domain& domain,
+               const Range& range,
+               const LinearOperator& op) {
+        { solver.setLinearOperator(op) };
+        { constSolver.solve(domain, range) };
+        { constSolver.scalarProduct(range, range) } -> Concepts::Arithmetic;
+};
+
+} // namespace Dumux::Concepts
 
 #endif

@@ -18,43 +18,25 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \brief Tests for the MultiIndex class
  */
+#include <iostream>
+#include <vector>
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <dumux/experimental/new_assembly/dumux/common/concepts.hh>
 
-#include <tuple>
-#include <ranges>
+struct IndexableType { int operator[](std::size_t i) { return 0; } };
 
-namespace Dumux {
-
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+int main()
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
+    using namespace Dumux::Concepts;
+
+    static_assert(MDArray<IndexableType>);
+    static_assert(MDArray<IndexableType, 1>);
+    static_assert(MDArray<std::vector<IndexableType>, 2>);
+    static_assert(!MDArray<std::vector<IndexableType>, 1>);
+    static_assert(!MDArray<std::vector<IndexableType>, 3>);
+
+    std::cout << "\nAll tests passed" << std::endl;
+    return 0;
 }
-
-} // end namespace Dumux
-
-#endif

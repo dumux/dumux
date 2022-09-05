@@ -18,43 +18,27 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Linear
+ * \brief Traits related to dune linear operators
  */
+#ifndef DUMUX_LINEAR_DUNE_OPERATOR_TRAITS_HH
+#define DUMUX_LINEAR_DUNE_OPERATOR_TRAITS_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <type_traits>
 
-#include <tuple>
-#include <ranges>
+#include <dune/istl/operators.hh>
 
-namespace Dumux {
+#include <dumux/experimental/new_assembly/dumux/linear/operator.hh>
+#include <dumux/experimental/new_assembly/dumux/linear/dune/detail.hh>
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
-{
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+namespace Dumux::Linear::Traits {
 
-} // end namespace Dumux
+template<LinearSystem::Detail::DuneMatrix M,
+         LinearSystem::Detail::DuneVector V>
+struct MatrixOperator<M, V>
+: public std::type_identity<Dune::MatrixAdapter<M, V, V>>
+{};
+
+} // namespace Dumux::Linear::Traits
 
 #endif

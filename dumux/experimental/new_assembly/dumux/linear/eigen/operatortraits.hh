@@ -18,43 +18,49 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Linear
+ * \brief Operator traits specialization for eigen
  */
+#ifndef DUMUX_LINEAR_EIGEN_OPERATOR_TRAITS_HH
+#define DUMUX_LINEAR_EIGEN_OPERATOR_TRAITS_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
+#include <type_traits>
 
-#include <tuple>
-#include <ranges>
+#include <dumux/experimental/new_assembly/dumux/linear/operator.hh>
+#include <dumux/experimental/new_assembly/dumux/linear/eigen/detail.hh>
 
 namespace Dumux {
+namespace Eigen_ {
 
-/*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
- */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<LinearSystem::Detail::EigenMatrix M>
+class EigenMatrixOperator
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+public:
+    template<typename _M> requires(
+        std::is_lvalue_reference_v<_M> and
+        std::constructible_from<const M&, _M>)
+    EigenMatrixOperator(_M&& m)
+    : m_(m)
+    {}
 
-} // end namespace Dumux
+    operator const M&() const
+    { return m_; }
+
+private:
+    const M& m_;
+};
+
+} // namespace Eigen_
+
+namespace Linear::Traits {
+
+template<LinearSystem::Detail::EigenMatrix M,
+         LinearSystem::Detail::EigenVector V>
+struct MatrixOperator<M, V>
+: public std::type_identity<Eigen_::EigenMatrixOperator<M>>
+{};
+
+} // namespace Linear::Traits
+} // namespace Dumux
 
 #endif

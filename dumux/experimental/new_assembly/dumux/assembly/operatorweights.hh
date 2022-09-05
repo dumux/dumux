@@ -18,42 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
- * \brief A Python-like enumerate function
+ * \ingroup Assembly
+ * \copydoc Dumux::OperatorWeights.
  */
+#ifndef DUMUX_ASSEMBLY_OPERATOR_WEIGHTS_HH
+#define DUMUX_ASSEMBLY_OPERATOR_WEIGHTS_HH
 
-#ifndef DUMUX_COMMON_ENUMERATE_HH
-#define DUMUX_COMMON_ENUMERATE_HH
-
-#include <tuple>
-#include <ranges>
+#include <concepts>
+#include <optional>
 
 namespace Dumux {
 
 /*!
- * \brief A Python-like enumerate function
- * \param inputRange Range to be enumerated
- * Usage example: for (const auto& [i, item] : enumerate(list))
+ * \file
+ * \ingroup Assembly
+ * \brief Small class to store weights associated with spatial and temporal
+ *        operators of a time-dependent PDE. This is used e.g. in the context
+ *        of multi-stage time integration methods.
  */
-template<std::ranges::range Range>
-constexpr auto enumerate(Range&& inputRange)
+template<std::floating_point Scalar>
+struct OperatorWeights
 {
-    if constexpr (std::is_reference_v<std::ranges::range_reference_t<Range>>)
-    {
-        using Ref = std::ranges::range_reference_t<Range>;
-        return std::views::transform(inputRange, [i=0] (Ref r) mutable {
-            return std::tie(i, r);
-        });
-    }
-    else
-    {
-        using Value = std::ranges::range_value_t<Range>;
-        static_assert(std::is_move_constructible_v<Value>);
-        return std::views::transform(inputRange, [i=0] (Value v) mutable {
-            return std::make_tuple(i, std::move(v));
-        });
-    }
-}
+    std::optional<Scalar> spatialWeight;
+    std::optional<Scalar> temporalWeight;
+};
 
 } // end namespace Dumux
 

@@ -1,0 +1,5 @@
+dumux_add_test(SOURCES test_multiindex.cc LABELS unit new_assembly)
+dumux_add_test(SOURCES test_indexstrategies.cc LABELS unit new_assembly)
+dumux_add_test(SOURCES test_typetraits.cc LABELS unit new_assembly)
+dumux_add_test(SOURCES test_concepts.cc LABELS unit new_assembly)
+dumux_add_test(SOURCES test_default_storage.cc LABELS unit new_assembly)
