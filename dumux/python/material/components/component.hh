@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief TODO: docme!
+ * \brief Python wrapper for fluid/solid system components
  */
 
 #ifndef DUMUX_PYTHON_MATERIAL_COMPONENT_HH

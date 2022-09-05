@@ -359,7 +359,7 @@
     /*!
      * \ingroup Flux
      * \defgroup CVFEFlux Flux related to the CVFE scheme
-     * \brief Flux related to the CVFE scheme
+     * \brief Flux related to control-volume finite element schemes
      */
     /*!
      * \ingroup Flux

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief TODO: docme!
+ * \brief Python wrapper for volume variables (finite volume schemes)
  */
 
 #ifndef DUMUX_PYTHON_COMMON_VOLUMEVARIABLES_HH
