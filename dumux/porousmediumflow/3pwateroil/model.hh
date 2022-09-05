@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ThreePWaterOilModel
- * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
+ * \brief Adaption of the fully implicit scheme to the three-phase water oil flow model.
  *
  * The model is designed for simulating three fluid phases with water, gas, and
  * a liquid contaminant (NAPL - non-aqueous phase liquid)
@@ -151,7 +151,7 @@ struct LocalResidual<TypeTag, TTag::ThreePWaterOilNI> { using type = ThreePWater
 template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::ThreePWaterOilNI> { static constexpr int value = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents(); };
 
-//! The primary variables vector for the 3p3c model
+//! The primary variables vector for the 3p water oil non-isothermal model
 template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::ThreePWaterOilNI>
 {

@@ -38,7 +38,7 @@ class FouriersLawImplementation;
 
 /*!
  * \ingroup CCMpfaFlux
- * \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+ * \brief Fourier's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
