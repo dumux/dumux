@@ -25,7 +25,6 @@
 #ifndef DUMUX_FREEFLOW_SUBPROBLEM_HH
 #define DUMUX_FREEFLOW_SUBPROBLEM_HH
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
@@ -41,10 +40,10 @@ namespace Dumux {
  * \ingroup BoundaryTests
  * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test
  */
-template <class TypeTag>
-class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class FreeFlowSubProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;

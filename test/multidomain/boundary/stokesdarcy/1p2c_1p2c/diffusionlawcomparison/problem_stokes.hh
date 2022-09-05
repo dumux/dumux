@@ -35,7 +35,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 // for StokesDarcyCouplingOptions
 #include <dumux/multidomain/boundary/stokesdarcy/couplingdata.hh>
@@ -49,9 +49,9 @@ namespace Dumux {
  * Horizontal flow from left to right with a parabolic velocity profile.
  */
 template <class TypeTag>
-class StokesSubProblem : public NavierStokesProblem<TypeTag>
+class StokesSubProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

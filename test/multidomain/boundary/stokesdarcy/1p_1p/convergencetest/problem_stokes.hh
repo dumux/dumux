@@ -33,7 +33,7 @@
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -49,9 +49,9 @@ class FreeFlowSubProblem;
  * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test
  */
 template <class TypeTag>
-class FreeFlowSubProblem : public NavierStokesProblem<TypeTag>
+class FreeFlowSubProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

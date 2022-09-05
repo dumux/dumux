@@ -33,6 +33,8 @@
 #include <dumux/porenetwork/1p/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/couplingmanager.hh>
@@ -109,7 +111,12 @@ struct SpatialParams<TypeTag, TTag::FreeFlowOneP>
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOneP> { using type = Dumux::FreeFlowOnePTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentum>
+{ using type = Dumux::FreeFlowOnePTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMass>
+{ using type = Dumux::FreeFlowOnePTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };

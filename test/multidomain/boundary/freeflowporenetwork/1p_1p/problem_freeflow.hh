@@ -27,7 +27,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
@@ -38,10 +37,10 @@ namespace Dumux {
  * \brief  Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
  *         A two-dimensional Stokes flow region coupled to a pore-network model.
  */
-template <class TypeTag>
-class FreeFlowOnePTestProblem :  public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class FreeFlowOnePTestProblem :  public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
