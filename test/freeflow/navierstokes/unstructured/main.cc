@@ -23,6 +23,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/version.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -183,7 +184,7 @@ int main(int argc, char** argv)
     }
 
     timer.stop();
-    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    const auto& comm = leafGridView.comm();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";

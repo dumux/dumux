@@ -31,7 +31,6 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
 
-#include <dune/common/version.hh>
 #include <dune/common/parallel/communication.hh>
 
 #include <dune/common/parallel/mpihelper.hh>

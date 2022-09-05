@@ -28,7 +28,6 @@
 
 #include <memory>
 
-#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 
@@ -71,11 +70,7 @@ int initSolverFactoriesForMultiTypeBlockMatrix()
     using TL = Dune::TypeList<M,X,Y>;
     auto& dsfac = Dune::DirectSolverFactory<M,X,Y>::instance();
     Dune::addRegistryToFactory<TL>(dsfac, Dumux::MultiTypeBlockMatrixDirectSolverTag{});
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
     auto& pfac = Dune::PreconditionerFactory<LinearOperator,X,Y>::instance();
-#else
-    auto& pfac = Dune::PreconditionerFactory<M,X,Y>::instance();
-#endif
     Dune::addRegistryToFactory<TL>(pfac, Dumux::MultiTypeBlockMatrixPreconditionerTag{});
     using TLS = Dune::TypeList<X,Y>;
     auto& isfac = Dune::IterativeSolverFactory<X,Y>::instance();
@@ -96,15 +91,7 @@ void initSolverFactories()
     if constexpr (isMultiTypeBlockMatrix<Matrix>::value)
         initSolverFactoriesForMultiTypeBlockMatrix<LinearOperator>();
     else
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
         Dune::initSolverFactories<LinearOperator>();
-#else
-    {
-        using X  = typename LinearOperator::range_type;
-        using Y  = typename LinearOperator::domain_type;
-        Dune::initSolverFactories<Matrix, X, Y>();
-    }
-#endif
 }
 
 /*!
@@ -112,7 +99,6 @@ void initSolverFactories()
  * \brief A linear solver using the dune-istl solver factory
  *        to choose the solver and preconditioner at runtime.
  * \note the solvers are configured via the input file
- * \note requires Dune version 2.7.1 or newer and 2.8 for parallel solvers
  */
 template <class LinearSolverTraits>
 class IstlSolverFactoryBackend : public LinearSolver
@@ -256,7 +242,6 @@ private:
     template<class ParallelTraits, class Matrix, class Vector>
     void solveParallel_(Matrix& A, Vector& x, Vector& b)
     {
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,8)
         using Comm = typename ParallelTraits::Comm;
         using LinearOperator = typename ParallelTraits::LinearOperator;
         using ScalarProduct = typename ParallelTraits::ScalarProduct;
@@ -274,9 +259,6 @@ private:
 
         // solve linear system
         solver->apply(x, b, result_);
-#else
-        DUNE_THROW(Dune::NotImplemented, "Parallel solvers only available for dune-istl > 2.7.0");
-#endif
     }
 #endif // HAVE_MPI
 

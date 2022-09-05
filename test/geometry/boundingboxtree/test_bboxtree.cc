@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
     std::vector<int> returns;
     Dumux::BBoxTreeTests<Grid> test;
 
-    int runIdx = 0;
+    [[maybe_unused]] int runIdx = 0;
     for (const auto scaling : {1e10, 1.0, 1e-3, 1e-10})
     {
         std::cout << std::endl
