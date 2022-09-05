@@ -30,7 +30,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 #include <dumux/io/gnuplotinterface.hh>
 
@@ -41,9 +41,9 @@ namespace Dumux {
  * \brief Test problem for the Maxwell-Stefan model
  */
 template <class TypeTag>
-class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
+class MaxwellStefanNCTestProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

@@ -30,7 +30,6 @@
 #include <dumux/common/timeloop.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
@@ -49,10 +48,10 @@ namespace Dumux {
  * For the non-isothermal test, water of increased temperature is injected at the inlet
  * while the walls are fully isolating.
  */
-template <class TypeTag>
-class ChannelTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class ChannelTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

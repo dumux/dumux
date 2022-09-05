@@ -32,7 +32,6 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
 
@@ -45,10 +44,10 @@ namespace Dumux {
  * The velocities and pressures decay exponentially. The Dirichlet boundary conditions are
  * time-dependent and consistent with the analytical solution.
  */
-template <class TypeTag>
-class AngeliTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class AngeliTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

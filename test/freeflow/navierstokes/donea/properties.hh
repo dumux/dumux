@@ -42,7 +42,7 @@
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
@@ -92,7 +92,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DoneaTest>
 {
     using Traits = MultiDomainTraits<TTag::DoneaTestMomentum, TTag::DoneaTestMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties

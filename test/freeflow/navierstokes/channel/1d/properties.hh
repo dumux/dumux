@@ -31,11 +31,13 @@
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -62,7 +64,12 @@ struct Grid<TypeTag, TTag::NavierStokesAnalytic> { using type = Dune::YaspGrid<1
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::NavierStokesAnalytic> { using type = Dumux::NavierStokesAnalyticProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::NavierStokesAnalyticMomentum>
+{ using type = NavierStokesAnalyticProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::NavierStokesAnalyticMass>
+{ using type = NavierStokesAnalyticProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::NavierStokesAnalytic> { static constexpr bool value = true; };
@@ -78,7 +85,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::NavierStokesAnalytic>
 {
     using Traits = MultiDomainTraits<TTag::NavierStokesAnalyticMomentum, TTag::NavierStokesAnalyticMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties

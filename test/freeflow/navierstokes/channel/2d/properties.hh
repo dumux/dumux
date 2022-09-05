@@ -31,12 +31,14 @@
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
@@ -56,8 +58,12 @@ struct ChannelTestMass { using InheritsFrom = std::tuple<ChannelTest, NavierStok
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ChannelTest>
-{ using type = ChannelTestProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::ChannelTestMomentum>
+{ using type = ChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ChannelTestMass>
+{ using type = ChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 // the fluid system
 template<class TypeTag>
@@ -93,7 +99,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::ChannelTest>
 {
     using Traits = MultiDomainTraits<TTag::ChannelTestMomentum, TTag::ChannelTestMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties

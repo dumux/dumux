@@ -31,7 +31,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
 
@@ -39,10 +38,10 @@ namespace Dumux {
  * \ingroup NavierStokesTests
  * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
  */
-template <class TypeTag>
-class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class NavierStokesAnalyticProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
