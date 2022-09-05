@@ -28,6 +28,10 @@
 
 #include <optional>
 #include <utility>
+#include <unordered_map>
+#include <array>
+#include <vector>
+
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -59,6 +63,11 @@ class BoxFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GGCache = typename GG::Cache;
+
+    using GeometryHelper = BoxGeometryHelper<GridView, dim,
+                                             typename GG::SubControlVolume,
+                                             typename GG::SubControlVolumeFace>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -71,20 +80,27 @@ public:
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
-    //! Constructor
-    BoxFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry) {}
+    /*!
+     * \brief Constructor
+     * \note Never use this directly and always construct this class via `localView(gridGeometry)`
+     */
+    BoxFVElementGeometry(const GGCache& ggCache)
+    : ggCache_(&ggCache) {}
+
+    [[deprecated("This Constructor is deprecated and will be removed after release 3.6. Always use localView(gridGeometry).")]]
+    BoxFVElementGeometry(const GridGeometry& gg)
+    : BoxFVElementGeometry(gg.cache_) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
-        return gridGeometry().scvs(eIdx_)[scvIdx];
+        return ggCache_->scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
-        return gridGeometry().scvfs(eIdx_)[scvfIdx];
+        return ggCache_->scvfs(eIdx_)[scvfIdx];
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -95,9 +111,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -108,9 +124,9 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.gridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
+        const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
+        return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
     //! Get a local finite element basis
@@ -122,13 +138,13 @@ public:
     //! The total number of sub control volumes
     std::size_t numScv() const
     {
-        return gridGeometry().scvs(eIdx_).size();
+        return ggCache_->scvs(eIdx_).size();
     }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
     {
-        return gridGeometry().scvfs(eIdx_).size();
+        return ggCache_->scvfs(eIdx_).size();
     }
 
     /*!
@@ -179,14 +195,38 @@ public:
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
+    { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
-    { return gridGeometry().hasBoundaryScvf(eIdx_); }
+    { return ggCache_->hasBoundaryScvf(eIdx_); }
+
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
+
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        const GeometryHelper geometryHelper(geo);
+        if (scvf.boundary())
+        {
+            const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
+            const auto& key = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localBoundaryIndex];
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getBoundaryScvfCorners(key[0], key[1]) };
+        }
+        else
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
+    }
 
 private:
-    const GridGeometry* gridGeometryPtr_;
+    const GGCache* ggCache_;
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
@@ -203,6 +243,7 @@ class BoxFVElementGeometry<GG, false>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GGCache = typename GG::Cache;
 
     using GeometryHelper = BoxGeometryHelper<GridView, dim,
                                              typename GG::SubControlVolume,
@@ -219,9 +260,16 @@ public:
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
-    //! Constructor
-    BoxFVElementGeometry(const GridGeometry& gridGeometry)
-    : gridGeometryPtr_(&gridGeometry) {}
+    /*!
+     * \brief Constructor
+     * \note Never use this directly and always construct this class via `localView(gridGeometry)`
+     */
+    BoxFVElementGeometry(const GGCache& ggCache)
+    : ggCache_(&ggCache) {}
+
+    [[deprecated("This Constructor is deprecated and will be removed after release 3.6. Always use localView(gridGeometry).")]]
+    BoxFVElementGeometry(const GridGeometry& gg)
+    : BoxFVElementGeometry(gg.cache_) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
@@ -325,14 +373,37 @@ public:
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
-    { return *gridGeometryPtr_; }
+    { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-private:
+    //! Geometry of a sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
 
+    //! Geometry of a sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        const GeometryHelper geometryHelper(geo);
+        if (scvf.boundary())
+        {
+            const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
+            const auto& key = scvfBoundaryGeometryKeys_[localBoundaryIndex];
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getBoundaryScvfCorners(key[0], key[1]) };
+        }
+        else
+            return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
+    }
+
+private:
     void makeElementGeometries_()
     {
         hasBoundaryScvf_ = false;
@@ -360,8 +431,9 @@ private:
         }
 
         // construct the sub control volume faces
-        const auto numInnerScvf = (dim==1) ? 1 : element.subEntities(dim-1);
+        const auto numInnerScvf = geometryHelper.numInteriorScvf();
         scvfs_.resize(numInnerScvf);
+        scvfBoundaryGeometryKeys_.clear();
 
         LocalIndexType scvfLocalIdx = 0;
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
@@ -400,6 +472,11 @@ private:
                                         std::move(localScvIndices),
                                         true);
 
+                    scvfBoundaryGeometryKeys_.emplace_back(std::array<LocalIndexType, 2>{{
+                        static_cast<LocalIndexType>(intersection.indexInInside()),
+                        static_cast<LocalIndexType>(isScvfLocalIdx)
+                    }});
+
                     // increment local counter
                     scvfLocalIdx++;
                 }
@@ -411,12 +488,13 @@ private:
     GridIndexType eIdx_;
     std::optional<Element> element_;
 
-    //! The global geometry this is a restriction of
-    const GridGeometry* gridGeometryPtr_;
+    //! The global geometry cache
+    const GGCache* ggCache_;
 
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+    std::vector<std::array<LocalIndexType, 2>> scvfBoundaryGeometryKeys_;
 
     bool hasBoundaryScvf_ = false;
 };

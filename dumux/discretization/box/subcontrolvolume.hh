@@ -30,6 +30,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/volume.hh>
+#include <dumux/geometry/center.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -93,21 +94,16 @@ public:
                         LocalIndexType scvIdx,
                         GridIndexType elementIndex,
                         GridIndexType dofIndex)
-    : corners_(geometryHelper.getScvCorners(scvIdx)),
-      center_(0.0),
-      elementIndex_(elementIndex),
-      localDofIdx_(scvIdx),
-      dofIndex_(dofIndex)
+    : corners_(geometryHelper.getScvCorners(scvIdx))
+    , center_(Dumux::center(corners_))
+    , elementIndex_(elementIndex)
+    , localDofIdx_(scvIdx)
+    , dofIndex_(dofIndex)
     {
         volume_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
             [&](unsigned int i){ return corners_[i]; }
         );
-
-        // compute center point
-        for (const auto& corner : corners_)
-            center_ += corner;
-        center_ /= corners_.size();
     }
 
     //! The center of the sub control volume
@@ -124,6 +120,7 @@ public:
 
     //! The geometry of the sub control volume
     // e.g. for integration
+    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scv).")]]
     Geometry geometry() const
     {
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
@@ -162,6 +159,7 @@ public:
     }
 
     //! Return the corner for the given local index
+    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scv).corner(i).")]]
     const GlobalPosition& corner(LocalIndexType localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
