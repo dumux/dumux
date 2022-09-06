@@ -41,7 +41,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup DiamondDiscretization
  * \ingroup MultiDomain
  * \brief A base class for all face-centered staggered local assemblers
  * \tparam id the id of the sub domain

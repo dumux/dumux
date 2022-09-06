@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Calculates the element-wise residual for control-volume finite element schemes
  */
 #ifndef DUMUX_CVFE_LOCAL_RESIDUAL_HH
@@ -63,7 +63,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The element-wise residual for control-volume finite element schemes
  * \tparam TypeTag the TypeTag
  */

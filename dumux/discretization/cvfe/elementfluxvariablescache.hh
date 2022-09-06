@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_ELEMENT_FLUXVARSCACHE_HH
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The flux variables caches for an element
  * \note The class is specialized for a version with and without caching
  * If grid caching is enabled the flux caches are stored for the whole gridview in the corresponding
@@ -43,7 +43,7 @@ class CVFEElementFluxVariablesCache
 {};
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The flux variables caches for an element with caching enabled
  */
 template<class GFVC>
@@ -138,7 +138,7 @@ private:
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \brief The flux variables caches for an element with caching disabled
  */
 template<class GFVC>

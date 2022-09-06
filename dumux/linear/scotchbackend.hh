@@ -50,7 +50,6 @@ namespace Dumux {
 #if HAVE_PTSCOTCH
 
 /*!
- * \file
  * \ingroup Linear
  * \brief A wrapper around a SCOTCH graph object
  */
@@ -118,7 +117,6 @@ private:
 };
 
 /*!
- * \file
  * \ingroup Linear
  * \brief A wrapper around a SCOTCH strategy object
  */
@@ -152,7 +150,6 @@ private:
 #endif // HAVE_PTSCOTCH
 
 /*!
- * \file
  * \ingroup Linear
  * \brief A reordering backend using the scotch library
  * \note You need to have PTSCOTCH installed to use this feature

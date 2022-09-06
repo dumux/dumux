@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief The grid volume variables class for box models
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_GRID_VOLUMEVARIABLES_HH
@@ -47,7 +47,7 @@ struct CVFEDefaultGridVolumeVariablesTraits
 };
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Base class for the grid volume variables
  */
 template<class Traits, bool enableCaching>

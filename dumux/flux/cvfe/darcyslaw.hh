@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEFlux
  * \brief Specialization of Darcy's Law for control-volume finite element schemes
  *
  * This file contains the data which is required to calculate
@@ -38,7 +38,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEFlux
  * \brief Darcy's law for control-volume finite element schemes
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
@@ -152,7 +152,7 @@ template<class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEFlux
  * \brief Specialization of Darcy's Law for control-volume finite element schemes
  */
 template<class TypeTag, class DM>

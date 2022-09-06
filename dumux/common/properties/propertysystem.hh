@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Properties
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \author Timo Koch
  * \brief The Dumux property system, traits with inheritance
  */

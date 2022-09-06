@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- *  \file
+ * \file
  * \ingroup TwoPNCModel
  * \brief Adaption of the fully implicit scheme to the
  *        two-phase n-component fully implicit model.

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Discretization
  * \brief The grid variable class for finite volume schemes,
  *        storing variables on scv and scvf (volume and flux variables)
@@ -35,6 +36,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Discretization
  * \brief Finite volume-specific local view on grid variables.
  * \tparam GV The grid variables class
@@ -108,6 +110,7 @@ private:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Discretization
  * \brief The grid variable class for finite volume schemes, storing
  *        variables on scv and scvf (volume and flux variables).

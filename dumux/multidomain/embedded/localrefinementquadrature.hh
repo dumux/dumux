@@ -35,7 +35,6 @@
 namespace Dumux {
 
 /*!
- * \file
  * \ingroup EmbeddedCoupling
  * \brief A quadrature rule using local refinement to approximate partitioned elements
  *

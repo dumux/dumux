@@ -302,9 +302,25 @@
          */
     /*!
      * \ingroup Discretization
+     * \defgroup CVFEDiscretization CVFE
+     * \brief Control-volume finite element schemes (e.g. box method)
+     * Control-volume finite element schemes are based on finite element basis functions for interpolation but define control volumes to construct a finite volume scheme. They can be interpreted both as finite volume or as (Petrov-Galerkin) finite element scheme.
+     */
+    /*!
+     * \ingroup Discretization
      * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
      */
+        /*!
+         * \ingroup FaceCenteredStaggeredDiscretization
+         * \defgroup DiamondDiscretization
+         * \brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
+         */
+        /*!
+         * \ingroup FaceCenteredStaggeredDiscretization
+         * \defgroup FaceCenteredStaggeredStaggeredDiscretization
+         * \brief Finite-volume marker-and-cell scheme.
+         */
     /*!
      * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
@@ -320,6 +336,16 @@
      * \defgroup PoreNetworkDiscretization Pore network model discretization
      * \brief The pore-network model discretization.
      */
+    /*!
+     * \ingroup Discretization
+     * \defgroup PQ1BubbleDiscretization PQ1 bubble scheme
+     * \brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
+     */
+/* ***************** Experimental ******************/
+/*!
+ * \defgroup Experimental Experimental
+ * \brief Experimental features.
+ */
 /* ***************** Flux ******************/
 /*!
  * \defgroup Flux Flux
@@ -329,6 +355,11 @@
      * \ingroup Flux
      * \defgroup BoxFlux Flux related to the box scheme
      * \brief Flux related to the box scheme
+     */
+    /*!
+     * \ingroup Flux
+     * \defgroup CVFEFlux Flux related to the CVFE scheme
+     * \brief Flux related to control-volume finite element schemes
      */
     /*!
      * \ingroup Flux
@@ -345,6 +376,11 @@
          * \defgroup CCMpfaFlux Flux related to the cell-centered multi-point flux approximation schemes
          * \brief Flux related to the cell-centered multi-point flux approximation schemes
          */
+   /*!
+     * \ingroup Flux
+     * \defgroup FaceCenteredDiamondFlux Flux related to the face-centered diamond scheme
+     * \brief Flux related to the face-centered diamond scheme
+     */
     /*!
      * \ingroup Flux
      * \defgroup PoreNetworkFlux Flux related to the pore network models
@@ -376,6 +412,7 @@
  *  - __Fluid state:__ <br> @copydoc FluidStates
  *  - __Solid state:__ <br> @copydoc SolidStates
  *  - __Fluid system:__ <br> @copydoc Fluidsystems
+ *  - __Solid system:__ <br> @copydoc Solidsystems
  *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
  */
     /*!
@@ -502,13 +539,10 @@
      */
     /*!
      * \ingroup Material
-     * \defgroup SpatialParameters Spatial Parameters
-     * \brief Parameters of the porous matrix and other parameter varying with position (e.g. porosity)
+     * \defgroup SpatialParameters Spatial parameters
+     * \brief Spatial parameters.
      *
-     * All parameters which depend on the matrix and
-     * therefore on the position within the model domain are defined as spatial
-     * parameters. For example permeability, porosity etc.
-     *
+     * Spatial parameters.
      */
 
 /* ***************** Adaptive ******************/
@@ -635,9 +669,3 @@
       *
       * For a detailed model description see porenetwork/2p/model.hh
       */
-
- /* ***************** TimeStepping ******************/
- /*!
-  * \defgroup TimeStepping Time stepping
-  * \brief The time stepping
-  */

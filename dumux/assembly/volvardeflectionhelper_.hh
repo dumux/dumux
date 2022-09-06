@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Assembly
+ * \brief Volume variables deflection helper.
+ */
+
 #ifndef DUMUX_ASSEMBLY_VOLVARS_DEFLECTION_HELPER_HH
 #define DUMUX_ASSEMBLY_VOLVARS_DEFLECTION_HELPER_HH
 

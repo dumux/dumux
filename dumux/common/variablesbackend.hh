@@ -188,7 +188,6 @@ public:
 };
 
 /*!
- * \file
  * \ingroup Common
  * \brief Class providing operations for generic variable classes,
  *        containing primary and possibly also secondary variables.

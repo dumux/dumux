@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Global flux variable cache
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_GRID_FLUXVARSCACHE_HH
@@ -33,7 +33,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variable caches traits
  */
 template<class P, class FVC>
@@ -47,7 +47,7 @@ struct CVFEDefaultGridFVCTraits
 };
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variable caches on a gridview
  * \note The class is specialized for a version with and without grid caching
  */
@@ -58,7 +58,7 @@ template<class Problem,
 class CVFEGridFluxVariablesCache;
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variable caches on a gridview with grid caching enabled
  * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
@@ -123,7 +123,7 @@ private:
 };
 
 /*!
- * \ingroup CVFE
+ * \ingroup CVFEDiscretization
  * \brief Flux variable caches on a gridview with grid caching disabled
  */
 template<class P, class FVC, class Traits>

@@ -38,7 +38,6 @@ struct Transmissibility : public TransmissibilityLawTypes... {};
 namespace Dumux::PoreNetwork {
 
 /*!
- * \file
  * \ingroup PoreNetworkFlux
  * \brief Hagen–Poiseuille-type flux law to describe the advective flux for pore-network models.
  */
@@ -153,7 +152,6 @@ public:
 };
 
 /*!
- * \file
  * \ingroup PoreNetworkFlux
  * \brief Non-creeping flow flux law to describe the advective flux for pore-network models based on
  *        El-Zehairy et al.(2019).

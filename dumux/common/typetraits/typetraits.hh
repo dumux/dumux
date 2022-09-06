@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TypeTraits
+ * \ingroup Typetraits
  * \brief Type traits.
  */
 #ifndef DUMUX_TYPE_TRAITS_HH

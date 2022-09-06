@@ -41,7 +41,6 @@ template<class GridGeometry, class DiscretizationMethod>
 struct LinearSolverTraitsImpl;
 
 /*!
- * \file
  * \brief The type traits required for using the IstlFactoryBackend
  */
 template<class GridGeometry>

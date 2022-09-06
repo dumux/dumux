@@ -280,7 +280,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup DiamondDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (Face-centered methods)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
@@ -291,7 +291,7 @@ class FaceCenteredDiamondLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup DiamindDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Face-centered scheme local assembler using numeric differentiation and implicit time discretization
  */
 template<class TypeTag, class Assembler, class Implementation>
@@ -537,7 +537,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup DiamondDiscretization
  * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
@@ -657,7 +657,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup DiamondDiscretization
  * \brief TODO docme
  */
 template<class TypeTag, class Assembler>
