@@ -1043,6 +1043,10 @@ private:
     const BaseLawParams* baseLawParamsPtr_;
 };
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Parker van Genuchten material law
+ */
 template<class ScalarType,
          class BaseLaw,
          class Regularization = NoRegularization,

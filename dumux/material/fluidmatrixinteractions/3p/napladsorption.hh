@@ -30,7 +30,10 @@
 #include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 
 namespace Dumux::FluidMatrix {
-
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Implementation of a NAPL adsorption model
+ */
 template<class Scalar>
 class ThreePNAPLAdsorption : Adapter<ThreePNAPLAdsorption<Scalar>, Adsorption>
 {

@@ -30,7 +30,10 @@
 
 namespace Dumux::PoreNetwork {
 
-//! wrapper for subgrid data
+/*!
+ * \ingroup PoreNetworkModels
+ * \brief wrapper for subgrid data
+ */
 template<class HostGrid, class SubGrid>
 class SubGridData
 {

@@ -31,7 +31,10 @@
 #include <dumux/discretization/facecentered/staggered/gridsupportsconcavecorners.hh>
 
 namespace Dumux {
-
+/*!
+ * \ingroup FaceCenteredStaggeredDiscretization
+ * \brief Face centered staggered geometry helper
+ */
 template<class GridView>
 class FaceCenteredStaggeredGeometryHelper
 {

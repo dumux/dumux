@@ -46,6 +46,10 @@ static constexpr bool hasVelocityInSpatialParams()
 { return Dune::Std::is_detected<HasVelocityInSpatialParams, Problem, SubControlVolumeFace>::value; }
 }
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Scheidegger's dispersion tensor
+ */
 template<class TypeTag>
 class ScheideggersDispersionTensor
 {

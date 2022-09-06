@@ -29,6 +29,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Full dispersion tensor
+ */
 template<class TypeTag>
 class FullDispersionTensor
 {

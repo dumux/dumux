@@ -168,7 +168,10 @@ struct OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>
 
 } // end namespace Detail::PQ1Bubble
 
-//! A class to create sub control volume and sub control volume face geometries per element
+/*!
+ * \ingroup PQ1BubbleDiscretization
+ * \brief A class to create sub control volume and sub control volume face geometries per element
+ */
 template <class GridView, class ScvType, class ScvfType>
 class PQ1BubbleGeometryHelper
 {
