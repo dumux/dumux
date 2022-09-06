@@ -18,6 +18,9 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __1d3d__: Fixed a bug in the extended source stencil which didn't respect a user-defined epsilon for numeric differentiation
 
+- __Pore-network model__: Pore-network model will no longer prevent non-wetting fluid flowing out by default. Throats  blocking non-wetting fluid can be specified by setting runtime parameter `InvasionState.BlockNonwettingPhaseAtThroatLabel`.
+
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Experimental features__: All headers with experimental features have been moved into the folder `dumux/experimental`.
