@@ -138,6 +138,51 @@ public:
     }
 
     /*!
+     * \brief Merges two trees by overwriting existing values
+     */
+    void merge(const Collector& collector)
+    {
+        this->getTree().merge_patch(collector.getTree());
+    }
+
+    /*!
+     * \brief Append data from another collector
+     * \param collector The json collector from which data is taken
+     * \param convertToArrays Convert non-array types to array which allows appending data
+     */
+    void append(const Collector& collector, bool convertToArrays = false)
+    {
+        const auto& tree = collector.getTree();
+        for (const auto& [key, values] : tree.items())
+        {
+            auto& dataAtKey = this->getTree()[key];
+            if(dataAtKey.is_array())
+            {
+                if(values.is_array())
+                    dataAtKey.insert(dataAtKey.end(), values.begin(), values.end());
+                else
+                    dataAtKey.push_back(values);
+            }
+            else if(dataAtKey.is_null())
+            {
+                dataAtKey = values;
+            }
+            else if(convertToArrays)
+            {
+                // convert to array and append data
+                auto val(dataAtKey);
+                dataAtKey = JsonTree::array({val});
+                if(values.is_array())
+                    dataAtKey.insert(dataAtKey.end(), values.begin(), values.end());
+                else
+                    dataAtKey.push_back(values);
+            }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Unclear how to append data without conversion to array!");
+        }
+    }
+
+    /*!
      * \brief returns the object with id of the json tree
      */
     auto& operator[] (std::string id)
@@ -172,6 +217,13 @@ public:
 private:
     JsonTree tree_;
 };
+
+//! convience function to check if file exists.
+bool jsonFileExists(const std::string& fileName)
+{
+    std::ifstream infile(fileName + ".json");
+    return infile.good();
+}
 
 //! reads a json file into a tree
 template<class Collector>
