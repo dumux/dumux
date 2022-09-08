@@ -33,6 +33,8 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/gridcapabilities.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
 
@@ -153,6 +155,7 @@ public:
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -177,6 +180,7 @@ public:
     , isStationaryProblem_(!timeLoop)
     {
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 

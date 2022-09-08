@@ -33,6 +33,8 @@
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
 
+#include <dumux/common/gridcapabilities.hh>
+
 namespace Dumux {
 
 /*!
@@ -433,6 +435,20 @@ private:
         return globalPositions;
     }
 };
+
+namespace Grid::Capabilities {
+
+// To the best of our knowledge YaspGrid is view thread-safe
+// This specialization can be removed after we depend on Dune release 2.9 and this is guaranteed by YaspGrid itself
+template<class Coordinates, int dim>
+struct MultithreadingSupported<Dune::YaspGrid<dim, Coordinates>>
+{
+    template<class GV>
+    static bool eval(const GV& gv) // default is independent of the grid view
+    { return true; }
+};
+
+} // end namespace Grid::Capabilities
 
 } // end namespace Dumux
 

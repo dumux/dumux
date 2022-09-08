@@ -33,6 +33,8 @@
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
 
+#include <dumux/common/gridcapabilities.hh>
+
 namespace Dumux {
 
 #if HAVE_DUNE_UGGRID
@@ -174,6 +176,20 @@ private:
         loadBalance();
     }
 };
+
+namespace Grid::Capabilities {
+
+// To the best of our knowledge UGGrid is view thread-safe for sequential runs
+// This specialization maybe be removed after we depend on Dune release 2.9 if is guaranteed by UGGrid itself by then
+template<int dim>
+struct MultithreadingSupported<Dune::UGGrid<dim>>
+{
+    template<class GV>
+    static bool eval(const GV& gv) // default is independent of the grid view
+    { return gv.comm().size() <= 1; }
+};
+
+} // end namespace Grid::Capabilities
 
 #endif // HAVE_DUNE_UGGRID
 
