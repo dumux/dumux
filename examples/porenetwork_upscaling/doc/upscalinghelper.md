@@ -4,27 +4,37 @@
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 2](main.md) |
 |---|---:|
 
-# Part 3: Upscaling helper
-
-The upscaling helper evaluates the pore-network simulation results for each direction $`i`$ and calculates the upscaled intrinsic permeability in this direction using:
+The upscaling helper evaluates the pore-network simulation results for each direction $`i`$ and calculates the upscaled properties in this direction. Firstly, it evaluates the apparent velocity as:
 
 ```math
- K_i = v_{\mathrm{Darcy},i} / \nabla p_i ~ \mu.
-```
-$`\nabla p_i`$ is a given pressure gradient in $`i`$-direction and $`\mu`$ the fluid dynamic viscosity.
-
-We evaluate the Darcy velocity as
-
-```math
-     v_{\mathrm{Darcy},i} = \frac{q_{\mathrm{mass,tot},i} / \varrho}{A_{\mathrm{tot},i}}
-```
+     v_{\mathrm{Apparent},i} = \frac{q_{\mathrm{mass,tot},i} / \varrho}{A_{\mathrm{tot},i}}
+``` 
 
 where $`q_{\mathrm{mass,tot},i}`$ is the total mass flow leaving the network over the REV's boundary with area
-$`A_{\mathrm{tot},i}`$ in $`i`$-direction. $`\varrho `$ is the fluid mass density.
+$`A_{\mathrm{tot},i}`$ in $`i`$-direction. $`\varrho `$ is the fluid mass density. Then, we calculate upscaled permeability as:
+
+```math
+ K_D = v_{\mathrm{Apparent},i}  ~ \mu / \nabla p_i.
+```
+$`\nabla p_i`$ is a given pressure gradient in $`i`$-direction and $`\mu`$ the fluid dynamic viscosity. In the creeping flow simulation, the calculated permeability, $`K_D`$, is the Darcy (intrinsic) permeability of the system.
+
+To simulate non-creeping flow, we use Forchheimer's equation to upscale the properties. 
+```math
+ \nabla p_i = \frac{\mu}{K_f} v_{\mathrm{Apparent},i} + \varrho \beta v_{\mathrm{Apparent},i}^2, 
+```
+where $`K_f`$ is the Forchheimer permeability and $`\beta`$ is the Forchheimer coefficient.
+
+Although it is sometimes assumed for the sake of simplicity that $`K_f = K_D`$, they are not exactly the same properties. As the velocity increases, the flow regime in a porous medium shifts from the Darcy to the Forchheimer regime. This change in the flow regime means that in addition to viscous dissipation (the first term in the Forchheimer equation), we also need to consider inertia effects (the second term in the Forchheimer equation). Moreover, the shift in the flow regime, means a different viscous dissipation than what the same porous medium experiences a Darcy flow. In other words, moving from the Darcy to the Forchheimer regime establishes a new velocity field in the porous medium which causes the difference in viscous dissipation in addition to inertia effects. The first and second terms in the Forchheimer equation are correlated. For more detail, we refer to the study conducted by [Dukhan and Minjeur (2010)](http://dx.doi.org/10.1007/s10934-010-9393-1).
+
+In this example the end of the creeping flow (Darcy regime) is defined as the moment when the pressure drop calculated by the Dracy (intrinsic) permeability $`\Delta p_i = v_{\mathrm{Apparent},i} \mu l/ K_D`$ becomes less than 99% of the total pressure drop [Muljadi et al.](https://doi.org/10.1016/j.advwatres.2015.05.019).
+To calculate upscaled properties, we rearrange Forchehimer's equation as:
+
+```math
+ \frac{\nabla p_i v_{\mathrm{Apparent},i}}{\mu} = \frac{1}{K_f} + \frac{\varrho v_{\mathrm{Apparent},i}}{\mu} \beta .
+```
+Finding the linear regression line of $`\nabla p_i v_{\mathrm{Apparent},i}/\mu `$ versus $`\varrho v_{\mathrm{Apparent},i}/\mu `$ and using the intercept and the slope of the regression line, we can respectively calculate the Forchheimer permeability and coefficient. It should be noted that the calculation of the Forchheimer permeability can be affected by the pressure range applied to the porous medium as well as the number of sample points that are used in the regression process. We compute the Darcy (intrinsic) permeability as the maximum permeability of the sample of data of the system which happens when the pressure gradient is small enough such that inertial effects are negligible. To ensure such a small pressure gradient, we set the first pressure gradient to be applied as $'10 Pa/m'$. However, this value can be adapted using the keyword `Problem.MinimumPressureGradient` in params.input. it is recommended to use more than 10 pressure sample points which can be set in the input file. As mentioned before, considering a slight difference between Darcy (intrinsic) permeability and Forchheimer permeability, in many applications they can be used interchangeabely. Here, however, we distinguish between them, calculate and report them separately.
 
 The code documentation is structured as follows:
-
-[[_TOC_]]
 
 
 ## Upscaling helper struct (`upscalinghelper.hh`)
@@ -42,57 +52,114 @@ the pore network in flow direction in order to find the upscaled Darcy permeabil
 #include <iomanip>
 #include <numeric>
 #include <functional>
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/format.hh>
 
 namespace Dumux {
 
-struct UpscalingHelper
+template<class Scalar>
+class UpscalingHelper
 {
+public:
 ```
 
-### Calculate the intrinsic permeability
+### Set data points to calculate intrinsic permeability and Forchheimer coefficient
 This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
-Afterwards, the mass flux is converted into an area specify volume flux from which finally the intrinsic Darcy
-permeability $`\mathbf{K}`$ [m$`^2`$] can be evaluated.
+Afterwards, the mass flux is converted into an volume flux which is used to calculate the apparent velocity.
+Then apparent permeability of the network is computed and stored for furthure calculations.
 
 ```cpp
-    template<class Problem, class Scalar>
-    static Scalar getDarcyPermeability(const Problem& problem, const Scalar totalMassFlux)
+    template <class Problem>
+    void setDataPoints(const Problem &problem, const Scalar totalMassFlux)
     {
         // get the domain side lengths from the problem
         auto sideLengths = problem.sideLengths();
 
-        // create temporary stringstream with fixed scientific formatting without affecting std::cout
-        std::ostream tmp(std::cout.rdbuf());
-        tmp << std::fixed << std::scientific;
-        static constexpr char dirNames[] = "xyz";
+
+        // get the applied pressure gradient
+        const auto pressureGradient = problem.pressureGradient();
+        const auto pressureDrop = pressureGradient * sideLengths[problem.direction()];
+
+        // get the fluid properties
+        const auto liquidDensity = problem.liquidDensity();
+        const auto liquidDynamicViscosity = problem.liquidDynamicViscosity();
 
         // convert mass to volume flux
-        const auto volumeFlux = totalMassFlux / problem.liquidDensity();;
+        const auto volumeFlux = totalMassFlux / liquidDensity;
+        ;
 
+        // calculate apparent velocity
         sideLengths[problem.direction()] = 1.0;
         const auto outflowArea = std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
-        const auto vDarcy = volumeFlux / outflowArea;
-        const auto K = vDarcy / problem.pressureGradient() * problem.liquidDynamicViscosity();
-        tmp << "\n########################################\n" << std::endl;
-        tmp << dirNames[problem.direction()] << "-direction";
-        tmp << ": Area = " << outflowArea << " m^2";
-        tmp << "; Massflux = " << totalMassFlux << " kg/s";
-        tmp << "; v_Darcy = " << vDarcy << " m/s";
-        tmp << "; K = " << K << " m^2" << std::endl;
-        tmp << "\n########################################\n" << std::endl;
+        const auto vApparent = volumeFlux / outflowArea;
 
-        return K;
+        // compute apparent permeability
+        const auto KApparent = vApparent / pressureGradient * liquidDynamicViscosity;
+        // calculate rho v / mu, called inertia to viscous ratio in the rest of the code
+        const auto inertiaToViscousRatio = liquidDensity * vApparent / liquidDynamicViscosity;
+
+        // store the required data for further calculations
+        totalPressureDrop_[problem.direction()].push_back(pressureDrop);
+        apparentVelocity_[problem.direction()].push_back(vApparent);
+        apparentPermeability_[problem.direction()].push_back(KApparent);
+        inertiaToViscousRatio_[problem.direction()].push_back(inertiaToViscousRatio);
     }
 ```
 
-### Determine the domain's side lengths automatically based on the bounding box of the network.
+### Calculate intrinsic permeability and Forchheimer coefficient.
+This function first calculate intrinsic permeability and Forchheimer coefficient using linear least squares regression method
+and reports them. It also plot the apparent permeability of the porous medium versus Forchheimer number/pressure gradient in each
+simulation.
+
+```cpp
+    template <class Problem>
+    void calculateUpscaledProperties(const Problem &problem, bool isCreepingFlow)
+    {
+        const auto sideLengths = problem.sideLengths();
+        const auto liquidDynamicViscosity = problem.liquidDynamicViscosity();
+
+        for (const auto dirIdx : directions_)
+        {
+            // determine Darcy permeability as the maximum permeability of the domain
+            darcyPermeability_[dirIdx] = *max_element(apparentPermeability_[dirIdx].begin(), apparentPermeability_[dirIdx].end());
+            if (!isCreepingFlow)
+            {
+                for (int i = 0; i < totalPressureDrop_[dirIdx].size(); i++)
+                {
+                    // calculate the Darcy pressure drop.
+                    const Scalar darcyPressureDrop = liquidDynamicViscosity * apparentVelocity_[dirIdx][i] * sideLengths[dirIdx] / darcyPermeability_[dirIdx];
+
+                    // calculate the ratio of Dracy to total pressure drop
+                    const Scalar pressureDropRatio = darcyPressureDrop / totalPressureDrop_[dirIdx][i];
+
+                    // set sample points for upscaling of Forchheimer parameters.
+                    // first, check the permability ratio to see if the flow regime is Forchheimer.
+                    if (pressureDropRatio < 0.99)
+                    {
+                        samplePointsX_[dirIdx].push_back(inertiaToViscousRatio_[dirIdx][i]);
+                        samplePointsY_[dirIdx].push_back(1 / apparentPermeability_[dirIdx][i]);
+                    }
+                }
+                // determine regression line and accordingly the Forchheimer permeability and the Forchheimer coefficient
+                const auto [intercept, slope] = linearRegression(samplePointsX_[dirIdx], samplePointsY_[dirIdx]);
+                forchheimerPermeability_[dirIdx] = 1.0 / intercept;
+                forchheimerCoefficient_[dirIdx] = slope;
+                writePlotDataToFile(dirIdx);
+            }
+        }
+    }
+```
+
+### Determine the domain's side lengths
+
+We determine the domain side length by using the bounding box of the network
 
 ```cpp
     template<class GridGeometry>
-    static auto getSideLengths(const GridGeometry& gridGeometry)
+    auto getSideLengths(const GridGeometry& gridGeometry)
     {
         using GlobalPosition = typename GridGeometry::GlobalCoordinate;
-        GlobalPosition result;
+        GlobalPosition result(0.0);
 
         std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
         for (int dimIdx = 0; dimIdx < GridGeometry::GridView::dimensionworld; ++dimIdx)
@@ -102,13 +169,231 @@ permeability $`\mathbf{K}`$ [m$`^2`$] can be evaluated.
     }
 ```
 
+### Plot the data using Gnuplot
+
 
 ```cpp
+    void plot()
+    {
+        // plot permeability ratio vs. Forchheimer number
+        plotPermeabilityratioVsForchheimerNumber_();
+
+        // plot inverse of apparent permability vs. rho v / mu
+        plotInversePrmeabilityVsInertiaToViscousRatio_();
+    }
+```
+
+
+### Save the relevant data for plot
+
+```cpp
+    void writePlotDataToFile(std::size_t dirIdx)
+    {
+        // write permeability ratio vs. Forchheimer number
+        writePermeabilityratioVsForchheimerNumber_(dirIdx);
+
+        // write inverse of apparent permability vs. rho v / mu
+        writeInversePrmeabilityVsInertiaToViscousRatio_(dirIdx);
+    }
+```
+
+
+### Report the upscaled data
+
+```cpp
+    void report(bool isCreepingFlow)
+    {
+        // Report the results for each direction
+        for (const auto dirIdx : directions_)
+        {
+            std::cout << Fmt::format("\n{:#>{}}\n\n", "", 40)
+                      << Fmt::format("{}-direction:\n", dirName_[dirIdx])
+                      << Fmt::format("-- Darcy (intrinsic) permeability = {:.3e} m^2\n", darcyPermeability_[dirIdx]);
+
+            // Report non-creeping flow upscaled properties
+            if (!isCreepingFlow)
+            {
+                std::cout << Fmt::format("-- Forchheimer permeability = {:.3e} m^2\n", forchheimerPermeability_[dirIdx]);
+                std::cout << Fmt::format("-- Forchheimer coefficient = {:.3e} m^-1\n", forchheimerCoefficient_[dirIdx]);
+            }
+
+            std::cout << Fmt::format("\n{:#>{}}\n", "", 40) << std::endl;
+        }
+    }
+```
+
+
+### Compare with reference data provided in input file
+
+```cpp
+    void compareWithReference(std::vector<Scalar> referenceData)
+    {
+        for (const auto dirIdx : directions_)
+        {
+            const auto K = darcyPermeability_[dirIdx];
+            static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon", 1e-3);
+            if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dirIdx], eps))
+            {
+                std::cerr << "Calculated permeability of " << K << " in "
+                        <<dirName_[dirIdx]<<"-direction does not match with reference value of "
+                        << referenceData[dirIdx] << std::endl;
+            }
+        }
+    }
+```
+
+
+### Set the directions that need to be considered
+
+
+```cpp
+    void setDirections(std::vector<std::size_t> directions)
+    {
+        directions_ = directions;
+    }
+    // [[codeblock]]
+
+private:
+    // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
+    // [[codeblock]]
+    void writePermeabilityratioVsForchheimerNumber_(std::size_t dirIdx)
+    {
+        // open a logfile
+        std::ofstream logfile(dirName_[dirIdx] + "-dir-PermeabilityratioVsForchheimerNumber.dat");
+
+        // save the data needed to be plotted in logfile
+        for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
+        {
+            // compute the Forchheimer number
+            const Scalar forchheimerNumber = darcyPermeability_[dirIdx] * forchheimerCoefficient_[dirIdx] * inertiaToViscousRatio_[dirIdx][i];
+            // ratio between apparrent permeability and darcy permeability
+            const Scalar permeabilityRatio = apparentPermeability_[dirIdx][i] / darcyPermeability_[dirIdx];
+
+            logfile << forchheimerNumber << " " << permeabilityRatio << std::endl;
+        }
+    }
+```
+
+### Save the relevant data for plot of inverse of apparent permability vs. rho v / mu
+
+```cpp
+    void writeInversePrmeabilityVsInertiaToViscousRatio_(std::size_t dirIdx)
+    {
+        // open a logfile and write inverese of apparent permeability given by the model vs. inertial to viscous ratio (rho v / mu)
+        std::ofstream logfile(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat");
+
+        // save the data needed to be plotted in logfile
+        for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
+        {
+            const Scalar inertiaToViscousRatio = inertiaToViscousRatio_[dirIdx][i];
+            const Scalar inverseAppPermeability = 1 / apparentPermeability_[dirIdx][i];
+
+            // compute inverse of apparent permeability using the Forchheimer permeability and coefficient
+            const Scalar inverseAppPermeabilityForchheimer = 1 / forchheimerPermeability_[dirIdx] + inertiaToViscousRatio * forchheimerCoefficient_[dirIdx];
+
+            logfile << inertiaToViscousRatio << " " << 1e-12 * inverseAppPermeability << " " << 1e-12 * inverseAppPermeabilityForchheimer << std::endl;
+        }
+    }
+```
+
+
+### Plot permeability ratio vs. Forchheimer number using Gnuplot
+
+
+```cpp
+    void plotPermeabilityratioVsForchheimerNumber_()
+    {
+        // using gnuplot interface
+        Dumux::GnuplotInterface<Scalar> gnuplot(true);
+        gnuplot.setOpenPlotWindow(true);
+
+        for (const auto dirIdx : directions_)
+        {
+            gnuplot.resetAll();
+            std::string title{}, option{};
+
+            // add the data in each direction for plot
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-PermeabilityratioVsForchheimerNumber.dat", "notitle with lines");
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 7\n";
+            // report the darcy permeability in each direction as the title of the plot
+            title += Fmt::format("{}-direction, Darcy permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
+
+            option += "set title \"" + title + "\"\n";
+            option += "set logscale x""\n";
+            option += "set format x '10^{%L}'""\n";
+
+            gnuplot.setXlabel("Forchheimer Number [-]");
+            gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
+            gnuplot.setOption(option);
+            gnuplot.plot("permeability_ratio_versus_forchheimer_number");
+        }
+    }
+```
+
+
+### Plot inverse of apparent permability vs. rho v / mu using Gnuplot
+
+
+```cpp
+    void plotInversePrmeabilityVsInertiaToViscousRatio_()
+    {
+        // using gnuplot interface
+        Dumux::GnuplotInterface<Scalar> gnuplot(true);
+        gnuplot.setOpenPlotWindow(true);
+
+        for (const auto dirIdx : directions_)
+        {
+            gnuplot.resetAll();
+            std::string title{}, option{};
+            std::string legend0 = "u 1:2 title \"Network model\" with lines";
+            // add the data in each direction for plot, first set of data
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat", legend0);
+
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 5\n";
+
+            std::string legend1 = "u 1:3 title \"Forchheimer equation\" with lines";
+            // add the data in each direction for plot, second set of data
+            gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-InversePrmeabilityVsInertiaToViscousRatio.dat", legend1);
+
+            // set the properties of lines to be plotted
+            option += "set linetype 2 linecolor 2 linewidth 5\n";
+
+            // report the darcy permeability in each direction as the title of the plot
+            title += Fmt::format("{}-direction, Darcy permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
+
+            option += "set title \"" + title + "\"\n";
+            option += "set logscale x""\n";
+            option += "set format x '10^{%L}'""\n";
+
+            gnuplot.setXlabel("{/Symbol r} v / {/Symbol m} [1/m]");
+            gnuplot.setYlabel("1/ Apparent permeability [1/m^2]  x 1e12");
+            gnuplot.setOption(option);
+            gnuplot.plot("inverse_apppermeability_versus_rhovmu-1");
+        }
+    }
+```
+
+
+```cpp
+    std::array<std::vector<Scalar>, 3> samplePointsX_;
+    std::array<std::vector<Scalar>, 3> samplePointsY_;
+    std::array<std::vector<Scalar>, 3>totalPressureDrop_;
+    std::array<std::vector<Scalar>, 3> apparentVelocity_;
+    std::array<std::vector<Scalar>, 3> apparentPermeability_;
+    std::array<std::vector<Scalar>, 3> inertiaToViscousRatio_;
+    std::array<Scalar, 3> darcyPermeability_;
+    std::array<Scalar, 3> forchheimerPermeability_;
+    std::array<Scalar, 3> forchheimerCoefficient_;
+    const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
+    std::vector<std::size_t> directions_;
 };
 
 } // end namespace Dumux
 ```
 
+[[/codeblock]]
 
 </details>
 

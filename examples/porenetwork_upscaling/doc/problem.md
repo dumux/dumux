@@ -35,6 +35,19 @@ type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
 ```
 
+The class that contains a collection of single-phase flow throat transmissibilities
+among them the transmisibility model to be used can be specified in AdvectionType class
+
+```cpp
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+```
+
+The class that provides specializations for both creeping and non-creeping advection types.
+
+```cpp
+#include <dumux/flux/porenetwork/advection.hh>
+```
+
 The local residual for incompressible flow is included.
 The one-phase flow model (included above) uses a default implementation of the
 local residual for single-phase flow. However, in this example we are using an
@@ -63,13 +76,15 @@ The classes that define the problem and parameters used in this simulation
 </details>
 
 ### `TypeTag` definition
-A `TypeTag` for our simulation is defined, which inherits properties from the
-single-phase flow model and the box scheme.
+Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
+which inherit properties from the single-phase pore network model. The non-creeping flow inherits
+all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
 
 ```cpp
 namespace Dumux::Properties {
 namespace TTag {
-struct PNMUpscaling { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingNonCreepingFlow { using InheritsFrom = std::tuple<PNMUpscalingCreepingFlow>; };
 }
 ```
 
@@ -81,43 +96,49 @@ default can be set, are specialized for our type tag `PNMUpscaling`.
 ```cpp
 // We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMUpscaling>
+struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = Dune::FoamGrid<1, 3>; };
 
 // The problem class specifying initial and boundary conditions:
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMUpscaling>
+struct Problem<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = UpscalingProblem<TypeTag>; };
 
-//! The spatial parameters to be employed.
+//! The spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PNMUpscaling>
+struct SpatialParams<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
 };
 
-//! The advection type.
+//! The advection type for creeping flow
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::PNMUpscaling>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
 public:
     using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
+//! The advection type for non-creeping flow (includes model for inertia effects)
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingNonCreepingFlow>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
+public:
+    using type = PoreNetwork::NonCreepingFlow<Scalar, TransmissibilityLaw>;
+};
+
 // We use a single liquid phase consisting of a component with constant fluid properties.
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMUpscaling>
+struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 ```
@@ -127,7 +148,7 @@ that contains functionality related to analytic differentiation.
 
 ```cpp
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::PNMUpscaling>
+struct LocalResidual<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 } // end namespace Dumux::Properties
@@ -169,46 +190,60 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
 <details><summary> Click to show convenience aliases</summary>
 
 ```cpp
-
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 ```
 
 </details>
-### The constructor of our problem.
+
+#### The constructor of our problem.
 
 ```cpp
 public:
-    template<class SpatialParams>
-    UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(gridGeometry, spatialParams)
+    UpscalingProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
     {
         // the applied pressure gradient
-        pressureGradient_ = getParam<Scalar>("Problem.PressureGradient");
+        pressureGradient_ = getParam<Scalar>("Problem.PressureGradient", 1e5);
 
         // We can either use pore labels (given in the grid file) to identify inlet and outlet pores
         // or use the network's bounding box to find these pores automatically. Using labels is usually much
         // more accurate, so this is the default here.
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
 
-        // an epsilon value for the bounding box approach
+        // an epsilon value for the floating point comparisons to determine inlet/outlet pores
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
     }
 ```
 
+#### Temperature
+We need to specify a constant temperature for our isothermal problem.
+Fluid properties that depend on temperature will be calculated with this value.
+
+```cpp
+    Scalar temperature() const
+    { return 283.15; }
+```
+
+Set the pressure gradient to be applied to the network
+
+```cpp
+    void setPressureGradient(Scalar pressureGradient)
+    { pressureGradient_ = pressureGradient; }
+```
+
 #### Boundary conditions
 This function is used to define the __type of boundary conditions__ used depending on the location.
-Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet and Neumann
-boundary conditions at all remaining boundaries. Note that the PNM only supports Neumann no-flow boundaries.
-The specify a certain mass flux, we would have to use a source term on the boundary pores (which is not done in this example).
+Here, we use Dirichlet boundary conditions (fixed pressures) at the inlet and outlet. Note that the PNM does not support Neumann boundaries.
+To specify a certain mass flux on a boundary, we would have to use a source term on the boundary pores (which is not done in this example).
 
 ```cpp
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
@@ -218,8 +253,6 @@ The specify a certain mass flux, we would have to use a source term on the bound
         // fix the pressure at the inlet and outlet pores
         if (isInletPore_(scv)|| isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-        else // Neumann (no-flow) for the remaining boundaries
-            bcTypes.setAllNeumann();
 
         return bcTypes;
     }
@@ -282,16 +315,23 @@ and the length of the domain at the inlet.
     // Return the applied pressure gradient.
     Scalar pressureGradient() const
     { return pressureGradient_; }
+```
 
+</details>
 
-    // Return the label of inlet pores assuming a previously set direction.
+Return the label of inlet pores assuming a previously set direction.
+
+```cpp
     int inletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {1, 3, 5};
         return label[direction_];
     }
+```
 
-    // Return the label of outlet pores assuming a previously set direction.
+Return the label of outlet pores assuming a previously set direction.
+
+```cpp
     int outletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {2, 4, 6};
@@ -315,25 +355,21 @@ private:
         else
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
+```
 
-    // private data members
+private data members
+
+```cpp
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
     GlobalPosition length_;
     bool useLabels_;
-```
-
-</details>
-
-```cpp
-
 };
 
 } // end namespace Dumux
 ```
 
-[[/codeblock]]
 
 </details>
 

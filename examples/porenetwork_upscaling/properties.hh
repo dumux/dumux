@@ -34,6 +34,13 @@
 // type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
 
+// The class that contains a collection of single-phase flow throat transmissibilities
+// among them the transmisibility model to be used can be specified in AdvectionType class
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+
+// The class that provides specializations for both creeping and non-creeping advection types.
+#include <dumux/flux/porenetwork/advection.hh>
+
 // The local residual for incompressible flow is included.
 // The one-phase flow model (included above) uses a default implementation of the
 // local residual for single-phase flow. However, in this example we are using an
@@ -46,18 +53,19 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-
 // The classes that define the problem and parameters used in this simulation
 #include "problem.hh"
 #include "spatialparams.hh"
 // [[/details]]
 //
 // ### `TypeTag` definition
-// A `TypeTag` for our simulation is defined, which inherits properties from the
-// single-phase flow model and the box scheme.
+// Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
+// which inherit properties from the single-phase pore network model. The non-creeping flow inherits
+// all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
 namespace Dumux::Properties {
 namespace TTag {
-struct PNMUpscaling { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingNonCreepingFlow { using InheritsFrom = std::tuple<PNMUpscalingCreepingFlow>; };
 }
 
 // ### Property specializations
@@ -67,43 +75,49 @@ struct PNMUpscaling { using InheritsFrom = std::tuple<PNMOneP>; };
 // [[codeblock]]
 // We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMUpscaling>
+struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = Dune::FoamGrid<1, 3>; };
 
 // The problem class specifying initial and boundary conditions:
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMUpscaling>
+struct Problem<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = UpscalingProblem<TypeTag>; };
 
-//! The spatial parameters to be employed.
+//! The spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PNMUpscaling>
+struct SpatialParams<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
 };
 
-//! The advection type.
+//! The advection type for creeping flow
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::PNMUpscaling>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
 public:
     using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
 
+//! The advection type for non-creeping flow (includes model for inertia effects)
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingNonCreepingFlow>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransmissibilityLaw = PoreNetwork::TransmissibilityPatzekSilin<Scalar, true/*considerPoreBodyResistance*/>;
+public:
+    using type = PoreNetwork::NonCreepingFlow<Scalar, TransmissibilityLaw>;
+};
+
 // We use a single liquid phase consisting of a component with constant fluid properties.
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMUpscaling>
+struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlow>
 {
-private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 // [[/codeblock]]
@@ -111,7 +125,7 @@ public:
 // Moreover, here we use a local residual specialized for incompressible flow
 // that contains functionality related to analytic differentiation.
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::PNMUpscaling>
+struct LocalResidual<TypeTag, TTag::PNMUpscalingCreepingFlow>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 } // end namespace Dumux::Properties

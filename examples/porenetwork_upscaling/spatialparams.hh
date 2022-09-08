@@ -102,10 +102,23 @@ public:
         return M_PI * r * r;
     }
 
+    // dimensionless kinetic-energy coefficient which for non-creeping flow
+    template<class ElementSolutionVector>
+    Scalar kineticEnergyCoefficient(const Element& element,
+                 const SubControlVolume& scv,
+                 const ElementSolutionVector& elemSol) const
+    { return 1.0; }
+
+    // dimensionless momentum coefficient which for non-creeping flow
+    template<class ElementSolutionVector>
+    Scalar momentumCoefficient(const Element& element,
+              const SubControlVolume& scv,
+              const ElementSolutionVector& elemSol) const
+    { return 1.0; }
+
 private:
     std::vector<Scalar> poreShapeFactor_;
 };
-
 
 } // namespace Dumux::PoreNetwork
 
