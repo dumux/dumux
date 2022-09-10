@@ -23,7 +23,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
 
 namespace Dumux {
 /*!
@@ -32,9 +32,9 @@ namespace Dumux {
  * Simulation of a radially-symmetric pipe flow with circular cross-section
  */
 template <class TypeTag>
-class FreeFlowPipeProblem : public NavierStokesProblem<TypeTag>
+class FreeFlowPipeProblem : public NavierStokesMomentumProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesMomentumProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;

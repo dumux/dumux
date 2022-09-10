@@ -33,7 +33,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
@@ -51,10 +50,10 @@ namespace Dumux {
  * For sake of efficiency, the 3D problem can be reduced to a two-dimensional one by including
  * an additional wall friction term to the momentum balance (Flekkoy et al., 1995 \cite flekkoy1995a).
  */
-template <class TypeTag>
-class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class ThreeDChannelTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

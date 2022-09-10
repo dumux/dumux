@@ -27,7 +27,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
 
@@ -38,10 +37,10 @@ namespace Dumux {
  * A two-dimensional Navier-Stokes flow with a periodicity in one direction
  * is considered.
  */
-template <class TypeTag>
-class PeriodicTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class PeriodicTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;

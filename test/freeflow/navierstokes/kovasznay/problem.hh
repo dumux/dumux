@@ -30,7 +30,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 namespace Dumux {
 
@@ -43,9 +43,9 @@ namespace Dumux {
  * and is chosen in a way such that an exact solution is available.
  */
 template <class TypeTag>
-class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
+class KovasznayTestProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

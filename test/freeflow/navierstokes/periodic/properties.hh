@@ -33,8 +33,10 @@
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
@@ -66,7 +68,12 @@ struct Grid<TypeTag, TTag::PeriodicTest> { using type = Dune::SPGrid<double, 2>;
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PeriodicTest> { using type = PeriodicTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::PeriodicTestMomentum>
+{ using type = PeriodicTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PeriodicTestMass>
+{ using type = PeriodicTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
@@ -79,7 +86,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PeriodicTest>
 {
     using Traits = MultiDomainTraits<TTag::PeriodicTestMomentum, TTag::PeriodicTestMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties

@@ -26,7 +26,6 @@
 #define DUMUX_KOVASZNAY_TEST_PROBLEM_NEW_HH
 
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
@@ -42,10 +41,10 @@ namespace Dumux {
  * is considered. The set-up represents a wake behind a two-dimensional grid
  * and is chosen in a way such that an exact solution is available.
  */
-template <class TypeTag>
-class FreeFlowOnePTestProblem :  public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class FreeFlowOnePTestProblem :  public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

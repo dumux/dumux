@@ -30,7 +30,6 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
 
 namespace Dumux {
 
@@ -43,10 +42,10 @@ namespace Dumux {
  * For the instationary case, the velocities and pressures are periodical in time. The Dirichlet boundary conditions are
  * consistent with the analytical solution and in the instationary case time-dependent.
  */
-template <class TypeTag>
-class SincosTestProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class SincosTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

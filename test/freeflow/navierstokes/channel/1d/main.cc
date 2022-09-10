@@ -40,7 +40,6 @@
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
@@ -86,8 +85,7 @@ int main(int argc, char** argv)
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
     // the coupling manager
-    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problem (initial and boundary conditions)
@@ -99,6 +97,7 @@ int main(int argc, char** argv)
     // the solution vector
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());

@@ -31,7 +31,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 namespace Dumux {
 
@@ -45,9 +45,9 @@ namespace Dumux {
  * represent solid walls with no-slip/no-flow conditions.
  */
 template <class TypeTag>
-class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
+class ChannelNCTestProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

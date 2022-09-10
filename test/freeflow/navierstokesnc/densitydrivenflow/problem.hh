@@ -30,7 +30,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 namespace Dumux {
 
@@ -46,9 +46,9 @@ namespace Dumux {
  * small numerical instabilities, fingers of denser water will form and sink downwards.
  */
 template <class TypeTag>
-class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
+class DensityDrivenFlowProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
 
     using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;

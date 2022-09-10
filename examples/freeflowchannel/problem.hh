@@ -29,23 +29,23 @@
 //
 // ### Include files
 //
-// Include the `NavierStokesProblem` class, the base
+// Include the `NavierStokesStaggeredProblem` class, the base
 // class from which we will derive.
-#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 // Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 // ### The problem class
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
-// As we are solving a problem related to free flow, we inherit from the base class `NavierStokesProblem`.
+// As we are solving a problem related to free flow, we inherit from the base class `NavierStokesStaggeredProblem`.
 // [[codeblock]]
 namespace Dumux {
 
 template <class TypeTag>
-class ChannelExampleProblem : public NavierStokesProblem<TypeTag>
+class ChannelExampleProblem : public NavierStokesStaggeredProblem<TypeTag>
 {
     // A few convenience aliases used throughout this class.
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;

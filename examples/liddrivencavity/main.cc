@@ -44,7 +44,6 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
 // The gridmanager constructs a grid from the information in the input or grid file.
@@ -144,9 +143,9 @@ int main(int argc, char** argv)
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
-    // We introduce the multidomain coupling manager, which will coupled the mass and the momentum problems
-    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    // We introduce the multidomain coupling manager, which will couple the mass and the momentum problems
+    // We can obtain the type from either the `MomentumTypeTag` or the `MassTypeTag` because they are mutually coupled with the same manager
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // We now instantiate the problems, in which we define the boundary and initial conditions.
@@ -161,6 +160,7 @@ int main(int argc, char** argv)
     // We initialize the solution vector by what was defined as the initial solution of the the problem.
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     momentumProblem->applyInitialSolution(x[momentumIdx]);

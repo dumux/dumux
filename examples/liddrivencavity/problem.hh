@@ -32,22 +32,18 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-// Include the `NavierStokesProblem` class, the base
-// class from which we will derive.
-#include <dumux/freeflow/navierstokes/problem.hh>
-
 // Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 // ### The problem class
 // As we are solving a problem related to free flow, we create a new class called `LidDrivenCavityExampleProblem`
-// and let it inherit from the class `NavierStokesProblem`.
+// and let it inherit from a base class for the momentum and mass subproblems (selected in properties.hh).
 // [[codeblock]]
 namespace Dumux {
-template <class TypeTag>
-class LidDrivenCavityExampleProblem : public NavierStokesProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class LidDrivenCavityExampleProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

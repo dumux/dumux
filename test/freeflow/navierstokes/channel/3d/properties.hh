@@ -40,10 +40,12 @@
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -94,7 +96,12 @@ struct SpatialParams<TypeTag, TTag::ThreeDChannelTest>
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::ThreeDChannelTest> { using type = ThreeDChannelTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::ThreeDChannelTestMomentum>
+{ using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ThreeDChannelTestMass>
+{ using type = ThreeDChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::ThreeDChannelTest> { static constexpr bool value = ENABLECACHING; };
@@ -107,7 +114,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::ThreeDChannelTest>
 {
     using Traits = MultiDomainTraits<TTag::ThreeDChannelTestMomentum, TTag::ThreeDChannelTestMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
+    using type = FreeFlowCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties
