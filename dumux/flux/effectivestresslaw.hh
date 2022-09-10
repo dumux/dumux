@@ -19,8 +19,20 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
+ * \brief Effective stress are used to describe the actual stresses acting on the grains/matrix in the soil.
+ * Furthermore, they determine the behaviour of the soil.
+ * Most of the geomechanical laws are written in terms of effective stresses,
+ * such as the poroelastic model in dumux/geomechanics/poroelastic/model.hh
+ *
+ * Effective stresses are denoted with \f$ \boldsymbol{\sigma_{\mathrm{eff}}} \f$.
+ * The effective stress tensor \f$ \boldsymbol{\sigma_{\mathrm{eff}}} \f$ is
+ * determined by the stress tensor \f$ \boldsymbol{\sigma} \f$ , the effective pore pressure \f$ p_{\mathrm{eff}} \f$ and the Biot's coefficient \f$ \alpha \f$ :
+ * \f[
+ * \boldsymbol{\sigma_{\mathrm{eff}}} = \boldsymbol{\sigma} - \alpha p_{\mathrm{eff}} \mathbf{I}
+ * \f]
+ * \note The implementations of the effective stress laws are inside the folders of their respective discretization.
+ *
+ *
  */
 #ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_HH
 #define DUMUX_FLUX_EFFECIVESTRESS_LAW_HH
