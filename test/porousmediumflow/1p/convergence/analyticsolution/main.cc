@@ -40,6 +40,8 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
+#include <dumux/common/metadata.hh>
+
 #include "properties.hh"
 
 template<class Problem, class SolutionVector>
@@ -71,11 +73,12 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
             << "L2 error = " << l2error
             << std::endl;
 
-    // write the norm into a log file
-    std::ofstream logFile;
-    logFile.open(problem.name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2error << std::endl;
-    logFile.close();
+    Dumux::MetaData::Collector collector;
+    if (Dumux::MetaData::jsonFileExists(problem.name()))
+        Dumux::MetaData::readJsonFile(collector, problem.name());
+    collector["numDofs"].push_back(numDofs);
+    collector["L2errors"].push_back(l2error);
+    Dumux::MetaData::writeJsonFile(collector, problem.name());
 }
 
 int main(int argc, char** argv)
