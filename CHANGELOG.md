@@ -24,6 +24,8 @@ that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __Examples__: Extend the porenetwork_upscaling example to include non-creeping flow simulation in pore network. The example is able now to provide not only upscaled Darcy permeability but also Forchheimer permeability and coefficient (employed in Forchheimer equation).
 
+- __Json__: Dumux now ships a fixed version of `https://github.com/nlohmann/json` to read and write JSON files. Only the symbols in the namespace `Dumux::Json` are meant to be used with Dumux. In particular, this now exports the json tree structure. More features may be added in the future.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Experimental features__: All headers with experimental features have been moved into the folder `dumux/experimental`.
@@ -42,6 +44,8 @@ Then code possibly fails to compile. The fix is to implement the same caching co
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
+- __Meta data__: There is support for extraction of meta data in `dumux/common/metadata.hh`. The extracted features, might change in the future
+and we can't give any guarantee that the name of keys and values in the extracted meta data tree will be stable between releases.
 
 Differences Between DuMu<sup>x</sup> 3.5 and DuMu<sup>x</sup> 3.4
 =============================================
