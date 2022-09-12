@@ -68,7 +68,8 @@ public:
         // take the average surface tension of both adjacent pores TODO: is this correct?
         surfaceTension_ = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
 
-        pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        pcMax_ = pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        pcAvg_ = 0.5 * (pc_ + std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure()));
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -251,7 +252,7 @@ public:
      * \brief Returns the curvature radius within the throat.
      */
     Scalar curvatureRadius() const
-    { return surfaceTension_ / pc_;}
+    { return surfaceTension_ / pcAvg_;}
 
     /*!
      * \brief Returns the cross-sectional area of a wetting layer within
@@ -379,6 +380,8 @@ private:
     Scalar throatInscribedRadius_;
     Scalar pcEntry_;
     Scalar pcSnapoff_;
+    Scalar pcMax_;
+    Scalar pcAvg_;
     Scalar pc_;
     Scalar surfaceTension_;
     bool invaded_;
