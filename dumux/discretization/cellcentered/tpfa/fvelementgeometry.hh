@@ -194,6 +194,18 @@ public:
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(scvIndices_[0]); }
 
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        return scv.geometry();
+    }
+
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        return scvf.geometry();
+    }
+
 private:
 
     std::optional<Element> element_;
@@ -356,6 +368,18 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
+
+    typename SubControlVolume::Traits::Geometry geometry (const SubControlVolume& scv) const
+    {
+        assert(isBound());
+        return scv.geometry();
+    }
+
+    typename SubControlVolumeFace::Traits::Geometry geometry (const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        return scvf.geometry();
+    }
 
 private:
     //! Binding of an element preparing the geometries of the whole stencil

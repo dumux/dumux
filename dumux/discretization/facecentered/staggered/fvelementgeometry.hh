@@ -221,6 +221,12 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
     }
 
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    { return scv.geometry(); }
+
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    { return scvf.geometry(); }
+
 private:
 
     const auto& scvfIndices_() const
