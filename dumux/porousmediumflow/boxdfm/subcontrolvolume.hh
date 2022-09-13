@@ -101,7 +101,7 @@ public:
     : isFractureScv_(false)
     , corners_(geometryHelper.getScvCorners(scvIdx))
     , center_(0.0)
-    , volume_(geometryHelper.scvVolume(corners_))
+    , volume_(geometryHelper.scvVolume(corners_))//TODO
     , elementIndex_(elementIndex)
     , vIdxLocal_(scvIdx)
     , elemLocalScvIdx_(scvIdx)
@@ -151,7 +151,7 @@ public:
             corners_[i] = corners[i];
 
         // compute volume and scv center
-        volume_ = geometryHelper.scvfArea(corners);
+        volume_ = geometryHelper.scvfArea(corners);//TODO
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();

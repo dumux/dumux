@@ -78,7 +78,7 @@ public:
     : corners_(geometryHelper.getScvfCorners(scvfIndex))
     , center_(0.0)
     , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
-    , area_(geometryHelper.scvfArea(corners_))
+    , area_(geometryHelper.scvfArea(corners_))//TODO
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(/*undefined*/)
@@ -105,7 +105,7 @@ public:
     : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
-    , area_(geometryHelper.scvfArea(corners_))
+    , area_(geometryHelper.scvfArea(corners_))//TODO
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(intersection.indexInInside())

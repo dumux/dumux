@@ -58,7 +58,7 @@ computeMpfaTransmissibility(const IVSubControlVolume& scv,
         wijk[dir] = vtmv(scvf.unitOuterNormal(), t, scv.nu(dir));
 
     using Extrusion = Extrusion_t<typename EG::GridGeometry>;
-    wijk *= Extrusion::area(scvf)*extrusionFactor;
+    wijk *= Extrusion::area(scvf)*extrusionFactor;// TODO: No fvGeometry available
     wijk /= scv.detX();
 
     return wijk;
@@ -88,7 +88,7 @@ computeMpfaTransmissibility(const IVSubControlVolume& scv,
         wijk[dir] = vtmv(scvf.unitOuterNormal(), t, scv.nu(dir));
 
     using Extrusion = Extrusion_t<typename EG::GridGeometry>;
-    wijk *= Extrusion::area(scvf)*extrusionFactor;
+    wijk *= Extrusion::area(scvf)*extrusionFactor;// TODO: No fvGeometry available
     wijk /= scv.detX();
 
     return wijk;
