@@ -214,7 +214,7 @@ private:
         Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradX.axpy(massOrMoleFraction(scv), fluxVarsCache.gradN(scv.indexInElement()));
-        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*Extrusion::area(scvf);
+        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*Extrusion::area(fvGeometry, scvf);
     }
 };
 

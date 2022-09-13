@@ -56,7 +56,7 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
 
         // compare volume and integrated volume of one scv
         const auto& scv = *(scvs(fvGeometry).begin());
-        const auto scvGeometry = scv.geometry();
+        const auto scvGeometry = fvGeometry.geometry(scv);
 
         double volScv = 0.0;
         const auto ruleScv = Dune::QuadratureRules<double, GG::GridView::dimension>::rule(scvGeometry.type(), 3);
@@ -68,7 +68,7 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
 
         // compare area and integration area of one scvf
         const auto& scvf = *(scvfs(fvGeometry).begin());
-        const auto scvfGeometry = scvf.geometry();
+        const auto scvfGeometry = fvGeometry.geometry(scvf);
 
         double volScvf = 0.0;
         const auto ruleScvf = Dune::QuadratureRules<double, GG::GridView::dimension-1>::rule(scvfGeometry.type(), 3);

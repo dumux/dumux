@@ -250,7 +250,7 @@ public:
         faceScvCenter *= 0.5;
         FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        source *= Extrusion::volume(faceScv)*extrusionFactor;
+        source *= Extrusion::volume(fvGeometry, faceScv)*extrusionFactor;
         residual -= source;
     }
 
@@ -292,7 +292,7 @@ public:
         faceScvCenter *= 0.5;
         FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        storage *= Extrusion::volume(faceScv)*extrusionFactor;
+        storage *= Extrusion::volume(fvGeometry, faceScv)*extrusionFactor;
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;

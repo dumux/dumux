@@ -157,7 +157,7 @@ public:
     {
         NumEqVector flux(0.0);
         // integrate over the scvf to compute the flux
-        const auto geometry = scvf.geometry();
+        const auto geometry = fvGeometry.geometry(scvf);
         Scalar derivative = 0.0;
         const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension-1>::rule(geometry.type(), 4);
         for(auto&& qp : quad)

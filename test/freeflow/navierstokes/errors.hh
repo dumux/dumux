@@ -123,7 +123,7 @@ private:
                     // compute the velocity errors
                     const auto velocityIndex = Indices::velocity(scvf.directionIndex());
 
-                    const Scalar staggeredHalfVolume = Extrusion::volume(
+                    const Scalar staggeredHalfVolume = Extrusion::volume(fvGeometry,
                         typename GridGeometry::Traits::FaceSubControlVolume(
                             0.5*(scv.center() + scvf.center()), 0.5*Extrusion::volume(fvGeometry, scv)
                         )

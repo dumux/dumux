@@ -130,7 +130,7 @@ public:
 
                 // get elements intersecting with the scvf center
                 // for robustness add epsilon in unit outer normal direction
-                const auto eps = (pmScvf.ipGlobal() - pmScvf.geometry().corner(0)).two_norm()*1e-8;
+                const auto eps = (pmScvf.ipGlobal() - pmFvGeometry.geometry(pmScvf).corner(0)).two_norm()*1e-8;
                 auto globalPos = pmScvf.ipGlobal(); globalPos.axpy(eps, pmScvf.unitOuterNormal());
                 const auto indices = intersectingEntities(globalPos, freeFlowMomentumGG.boundingBoxTree());
 
@@ -181,7 +181,7 @@ public:
                             else
                             {
                                 // for robustness add epsilon in unit outer normal direction
-                                const auto otherScvfEps = (otherFfScvf.ipGlobal() - otherFfScvf.geometry().corner(0)).two_norm()*1e-8;
+                                const auto otherScvfEps = (otherFfScvf.ipGlobal() - ffFvGeometry.geometry(otherFfScvf).corner(0)).two_norm()*1e-8;
                                 auto otherScvfGlobalPos = otherFfScvf.center(); otherScvfGlobalPos.axpy(otherScvfEps, otherFfScvf.unitOuterNormal());
 
                                 if (!intersectingEntities(otherScvfGlobalPos, porousMediumGG.boundingBoxTree()).empty())

@@ -225,8 +225,8 @@ public:
                 auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
                 pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
                 source[scv.dofIndex()] += pointSources;
-                auto a = scv.corner(0)[2];
-                auto b = scv.corner(1)[2];
+                auto a = fvGeometry.geometry(scv).corner(0)[2];
+                auto b = fvGeometry.geometry(scv).corner(1)[2];
                 if (a > b) std::swap(a, b);
                 sourceExact[scv.dofIndex()] += a*(1.0+0.5*a) - b*(1.0+0.5*b);
                 volume += scv.volume();

@@ -270,7 +270,7 @@ public:
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

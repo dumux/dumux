@@ -197,7 +197,7 @@ private:
             {
                 if (scvf.boundary() && considerFace(fvGeometry, scvf))
                 {
-                    const auto& geo = scvf.geometry();
+                    const auto& geo = fvGeometry.geometry(scvf);
                     CornerStorage corners;
                     for (int i = 0; i < geo.corners(); ++i)
                         corners.push_back(geo.corner(i));

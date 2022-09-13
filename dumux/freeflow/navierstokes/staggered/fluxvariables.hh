@@ -130,7 +130,7 @@ public:
 
         const Scalar flux = (upwindWeight * upwindTerm(upstreamVolVars) +
                             (1.0 - upwindWeight) * upwindTerm(downstreamVolVars))
-                            * velocity * Extrusion::area(scvf) * scvf.directionSign();
+                            * velocity * Extrusion::area(localView(problem.gridGeometry()), scvf) * scvf.directionSign();
 
         return flux * extrusionFactor_(elemVolVars, scvf);
     }
@@ -255,7 +255,7 @@ public:
         // our velocity dof of interest lives on but with adjusted centroid
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         FaceFrontalSubControlVolumeFace frontalFace(scv.center(), scvf.area());
-        return frontalFlux * Extrusion::area(frontalFace) * insideVolVars.extrusionFactor();
+        return frontalFlux * Extrusion::area(fvGeometry, frontalFace) * insideVolVars.extrusionFactor();
    }
 
     /*!
@@ -334,7 +334,7 @@ public:
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     const auto lateralBoundaryFace = makeStaggeredBoundaryFace(scvf, lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(lateralFace.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(lateralScvf) * lateralFace.directionSign();
+                        * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(fvGeometry, lateralScvf) * lateralFace.directionSign();
 
                     continue;
                 }
@@ -350,7 +350,7 @@ public:
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                        * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(lateralScvf) * lateralFace.directionSign();
+                        * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(fvGeometry, lateralScvf) * lateralFace.directionSign();
 
                     continue;
                 }
@@ -374,7 +374,7 @@ public:
                     const auto& lateralStaggeredFaceCenter = lateralStaggeredFaceCenter_(scvf, localSubFaceIdx);
                     const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter);
                     lateralFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * Extrusion::area(lateralScvf);
+                                                  * elemVolVars[lateralFace.insideScvIdx()].extrusionFactor() * Extrusion::area(fvGeometry, lateralScvf);
 
                     continue;
                 }
@@ -459,7 +459,7 @@ public:
         inOrOutflow += boundaryPressure;
 
         // Account for the orientation of the face at the boundary,
-        return inOrOutflow * scvf.directionSign() * Extrusion::area(scvf) * insideVolVars.extrusionFactor();
+        return inOrOutflow * scvf.directionSign() * Extrusion::area(localView(problem.gridGeometry()), scvf) * insideVolVars.extrusionFactor();
     }
 
 private:
@@ -533,7 +533,7 @@ private:
         StaggeredUpwindHelper<TypeTag, upwindSchemeOrder> upwindHelper(element, fvGeometry, scvf, elemFaceVars, elemVolVars, gridFluxVarsCache.staggeredUpwindMethods());
         FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
         return upwindHelper.computeUpwindLateralMomentum(selfIsUpstream, lateralFace, localSubFaceIdx, currentScvfBoundaryTypes, lateralFaceBoundaryTypes)
-               * transportingVelocity * lateralFace.directionSign() * Extrusion::area(lateralScvf) * extrusionFactor_(elemVolVars, lateralFace);
+               * transportingVelocity * lateralFace.directionSign() * Extrusion::area(fvGeometry, lateralScvf) * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -611,7 +611,7 @@ private:
 
         // Account for the area of the staggered lateral face (0.5 of the coinciding scfv).
         FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
-        return lateralDiffusiveFlux * Extrusion::area(lateralScvf) * extrusionFactor_(elemVolVars, lateralFace);
+        return lateralDiffusiveFlux * Extrusion::area(fvGeometry, lateralScvf) * extrusionFactor_(elemVolVars, lateralFace);
     }
 
     /*!
@@ -688,7 +688,7 @@ private:
             FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
             const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
             lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                               * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(lateralScvf);
+                                               * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(fvGeometry, lateralScvf);
             return true;
         }
         else
