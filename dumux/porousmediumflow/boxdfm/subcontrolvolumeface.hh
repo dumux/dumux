@@ -33,6 +33,7 @@
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/porousmediumflow/boxdfm/geometryhelper.hh>
+#include <dumux/geometry/volume.hh>
 
 namespace Dumux {
 
@@ -103,7 +104,10 @@ public:
     : corners_(geometryHelper.getScvfCorners(scvfIndex))
     , center_(0.0)
     , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
-    , area_(geometryHelper.scvfArea(corners_))//TODO
+    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
+            Dune::GeometryTypes::cube(T::dim-1),
+            [&](unsigned int i){ return corners_[i]; })
+    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(false)
@@ -127,7 +131,10 @@ public:
     : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
-    , area_(geometryHelper.scvfArea(corners_))//TODO
+    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
+            Dune::GeometryTypes::cube(T::dim-1),
+            [&](unsigned int i){ return corners_[i]; })
+    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(true)
