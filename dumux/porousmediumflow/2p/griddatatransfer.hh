@@ -35,6 +35,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/geometry/volume.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/adaptive/griddatatransfer.hh>
 
@@ -240,7 +241,7 @@ public:
                 if (!isBox)
                     elemSol[0] /= adaptedValues.count;
 
-                const auto elementVolume = Extrusion::volume(element.geometry());
+                const auto elementVolume = volume(element.geometry());
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     VolumeVariables volVars;
@@ -328,7 +329,7 @@ public:
                         else if (formulation == p1s0)
                             massCoeffSon = Extrusion::volume(fvGeometry, scv) * volVars.density(phase0Idx) * volVars.porosity();
                         sol_[scv.dofIndex()][saturationIdx] =
-                            ( Extrusion::volume(fvGeometry, scv)/Extrusion::volume(fatherElement.geometry())*massFather )/massCoeffSon;
+                            ( Extrusion::volume(fvGeometry, scv)/volume(fatherElement.geometry())*massFather )/massCoeffSon;
                     }
                 }
                 else
@@ -347,7 +348,7 @@ public:
                                                                         scv.dofPosition());
 
                     // compute mass & mass coefficients for the scvs (saturations are recalculated at the end)
-                    const auto fatherElementVolume = Extrusion::volume(fatherGeometry);
+                    const auto fatherElementVolume = volume(fatherGeometry);
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         VolumeVariables volVars;
