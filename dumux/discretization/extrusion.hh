@@ -48,12 +48,12 @@ struct NoExtrusion
     static constexpr auto volume(const SCV& scv)
     { return scv.volume(); }
 
-    template<class FVGeo>
-    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    template<class FVGeo, class SCVF>
+    static constexpr auto area(const FVGeo& fvGeometry, const SCVF& scvf)
     { return scvf.area(); }
 
-    template<class FVGeo>
-    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    template<class FVGeo, class SCV>
+    static constexpr auto volume(const FVGeo& fvGeometry, const SCV& scv)
     { return scv.volume(); }
 
     template<class Geometry>
