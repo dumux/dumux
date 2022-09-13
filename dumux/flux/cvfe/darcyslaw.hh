@@ -112,7 +112,7 @@ public:
             gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
         // apply the permeability and return the flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(scvf);
+        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(fvGeometry, scvf);
     }
 
     // compute transmissibilities ti for analytical Jacobians
@@ -141,7 +141,7 @@ public:
         std::vector<Scalar> ti(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
             ti[scv.indexInElement()] =
-                -1.0*Extrusion::area(scvf)*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
+                -1.0*Extrusion::area(fvGeometry, scvf)*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
 
         return ti;
     }

@@ -150,7 +150,7 @@ public:
         const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
         flux[FluidSystem::getMainComponent(0)] = -cumulativeFlux;
 
-        flux *= Extrusion::area(scvf);
+        flux *= Extrusion::area(fvGeometry, scvf);
 
         return flux;
     }

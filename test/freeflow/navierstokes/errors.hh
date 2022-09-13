@@ -102,7 +102,7 @@ private:
 
             for (const auto& scv : scvs(fvGeometry))
             {
-                totalVolume += Extrusion::volume(scv);
+                totalVolume += Extrusion::volume(fvGeometry, scv);
 
                 // compute the pressure errors
                 const auto analyticalSolutionCellCenter
@@ -115,8 +115,8 @@ private:
 
                 maxError[Indices::pressureIdx] = std::max(maxError[Indices::pressureIdx], pError);
                 maxReference[Indices::pressureIdx] = std::max(maxReference[Indices::pressureIdx], pReference);
-                sumError[Indices::pressureIdx] += pError * pError * Extrusion::volume(scv);
-                sumReference[Indices::pressureIdx] += pReference * pReference * Extrusion::volume(scv);
+                sumError[Indices::pressureIdx] += pError * pError * Extrusion::volume(fvGeometry, scv);
+                sumReference[Indices::pressureIdx] += pReference * pReference * Extrusion::volume(fvGeometry, scv);
 
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
@@ -125,7 +125,7 @@ private:
 
                     const Scalar staggeredHalfVolume = Extrusion::volume(
                         typename GridGeometry::Traits::FaceSubControlVolume(
-                            0.5*(scv.center() + scvf.center()), 0.5*Extrusion::volume(scv)
+                            0.5*(scv.center() + scvf.center()), 0.5*Extrusion::volume(fvGeometry, scv)
                         )
                     );
 
@@ -376,7 +376,7 @@ private:
             {
                 using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
                 using Extrusion = Extrusion_t<GridGeometry>;
-                totalVolume_ += Extrusion::volume(scv);
+                totalVolume_ += Extrusion::volume(fvGeometry, scv);
 
                 // velocity errors
                 if constexpr (isMomentumProblem)
@@ -396,8 +396,8 @@ private:
 
                         maxError[velIdx] = std::max(maxError[velIdx], vError);
                         maxReference[velIdx] = std::max(maxReference[velIdx], vReference);
-                        sumError[velIdx] += vError * vError * Extrusion::volume(scv);
-                        sumReference[velIdx] += vReference * vReference * Extrusion::volume(scv);
+                        sumError[velIdx] += vError * vError * Extrusion::volume(fvGeometry, scv);
+                        sumReference[velIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                     }
                     else if (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
                     {
@@ -413,8 +413,8 @@ private:
 
                             maxError[dirIdx] = std::max(maxError[dirIdx], vError);
                             maxReference[dirIdx] = std::max(maxReference[dirIdx], vReference);
-                            sumError[dirIdx] += vError * vError * Extrusion::volume(scv);
-                            sumReference[dirIdx] += vReference * vReference * Extrusion::volume(scv);
+                            sumError[dirIdx] += vError * vError * Extrusion::volume(fvGeometry, scv);
+                            sumReference[dirIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                         }
                     }
                 }
@@ -433,8 +433,8 @@ private:
 
                     maxError[0] = std::max(maxError[0], pError);
                     maxReference[0] = std::max(maxReference[0], pReference);
-                    sumError[0] += pError * pError * Extrusion::volume(scv);
-                    sumReference[0] += pReference * pReference * Extrusion::volume(scv);
+                    sumError[0] += pError * pError * Extrusion::volume(fvGeometry, scv);
+                    sumReference[0] += pReference * pReference * Extrusion::volume(fvGeometry, scv);
                 }
             }
         }

@@ -218,7 +218,7 @@ public:
         {
             auto couplingSource = this->problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
             couplingSource += this->problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
-            couplingSource *= -GridGeometry<i>::Extrusion::volume(scv)*curElemVolVars[scv].extrusionFactor();
+            couplingSource *= -GridGeometry<i>::Extrusion::volume(fvGeometry, scv)*curElemVolVars[scv].extrusionFactor();
             residual[scv.indexInElement()] = couplingSource;
         }
         return residual;

@@ -138,7 +138,7 @@ public:
            normalX[compIdx] = gradX *scvf.unitOuterNormal();
         }
          reducedDiffusionMatrix.solve(reducedFlux,normalX);
-         reducedFlux *= -1.0*rho*Extrusion::area(scvf);
+         reducedFlux *= -1.0*rho*Extrusion::area(fvGeometry, scvf);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {

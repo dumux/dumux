@@ -105,7 +105,7 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        const auto poreVolume = Extrusion::volume(scv)*curVolVars.porosity();
+        const auto poreVolume = Extrusion::volume(fvGeometry, scv)*curVolVars.porosity();
         const auto dt = this->timeLoop().timeStepSize();
 
         // partial derivative of the phase storage terms w.r.t. S_n

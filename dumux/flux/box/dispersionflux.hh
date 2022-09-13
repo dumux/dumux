@@ -164,7 +164,7 @@ public:
             gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
 
         // compute the heat conduction flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), dispersionTensor, gradTemp)*Extrusion::area(scvf);
+        return -1.0*vtmv(scvf.unitOuterNormal(), dispersionTensor, gradTemp)*Extrusion::area(fvGeometry, scvf);
     }
 
 };

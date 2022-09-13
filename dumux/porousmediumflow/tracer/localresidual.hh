@@ -218,7 +218,7 @@ public:
 
         const auto porosity = curVolVars.porosity();
         const auto rho = useMoles ? curVolVars.molarDensity() : curVolVars.density();
-        const auto d_storage = Extrusion::volume(scv)*porosity*rho*saturation/this->timeLoop().timeStepSize();
+        const auto d_storage = Extrusion::volume(fvGeometry, scv)*porosity*rho*saturation/this->timeLoop().timeStepSize();
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             partialDerivatives[compIdx][compIdx] += d_storage;

@@ -145,7 +145,7 @@ public:
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
         const auto advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
 
-        return advectiveTermIntegrand * Extrusion::area(scvf) * insideVolVars.extrusionFactor();
+        return advectiveTermIntegrand * Extrusion::area(fvGeometry, scvf) * insideVolVars.extrusionFactor();
     }
 
     /*!
@@ -186,7 +186,7 @@ public:
         if (enableDilatationTerm)
             diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
 
-        diffusiveFlux *= Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
         return diffusiveFlux;
     }
 
@@ -208,7 +208,7 @@ public:
         const auto referencePressure = context.problem().referencePressure();
 
         NumEqVector pn(scvf.unitOuterNormal());
-        pn *= (pressure-referencePressure)*Extrusion::area(scvf)*elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
         return pn;
     }

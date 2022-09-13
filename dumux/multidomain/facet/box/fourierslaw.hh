@@ -117,7 +117,7 @@ public:
             gradT /= gradT.two_norm2();
             gradT *= (facetVolVars.temperature() - T);
 
-            return -1.0*Extrusion::area(scvf)
+            return -1.0*Extrusion::area(fvGeometry, scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(),
                              facetVolVars.effectiveThermalConductivity(),
@@ -144,7 +144,7 @@ public:
                 gradT.axpy(temperatures[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
 
             // apply matrix thermal conductivity and return the flux
-            return -1.0*Extrusion::area(scvf)
+            return -1.0*Extrusion::area(fvGeometry, scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(),
                          insideVolVars.effectiveThermalConductivity(),

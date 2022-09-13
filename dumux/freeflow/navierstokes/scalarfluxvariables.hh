@@ -69,7 +69,7 @@ public:
                            const ElementFluxVariablesCache& elemFluxVarsCache)
         {
             const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(scvf)*extrusionFactor_(elemVolVars, scvf);
+            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(fvGeometry, scvf)*extrusionFactor_(elemVolVars, scvf);
             return volumeFlux;
         }
     };
@@ -84,7 +84,7 @@ public:
         {
             const auto& scvf = this->scvFace();
             const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(scvf)*extrusionFactor_(this->elemVolVars(), scvf);
+            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(this->fvGeometry(), scvf)*extrusionFactor_(this->elemVolVars(), scvf);
             return UpwindScheme::apply(*this, upwindTerm, volumeFlux, 0/*phaseIdx*/);
         }
         else

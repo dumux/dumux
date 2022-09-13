@@ -142,7 +142,7 @@ public:
             flux[viscosityTildeEqIdx]
                 += coeff / distance
                    * (insideVolVars.viscosityTilde() - outsideVolVars.viscosityTilde())
-                   * Extrusion::area(scvf);
+                   * Extrusion::area(fvGeometry, scvf);
         }
         return flux;
     }

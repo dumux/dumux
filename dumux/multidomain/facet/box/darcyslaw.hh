@@ -122,7 +122,7 @@ public:
                 gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
             // apply facet permeability and return the flux
-            return -1.0*Extrusion::area(scvf)
+            return -1.0*Extrusion::area(fvGeometry, scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), gradP);
         }
@@ -154,7 +154,7 @@ public:
                 gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
             // apply matrix permeability and return the flux
-            return -1.0*Extrusion::area(scvf)
+            return -1.0*Extrusion::area(fvGeometry, scvf)
                        *insideVolVars.extrusionFactor()
                        *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), gradP);
         }

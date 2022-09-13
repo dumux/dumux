@@ -258,7 +258,7 @@ public:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar extrusionFactor = harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
-            result[0] = elemFaceVars[scvf].velocitySelf() * Extrusion::area(scvf) * extrusionFactor * scvf.directionSign();
+            result[0] = elemFaceVars[scvf].velocitySelf() * Extrusion::area(fvGeometry, scvf) * extrusionFactor * scvf.directionSign();
             return result;
         };
 

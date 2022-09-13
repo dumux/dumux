@@ -214,20 +214,20 @@ class InteractionVolumeAssemblerBase
 
                 rho /= numOutsideFaces + 1;
                 deltaG[localDofIdx] -= alpha_inside;
-                deltaG[localDofIdx] *= rho*Extrusion::area(curGlobalScvf);
+                deltaG[localDofIdx] *= rho*Extrusion::area(fvGeometry(), curGlobalScvf);
             }
             // use density resulting from Dirichlet BCs
             else
                 rho = getRho(elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] = alpha_inside*rho*Extrusion::area(curGlobalScvf);
+            g[faceIdx] = alpha_inside*rho*Extrusion::area(fvGeometry(), curGlobalScvf);
 
             if (isSurfaceGrid)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(curGlobalScvf);
+                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(fvGeometry(), curGlobalScvf);
             }
         }
 

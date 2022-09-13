@@ -188,7 +188,7 @@ public:
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
         {
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
         }
         // otherwise we compute a tpfa harmonic mean
         else
@@ -209,7 +209,7 @@ public:
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

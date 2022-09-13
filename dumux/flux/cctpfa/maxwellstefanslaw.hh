@@ -195,7 +195,7 @@ public:
                 reducedDiffusionMatrixInside.mv(helperVector, reducedFlux);
             }
 
-            reducedFlux *= -Extrusion::area(scvf);
+            reducedFlux *= -Extrusion::area(fvGeometry, scvf);
             for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
             {
                 componentFlux[compIdx] = reducedFlux[compIdx];

@@ -48,11 +48,11 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
         fvGeometry.bind(element);
 
         for (const auto& scv : scvs(fvGeometry))
-            volume += GG::Extrusion::volume(scv);
+            volume += GG::Extrusion::volume(fvGeometry, scv);
 
         for (const auto& scvf : scvfs(fvGeometry))
             if (scvf.boundary())
-                surface += GG::Extrusion::area(scvf);
+                surface += GG::Extrusion::area(fvGeometry, scvf);
 
         // compare volume and integrated volume of one scv
         const auto& scv = *(scvs(fvGeometry).begin());
@@ -63,8 +63,8 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
         for (const auto& qp : ruleScv)
             volScv += qp.weight()*GG::Extrusion::integrationElement(scvGeometry, qp.position());
 
-        if (!Dune::FloatCmp::eq(volScv, GG::Extrusion::volume(scv)))
-            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScv << ", direct: " << GG::Extrusion::volume(scv));
+        if (!Dune::FloatCmp::eq(volScv, GG::Extrusion::volume(fvGeometry, scv)))
+            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScv << ", direct: " << GG::Extrusion::volume(fvGeometry, scv));
 
         // compare area and integration area of one scvf
         const auto& scvf = *(scvfs(fvGeometry).begin());
@@ -75,8 +75,8 @@ void runTest(const GG& gg, const double refVolume, const double refSurface)
         for (const auto& qp : ruleScvf)
             volScvf += qp.weight()*GG::Extrusion::integrationElement(scvfGeometry, qp.position());
 
-        if (!Dune::FloatCmp::eq(volScvf, GG::Extrusion::area(scvf)))
-            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScvf << ", direct: " << GG::Extrusion::area(scvf));
+        if (!Dune::FloatCmp::eq(volScvf, GG::Extrusion::area(fvGeometry, scvf)))
+            DUNE_THROW(Dune::Exception, "Integration not correct! Integrated: " << volScvf << ", direct: " << GG::Extrusion::area(fvGeometry, scvf));
     }
 
     // compare total volume/surface area to reference

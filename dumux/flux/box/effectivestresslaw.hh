@@ -81,7 +81,7 @@ public:
 
         ForceVector scvfForce(0.0);
         sigma.mv(scvf.unitOuterNormal(), scvfForce);
-        scvfForce *= Extrusion::area(scvf);
+        scvfForce *= Extrusion::area(fvGeometry, scvf);
 
         return scvfForce;
     }

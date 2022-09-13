@@ -196,7 +196,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             //! compute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
-            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(scvf)*alpha_inside;
+            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(fvGeometry, scvf)*alpha_inside;
 
             //! On interior faces we have to add K-weighted gravitational contributions
             if (!scvf.boundary())
@@ -245,7 +245,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
 
         // on the boundary (dirichlet) we only need ti
         if (scvf.boundary())
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
 
         // otherwise we compute a tpfa harmonic mean
         else
@@ -264,7 +264,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;
@@ -390,7 +390,7 @@ public:
                     Scalar sumPTi(tij*pInside);
 
                     // add inside gravitational contribution
-                    sumPTi += rho*Extrusion::area(scvf)
+                    sumPTi += rho*Extrusion::area(fvGeometry, scvf)
                               *insideVolVars.extrusionFactor()
                               *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
@@ -404,7 +404,7 @@ public:
                         sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
 
                         // add outside gravitational contribution
-                        sumPTi += rho*Extrusion::area(scvf)
+                        sumPTi += rho*Extrusion::area(fvGeometry, scvf)
                                   *outsideVolVars.extrusionFactor()
                                   *vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
                     }
@@ -415,7 +415,7 @@ public:
             //! precompute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
-            Scalar flux = tij*(pInside - pOutside) + Extrusion::area(scvf)*rho*alpha_inside;
+            Scalar flux = tij*(pInside - pOutside) + Extrusion::area(fvGeometry, scvf)*rho*alpha_inside;
 
             //! On interior faces with one neighbor we have to add K-weighted gravitational contributions
             if (!scvf.boundary() && scvf.numOutsideScvs() == 1)
@@ -487,7 +487,7 @@ public:
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
 
         // otherwise we compute a tpfa harmonic mean
         else
@@ -506,7 +506,7 @@ public:
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

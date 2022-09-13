@@ -162,7 +162,7 @@ public:
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), diffCoeff, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(scvf);
+                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), diffCoeff, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(fvGeometry, scvf);
         }
 
         return ti;

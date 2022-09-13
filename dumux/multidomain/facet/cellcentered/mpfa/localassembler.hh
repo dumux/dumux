@@ -229,7 +229,7 @@ public:
                     rho /= numOutsideFaces + 1;
 
                 deltaG[localDofIdx] -= curXiFactor*alpha_inside;
-                deltaG[localDofIdx] *= rho*Extrusion::area(curGlobalScvf);
+                deltaG[localDofIdx] *= rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
             }
             // use average density between facet and cell density on interior Dirichlet boundaries
             else if (curIsInteriorBoundary)
@@ -243,13 +243,13 @@ public:
                 rho = getRho(this->elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] = alpha_inside*rho*Extrusion::area(curGlobalScvf);
+            g[faceIdx] = alpha_inside*rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
 
             if (isSurfaceGrid && !curIsInteriorBoundary)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(curGlobalScvf);
+                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
             }
         }
 
@@ -434,7 +434,7 @@ private:
 
                     // On surface grids we use the square root of the extrusion factor as approximation of the aperture
                     using std::sqrt;
-                    const auto wFacet = 2.0*Extrusion::area(curGlobalScvf)*posVolVars.extrusionFactor()
+                    const auto wFacet = 2.0*Extrusion::area(this->fvGeometry(), curGlobalScvf)*posVolVars.extrusionFactor()
                                            *vtmv(curGlobalScvf.unitOuterNormal(), facetTensor, curGlobalScvf.unitOuterNormal())
                                            / (dim < dimWorld ? sqrt(facetVolVars.extrusionFactor()) : facetVolVars.extrusionFactor());
 

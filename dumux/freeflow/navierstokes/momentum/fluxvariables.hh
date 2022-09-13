@@ -185,7 +185,7 @@ public:
         static const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
-        result -= factor * mu * velGradII * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor() * scvf.directionSign();
+        result -= factor * mu * velGradII * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor() * scvf.directionSign();
 
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
@@ -199,7 +199,7 @@ public:
                     divergence += VelocityGradients::velocityGradII(fvGeometry, otherFrontalScvf, elemVolVars);
             }
 
-            result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+            result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
         }
 
         return result;
@@ -262,7 +262,7 @@ public:
         }
 
         // Account for the area of the staggered lateral face.
-        return result * Extrusion::area(scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        return result * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
     }
 
     /*!
@@ -290,7 +290,7 @@ public:
 
         // The pressure force needs to take the extruded scvf area into account.
         const auto pressure = this->problem().pressure(this->element(), this->fvGeometry(), scvf);
-        result = pressure*Extrusion::area(scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+        result = pressure*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellantion) for the final residual value.
@@ -347,7 +347,7 @@ public:
         const Scalar transportedMomentum = selfIsUpstream ? (upwindWeight * velocitySelf + (1.0 - upwindWeight) * velocityOpposite) * density
                                                           : (upwindWeight * velocityOpposite + (1.0 - upwindWeight) * velocitySelf) * density;
 
-        return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
+        return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(this->fvGeometry(), scvf) * extrusionFactor_(elemVolVars, scvf);
     }
 
     /*!
@@ -470,7 +470,7 @@ public:
                                   : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
         }();
 
-        return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(scvf) * extrusionFactor_(elemVolVars, scvf);
+        return  transportingVelocity * transportedMomentum * scvf.directionSign() * Extrusion::area(fvGeometry, scvf) * extrusionFactor_(elemVolVars, scvf);
     }
 
 private:

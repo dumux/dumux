@@ -155,7 +155,7 @@ public:
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
@@ -204,7 +204,7 @@ public:
         storage *= curVolVars.extrusionFactor();
 
         storage -= prevStorage;
-        storage *= Extrusion::volume(scv);
+        storage *= Extrusion::volume(fvGeometry, scv);
         storage /= this->timeLoop().timeStepSize();
 
         residual[scv.localDofIndex()] += storage;

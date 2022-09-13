@@ -167,7 +167,7 @@ public:
         storage *= curVolVars.extrusionFactor();
 
         storage -= prevStorage;
-        storage *= Extrusion::volume(scv);
+        storage *= Extrusion::volume(fvGeometry, scv);
         storage /= this->timeLoop().timeStepSize();
 
         residual[scv.localDofIndex()] += storage;
