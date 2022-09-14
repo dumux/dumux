@@ -264,7 +264,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto wIn = Extrusion::area(fvGeometry, scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.permeability(),
                                                       insideVolVars.extrusionFactor());
 
@@ -291,7 +291,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
                 const auto wOut = -1.0*Extrusion::area(fvGeometry, scvf)
-                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                                  *computeTpfaTransmissibility(fvGeometry, scvf, fvGeometry.scv(outsideScvIdx),
                                                                outsideVolVars.permeability(),
                                                                outsideVolVars.extrusionFactor());
 
@@ -535,7 +535,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = area*computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
+        const auto wIn = area*computeTpfaTransmissibility(fvGeometry, scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);

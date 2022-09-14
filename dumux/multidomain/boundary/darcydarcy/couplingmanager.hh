@@ -178,8 +178,8 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
 
         using Extrusion = typename GridGeometry<i>::Extrusion;
-        const auto ti = computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
-        const auto tj = computeTpfaTransmissibility(flipScvf, outsideScv, outsideVolVars.permeability(), outsideVolVars.extrusionFactor());
+        const auto ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
+        const auto tj = computeTpfaTransmissibility(fvGeometryOutside, flipScvf, outsideScv, outsideVolVars.permeability(), outsideVolVars.extrusionFactor());
         Scalar tij = 0.0;
         if (ti*tj > 0.0)
             tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);

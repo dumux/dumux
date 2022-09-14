@@ -489,7 +489,7 @@ protected:
         const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
+        const auto ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, K, 1.0);
 
         return (-1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
                + couplingPhaseCellCenterPressure;

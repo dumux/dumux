@@ -204,8 +204,8 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto outsideK = outsideVolVars.permeability();
                 const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
-                    ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
-                    : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                    ? computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
+                    : -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
@@ -239,7 +239,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
@@ -256,8 +256,8 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const Scalar tj = fvGeometry.gridGeometry().isPeriodic()
-                ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
-                : -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
+                ? computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
+                : -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
             // TODO: This could lead to problems!? Is there a better way to do this?
@@ -423,7 +423,7 @@ public:
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto& outsideScvf = fvGeometry.flipScvf(scvf.index());
                 const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = computeTpfaTransmissibility(outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                const auto outsideTi = computeTpfaTransmissibility(fvGeometry, outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux -= rho*tij/outsideTi*(alpha_inside + alpha_outside);
@@ -481,7 +481,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
@@ -497,7 +497,7 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv,
+            const Scalar tj = computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv,
                                                           getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                           outsideVolVars.extrusionFactor());
 

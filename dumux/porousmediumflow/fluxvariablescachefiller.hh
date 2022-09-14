@@ -638,7 +638,7 @@ private:
                     const auto& scvf = fvGeometry().scvf(iv.localScvf(0).gridScvfIndex());
                     const auto& vv = elemVolVars()[scv];
                     const auto eps = Extrusion::area(fvGeometry(), scvf)*computeTpfaTransmissibility(
-                        scvf, scv, zeroD, vv.extrusionFactor()
+                        fvGeometry(), scvf, scv, zeroD, vv.extrusionFactor()
                     );
 
                     localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, eps);

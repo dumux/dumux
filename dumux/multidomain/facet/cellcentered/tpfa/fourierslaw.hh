@@ -196,7 +196,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto wIn = Extrusion::area(fvGeometry, scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.effectiveThermalConductivity(),
                                                       insideVolVars.extrusionFactor());
 
@@ -225,7 +225,7 @@ public:
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
                 const auto wOut = -1.0*Extrusion::area(fvGeometry, scvf)
-                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                                  *computeTpfaTransmissibility(fvGeometry, scvf, fvGeometry.scv(outsideScvIdx),
                                                                outsideVolVars.effectiveThermalConductivity(),
                                                                outsideVolVars.extrusionFactor());
 
@@ -394,7 +394,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         const auto wIn = Extrusion::area(fvGeometry, scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.effectiveThermalConductivity(),
                                                       insideVolVars.extrusionFactor());
 

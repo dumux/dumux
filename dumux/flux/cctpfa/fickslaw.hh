@@ -241,7 +241,7 @@ public:
 
         const auto insideDiffCoeff = getDiffCoeff(insideVolVars);
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideDiffCoeff, insideVolVars.extrusionFactor());
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, insideDiffCoeff, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         Scalar tij;
@@ -259,9 +259,9 @@ public:
             Scalar tj;
             if constexpr (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideDiffCoeff, outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, outsideDiffCoeff, outsideVolVars.extrusionFactor());
             else
-                tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()),
+                tj = computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()),
                                                  outsideScv,
                                                  outsideDiffCoeff,
                                                  outsideVolVars.extrusionFactor());
