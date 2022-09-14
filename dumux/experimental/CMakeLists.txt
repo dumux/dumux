@@ -1,3 +1,4 @@
 add_subdirectory(common)
 add_subdirectory(discretization)
+add_subdirectory(new_assembly)
 add_subdirectory(timestepping)
