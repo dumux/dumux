@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/timer.hh>
 
 #include <dumux/experimental/new_assembly/dumux/discretization/cctpfa/gridgeometry.hh>
 
@@ -49,10 +50,15 @@ bool equal(const Dune::FieldVector<ctype, dim>& p0,
     });
 }
 
-template<typename GridView>
+template<typename GridView,
+         bool caching = true,
+         typename Traits = Dumux::DefaultCCTpfaGridGeometryTraits<GridView>>
 void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expectedNumScvf)
 {
-    Dumux::CCTpfaGridGeometry gridGeometry{gridView};
+    Dune::Timer timer;
+    Dumux::CCTpfaGridGeometry<GridView, caching, Traits> gridGeometry{gridView};
+    timer.stop();
+    std::cout << "Construction took " << timer.elapsed() << " seconds\n";
 
     if (gridGeometry.numDofs() != gridView.size(0))
         DUNE_THROW(Dune::InvalidStateException, "Unexpected numDofs()");
@@ -155,10 +161,21 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
     }
 }
 
+template<typename GV>
+struct DynamicallySizedTraits : public Dumux::DefaultMapperTraits<GV>
+{
+    static constexpr auto maxAdjacentElementLevelDifference = Dumux::Size::dynamic;
+    static constexpr auto maxNumBranchesPerScvf = Dumux::Size::dynamic;
+};
+
 void test(const Dune::YaspGrid<2>& grid)
 {
+    using GV = std::decay_t<decltype(grid.leafGridView())>;
+    using DynamicTraits = DynamicallySizedTraits<GV>;
+
     const std::size_t numScvf = grid.leafGridView().size(0)*4;
-    testCCTpfaGridGeometry(grid.leafGridView(), numScvf);
+    testCCTpfaGridGeometry<GV, true>(grid.leafGridView(), numScvf);
+    testCCTpfaGridGeometry<GV, true, DynamicTraits>(grid.leafGridView(), numScvf);
 }
 
 // void test(const Dune::YaspGrid<3>& grid)
