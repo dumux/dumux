@@ -241,7 +241,7 @@ public:
                 if (!isBox)
                     elemSol[0] /= adaptedValues.count;
 
-                const auto elementVolume = volume(element.geometry());
+                const auto elementVolume = volume(element.geometry(), Extrusion{});
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     VolumeVariables volVars;
