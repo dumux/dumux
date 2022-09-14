@@ -177,6 +177,21 @@ auto volume(const Geometry& geo, unsigned int integrationOrder = 4)
     return volume;
 }
 
+/*!
+ * \ingroup Geometry
+ * \brief The volume of a given geometry with an extrusion/transformation policy
+ * \note depending on the transformation this might not be an accurate quadrature rule anymore
+ */
+template<class Geometry, class Transformation>
+auto volume(const Geometry& geo, Transformation transformation, unsigned int integrationOrder = 4)
+{
+    double volume = 0.0;
+    const auto rule = Dune::QuadratureRules<double, Geometry::mydimension>::rule(geo.type(), integrationOrder);
+    for (const auto& qp : rule)
+        volume += transformation.integrationElement(geo, qp.position())*qp.weight();
+    return volume;
+}
+
 } // end namespace Dumux
 
 #endif
