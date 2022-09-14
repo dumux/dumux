@@ -104,6 +104,7 @@ public:
 
         auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
         flux[localEnergyBalanceIdx] += FluxVariables::advectiveFluxForCellCenter(problem,
+                                                                                 fvGeometry,
                                                                                  elemVolVars,
                                                                                  elemFaceVars,
                                                                                  scvf,

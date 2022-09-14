@@ -88,7 +88,7 @@ public:
                 return density * fraction;
             };
 
-            flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
+            flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, fvGeometry, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
             //check for the reference system and adapt units of the diffusive flux accordingly.
             if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
