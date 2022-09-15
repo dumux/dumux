@@ -70,150 +70,7 @@ public:
     using SubControlVolume = typename GeometryStorage::SubControlVolume;
     using SubControlVolumeFace = typename GeometryStorage::SubControlVolumeFace;
 
-    class LocalView
-    {
-        using IndexType = typename GV::IndexSet::IndexType;
-
-    public:
-        using GridGeometry = ThisType;
-        using Element = typename GridGeometry::Element;
-        using SubControlVolume = typename GridGeometry::SubControlVolume;
-        using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-
-        LocalView(const ThisType& gg)
-        : gridGeometry_(gg)
-        {}
-
-        const GridGeometry& gridGeometry() const
-        { return gridGeometry_; }
-
-        void bind(const Element& e) &
-        {
-            bindElement(e);
-            findNeighborScvIndices_();
-            findNeighborScvfIndices_();
-        }
-
-        void bindElement(const Element& e) &
-        {
-            clear_();
-            eIdx_ = gridGeometry_.elementMapper().index(e);
-        }
-
-        LocalView bind(const Element& e) && { this->bind(e); return std::move(*this); }
-        LocalView bindElement(const Element& e) && { this->bindElement(e); return std::move(*this); }
-
-        friend std::ranges::range auto scvs(const LocalView& lv) { return lv.scvs_(); }
-        friend std::ranges::range auto scvfs(const LocalView& lv) { return lv.scvfs_(); }
-        friend std::ranges::range auto neighborScvs(const LocalView& lv) { return lv.neighborScvs_(); }
-        friend std::ranges::range auto neighborScvfs(const LocalView& lv) { return lv.neighborScvfs_(); }
-
-        auto geometry(const SubControlVolume& scv) const
-        { return gridGeometry_.element(scv.dofIndex()).geometry(); }
-
-        auto geometry(const SubControlVolumeFace& scvf) const
-        {
-            const auto& facet = gridGeometry_.scvfToSeedMap_[scvf.id].first->insideFacet();
-            return gridGeometry_.element(facet.elementIndex).template subEntity<1>(facet.facetIndex).geometry();
-        }
-
-        bool onBoundary(const SubControlVolumeFace& scvf) const
-        {
-            const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
-            return seedPtr->numOutsideNeighbors() == 0;
-        }
-
-        const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
-        {
-            const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
-            return gridGeometry_.storage_.scv(seedPtr->facet(idxInNeighbors).elementIndex);
-        }
-
-        const SubControlVolume& outsideScv(const SubControlVolumeFace& scvf, unsigned int i = 0) const
-        {
-            const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
-            if (i >= idxInNeighbors) i++;
-            assert(i < seedPtr->numNeighbors());
-            return gridGeometry_.storage_.scv(seedPtr->facet(i).elementIndex);
-        }
-
-        const SubControlVolumeFace& flipScvf(const SubControlVolumeFace& scvf, unsigned int i = 0) const
-        {
-            const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
-            if (i >= idxInNeighbors) i++;
-            assert(i < seedPtr->numNeighbors());
-            for (const auto& scvfId : gridGeometry_.elementScvfs_[seedPtr->facet(i).elementIndex])
-                if (gridGeometry_.scvfToSeedMap_[scvfId].first == seedPtr)
-                    return gridGeometry_.storage_.scvf(scvfId);
-            DUNE_THROW(Dune::InvalidStateException, "Could not find flip scvf");
-        }
-
-    private:
-        void clear_()
-        {
-            neighborScvIndices_.clear();
-            neighborScvfIndices_.clear();
-        }
-
-        void findNeighborScvIndices_()
-        {
-            std::ranges::for_each(gridGeometry_.elementScvfs_[eIdx_], [&] (std::integral auto idx) {
-                const auto& faceSeed = *gridGeometry_.scvfToSeedMap_[idx].first;
-                std::ranges::for_each(faceSeed.facets(), [&] (const auto& facet) {
-                    if (facet.elementIndex != eIdx_)
-                        neighborScvIndices_.push_back(facet.elementIndex);
-                });
-            });
-        }
-
-        void findNeighborScvfIndices_()
-        {
-            std::ranges::for_each(neighborScvIndices_, [&] (std::integral auto scvIdx) {
-                std::ranges::for_each(gridGeometry_.elementScvfs_[scvIdx], [&] (std::integral auto scvfIdx) {
-                    const auto& faceSeed = *gridGeometry_.scvfToSeedMap_[scvfIdx].first;
-                    if (std::ranges::any_of(faceSeed.facets(), [&] (const auto& facet) {
-                        return facet.elementIndex == eIdx_;
-                    }))
-                        neighborScvfIndices_.push_back(scvfIdx);
-                });
-            });
-        }
-
-        std::ranges::range auto scvs_() const
-        { return std::views::single(gridGeometry_.storage_.scv(eIdx_)); }
-
-        std::ranges::range auto scvfs_() const
-        {
-            return std::views::transform(
-                gridGeometry_.elementScvfs_[eIdx_],
-                [&] (std::integral auto scvfIdx) -> const SubControlVolumeFace& {
-                    return gridGeometry_.storage_.scvf(scvfIdx);
-            });
-        }
-
-        std::ranges::range auto neighborScvs_() const
-        {
-            return std::views::transform(
-                neighborScvIndices_,
-                [&] (std::integral auto scvIdx) -> const SubControlVolume& {
-                    return gridGeometry_.storage_.scv(scvIdx);
-            });
-        }
-
-        std::ranges::range auto neighborScvfs_() const
-        {
-            return std::views::transform(
-                neighborScvfIndices_,
-                [&] (std::integral auto scvfIdx) -> const SubControlVolumeFace& {
-                    return gridGeometry_.storage_.scvf(scvfIdx);
-            });
-        }
-
-        const ThisType& gridGeometry_;
-        IndexType eIdx_;
-        DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvIndices_;
-        DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvfIndices_;
-    };
+    class LocalView;
 
     explicit CCTpfaGridGeometry(const GV& gridView)
     : ParentType(gridView)
@@ -307,6 +164,153 @@ private:
     GeometryStorage storage_;
     std::vector<ElementScvfs> elementScvfs_;
     std::vector<std::pair<const FaceSeed*, LocalIndex>> scvfToSeedMap_;
+};
+
+
+template<typename GV, typename Traits>
+class CCTpfaGridGeometry<GV, true, Traits>::LocalView
+{
+    using IndexType = typename GV::IndexSet::IndexType;
+
+public:
+    using GridGeometry = ThisType;
+    using Element = typename GridGeometry::Element;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+
+    LocalView(const ThisType& gg)
+    : gridGeometry_(gg)
+    {}
+
+    const GridGeometry& gridGeometry() const
+    { return gridGeometry_; }
+
+    void bind(const Element& e) &
+    {
+        bindElement(e);
+        findNeighborScvIndices_();
+        findNeighborScvfIndices_();
+    }
+
+    void bindElement(const Element& e) &
+    {
+        clear_();
+        eIdx_ = gridGeometry_.elementMapper().index(e);
+    }
+
+    LocalView bind(const Element& e) && { this->bind(e); return std::move(*this); }
+    LocalView bindElement(const Element& e) && { this->bindElement(e); return std::move(*this); }
+
+    friend std::ranges::range auto scvs(const LocalView& lv) { return lv.scvs_(); }
+    friend std::ranges::range auto scvfs(const LocalView& lv) { return lv.scvfs_(); }
+    friend std::ranges::range auto neighborScvs(const LocalView& lv) { return lv.neighborScvs_(); }
+    friend std::ranges::range auto neighborScvfs(const LocalView& lv) { return lv.neighborScvfs_(); }
+
+    auto geometry(const SubControlVolume& scv) const
+    { return gridGeometry_.element(scv.dofIndex()).geometry(); }
+
+    auto geometry(const SubControlVolumeFace& scvf) const
+    {
+        const auto& facet = gridGeometry_.scvfToSeedMap_[scvf.id].first->insideFacet();
+        return gridGeometry_.element(facet.elementIndex).template subEntity<1>(facet.facetIndex).geometry();
+    }
+
+    bool onBoundary(const SubControlVolumeFace& scvf) const
+    {
+        const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
+        return seedPtr->numOutsideNeighbors() == 0;
+    }
+
+    const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
+    {
+        const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
+        return gridGeometry_.storage_.scv(seedPtr->facet(idxInNeighbors).elementIndex);
+    }
+
+    const SubControlVolume& outsideScv(const SubControlVolumeFace& scvf, unsigned int i = 0) const
+    {
+        const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
+        if (i >= idxInNeighbors) i++;
+        assert(i < seedPtr->numNeighbors());
+        return gridGeometry_.storage_.scv(seedPtr->facet(i).elementIndex);
+    }
+
+    const SubControlVolumeFace& flipScvf(const SubControlVolumeFace& scvf, unsigned int i = 0) const
+    {
+        const auto [seedPtr, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
+        if (i >= idxInNeighbors) i++;
+        assert(i < seedPtr->numNeighbors());
+        for (const auto& scvfId : gridGeometry_.elementScvfs_[seedPtr->facet(i).elementIndex])
+            if (gridGeometry_.scvfToSeedMap_[scvfId].first == seedPtr)
+                return gridGeometry_.storage_.scvf(scvfId);
+        DUNE_THROW(Dune::InvalidStateException, "Could not find flip scvf");
+    }
+
+private:
+    void clear_()
+    {
+        neighborScvIndices_.clear();
+        neighborScvfIndices_.clear();
+    }
+
+    void findNeighborScvIndices_()
+    {
+        std::ranges::for_each(gridGeometry_.elementScvfs_[eIdx_], [&] (std::integral auto idx) {
+            const auto& faceSeed = *gridGeometry_.scvfToSeedMap_[idx].first;
+            std::ranges::for_each(faceSeed.facets(), [&] (const auto& facet) {
+                if (facet.elementIndex != eIdx_)
+                    neighborScvIndices_.push_back(facet.elementIndex);
+            });
+        });
+    }
+
+    void findNeighborScvfIndices_()
+    {
+        std::ranges::for_each(neighborScvIndices_, [&] (std::integral auto scvIdx) {
+            std::ranges::for_each(gridGeometry_.elementScvfs_[scvIdx], [&] (std::integral auto scvfIdx) {
+                const auto& faceSeed = *gridGeometry_.scvfToSeedMap_[scvfIdx].first;
+                if (std::ranges::any_of(faceSeed.facets(), [&] (const auto& facet) {
+                    return facet.elementIndex == eIdx_;
+                }))
+                    neighborScvfIndices_.push_back(scvfIdx);
+            });
+        });
+    }
+
+    std::ranges::range auto scvs_() const
+    { return std::views::single(gridGeometry_.storage_.scv(eIdx_)); }
+
+    std::ranges::range auto scvfs_() const
+    {
+        return std::views::transform(
+            gridGeometry_.elementScvfs_[eIdx_],
+            [&] (std::integral auto scvfIdx) -> const SubControlVolumeFace& {
+                return gridGeometry_.storage_.scvf(scvfIdx);
+        });
+    }
+
+    std::ranges::range auto neighborScvs_() const
+    {
+        return std::views::transform(
+            neighborScvIndices_,
+            [&] (std::integral auto scvIdx) -> const SubControlVolume& {
+                return gridGeometry_.storage_.scv(scvIdx);
+        });
+    }
+
+    std::ranges::range auto neighborScvfs_() const
+    {
+        return std::views::transform(
+            neighborScvfIndices_,
+            [&] (std::integral auto scvfIdx) -> const SubControlVolumeFace& {
+                return gridGeometry_.storage_.scvf(scvfIdx);
+        });
+    }
+
+    const ThisType& gridGeometry_;
+    IndexType eIdx_;
+    DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvIndices_;
+    DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvfIndices_;
 };
 
 } // end namespace Dumux
