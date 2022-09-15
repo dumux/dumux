@@ -69,6 +69,17 @@ public:
         scvs_.reserve(size.numScvs);
     }
 
+    void clear()
+    {
+        faces_.clear();
+        scvfs_.clear();
+        scvs_.clear();
+    }
+
+    std::size_t numFaces() const { return faces_.size(); }
+    std::size_t numScvfs() const { return scvfs_.size(); }
+    std::size_t numScvs() const { return scvs_.size(); }
+
     std::size_t pushFace(Face&& f) { return add_(faces_, std::move(f)); }
     std::size_t pushScvf(Scvf&& f) { return add_(scvfs_, std::move(f)); }
     std::size_t pushScv(Scv&& s) { return add_(scvs_, std::move(s)); }
