@@ -113,6 +113,11 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
             std::ranges::sort(neighborInsideScvIndices);
             if (!std::ranges::equal(neighborInsideScvIndices, neighborScvIndices))
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected neighbor scv indices");
+
+            const auto numNeighbors = neighborScvIndices.size();
+            std::ranges::unique(neighborScvIndices);
+            if (neighborScvIndices.size() != numNeighbors)
+                DUNE_THROW(Dune::InvalidStateException, "Duplicate neighbor scvs");
         }
 
         count = 0;
