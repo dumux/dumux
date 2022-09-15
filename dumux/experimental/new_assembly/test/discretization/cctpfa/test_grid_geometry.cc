@@ -77,6 +77,8 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
             scvDofIdx = static_cast<std::size_t>(scv.dofIndex());
             if (!equal(scv.center(), element.geometry().center(), tol))
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv center");
+            if (!equal(scv.center(), localView.element().geometry().center(), tol))
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected localView-element center");
             if (!equal(element.geometry().center(), localView.geometry(scv).center(), tol))
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv geometry center");
             if (!Dune::FloatCmp::eq(scv.volume(), element.geometry().volume(), tol))

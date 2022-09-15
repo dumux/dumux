@@ -27,6 +27,7 @@
 #include <vector>
 #include <cstdint>
 #include <cassert>
+#include <optional>
 
 #include <dumux/geometry/volume.hh>
 
@@ -178,7 +179,7 @@ public:
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
-    LocalView(const ThisType& gg)
+    LocalView(const GridGeometry& gg)
     : gridGeometry_(gg)
     {}
 
@@ -195,6 +196,7 @@ public:
     void bindElement(const Element& e) &
     {
         clear_();
+        element_ = e;
         eIdx_ = gridGeometry_.elementMapper().index(e);
     }
 
@@ -205,6 +207,9 @@ public:
     friend std::ranges::range auto scvfs(const LocalView& lv) { return lv.scvfs_(); }
     friend std::ranges::range auto neighborScvs(const LocalView& lv) { return lv.neighborScvs_(); }
     friend std::ranges::range auto neighborScvfs(const LocalView& lv) { return lv.neighborScvfs_(); }
+
+    const Element& element() const
+    { return *element_; }
 
     auto geometry(const SubControlVolume& scv) const
     { return gridGeometry_.element(scv.dofIndex()).geometry(); }
@@ -249,6 +254,7 @@ public:
 private:
     void clear_()
     {
+        element_.reset();
         neighborScvIndices_.clear();
         neighborScvfIndices_.clear();
     }
@@ -307,7 +313,8 @@ private:
         });
     }
 
-    const ThisType& gridGeometry_;
+    const GridGeometry& gridGeometry_;
+    std::optional<Element> element_;
     IndexType eIdx_;
     DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvIndices_;
     DefaultStorage<IndexType, GridGeometry::maxElementStencilSize> neighborScvfIndices_;
