@@ -103,8 +103,8 @@ public:
     , corners_(geometryHelper.getScvCorners(scvIdx))
     , center_(0.0)
     , volume_(Dumux::convexPolytopeVolume<T::dim>(
-            Dune::GeometryTypes::cube(T::dim),
-            [&](unsigned int i){ return corners_[i]; })
+        Dune::GeometryTypes::cube(T::dim),
+        [&](unsigned int i){ return corners_[i]; })
     )
     , elementIndex_(elementIndex)
     , vIdxLocal_(scvIdx)

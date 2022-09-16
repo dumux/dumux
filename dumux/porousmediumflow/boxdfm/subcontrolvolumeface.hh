@@ -105,8 +105,8 @@ public:
     , center_(0.0)
     , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
     , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-            Dune::GeometryTypes::cube(T::dim-1),
-            [&](unsigned int i){ return corners_[i]; })
+        Dune::GeometryTypes::cube(T::dim-1),
+        [&](unsigned int i){ return corners_[i]; })
     )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
@@ -132,8 +132,8 @@ public:
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-            Dune::GeometryTypes::cube(T::dim-1),
-            [&](unsigned int i){ return corners_[i]; })
+        Dune::GeometryTypes::cube(T::dim-1),
+        [&](unsigned int i){ return corners_[i]; })
     )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
