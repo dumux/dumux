@@ -72,6 +72,7 @@ computeMpfaTransmissibility(const IVSubControlVolume& scv,
  *        sub-control volume face stemming from a given sub-control
  *        volume with corresponding tensor t.
  *
+ * \param fvGeometry The element-centered control volume geometry
  * \param scv The iv-local sub-control volume
  * \param scvf The grid sub-control volume face
  * \param t The tensor living in the scv
@@ -134,6 +135,7 @@ computeMpfaTransmissibility(const IVSubControlVolume& scv,
  *        sub-control volume face stemming from a given sub-control
  *        volume with corresponding tensor t, where t is a scalar.
  *
+ * \param fvGeometry The element-centered control volume geometry
  * \param scv The iv-local sub-control volume
  * \param scvf The grid sub-control volume face
  * \param t the scalar quantity living in the scv

@@ -68,20 +68,20 @@ typename Tensor::field_type computeTpfaTransmissibility(const SubControlVolumeFa
  *        sub-control volume face stemming from a given sub-control
  *        volume with corresponding tensor T.
  *
- * \param fvGeometry The finite-volume geometry
+ * \param fvGeometry The element-centered control volume geometry
  * \param scvf The sub-control volume face
  * \param scv The neighboring sub-control volume
  * \param T The tensor living in the neighboring scv
  * \param extrusionFactor The extrusion factor of the scv
  */
-template< class FVElementGeometry, class SubControlVolumeFace, class SubControlVolume, class Tensor >
+template< class FVElementGeometry, class Tensor >
 typename Tensor::field_type computeTpfaTransmissibility(const FVElementGeometry& fvGeometry,
-                                                        const SubControlVolumeFace& scvf,
-                                                        const SubControlVolume& scv,
+                                                        const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                        const typename FVElementGeometry::SubControlVolume& scv,
                                                         const Tensor& T,
-                                                        typename SubControlVolume::Traits::Scalar extrusionFactor)
+                                                        typename FVElementGeometry::SubControlVolume::Traits::Scalar extrusionFactor)
 {
-    using GlobalPosition = typename SubControlVolumeFace::Traits::GlobalPosition;
+    using GlobalPosition = typename FVElementGeometry::SubControlVolumeFace::Traits::GlobalPosition;
     GlobalPosition Knormal;
     T.mv(scvf.unitOuterNormal(), Knormal);
 
@@ -128,22 +128,20 @@ Tensor computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
  *        sub-control volume face stemming from a given sub-control
  *        volume for the case where T is just a scalar
  *
- * \param fvGeometry The finite-volume geometry
+ * \param fvGeometry The element-centered control volume geometry
  * \param scvf The sub-control volume face
  * \param scv The neighboring sub-control volume
  * \param t The scalar quantity living in the neighboring scv
  * \param extrusionFactor The extrusion factor of the scv
  */
 template< class FVElementGeometry,
-          class SubControlVolumeFace,
-          class SubControlVolume,
           class Tensor,
           typename std::enable_if_t<Dune::IsNumber<Tensor>::value, int> = 0 >
 Tensor computeTpfaTransmissibility(const FVElementGeometry& fvGeometry,
-                                   const SubControlVolumeFace& scvf,
-                                   const SubControlVolume &scv,
+                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                   const typename FVElementGeometry::SubControlVolume& scv,
                                    Tensor t,
-                                   typename SubControlVolumeFace::Traits::Scalar extrusionFactor)
+                                   typename FVElementGeometry::SubControlVolumeFace::Traits::Scalar extrusionFactor)
 {
     auto distanceVector = scvf.ipGlobal();
     distanceVector -= scv.center();
