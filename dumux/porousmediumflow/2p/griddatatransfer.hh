@@ -329,7 +329,7 @@ public:
                         else if (formulation == p1s0)
                             massCoeffSon = Extrusion::volume(fvGeometry, scv) * volVars.density(phase0Idx) * volVars.porosity();
                         sol_[scv.dofIndex()][saturationIdx] =
-                            ( Extrusion::volume(fvGeometry, scv)/volume(fatherElement.geometry())*massFather )/massCoeffSon;
+                            ( Extrusion::volume(fvGeometry, scv)/volume(fatherElement.geometry(), Extrusion{})*massFather )/massCoeffSon;
                     }
                 }
                 else
@@ -348,7 +348,7 @@ public:
                                                                         scv.dofPosition());
 
                     // compute mass & mass coefficients for the scvs (saturations are recalculated at the end)
-                    const auto fatherElementVolume = volume(fatherGeometry);
+                    const auto fatherElementVolume = volume(fatherGeometry, Extrusion{});
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         VolumeVariables volVars;
