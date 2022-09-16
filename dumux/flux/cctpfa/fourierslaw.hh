@@ -183,12 +183,12 @@ public:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         const auto insideLambda = insideVolVars.effectiveThermalConductivity();
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
         {
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
         }
         // otherwise we compute a tpfa harmonic mean
         else
@@ -201,15 +201,15 @@ public:
             Scalar tj;
             if constexpr (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
             else
-                tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
+                tj = computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
 
             // check for division by zero!
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

@@ -158,7 +158,7 @@ public:
                                                             darcyVelocity);
 
         Scalar flux = velocity * scvf.unitOuterNormal();
-        flux *= Extrusion::area(scvf);
+        flux *= Extrusion::area(fvGeometry, scvf);
         return flux;
     }
 

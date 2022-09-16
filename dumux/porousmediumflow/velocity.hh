@@ -163,7 +163,7 @@ public:
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-                flux /= insideVolVars.extrusionFactor() * Extrusion::area(scvf) / scvf.area();
+                flux /= insideVolVars.extrusionFactor() * Extrusion::area(fvGeometry, scvf) / scvf.area();
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = gridGeometry_.elementMapper().index(element);
@@ -208,7 +208,7 @@ public:
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-                flux /= insideVolVars.extrusionFactor() * Extrusion::area(scvf) / scvf.area();
+                flux /= insideVolVars.extrusionFactor() * Extrusion::area(fvGeometry, scvf) / scvf.area();
 
                 // transform the volume flux into a velocity vector
                 Velocity tmpVelocity = localNormal;

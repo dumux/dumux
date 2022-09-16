@@ -28,7 +28,7 @@
 #include <vector>
 #include <utility>
 
-#include <dumux/discretization/box/elementfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/elementfluxvariablescache.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -44,9 +44,9 @@ class PNMTwoPElementFluxVariablesCache;
  * \brief The flux variables caches for an element with caching enabled
  */
 template<class GFVC>
-class PNMTwoPElementFluxVariablesCache<GFVC, true> : public BoxElementFluxVariablesCache<GFVC, true>
+class PNMTwoPElementFluxVariablesCache<GFVC, true> : public CVFEElementFluxVariablesCache<GFVC, true>
 {
-    using ParentType = BoxElementFluxVariablesCache<GFVC, true>;
+    using ParentType = CVFEElementFluxVariablesCache<GFVC, true>;
 public:
     using ParentType::ParentType;
 };

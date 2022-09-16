@@ -194,8 +194,8 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                totalWaterVolume += Extrusion::volume(scv)*volVars.porosity()*volVars.saturation(0);
-                refWaterVolume += Extrusion::volume(scv)*volVars.porosity()*initialSaturation;
+                totalWaterVolume += Extrusion::volume(fvGeometry, scv)*volVars.porosity()*volVars.saturation(0);
+                refWaterVolume += Extrusion::volume(fvGeometry, scv)*volVars.porosity()*initialSaturation;
             }
         }
 
@@ -223,8 +223,8 @@ public:
             {
                 const auto& volVars = elemVolVars[scv];
                 const auto& oldVolVars = oldElemVolVars[scv];
-                storageDerivative[scv.dofIndex()] += Extrusion::volume(scv)*(volVars.saturation(0) - oldVolVars.saturation(0))/dt;
-                volumes[scv.dofIndex()] += Extrusion::volume(scv);
+                storageDerivative[scv.dofIndex()] += Extrusion::volume(fvGeometry, scv)*(volVars.saturation(0) - oldVolVars.saturation(0))/dt;
+                volumes[scv.dofIndex()] += Extrusion::volume(fvGeometry, scv);
             }
         }
 

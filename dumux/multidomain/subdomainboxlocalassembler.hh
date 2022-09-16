@@ -250,7 +250,7 @@ public:
         {
             const auto& curVolVars = elemVolVars[scv];
             auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
-            source *= -Extrusion::volume(scv)*curVolVars.extrusionFactor();
+            source *= -Extrusion::volume(this->fvGeometry(), scv)*curVolVars.extrusionFactor();
             residual[scv.localDofIndex()] = std::move(source);
         }
 

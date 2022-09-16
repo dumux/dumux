@@ -240,7 +240,7 @@ public:
                 if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.dofAxis()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
             else if (scvf.isLateral())
@@ -273,7 +273,7 @@ public:
                 if (bcTypes.hasNeumann() && bcTypes.isNeumann(scvf.normalAxis()))
                 {
                     const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                    return neumannFluxes[scv.dofAxis()] * Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
                 }
             }
         }
@@ -303,7 +303,7 @@ public:
             if (bcTypes.hasNeumann() && bcTypes.isNeumann(scv.dofAxis()))
             {
                 const auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                return neumannFluxes[scv.dofAxis()] * Extrusion::area(scvf) * elemVolVars[scv].extrusionFactor();
+                return neumannFluxes[scv.dofAxis()] * Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
             }
         }
 

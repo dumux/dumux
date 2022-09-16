@@ -32,6 +32,7 @@
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/porousmediumflow/boxdfm/geometryhelper.hh>
 #include <dumux/common/math.hh>
+#include <dumux/geometry/volume.hh>
 
 namespace Dumux {
 
@@ -101,7 +102,10 @@ public:
     : isFractureScv_(false)
     , corners_(geometryHelper.getScvCorners(scvIdx))
     , center_(0.0)
-    , volume_(geometryHelper.scvVolume(corners_))
+    , volume_(Dumux::convexPolytopeVolume<T::dim>(
+        Dune::GeometryTypes::cube(T::dim),
+        [&](unsigned int i){ return corners_[i]; })
+    )
     , elementIndex_(elementIndex)
     , vIdxLocal_(scvIdx)
     , elemLocalScvIdx_(scvIdx)
@@ -151,7 +155,10 @@ public:
             corners_[i] = corners[i];
 
         // compute volume and scv center
-        volume_ = geometryHelper.scvfArea(corners);
+        volume_ = Dumux::convexPolytopeVolume<T::dim-1>(
+            Dune::GeometryTypes::cube(T::dim-1),
+            [&](unsigned int i){ return corners_[i]; }
+        );
         for (const auto& corner : corners_)
             center_ += corner;
         center_ /= corners_.size();

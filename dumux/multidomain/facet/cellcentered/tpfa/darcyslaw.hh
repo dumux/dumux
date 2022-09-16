@@ -193,7 +193,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
             // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
             const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
-            const auto rhoTimesArea = rho*Extrusion::area(scvf);
+            const auto rhoTimesArea = rho*Extrusion::area(fvGeometry, scvf);
             const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()
                                       *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
@@ -263,8 +263,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = Extrusion::area(scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+        const auto wIn = Extrusion::area(fvGeometry, scvf)
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.permeability(),
                                                       insideVolVars.extrusionFactor());
 
@@ -275,7 +275,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(fvGeometry, scvf)*insideVolVars.extrusionFactor()
                                    /facetVolVars.extrusionFactor()
                                    *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
 
@@ -290,8 +290,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/fa
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                const auto wOut = -1.0*Extrusion::area(scvf)
-                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                const auto wOut = -1.0*Extrusion::area(fvGeometry, scvf)
+                                  *computeTpfaTransmissibility(fvGeometry, scvf, fvGeometry.scv(outsideScvIdx),
                                                                outsideVolVars.permeability(),
                                                                outsideVolVars.extrusionFactor());
 
@@ -472,7 +472,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
             // compute alpha := n^T*K*g and add to flux (use arithmetic mean for density)
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
             const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
-            const auto rhoTimesArea = rho*Extrusion::area(scvf);
+            const auto rhoTimesArea = rho*Extrusion::area(fvGeometry, scvf);
             const auto alpha_inside = rhoTimesArea*insideVolVars.extrusionFactor()
                                       *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
@@ -531,11 +531,11 @@ class CCTpfaFacetCouplingDarcysLawImpl<ScalarType, GridGeometry, /*isNetwork*/tr
         if (Dune::FloatCmp::ne(xi, 1.0, 1e-6))
             DUNE_THROW(Dune::InvalidStateException, "Xi != 1.0 cannot be used on surface grids");
 
-        const auto area = Extrusion::area(scvf);
+        const auto area = Extrusion::area(fvGeometry, scvf);
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = area*computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
+        const auto wIn = area*computeTpfaTransmissibility(fvGeometry, scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);

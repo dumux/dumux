@@ -84,7 +84,7 @@ public:
  * \brief Base class for the finite volume geometry vector for staggered models
  *        This locally builds up the sub control volumes and sub control volume faces
  *        for each element.
- *        Specialization for grid caching enabled
+ *        Specialization for grid caching disabled
  * \tparam GG the finite volume grid geometry type
  */
 template<class GG>
@@ -218,6 +218,12 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
+
+    typename SubControlVolumeFace::Traits::Geometry geometry (const SubControlVolumeFace& scvf) const
+    {
+        assert(isBound());
+        return scvf.geometry();
+    }
 
 private:
     //! Binding of an element preparing the geometries only inside the element

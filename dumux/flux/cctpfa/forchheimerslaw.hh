@@ -186,7 +186,7 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
         auto upwindTerm = [phaseIdx](const auto& volVars){ return volVars.mobility(phaseIdx); };
         DimWorldVector darcyVelocity = scvf.unitOuterNormal();
         darcyVelocity *= ForchheimerVelocity::UpwindScheme::apply(elemVolVars, scvf, upwindTerm, darcyFlux, phaseIdx);
-        darcyVelocity /= Extrusion::area(scvf);
+        darcyVelocity /= Extrusion::area(fvGeometry, scvf);
 
         const auto velocity = ForchheimerVelocity::velocity(fvGeometry,
                                                             elemVolVars,
@@ -196,7 +196,7 @@ class CCTpfaForchheimersLaw<ScalarType, GridGeometry, ForchheimerVelocity, /*isN
                                                             darcyVelocity);
 
         Scalar flux = velocity * scvf.unitOuterNormal();
-        flux *= Extrusion::area(scvf);
+        flux *= Extrusion::area(fvGeometry, scvf);
         return flux;
     }
 

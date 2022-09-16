@@ -444,7 +444,7 @@ public:
             // Add the contributions to the dof source values
             // We divide by the volume. In the local residual this will be multiplied with the same
             // factor again. That's because the user specifies absolute values in kg/s.
-            const auto volume = Extrusion::volume(scv)*elemVolVars[scv].extrusionFactor();
+            const auto volume = Extrusion::volume(fvGeometry, scv)*elemVolVars[scv].extrusionFactor();
 
             for (const auto& ps : pointSourceMap_.at(key))
             {

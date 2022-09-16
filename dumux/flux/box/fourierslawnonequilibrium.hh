@@ -119,7 +119,7 @@ public:
         }
 
         // compute the heat conduction flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*Extrusion::area(scvf);
+        return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*Extrusion::area(fvGeometry, scvf);
     }
 };
 

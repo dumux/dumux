@@ -48,12 +48,12 @@ struct NoExtrusion
     static constexpr auto volume(const SCV& scv)
     { return scv.volume(); }
 
-    template<class FVGeo>
-    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    template<class FVGeo, class SCVF>
+    static constexpr auto area(const FVGeo&, const SCVF& scvf)
     { return scvf.area(); }
 
-    template<class FVGeo>
-    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    template<class FVGeo, class SCV>
+    static constexpr auto volume(const FVGeo&, const SCV& scv)
     { return scv.volume(); }
 
     template<class Geometry>
@@ -87,10 +87,9 @@ struct RotationalExtrusion
         return scvf.area()*2.0*M_PI*scvf.center()[radialAxis];
     }
 
-    template<class FVGeo>
-    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    template<class FVGeo, class SCVF>
+    static constexpr auto area(const FVGeo&, const SCVF& scvf)
     {
-        using SCVF = typename FVGeo::SubControlVolumeFace;
         static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
         static_assert(SCVF::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
         static_assert(radialAxis < int(SCVF::Traits::Geometry::coorddimension), "Illegal radial axis!");
@@ -115,10 +114,9 @@ struct RotationalExtrusion
         return scv.volume()*2.0*M_PI*scv.center()[radialAxis];
     }
 
-    template<class FVGeo>
-    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    template<class FVGeo, class SCV>
+    static constexpr auto volume(const FVGeo&, const SCV& scv)
     {
-        using SCV = typename FVGeo::SubControlVolume;
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
         static_assert(SCV::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
         static_assert(radialAxis < int(SCV::Traits::Geometry::coorddimension), "Illegal radial axis!");
@@ -163,10 +161,9 @@ struct SphericalExtrusion
         return 4.0*M_PI*radius*radius;
     }
 
-    template<class FVGeo>
-    static constexpr auto area(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolumeFace& scvf)
+    template<class FVGeo, class SCVF>
+    static constexpr auto area(const FVGeo&, const SCVF& scvf)
     {
-        using SCVF = typename FVGeo::SubControlVolumeFace;
         static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
         static_assert(SCVF::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
 
@@ -193,10 +190,9 @@ struct SphericalExtrusion
         return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
     }
 
-    template<class FVGeo>
-    static constexpr auto volume(const FVGeo& fvGeometry, const typename FVGeo::SubControlVolume& scv)
+    template<class FVGeo, class SCV>
+    static constexpr auto volume(const FVGeo& fvGeometry, const SCV& scv)
     {
-        using SCV = typename FVGeo::SubControlVolume;
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
         static_assert(SCV::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
 

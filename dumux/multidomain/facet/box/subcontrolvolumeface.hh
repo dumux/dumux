@@ -35,6 +35,7 @@
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
+#include <dumux/geometry/volume.hh>
 
 namespace Dumux {
 
@@ -78,7 +79,10 @@ public:
     : corners_(geometryHelper.getScvfCorners(scvfIndex))
     , center_(0.0)
     , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
-    , area_(geometryHelper.scvfArea(corners_))
+    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
+        Dune::GeometryTypes::cube(T::dim-1),
+        [&](unsigned int i){ return corners_[i]; })
+    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(/*undefined*/)
@@ -105,7 +109,10 @@ public:
     : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
-    , area_(geometryHelper.scvfArea(corners_))
+    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
+        Dune::GeometryTypes::cube(T::dim-1),
+        [&](unsigned int i){ return corners_[i]; })
+    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(intersection.indexInInside())

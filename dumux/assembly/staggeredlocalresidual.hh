@@ -125,7 +125,7 @@ public:
 
             // subtract the source term from the local rate
             auto source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curElemFaceVars, scv);
-            source *= Extrusion::volume(scv)*curExtrusionFactor;
+            source *= Extrusion::volume(fvGeometry, scv)*curExtrusionFactor;
             residual -= source;
     }
 
@@ -171,7 +171,7 @@ public:
 
         storage = std::move(curCCStorage);
         storage -= std::move(prevCCStorage);
-        storage *= Extrusion::volume(scv);
+        storage *= Extrusion::volume(fvGeometry, scv);
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;
@@ -250,7 +250,7 @@ public:
         faceScvCenter *= 0.5;
         FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        source *= Extrusion::volume(faceScv)*extrusionFactor;
+        source *= Extrusion::volume(fvGeometry, faceScv)*extrusionFactor;
         residual -= source;
     }
 
@@ -292,7 +292,7 @@ public:
         faceScvCenter *= 0.5;
         FaceSubControlVolume faceScv(faceScvCenter, 0.5*scv.volume());
 
-        storage *= Extrusion::volume(faceScv)*extrusionFactor;
+        storage *= Extrusion::volume(fvGeometry, faceScv)*extrusionFactor;
         storage /= timeLoop_->timeStepSize();
 
         residual += storage;

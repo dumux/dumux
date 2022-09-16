@@ -203,8 +203,8 @@ int main (int argc, char *argv[])
                 DUNE_THROW(Dune::InvalidStateException, "Scvf has more than one neighbor");
 
             //! center must always be between the corners
-            const auto d1 = scvf.corner(0) - scvf.center();
-            const auto d2 = scvf.corner(1) - scvf.center();
+            const auto d1 = fvGeometry.geometry(scvf).corner(0) - scvf.center();
+            const auto d2 = fvGeometry.geometry(scvf).corner(1) - scvf.center();
             if ( d1 * d2 >= 0 )
                 DUNE_THROW(Dune::InvalidStateException, "Center is not between the two corners");
 

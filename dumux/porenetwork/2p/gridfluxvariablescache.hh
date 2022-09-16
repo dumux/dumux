@@ -26,7 +26,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/localview.hh>
-#include <dumux/discretization/box/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include "elementfluxvariablescache.hh"
 #include "invasionstate.hh"
 

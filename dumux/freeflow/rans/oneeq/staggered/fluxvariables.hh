@@ -100,7 +100,7 @@ public:
         };
 
         flux[viscosityTildeEqIdx]
-            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
+            = ParentType::advectiveFluxForCellCenter(problem, fvGeometry, elemVolVars, elemFaceVars, scvf, upwindTermK);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -142,7 +142,7 @@ public:
             flux[viscosityTildeEqIdx]
                 += coeff / distance
                    * (insideVolVars.viscosityTilde() - outsideVolVars.viscosityTilde())
-                   * Extrusion::area(scvf);
+                   * Extrusion::area(fvGeometry, scvf);
         }
         return flux;
     }

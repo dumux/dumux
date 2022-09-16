@@ -196,7 +196,7 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             //! compute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
-            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(scvf)*alpha_inside;
+            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(fvGeometry, scvf)*alpha_inside;
 
             //! On interior faces we have to add K-weighted gravitational contributions
             if (!scvf.boundary())
@@ -204,8 +204,8 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto outsideK = outsideVolVars.permeability();
                 const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
-                    ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
-                    : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                    ? computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
+                    : -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
@@ -239,13 +239,13 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // on the boundary (dirichlet) we only need ti
         if (scvf.boundary())
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
 
         // otherwise we compute a tpfa harmonic mean
         else
@@ -256,15 +256,15 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const Scalar tj = fvGeometry.gridGeometry().isPeriodic()
-                ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
-                : -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
+                ? computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
+                : -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
             // TODO: This could lead to problems!? Is there a better way to do this?
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;
@@ -390,7 +390,7 @@ public:
                     Scalar sumPTi(tij*pInside);
 
                     // add inside gravitational contribution
-                    sumPTi += rho*Extrusion::area(scvf)
+                    sumPTi += rho*Extrusion::area(fvGeometry, scvf)
                               *insideVolVars.extrusionFactor()
                               *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
@@ -404,7 +404,7 @@ public:
                         sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
 
                         // add outside gravitational contribution
-                        sumPTi += rho*Extrusion::area(scvf)
+                        sumPTi += rho*Extrusion::area(fvGeometry, scvf)
                                   *outsideVolVars.extrusionFactor()
                                   *vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
                     }
@@ -415,7 +415,7 @@ public:
             //! precompute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
-            Scalar flux = tij*(pInside - pOutside) + Extrusion::area(scvf)*rho*alpha_inside;
+            Scalar flux = tij*(pInside - pOutside) + Extrusion::area(fvGeometry, scvf)*rho*alpha_inside;
 
             //! On interior faces with one neighbor we have to add K-weighted gravitational contributions
             if (!scvf.boundary() && scvf.numOutsideScvs() == 1)
@@ -423,7 +423,7 @@ public:
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto& outsideScvf = fvGeometry.flipScvf(scvf.index());
                 const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = computeTpfaTransmissibility(outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                const auto outsideTi = computeTpfaTransmissibility(fvGeometry, outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux -= rho*tij/outsideTi*(alpha_inside + alpha_outside);
@@ -481,13 +481,13 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-            tij = Extrusion::area(scvf)*ti;
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
 
         // otherwise we compute a tpfa harmonic mean
         else
@@ -497,7 +497,7 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv,
+            const Scalar tj = computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv,
                                                           getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                           outsideVolVars.extrusionFactor());
 
@@ -506,7 +506,7 @@ public:
             if (ti*tj <= 0.0)
                 tij = 0;
             else
-                tij = Extrusion::area(scvf)*(ti * tj)/(ti + tj);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
         }
 
         return tij;

@@ -162,7 +162,7 @@ public:
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), diffCoeff, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(scvf);
+                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), diffCoeff, fluxVarCache.gradN(scv.indexInElement()))*Extrusion::area(fvGeometry, scvf);
         }
 
         return ti;
@@ -214,7 +214,7 @@ private:
         Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradX.axpy(massOrMoleFraction(scv), fluxVarsCache.gradN(scv.indexInElement()));
-        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*Extrusion::area(scvf);
+        return -1.0*preFactor*vtmv(scvf.unitOuterNormal(), D, gradX)*Extrusion::area(fvGeometry, scvf);
     }
 };
 

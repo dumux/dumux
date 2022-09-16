@@ -195,8 +195,8 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = Extrusion::area(scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+        const auto wIn = Extrusion::area(fvGeometry, scvf)
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.effectiveThermalConductivity(),
                                                       insideVolVars.extrusionFactor());
 
@@ -207,7 +207,7 @@ public:
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(fvGeometry, scvf)*insideVolVars.extrusionFactor()
                                    /facetVolVars.extrusionFactor()
                                    *vtmv(scvf.unitOuterNormal(),
                                          facetVolVars.effectiveThermalConductivity(),
@@ -224,8 +224,8 @@ public:
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                const auto wOut = -1.0*Extrusion::area(scvf)
-                                  *computeTpfaTransmissibility(scvf, fvGeometry.scv(outsideScvIdx),
+                const auto wOut = -1.0*Extrusion::area(fvGeometry, scvf)
+                                  *computeTpfaTransmissibility(fvGeometry, scvf, fvGeometry.scv(outsideScvIdx),
                                                                outsideVolVars.effectiveThermalConductivity(),
                                                                outsideVolVars.extrusionFactor());
 
@@ -393,8 +393,8 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = Extrusion::area(scvf)
-                         *computeTpfaTransmissibility(scvf, insideScv,
+        const auto wIn = Extrusion::area(fvGeometry, scvf)
+                         *computeTpfaTransmissibility(fvGeometry, scvf, insideScv,
                                                       insideVolVars.effectiveThermalConductivity(),
                                                       insideVolVars.extrusionFactor());
 
@@ -408,7 +408,7 @@ public:
             // as an approximate average distance from scvf ip to facet center
             using std::sqrt;
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*Extrusion::area(scvf)*insideVolVars.extrusionFactor()
+            const auto wFacet = 2.0*Extrusion::area(fvGeometry, scvf)*insideVolVars.extrusionFactor()
                                    /sqrt(facetVolVars.extrusionFactor())
                                    *vtmv(scvf.unitOuterNormal(),
                                          facetVolVars.effectiveThermalConductivity(),

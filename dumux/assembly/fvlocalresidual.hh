@@ -114,7 +114,7 @@ public:
             auto localScvIdx = scv.localDofIndex();
             const auto& volVars = elemVolVars[scv];
             storage[localScvIdx] = asImp().computeStorage(problem, scv, volVars);
-            storage[localScvIdx] *= Extrusion::volume(scv) * volVars.extrusionFactor();
+            storage[localScvIdx] *= Extrusion::volume(fvGeometry, scv) * volVars.extrusionFactor();
         }
 
         return storage;
@@ -307,7 +307,7 @@ public:
         storage *= curVolVars.extrusionFactor();
 
         storage -= prevStorage;
-        storage *= Extrusion::volume(scv);
+        storage *= Extrusion::volume(fvGeometry, scv);
         storage /= timeLoop_->timeStepSize();
 
         residual[scv.localDofIndex()] += storage;
@@ -336,7 +336,7 @@ public:
         //! Compute source with the model specific storage residual
         const auto& curVolVars = curElemVolVars[scv];
         NumEqVector source = asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
-        source *= Extrusion::volume(scv)*curVolVars.extrusionFactor();
+        source *= Extrusion::volume(fvGeometry, scv)*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)
         residual[scv.localDofIndex()] -= source;

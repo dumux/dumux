@@ -253,7 +253,7 @@ public:
                 for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if (bcTypes.isNeumann(eqIdx + cellCenterOffset))
-                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * Extrusion::area(scvf);
+                        result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * Extrusion::area(fvGeometry, scvf);
                 }
             }
 
@@ -325,7 +325,7 @@ public:
                 // add a given Neumann flux for the face on the boundary itself ...
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
                 result = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
-                                         * extrusionFactor * Extrusion::area(scvf);
+                                         * extrusionFactor * Extrusion::area(fvGeometry, scvf);
 
                 // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
                 result += fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
@@ -337,7 +337,7 @@ public:
                 result = fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
 
                 // incorporate the inflow or outflow contribution
-                result += fluxVars.inflowOutflowBoundaryFlux(problem, element, scvf, elemVolVars, elemFaceVars);
+                result += fluxVars.inflowOutflowBoundaryFlux(problem, scvf, fvGeometry, elemVolVars, elemFaceVars);
             }
         }
         return result;
@@ -370,7 +370,7 @@ private:
             if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
             {
                 boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
-                                                           * extrusionFactor * Extrusion::area(scvf);
+                                                           * extrusionFactor * Extrusion::area(fvGeometry, scvf);
             }
         }
     }

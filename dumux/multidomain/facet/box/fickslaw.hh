@@ -132,7 +132,7 @@ public:
                 auto gradX = preGradX;
                 gradX *= (massOrMoleFraction(facetVolVars, referenceSystem, phaseIdx, compIdx) - x);
 
-                componentFlux[compIdx] = -1.0*rho*Extrusion::area(scvf)
+                componentFlux[compIdx] = -1.0*rho*Extrusion::area(fvGeometry, scvf)
                                              *insideVolVars.extrusionFactor()
                                              *vtmv(scvf.unitOuterNormal(),
                                                    facetVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
@@ -170,7 +170,7 @@ public:
                     gradX.axpy(xFractions[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
 
                 // apply matrix diffusion coefficient and return the flux
-                componentFlux[compIdx] = -1.0*rho*Extrusion::area(scvf)
+                componentFlux[compIdx] = -1.0*rho*Extrusion::area(fvGeometry, scvf)
                                              *insideVolVars.extrusionFactor()
                                              *vtmv(scvf.unitOuterNormal(),
                                                    insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),

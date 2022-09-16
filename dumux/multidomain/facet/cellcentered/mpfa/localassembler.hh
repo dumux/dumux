@@ -229,7 +229,7 @@ public:
                     rho /= numOutsideFaces + 1;
 
                 deltaG[localDofIdx] -= curXiFactor*alpha_inside;
-                deltaG[localDofIdx] *= rho*Extrusion::area(curGlobalScvf);
+                deltaG[localDofIdx] *= rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
             }
             // use average density between facet and cell density on interior Dirichlet boundaries
             else if (curIsInteriorBoundary)
@@ -243,13 +243,13 @@ public:
                 rho = getRho(this->elemVolVars()[curGlobalScvf.outsideScvIdx()]);
 
             // add "inside" & "outside" alphas to gravity containers
-            g[faceIdx] = alpha_inside*rho*Extrusion::area(curGlobalScvf);
+            g[faceIdx] = alpha_inside*rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
 
             if (isSurfaceGrid && !curIsInteriorBoundary)
             {
                 unsigned int i = 0;
                 for (const auto& alpha : alpha_outside)
-                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(curGlobalScvf);
+                    outsideG[faceIdx][i++] = alpha*rho*Extrusion::area(this->fvGeometry(), curGlobalScvf);
             }
         }
 
@@ -340,7 +340,7 @@ private:
 
                 // the omega factors of the "positive" sub volume
                 Helper::resizeVector(wijk[faceIdx], /*no outside scvs present*/1);
-                wijk[faceIdx][0] = computeMpfaTransmissibility<EG>(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
+                wijk[faceIdx][0] = computeMpfaTransmissibility<EG>(this->fvGeometry(), posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
                 for (LocalIndexType localDir = 0; localDir < dim; localDir++)
@@ -379,7 +379,7 @@ private:
 
                 // the omega factors of the "positive" sub volume
                 Helper::resizeVector(wijk[faceIdx], neighborScvIndices.size());
-                wijk[faceIdx][0] = computeMpfaTransmissibility<EG>(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
+                wijk[faceIdx][0] = computeMpfaTransmissibility<EG>(this->fvGeometry(), posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 using std::abs;
                 bool isZeroWij = false;
@@ -434,7 +434,7 @@ private:
 
                     // On surface grids we use the square root of the extrusion factor as approximation of the aperture
                     using std::sqrt;
-                    const auto wFacet = 2.0*Extrusion::area(curGlobalScvf)*posVolVars.extrusionFactor()
+                    const auto wFacet = 2.0*Extrusion::area(this->fvGeometry(), curGlobalScvf)*posVolVars.extrusionFactor()
                                            *vtmv(curGlobalScvf.unitOuterNormal(), facetTensor, curGlobalScvf.unitOuterNormal())
                                            / (dim < dimWorld ? sqrt(facetVolVars.extrusionFactor()) : facetVolVars.extrusionFactor());
 
@@ -467,7 +467,7 @@ private:
                         // On surface grids, use outside face for "negative" transmissibility calculation
                         const auto& scvf = dim < dimWorld ? this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside)
                                                           : curGlobalScvf;
-                        wijk[faceIdx][idxOnScvf] = computeMpfaTransmissibility<EG>(negLocalScv, scvf, negTensor, negVolVars.extrusionFactor());
+                        wijk[faceIdx][idxOnScvf] = computeMpfaTransmissibility<EG>(this->fvGeometry(), negLocalScv, scvf, negTensor, negVolVars.extrusionFactor());
 
                         // flip sign on surface grids (since we used the "outside" normal)
                         if (dim < dimWorld)

@@ -498,7 +498,8 @@ This is done for both the momentum and mass grid geometries
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 ```
 
-We introduce the multidomain coupling manager, which will coupled the mass and the momentum problems
+We introduce the multidomain coupling manager, which will couple the mass and the momentum problems
+We can obtain the type from either the `MomentumTypeTag` or the `MassTypeTag` because they are mutually coupled with the same manager
 
 ```cpp
     using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;

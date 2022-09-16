@@ -106,7 +106,7 @@ public:
             flux = avgLambda * (insideTemperature - outsideTemperature) / (insideDistance + outsideDistance);
         }
 
-        flux *= Extrusion::area(scvf);
+        flux *= Extrusion::area(fvGeometry, scvf);
         return flux;
     }
 };

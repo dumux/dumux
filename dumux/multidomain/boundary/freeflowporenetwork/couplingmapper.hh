@@ -325,7 +325,7 @@ private:
         using std::abs;
         for (const auto& scv : scvs(fvGeometry))
         {
-            const Scalar eps = diameter(scv.geometry())*1e-6; // TODO
+            const Scalar eps = diameter(fvGeometry.geometry(scv))*1e-6; // TODO
             assert(eps < couplingPoreRadius);
 
             if (scv.dofAxis() == couplingInterfaceDirectionIdx) // the free flow dofs that lie within the coupling interface

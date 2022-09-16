@@ -103,9 +103,9 @@ public:
         { return volVars.dissipation() * volVars.density(); };
 
         flux[turbulentKineticEnergyEqIdx]
-            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
+            = ParentType::advectiveFluxForCellCenter(problem, fvGeometry, elemVolVars, elemFaceVars, scvf, upwindTermK);
         flux[dissipationEqIdx]
-            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermOmega);
+            = ParentType::advectiveFluxForCellCenter(problem, fvGeometry, elemVolVars, elemFaceVars, scvf, upwindTermOmega);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -174,7 +174,7 @@ public:
             flux[turbulentKineticEnergyEqIdx]
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                   * Extrusion::area(scvf);
+                   * Extrusion::area(fvGeometry, scvf);
         }
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
@@ -182,7 +182,7 @@ public:
             flux[dissipationEqIdx]
                 += coeff_w / distance
                    * (insideVolVars.dissipation() - outsideVolVars.dissipation())
-                   * Extrusion::area(scvf);
+                   * Extrusion::area(fvGeometry, scvf);
         }
         return flux;
     }
@@ -203,7 +203,7 @@ public:
         return ParentType::computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
                + ParentType::computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, gridFluxVarsCache)
                + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
-                 * Extrusion::area(scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
+                 * Extrusion::area(fvGeometry, scvf) * scvf.directionSign() * insideVolVars.extrusionFactor();
     }
 };
 

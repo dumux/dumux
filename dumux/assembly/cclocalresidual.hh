@@ -104,7 +104,7 @@ public:
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                neumannFluxes *= Extrusion::area(scvf)*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
 
                 flux += neumannFluxes;
             }
