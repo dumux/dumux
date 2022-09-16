@@ -515,13 +515,13 @@ public:
      * \endverbatim
      */
     FacePrimaryVariables inflowOutflowBoundaryFlux(const Problem& problem,
-                                                   const Element& element,
                                                    const SubControlVolumeFace& scvf,
                                                    const FVElementGeometry& fvGeometry,
                                                    const ElementVolumeVariables& elemVolVars,
                                                    const ElementFaceVariables& elemFaceVars) const
     {
         FacePrimaryVariables inOrOutflow(0.0);
+        const auto& element = fvGeometry.element();
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Advective momentum flux.

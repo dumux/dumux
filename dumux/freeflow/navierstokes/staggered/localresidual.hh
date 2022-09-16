@@ -337,7 +337,7 @@ public:
                 result = fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache.gridFluxVarsCache());
 
                 // incorporate the inflow or outflow contribution
-                result += fluxVars.inflowOutflowBoundaryFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+                result += fluxVars.inflowOutflowBoundaryFlux(problem, scvf, fvGeometry, elemVolVars, elemFaceVars);
             }
         }
         return result;
