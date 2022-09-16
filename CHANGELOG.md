@@ -41,6 +41,9 @@ Then code possibly fails to compile. The fix is to implement the same caching co
 
 - __Box__: `scv/scvf.geometry()` have been deprecated, use `fvGeometry.geometry(scv/scvf)` instead
 - __Box__: `scv/scvf.corner(i)` have been deprecated, use `fvGeometry.geometry(scv/scvf).corner(i)` instead
+- __Cell centered__: The `computeTpfa/MpfaTransmissibilities()` interfaces now require an additional parameter `fvGeometry`
+- __Staggered__: `fluxVars.advectivFluxForCellCenter()/inflowOutflowBoundaryFlux()` interfaces now require parameter `fvGeometry` instead of `element`
+- __Discretization__: `Extrusion::area/volume(scvf/scv)` have been deprecated, use `Extrusion::area/volume(fvGeometry, scvf/scv)` instead
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
