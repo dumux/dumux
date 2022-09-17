@@ -152,5 +152,6 @@ CCTpfaGridGeometry(const GV& gv) -> CCTpfaGridGeometry<GV>;
 } // end namespace Dumux
 
 #include "gridgeometry_caching.hh"
+#include "gridgeometry_nocaching.hh"
 
 #endif
