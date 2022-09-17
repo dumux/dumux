@@ -242,7 +242,7 @@ public:
     {
         const auto& [seed, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
         if (i >= idxInNeighbors) i++;
-        assert(i < seedPtr->numNeighbors());
+        assert(i < seed.numNeighbors());
         return gridGeometry_.storage_.scv(seed.facet(i).elementIndex);
     }
 
@@ -250,7 +250,7 @@ public:
     {
         const auto& [seed, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
         if (i >= idxInNeighbors) i++;
-        assert(i < seedPtr->numNeighbors());
+        assert(i < seed.numNeighbors());
         for (const auto& scvfId : gridGeometry_.elementScvfs_[seed.facet(i).elementIndex])
             if (&gridGeometry_.scvfToSeedMap_[scvfId].faceSeed == &seed)
                 return gridGeometry_.storage_.scvf(scvfId);
