@@ -50,6 +50,9 @@ class WrappedEntity : public BaseEntity
 public:
     using BaseEntity::BaseEntity;
 
+    operator const BaseEntity&() const
+    { return static_cast<const BaseEntity&>(*this); }
+
 private:
     friend Friend;
     std::size_t id;
