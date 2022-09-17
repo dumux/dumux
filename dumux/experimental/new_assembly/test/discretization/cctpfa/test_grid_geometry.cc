@@ -51,7 +51,7 @@ bool equal(const Dune::FieldVector<ctype, dim>& p0,
 }
 
 template<typename GridView,
-         bool caching = true,
+         bool caching = false,
          typename Traits = Dumux::DefaultCCTpfaGridGeometryTraits<GridView>>
 void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expectedNumScvf)
 {
@@ -182,7 +182,9 @@ void test(const Dune::YaspGrid<2>& grid)
 
     const std::size_t numScvf = grid.leafGridView().size(0)*4;
     testCCTpfaGridGeometry<GV, true>(grid.leafGridView(), numScvf);
+    testCCTpfaGridGeometry<GV, false>(grid.leafGridView(), numScvf);
     testCCTpfaGridGeometry<GV, true, DynamicTraits>(grid.leafGridView(), numScvf);
+    testCCTpfaGridGeometry<GV, false, DynamicTraits>(grid.leafGridView(), numScvf);
 }
 
 // void test(const Dune::YaspGrid<3>& grid)
