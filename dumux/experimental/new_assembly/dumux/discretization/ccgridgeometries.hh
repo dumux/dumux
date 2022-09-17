@@ -33,6 +33,7 @@ template<typename Coordinate,
 class CCFace
 {
 public:
+    CCFace() = default;
     CCFace(ctype area, Coordinate&& center)
     : area_(area)
     , center_(std::move(center))
@@ -52,18 +53,19 @@ template<typename Coordinate,
 class CCSubControlVolumeFace
 {
 public:
+    CCSubControlVolumeFace() = default;
     CCSubControlVolumeFace(const Face& face, Coordinate&& normal)
-    : face_(face)
+    : face_(&face)
     , normal_(std::move(normal))
     {}
 
-    ctype area() const { return face_.area(); }
-    const Coordinate& center() const { return face_.center(); }
-    const Coordinate& ipGlobal() const { return face_.center(); }
+    ctype area() const { return face_->area(); }
+    const Coordinate& center() const { return face_->center(); }
+    const Coordinate& ipGlobal() const { return face_->center(); }
     const Coordinate& unitOuterNormal() const { return normal_; }
 
 private:
-    const Face& face_;
+    const Face* face_{nullptr};
     Coordinate normal_;
 };
 
@@ -73,6 +75,7 @@ template<typename GridIndex,
 class CCSubControlVolume
 {
 public:
+    CCSubControlVolume() = default;
     CCSubControlVolume(GridIndex dofIndex,
                        ctype volume,
                        Coordinate&& center)
