@@ -1,0 +1,21 @@
+[Grid]
+#Landfill
+SizeXLF = 50.0 350.0
+SizeYLF = 50.0 350.0
+SizeZLF = 6.0 24.0
+
+CellsLandfill = 30 30 8
+
+#Aquifer
+SizeXAQ = 0.0 850.0 
+SizeYAQ = 0.0 500 
+SizeZAQ = 0.0 5.0
+
+CellsAquifer = 85 50 5
+
+SlopeLF = 1.0
+
+
+
+Verbosity = false
+Name = test

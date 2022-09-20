@@ -1,6 +1,8 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
+add_subdirectory(1p)
+
 add_executable(test_gridmanager_cake_ug EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
 target_compile_definitions(test_gridmanager_cake_ug PUBLIC "USEUG=1")
 
@@ -413,3 +415,9 @@ dumux_add_test(NAME test_pnm_gridmanager_remove_throats_on_boundary_all
 dumux_add_test(SOURCES test_pnm_subgriddata.cc
                LABELS unit io porenetwork
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-subgrid_FOUND )")
+
+dumux_add_test(NAME test_gridmanager_landfill
+              SOURCES test_gridmanager_landfill.cc
+              LABELS unit io
+              CMAKE_GUARD dune-uggrid_FOUND
+              )

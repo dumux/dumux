@@ -1,0 +1,22 @@
+[TimeLoop]
+DtInitial = 1e1 # [s]
+TEnd = 1e2 # [s]
+MaxTimeStepSize = 1e1# [s]
+
+[Grid]
+#Landfill
+SizeXLF = 100.0 400.0
+SizeYLF = 100.0 400.0
+SizeZLF = 16.0 36.0
+CellsLandfill = 30 30 5
+
+#Aquifer
+SizeXAQ = 0.0 900.0 
+SizeYAQ = 0.0 500 
+SizeZAQ = 0.0 15.0
+CellsAquifer = 90 50 5
+
+Verbosity = false
+
+[Problem]
+Name = 1p_landfill_test
