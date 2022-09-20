@@ -18,25 +18,25 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RichardsModel
- * \brief Adds I/O fields specific to the Richards model.
+ * \ingroup ExtendedRichardsModel
+ * \brief Adds I/O fields specific to the extended Richards model.
  */
 
-#ifndef DUMUX_RICHARDS_IO_FIELDS_HH
-#define DUMUX_RICHARDS_IO_FIELDS_HH
+#ifndef DUMUX_RICHARDSEXTENDED_IO_FIELDS_HH
+#define DUMUX_RICHARDSEXTENDED_IO_FIELDS_HH
 
-#include <dumux/common/parameters.hh>
 #include <dumux/io/name.hh>
+#include <dumux/porousmediumflow/richards/iofields.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \brief Adds I/O fields specific to the Richards model.
+ * \ingroup ExtendedRichardsModel
+ * \brief Adds I/O fields specific to the extended Richards model.
  */
-template <bool enableWaterDiffusionInAir>
-class RichardsIOFields
+class ExtendedRichardsIOFields : public RichardsIOFields<false>
 {
+    using ParentType = RichardsIOFields<false>;
 public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
@@ -44,6 +44,7 @@ public:
         using VV = typename OutputModule::VolumeVariables;
         using FS = typename VV::FluidSystem;
 
+        // TODO: replace by a call to the base class plus code specific to extended model after release (3.6)
         out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase0Idx); },
                               IOName::saturation<FS>(FS::phase0Idx));
         out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase1Idx); },
@@ -68,25 +69,12 @@ public:
         if(gravity)
             out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::phase0Idx); },
                                   IOName::pressureHead());
-        if constexpr (enableWaterDiffusionInAir)
-            out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::phase1Idx, FS::comp0Idx); },
+        out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::phase1Idx, FS::comp0Idx); },
                                   IOName::moleFraction<FS>(FS::phase1Idx, FS::comp0Idx));
         out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::phase0Idx); },
                               IOName::waterContent());
-
         out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
-                              IOName::phasePresence());
-    }
-
-    template<class ModelTraits, class FluidSystem, class SolidSystem = void>
-    static std::string primaryVariableName(int pvIdx, int state)
-    {
-        using Indices = typename ModelTraits::Indices;
-
-        if (state == Indices::gasPhaseOnly)
-            return IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::phase0Idx);
-        else
-            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
+                                  IOName::phasePresence());
     }
 };
 

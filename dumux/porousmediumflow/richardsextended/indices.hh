@@ -18,21 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RichardsModel
- * \brief Index names for the Richards model.
+ * \ingroup ExtendedRichardsModel
+ * \brief Index names for the extended Richards model.
  */
 
-#ifndef DUMUX_RICHARDS_INDICES_HH
-#define DUMUX_RICHARDS_INDICES_HH
+#ifndef DUMUX_RICHARDSEXTENDED_INDICES_HH
+#define DUMUX_RICHARDSEXTENDED_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \brief Index names for the Richards model.
+ * \ingroup ExtendedRichardsModel
+ * \brief Index names for the extended Richards model.
  */
 
-struct RichardsIndices
+struct ExtendedRichardsIndices
 {
     //! Primary variable index for the wetting phase pressure
     static constexpr int pressureIdx = 0;
@@ -41,6 +41,7 @@ struct RichardsIndices
     //! Equation index for the mass conservation of the wetting phase
     static constexpr int conti0EqIdx = 0;
 
+    //TODO: After release (3.6) replace with inheritance from base Richards model plus phase states
     // present phases (-> 'pseudo' primary variable)
     static constexpr int liquidPhaseOnly = 1; //!< Only the liquid phase is present
     static constexpr int gasPhaseOnly = 2; //!< Only the gas phase is present
