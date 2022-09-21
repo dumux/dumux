@@ -40,6 +40,7 @@
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/parallel/multithreading.hh>
+#include <dumux/parallel/parallel_for.hh>
 #include <dumux/material/components/componenttraits.hh>
 
 namespace Dumux::Components {
@@ -790,11 +791,11 @@ private:
     static void initVaporPressure_()
     {
         // fill the temperature-pressure arrays
-        for (unsigned iT = 0; iT < nTemp_; ++ iT)
+        Dumux::parallelFor(nTemp_, [&](unsigned iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
             vaporPressure_[iT] = RawComponent::vaporPressure(temperature);
-        }
+        });
     }
 
     //! if !useVaporPressure, do nothing here
@@ -818,7 +819,7 @@ private:
     template<class PropFunc, class MinPFunc, class MaxPFunc>
     static void initTPArray_(PropFunc&& f, MinPFunc&& minP,  MaxPFunc&& maxP, std::vector<typename RawComponent::Scalar>& values)
     {
-        for (unsigned iT = 0; iT < nTemp_; ++ iT)
+        Dumux::parallelFor(nTemp_, [&](unsigned iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -829,7 +830,7 @@ private:
                 Scalar pressure = iP * (pMax - pMin)/(nPress_ - 1) + pMin;
                 values[iT + iP*nTemp_] = f(temperature, pressure);
             }
-        }
+        });
     }
 
     /*!
@@ -854,7 +855,7 @@ private:
                                     std::vector<typename RawComponent::Scalar>& rhoMin,
                                     std::vector<typename RawComponent::Scalar>& rhoMax)
     {
-        for (unsigned iT = 0; iT < nTemp_; ++ iT)
+        Dumux::parallelFor(nTemp_, [&](unsigned iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -863,7 +864,7 @@ private:
                 rhoMax[iT] = rho(temperature, maxP(iT + 1));
             else
                 rhoMax[iT] = rho(temperature, maxP(iT));
-        }
+        });
     }
 
     /*!
@@ -881,7 +882,7 @@ private:
                                    const std::vector<typename RawComponent::Scalar>& rhoMin,
                                    const std::vector<typename RawComponent::Scalar>& rhoMax)
     {
-        for (unsigned iT = 0; iT < nTemp_; ++ iT)
+        Dumux::parallelFor(nTemp_, [&](unsigned iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -892,7 +893,7 @@ private:
                                  +  rhoMin[iT];
                 pressure[iT + iRho*nTemp_] = p(temperature, density);
             }
-        }
+        });
     }
 
     //! returns an interpolated value depending on temperature
