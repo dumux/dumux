@@ -30,6 +30,8 @@
 
 #include <dune/common/float_cmp.hh>
 
+#include <dumux/common/initialize.hh>
+
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/benzene.hh>
 #include <dumux/material/components/brine.hh>
@@ -68,6 +70,9 @@ int main(int argc, char *argv[])
     using namespace Dumux;
     using Scalar = double;
 
+    // initialize MPI+X (tabulation uses multithreading features)
+    Dumux::initialize(argc, argv);
+
     // test IapwsH2O in detail
     {
         using IapwsH2O = Components::H2O<Scalar>;
@@ -89,7 +94,7 @@ int main(int argc, char *argv[])
         std::cout << "Checking tabulation\n";
         const int m = nTemp*3;
         const int n = nPress*3;
-        for (int i = 0; i < m; ++i)
+        Dumux::parallelFor(m, [&](int i)
         {
             const Scalar T = tempMin + (tempMax - tempMin)*Scalar(i)/Scalar(m-1);
             checkEquality("vaporPressure", TabulatedH2O::vaporPressure(T), IapwsH2O::vaporPressure(T), eps);
@@ -120,8 +125,7 @@ int main(int argc, char *argv[])
 
 
             }
-
-        }
+        });
     }
 
     // test if other components can be tabulated
@@ -135,7 +139,7 @@ int main(int argc, char *argv[])
         Components::TabulatedComponent<Components::CarbonateIon<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::CH4<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::Granite<Scalar>, false>::init(273, 275, 3, 1e5, 1e6, 3);
-        Components::TabulatedComponent<Components::H2O<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
+        Components::TabulatedComponent<Components::H2O<Scalar>>::init(273.15, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::HeavyOil<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::Mesitylene<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
         Components::TabulatedComponent<Components::N2<Scalar>>::init(273, 275, 3, 1e5, 1e6, 3);
