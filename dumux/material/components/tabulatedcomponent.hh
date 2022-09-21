@@ -38,12 +38,13 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/components/componenttraits.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 // forward declaration
 template<class RawComponent, bool useVaporPressure>
 class TabulatedComponent;
-} // end namespace Components
+} // end namespace Dumux::Components
+
+namespace Dumux {
 
 //! component traits for tabulated component
 template<class RawComponent, bool useVaporPressure>
@@ -60,8 +61,9 @@ struct ComponentTraits<Components::TabulatedComponent<RawComponent, useVaporPres
     //! if the component implements a gaseous state
     static constexpr bool hasGasState = std::is_base_of<Components::Gas<Scalar, RawComponent>, RawComponent>::value;
 };
+} // end namespace Dumux
 
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -1088,8 +1090,6 @@ struct IsAqueous;
 template <class RawComponent, bool useVaporPressure>
 struct IsAqueous<TabulatedComponent<RawComponent, useVaporPressure>> : public IsAqueous<RawComponent> {};
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif
