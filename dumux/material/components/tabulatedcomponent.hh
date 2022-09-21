@@ -34,6 +34,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 #include <dune/common/std/type_traits.hh>
 
@@ -791,7 +792,7 @@ private:
     static void initVaporPressure_()
     {
         // fill the temperature-pressure arrays
-        Dumux::parallelFor(nTemp_, [&](unsigned iT)
+        Dumux::parallelFor(nTemp_, [&](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
             vaporPressure_[iT] = RawComponent::vaporPressure(temperature);
@@ -819,13 +820,13 @@ private:
     template<class PropFunc, class MinPFunc, class MaxPFunc>
     static void initTPArray_(PropFunc&& f, MinPFunc&& minP,  MaxPFunc&& maxP, std::vector<typename RawComponent::Scalar>& values)
     {
-        Dumux::parallelFor(nTemp_, [&](unsigned iT)
+        Dumux::parallelFor(nTemp_, [&](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
             Scalar pMax = maxP(iT);
             Scalar pMin = minP(iT);
-            for (unsigned iP = 0; iP < nPress_; ++ iP)
+            for (std::size_t iP = 0; iP < nPress_; ++ iP)
             {
                 Scalar pressure = iP * (pMax - pMin)/(nPress_ - 1) + pMin;
                 values[iT + iP*nTemp_] = f(temperature, pressure);
@@ -855,7 +856,7 @@ private:
                                     std::vector<typename RawComponent::Scalar>& rhoMin,
                                     std::vector<typename RawComponent::Scalar>& rhoMax)
     {
-        Dumux::parallelFor(nTemp_, [&](unsigned iT)
+        Dumux::parallelFor(nTemp_, [&](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -882,11 +883,11 @@ private:
                                    const std::vector<typename RawComponent::Scalar>& rhoMin,
                                    const std::vector<typename RawComponent::Scalar>& rhoMax)
     {
-        Dumux::parallelFor(nTemp_, [&](unsigned iT)
+        Dumux::parallelFor(nTemp_, [&](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
-            for (unsigned iRho = 0; iRho < nDensity_; ++ iRho)
+            for (std::size_t iRho = 0; iRho < nDensity_; ++ iRho)
             {
                 Scalar density = Scalar(iRho)/(nDensity_ - 1)
                                  * (rhoMax[iT] - rhoMin[iT])
@@ -903,7 +904,7 @@ private:
         if (alphaT < 0 || alphaT >= nTemp_ - 1)
             return std::numeric_limits<Scalar>::quiet_NaN();
 
-        unsigned iT = (unsigned) alphaT;
+        const auto iT = static_cast<int>(alphaT);
         alphaT -= iT;
 
         return values[iT    ]*(1 - alphaT) +
@@ -919,16 +920,15 @@ private:
         if (alphaT < 0 || alphaT >= nTemp_ - 1) {
             return std::numeric_limits<Scalar>::quiet_NaN();
         }
-        using std::min;
-        using std::max;
-        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
+        using std::clamp;
+        const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp_ - 2);
         alphaT -= iT;
 
         Scalar alphaP1 = getPIdx(p, iT);
         Scalar alphaP2 = getPIdx(p, iT + 1);
 
-        unsigned iP1 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP1));
-        unsigned iP2 = max<int>(0, min<int>(nPress_ - 2, (int) alphaP2));
+        const auto iP1 = clamp<int>(static_cast<int>(alphaP1), 0, nPress_ - 2);
+        const auto iP2 = clamp<int>(static_cast<int>(alphaP2), 0, nPress_ - 2);
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -954,16 +954,15 @@ private:
     template<class GetRhoIdx>
     static Scalar interpolateTRho_(const std::vector<typename RawComponent::Scalar>& values, Scalar T, Scalar rho, GetRhoIdx&& rhoIdx)
     {
-        using std::min;
-        using std::max;
+        using std::clamp;
         Scalar alphaT = tempIdx_(T);
-        unsigned iT = max<int>(0, min<int>(nTemp_ - 2, (int) alphaT));
+        const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp_ - 2);
         alphaT -= iT;
 
         Scalar alphaP1 = rhoIdx(rho, iT);
         Scalar alphaP2 = rhoIdx(rho, iT + 1);
-        unsigned iP1 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP1));
-        unsigned iP2 = max<int>(0, min<int>(nDensity_ - 2, (int) alphaP2));
+        const auto iP1 = clamp<int>(static_cast<int>(alphaP1), 0, nDensity_ - 2);
+        const auto iP2 = clamp<int>(static_cast<int>(alphaP2), 0, nDensity_ - 2);
         alphaP1 -= iP1;
         alphaP2 -= iP2;
 
@@ -980,7 +979,7 @@ private:
     }
 
     //! returns the index of an entry in a pressure field
-    static Scalar pressLiquidIdx_(Scalar pressure, unsigned tempIdx)
+    static Scalar pressLiquidIdx_(Scalar pressure, std::size_t tempIdx)
     {
         Scalar plMin = minLiquidPressure_(tempIdx);
         Scalar plMax = maxLiquidPressure_(tempIdx);
@@ -989,7 +988,7 @@ private:
     }
 
     //! returns the index of an entry in a temperature field
-    static Scalar pressGasIdx_(Scalar pressure, unsigned tempIdx)
+    static Scalar pressGasIdx_(Scalar pressure, std::size_t tempIdx)
     {
         Scalar pgMin = minGasPressure_(tempIdx);
         Scalar pgMax = maxGasPressure_(tempIdx);
@@ -998,7 +997,7 @@ private:
     }
 
     //! returns the index of an entry in a density field
-    static Scalar densityLiquidIdx_(Scalar density, unsigned tempIdx)
+    static Scalar densityLiquidIdx_(Scalar density, std::size_t tempIdx)
     {
         Scalar densityMin = minLiquidDensity_[tempIdx];
         Scalar densityMax = maxLiquidDensity_[tempIdx];
@@ -1006,7 +1005,7 @@ private:
     }
 
     //! returns the index of an entry in a density field
-    static Scalar densityGasIdx_(Scalar density, unsigned tempIdx)
+    static Scalar densityGasIdx_(Scalar density, std::size_t tempIdx)
     {
         Scalar densityMin = minGasDensity_[tempIdx];
         Scalar densityMax = maxGasDensity_[tempIdx];
@@ -1295,15 +1294,15 @@ private:
     // temperature, pressure and density ranges
     static Scalar tempMin_;
     static Scalar tempMax_;
-    static unsigned nTemp_;
+    static std::size_t nTemp_;
 
     static Scalar pressMin_;
     static Scalar pressMax_;
-    static unsigned nPress_;
+    static std::size_t nPress_;
 
     static Scalar densityMin_;
     static Scalar densityMax_;
-    static unsigned nDensity_;
+    static std::size_t nDensity_;
 };
 
 
@@ -1383,19 +1382,19 @@ typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::tempMax_;
 template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nTemp_;
+std::size_t TabulatedComponent<RawComponent, useVaporPressure>::nTemp_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMin_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::pressMax_;
 template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nPress_;
+std::size_t TabulatedComponent<RawComponent, useVaporPressure>::nPress_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMin_;
 template <class RawComponent, bool useVaporPressure>
 typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>::densityMax_;
 template <class RawComponent, bool useVaporPressure>
-unsigned TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
+std::size_t TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
 
 // forward declaration
 template <class Component>
