@@ -347,11 +347,8 @@ public:
         std::cout << " - use N2 heat conductivity as gas mixture heat conductivity: " << std::boolalpha << Policy::useN2HeatConductivityAsGasMixtureHeatConductivity() << "\n";
         std::cout << " - use ideal gas heat capacities: " << std::boolalpha << Policy::useIdealGasHeatCapacities() << std::endl;
 
-        if (H2O::isTabulated)
-        {
-            TabulatedH2O::init(tempMin, tempMax, nTemp,
-                               pressMin, pressMax, nPress);
-        }
+        if constexpr (H2O::isTabulated)
+            H2O::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
     }
 
     using Base::density;
