@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_GRID_FLUXVARSCACHE_HH
 
+#include <dumux/parallel/parallel_for.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cellcentered/tpfa/elementfluxvariablescache.hh>
@@ -101,19 +103,18 @@ public:
 
             fluxVarsCache_.resize(gridGeometry.numScvf());
 
-            auto fvGeometry = localView(gridGeometry);
-            auto elemVolVars = localView(gridVolVars);
-            for (const auto& element : elements(gridGeometry.gridView()))
+            Dumux::parallelFor(gridGeometry.gridView().size(0), [&](const std::size_t eIdx)
             {
                 // Prepare the geometries within the elements of the stencil
-                fvGeometry.bind(element);
-                elemVolVars.bind(element, fvGeometry, sol);
+                const auto element = gridGeometry.element(eIdx);
+                const auto fvGeometry = localView(gridGeometry).bind(element);
+                const auto elemVolVars = localView(gridVolVars).bind(element, fvGeometry, sol);
 
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf, forceUpdate);
                 }
-            }
+            });
         }
     }
 
