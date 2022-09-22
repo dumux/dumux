@@ -162,7 +162,7 @@ public:
         }
         else if (phasePresence == Indices::bothPhases)
         {
-            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+            completeFluidState_(elemSol, problem, element, scv, fluidState_, solidState_);
 
             // we want to account for diffusion in the air phase
             // use Raoult to compute the water mole fraction in air
@@ -186,7 +186,7 @@ public:
         }
         else if (phasePresence == Indices::liquidPhaseOnly)
         {
-            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+            completeFluidState_(elemSol, problem, element, scv, fluidState_, solidState_);
 
             molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
             molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
@@ -206,66 +206,6 @@ public:
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
         EnergyVolVars::updateEffectiveThermalConductivity();
-    }
-
-    /*!
-     * \brief Fills the fluid state according to the primary variables.
-     *
-     * Taking the information from the primary variables,
-     * the fluid state is filled with every information that is
-     * necessary to evaluate the model's local residual.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The problem at hand.
-     * \param element The current element.
-     * \param scv The subcontrol volume.
-     * \param fluidState The fluid state to fill.
-     * \param solidState The solid state to fill.
-     */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void completeFluidState(const ElemSol& elemSol,
-                            const Problem& problem,
-                            const Element& element,
-                            const Scv& scv,
-                            FluidState& fluidState,
-                            SolidState& solidState)
-    {
-        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
-
-        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
-
-        const auto& priVars = elemSol[scv.localDofIndex()];
-
-        // set the wetting pressure
-        using std::max;
-        Scalar minPc = fluidMatrixInteraction.pc(1.0);
-        fluidState.setPressure(liquidPhaseIdx, priVars[Indices::pressureIdx]);
-        fluidState.setPressure(gasPhaseIdx, max(problem.nonwettingReferencePressure(), fluidState.pressure(liquidPhaseIdx) + minPc));
-
-        // compute the capillary pressure to compute the saturation
-        // make sure that we the capillary pressure is not smaller than the minimum pc
-        // this would possibly return unphysical values from regularized material laws
-        using std::max;
-        const Scalar pc = max(fluidMatrixInteraction.endPointPc(),
-                              problem.nonwettingReferencePressure() - fluidState.pressure(liquidPhaseIdx));
-        const Scalar sw = fluidMatrixInteraction.sw(pc);
-        fluidState.setSaturation(liquidPhaseIdx, sw);
-        fluidState.setSaturation(gasPhaseIdx, 1.0-sw);
-
-        // density and viscosity
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-        fluidState.setDensity(liquidPhaseIdx,
-                              FluidSystem::density(fluidState, paramCache, liquidPhaseIdx));
-        fluidState.setDensity(gasPhaseIdx,
-                              FluidSystem::density(fluidState, paramCache, gasPhaseIdx));
-
-        fluidState.setViscosity(liquidPhaseIdx,
-                                FluidSystem::viscosity(fluidState, paramCache, liquidPhaseIdx));
-
-        // compute and set the enthalpy
-        fluidState.setEnthalpy(liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, liquidPhaseIdx));
-        fluidState.setEnthalpy(gasPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, gasPhaseIdx));
     }
 
     /*!
@@ -477,6 +417,66 @@ public:
         assert(phaseIdx == gasPhaseIdx);
         assert(compIIdx != compJIdx);
         return effectiveDiffCoeff_;
+    }
+private:
+    /*!
+     * \brief Fills the fluid state according to the primary variables.
+     *
+     * Taking the information from the primary variables,
+     * the fluid state is filled with every information that is
+     * necessary to evaluate the model's local residual.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem at hand.
+     * \param element The current element.
+     * \param scv The subcontrol volume.
+     * \param fluidState The fluid state to fill.
+     * \param solidState The solid state to fill.
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void completeFluidState_(const ElemSol& elemSol,
+                             const Problem& problem,
+                             const Element& element,
+                             const Scv& scv,
+                             FluidState& fluidState,
+                             SolidState& solidState)
+    {
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
+
+        const auto fluidMatrixInteraction = problem.spatialParams().fluidMatrixInteraction(element, scv, elemSol);
+
+        const auto& priVars = elemSol[scv.localDofIndex()];
+
+        // set the wetting pressure
+        using std::max;
+        Scalar minPc = fluidMatrixInteraction.pc(1.0);
+        fluidState.setPressure(liquidPhaseIdx, priVars[Indices::pressureIdx]);
+        fluidState.setPressure(gasPhaseIdx, max(problem.nonwettingReferencePressure(), fluidState.pressure(liquidPhaseIdx) + minPc));
+
+        // compute the capillary pressure to compute the saturation
+        // make sure that we the capillary pressure is not smaller than the minimum pc
+        // this would possibly return unphysical values from regularized material laws
+        using std::max;
+        const Scalar pc = max(fluidMatrixInteraction.endPointPc(),
+                              problem.nonwettingReferencePressure() - fluidState.pressure(liquidPhaseIdx));
+        const Scalar sw = fluidMatrixInteraction.sw(pc);
+        fluidState.setSaturation(liquidPhaseIdx, sw);
+        fluidState.setSaturation(gasPhaseIdx, 1.0-sw);
+
+        // density and viscosity
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
+        fluidState.setDensity(liquidPhaseIdx,
+                              FluidSystem::density(fluidState, paramCache, liquidPhaseIdx));
+        fluidState.setDensity(gasPhaseIdx,
+                              FluidSystem::density(fluidState, paramCache, gasPhaseIdx));
+
+        fluidState.setViscosity(liquidPhaseIdx,
+                                FluidSystem::viscosity(fluidState, paramCache, liquidPhaseIdx));
+
+        // compute and set the enthalpy
+        fluidState.setEnthalpy(liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, liquidPhaseIdx));
+        fluidState.setEnthalpy(gasPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, gasPhaseIdx));
     }
 
 protected:
