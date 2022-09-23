@@ -41,7 +41,7 @@ struct DefaultFVGridGeometryStorageSizes
 /*!
  * \ingroup Discretization
  * \brief Class to store finite-volume grid geometries.
- *        Allows insertion of geometries while retrieving their cache-local
+ *        Allows insertion of geometries while retrieving their local storage
  *        index. Access to the geometries afterwards occurs via their index.
  */
 template<typename F,
