@@ -21,7 +21,7 @@
 #ifndef DOXYGEN
 
 #include <dumux/experimental/new_assembly/dumux/common/size.hh>
-#include <dumux/experimental/new_assembly/dumux/discretization/ccgridgeometries.hh>
+#include <dumux/experimental/new_assembly/dumux/discretization/fvgridgeometries.hh>
 
 namespace Dumux::CCTpfa::Detail {
 
@@ -59,8 +59,8 @@ private:
 };
 
 template<typename GV> using Coordinate = typename GV::template Codim<0>::Entity::Geometry::GlobalCoordinate;
-template<typename GV> using Face = CCFace<Coordinate<GV>>;
-template<typename GV> using Scvf = CCSubControlVolumeFace<Coordinate<GV>>;
+template<typename GV> using Face = Face<Coordinate<GV>>;
+template<typename GV> using Scvf = SubControlVolumeFace<Coordinate<GV>>;
 template<typename GV> using Scv = CCSubControlVolume<typename GV::IndexSet::IndexType, Coordinate<GV>>;
 template<typename GV, typename Friend> using ScvWithId = WrappedEntity<Scv<GV>, Friend>;
 template<typename GV, typename Friend> using ScvfWithId = WrappedEntity<Scvf<GV>, Friend>;
