@@ -84,6 +84,7 @@ class CCTpfaGridGeometry<GV, false, Traits>::LocalView
     };
 
     using LocalFaceNeighbors = DefaultStorage<unsigned int, maxNumFaceNeighbors>;
+
     using GeometryStorage = FVGridGeometryStorage<
         CCTpfa::Detail::Face<GV>,
         CCTpfa::Detail::ScvWithId<GV, ThisType>,
@@ -184,10 +185,7 @@ public:
     }
 
     bool onBoundary(const SubControlVolumeFace& scvf) const
-    {
-        const auto [faceIdx, idxInNeighbors] = scvfLocalKeys_[scvf.id];
-        return faceNeighbors_[faceIdx].neighborScvs.size() == 1;
-    }
+    { return scvfToSeedMap_[scvf.id]->onBoundary(); }
 
     const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
     {
@@ -278,7 +276,7 @@ private:
                 static constexpr unsigned int idxInFaceNeighbors = 0;
                 faceNeighbors_.push_back({{insideScvIdx}, {static_cast<unsigned>(curScvfIdx)}});
                 scvfLocalKeys_.push_back({faceIdx, idxInFaceNeighbors});
-                scvfToSeedMap_.push_back({&faceSeed});
+                scvfToSeedMap_.push_back(&faceSeed);
             }
         }
 
@@ -312,7 +310,7 @@ private:
                 faceNeighborScvs.push_back(outsideScvId);
                 faceNeighborScvfs.push_back(outsideScvfId);
                 scvfLocalKeys_.push_back({faceIdx, faceNeighborIdx});
-                scvfToSeedMap_.push_back({&faceSeed});
+                scvfToSeedMap_.push_back(&faceSeed);
                 faceNeighborIdx++;
             }
         }

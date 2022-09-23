@@ -226,10 +226,7 @@ public:
     }
 
     bool onBoundary(const SubControlVolumeFace& scvf) const
-    {
-        const auto& [seed, idxInNeighbors] = gridGeometry_.scvfToSeedMap_[scvf.id];
-        return seed.numOutsideNeighbors() == 0;
-    }
+    { return gridGeometry_.scvfToSeedMap_[scvf.id].faceSeed.onBoundary(); }
 
     const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
     {
