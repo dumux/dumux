@@ -49,13 +49,15 @@ public:
     using Facet = Dumux::Facet<GridIndex, LocalIndex>;
 
     //! Constructor from an element facet
-    explicit FaceSeed(Facet facet) noexcept(std::is_nothrow_move_constructible_v<Facet>)
+    explicit FaceSeed(Facet facet, bool boundary) noexcept(std::is_nothrow_move_constructible_v<Facet>)
     : facets_({std::move(facet)})
+    , boundary_(boundary)
     {}
 
     void addOutsideFacet(Facet&& facet)
     { facets_.push_back(std::move(facet)); }
 
+    bool onBoundary() const { return boundary_; }
     std::size_t numNeighbors() const { return facets_.size(); }
     std::size_t numOutsideNeighbors() const { return numNeighbors() - 1; }
 
@@ -74,6 +76,7 @@ public:
 
 private:
     DefaultStorage<Facet, maxNumFaceNeighbors> facets_;
+    bool boundary_;
 };
 
 } // end namespace Dumux

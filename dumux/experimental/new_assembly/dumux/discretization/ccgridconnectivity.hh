@@ -194,7 +194,7 @@ private:
 
     void registerBoundaryFace_(const typename GridView::Intersection& is,
                                const GridIndex insideElemIdx)
-    { pushFace_(insideElemIdx, is.indexInInside()); }
+    { pushFace_(insideElemIdx, is.indexInInside(), is.boundary()); }
 
     template<Concepts::ElementMapper<GridView> Mapper>
     void registerInteriorFace_(const typename GridView::Intersection& is,
@@ -207,7 +207,7 @@ private:
         auto faceIndex = getFaceIndex_(insideElemIdx, is.indexInInside());
         if (!faceIndex)
         {
-            faceIndex = pushFace_(insideElemIdx, is.indexInInside());
+            faceIndex = pushFace_(insideElemIdx, is.indexInInside(), is.boundary());
             addNeighbor_(*faceIndex, outsideElemIdx, is.indexInOutside());
         }
         else if (!isAmongNeighbors_(faceSeeds_[*faceIndex], outsideElemIdx, is.indexInOutside()))
@@ -228,10 +228,11 @@ private:
     }
 
     std::size_t pushFace_(const GridIndex insideElemIndex,
-                          const LocalIndex insideElemFacetIndex)
+                          const LocalIndex insideElemFacetIndex,
+                          bool boundary)
     {
         const auto nextFaceIdx = faceSeeds_.size();
-        faceSeeds_.push_back(FaceSeed{{insideElemIndex, insideElemFacetIndex}});
+        faceSeeds_.emplace_back(Facet{insideElemIndex, insideElemFacetIndex}, boundary);
         elementFacetsToFacesMap_[insideElemIndex][insideElemFacetIndex].push_back(nextFaceIdx);
         return nextFaceIdx;
     }
