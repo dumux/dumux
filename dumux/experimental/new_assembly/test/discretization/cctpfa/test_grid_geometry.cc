@@ -37,8 +37,12 @@ auto tolerance(const GridGeometry& gg)
     using std::min;
     for (int dim = 0; dim < GridGeometry::GridView::dimension; ++dim)
         tol = min(tol, gg.bBoxMax()[dim] - gg.bBoxMin()[dim]);
-    return tol*1e-7;
+    return tol*1e-10;
 }
+
+template<std::floating_point ctype>
+bool equal(const ctype a, const ctype b, const ctype tolerance)
+{ return Dune::FloatCmp::eq(a, b, tolerance); }
 
 template<typename ctype, int dim>
 bool equal(const Dune::FieldVector<ctype, dim>& p0,
@@ -46,7 +50,7 @@ bool equal(const Dune::FieldVector<ctype, dim>& p0,
            const ctype tolerance)
 {
     return std::ranges::equal(p0, p1, [&] (const ctype a, const ctype b) {
-        return Dune::FloatCmp::eq(a, b, tolerance);
+        return equal(a, b, tolerance);
     });
 }
 
@@ -124,7 +128,8 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
         for (const auto& scvf : scvfs(localView))
         {
             count++;
-            auto d = scvf.center() - element.geometry().center();
+            const auto c = scvf.center();
+            auto d = c - element.geometry().center();
             d /= d.two_norm();
 
             if (!equal(scvf.center(), localView.geometry(scvf).center(), tol))
@@ -137,17 +142,31 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected inside scv");
             if (!localView.onBoundary(scvf))
             {
-                d = localView.outsideScv(scvf).center()
+
+                d = scvf.center()
                     - localView.insideScv(scvf).center();
                 d /= d.two_norm();
                 if (!Dune::FloatCmp::eq(d*scvf.unitOuterNormal(), 1.0, tol))
-                    DUNE_THROW(Dune::InvalidStateException, "Unexpected outside scv center");
-                if (!equal(scvf.center(), localView.flipScvf(scvf).center(), tol))
-                    DUNE_THROW(Dune::InvalidStateException, "Unexpected Flip Scvf center");
-                if (localView.insideScv(localView.flipScvf(scvf)).dofIndex()
-                    != localView.outsideScv(scvf).dofIndex())
-                    DUNE_THROW(Dune::InvalidStateException, "insiceScv(flipScvf) != outsideScv(scvf)");
+                    DUNE_THROW(Dune::InvalidStateException, "Unexpected scvf normal");
+                if (withStencil)
+                {
+                    d = localView.outsideScv(scvf).center()
+                        - localView.insideScv(scvf).center();
+                    d /= d.two_norm();
+                    if (!Dune::FloatCmp::eq(d*scvf.unitOuterNormal(), 1.0, tol))
+                        DUNE_THROW(Dune::InvalidStateException, "Unexpected outside scv center");
+                    if (!equal(scvf.center(), localView.flipScvf(scvf).center(), tol))
+                        DUNE_THROW(Dune::InvalidStateException, "Unexpected Flip Scvf center");
+                    if (localView.insideScv(localView.flipScvf(scvf)).dofIndex()
+                        != localView.outsideScv(scvf).dofIndex())
+                        DUNE_THROW(Dune::InvalidStateException, "insiceScv(flipScvf) != outsideScv(scvf)");
+                }
             }
+            else if (!equal(c[0], gridGeometry.bBoxMin()[0], tol) &&
+                     !equal(c[0], gridGeometry.bBoxMax()[0], tol) &&
+                     !equal(c[1], gridGeometry.bBoxMin()[1], tol) &&
+                     !equal(c[1], gridGeometry.bBoxMax()[1], tol))
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected boundary face position");
         }
 
         if (count != element.subEntities(1))
@@ -179,6 +198,8 @@ void test(const Dune::YaspGrid<2>& grid)
 {
     using GV = std::decay_t<decltype(grid.leafGridView())>;
     using DynamicTraits = DynamicallySizedTraits<GV>;
+
+    // TODO: WE NEED TO TEST ALSO NUMBER OF SCVS/SCVFS PER LOCALVIEW
 
     const std::size_t numScvf = grid.leafGridView().size(0)*4;
     testCCTpfaGridGeometry<GV, true>(grid.leafGridView(), numScvf);
