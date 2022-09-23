@@ -34,7 +34,7 @@
 #include <dumux/experimental/new_assembly/dumux/common/storage.hh>
 
 #include <dumux/experimental/new_assembly/dumux/discretization/concepts.hh>
-#include <dumux/experimental/new_assembly/dumux/discretization/faceseed.hh>
+#include <dumux/experimental/new_assembly/dumux/discretization/ccfaceseed.hh>
 
 namespace Dumux {
 
@@ -68,7 +68,7 @@ class CCGridConnectivity
     static constexpr bool isNetworkGrid = int(GridView::dimension) < int(GridView::dimensionworld);
 
 public:
-    using FaceSeed = Dumux::FaceSeed<maxNumFaceNeighbors, GridIndex, LocalIndex>;
+    using FaceSeed = Dumux::CCFaceSeed<maxNumFaceNeighbors, GridIndex, LocalIndex>;
     using Facet = typename FaceSeed::Facet;
 
     template<Concepts::ElementMapper<GridView> Mapper>

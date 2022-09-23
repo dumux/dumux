@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
- * \copydoc Dumux::FaceSeed
+ * \ingroup CCDiscretization
+ * \copydoc Dumux::CCFaceSeed
  */
-#ifndef DUMUX_DISCRETIZATION_FACE_SEED_HH
-#define DUMUX_DISCRETIZATION_FACE_SEED_HH
+#ifndef DUMUX_DISCRETIZATION_CC_FACE_SEED_HH
+#define DUMUX_DISCRETIZATION_CC_FACE_SEED_HH
 
 #include <ranges>
 #include <cassert>
@@ -37,19 +37,19 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
- * \brief Class to stores connectivity info for a grid face.
+ * \ingroup CCDiscretization
+ * \brief Stores connectivity information for a grid face.
  */
 template<Concepts::Size auto maxNumFaceNeighbors = Size::dynamic,
          std::integral GridIndex = std::size_t,
          std::integral LocalIndex = std::uint_least8_t>
-class FaceSeed
+class CCFaceSeed
 {
 public:
     using Facet = Dumux::Facet<GridIndex, LocalIndex>;
 
     //! Constructor from an element facet
-    explicit FaceSeed(Facet facet, bool boundary) noexcept(std::is_nothrow_move_constructible_v<Facet>)
+    explicit CCFaceSeed(Facet facet, bool boundary) noexcept(std::is_nothrow_move_constructible_v<Facet>)
     : facets_({std::move(facet)})
     , boundary_(boundary)
     {}
