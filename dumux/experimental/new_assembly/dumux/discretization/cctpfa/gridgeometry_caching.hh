@@ -195,8 +195,7 @@ public:
     void bind(const Element& e) &
     {
         bindElement(e);
-        findNeighborScvIndices_();
-        findNeighborScvfIndices_();
+        findNeighborEntityIndices_();
     }
 
     void bindElement(const Element& e) &
@@ -265,26 +264,22 @@ private:
         neighborScvfIndices_.clear();
     }
 
-    void findNeighborScvIndices_()
+    void findNeighborEntityIndices_()
     {
         std::ranges::for_each(gridGeometry_.elementScvfs_[eIdx_], [&] (std::integral auto idx) {
             const auto& faceSeed = gridGeometry_.scvfToSeedMap_[idx].faceSeed;
             std::ranges::for_each(faceSeed.facets(), [&] (const auto& facet) {
                 if (facet.elementIndex != eIdx_)
+                {
                     neighborScvIndices_.push_back(facet.elementIndex);
-            });
-        });
-    }
-
-    void findNeighborScvfIndices_()
-    {
-        std::ranges::for_each(neighborScvIndices_, [&] (std::integral auto scvIdx) {
-            std::ranges::for_each(gridGeometry_.elementScvfs_[scvIdx], [&] (std::integral auto scvfIdx) {
-                const auto& faceSeed = gridGeometry_.scvfToSeedMap_[scvfIdx].faceSeed;
-                if (std::ranges::any_of(faceSeed.facets(), [&] (const auto& facet) {
-                    return facet.elementIndex == eIdx_;
-                }))
-                    neighborScvfIndices_.push_back(scvfIdx);
+                    auto neighborScvfIdx = std::ranges::find_if(
+                        gridGeometry_.elementScvfs_[facet.elementIndex],
+                        [&] (std::integral auto scvfIdx) {
+                            return &gridGeometry_.scvfToSeedMap_[scvfIdx].faceSeed == &faceSeed;
+                    });
+                    assert(neighborScvfIdx != std::ranges::end(gridGeometry_.elementScvfs_[facet.elementIndex]));
+                    neighborScvfIndices_.push_back(*neighborScvfIdx);
+                }
             });
         });
     }
