@@ -98,7 +98,7 @@ private:
     void reserve_()
     {
         storage_.reserve({
-            .numFaces = this->numFaces(),
+            .numFaces = this->numFaces_(),
             .numScvfs = this->numScvf(),
             .numScvs = this->numScv()
         });

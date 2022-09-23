@@ -104,10 +104,6 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(0); }
 
-    //! Return the total number of faces of the discretization
-    std::size_t numFaces() const
-    { return connectivity_.numFaces(); }
-
     //! Return the total number of sub control volumes
     std::size_t numScv() const
     { return this->gridView().size(0); }
@@ -118,6 +114,9 @@ public:
 
 protected:
     using FaceSeed = typename Connectivity::FaceSeed;
+
+    std::size_t numFaces_() const
+    { return connectivity_.numFaces(); }
 
     //! Return the face seeds associated with the given facet
     decltype(auto) faceSeeds_(std::size_t eIdx, unsigned int facetIndex) const
