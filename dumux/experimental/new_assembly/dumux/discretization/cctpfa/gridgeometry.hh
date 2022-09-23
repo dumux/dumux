@@ -141,7 +141,7 @@ private:
  *        Provides an element-local view on the scvs and scvfs of the discretization.
  */
 template<typename GV,
-         bool cacheGridGeometries = true,
+         bool cacheGridGeometries = false,
          typename Traits = DefaultCCTpfaGridGeometryTraits<GV>>
 class CCTpfaGridGeometry;
 
