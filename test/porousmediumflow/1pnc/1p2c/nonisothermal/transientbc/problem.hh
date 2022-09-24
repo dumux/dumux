@@ -243,9 +243,9 @@ private:
         return priVars;
     }
 
-        static constexpr Scalar eps_ = 1e-6;
-        Scalar time_;
-    };
+    static constexpr Scalar eps_ = 1e-6;
+    Scalar time_ = 0.0;
+};
 
 } // end namespace Dumux
 
