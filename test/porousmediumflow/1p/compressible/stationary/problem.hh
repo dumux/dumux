@@ -58,7 +58,7 @@ public:
     : ParentType(gridGeometry)
     {
         Components::TabulatedComponent<Components::H2O<Scalar>>
-            ::init(272.15, 294.15, 10, 1.0e4, 1.0e6, 200);
+            ::init(273.15, 294.15, 10, 1.0e4, 1.0e6, 200);
     }
 
     /*!

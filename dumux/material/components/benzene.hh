@@ -60,6 +60,30 @@ public:
     { return 0.07811; }
 
     /*!
+     * \brief Returns true if the gas phase is assumed to be compressible
+     */
+    static constexpr bool gasIsCompressible()
+    { return true; }
+
+    /*!
+     * \brief Returns true if the liquid phase is assumed to be compressible
+     */
+    static constexpr bool liquidIsCompressible()
+    { return false; }
+
+    /*!
+     * \brief Returns true if the gas phase viscosity is constant
+     */
+    static constexpr bool gasViscosityIsConstant()
+    { return true; }
+
+    /*!
+     * \brief Returns true if the liquid phase viscosity is constant
+     */
+    static constexpr bool liquidViscosityIsConstant()
+    { return true; }
+
+    /*!
      * \brief The density of benzene steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

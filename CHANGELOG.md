@@ -9,6 +9,8 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 
 ### Improvements and Enhancements
 
+- __Components__: Fixed a bug in `TabularizedComponent` that caused data races in multithreaded applications
+
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
 that implement an empty cache (i.e. nothing is cached for the flux variables).
 
