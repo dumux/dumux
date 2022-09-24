@@ -55,8 +55,8 @@ public:
     OnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        Components::TabulatedComponent<Components::H2O<Scalar>>::init(272.15, 294.15, 10,
-                                                      1.0e4, 1.0e6, 200);
+        Components::TabulatedComponent<Components::H2O<Scalar>>
+            ::init(273.15, 294.15, 10, 1.0e4, 1.0e6, 200);
     }
 
     /*!
