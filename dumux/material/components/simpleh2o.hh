@@ -217,13 +217,13 @@ public:
     { return false; }
 
     /*!
-     * \brief Returns true if the gas phase viscostiy is constant
+     * \brief Returns true if the gas phase viscosity is constant
      */
     static constexpr bool gasViscosityIsConstant()
     { return true; }
 
     /*!
-     * \brief Returns true if the liquid phase viscostiy is constant
+     * \brief Returns true if the liquid phase viscosity is constant
      */
     static constexpr bool liquidViscosityIsConstant()
     { return true; }
