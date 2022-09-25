@@ -178,5 +178,15 @@ int main(int argc, char** argv)
         vtkWriter.write("subgrid_binary_image");
     }
 
+    {
+        std::cout << "Constructing SubGrid from binary image" << std::endl;
+        using HostGrid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<double, dim>>;
+        using GridManager = Dumux::GridManager<Dune::SubGrid<dim, HostGrid>>;
+        GridManager subgridManager;
+        subgridManager.init("RepeatedImage");
+        Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
+        vtkWriter.write("repeatedsubgrid_binary_image");
+    }
+
     return 0;
 }

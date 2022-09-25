@@ -21,3 +21,9 @@ LowerLeft = 1 1
 UpperRight = 5 2
 Cells = 100 25
 Image = grids/dumux_binary.pbm
+
+[RepeatedImage.Grid]
+LowerLeft = 1 1
+PixelDimensions = 1 1
+Repeat = 5 3
+Image = grids/dumux_binary.pbm
