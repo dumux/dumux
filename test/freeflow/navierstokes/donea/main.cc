@@ -80,10 +80,14 @@ int main(int argc, char** argv)
 
     // create the finite volume grid geometries
     using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
-    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
-
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
-    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
+
+    // share the basic grid geometry
+    using BasicGridGeometry = typename MassGridGeometry::BasicGridGeometry;
+    auto basicGridGeometry = std::make_shared<BasicGridGeometry>(leafGridView);
+
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(basicGridGeometry);
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(basicGridGeometry);
 
     // mass-momentum coupling manager
     using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;

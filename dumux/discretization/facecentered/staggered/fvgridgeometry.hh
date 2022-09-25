@@ -58,7 +58,6 @@ namespace Dumux {
 template<class GridView>
 struct FaceCenteredStaggeredDefaultGridGeometryTraits : public DefaultMapperTraits<GridView>
 {
-    using ElementMapper = Dune::SingleCodimSingleGeomTypeMapper<GridView, 0/*codim*/>;
     using SubControlVolume = FaceCenteredStaggeredSubControlVolume<GridView>;
     using SubControlVolumeFace = FaceCenteredStaggeredSubControlVolumeFace<GridView>;
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
@@ -135,6 +134,8 @@ public:
 
     static constexpr bool cachingEnabled = true;
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -152,18 +153,23 @@ public:
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
 
-    //! Constructor
-    FaceCenteredStaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
-    : ParentType(gridView)
-    , intersectionMapper_(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
+    : ParentType(std::move(gg))
+    , intersectionMapper_(this->gridView())
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
     }
+
+    //! Constructor from gridView
+    FaceCenteredStaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
+    : FaceCenteredStaggeredFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView), paramGroup)
+    {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -544,6 +550,8 @@ public:
 
     static constexpr bool cachingEnabled = false;
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
     //! export the type of sub control volume
@@ -561,18 +569,23 @@ public:
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
 
-    //! Constructor
-    FaceCenteredStaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
-    : ParentType(gridView)
-    , intersectionMapper_(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
+    : ParentType(std::move(gg))
+    , intersectionMapper_(this->gridView())
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
     }
+
+    //! Constructor from gridView
+    FaceCenteredStaggeredFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
+    : FaceCenteredStaggeredFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView), paramGroup)
+    {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const

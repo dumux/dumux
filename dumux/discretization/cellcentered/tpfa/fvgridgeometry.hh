@@ -100,6 +100,8 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
     static const int dimWorld = GV::dimensionworld;
 
 public:
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -121,17 +123,22 @@ public:
     //! export the grid view type
     using GridView = GV;
 
-    //! Constructor
-    CCTpfaFVGridGeometry(const GridView& gridView)
-    : ParentType(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
     }
+
+    //! Constructor from gridView
+    CCTpfaFVGridGeometry(const GridView& gridView)
+    : CCTpfaFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -400,6 +407,8 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
                                                                Dune::ReservedVector<GridIndexType, 1> >;
 
 public:
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
     //! export the type of sub control volume
@@ -421,17 +430,22 @@ public:
     //! Export the type of the grid view
     using GridView = GV;
 
-    //! Constructor
-    CCTpfaFVGridGeometry(const GridView& gridView)
-    : ParentType(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
     {
         // Check if the overlap size is what we expect
-        if (!CheckOverlapSize<DiscretizationMethod>::isValid(gridView))
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
     }
+
+    //! Constructor from gridView
+    CCTpfaFVGridGeometry(const GridView& gridView)
+    : CCTpfaFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
