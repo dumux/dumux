@@ -1,1 +1,5 @@
 add_subdirectory(1p)
+
+file(GLOB DUMUX_FREEFLOW_NAVIERSTOKES_MASS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_FREEFLOW_NAVIERSTOKES_MASS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/navierstokes/mass)
