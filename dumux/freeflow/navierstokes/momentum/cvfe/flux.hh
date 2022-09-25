@@ -21,8 +21,8 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesFluxVariablesImpl
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_FLUXVARIABLES_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_FLUXVARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH
 
 #include <dune/common/fmatrix.hh>
 
@@ -96,10 +96,10 @@ private:
 
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux variables class for the Navier-Stokes model using the diamond grid discretization
+ * \brief The flux variables class for the Navier-Stokes model using control-volume finite element schemes
  */
 template<class GridGeometry, class NumEqVector>
-class NavierStokesMomentumFluxDiamond
+class NavierStokesMomentumFluxCVFE
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -172,14 +172,14 @@ public:
         // get viscosity from the problem
         const auto mu = context.problem().effectiveViscosity(element, fvGeometry, scvf);
 
-        // TODO enable symmetric gradient
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
-        if (!enableUnsymmetrizedVelocityGradient)
-            DUNE_THROW(Dune::NotImplemented, "Symmetric velocity gradient");
 
         // compute -mu*gradV*n*dA
-        NumEqVector diffusiveFlux = mv(gradV, scvf.unitOuterNormal());
+        NumEqVector diffusiveFlux = enableUnsymmetrizedVelocityGradient ?
+                mv(gradV, scvf.unitOuterNormal())
+                : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal());
+
         diffusiveFlux *= -mu;
 
         static const bool enableDilatationTerm = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);

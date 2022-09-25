@@ -33,7 +33,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/cvfelocalresidual.hh>
 
-#include "flux.hh"
+#include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
 
 namespace Dumux {
 
@@ -77,7 +77,7 @@ class NavierStokesMomentumDiamondResidual
     static constexpr auto dim = GridView::dimension;
 
     using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
-    using FluxHelper = NavierStokesMomentumFluxDiamond<GridGeometry, NumEqVector>;
+    using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
 
 public:
     //! Use the parent type's constructor
