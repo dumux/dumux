@@ -37,7 +37,7 @@ namespace Dumux {
  * \tparam cachingEnabled if the cache is enabled
  */
 template<class GVV, bool cachingEnabled>
-class BoxElementVolumeVariables [[deprecated("Will be removed after 3.6")]] = CVFEElementVolumeVariables<GVV, cachingEnabled>;
+using BoxElementVolumeVariables [[deprecated("Will be removed after 3.6")]] = CVFEElementVolumeVariables<GVV, cachingEnabled>;
 
 } // end namespace Dumux
 
