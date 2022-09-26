@@ -24,6 +24,14 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_DFG_CHANNEL_PROPERTIES_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_DFG_CHANNEL_PROPERTIES_HH
 
+#ifndef TYPETAG_MOMENTUM
+#define TYPETAG_MOMENTUM DFGChannelTestMomentumDiamond
+#endif
+
+#ifndef TYPETAG_MASS
+#define TYPETAG_MASS DFGChannelTestMassTpfa
+#endif
+
 #include <dune/grid/uggrid.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
@@ -40,6 +48,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
 

@@ -25,6 +25,10 @@
 #ifndef DUMUX_COMMON_DEPRECATED_HH
 #define DUMUX_COMMON_DEPRECATED_HH
 
+#include <utility>
+
+#include <dune/common/std/type_traits.hh>
+
 namespace Dumux {
 
 #ifndef DOXYGEN // hide from doxygen

@@ -28,10 +28,13 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/grid/griddata.hh>
 
 #include <dumux/geometry/diameter.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 
 namespace Dumux {

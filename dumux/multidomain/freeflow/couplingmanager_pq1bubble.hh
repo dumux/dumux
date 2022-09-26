@@ -42,6 +42,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/fvassembler.hh>
 
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/assembly/coloring.hh>

@@ -36,6 +36,7 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/io/format.hh>
+#include <dumux/parallel/parallel_for.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/coloring.hh>
@@ -46,6 +47,7 @@
 #include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
+#include <dumux/multidomain/fvassembler.hh>
 
 namespace Dumux {
 

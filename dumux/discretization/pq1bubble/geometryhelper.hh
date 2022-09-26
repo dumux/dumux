@@ -32,6 +32,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
+#include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>

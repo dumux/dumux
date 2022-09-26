@@ -36,7 +36,7 @@ namespace Dumux {
 template<class Problem,
          class VolumeVariables,
          bool enableGridVolVarsCache = false,
-         class Traits = BoxDefaultGridVolumeVariablesTraits<Problem, VolumeVariables> >
+         class Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables> >
 using BoxGridVolumeVariables [[deprecated("Will be removed after 3.6")]] = CVFEGridVolumeVariables<Traits, enableGridVolVarsCache>;
 
 } // end namespace Dumux

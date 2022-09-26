@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

@@ -32,6 +32,7 @@
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
 
