@@ -251,7 +251,7 @@ int main(int argc, char** argv)
     NavierStokesAnalyticalSolutionVectors freeFlowAnalyticalSolVectors(freeFlowProblem);
     freeFlowVtkWriter.addField(freeFlowAnalyticalSolVectors.getAnalyticalPressureSolution(), "pressureExact");
     freeFlowVtkWriter.addField(freeFlowAnalyticalSolVectors.getAnalyticalVelocitySolution(), "velocityExact");
-    freeFlowVtkWriter.addFaceField(freeFlowAnalyticalSolVectors.getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
+    freeFlowVtkWriter.addFaceField(freeFlowAnalyticalSolVectors.getAnalyticalVelocitySolutionAtDofs(), "faceVelocityExact");
 
     freeFlowVtkWriter.write(0.0);
 

@@ -21,8 +21,8 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesResidualImpl
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_LOCAL_RESIDUAL_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_LOCAL_RESIDUAL_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_LOCAL_RESIDUAL_HH
 
 #include <dune/common/hybridutilities.hh>
 
@@ -39,10 +39,10 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Element-wise calculation of the Navier-Stokes residual for models using the diamond discretization
+ * \brief Element-wise calculation of the Navier-Stokes residual for models using the pq1bubble discretization
  */
 template<class TypeTag>
-class NavierStokesMomentumDiamondResidual
+class NavierStokesMomentumPQ1BubbleLocalResidual
 : public CVFELocalResidual<TypeTag>
 {
     using ParentType = CVFELocalResidual<TypeTag>;

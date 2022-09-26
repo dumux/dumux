@@ -54,8 +54,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::ThreeDChannelTestMomentum;
-    using MassTypeTag = Properties::TTag::ThreeDChannelTestMass;
+    using MomentumTypeTag = Properties::TTag::TYPETAG_MOMENTUM;
+    using MassTypeTag = Properties::TTag::TYPETAG_MASS;
 
     // initialize MPI+X
     initialize(argc, argv);

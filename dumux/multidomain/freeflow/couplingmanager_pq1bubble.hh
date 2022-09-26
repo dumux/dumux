@@ -21,8 +21,8 @@
  * \ingroup MultiDomain
  * \brief Freeflow coupling managers (Navier-Stokes mass-momentum coupling)
  */
-#ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_DIAMOND_HH
-#define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_DIAMOND_HH
+#ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_PQ1BUBBLE_HH
+#define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_PQ1BUBBLE_HH
 
 #include <memory>
 #include <tuple>
@@ -51,10 +51,10 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for free flow systems
- * \note coupling manager for the face-centered diamond discretization scheme
+ * \note coupling manager for the control-volume finite-element discretization scheme
  */
 template<class Traits>
-class FCDiamondFreeFlowCouplingManager
+class PQ1BubbleFreeFlowCouplingManager
 : public CouplingManager<Traits>
 {
     using ParentType = CouplingManager<Traits>;
@@ -205,7 +205,8 @@ public:
 
             return volVars.density();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -235,6 +236,7 @@ public:
      * \brief Returns the density at a given sub control volume.
      */
     Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const SubControlVolume<freeFlowMomentumIndex>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
@@ -252,7 +254,8 @@ public:
 
             return volVars.density();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -293,7 +296,8 @@ public:
             const auto& volVars = this->momentumCouplingContext_()[0].curElemVolVars[scv];
             return volVars.viscosity();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             // TODO: cache the shape values when Box method is used
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -326,17 +330,17 @@ public:
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
 
-        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(element);
-        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, eIdx);
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element);
 
         const auto& fvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
         const auto& localBasis = fvGeometry.feLocalBasis();
+
+        // interpolate velocity at scvf
+        VelocityVector velocity(0.0);
         std::vector<ShapeValue> shapeValues;
         const auto ipLocal = element.geometry().local(scvf.ipGlobal());
         localBasis.evaluateFunction(ipLocal, shapeValues);
 
-        // interpolate velocity at scvf
-        VelocityVector velocity(0.0);
         for (const auto& scv : scvs(fvGeometry))
             velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
@@ -467,7 +471,8 @@ public:
                     momentumCouplingContext_()[0].curElemVolVars[scv].update(std::move(elemSol), problem, deflectedElement, scv);
             }
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
             if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
             {
@@ -503,9 +508,8 @@ public:
      */
     void computeColorsForAssembly()
     {
-        // use coloring of the mass discretization for both domains
-        // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
-        elementSets_ = computeColoring(this->problem(freeFlowMassIndex).gridGeometry()).sets;
+        // use coloring of the momentum discretization for both domains
+        elementSets_ = computeColoring(this->problem(freeFlowMomentumIndex).gridGeometry()).sets;
     }
 
     /*!
@@ -524,12 +528,12 @@ public:
         // for this we have to color the elements so that we don't get
         // race conditions when writing into the global matrix
         // each color can be assembled using multiple threads
-        const auto& grid = this->problem(freeFlowMassIndex).gridGeometry().gridView().grid();
+        const auto& grid = this->problem(domainId).gridGeometry().gridView().grid();
         for (const auto& elements : elementSets_)
         {
-            Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
+            Dumux::parallelFor(elements.size(), [&](const std::size_t n)
             {
-                const auto element = grid.entity(elements[eIdx]);
+                const auto element = grid.entity(elements[n]);
                 assembleElement(element);
             });
         }
@@ -692,7 +696,7 @@ private:
 
 //! we support multithreaded assembly
 template<class T>
-struct CouplingManagerSupportsMultithreadedAssembly<FCDiamondFreeFlowCouplingManager<T>>
+struct CouplingManagerSupportsMultithreadedAssembly<PQ1BubbleFreeFlowCouplingManager<T>>
 : public std::true_type {};
 
 } // end namespace Dumux

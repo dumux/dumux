@@ -252,6 +252,46 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
+/*!
+ * \ingroup MultiDomain
+ * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
+ *        for the pq1bubble scheme
+ */
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::pq1bubble), int> = 0>
+Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
+                                                Dune::index_constant<i> domainI,
+                                                const GridGeometryI& gridGeometryI,
+                                                Dune::index_constant<j> domainJ,
+                                                const GridGeometryJ& gridGeometryJ)
+{
+    Dune::MatrixIndexSet pattern;
+
+    // matrix pattern for implicit Jacobians
+    if (isImplicit)
+    {
+        pattern.resize(gridGeometryI.numDofs(),  gridGeometryJ.numDofs());
+        auto fvGeometry = localView(gridGeometryI);
+        for (const auto& elementI : elements(gridGeometryI.gridView()))
+        {
+            fvGeometry.bindElement(elementI);
+            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                for (const auto globalJ : stencil)
+                    pattern.add(scv.dofIndex(), globalJ);
+
+            }
+        }
+    }
+
+    // matrix pattern for explicit Jacobians
+    // -> diagonal matrix, so coupling block is empty
+    // just return the empty pattern
+
+    return pattern;
+}
+
 } // end namespace Dumux
 
 #endif

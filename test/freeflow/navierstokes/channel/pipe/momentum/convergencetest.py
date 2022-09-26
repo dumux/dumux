@@ -67,7 +67,7 @@ def mean(numbers):
     return float(sum(numbers)) / len(numbers)
 
 
-if mean(resultsVx) < 2.05 and mean(resultsVx) < 1.9:
+if mean(resultsVx) < 2.05 and mean(resultsVx) < 1.9 and max(errorVx) > 1e-15:
     sys.stderr.write(
         "*" * 70
         + "\n"
@@ -77,7 +77,7 @@ if mean(resultsVx) < 2.05 and mean(resultsVx) < 1.9:
     )
     sys.exit(1)
 
-if mean(resultsVy) < 2.05 and mean(resultsVy) < 1.9:
+if mean(resultsVy) < 2.05 and mean(resultsVy) < 1.9 and max(errorVy) > 1e-15:
     sys.stderr.write(
         "*" * 70
         + "\n"

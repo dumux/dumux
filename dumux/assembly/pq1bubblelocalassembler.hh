@@ -114,70 +114,49 @@ public:
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
-
-            if (this->element().partitionType() == Dune::InteriorEntity)
-            {
-                for (const auto& scv : scvs(this->fvGeometry()))
-                    res[scv.dofIndex()] += residual[scv.localDofIndex()];
-            }
-            else
-            {
-                int numVerticesLocal = this->element().subEntities(dim);
-
-                for (int i = 0; i < numVerticesLocal; ++i)
-                {
-                    auto vertex = this->element().template subEntity<dim>(i);
-
-                    if (vertex.partitionType() == Dune::InteriorEntity ||
-                        vertex.partitionType() == Dune::BorderEntity)
-                    {
-                        // do not change the non-ghost vertices
-                        continue;
-                    }
-
-                    // set main diagonal entries for the vertex
-                    int vIdx = gridGeometry.dofMapper().index(vertex);
-
-                    typedef typename JacobianMatrix::block_type BlockType;
-                    BlockType &J = jac[vIdx][vIdx];
-                    for (int j = 0; j < BlockType::rows; ++j)
-                        J[j][j] = 1.0;
-
-                    // set residual for the vertex
-                    res[vIdx] = 0;
-                }
-            }
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
             maybeAssembleCouplingBlocks(residual);
         }
         else
         {
-            //TODO this needs also be done for the interior (element) dofs
-            int numVerticesLocal = this->element().subEntities(dim);
+            assert(this->elementIsGhost());
 
+            // handle vertex dofs
+            const auto numVerticesLocal = this->element().subEntities(dim);
             for (int i = 0; i < numVerticesLocal; ++i)
             {
+                // do not change the non-ghost vertices
                 auto vertex = this->element().template subEntity<dim>(i);
-
-                if (vertex.partitionType() == Dune::InteriorEntity ||
-                    vertex.partitionType() == Dune::BorderEntity)
-                {
-                    // do not change the non-ghost vertices
+                if (vertex.partitionType() == Dune::InteriorEntity || vertex.partitionType() == Dune::BorderEntity)
                     continue;
-                }
 
                 // set main diagonal entries for the vertex
-                int vIdx = gridGeometry.dofMapper().index(vertex);
+                const auto dofIndex = gridGeometry.dofMapper().index(vertex);
 
+                // this might be a vector-valued dof
                 typedef typename JacobianMatrix::block_type BlockType;
-                BlockType &J = jac[vIdx][vIdx];
+                BlockType &J = jac[dofIndex][dofIndex];
                 for (int j = 0; j < BlockType::rows; ++j)
                     J[j][j] = 1.0;
 
-                // set residual for the vertex
-                res[vIdx] = 0;
+                // set residual for the ghost vertex dof
+                res[dofIndex] = 0;
             }
+
+            // handle element dof
+            const auto elemDofIndex = gridGeometry.dofMapper().index(this->element());
+
+            // this might be a vector-valued dof
+            typedef typename JacobianMatrix::block_type BlockType;
+            BlockType &J = jac[elemDofIndex][elemDofIndex];
+            for (int j = 0; j < BlockType::rows; ++j)
+                J[j][j] = 1.0;
+
+            // set residual for the ghost element dof
+            res[elemDofIndex] = 0;
         }
 
         auto applyDirichlet = [&] (const auto& scvI,

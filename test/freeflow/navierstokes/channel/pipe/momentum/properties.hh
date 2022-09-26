@@ -28,10 +28,11 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
-#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -42,7 +43,9 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct PipeFlow { using InheritsFrom = std::tuple<NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
+struct PipeFlow { };
+struct PipeFlowDiamond { using InheritsFrom = std::tuple<NavierStokesMomentumDiamond, FaceCenteredDiamondModel, PipeFlow>; };
+struct PipeFlowPQ1Bubble { using InheritsFrom = std::tuple<NavierStokesMomentumPQ1Bubble, PQ1BubbleModel, PipeFlow>; };
 } // end namespace TTag
 
 // the fluid system
@@ -50,7 +53,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PipeFlow>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
@@ -61,7 +64,7 @@ struct Grid<TypeTag, TTag::PipeFlow>
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PipeFlow>
-{ using type = FreeFlowPipeProblem<TypeTag> ; };
+{ using type = FreeFlowPipeProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::PipeFlow> { static constexpr bool value = true; };
@@ -72,7 +75,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PipeFlow> { static constexp
 
 // rotation-symmetric grid geometry forming a cylinder channel
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PipeFlow>
+struct GridGeometry<TypeTag, TTag::PipeFlowDiamond>
 {
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
@@ -81,6 +84,20 @@ struct GridGeometry<TypeTag, TTag::PipeFlow>
     { using Extrusion = RotationalExtrusion<0>; };
 
     using type = FaceCenteredDiamondFVGridGeometry<GridView, enableCache, GGTraits>;
+};
+
+// rotation-symmetric grid geometry forming a cylinder channel
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PipeFlowPQ1Bubble>
+{
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    struct GGTraits : public PQ1BubbleDefaultGridGeometryTraits<GridView>
+    { using Extrusion = RotationalExtrusion<0>; };
+
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, GGTraits>;
 };
 
 } // end namespace Dumux::Properties

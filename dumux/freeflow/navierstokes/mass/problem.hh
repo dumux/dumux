@@ -107,6 +107,17 @@ public:
     }
 
     /*!
+     * \brief Returns the velocity at the element center.
+     */
+    VelocityVector elementVelocity(const FVElementGeometry& fvGeometry) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->elementVelocity(fvGeometry);
+        else
+            return asImp_().velocityAtPos(fvGeometry.element().geometry().center());
+    }
+
+    /*!
      * \brief Returns the velocity at a given position.
      */
     VelocityVector velocityAtPos(const GlobalPosition&) const

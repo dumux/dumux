@@ -349,6 +349,9 @@ public:
     //! Volume of domain
     Scalar totalVolume() const { return totalVolume_; }
 
+    //! Number of scvs that have been considered in error calculation
+    Scalar numDofs() const { return numDofs_; }
+
 private:
     template<class SolutionVector>
     void calculateErrors_(const SolutionVector& curSol, Scalar time)
@@ -359,6 +362,12 @@ private:
         // calculate helping variables
         totalVolume_ = 0.0;
         hMax_ = 0.0;
+        numDofs_ = problem_->gridGeometry().numDofs();
+
+        using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+        // We do not consider the overlapping Dofs, i.e. elements, in the errors
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+            numDofs_ -= problem_->gridGeometry().gridView().size(0);
 
         ErrorVector sumReference(0.0);
         ErrorVector sumError(0.0);
@@ -374,15 +383,14 @@ private:
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
             {
-                using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
                 using Extrusion = Extrusion_t<GridGeometry>;
-                totalVolume_ += Extrusion::volume(fvGeometry, scv);
 
                 // velocity errors
                 if constexpr (isMomentumProblem)
                 {
                     if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
                     {
+                        totalVolume_ += Extrusion::volume(fvGeometry, scv);
                         // compute the velocity errors
                         using Indices = typename Problem::Indices;
                         const auto velIdx = Indices::velocity(scv.dofAxis());
@@ -399,8 +407,9 @@ private:
                         sumError[velIdx] += vError * vError * Extrusion::volume(fvGeometry, scv);
                         sumReference[velIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                     }
-                    else if (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
                     {
+                        totalVolume_ += Extrusion::volume(fvGeometry, scv);
                         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
                         {
                             const auto analyticalSolution
@@ -417,10 +426,36 @@ private:
                             sumReference[dirIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                         }
                     }
+                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+                    {
+                        if(!scv.isOverlapping())
+                        {
+                            totalVolume_ += Extrusion::volume(fvGeometry, scv);
+                            for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                            {
+                                const auto analyticalSolution
+                                    = problem_->analyticalSolution(scv.dofPosition(), time)[dirIdx];
+                                const auto numericalSolution
+                                    = curSol[scv.dofIndex()][dirIdx];
+
+                                const Scalar vError = absDiff_(analyticalSolution, numericalSolution);
+                                const Scalar vReference = absDiff_(analyticalSolution, 0.0);
+
+                                maxError[dirIdx] = std::max(maxError[dirIdx], vError);
+                                maxReference[dirIdx] = std::max(maxReference[dirIdx], vReference);
+                                sumError[dirIdx] += vError * vError * Extrusion::volume(fvGeometry, scv);
+                                sumReference[dirIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
+                            }
+                        }
+                    }
+                    else
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Unknown momentum discretization scheme in Navier-Stokes error calculation");
                 }
                 // pressure errors
                 else
                 {
+                    totalVolume_ += Extrusion::volume(fvGeometry, scv);
                     // compute the pressure errors
                     using Indices = typename Problem::Indices;
                     const auto analyticalSolution
@@ -462,6 +497,7 @@ private:
     Scalar time_;
     Scalar hMax_;
     Scalar totalVolume_;
+    std::size_t numDofs_;
 };
 
 /*!
@@ -474,6 +510,7 @@ class Errors
         = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
 
     using ErrorVector = Dune::FieldVector<Scalar, dim+1>;
+    using NumSubProblemVector = Dune::FieldVector<Scalar, 2>;
 
 public:
     template<class SolutionVector>
@@ -519,8 +556,12 @@ public:
         std::copy( lInfAbsoluteMomentum.begin(), lInfAbsoluteMomentum.end(), lInfAbsolute_.begin() + 1 );
         std::copy( lInfRelativeMomentum.begin(), lInfRelativeMomentum.end(), lInfRelative_.begin() + 1 );
 
-        hMax_ = massErrors_.hMax();
-        totalVolume_ = massErrors_.totalVolume();
+        hMax_[0] = massErrors_.hMax();
+        totalVolume_[0] = massErrors_.totalVolume();
+        numDofs_[0] = massErrors_.numDofs();
+        hMax_[1] = momentumErrors_.hMax();
+        totalVolume_[1] = momentumErrors_.totalVolume();
+        numDofs_[1] = momentumErrors_.numDofs();
     }
 
     //! The (absolute) discrete l2 error
@@ -532,14 +573,15 @@ public:
     //! The relative discrete l-infinity error (relative to the discrete loo norm of the reference solution)
     const ErrorVector& lInfRelative() const { return lInfRelative_; }
 
+    //! Volume of scvs considered in error calculation
+    const NumSubProblemVector& totalVolume() const { return totalVolume_; }
+    //! Number of scvs considered in error calculation
+    const NumSubProblemVector& numDofs() const { return numDofs_; }
+    //! Maximum diameter of primal grid elements
+    const NumSubProblemVector& hMax() const { return hMax_; }
+
     //! Time corresponding to the error (returns 0 per default)
     Scalar time() const { return time_; }
-
-    //! Maximum diameter of primal grid elements
-    Scalar hMax() const { return hMax_; }
-
-    //! Volume of domain
-    Scalar totalVolume() const { return totalVolume_; }
 
 private:
     ErrorsSubProblem<MomentumProblem, Scalar> momentumErrors_;
@@ -550,9 +592,11 @@ private:
     ErrorVector lInfAbsolute_;
     ErrorVector lInfRelative_;
 
+    NumSubProblemVector hMax_;
+    NumSubProblemVector totalVolume_;
+    NumSubProblemVector numDofs_;
+
     Scalar time_;
-    Scalar hMax_;
-    Scalar totalVolume_;
 };
 
 template<class Problem, class SolutionVector>

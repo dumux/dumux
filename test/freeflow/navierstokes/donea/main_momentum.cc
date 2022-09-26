@@ -80,13 +80,14 @@ void printErrors(std::shared_ptr<Problem> problem,
 
         std::ofstream logFile(problem->name() + ".csv", std::ios::app);
         auto totalVolume = errors.totalVolume();
+        auto numDofs = errors.numDofs();
         // For the staggered scheme, the control volumes are overlapping
         if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
             totalVolume /= dim;
 
         logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
-        logFile << problem->gridGeometry().numDofs() << ", ";
-        logFile << std::pow(totalVolume / problem->gridGeometry().numDofs(), 1.0/dim);
+        logFile << numDofs << ", ";
+        logFile << std::pow(totalVolume / numDofs, 1.0/dim);
         const auto& componentErrors = errors.l2Absolute();
         // Calculate L2-error for velocity field
         Dune::FieldVector<double, 1> velError(0.0);
@@ -107,10 +108,6 @@ void updateVelocities(
 ){
     auto fvGeometry = localView(gridGeometry);
     auto elemVolVars = localView(gridVariables.curGridVolVars());
-
-    using ShapeValue = typename Dune::FieldVector<double, 1>;
-    std::vector<ShapeValue> shapeValues;
-
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         fvGeometry.bind(element);
@@ -133,6 +130,12 @@ void updateVelocities(
             velocity[eIdx] = evalSolution(element, elemGeo, gridGeometry, elemSol, elemGeo.center());
             for (const auto& scv : scvs(fvGeometry))
                 faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
+        }
+        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble)
+        {
+            const auto elemGeo = element.geometry();
+            const auto elemSol = elementSolution(element, x, gridGeometry);
+            velocity[eIdx] = evalSolution(element, elemGeo, gridGeometry, elemSol, elemGeo.center());
         }
         else
             DUNE_THROW(Dune::Exception, "Unknown discretization type: " << GridGeometry::discMethod);
@@ -215,13 +218,17 @@ int main(int argc, char** argv)
     writer.write(baseName + discSuffix + "_0");
 
     ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
-    faceVtk.addField(dofIdx, "dofIdx");
-    faceVtk.addField(faceVelocity, "velocityVector");
-    faceVtk.addField([&](const auto& is, const auto idx) {
-        const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
-        return facet.partitionType();
-    }, "partitionType");
-    faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
+    // face quantities have no special significance for the PQ1Bubble scheme
+    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble)
+    {
+        faceVtk.addField(dofIdx, "dofIdx");
+        faceVtk.addField(faceVelocity, "velocityVector");
+        faceVtk.addField([&](const auto& is, const auto idx) {
+            const auto& facet = is.inside().template subEntity <1> (is.indexInInside());
+            return facet.partitionType();
+        }, "partitionType");
+        faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
+    }
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
@@ -239,7 +246,9 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     Dumux::updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
     writer.write(baseName + discSuffix + "_1");
-    faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble)
+        faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
 
     Dumux::printErrors(problem, *gridVariables, x);
 
