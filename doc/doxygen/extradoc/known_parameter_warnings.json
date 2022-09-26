@@ -12,7 +12,6 @@
         "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);"
     ],
     "dumux/io/grid/porenetwork/structuredlatticegridcreator.hh": [
-        "grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, \"Grid.Grading\" + std::to_string(i), grading[i]);",
         "positions[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Positions\" + std::to_string(i), std::vector<CoordScalar>{});",
         "grading[i] = getParamFromGroup<std::vector<CoordScalar>>(paramGroup_, \"Grid.Grading\" + std::to_string(i), grading[i]);"
     ],
@@ -37,10 +36,7 @@
         "const Scalar inputThroatInscribedRadius = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadius\", -1.0);",
         "const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatInscribedRadiusN\", 0.1);",
         "const Scalar inputThroatLength = getParamFromGroup<Scalar>(paramGroup_, prefix + \"ThroatLength\", -1.0);",
-        "const bool substractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubstractRadiiFromThroatLength\", true);",
-        "// TODO remove if/else after 3.5 and use const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubtractPoreInscribedRadiiFromThroatLength\", true);",
-        "subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubstractRadiiFromThroatLength\");",
-        "subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubtractPoreInscribedRadiiFromThroatLength\", true);"
+        "const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + \"SubtractPoreInscribedRadiiFromThroatLength\", true);"
     ],
     "dumux/freeflow/navierstokes/staggered/velocitygradients.hh": [
         "static const bool unsymmetrizedGradientForBJ = getParamFromGroup<bool>(problem.paramGroup(),",
@@ -65,6 +61,12 @@
         "const ScalarVector normalGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, \"Grid.Grading\"  + std::to_string(directionIndex), ScalarVector{});"
     ],
     "dumux/assembly/boxlocalassembler.hh": [
+        "static const bool updateAllVolVars = getParamFromGroup<bool>("
+    ],
+    "dumux/assembly/fcdiamondlocalassembler.hh": [
+        "static const bool updateAllVolVars = getParamFromGroup<bool>("
+    ],
+    "dumux/assembly/pq1bubblelocalassembler.hh": [
         "static const bool updateAllVolVars = getParamFromGroup<bool>("
     ]
 }

@@ -341,6 +341,18 @@
             "Whether to refine where source terms are specified"
         ]
     },
+    "Assembly.FCDiamondVolVarsDependOnAllElementDofs": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Whether to update all volvars in the stencil or only those of the associated scv"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
     "Assembly.Multithreading": {
         "explanation": [
             "Whether to enable multi-threaded assembly"
@@ -359,6 +371,18 @@
     "Assembly.NumericDifferenceMethod": {
         "explanation": [
             "The numeric difference method (1: forward differences (default), 0: central differences, -1: backward differences)"
+        ]
+    },
+    "Assembly.PQ1BubbleVolVarsDependOnAllElementDofs": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Whether to update all volvars in the stencil or only those of the associated scv"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "BinaryCoefficients.GasDiffCoeff": {
@@ -673,11 +697,6 @@
         "mode": "manual",
         "type": [
             "std::vector<Scalar>"
-        ]
-    },
-    "Grid.BoundaryFaceMarker": {
-        "explanation": [
-            "With this, the boundary faces can be set in the format xmin xmax ymin ymax (zmin zmax)."
         ]
     },
     "Grid.BoundaryPoreLabels": {
@@ -1100,6 +1119,11 @@
             "Whether the throats on the boundary should be removed."
         ]
     },
+    "Grid.Repeat": {
+        "explanation": [
+            "Number of times to repeat the subgrid pattern in each dimension."
+        ]
+    },
     "Grid.RightBoundary": {
         "explanation": [
             "The end coordinate of a 1D grid"
@@ -1331,7 +1355,19 @@
             "GlobalPosition"
         ]
     },
-    "Grid.SubstractRadiiFromThroatLength": {
+    "Grid.Subregion0,1,....SubstractPoreInscribedRadiiFromThroatLength": {
+        "defaultValue": [
+            "true"
+        ],
+        "explanation": [
+            "Decide whether to subtract the pore radii from the throat length or not for a pore throat not belonging to a subregion."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
+    "Grid.SubstractPoreInscribedRadiiFromThroatLength": {
         "defaultValue": [
             "true"
         ],
