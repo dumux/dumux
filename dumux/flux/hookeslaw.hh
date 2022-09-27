@@ -19,8 +19,23 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Hooke's law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from mechanical deformation.
+ * \brief Stress-Strain relationship according to Hooke's law
+ *
+ * Hooke's law describes a linear stress-strain relationship. \n
+ * \n
+ * \f$\sigma=\mathbf{c}\epsilon\f$
+ * with
+ * \f$\epsilon=\frac{1}{2}( \; \mathrm{grad}( \mathbf{u})+\mathrm{grad}(\mathbf{u})^T)\f$ \n
+ *\n
+ * Furthermore, homogeneous and isotropic materials are assumed. \n
+ * As proportionality constants the first and second Lamé parameters are used.\n
+ * The final stress-strain relationship yields the following:\n
+ * \n
+ * \f$ \sigma= 2 \mu \epsilon+\lambda \mathrm{tr}(\epsilon)\mathbf{I} \f$
+ * \n
+ * \n
+ *
+ *
  */
 #ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 #define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
