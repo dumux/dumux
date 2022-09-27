@@ -258,9 +258,9 @@ missingParameters = [key for key in inputDict if key.replace("-.", "") not in pa
 for missingKey in missingParameters:
 
     MODE = inputDict[missingKey].get("mode")
+    key = missingKey.replace("-.", "")
 
     if MODE == "manual":
-        key = missingKey.replace("-.", "")
         parameterDict[key] = inputDict[missingKey]
         parameterDict[key]["defaultValue"] = inputDict[missingKey]["defaultValue"]
         parameterDict[key]["paramType"] = inputDict[missingKey]["type"]
