@@ -79,7 +79,6 @@ public:
         const auto refElement = Dune::referenceElement<typename Traits::DomainFieldType, dim>(type());
         const auto& center = refElement.position(0, 0);
         p1Basis.evaluateFunction(center, pq1AtCenter_);
-        bubbleAtCenter_ = evaluateBubble_(center, pq1AtCenter_);
     }
 
     /*!
@@ -97,9 +96,9 @@ public:
         out.reserve(size());
         const auto& p1Basis = pq1FiniteElement_.localBasis();
         p1Basis.evaluateFunction(x, out);
-        const auto bubble = evaluateBubble_(x, out);
+        const auto bubble = evaluateBubble_(x);
         out.resize(size());
-        out.back() = bubble/bubbleAtCenter_;
+        out.back() = bubble;
         for (int i = 0; i < numDofs-1; ++i)
             out[i] -= pq1AtCenter_[i]*out.back();
     }
@@ -117,7 +116,7 @@ public:
         std::vector<typename Traits::RangeType> shapeValues;
         p1Basis.evaluateFunction(x, shapeValues);
 
-        const auto bubbleJacobian = evaluateBubbleJacobian_(x, shapeValues, out);
+        const auto bubbleJacobian = evaluateBubbleJacobian_(x);
 
         for (int i = 0; i < numDofs-1; ++i)
             for (int k = 0; k < dim; ++k)
@@ -158,38 +157,55 @@ public:
     }
 private:
     // evaluate bubble function at x
-    // pq1 is the P1/Q1 basis pre-evaluated at x
-    typename Traits::RangeType evaluateBubble_(const typename Traits::DomainType& x,
-                                               const std::vector<typename Traits::RangeType>& pq1) const
+    typename Traits::RangeType evaluateBubble_(const typename Traits::DomainType& x) const
     {
-        return std::accumulate(pq1.begin(), pq1.end(), 1.0, std::multiplies<typename Traits::RangeType>{});
+        if constexpr (type() == Dune::GeometryTypes::simplex(dim))
+        {
+            if constexpr (dim == 2)
+                return 27*x[0]*x[1]*(1-x[0]-x[1]);
+            else if constexpr (dim == 3)
+                return 256*x[0]*x[1]*x[2]*(1-x[0]-x[1]-x[2]);
+        }
+        else if constexpr (type() == Dune::GeometryTypes::cube(dim))
+        {
+            if constexpr (dim == 2)
+                return 16*x[0]*x[1]*(1-x[0])*(1-x[1]);
+            else if constexpr (dim == 3)
+                return 64*x[0]*x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]);
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type());
     }
 
     // evaluate bubble function at x
-    // pq1 is the P1/Q1 basis pre-evaluated at x
-    // pq1Jacobian is the P1/Q1 basis Jacobian pre-evaluated at x
-    typename Traits::JacobianType evaluateBubbleJacobian_(const typename Traits::DomainType& x,
-                                                          const std::vector<typename Traits::RangeType>& pq1,
-                                                          const std::vector<typename Traits::JacobianType>& pq1Jacobian) const
+    typename Traits::JacobianType evaluateBubbleJacobian_(const typename Traits::DomainType& x) const
     {
-        typename Traits::JacobianType bubbleJacobian(0.0);
-        for (int k = 0; k < dim; ++k)
+        if constexpr (type() == Dune::GeometryTypes::simplex(dim))
         {
-            for (int i = 0; i < numDofs-1; ++i)
-            {
-                typename Traits::RangeType value(1.0);
-                for (int j = 0; j < numDofs-1; ++j)
-                    value *= i==j ? pq1Jacobian[i][0][k] : pq1[j][0];
-                bubbleJacobian[0][k] += value;
-            }
+            if constexpr (dim == 2)
+                return {{27*(x[1]*(1-x[0]-x[1]) - x[0]*x[1]),
+                         27*(x[0]*(1-x[0]-x[1]) - x[0]*x[1])}};
+            else if constexpr (dim == 3)
+                return {{256*(x[1]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
+                         256*(x[0]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
+                         256*(x[0]*x[1]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2])}};
         }
-        bubbleJacobian /= bubbleAtCenter_;
-        return bubbleJacobian;
+        else if constexpr (type() == Dune::GeometryTypes::cube(dim))
+        {
+            if constexpr (dim == 2)
+                return {{16*(x[1]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[1])),
+                         16*(x[0]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[0]))}};
+            else if constexpr (dim == 3)
+                return {{64*(x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[1]))*(1-x[2]),
+                         64*(x[0]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[2]),
+                         64*(x[0]*x[1]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[1])}};
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type() << " dim = " << dim);
     }
 
     PQ1FiniteElement pq1FiniteElement_;
     std::vector<typename Traits::RangeType> pq1AtCenter_;
-    typename Traits::RangeType bubbleAtCenter_;
 };
 
 /*!
