@@ -28,11 +28,13 @@
 #include <utility>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 
 
 #include <typeinfo>

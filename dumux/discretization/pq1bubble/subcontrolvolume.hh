@@ -30,6 +30,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
+#include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
 

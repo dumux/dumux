@@ -26,6 +26,8 @@
 #ifndef DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_BOXDFM_FLUXVARIABLESCACHE_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/fluxvariablescaching.hh>

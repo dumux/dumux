@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FV_ELEMENT_GEOMETRY_HH
 
 #include <type_traits>
+#include <optional>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/iteratorrange.hh>

@@ -24,6 +24,7 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>

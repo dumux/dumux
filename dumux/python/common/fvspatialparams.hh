@@ -29,8 +29,10 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
 #include <dune/python/pybind11/pybind11.h>
+
+#include <dumux/common/parameters.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux::Python {
 

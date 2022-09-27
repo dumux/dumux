@@ -57,6 +57,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
 

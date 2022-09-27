@@ -27,6 +27,8 @@
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
+#include "pressureformulation.hh"
+
 namespace Dumux {
 
 namespace MPNCInitialConditions {

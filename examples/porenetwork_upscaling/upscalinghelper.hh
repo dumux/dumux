@@ -30,8 +30,12 @@
 #include <iomanip>
 #include <numeric>
 #include <functional>
+
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/format.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 
