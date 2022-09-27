@@ -355,7 +355,7 @@ public:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // one residual per element facet
-        const auto numElementResiduals = element.subEntities(1);
+        const auto numElementResiduals = fvGeometry.numScv();
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(numElementResiduals);
@@ -484,7 +484,7 @@ public:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(element.subEntities(2));
+        ElementResidualVector partialDerivs(fvGeometry.numScv());
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))

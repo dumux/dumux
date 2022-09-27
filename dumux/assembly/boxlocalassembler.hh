@@ -321,7 +321,7 @@ public:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(element.subEntities(dim));
+        ElementResidualVector partialDerivs(fvGeometry.numScv());
 
         Detail::VolVarsDeflectionHelper deflectionHelper(
             [&] (const auto& scv) -> VolumeVariables& {
@@ -448,7 +448,7 @@ public:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(element.subEntities(dim));
+        ElementResidualVector partialDerivs(fvGeometry.numScv());
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
