@@ -21,7 +21,7 @@
  * \ingroup Flux
  * \brief Advective fluxes according to Darcy's law
  *
- * Darcy's law describes the advective flux in porous media on the macro-scale and is valid in the creeping flow regime (Reynolds number << 1).
+ * Darcy's law describes the advective flux in porous media on the macro-scale and is valid in the creeping flow regime (Reynolds number << 1, Forchheimer extensions is also implemented->see forcheimerslaw.hh).
  * The advective flux characterizes the bulk flow for each fluid phase including all components in case of compositional flow.
  * It is driven by the potential gradient \f$\textbf{grad}\, p - \varrho {\textbf g}\f$,
  * accounting for both pressure-driven and gravitationally-driven flow.

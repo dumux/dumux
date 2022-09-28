@@ -41,6 +41,8 @@ namespace Dumux {
 /*!
  * \ingroup Flux
  * \brief Forchheimer's law
+ *        For a detailed description see dumux/flow/forchheimerslaw.hh
+ *
  *        This file contains the calculation of the Forchheimer velocity
  *        for a given Darcy velocity
  */
@@ -60,65 +62,7 @@ class ForchheimerVelocity
     using DimWorldVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    /*! \brief Compute the Forchheimer velocity of a phase at
-    *          the given sub-control volume face using the Forchheimer equation.
-    *
-    *
-    * see e.g. Nield & Bejan: Convection in Porous Media \cite nield2006
-    *
-    * The relative passability \f$ \eta_r\f$ is the "Forchheimer-equivalent" to the relative
-    * permeability \f$ k_r\f$.
-    * We use the same function as for \f$ k_r \f$ (VG, BC, linear) other authors use a simple
-    * power law e.g.: \f$\eta_{rw} = S_w^3\f$
-    *
-    * Some rearrangements have been made to the original Forchheimer relation:
-    *
-    * \f[ \mathbf{v_\alpha} + c_F \sqrt{\mathbf{K}} \frac{\rho_\alpha}{\mu_\alpha }
-    *     |\mathbf{v_\alpha}| \mathbf{v_\alpha}
-    *     + \frac{k_{r \alpha}}{\mu_\alpha} \mathbf{K} \nabla \left(p_\alpha
-    *     + \rho_\alpha g z \right)=  0
-    * \f]
-    *
-    * This already includes the assumption \f$ k_r(S_w) = \eta_r(S_w)\f$:
-    * - \f$\eta_{rw} = S_w^x\f$ looks very similar to e.g. Van Genuchten relative permeabilities
-    * - Fichot, et al. (2006), Nuclear Engineering and Design, state that several authors claim
-    *   that \f$ k_r(S_w), \eta_r(S_w)\f$ can be chosen equal
-    * - It leads to the equation not degenerating for the case of \f$S_w=1\f$, because I do not
-    *   need to multiply with two different functions, and therefore there are terms not being
-    *   zero.
-    * - If this assumption is not to be made: Some regularization needs to be introduced ensuring
-    *   that not all terms become zero for \f$S_w=1\f$.
-    *
-    * This non-linear equations is solved for \f$\mathbf{v_\alpha}\f$ using Newton's method
-    * and an analytical derivative w.r.t. \f$\mathbf{v_\alpha}\f$.
-    *
-    * The gradient of the Forchheimer relations looks as follows (mind that \f$\sqrt{\mathbf{K}}\f$
-    * is a tensor):
-    *
-    * \f[  f\left(\mathbf{v_\alpha}\right) =
-    * \left(
-    * \begin{array}{ccc}
-    * 1 & 0 &0 \\
-    * 0 & 1 &0 \\
-    * 0 & 0 &1 \\
-    * \end{array}
-    * \right)
-    * +
-    * c_F \frac{\rho_\alpha}{\mu_\alpha} |\mathbf{v}_\alpha| \sqrt{\mathbf{K}}
-    * +
-    * c_F \frac{\rho_\alpha}{\mu_\alpha}\frac{1}{|\mathbf{v}_\alpha|} \sqrt{\mathbf{K}}
-    * \left(
-    * \begin{array}{ccc}
-    * v_x^2 & v_xv_y & v_xv_z \\
-    * v_yv_x & v_{y}^2 & v_yv_z \\
-    * v_zv_x & v_zv_y &v_{z}^2 \\
-    * \end{array}
-    * \right)
-    *  \f]
-    *
-    * \note We restrict the use of Forchheimer's law to diagonal permeability tensors so far. This might be changed to
-    * general tensors using eigenvalue decomposition to get \f$\sqrt{\mathbf{K}}\f$
-    */
+
     template<class ElementVolumeVariables>
     static DimWorldVector velocity(const FVElementGeometry& fvGeometry,
                                    const ElementVolumeVariables& elemVolVars,
