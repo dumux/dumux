@@ -19,9 +19,33 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Fick's law specialized for different discretization schemes.
- *        This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \brief Diffusive mass flux according to Fick's law
+ *
+ *
+ * Fick's law describes the diffusive flux of mass as proportional to it's concentration gradient in a given phase, caused by the Brownian molecular motion. \n
+ * For a single phase system, the proportionality constant is the molecular diffusion coefficient \f$ D_m \f$.
+ *
+ * \n
+ * \f[
+ * \mathbf{j}_{d} = - \varrho D_m \textbf{grad}\, X
+ * \f]
+ * \n
+ *
+ * Extending this to multi-phase, multi-component systems, Fick's law can be expressed as follows:
+ * \n
+ * \f[
+ * \mathbf{j}_{d,\alpha}^\kappa = - \varrho_\alpha D_\alpha^\kappa \textbf{grad}\, X_\alpha^\kappa
+ * \f]
+ * \n
+ *
+ * Here \f$D_\alpha^\kappa\f$ is the molecular diffusion coefficient of component \f$\kappa\f$ in phase \f$\alpha\f$.
+ * \n
+ * In a porous medium, the actual path lines are tortuous due to the impact of the solid matrix. The tortuosity and the impact of
+ * the presence of multiple phases is accounted by using an effective diffusion coefficient \f$D_{pm,\alpha}^\kappa\f$. \n
+ * The effective diffusion coefficient is then a function of tortuosity \f$\tau\f$, porosity \f$\phi\f$, saturation \f$S\f$ and the molecular diffusion coefficient \f$D_{m}\f$
+ * (\f$D_{pm,\alpha}^\kappa=f(\tau,\phi,S_\alpha,D_m)\f$). \n
+ * Models to describe those effects are for example Millington-Quirk \cite millington1961 or Constant-Tortuosity \cite carman1937, \cite bear1972.
+ * \n
  */
 #ifndef DUMUX_FLUX_FICKS_LAW_HH
 #define DUMUX_FLUX_FICKS_LAW_HH
