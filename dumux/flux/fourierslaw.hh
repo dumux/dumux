@@ -19,9 +19,21 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief Fourier's law specialized for different discretization schemes
- *        This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ * \brief Diffusive heat flux according to Fourier's law
+ *
+ * According to Fourier's law, the heat flux is proportional to the gradient of the temperature. \n
+ * The proportonality constant is the thermal conductivity \f$\lambda \f$. \n
+ * The flux is calculated as:\n
+ * \n
+ * \f[
+ * \textbf{j}_{heat} = - \lambda \; \textbf{grad}\, T
+ * \f]
+ * \n
+ * \n
+ * In general, for porous medium local thermal equilibrium is assumed.\n
+ * To account for effects of porous media, an effective thermal conductivity \f$\lambda_{pm}\f$ is used.\n
+ * Models for the effective thermal conductivity are for example: Johansen \cite johansen1977,  simple fluid lumping, Somerton \cite somerton1974.
+ *
  */
 #ifndef DUMUX_FLUX_FOURIERS_LAW_HH
 #define DUMUX_FLUX_FOURIERS_LAW_HH
