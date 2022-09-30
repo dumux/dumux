@@ -18,10 +18,13 @@ such that you can see how a model is developed in \Dumux. As a teaser, we've
 what I've downloaded."}, you question.
 The \Dumux course material is available online:
 \url{https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course}. \par
-In order to download this repository, which acts as an additional module to
-the \Dumux base, you can download an installation script with the following command:
+In order to use this repository, which acts as an additional module to
+the \Dumux base, you can excecute the following commands to download and execute the corresponding installation script:
 \begin{lstlisting}[style=Bash,escapechar=\%]
-$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/raw/releases/%\DumuxVersion%/scripts/install.sh
+$ wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/releases/%\DumuxVersion%/bin/installdumux.py
+$ python3 installdumux.py --dumux-version %\DumuxVersion% --dune-version %\DuneVersion%
+$ python3 dumux/bin/installexternal.py course
+$ ./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all
 \end{lstlisting}
 This script will install \texttt{dumux}, it's Dune dependencies, and the \texttt{dumux-course}
 repository. Within the directory \texttt{dumux-course} there are a series of exercises
