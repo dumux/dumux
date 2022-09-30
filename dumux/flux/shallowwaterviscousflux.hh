@@ -53,9 +53,22 @@ static constexpr bool implementsFrictionLaw()
 
 /*!
  * \ingroup Flux
- * \brief Computes the shallow water viscous momentum flux due to (turbulent) viscosity
- *        by adding all surrounding shear stresses.
- *        For now implemented strictly for 2D depth-averaged models (i.e. 3 equations)
+ * \brief Compute the shallow water viscous momentum flux due to (turbulent) viscosity.
+ *
+ * The viscous momentum flux
+ * \f[
+ * \int \int_{V} \mathbf{\nabla} \cdot \nu_t h \mathbf{\nabla} \mathbf{u} dV
+ * \f]
+ * is re-written using Gauss' divergence theorem to:
+ * \f[
+ * \int_{S_f} \nu_t h \mathbf{\nabla} \mathbf{u} \cdot \mathbf{n_f} dS
+ * \f]
+ *
+ * The turbulent viscosity \f$ \nu_t \f$ is calculated by adding a vertical (Elder-like)
+ * and a horizontal (Smagorinsky-like) part.
+ *
+ * For now the calculation of the shallow water viscous momentum flux is implemented
+ * strictly for 2D depth-averaged models (i.e. 3 equations).
  */
 template<class NumEqVector, typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
 class ShallowWaterViscousFlux
@@ -69,15 +82,6 @@ public:
      * \ingroup Flux
      * \brief Compute the viscous momentum flux contribution from the interface
      *        shear stress
-     *
-     *        The viscous momentum flux
-     *        \f[
-     *        \int \int_{V} \mathbf{\nabla} \cdot \nu_t h \mathbf{\nabla} \mathbf{u} dV
-     *        \f]
-     *        is re-written using Gauss' divergence theorem to:
-     *        \f[
-     *        \int_{S_f} \nu_t h \mathbf{\nabla} \mathbf{u} \cdot \mathbf{n_f} dS
-     *        \f]
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
@@ -187,7 +191,7 @@ public:
                 * and the magnitude of the stress (rate-of-strain) tensor:
                 *
                 * \f[
-                * nu_t^h = (c^h h)^2 \sqrt{ 2\left(\frac{\partial u}{\partial x}\right)^2 + \left(\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x}\right)^2 + 2\left(\frac{\partial v}{\partial y}\right)^2 }
+                * \nu_t^h = (c^h h)^2 \sqrt{ 2\left(\frac{\partial u}{\partial x}\right)^2 + \left(\frac{\partial u}{\partial y} + \frac{\partial v}{\partial x}\right)^2 + 2\left(\frac{\partial v}{\partial y}\right)^2 }
                 * \f]
                 *
                 * However, based on the velocity vectors in the direct neighbours of the volume face, it is not possible to compute all components of the stress tensor.
@@ -202,7 +206,7 @@ public:
                 * In other words, the present approximation of the horizontal contribution to the turbulent viscosity reduces to:
                 *
                 * \f[
-                * nu_t^h = (c^h h)^2 \sqrt{ 2\left(\frac{\partial u}{\partial n}\right)^2 + 2\left(\frac{\partial v}{\partial n}\right)^2 }
+                * \nu_t^h = (c^h h)^2 \sqrt{ 2\left(\frac{\partial u}{\partial n}\right)^2 + 2\left(\frac{\partial v}{\partial n}\right)^2 }
                 * \f]
                 *
                 It should be noted that this simplified approach is formally inconsistent and will result in a turbulent viscosity that is dependent on the grid (orientation).
