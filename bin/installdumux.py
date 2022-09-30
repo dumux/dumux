@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(
 )
 # Optional arguments
 parser.add_argument("--dune-version", default="2.8", help="Dune version to be checked out.")
-parser.add_argument("--dumux-version", default="3.5", help="Dumux version to be checked out.")
+parser.add_argument("--dumux-version", default="3.6", help="Dumux version to be checked out.")
 args = vars(parser.parse_args())
 
 duneBranch = (
