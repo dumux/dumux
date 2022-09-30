@@ -16,7 +16,12 @@ class _Version:
         self._version = [int(v) for v in version.strip(" ").strip("\n").split(".")]
 
     def __lt__(self, other) -> bool:
-        return all(v1 < v2 for v1, v2 in zip(self._version, other._version))
+        for versionSelf, versionOther in zip(self._version, other._version):
+            if versionSelf < versionOther:
+                return True
+            if versionSelf > versionOther:
+                return False
+        return False
 
 
 parser = argparse.ArgumentParser(
