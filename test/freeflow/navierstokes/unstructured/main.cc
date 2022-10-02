@@ -151,7 +151,7 @@ int main(int argc, char** argv)
         static constexpr double cDrafReference = 5.57953523384;
         static constexpr double cLiftReference = 0.010618948146;
         static constexpr double pDiffReference = 0.11752016697;
-        const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficientWithIntegration(*momentumGridVariables, x[momentumIdx]);
+        const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
         std::cout << "cDrag: " << cDrag
                 << " (reference: " << cDrafReference << ")"
                 << "\n"
