@@ -31,13 +31,17 @@
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
+#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
+#include <dumux/discretization/pq1bubble/elementsolution.hh>
 
 #include "evalsolution.hh"
 
 namespace Dumux {
 
+// some implementation details
+namespace Detail{
 /*!
- * \brief Evaluates the gradient of a given box element solution to a given global position.
+ * \brief Evaluates the gradient of a control-volume finite element solution to a given global position.
  * \ingroup Discretization
  *
  * \param element The element
@@ -51,13 +55,13 @@ namespace Dumux {
  *         the PrimaryVariables object (i.e. numEq). Each entry is
  *         a GlobalCoordinate object holding the priVar gradient.
  */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalGradients(const Element& element,
-                   const typename Element::Geometry& geometry,
-                   const typename FVElementGeometry::GridGeometry& gridGeometry,
-                   const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                   const typename Element::Geometry::GlobalCoordinate& globalPos,
-                   bool ignoreState = false)
+template<class Element, class GridGeometry, class CVFEElemSol>
+auto evalCVFEGradients(const Element& element,
+                       const typename Element::Geometry& geometry,
+                       const GridGeometry& gridGeometry,
+                       const CVFEElemSol& elemSol,
+                       const typename Element::Geometry::GlobalCoordinate& globalPos,
+                       bool ignoreState = false)
 {
     // determine if all states are the same at all vertices
     using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
@@ -80,15 +84,15 @@ auto evalGradients(const Element& element,
         const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
 
         // interpolate the gradients
-        Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
-        for (int i = 0; i < element.subEntities(Element::Geometry::mydimension); ++i)
+        Dune::FieldVector<GlobalPosition, CVFEElemSol::PrimaryVariables::dimension> result( GlobalPosition(0.0) );
+        for (int i = 0; i < shapeJacobian.size(); ++i)
         {
             // the global shape function gradient
             GlobalPosition gradN;
             jacInvT.mv(shapeJacobian[i][0], gradN);
 
             // add gradient to global privar gradients
-            for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+            for (unsigned int pvIdx = 0; pvIdx < CVFEElemSol::PrimaryVariables::dimension; ++pvIdx)
             {
                 GlobalPosition tmp(gradN);
                 tmp *= elemSol[i][pvIdx];
@@ -100,8 +104,76 @@ auto evalGradients(const Element& element,
     }
     else
     {
-        DUNE_THROW(Dune::NotImplemented, "Element vertices have different phase states. Enforce calculation by setting ignoreState to true.");
+        DUNE_THROW(Dune::NotImplemented, "Element dofs have different phase states. Enforce calculation by setting ignoreState to true.");
     }
+}
+
+} // end namespace Detail
+
+/*!
+ * \brief Evaluates the gradient of a given box element solution to a given global position.
+ * \ingroup Discretization
+ *
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalGradients(const Element& element,
+                   const typename Element::Geometry& geometry,
+                   const typename FVElementGeometry::GridGeometry& gridGeometry,
+                   const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                   const typename Element::Geometry::GlobalCoordinate& globalPos,
+                   bool ignoreState = false)
+{
+    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
+}
+
+/*!
+ * \brief Evaluates the gradient of a given diamond scheme element solution to a given global position.
+ * \ingroup Discretization
+ *
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalGradients(const Element& element,
+                   const typename Element::Geometry& geometry,
+                   const typename FVElementGeometry::GridGeometry& gridGeometry,
+                   const FaceCenteredDiamondElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                   const typename Element::Geometry::GlobalCoordinate& globalPos,
+                   bool ignoreState = false)
+{
+    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
+}
+
+/*!
+ * \brief Evaluates the gradient of a given pq1bubble scheme element solution to a given global position.
+ * \ingroup Discretization
+ *
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
+ * \param globalPos The global position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalGradients(const Element& element,
+                   const typename Element::Geometry& geometry,
+                   const typename FVElementGeometry::GridGeometry& gridGeometry,
+                   const PQ1BubbleElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                   const typename Element::Geometry::GlobalCoordinate& globalPos,
+                   bool ignoreState = false)
+{
+    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
 }
 
 /*!
