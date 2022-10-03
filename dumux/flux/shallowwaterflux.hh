@@ -31,7 +31,18 @@ namespace Dumux {
 
 /*!
  * \ingroup Flux
- * \brief Computes the shallow water flux by solving a riemann problem.
+ * \brief Prepare and compute the shallow water advective flux.
+ *
+ * Prepares the Riemann problem for the advective flux for the 2D shallow
+ * water model. The actual model uses an exact Riemann solver after Torro
+ * and the reconstruction after Audusse. A flux limiter is
+ * applied to limit water flow for small water depths.
+ *
+ * The computed water flux of the Riemann solver is given in m^2/s, the
+ * momentum fluxes are given in m^3/s^2. The Riemann flux is multiplied by
+ * scvf.area() (given in m) to obtain the flux over the face.
+ *
+ * \todo Add more numerical fluxes and reconstruction methods.
  */
 template<class NumEqVector>
 class ShallowWaterFlux
@@ -44,17 +55,8 @@ public:
 
     /*!
      * \ingroup Flux
-     * \brief Prepares the Riemann problem for the advective flux for
-     *        the 2D shallow water model. The actual model uses an
-     *        exact Riemann solver after Torro and the reconstruction
-     *        after Audusse and a flux limiter for small water depths.
+     * \brief Prepares and compute the shallow water advective flux.
      *
-     *        The computed water flux of the Riemann solver is given
-     *        in m^2/s, the momentum fluxes are given in m^3/s^2. The
-     *        Riemann flux is multiplied by scvf.area() (given in m
-     *        for a 2D domain) to get the flux over the face.
-     *
-     * \todo The choice of the Riemann solver should be more flexible
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
     static NumEqVector flux(const Problem& problem,
