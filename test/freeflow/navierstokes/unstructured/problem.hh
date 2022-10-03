@@ -32,6 +32,7 @@
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/grid/griddata.hh>
 #include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
@@ -210,7 +211,6 @@ public:
     {
         auto fvGeometry = localView(this->gridGeometry());
         auto elemVolVars = localView(gridVariables.curGridVolVars());
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
 
         BoundaryFluxes forces(0.0);
         Scalar cylinderSurface = 0.0;
@@ -224,203 +224,29 @@ public:
                     if (scvf.boundary() && onCylinderBoundary_(scvf.ipGlobal()))
                     {
                         elemVolVars.bind(element, fvGeometry, v);
-                        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
-                        const auto& fluxVarCache = elemFluxVarsCache[scvf];
-
-                        Dune::FieldMatrix<Scalar, 2, 2> stress(0.0);
-                        for (const auto& scv : scvs(fvGeometry))
-                        {
-                            const auto velocity = elemVolVars[scv].velocity();
-                            for (int dir = 0; dir < dim; ++dir)
-                                stress[dir].axpy(velocity[dir], fluxVarCache.gradN(scv.indexInElement()));
-                        }
-
-                        stress *= viscosity_;
-
-                        for (int dir = 0; dir < dim; ++dir)
-                            stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
-
-                        BoundaryFluxes normalStress = mv(stress, scvf.unitOuterNormal());
-                        forces.axpy(scvf.area(), normalStress);
-
-                        cylinderSurface += scvf.area();
-                    }
-                }
-            }
-        }
-
-        const Scalar dragForce = -forces[0];
-        const Scalar liftForce = -forces[1];
-
-        const Scalar uMean = 0.2;
-        const Scalar lChar = 0.1;
-        const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
-
-        // sanity check
-        std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << std::endl;
-        std::cout << "Cylinder surface: " << cylinderSurface
-                  << " (reference: 0.31415926535)"
-                  << std::endl;
-
-        return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
-    }
-
-    //! Computes drag and lift coefficient benchmark indicator
-    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
-    template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<P::isMomentumProblem(), int> = 0>
-    auto evalDragAndLiftCoefficientWithoutBubble(const GridVariables& gridVariables, const SolutionVector& v) const
-    {
-        auto fvGeometry = localView(this->gridGeometry());
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-
-        BoundaryFluxes forces(0.0);
-        Scalar cylinderSurface = 0.0;
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bind(element);
-            if (fvGeometry.hasBoundaryScvf())
-            {
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    if (scvf.boundary() && onCylinderBoundary_(scvf.ipGlobal()))
-                    {
-                        using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
-                        using P1FiniteElement = Dune::LagrangeCubeLocalFiniteElement<CoordScalar, Scalar, dim, 1>;
-                        P1FiniteElement p1FiniteElement;
-
-                        elemVolVars.bind(element, fvGeometry, v);
-                        const auto& localBasis = p1FiniteElement.localBasis();
-
-                        const auto geometry = element.geometry();
-                        Dune::FieldMatrix<Scalar, 2, 2> stress(0.0);
-                        using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
-                        using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-                        using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-                        using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
-                        std::vector<GlobalPosition> gradN;
-                        std::vector<ShapeJacobian> shapeJacobian;
-                        std::vector<ShapeValue> shapeValues;
-                        const auto ipGlobal = scvf.ipGlobal();
-                        const auto ipLocal = geometry.local(ipGlobal);
-                        JacobianInverseTransposed jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-                        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-                        localBasis.evaluateFunction(ipLocal, shapeValues);
-
-                        shapeJacobian.push_back(ShapeJacobian(0.0));
-                        shapeValues.push_back(ShapeValue(0.0));
-
-                        // compute the gradN at for every scv/dof
-                        gradN.resize(fvGeometry.numScv());
-                        for (const auto& scv: scvs(fvGeometry))
-                            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
-
-                        for (const auto& scv : scvs(fvGeometry))
-                        {
-                            const auto velocity = elemVolVars[scv].velocity();
-                            for (int dir = 0; dir < dim; ++dir)
-                                stress[dir].axpy(velocity[dir], gradN[scv.indexInElement()]);
-                        }
-
-                        stress += getTransposed(stress);
-                        stress *= viscosity_;
-
-                        for (int dir = 0; dir < dim; ++dir)
-                            stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
-
-                        BoundaryFluxes normalStress = mv(stress, scvf.unitOuterNormal());
-                        forces.axpy(scvf.area(), normalStress);
-
-                        cylinderSurface += scvf.area();
-                    }
-                }
-            }
-        }
-
-        const Scalar dragForce = -forces[0];
-        const Scalar liftForce = -forces[1];
-
-        const Scalar uMean = 0.2;
-        const Scalar lChar = 0.1;
-        const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
-
-        // sanity check
-        std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << std::endl;
-        std::cout << "Cylinder surface: " << cylinderSurface
-                  << " (reference: 0.31415926535)"
-                  << std::endl;
-
-        return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
-    }
-
-    //! Computes drag and lift coefficient benchmark indicator
-    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
-    template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<P::isMomentumProblem(), int> = 0>
-    auto evalDragAndLiftCoefficientWithIntegration(const GridVariables& gridVariables, const SolutionVector& v) const
-    {
-        auto fvGeometry = localView(this->gridGeometry());
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
-
-        BoundaryFluxes forces(0.0);
-        Scalar cylinderSurface = 0.0;
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bind(element);
-            if (fvGeometry.hasBoundaryScvf())
-            {
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    if (scvf.boundary() && onCylinderBoundary_(scvf.ipGlobal()))
-                    {
-                        elemVolVars.bind(element, fvGeometry, v);
-                        Dune::FieldMatrix<Scalar, 2, 2> stress(0.0);
-                        const auto& localBasis = fvGeometry.feLocalBasis();
-                        Scalar area = 0.0;
+                        Dune::FieldVector<GlobalPosition, 2> stress(GlobalPosition(0.0));
 
                         const auto geometry = element.geometry();
                         const auto isgeometry = fvGeometry.geometry(scvf);
                         const auto& quad = Dune::QuadratureRules<Scalar, std::decay_t<decltype(isgeometry)>::mydimension>::rule(isgeometry.type(), 5);
                         for (auto&& qp : quad)
                         {
-                            Dune::FieldMatrix<Scalar, 2, 2> stressLocal(0.0);
-                            using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
-                            using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-                            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-                            using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
-                            std::vector<GlobalPosition> gradN;
-                            std::vector<ShapeJacobian> shapeJacobian;
-                            std::vector<ShapeValue> shapeValues;
                             const auto ipGlobal = isgeometry.global(qp.position());
-                            const auto ipLocal = geometry.local(ipGlobal);
-                            JacobianInverseTransposed jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-                            localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-                            localBasis.evaluateFunction(ipLocal, shapeValues);
-
-                            // compute the gradN at for every scv/dof
-                            gradN.resize(fvGeometry.numScv());
-                            for (const auto& scv: scvs(fvGeometry))
-                                jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
-
-                            for (const auto& scv : scvs(fvGeometry))
-                            {
-                                const auto velocity = elemVolVars[scv].velocity();
-                                for (int dir = 0; dir < dim; ++dir)
-                                    stressLocal[dir].axpy(velocity[dir], gradN[scv.indexInElement()]);
-                            }
-                            area += qp.weight()*isgeometry.integrationElement(qp.position());
-                            stressLocal += getTransposed(stressLocal);
+                            const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                            auto stressLocal = evalGradients(element, geometry, fvGeometry.gridGeometry(), elemSol, ipGlobal);
                             stressLocal *= qp.weight()*isgeometry.integrationElement(qp.position());
-
-                            stress += stressLocal;
+                            stress = stress + stressLocal;
                         }
                         stress *= viscosity_;
                         stress /= scvf.area();
 
-                        // Add pressure contribuition
+                        BoundaryFluxes normalStress(0.0);
                         for (int dir = 0; dir < dim; ++dir)
+                        {
+                            // Add pressure contribuition
                             stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
-
-                        BoundaryFluxes normalStress = mv(stress, scvf.unitOuterNormal());
+                            normalStress[dir] = stress[dir]*scvf.unitOuterNormal();
+                        }
                         forces.axpy(scvf.area(), normalStress);
 
                         cylinderSurface += scvf.area();
