@@ -9,12 +9,30 @@ Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 
 ### Improvements and Enhancements
 
+- __bin/extract_as_new_module.py__: Allow for main branch named `main` or `master`
+
 - __Components__: Fixed a bug in `TabularizedComponent` that caused data races in multithreaded applications
 
 - __Discretization__: There is now defaults for `FluxVariablesCache` and `FluxVariablesCacheFiller` for box/cctpfa/ccmpfa/staggered
 that implement an empty cache (i.e. nothing is cached for the flux variables).
 
 - __Discretization__: Added a new face-centered FV scheme based on non-conforming FE spaces `FCDiamond`
+
+- __Discretization__: Added a new FV scheme based on conforming FE spaces `pq1bubble`
+
+- __Discretization__: Added a `basicGridGeometry` which isn't discretization specific and may be shared among multiple `gridGeometry`s on the same grid.
+
+- __Grid__: Added stamped subgrids which allow for domains to be generated from repeated images
+
+- __Parallelization__: Update grid caches in parallel
+
+- __Parallelization__: GridView confirms whether multithreaded iteration of the grid is permitted
+
+- __Multidomain__: Added a parallel scalar product for multidomain problems
+
+- __Assembly__: Enabled multithreaded assembly for embedded problems
+
+- __Multiphase and multicomponent__: Added an initial helper to choose an appropriate constraintsolver based on present phases
 
 - __Properties__: There is now a `GetPropOr` helper that evaluates to the property type if that type is specialized for the given TypeTag and a given type if not.
 
@@ -46,6 +64,9 @@ Then code possibly fails to compile. The fix is to implement the same caching co
 - __Cell centered__: The `computeTpfa/MpfaTransmissibilities()` interfaces now require an additional parameter `fvGeometry`
 - __Staggered__: `fluxVars.advectivFluxForCellCenter()/inflowOutflowBoundaryFlux()` interfaces now require parameter `fvGeometry` instead of `element`
 - __Discretization__: `Extrusion::area/volume(scvf/scv)` have been deprecated, use `Extrusion::area/volume(fvGeometry, scvf/scv)` instead
+- __Richards__: Using the extended Richards model accounting for vapor diffusion in the gaseous phase by setting the property `EnableWaterDiffusionInAir` and the use of the corresponding template parameter in `richards/model.hh` has been deprecated. Use the new model `ExtendedRichards` instead
+- __Navier-Stokes__: The unified `NavierStokesParentProblem` covering both momentum and mass problems has been deprecated, use separated problems instead
+- __Box__: `BoxElementVolumeVariables` and `BoxGridVolumeVariables` have been deprecated, use unified `CVFE` volume variables instead
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
