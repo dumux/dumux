@@ -16,7 +16,12 @@ class _Version:
         self._version = [int(v) for v in version.strip(" ").strip("\n").split(".")]
 
     def __lt__(self, other) -> bool:
-        return all(v1 < v2 for v1, v2 in zip(self._version, other._version))
+        for versionSelf, versionOther in zip(self._version, other._version):
+            if versionSelf < versionOther:
+                return True
+            if versionSelf > versionOther:
+                return False
+        return False
 
 
 parser = argparse.ArgumentParser(
@@ -26,7 +31,7 @@ parser = argparse.ArgumentParser(
 )
 # Optional arguments
 parser.add_argument("--dune-version", default="2.8", help="Dune version to be checked out.")
-parser.add_argument("--dumux-version", default="3.5", help="Dumux version to be checked out.")
+parser.add_argument("--dumux-version", default="3.6", help="Dumux version to be checked out.")
 args = vars(parser.parse_args())
 
 duneBranch = (
