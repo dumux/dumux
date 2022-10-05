@@ -135,7 +135,6 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = initialPressure_;
-        values.setState(Indices::bothPhases);
         return values;
     }
 
