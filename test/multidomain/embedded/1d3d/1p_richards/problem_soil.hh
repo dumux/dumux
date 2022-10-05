@@ -198,7 +198,6 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars({initPressure_});
-        priVars.setState(Indices::bothPhases);
         return priVars;
     }
 

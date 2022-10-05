@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RichardsModel
+ * \ingroup ExtenndedRichardsModel
  * \brief The primary variable switch for the extended Richards model.
  */
 
-#ifndef DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
-#define DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
+#ifndef DUMUX_RICHARDSEXTENDED_PRIMARY_VARIABLE_SWITCH_HH
+#define DUMUX_RICHARDSEXTENDED_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
@@ -61,9 +61,6 @@ protected:
         static const bool usePriVarSwitch = getParam<bool>("Problem.UsePrimaryVariableSwitch");
         if (!usePriVarSwitch)
             return false;
-
-        if (!VolumeVariables::enableWaterDiffusionInAir())
-            DUNE_THROW(Dune::InvalidStateException, "The Richards primary variable switch only works with water diffusion in air enabled!");
 
         static constexpr int liquidCompIdx = FluidSystem::liquidPhaseIdx;
 
