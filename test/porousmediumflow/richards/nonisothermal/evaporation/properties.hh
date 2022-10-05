@@ -32,7 +32,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 
-#include <dumux/porousmediumflow/richards/model.hh>
+#include <dumux/porousmediumflow/richardsextended/model.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
@@ -43,7 +43,7 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct RichardsNIEvaporation { using InheritsFrom = std::tuple<RichardsNI>; };
+struct RichardsNIEvaporation { using InheritsFrom = std::tuple<ExtendedRichardsNI>; };
 struct RichardsNIEvaporationBox { using InheritsFrom = std::tuple<RichardsNIEvaporation, BoxModel>; };
 struct RichardsNIEvaporationCC { using InheritsFrom = std::tuple<RichardsNIEvaporation, CCTpfaModel>; };
 } // end namespace TTag
@@ -68,9 +68,6 @@ struct SpatialParams<TypeTag, TTag::RichardsNIEvaporation>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = RichardsNISpatialParams<GridGeometry, Scalar>;
 };
-
-template<class TypeTag>
-struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNIEvaporation> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

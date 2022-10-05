@@ -255,7 +255,6 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(liquidPhaseOnly);
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
 
         priVars[temperatureIdx] = 290.;

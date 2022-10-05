@@ -68,6 +68,12 @@ struct SpatialParams<TypeTag, TTag::RichardsNIConvection>
     using type = RichardsNISpatialParams<GridGeometry, Scalar>;
 };
 
+// TODO: remove after release (3.6)
+// Set the primary variables type
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::RichardsNIConvection>
+{ using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+
 } // end namespace Dumux::Properties
 
 #endif

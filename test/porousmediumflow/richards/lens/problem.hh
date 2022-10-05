@@ -184,7 +184,6 @@ private:
         const Scalar sw = 0.0;
         const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
         values[pressureIdx] = nonwettingReferencePressure() - pc;
-        values.setState(bothPhases);
         return values;
     }
 

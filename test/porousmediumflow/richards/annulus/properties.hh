@@ -74,6 +74,12 @@ public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, GGTraits>;
 };
 
+// TODO: remove after release (3.6)
+// Set the primary variables type
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::RichardsAnnulus>
+{ using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+
 } // end namespace Dumux::Properties
 
 #endif
