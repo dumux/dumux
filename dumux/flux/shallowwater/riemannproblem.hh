@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup ShallowWaterFlux
- * \brief This file includes a function to construct the Riemann problem
+ * \brief This file includes a function to construct the Riemann problem.
  *
  */
 #ifndef DUMUX_FLUX_SHALLOW_WATER_RIEMANN_PROBLEM_HH
@@ -34,7 +34,7 @@ namespace ShallowWater {
 
 /*!
  * \ingroup ShallowWaterFlux
- * \brief Construct a Riemann problem and solve it
+ * \brief Construct a Riemann problem and solve it.
  *
  *
  * Riemann problem applies the hydrostatic reconstruction, uses the
