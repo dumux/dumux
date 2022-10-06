@@ -19,8 +19,19 @@
 /*!
  * \file
  * \ingroup Flux
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ * \brief  Diffusive heat flux according to non-equilibrium Fourier's law
+ *
+ * This law is based on the general form of Fourier's law which describes the diffusive
+ * heat flux as proportional to a temperature gradient \f$\textbf{grad}\, T_\alpha \f$.
+ * In contrast to the general form, a local thermodynamic equilibrium is not assumed.
+ * Thus, the heat flux for the different phases \f$\alpha \f$ needs to be solved.
+ * \n
+ * \f[
+ * \textbf{j}_{heat,\alpha} = - \lambda_\alpha \; \textbf{grad}\, T_\alpha
+ * \f]
+ * \n
+ * With \f$\lambda_\alpha \f$ as the thermal conductivity for either a solid, liquid or
+ * gaseous phase.
  */
 #ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
