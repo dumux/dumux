@@ -818,7 +818,7 @@ private:
      * \param values container to store property values
      */
     template<class PropFunc, class MinPFunc, class MaxPFunc>
-    static void initTPArray_(PropFunc&& f, MinPFunc&& minP,  MaxPFunc&& maxP, std::vector<typename RawComponent::Scalar>& values)
+    static void initTPArray_(const PropFunc& f, const MinPFunc& minP, const MaxPFunc& maxP, std::vector<typename RawComponent::Scalar>& values)
     {
         Dumux::parallelFor(nTemp_, [&](std::size_t iT)
         {
@@ -850,9 +850,9 @@ private:
      * \param rhoMax container to store maximum density values
      */
     template<class RhoFunc, class MinPFunc, class MaxPFunc>
-    static void initMinMaxRhoArray_(RhoFunc&& rho,
-                                    MinPFunc&& minP,
-                                    MaxPFunc&& maxP,
+    static void initMinMaxRhoArray_(const RhoFunc& rho,
+                                    const MinPFunc& minP,
+                                    const MaxPFunc& maxP,
                                     std::vector<typename RawComponent::Scalar>& rhoMin,
                                     std::vector<typename RawComponent::Scalar>& rhoMax)
     {
@@ -879,7 +879,8 @@ private:
      * \param rhoMax container with maximum density values
      */
     template<class PFunc>
-    static void initPressureArray_(std::vector<typename RawComponent::Scalar>& pressure, PFunc&& p,
+    static void initPressureArray_(std::vector<typename RawComponent::Scalar>& pressure,
+                                   const PFunc& p,
                                    const std::vector<typename RawComponent::Scalar>& rhoMin,
                                    const std::vector<typename RawComponent::Scalar>& rhoMax)
     {
