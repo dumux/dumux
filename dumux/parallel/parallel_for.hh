@@ -67,7 +67,7 @@ public:
     }
 
 private:
-    FunctorType functor_;
+    const FunctorType& functor_;
     std::size_t count_;
 };
 
@@ -86,7 +86,7 @@ public:
     }
 
 private:
-    FunctorType functor_;
+    const FunctorType& functor_;
     Dune::IntegralRange<std::size_t> range_;
 };
 #endif
@@ -107,7 +107,7 @@ public:
     }
 
 private:
-    FunctorType functor_;
+    const FunctorType& functor_;
     std::size_t count_;
 };
 #endif // HAVE_TBB
@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    FunctorType functor_;
+    const FunctorType& functor_;
     std::size_t count_;
 };
 #endif // HAVE_KOKKOS
@@ -150,7 +150,7 @@ public:
     }
 
 private:
-    FunctorType functor_;
+    const FunctorType& functor_;
     std::size_t count_;
 };
 #endif // HAVE_OPENMP
