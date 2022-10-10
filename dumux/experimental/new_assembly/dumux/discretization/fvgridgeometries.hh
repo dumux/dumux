@@ -69,6 +69,12 @@ public:
     , normal_(std::move(normal))
     {}
 
+    /*!
+     * \brief Forbid copies to avoid issues with the lifetime of this
+              object being bound to that of the underlying face
+     */
+    SubControlVolumeFace(const SubControlVolumeFace&) = delete;
+
     ctype area() const { return face_->area(); }
     const Coordinate& center() const { return face_->center(); }
     const Coordinate& ipGlobal() const { return face_->center(); }
