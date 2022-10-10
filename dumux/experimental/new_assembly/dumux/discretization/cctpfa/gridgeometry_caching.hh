@@ -137,7 +137,7 @@ private:
         const auto& face = pushFace_(faceSeed);
         const auto n = getNormal_(faceSeed.insideFacet());
         pushScvf_(faceSeed, face, Coordinate{n}, nIdx++, faceSeed.insideFacet().elementIndex);
-        for ([[maybe_unused]] const auto& outsideFacet : faceSeed.outsideFacets())
+        for (const auto& outsideFacet : faceSeed.outsideFacets())
         {
             auto outsideN = n;
             outsideN *= -1.0;

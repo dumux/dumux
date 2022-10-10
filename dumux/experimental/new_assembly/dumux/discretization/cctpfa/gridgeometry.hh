@@ -41,7 +41,7 @@ namespace Dumux {
 
 /*!
  * \ingroup CCTpfaDiscretization
- * \brief Default traits for the `CCTpfaGridGeometry`
+ * \brief Default traits for `CCTpfaGridGeometry`
  */
 template<typename GV>
 struct DefaultCCTpfaGridGeometryTraits
@@ -49,8 +49,8 @@ struct DefaultCCTpfaGridGeometryTraits
 {
     //! Per default, we allow for maximally one hanging node per facet
     static constexpr int maxAdjacentElementLevelDifference = 1;
-    //! Per default, we set an upper limit of 8 neighbors on surface/network grids
-    static constexpr int maxNumBranchesPerScvf = int(GV::dimension) < int(GV::dimensionworld) ? 8 : 1;
+    //! Per default, we set an upper limit of 7 branches (8 neighbors) on surface/network grids
+    static constexpr int maxNumBranchesPerScvf = int(GV::dimension) < int(GV::dimensionworld) ? 7 : 1;
 };
 
 /*!

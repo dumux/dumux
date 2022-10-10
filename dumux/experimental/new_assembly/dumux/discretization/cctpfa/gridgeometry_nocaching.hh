@@ -121,10 +121,7 @@ public:
 
     void bind(const Element& e) &
     {
-        clear_();
-        set_(e);
-        reserve_();
-        makeInsideGeometries_();
+        bindElement(e);
         makeOutsideGeometries_();
     }
 
