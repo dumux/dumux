@@ -72,7 +72,11 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
         DUNE_THROW(Dune::InvalidStateException, "Unexpected numScv()");
 
     const auto tol = tolerance(gridGeometry);
-    const auto testLocalView = [&] (const auto& element, const auto& localView, bool withStencil) {
+    const auto testLocalView = [&] <typename LocalView> (const auto& element,
+                                                         const LocalView& localView,
+                                                         bool withStencil) {
+        static_assert(Dumux::Concepts::CCGridGeometryLocalView<LocalView>);
+
         int count = 0;
         int scvDofIdx = -1;
         for (const auto& scv : scvs(localView))
