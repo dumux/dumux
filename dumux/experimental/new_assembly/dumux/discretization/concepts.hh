@@ -25,6 +25,9 @@
 #define DUMUX_DISCRETIZATION_CONCEPTS_HH
 
 #include <concepts>
+#include <utility>
+
+#include <dumux/experimental/new_assembly/dumux/common/concepts.hh>
 
 namespace Dumux::Concepts {
 
@@ -36,6 +39,33 @@ concept ElementMapper = requires(const T& t, const typename GridView::template C
 template<typename T, typename GridView>
 concept UpdatableElementMapper = ElementMapper<T, GridView> and requires(T& t, const GridView& gv) {
     { t.update(gv) };
+};
+
+template<typename T>
+concept CCGridGeometryLocalView = requires(T& localView, const T& constLocalView) {
+    typename T::GridGeometry;
+    typename T::Element;
+    typename T::SubControlVolume;
+    typename T::SubControlVolumeFace;
+
+    { constLocalView.gridGeometry() } -> std::same_as<const typename T::GridGeometry&>;
+    { constLocalView.element() } -> std::same_as<const typename T::Element&>;
+
+    { localView.bind(std::declval<const typename T::Element&>()) };
+    { localView.bindElement(std::declval<const typename T::Element&>()) };
+
+    { scvs(constLocalView) } -> RangeOf<typename T::SubControlVolume>;
+    { scvfs(constLocalView) } -> RangeOf<typename T::SubControlVolumeFace>;
+
+    { neighborScvs(constLocalView) } -> RangeOf<typename T::SubControlVolume>;
+    { neighborScvfs(constLocalView) } -> RangeOf<typename T::SubControlVolumeFace>;
+
+    { constLocalView.onBoundary(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<bool>;
+    { constLocalView.insideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.outsideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
+
+    { constLocalView.geometry(std::declval<const typename T::SubControlVolume&>()) };
+    { constLocalView.geometry(std::declval<const typename T::SubControlVolumeFace&>()) };
 };
 
 } // end namespace Dumux::Concepts
