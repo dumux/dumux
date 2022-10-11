@@ -951,9 +951,9 @@ private:
                                  const GetPIdx& getPIdx, const MinPFunc& minP, const MaxPFunc& maxP)
     {
         Scalar alphaT = tempIdx_(T);
-        if (alphaT < 0 || alphaT >= nTemp_ - 1) {
+        if (alphaT < 0 || alphaT >= nTemp_ - 1)
             return std::numeric_limits<Scalar>::quiet_NaN();
-        }
+
         using std::clamp;
         const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp_ - 2);
         alphaT -= iT;
@@ -990,6 +990,9 @@ private:
     {
         using std::clamp;
         Scalar alphaT = tempIdx_(T);
+        if (alphaT < 0 || alphaT >= nTemp_ - 1)
+            return std::numeric_limits<Scalar>::quiet_NaN();
+
         const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp_ - 2);
         alphaT -= iT;
 
