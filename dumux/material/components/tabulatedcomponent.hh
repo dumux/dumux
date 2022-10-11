@@ -948,7 +948,7 @@ private:
     //! returns an interpolated value depending on temperature and pressure
     template<class GetPIdx, class MinPFunc, class MaxPFunc>
     static Scalar interpolateTP_(const std::vector<typename RawComponent::Scalar>& values, Scalar T, Scalar p,
-                                 GetPIdx&& getPIdx, MinPFunc&& minP, MaxPFunc&& maxP)
+                                 const GetPIdx& getPIdx, const MinPFunc& minP, const MaxPFunc& maxP)
     {
         Scalar alphaT = tempIdx_(T);
         if (alphaT < 0 || alphaT >= nTemp_ - 1) {
