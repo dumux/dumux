@@ -7,7 +7,7 @@ target_compile_definitions(test_ff_rans2c_kepsilon PUBLIC "TYPETAG=FlatPlateNCKE
 
 dumux_add_test(NAME test_ff_rans2c_kepsilon_twolayer
               TARGET test_ff_rans2c_kepsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
                             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_twolayer
 
 dumux_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
               TARGET test_ff_rans2c_kepsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
                             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -30,7 +30,7 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
 dumux_add_test(NAME test_ff_rans2c_sst
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCSST
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -44,7 +44,7 @@ dumux_add_test(NAME test_ff_rans2c_sst
 dumux_add_test(NAME test_ff_rans2c_komega
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCKOmega
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -56,7 +56,7 @@ dumux_add_test(NAME test_ff_rans2c_komega
 dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCLowReKEpsilon
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -68,7 +68,7 @@ dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
 dumux_add_test(NAME test_ff_rans2c_oneeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCOneEq
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -81,7 +81,7 @@ dumux_add_test(NAME test_ff_rans2c_oneeq
 dumux_add_test(NAME test_ff_rans2c_zeroeq
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCZeroEq
-              LABELS freeflow rans
+              LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
