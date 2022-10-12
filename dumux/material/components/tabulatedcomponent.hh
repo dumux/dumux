@@ -893,11 +893,9 @@ private:
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
+            using std::min;
             rhoMin[iT] = rho(temperature, minP(iT));
-            if (iT < nTemp_ - 1)
-                rhoMax[iT] = rho(temperature, maxP(iT + 1));
-            else
-                rhoMax[iT] = rho(temperature, maxP(iT));
+            rhoMax[iT] = rho(temperature, maxP(min(iT + 1, nTemp_ - 1)));
         });
     }
 
