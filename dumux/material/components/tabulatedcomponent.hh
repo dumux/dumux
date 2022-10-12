@@ -933,7 +933,7 @@ private:
     static Scalar interpolateT_(const std::vector<typename RawComponent::Scalar>& values, Scalar T)
     {
         Scalar alphaT = tempIdx_(T);
-        if (alphaT < 0 || alphaT >= nTemp_ - 1)
+        if (alphaT < 0 - eps_ || alphaT >= nTemp_ - 1 + eps_)
             return std::numeric_limits<Scalar>::quiet_NaN();
 
         const auto iT = static_cast<int>(alphaT);
@@ -949,7 +949,7 @@ private:
                                  const GetPIdx& getPIdx, const MinPFunc& minP, const MaxPFunc& maxP)
     {
         Scalar alphaT = tempIdx_(T);
-        if (alphaT < 0 || alphaT >= nTemp_ - 1)
+        if (alphaT < 0 - eps_ || alphaT >= nTemp_ - 1 + eps_)
             return std::numeric_limits<Scalar>::quiet_NaN();
 
         using std::clamp;
@@ -988,7 +988,7 @@ private:
     {
         using std::clamp;
         Scalar alphaT = tempIdx_(T);
-        if (alphaT < 0 || alphaT >= nTemp_ - 1)
+        if (alphaT < 0 -eps_ || alphaT >= nTemp_ - 1 + eps_)
             return std::numeric_limits<Scalar>::quiet_NaN();
 
         const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp_ - 2);
@@ -1336,6 +1336,8 @@ private:
     static Scalar densityMin_;
     static Scalar densityMax_;
     static std::size_t nDensity_;
+
+    static constexpr Scalar eps_ = 1.0e-7;
 };
 
 template <class RawComponent, bool useVaporPressure>
