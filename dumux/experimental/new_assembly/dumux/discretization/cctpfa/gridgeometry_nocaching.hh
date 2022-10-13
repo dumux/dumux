@@ -206,6 +206,9 @@ public:
         return storage_.scvf(faceNeighbors_[faceIdx].neighborScvfs[i]);
     }
 
+    std::size_t numOutsideNeighbors(const SubControlVolumeFace& scvf) const
+    { return scvfToSeedMap_[scvf.id]->numOutsideNeighbors(); }
+
 private:
     void clear_()
     {

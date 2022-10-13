@@ -253,6 +253,12 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Could not find flip scvf");
     }
 
+    std::size_t numOutsideNeighbors(const SubControlVolumeFace& scvf) const
+    {
+        const auto& [seed, _] = gridGeometry_.scvfToSeedMap_[scvf.id];
+        return seed.numOutsideNeighbors();
+    }
+
 private:
     void clear_()
     {

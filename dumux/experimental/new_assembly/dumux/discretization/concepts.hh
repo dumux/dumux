@@ -63,6 +63,8 @@ concept CCGridGeometryLocalView = requires(T& localView, const T& constLocalView
     { constLocalView.onBoundary(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<bool>;
     { constLocalView.insideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
     { constLocalView.outsideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.outsideScv(std::declval<const typename T::SubControlVolumeFace&>(), unsigned{}) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.numOutsideNeighbors(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::integral;
 
     { constLocalView.geometry(std::declval<const typename T::SubControlVolume&>()) };
     { constLocalView.geometry(std::declval<const typename T::SubControlVolumeFace&>()) };
