@@ -3,6 +3,12 @@ dumux_add_test(
     SOURCES test_grid_geometry.cc
     LABELS unit new_assembly
 )
+dumux_add_test(
+    NAME test_cctpfa_grid_geometry_non_conforming
+    CMAKE_GUARD dune-alugrid_FOUND
+    SOURCES test_grid_geometry_non_conforming.cc
+    LABELS unit new_assembly
+)
 
 # todo: delete after testing phase
 dumux_add_test(
