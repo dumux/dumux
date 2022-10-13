@@ -29,8 +29,6 @@
 #include <cassert>
 #include <optional>
 
-#include <dumux/geometry/volume.hh>
-
 #include <dumux/experimental/new_assembly/dumux/common/storage.hh>
 #include <dumux/experimental/new_assembly/dumux/geometry/normal.hh>
 #include <dumux/experimental/new_assembly/dumux/discretization/fvgridgeometrystorage.hh>
@@ -112,7 +110,7 @@ private:
         {
             const auto& element = this->element(eIdx);
             const auto& eg = element.geometry();
-            storage_.pushScv({eIdx, convexPolytopeVolume(eg), eg.center()});
+            storage_.pushScv({eIdx, eg.volume(), eg.center()});
             for (unsigned int facetIdx = 0; facetIdx < element.subEntities(1); ++facetIdx)
                 for (const auto& faceSeed : this->faceSeeds_(eIdx, facetIdx))
                     if (faceSeed.insideFacet().elementIndex == eIdx &&
@@ -149,7 +147,7 @@ private:
     {
         const auto& element = this->element(faceSeed.insideFacet().elementIndex);
         const auto& faceGeo = element.template subEntity<1>(faceSeed.insideFacet().facetIndex).geometry();
-        const auto faceIdx = storage_.pushFace({convexPolytopeVolume(faceGeo), faceGeo.center()});
+        const auto faceIdx = storage_.pushFace({faceGeo.volume(), faceGeo.center()});
         return storage_.face(faceIdx);
     }
 

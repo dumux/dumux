@@ -29,8 +29,6 @@
 #include <cassert>
 #include <optional>
 
-#include <dumux/geometry/volume.hh>
-
 #include <dumux/experimental/new_assembly/dumux/common/storage.hh>
 #include <dumux/experimental/new_assembly/dumux/geometry/normal.hh>
 #include <dumux/experimental/new_assembly/dumux/discretization/fvgridgeometrystorage.hh>
@@ -265,7 +263,7 @@ private:
                 const auto& [elemIdx, elemFacetIdx] = faceSeed.insideFacet();
                 const auto& element = gridGeometry_.element(elemIdx);
                 const auto& faceGeo = element.template subEntity<1>(elemFacetIdx).geometry();
-                const std::size_t faceIdx = storage_.pushFace({convexPolytopeVolume(faceGeo), faceGeo.center()});
+                const std::size_t faceIdx = storage_.pushFace({faceGeo.volume(), faceGeo.center()});
                 const std::size_t curScvfIdx = storage_.pushScvf({
                     storage_.face(faceIdx),
                     getNormal(insideElemGeometry, facetIdx)
@@ -319,9 +317,7 @@ private:
     auto pushScv_(const std::integral auto dofIndex, const typename Element::Geometry& geo)
     {
         const std::size_t scvIdx = storage_.pushScv({
-            dofIndex,
-            convexPolytopeVolume(geo),
-            geo.center()
+            dofIndex, geo.volume(), geo.center()
         });
         storage_.scv(scvIdx).id = scvIdx;
         return scvIdx;
