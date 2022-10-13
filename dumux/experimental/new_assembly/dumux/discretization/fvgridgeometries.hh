@@ -56,6 +56,7 @@ private:
  * \brief A sub-control volume face is a face with a defined orientation of the outer normal vector.
  *        That is, there exists a unique sub-control volume face for each neighboring control volume
  *        of a face.
+ * \note The lifetime of this object is bound to the lifetime of the underlying `Face`
  */
 template<typename Coordinate,
          typename ctype = typename Coordinate::value_type,
@@ -68,12 +69,6 @@ public:
     : face_(&face)
     , normal_(std::move(normal))
     {}
-
-    /*!
-     * \brief Forbid copies to avoid issues with the lifetime of this
-              object being bound to that of the underlying face
-     */
-    SubControlVolumeFace(const SubControlVolumeFace&) = delete;
 
     ctype area() const { return face_->area(); }
     const Coordinate& center() const { return face_->center(); }
