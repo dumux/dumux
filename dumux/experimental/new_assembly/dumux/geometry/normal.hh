@@ -31,14 +31,19 @@
 namespace Dumux {
 
 // TODO: proper helper (with compile-time overloads)
+//       this should also get rid of the currently appearing compiler warnings
 template<typename Geometry>
 auto getNormal(const Geometry& geo, unsigned int facetIdx)
 {
-    static_assert(Geometry::mydimension == 2);
-    const auto rotateClockWiseAndScale = [] (auto&& v) {
+    static_assert(Geometry::coorddimension == 2);
+    const auto scale = [] (auto&& v) {
+        v /= v.two_norm();
+        return v;
+    };
+    const auto rotateClockWiseAndScale = [&] (auto&& v) {
         std::swap(v[0], v[1]);
         v[1] *= -1.0;
-        v /= v.two_norm();
+        scale(v);
         return v;
     };
 
@@ -66,6 +71,8 @@ auto getNormal(const Geometry& geo, unsigned int facetIdx)
             );
         }
     }
+    if (geo.type() == Dune::GeometryTypes::line)
+        return scale(geo.global(refElement.position(facetIdx, 1)) - geo.center());
 
     DUNE_THROW(Dune::NotImplemented, "TODO");
 }
