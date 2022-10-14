@@ -1165,7 +1165,8 @@ private:
         if (alphaT < 0 - 1e-7*nTemp || alphaT >= nTemp - 1 + 1e-7*nTemp)
             return std::numeric_limits<Scalar>::quiet_NaN();
 
-        const auto iT = static_cast<int>(alphaT);
+        using std::clamp;
+        const auto iT = clamp<int>(static_cast<int>(alphaT), 0, nTemp - 2);
         alphaT -= iT;
 
         return values[iT    ]*(1 - alphaT) +
