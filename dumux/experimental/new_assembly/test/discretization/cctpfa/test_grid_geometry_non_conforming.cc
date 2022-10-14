@@ -92,21 +92,30 @@ auto expectedScvfCenters(const GridView& gridView, const Element& element)
 template<typename GridGeometry, typename Element>
 void checkScvfAreas(const GridGeometry& gridGeometry, const Element& element)
 {
+    const auto fvGeometry = localView(gridGeometry).bindElement(element);
     auto expectedAreas = expectedScvfAreas(gridGeometry.gridView(), element);
     std::ranges::sort(expectedAreas);
 
+    const auto testScvfAreas = [&] (auto& scvfAreas) {
+        if (expectedAreas.size() != scvfAreas.size())
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected number of scvfs");
+
+        using std::abs;
+        std::ranges::sort(scvfAreas);
+        for (std::size_t i = 0; i < scvfAreas.size(); ++i)
+            if (abs(scvfAreas[i] - expectedAreas[i]) > 1e-6)
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected scvf area");
+    };
+
     std::vector<double> scvfAreas;
-    for (const auto& scvf : scvfs(localView(gridGeometry).bind(element)))
+    for (const auto& scvf : scvfs(fvGeometry))
         scvfAreas.push_back(scvf.area());
-    std::ranges::sort(scvfAreas);
+    testScvfAreas(scvfAreas);
 
-    if (expectedAreas.size() != scvfAreas.size())
-        DUNE_THROW(Dune::InvalidStateException, "Unexpected number of scvfs");
-
-    using std::abs;
-    for (std::size_t i = 0; i < scvfAreas.size(); ++i)
-        if (abs(scvfAreas[i] - expectedAreas[i]) > 1e-6)
-            DUNE_THROW(Dune::InvalidStateException, "Unexpected scvf area");
+    scvfAreas.clear();
+    for (const auto& scvf : scvfs(fvGeometry))
+        scvfAreas.push_back(fvGeometry.geometry(scvf).volume());
+    testScvfAreas(scvfAreas);
 }
 
 template<typename GridGeometry, typename Element>
