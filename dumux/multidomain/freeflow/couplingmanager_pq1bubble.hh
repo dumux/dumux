@@ -695,10 +695,10 @@ private:
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
 
-//! we support multithreaded assembly
+//! TODO The infrastructure for multithreaded assembly is implemented (see code in the class above) but the current implementation seems to have a bug and may cause race conditions. The result is different when running in parallel. After this has been fixed activate multithreaded assembly by inheriting from std::true_type here.
 template<class T>
 struct CouplingManagerSupportsMultithreadedAssembly<PQ1BubbleFreeFlowCouplingManager<T>>
-: public std::true_type {};
+: public std::false_type {};
 
 } // end namespace Dumux
 
