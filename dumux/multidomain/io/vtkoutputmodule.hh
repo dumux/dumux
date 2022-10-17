@@ -103,7 +103,7 @@ public:
         });
     }
 
-    //! Write the data for this timestep to file for all output moduless
+    //! Write the data for this timestep to file for all output modules
     void write(double t, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         using namespace Dune::Hybrid;

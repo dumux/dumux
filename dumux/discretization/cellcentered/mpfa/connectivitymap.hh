@@ -22,7 +22,7 @@
  * \brief Stores the face indices corresponding to the neighbors of an element
  *        that contribute to the derivative calculation. Depending on if an
  *        mpfa scheme leads to a symmetric/unsymmetric sparsity pattern, the
- *        adequate implementation of the connectiviy map is chosen.
+ *        adequate implementation of the connectivity map is chosen.
  */
 #ifndef DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
 #define DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
