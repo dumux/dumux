@@ -82,7 +82,7 @@ codespell:
   stage: linting
   script:
     - codespell --version
-    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git" --ignore-words-list="ges"
+    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf" --ignore-words-list="ges"
   needs:
     - job: configure
       artifacts: true
