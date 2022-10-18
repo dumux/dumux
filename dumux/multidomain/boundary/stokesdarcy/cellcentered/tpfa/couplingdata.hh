@@ -90,12 +90,12 @@ public:
                                     const SubControlVolumeFace<freeFlowIdx>& scvf) const
     {
         static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<porousMediumIdx>, Properties::ModelTraits>::numFluidPhases();
-
+        static const bool useCellPressureAtInterface = getParam<bool>("Problem.UseCellPressureAtInterface", false);
         Scalar momentumFlux(0.0);
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
 
         // - p_pm * n_pm = p_pm * n_ff
-        if constexpr (numPhasesDarcy > 1)
+        if (numPhasesDarcy > 1 || useCellPressureAtInterface)
             momentumFlux = stokesContext.volVars.pressure(couplingPhaseIdx(porousMediumIdx));
         else // use pressure reconstruction for single phase models
             momentumFlux = pressureAtInterface_(element, scvf, stokesElemFaceVars, stokesContext);
