@@ -86,6 +86,8 @@ class DefaultStorage
 
 public:
     using ParentType::ParentType;
+    using typename ParentType::iterator;
+    using typename ParentType::const_iterator;
 
     using ParentType::size;
     using ParentType::empty;
