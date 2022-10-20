@@ -27,3 +27,34 @@ dumux_add_test(
     COMMAND ./test_cctpfa_grid_geometry_corner_point
     CMD_ARGS -Grid.File "cp_grid.grdecl"
 )
+
+# todo: delete after testing phase
+dune_symlink_to_source_files(FILES "performance_test.py")
+dumux_add_test(
+    NAME test_grid_geometry_performance_no_cache_new_implementation
+    SOURCES test_grid_geometry_performance.cc
+    LABELS unit new_assembly
+    COMPILE_DEFINITIONS USE_OLD=0
+    COMPILE_DEFINITIONS USE_CACHING=0
+)
+dumux_add_test(
+    NAME test_grid_geometry_performance_no_cache_old_implementation
+    SOURCES test_grid_geometry_performance.cc
+    LABELS unit new_assembly
+    COMPILE_DEFINITIONS USE_OLD=1
+    COMPILE_DEFINITIONS USE_CACHING=0
+)
+dumux_add_test(
+    NAME test_grid_geometry_performance_with_cache_new_implementation
+    SOURCES test_grid_geometry_performance.cc
+    LABELS unit new_assembly
+    COMPILE_DEFINITIONS USE_OLD=0
+    COMPILE_DEFINITIONS USE_CACHING=1
+)
+dumux_add_test(
+    NAME test_grid_geometry_performance_with_cache_old_implementation
+    SOURCES test_grid_geometry_performance.cc
+    LABELS unit new_assembly
+    COMPILE_DEFINITIONS USE_OLD=1
+    COMPILE_DEFINITIONS USE_CACHING=1
+)
