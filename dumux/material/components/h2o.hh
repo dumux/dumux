@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cassert>
 
+#include <dumux/nonlinear/findscalarroot.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/common/exceptions.hh>
 
@@ -677,29 +678,24 @@ public:
      */
     static Scalar liquidPressure(Scalar temperature, Scalar density)
     {
-        // We use the newton method for this. For the initial value we
-        // assume the pressure to be 10% higher than the vapor
-        // pressure
-        Scalar pressure = 1.1*vaporPressure(temperature);
-        Scalar eps = pressure*1e-7;
-
-        Scalar deltaP = pressure*2;
-
-        using std::abs;
-        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
-            Scalar f = liquidDensity(temperature, pressure) - density;
-
-            Scalar df_dp;
-            df_dp = liquidDensity(temperature, pressure + eps);
-            df_dp -= liquidDensity(temperature, pressure - eps);
-            df_dp /= 2*eps;
-
-            deltaP = - f/df_dp;
-
-            pressure += deltaP;
+        // We use Brent's method for this, with a pressure range including the surroundings of the
+        // vapor pressure line
+        Scalar minPressure = vaporPressure(temperature)/1.11;
+        Scalar maxPressure = 100e6;
+        const auto residualFunction = [&] (const Scalar pressure) {
+            return liquidDensity(temperature, pressure) - density;
+        };
+        try
+        {
+            return findScalarRootBrent(minPressure, maxPressure, residualFunction);
         }
-
-        return pressure;
+        catch (const NumericalProblem& e)
+        {
+            DUNE_THROW(NumericalProblem,
+                    "searched for pressure(T=" << temperature << ",rho=" << density
+                    <<") in [" << minPressure << ", " << maxPressure << "]: "
+                    << e.what());
+        }
     }
 
     /*!
