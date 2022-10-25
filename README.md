@@ -1,3 +1,13 @@
+About this repository
+==============
+This repository forks the master branch of Dumux-Repo,
+applying the fix to the temporary derivate of storage term
+in the multi-domain poromechanics problems.
+
+- show me [the local change log](localchangelog.md)
+
+<details>
+<summary markdown="span"> original readme </summary>
 <img src="doc/logo/dumux_logo_hires_whitebg.png" alt="dumux logo" width="400"/>
 
 What is DuMu<sup>x</sup>?
@@ -162,3 +172,4 @@ the degree of backwards compatibility be decided by a vote in one of the monthly
 [5]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [6]: https://www.iws.uni-stuttgart.de/en/lh2/
 [7]: https://doi.org/10.1016/j.camwa.2020.02.012
+</details>
