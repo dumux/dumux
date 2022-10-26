@@ -1,0 +1,116 @@
+diff --git a/opm/grid/cpgrid/CpGridData.hpp b/opm/grid/cpgrid/CpGridData.hpp
+index 6234815..5ce03fc 100644
+--- a/opm/grid/cpgrid/CpGridData.hpp
++++ b/opm/grid/cpgrid/CpGridData.hpp
+@@ -697,8 +697,7 @@ struct BaseMover
+ template<class DataHandle>
+ struct Mover<DataHandle,0> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,0>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView, CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+ 
+@@ -715,8 +714,7 @@ struct Mover<DataHandle,0> : public BaseMover<DataHandle>
+ template<class DataHandle>
+ struct Mover<DataHandle,1> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,1>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView, CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+ 
+@@ -739,8 +737,7 @@ struct Mover<DataHandle,1> : public BaseMover<DataHandle>
+ template<class DataHandle>
+ struct Mover<DataHandle,3> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,3>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView, CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+     void operator()(std::size_t from_cell_index,std::size_t to_cell_index)
+diff --git a/opm/grid/cpgrid/Intersection.hpp b/opm/grid/cpgrid/Intersection.hpp
+index bed2e44..f44fd06 100644
+--- a/opm/grid/cpgrid/Intersection.hpp
++++ b/opm/grid/cpgrid/Intersection.hpp
+@@ -288,6 +288,10 @@ namespace Dune
+         {
+         public:
+             typedef cpgrid::Intersection Intersection;
++            typedef std::ptrdiff_t difference_type;
++            typedef Intersection value_type;
++            typedef const Intersection* pointer;
++            typedef const Intersection& reference;
+ 
+             IntersectionIterator()
+                 : Intersection()
+@@ -310,6 +314,13 @@ namespace Dune
+                 return *this;
+             }
+ 
++            IntersectionIterator operator++(int)
++            {
++                auto tmp(*this);
++		++(*this);
++		return tmp;
++            }
++
+             const Intersection* operator->() const
+             {
+                 assert(!Intersection::isAtEnd());
+diff --git a/opm/grid/cpgrid/Iterators.hpp b/opm/grid/cpgrid/Iterators.hpp
+index 03f0197..bf934d4 100644
+--- a/opm/grid/cpgrid/Iterators.hpp
++++ b/opm/grid/cpgrid/Iterators.hpp
+@@ -60,6 +60,7 @@ namespace Dune
+             /// @todo Doc me!
+             /// @param
+             Iterator(const CpGridData& grid, int index, bool orientation);
++            Iterator() = default;
+ 
+             /// Increment operator.
+             /// Implementation note: This class is a friend of
+@@ -76,6 +77,14 @@ namespace Dune
+                     EntityRep<cd>::increment();
+                 return *this;
+             }
++
++            Iterator operator++(int)
++            {
++                auto tmp(*this);
++		++(*this);
++		return tmp;
++            }
++
+             /// Const member by pointer operator.
+             const Entity<cd>* operator->() const
+             {
+diff --git a/tests/test_cartgrid.cpp b/tests/test_cartgrid.cpp
+index f753eae..8b64e64 100644
+--- a/tests/test_cartgrid.cpp
++++ b/tests/test_cartgrid.cpp
+@@ -36,7 +36,7 @@
+ #include <opm/grid/UnstructuredGrid.h>
+ #include <cstdio>
+ 
+-BOOST_AUTO_TEST_SUITE ()
++BOOST_AUTO_TEST_SUITE (facenumbers_test_suite)
+ 
+ BOOST_AUTO_TEST_CASE (facenumbers)
+ {
+diff --git a/tests/test_regionmapping.cpp b/tests/test_regionmapping.cpp
+index 029b1ce..3c62aa2 100644
+--- a/tests/test_regionmapping.cpp
++++ b/tests/test_regionmapping.cpp
+@@ -34,7 +34,7 @@
+ #include <algorithm>
+ #include <map>
+ 
+-BOOST_AUTO_TEST_SUITE ()
++BOOST_AUTO_TEST_SUITE (forward_test_suite)
+ 
+ 
+ BOOST_AUTO_TEST_CASE (Forward)

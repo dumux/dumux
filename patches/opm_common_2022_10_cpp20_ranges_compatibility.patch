@@ -1,0 +1,81 @@
+diff --git a/cmake/Modules/OpmInit.cmake b/cmake/Modules/OpmInit.cmake
+index c2ddbd5..5013f47 100644
+--- a/cmake/Modules/OpmInit.cmake
++++ b/cmake/Modules/OpmInit.cmake
+@@ -138,7 +138,7 @@ endif ()
+ # Compiler standard version needs to be requested here as prereqs is included
+ # before OpmLibMain and some tests need/use CXX_STANDARD_VERSION (e.g. pybind11)
+ # Languages and global compiler settings
+-set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD 20)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+diff --git a/src/opm/io/eclipse/SummaryNode.cpp b/src/opm/io/eclipse/SummaryNode.cpp
+index cf71ea0..4a63d49 100644
+--- a/src/opm/io/eclipse/SummaryNode.cpp
++++ b/src/opm/io/eclipse/SummaryNode.cpp
+@@ -151,9 +151,8 @@ std::string Opm::EclIO::SummaryNode::unique_key(number_renderer render_number) c
+     if (auto opt = display_number(render_number))
+         key_parts.emplace_back(opt.value());
+ 
+-    auto compose_key = [](std::string& key, const std::string& key_part) -> std::string {
+-        constexpr auto delimiter { ':' } ;
+-        return key.empty() ? key_part : key + delimiter + key_part;
++    auto compose_key = [](const std::string& key, const std::string& key_part) -> std::string {
++        return key.empty() ? key_part : key + ":" + key_part;
+     };
+ 
+     return std::accumulate(std::begin(key_parts), std::end(key_parts), std::string(), compose_key);
+diff --git a/src/opm/output/eclipse/report/WELSPECS.cpp b/src/opm/output/eclipse/report/WELSPECS.cpp
+index c76237b..751a66b 100644
+--- a/src/opm/output/eclipse/report/WELSPECS.cpp
++++ b/src/opm/output/eclipse/report/WELSPECS.cpp
+@@ -433,7 +433,7 @@ namespace {
+         std::string grid_block(const context&, std::size_t, std::size_t) const {
+             const std::array<int,3> ijk { connection.getI() + 1, connection.getJ() + 1, connection.getK() + 1 } ;
+ 
+-            auto compose_coordinates { [](std::string& out, int in) -> std::string {
++            auto compose_coordinates { [](const std::string& out, int in) -> std::string {
+                 constexpr auto delimiter { ',' } ;
+                 std::string coordinate_part { std::to_string(in) } ;
+                 right_align(coordinate_part, 3);
+diff --git a/tests/test_CopyablePtr.cpp b/tests/test_CopyablePtr.cpp
+index 733d0a3..950a1c1 100644
+--- a/tests/test_CopyablePtr.cpp
++++ b/tests/test_CopyablePtr.cpp
+@@ -47,7 +47,7 @@ struct B {
+ };
+ } // namespace
+ 
+-BOOST_AUTO_TEST_SUITE ()
++BOOST_AUTO_TEST_SUITE (suite_copyable)
+ 
+ BOOST_AUTO_TEST_CASE (copyable)
+ {
+diff --git a/tests/test_calculateCellVol.cpp b/tests/test_calculateCellVol.cpp
+index 4ef70d0..1dc4070 100644
+--- a/tests/test_calculateCellVol.cpp
++++ b/tests/test_calculateCellVol.cpp
+@@ -30,7 +30,7 @@
+ 
+ //using namespace Opm;
+ 
+-BOOST_AUTO_TEST_SUITE ()
++BOOST_AUTO_TEST_SUITE (suite_calc_cellvol)
+ 
+ BOOST_AUTO_TEST_CASE (calc_cellvol)
+ {
+diff --git a/tests/test_cubic.cpp b/tests/test_cubic.cpp
+index 329036b..db5e9d7 100644
+--- a/tests/test_cubic.cpp
++++ b/tests/test_cubic.cpp
+@@ -45,7 +45,7 @@
+ #include <opm/common/utility/numeric/MonotCubicInterpolator.hpp>
+ using namespace Opm;
+ 
+-BOOST_AUTO_TEST_SUITE ()
++BOOST_AUTO_TEST_SUITE (suite_cubic)
+ 
+ BOOST_AUTO_TEST_CASE (cubic)
+ {
