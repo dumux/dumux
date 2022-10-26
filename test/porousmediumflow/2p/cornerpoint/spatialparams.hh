@@ -26,7 +26,7 @@
 #define DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 
 #if HAVE_OPM_GRID
-#include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/input/eclipse/Deck/Deck.hpp>
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
@@ -70,7 +70,9 @@ public:
 
         if (deck_->hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PORO").getRawDoubleData();
+            if (deck->index("PORO").size() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "More than one PORO index");
+            std::vector<double> eclVector = (*deck_)[deck->index("PORO")[0]].getRawDoubleData();
             porosity_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -83,7 +85,9 @@ public:
 
         if (deck_->hasKeyword("PERMX")) {
             std::cout << "Found PERMX..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PERMX").getRawDoubleData();
+            if (deck->index("PERMX").size() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "More than one PERMX index");
+            std::vector<double> eclVector = (*deck_)[deck->index("PERMX")[0]].getRawDoubleData();
             permX_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -97,7 +101,9 @@ public:
 
         if (deck_->hasKeyword("PERMZ")) {
             std::cout << "Found PERMZ..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PERMZ").getRawDoubleData();
+            if (deck->index("PERMZ").size() != 1)
+                DUNE_THROW(Dune::InvalidStateException, "More than one PERMZ index");
+            std::vector<double> eclVector = (*deck_)[deck->index("PERMZ")[0]].getRawDoubleData();
             permZ_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
