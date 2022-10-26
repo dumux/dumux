@@ -31,7 +31,7 @@ namespace Dumux::Concepts {
 
 //! Concept for a range with a specified range value type
 template<typename T, typename ValueType>
-concept RangeOf = std::ranges::range<T> and std::same_as<std::ranges::range_value_t<T>, ValueType>;
+concept RangeOf = std::ranges::range<T> and std::convertible_to<std::ranges::range_value_t<T>, ValueType>;
 
 } // namespace Dumux::Concepts
 

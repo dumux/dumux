@@ -42,9 +42,9 @@ concept GridView = requires(const T& t) {
     typename T::template Codim<T::dimension>;
     typename T::template Codim<T::dimension>::Entity;
 
-    { elements(t) } -> RangeOf<const typename T::template Codim<0>::Entity>;
-    { vertices(t) } -> RangeOf<const typename T::template Codim<T::dimension>::Entity>;
-    { intersections(t, std::declval<typename T::template Codim<0>::Entity>()) } -> RangeOf<const typename T::Intersection>;
+    { elements(t) } -> RangeOf<typename T::template Codim<0>::Entity>;
+    { vertices(t) } -> RangeOf<typename T::template Codim<T::dimension>::Entity>;
+    { intersections(t, std::declval<typename T::template Codim<0>::Entity>()) } -> RangeOf<typename T::Intersection>;
 };
 
 template<typename T>
