@@ -24,7 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_FV_GRID_GEOMETRIES_HH
 #define DUMUX_DISCRETIZATION_FV_GRID_GEOMETRIES_HH
 
+#include <concepts>
 #include <utility>
+#include <type_traits>
 
 namespace Dumux {
 
@@ -38,9 +40,11 @@ class Face
 {
 public:
     Face() = default;
-    Face(ctype area, Coordinate&& center)
+
+    template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
+    Face(ctype area, C&& center)
     : area_(area)
-    , center_(std::move(center))
+    , center_(std::forward<C>(center))
     {}
 
     ctype area() const { return area_; }
@@ -65,9 +69,11 @@ class SubControlVolumeFace
 {
 public:
     SubControlVolumeFace() = default;
-    SubControlVolumeFace(const Face& face, Coordinate&& normal)
+
+    template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
+    SubControlVolumeFace(const Face& face, C&& normal)
     : face_(&face)
-    , normal_(std::move(normal))
+    , normal_(std::forward<C>(normal))
     {}
 
     ctype area() const { return face_->area(); }
@@ -88,12 +94,12 @@ class SubControlVolumeBase
 {
 public:
     SubControlVolumeBase() = default;
-    SubControlVolumeBase(GridIndex dofIndex,
-                         ctype volume,
-                         Coordinate&& center)
+
+    template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
+    SubControlVolumeBase(GridIndex dofIndex, ctype volume, C&& center)
     : dofIndex_(dofIndex)
     , volume_(volume)
-    , center_(std::move(center))
+    , center_(std::forward<C>(center))
     {}
 
     ctype volume() const { return volume_; }
@@ -121,11 +127,10 @@ class SubControlVolume
 
 public:
     SubControlVolume() = default;
-    SubControlVolume(GridIndex dofIndex,
-                     ctype volume,
-                     Coordinate&& center,
-                     unsigned int localIndex)
-    : ParentType(dofIndex, volume, std::move(center))
+
+    template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
+    SubControlVolume(GridIndex dofIndex, ctype volume, C&& center, unsigned int localIndex)
+    : ParentType(dofIndex, volume, std::forward<C>(center))
     , localIndex_(localIndex)
     {}
 
