@@ -104,6 +104,8 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv volume");
             if (!Dune::FloatCmp::eq(localView.geometry(scv).volume(), element.geometry().volume(), tol))
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv geometry volume");
+            if (localView.indexInElement(scv) != count)
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected scv indexin element");
         }
 
         if (count != 1)
@@ -155,6 +157,8 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scvf normal");
             if (localView.insideScv(scvf).dofIndex() != scvDofIdx)
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected inside scv");
+            if (localView.indexInElement(scvf) != count)
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected scvf index in element");
             if (!localView.onBoundary(scvf))
             {
 

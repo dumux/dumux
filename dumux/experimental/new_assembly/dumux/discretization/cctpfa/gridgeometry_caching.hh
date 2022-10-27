@@ -368,6 +368,21 @@ public:
         return gridGeometry_.faceConnectivity_[faceIndex].neighborScvs.size() - 1;
     }
 
+    std::size_t indexInElement(const SubControlVolume& scv) const
+    {
+        assert(scv.dofIndex() == eIdx_ && "Index in element only available for scvs inside the bound element");
+        return 0;
+    }
+
+    std::size_t indexInElement(const SubControlVolumeFace& scvf) const
+    {
+        const auto [faceIndex, _] = gridGeometry_.scvfKeys_[scvf.id];
+        const auto& faces = gridGeometry_.elementFaces_[eIdx_];
+        auto it = std::ranges::find(faces, faceIndex);
+        assert(it != std::ranges::end(faces) && "Index in element only available for scvfs inside the bound element");
+        return std::ranges::distance(std::ranges::begin(faces), it);
+    }
+
     const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
     {
         const auto [faceIndex, indexInNeighbors] = gridGeometry_.scvfKeys_[scvf.id];

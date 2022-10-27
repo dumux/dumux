@@ -178,6 +178,21 @@ public:
         return faceConnectivity_[scvfFaceIdx].neighborScvs.size() - 1;
     }
 
+    std::size_t indexInElement(const SubControlVolume& scv) const
+    {
+        assert(scv.id == 0 && "Index in element only available for scvs inside the bound element");
+        return scv.id;
+    }
+
+    std::size_t indexInElement(const SubControlVolumeFace& scvf) const
+    {
+        auto it = std::ranges::find_if(insideScvfIndices_, [&] (const auto& i) {
+            return storage_.scvf(i).id == scvf.id;
+        });
+        assert(it != std::ranges::end(insideScvfIndices_) && "Index in element only available for scvfs inside the bound element");
+        return std::ranges::distance(std::ranges::begin(insideScvfIndices_), it);
+    }
+
     const SubControlVolume& insideScv(const SubControlVolumeFace& scvf) const
     {
         const auto [faceIdx, idxInNeighbors] = scvfLocalKeys_[scvf.id];
