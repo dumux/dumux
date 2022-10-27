@@ -55,7 +55,7 @@ private:
 template<typename GV> using Coordinate = typename GV::template Codim<0>::Entity::Geometry::GlobalCoordinate;
 template<typename GV> using Face = Dumux::Face<Coordinate<GV>>;
 template<typename GV> using Scvf = SubControlVolumeFace<Coordinate<GV>>;
-template<typename GV> using Scv = CCSubControlVolume<typename GV::IndexSet::IndexType, Coordinate<GV>>;
+template<typename GV> using Scv = SubControlVolume<typename GV::IndexSet::IndexType, Coordinate<GV>>;
 template<typename GV, typename Friend> using ScvWithId = WrappedEntity<Scv<GV>, Friend>;
 template<typename GV, typename Friend> using ScvfWithId = WrappedEntity<Scvf<GV>, Friend>;
 

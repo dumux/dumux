@@ -86,17 +86,20 @@ private:
     Coordinate normal_;
 };
 
-//! Base class for sub-control volumes, storing basic geometric information.
+/*!
+ * \ingroup FVDiscretization
+ * \brief Sub-control volume implementation for finite-volume schemes.
+ */
 template<typename GridIndex,
          typename Coordinate,
          typename ctype = typename Coordinate::value_type>
-class SubControlVolumeBase
+class SubControlVolume
 {
 public:
-    SubControlVolumeBase() = default;
+    SubControlVolume() = default;
 
     template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
-    SubControlVolumeBase(GridIndex dofIndex, ctype volume, C&& center)
+    SubControlVolume(GridIndex dofIndex, ctype volume, C&& center)
     : dofIndex_(dofIndex)
     , volume_(volume)
     , center_(std::forward<C>(center))
@@ -111,51 +114,6 @@ private:
     GridIndex dofIndex_;
     ctype volume_;
     Coordinate center_;
-};
-
-/*!
- * \ingroup FVDiscretization
- * \brief Sub-control volume implementation for finite-volume schemes.
- */
-template<typename GridIndex,
-         typename Coordinate,
-         typename ctype = typename Coordinate::value_type>
-class SubControlVolume
-: public SubControlVolumeBase<GridIndex, Coordinate, ctype>
-{
-    using ParentType = SubControlVolumeBase<GridIndex, Coordinate, ctype>;
-
-public:
-    SubControlVolume() = default;
-
-    template<typename C> requires(std::same_as<Coordinate, std::decay_t<C>>)
-    SubControlVolume(GridIndex dofIndex, ctype volume, C&& center, unsigned int localIndex)
-    : ParentType(dofIndex, volume, std::forward<C>(center))
-    , localIndex_(localIndex)
-    {}
-
-    unsigned int localDofIndex() const { return localIndex_; }
-
-private:
-    unsigned int localIndex_;
-};
-
-/*!
- * \ingroup FVDiscretization
- * \brief Sub-control volume implementation for cell-centered finite-volume schemes.
- *        In cell-centered schemes, there is only a single sub-control volume per grid
- *        cell, and thus, the `localDofIndex` is zero and is known at compile-time.
- */
-template<typename GridIndex,
-         typename Coordinate,
-         typename ctype = typename Coordinate::value_type>
-class CCSubControlVolume : public SubControlVolumeBase<GridIndex, Coordinate, ctype>
-{
-    using ParentType = SubControlVolumeBase<GridIndex, Coordinate, ctype>;
-
-public:
-    using ParentType::ParentType;
-    unsigned int localDofIndex() const { return 0; }
 };
 
 } // end namespace Dumux
