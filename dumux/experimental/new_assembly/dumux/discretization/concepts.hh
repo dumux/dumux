@@ -73,8 +73,8 @@ concept CCGridGeometryLocalView = requires {
     typename T::SubControlVolume;
     typename T::SubControlVolumeFace;
 
-    SubControlVolume<typename T::SubControlVolume>;
-    SubControlVolumeFace<typename T::SubControlVolumeFace>;
+    requires SubControlVolume<typename T::SubControlVolume>;
+    requires SubControlVolumeFace<typename T::SubControlVolumeFace>;
 } and requires(T& localView,
                const T& constLocalView,
                const typename T::Element& element,
