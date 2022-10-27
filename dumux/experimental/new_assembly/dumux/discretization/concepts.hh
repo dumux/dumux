@@ -51,17 +51,40 @@ template<typename T>
 concept NetworkGridView = GridView<T> and (int{T::dimension} < int{T::dimensionworld});
 
 template<typename T>
-concept CCGridGeometryLocalView = requires(T& localView, const T& constLocalView) {
+concept SubControlVolume = requires(const T& t) {
+    { t.volume() };
+    { t.center() };
+    { t.dofPosition() };
+    { t.dofIndex() };
+};
+
+template<typename T>
+concept SubControlVolumeFace = requires(const T& t) {
+    { t.area() };
+    { t.center() };
+    { t.ipGlobal() };
+    { t.unitOuterNormal() };
+};
+
+template<typename T>
+concept CCGridGeometryLocalView = requires {
     typename T::GridGeometry;
     typename T::Element;
     typename T::SubControlVolume;
     typename T::SubControlVolumeFace;
 
+    SubControlVolume<typename T::SubControlVolume>;
+    SubControlVolumeFace<typename T::SubControlVolumeFace>;
+} and requires(T& localView,
+               const T& constLocalView,
+               const typename T::Element& element,
+               const typename T::SubControlVolume& scv,
+               const typename T::SubControlVolumeFace& scvf) {
+    { localView.bind(element) };
+    { localView.bindElement(element) };
+
     { constLocalView.gridGeometry() } -> std::same_as<const typename T::GridGeometry&>;
     { constLocalView.element() } -> std::same_as<const typename T::Element&>;
-
-    { localView.bind(std::declval<const typename T::Element&>()) };
-    { localView.bindElement(std::declval<const typename T::Element&>()) };
 
     { scvs(constLocalView) } -> RangeOf<typename T::SubControlVolume>;
     { scvfs(constLocalView) } -> RangeOf<typename T::SubControlVolumeFace>;
@@ -69,14 +92,17 @@ concept CCGridGeometryLocalView = requires(T& localView, const T& constLocalView
     { neighborScvs(constLocalView) } -> RangeOf<typename T::SubControlVolume>;
     { neighborScvfs(constLocalView) } -> RangeOf<typename T::SubControlVolumeFace>;
 
-    { constLocalView.onBoundary(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<bool>;
-    { constLocalView.insideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
-    { constLocalView.outsideScv(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::convertible_to<typename T::SubControlVolume>;
-    { constLocalView.outsideScv(std::declval<const typename T::SubControlVolumeFace&>(), unsigned{}) } -> std::convertible_to<typename T::SubControlVolume>;
-    { constLocalView.numOutsideNeighbors(std::declval<const typename T::SubControlVolumeFace&>()) } -> std::integral;
+    { constLocalView.onBoundary(scvf) } -> std::convertible_to<bool>;
+    { constLocalView.insideScv(scvf) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.outsideScv(scvf) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.outsideScv(scvf, unsigned{}) } -> std::convertible_to<typename T::SubControlVolume>;
+    { constLocalView.numOutsideNeighbors(scvf) } -> std::integral;
 
-    { constLocalView.geometry(std::declval<const typename T::SubControlVolume&>()) };
-    { constLocalView.geometry(std::declval<const typename T::SubControlVolumeFace&>()) };
+    { constLocalView.indexInElement(scv) } -> std::integral;
+    { constLocalView.indexInElement(scvf) } -> std::integral;
+
+    { constLocalView.geometry(scv) };
+    { constLocalView.geometry(scvf) };
 };
 
 } // end namespace Dumux::Concepts
