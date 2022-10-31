@@ -1,2 +1,3 @@
 add_subdirectory(elastic)
 add_subdirectory(poroelastic)
+add_subdirectory(mytests)

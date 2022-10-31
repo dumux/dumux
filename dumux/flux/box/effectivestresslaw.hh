@@ -25,6 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
 
+#include <type_traits>
 #include <dumux/flux/effectivestresslaw.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -38,8 +39,8 @@ namespace Dumux {
  *         purely mechanical stresses (i.e. material law)
  * \tparam GridGeometry the finite volume grid geometry
  */
-template<class StressType, class GridGeometry>
-class EffectiveStressLaw<StressType, GridGeometry, typename GridGeometry::DiscretizationMethod>
+template<class StressType, class StressDropLaw, class GridGeometry>
+class EffectiveStressLaw<StressType,StressDropLaw, GridGeometry, typename GridGeometry::DiscretizationMethod>
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -106,6 +107,32 @@ public:
         for (int i = 0; i < dim; ++i)
             sigma[i][i] -= bcp;
 
+
+        if constexpr(!std::is_same_v<StressDropLaw, void>)
+        {
+            // implement the stress drop law
+            static const bool enableStressDrop = getParam<bool>("Problem.EnableStressDrop",false);
+            if (enableStressDrop)
+            {
+                StressDropLaw stressDropLaw(sigma);
+                const auto& params = problem.spatialParams().stressDropLawParam(element);
+
+                std::cout<< "has Failure: " << stressDropLaw.hasFailure(params) << std::endl;
+                if (stressDropLaw.hasFailure(params))
+                {
+                    problem.spatialParams().setFailure(element);
+                    stressDropLaw.doStressDrop(params);
+                    sigma = stressDropLaw.stressTensor();
+                }
+            }
+        }
+        else {
+            static const bool enableStressDrop = getParam<bool>("Problem.EnableStressDrop",false);
+            if (enableStressDrop)
+            {
+                DUNE_THROW(Dune::NotImplemented," To implement StressDropLaw, the StressDropLaw type has to be specified!");
+            }
+        }
         return sigma;
     }
 

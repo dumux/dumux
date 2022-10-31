@@ -18,26 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
+ * \ingroup Geomechanics
+ * \brief Line class in the Mohr Space
  */
-#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
-#define DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
+#ifndef DUMUX_STRESS_STATE_MATH_MOHR_SPACE_HH
+#define DUMUX_STRESS_STATE_MATH_MOHR_SPACE_HH
 
-#include <dumux/discretization/method.hh>
+#include "line.hh"
+#include "point.hh"
+#include "pointlinedistance.hh"
+#include "mohrcircle.hh"
 
-namespace Dumux {
-
-/*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
- */
-template <class StressType, class StressDropLaw, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
-class EffectiveStressLaw;
-
-} // end namespace Dumux
-
+namespace Dumux{
+template <class Scalar, class StressTensor>
+struct MohrSpaceTypeTraits
+{
+    using PointType = Point<Scalar>;
+    using LineType = Line<Scalar>;
+    using MohrCircleType = MohrCircle<Scalar, PointType, StressTensor>;
+};
+}
 #endif

@@ -6,6 +6,7 @@ Cells = 10 10
 [Problem]
 InjectionRate = 1e-3
 EnableGravity = false
+EnableStressDrop = true
 
 [PoroElastic.Problem]
 Name = poroelastic

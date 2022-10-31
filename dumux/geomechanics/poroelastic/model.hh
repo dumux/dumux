@@ -154,7 +154,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElasticStressType = HookesLaw< Scalar, GridGeometry >;
 public:
-    using type = EffectiveStressLaw< ElasticStressType, GridGeometry >;
+    using type = EffectiveStressLaw< ElasticStressType, /*StressDropLaw*/void,GridGeometry >;
 };
 
 } // namespace Properties

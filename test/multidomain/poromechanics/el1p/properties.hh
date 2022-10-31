@@ -38,6 +38,7 @@
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/geomechanics/poroelastic/couplingmanager.hh>
+#include <dumux/geomechanics/stressstate/stressdroplaw.hh>
 
 #include "spatialparams_1p.hh"
 #include "spatialparams_poroelastic.hh"
@@ -86,6 +87,20 @@ struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::YaspGrid<2>; };
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
+
+template<class TypeTag>
+struct StressType<TypeTag, TTag::PoroElasticSub>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElasticStressType = HookesLaw< Scalar, GridGeometry >;
+    using StressTensor = typename ElasticStressType::StressTensor;
+    using MohrSpaceTypeTraitsImpl = MohrSpaceTypeTraits<Scalar,StressTensor>;
+    using StressDropLawType = StressDropLaw<Scalar,StressTensor,MohrSpaceTypeTraitsImpl>;
+public:
+    using type = EffectiveStressLaw< ElasticStressType,StressDropLawType,GridGeometry >;
+};
 // The fluid phase consists of one constant component
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PoroElasticSub>

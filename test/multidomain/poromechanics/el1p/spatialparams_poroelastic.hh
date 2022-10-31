@@ -28,6 +28,8 @@
 #include <dumux/geomechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
+#include <dumux/geomechanics/stressstate/stressdroplawparams.hh>
+#include <dumux/geomechanics/stressstate/math/mohrspace.hh>
 namespace Dumux {
 
 /*!
@@ -48,6 +50,8 @@ class PoroElasticSpatialParams : public FVPoroElasticSpatialParams< GridGeometry
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using StressDropLawParam = StressDropLawParams<Scalar,Line<Scalar>>;
 public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
@@ -57,6 +61,7 @@ public:
     : ParentType(gridGeometry)
     , couplingManager_(couplingManagerPtr)
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
+    , stressDropLawParam_(-45.0,1000,1)
     {
         // Young's modulus [Pa]
        Scalar E = 6.e9;
@@ -114,8 +119,15 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    StressDropLawParam stressDropLawParam(const Element& element) const
+    { return stressDropLawParam_; }
+
+    void setFailure(const Element& element) const
+    { std::cout << "shear failure detected." << std::endl;}
+
 private:
     std::shared_ptr<const CouplingManager> couplingManager_;
+    StressDropLawParam stressDropLawParam_;
     Scalar initPorosity_;
     LameParams lameParams_;
 };

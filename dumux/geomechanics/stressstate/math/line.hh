@@ -18,26 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
+ * \ingroup Geomechanics
+ * \brief Line class in the Mohr Space
  */
-#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
-#define DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
+#ifndef DUMUX_STRESS_STATE_MATH_LINE_HH
+#define DUMUX_STRESS_STATE_MATH_LINE_HH
 
-#include <dumux/discretization/method.hh>
-
-namespace Dumux {
-
+namespace Dumux{
 /*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
+ * \brief Line class in Mohr Space
+ *        in form y = ax + b,
+ *        where a is slope and b is the intercept.
+ *
+ * \tparam Scalar
  */
-template <class StressType, class StressDropLaw, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
-class EffectiveStressLaw;
+template<class Scalar>
+class Line{
+public:
+    Line(const Scalar& slope, const Scalar& intercept)
+    :slope_(slope),intercept_(intercept)
+    {}
 
-} // end namespace Dumux
+    Line():Line(0.0,0.0){}
 
+    Scalar slope() const { return slope_; }
+    Scalar intercept() const { return intercept_; }
+    Scalar y(const Scalar& x) const { return slope_ * x + intercept_; }
+private:
+    Scalar slope_;
+    Scalar intercept_;
+};
+}// end namespace Dumux
 #endif

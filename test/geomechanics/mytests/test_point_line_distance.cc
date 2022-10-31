@@ -16,28 +16,19 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- */
-#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
-#define DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
 
-#include <dumux/discretization/method.hh>
+#include <config.h>
+#include <dune/common/exceptions.hh>
+#include <dumux/geomechanics/stressstate/math/mohrspace.hh>
 
-namespace Dumux {
+int main(int argc, char *argv[])
+{
+    using namespace Dumux;
+    Point p(1.0,3.0);
+    Line l(4.27,11.5);
 
-/*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
- */
-template <class StressType, class StressDropLaw, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
-class EffectiveStressLaw;
-
-} // end namespace Dumux
-
-#endif
+    [[maybe_unused]] double dist = pointLineDistance<double>(p,l);
+    [[maybe_unused]] double solution = 2.9118;
+    if (std::abs(dist - solution) > 1e-3)
+    {DUNE_THROW(Dune::MathError, "test failed.");}
+}

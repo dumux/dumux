@@ -18,26 +18,37 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
+ * \ingroup Geomechanics
+ * \brief Stress drop law checks if the shear failure occurs and reduces
+ *  the shear stress directly from the failure stress state.
+ *  The failure stress state maybe rotated.
  */
-#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
-#define DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
+#ifndef DUMUX_STRESS_STATE_MATH_POINT_LINE_DISTANCE_HH
+#define DUMUX_STRESS_STATE_MATH_POINT_LINE_DISTANCE_HH
 
-#include <dumux/discretization/method.hh>
+#include <cmath>
 
-namespace Dumux {
-
+namespace Dumux{
 /*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
+ * \brief distance from one point to a line
+ *
+ * \tparam Scalar
+ * \tparam Point
+ * \tparam Line
+ * \param p Point
+ * \param l Line
+ * \return Scalar
  */
-template <class StressType, class StressDropLaw, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
-class EffectiveStressLaw;
-
-} // end namespace Dumux
-
+template<class Scalar, class Point, class Line>
+Scalar pointLineDistance(const Point& p,
+                         const Line& l)
+{
+    using std::abs, std::sqrt;
+    Scalar x = p.x();
+    Scalar y = p.y();
+    Scalar a = l.slope();
+    Scalar b = l.intercept();
+    return abs(a*x - y + b)/sqrt(1+a*a);
+}
+}// end namespace Dumux
 #endif

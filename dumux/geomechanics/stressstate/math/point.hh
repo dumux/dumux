@@ -18,26 +18,37 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Flux
- * \brief The effective stress law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
+ * \ingroup Geomechanics
+ * \brief Point class in Mohr Space
  */
-#ifndef DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
-#define DUMUX_FLUX_EFFECIVESTRESS_LAW_FWD_HH
+#ifndef DUMUX_STRESS_STATE_MATH_POINT_HH
+#define DUMUX_STRESS_STATE_MATH_POINT_HH
 
-#include <dumux/discretization/method.hh>
+#include <dune/common/fvector.hh>
 
-namespace Dumux {
+namespace Dumux{
+template<class Scalar>
+class Point{
+    using Position = Dune::FieldVector<Scalar,2>;
+public:
+    Point(const Scalar& x, const Scalar& y)
+    {
+        pos_[0] = x;
+        pos_[1] = y;
+    }
 
-/*!
- * \ingroup Flux
- * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
- */
-template <class StressType, class StressDropLaw, class GridGeometry, class DiscretizationMethod = typename GridGeometry::DiscretizationMethod>
-class EffectiveStressLaw;
+    Point():Point(0.0,0.0){};
+    Scalar x() const { return pos_[0]; }
+    Scalar y() const { return pos_[1]; }
 
-} // end namespace Dumux
-
+    /*!
+     * \brief return the position as vector
+     *
+     * \return Position
+     */
+    Position pos() const {return pos_;}
+private:
+    Position pos_;
+};
+}// end namespace Dumux
 #endif
