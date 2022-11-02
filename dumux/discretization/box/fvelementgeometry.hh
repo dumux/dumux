@@ -87,10 +87,6 @@ public:
     BoxFVElementGeometry(const GGCache& ggCache)
     : ggCache_(&ggCache) {}
 
-    [[deprecated("This Constructor is deprecated and will be removed after release 3.6. Always use localView(gridGeometry).")]]
-    BoxFVElementGeometry(const GridGeometry& gg)
-    : BoxFVElementGeometry(gg.cache_) {}
-
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const
     {
@@ -266,10 +262,6 @@ public:
      */
     BoxFVElementGeometry(const GGCache& ggCache)
     : ggCache_(&ggCache) {}
-
-    [[deprecated("This Constructor is deprecated and will be removed after release 3.6. Always use localView(gridGeometry).")]]
-    BoxFVElementGeometry(const GridGeometry& gg)
-    : BoxFVElementGeometry(gg.cache_) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(LocalIndexType scvIdx) const

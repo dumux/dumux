@@ -98,10 +98,6 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
                                              typename Traits::SubControlVolume,
                                              typename Traits::SubControlVolumeFace>;
 
-    // Remove this after release 3.6 when the deprecated local view constructor is removed
-    using LV_ = typename Traits::template LocalView<ThisType, true>;
-    friend LV_;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -171,16 +167,6 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-    //! Get the local scvs for an element
-    [[deprecated("Will be removed after release 3.6")]]
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return cache_.scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    [[deprecated("Will be removed after release 3.6")]]
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return cache_.scvfs_[eIdx]; }
-
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -196,11 +182,6 @@ public:
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    [[deprecated("Will be removed after release 3.6")]]
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return cache_.hasBoundaryScvf_[eIdx]; }
 
     //! local view of this object (constructed with the internal cache)
     friend inline LocalView localView(const BoxFVGridGeometry& gg)
@@ -450,10 +431,6 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
-
-    // Remove this after release 3.6 when the deprecated local view constructor is removed
-    using LV_ = typename Traits::template LocalView<ThisType, false>;
-    friend LV_;
 
 public:
     //! export the discretization method this geometry belongs to
