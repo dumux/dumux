@@ -84,15 +84,6 @@ public:
         return ScvfCornerStorage({ geo.global(ref.position(localFacetIndex, 1)) });
     }
 
-    //! Get the corners of the (d-1)-dimensional fracture scvf
-    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
-    ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeom,
-                                             unsigned int idxOnIntersection = 0) const
-    {
-        return getFractureScvfCorners(is.indexInInside(), idxOnIntersection);
-    }
-
     //! get fracture scvf normal vector (simply the unit vector of the edge)
     //! The third argument is for compatibility reasons with the 3d case!
     typename ScvfType::Traits::GlobalPosition
