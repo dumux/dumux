@@ -98,10 +98,6 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
                                              typename Traits::SubControlVolume,
                                              typename Traits::SubControlVolumeFace>;
 
-    // Remove this after release 3.6 when the deprecated local view constructor is removed
-    using LV_ = typename Traits::template LocalView<ThisType, true>;
-    friend LV_;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -435,10 +431,6 @@ class BoxFVGridGeometry<Scalar, GV, false, Traits>
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
-
-    // Remove this after release 3.6 when the deprecated local view constructor is removed
-    using LV_ = typename Traits::template LocalView<ThisType, false>;
-    friend LV_;
 
 public:
     //! export the discretization method this geometry belongs to
