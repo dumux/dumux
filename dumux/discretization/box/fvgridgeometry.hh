@@ -171,16 +171,6 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-    //! Get the local scvs for an element
-    [[deprecated("Will be removed after release 3.6")]]
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return cache_.scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    [[deprecated("Will be removed after release 3.6")]]
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return cache_.scvfs_[eIdx]; }
-
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -196,11 +186,6 @@ public:
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { return periodicVertexMap_; }
-
-    //! Returns whether one of the geometry's scvfs lies on a boundary
-    [[deprecated("Will be removed after release 3.6")]]
-    bool hasBoundaryScvf(GridIndexType eIdx) const
-    { return cache_.hasBoundaryScvf_[eIdx]; }
 
     //! local view of this object (constructed with the internal cache)
     friend inline LocalView localView(const BoxFVGridGeometry& gg)
