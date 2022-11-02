@@ -33,7 +33,7 @@
 template<typename GridGeometry>
 auto tolerance(const GridGeometry& gg)
 {
-    typename GridGeometry::GridView::ctype tol = 0.0;
+    typename GridGeometry::GridView::ctype tol = 1e6;
     using std::min;
     for (int dim = 0; dim < GridGeometry::GridView::dimension; ++dim)
         tol = min(tol, gg.bBoxMax()[dim] - gg.bBoxMin()[dim]);
