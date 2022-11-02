@@ -38,16 +38,6 @@ namespace Dumux {
  */
 struct NoExtrusion
 {
-    template<class SCVF>
-    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
-    static constexpr auto area(const SCVF& scvf)
-    { return scvf.area(); }
-
-    template<class SCV>
-    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
-    static constexpr auto volume(const SCV& scv)
-    { return scv.volume(); }
-
     template<class FVGeo, class SCVF>
     static constexpr auto area(const FVGeo&, const SCVF& scvf)
     { return scvf.area(); }
@@ -75,18 +65,6 @@ struct RotationalExtrusion
      * \brief Transformed sub-control-volume face area
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class SCVF>
-    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
-    static constexpr auto area(const SCVF& scvf)
-    {
-        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
-        static_assert(SCVF::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
-        static_assert(radialAxis < int(SCVF::Traits::Geometry::coorddimension), "Illegal radial axis!");
-
-        // Guldinus theorem
-        return scvf.area()*2.0*M_PI*scvf.center()[radialAxis];
-    }
-
     template<class FVGeo, class SCVF>
     static constexpr auto area(const FVGeo&, const SCVF& scvf)
     {
@@ -102,18 +80,6 @@ struct RotationalExtrusion
      * \brief Transformed sub-control-volume volume
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class SCV>
-    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
-    static constexpr auto volume(const SCV& scv)
-    {
-        static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
-        static_assert(SCV::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
-        static_assert(radialAxis < int(SCV::Traits::Geometry::coorddimension), "Illegal radial axis!");
-
-        // Guldinus theorem
-        return scv.volume()*2.0*M_PI*scv.center()[radialAxis];
-    }
-
     template<class FVGeo, class SCV>
     static constexpr auto volume(const FVGeo&, const SCV& scv)
     {
@@ -149,18 +115,6 @@ struct SphericalExtrusion
      * \brief Transformed sub-control-volume face area
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class SCVF>
-    [[deprecated("Will be removed after 3.6. Use area(fvGeometry, scvf)")]]
-    static constexpr auto area(const SCVF& scvf)
-    {
-        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
-        static_assert(SCVF::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
-
-        // sphere surface area
-        const auto radius = scvf.center()[0];
-        return 4.0*M_PI*radius*radius;
-    }
-
     template<class FVGeo, class SCVF>
     static constexpr auto area(const FVGeo&, const SCVF& scvf)
     {
@@ -176,20 +130,6 @@ struct SphericalExtrusion
      * \brief Transformed sub-control-volume volume
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class SCV>
-    [[deprecated("Will be removed after 3.6. Use volume(fvGeometry, scv)")]]
-    static constexpr auto volume(const SCV& scv)
-    {
-        static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
-        static_assert(SCV::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
-
-        // subtract two balls
-        const auto radius0 = scv.corner(0)[0];
-        const auto radius1 = scv.corner(1)[0];
-        using std::abs;
-        return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
-    }
-
     template<class FVGeo, class SCV>
     static constexpr auto volume(const FVGeo& fvGeometry, const SCV& scv)
     {
