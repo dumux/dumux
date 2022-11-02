@@ -49,14 +49,7 @@ namespace Deprecated {
 #endif // __clang__
 
 template<class G>
-using DetectFVGeometryHasSCVGeometry = decltype(std::declval<G>().geometry(std::declval<typename G::SubControlVolume>()));
-
-template<class G>
 using DetectFVGeometryHasSCVFGeometry = decltype(std::declval<G>().geometry(std::declval<typename G::SubControlVolumeFace>()));
-
-template<class G>
-constexpr inline bool hasSCVGeometryInterface()
-{ return Dune::Std::is_detected<DetectFVGeometryHasSCVGeometry, G>::value; }
 
 template<class G>
 constexpr inline bool hasSCVFGeometryInterface()

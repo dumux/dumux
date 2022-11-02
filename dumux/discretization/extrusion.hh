@@ -28,7 +28,6 @@
 #define DUMUX_DISCRETIZATION_EXTRUSION_HH
 
 #include <dune/common/std/type_traits.hh>
-#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -137,23 +136,11 @@ struct SphericalExtrusion
         static_assert(SCV::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
 
         // subtract two balls
-        if constexpr (Deprecated::hasSCVGeometryInterface<FVGeo>())
-        {
-            const auto geo = fvGeometry.geometry(scv);
-            const auto radius0 = geo.corner(0)[0];
-            const auto radius1 = geo.corner(1)[0];
-            using std::abs;
-            return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
-        }
-        else
-        {
-            // fall-back version for old interface (may trigger deprecation warning)
-            const auto geo = scv.geometry();
-            const auto radius0 = geo.corner(0)[0];
-            const auto radius1 = geo.corner(1)[0];
-            using std::abs;
-            return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
-        }
+        const auto geo = fvGeometry.geometry(scv);
+        const auto radius0 = geo.corner(0)[0];
+        const auto radius1 = geo.corner(1)[0];
+        using std::abs;
+        return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
     }
 
     /*!
