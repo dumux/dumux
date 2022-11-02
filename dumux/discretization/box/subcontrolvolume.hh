@@ -118,14 +118,6 @@ public:
         return volume_;
     }
 
-    //! The geometry of the sub control volume
-    // e.g. for integration
-    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scv).")]]
-    Geometry geometry() const
-    {
-        return Geometry(Dune::GeometryTypes::cube(dim), corners_);
-    }
-
     //! The element-local index of the dof this scv is embedded in
     LocalIndexType localDofIndex() const
     {
@@ -156,14 +148,6 @@ public:
     GridIndexType elementIndex() const
     {
         return elementIndex_;
-    }
-
-    //! Return the corner for the given local index
-    [[deprecated("This will be removed after 3.6. Use fvGeometry.geometry(scv).corner(i).")]]
-    const GlobalPosition& corner(LocalIndexType localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
     }
 
 private:
