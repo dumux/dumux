@@ -116,17 +116,6 @@ public:
     /*
      * \brief Access operator
      * \return BoundaryTypes
-     */
-    [[deprecated("This operator is deprecated use get function")]]
-    const BoundaryTypes& operator[] (std::size_t i) const
-    {
-        assert(i < bcTypes_.size());
-        return bcTypes_[i];
-    }
-
-    /*
-     * \brief Access operator
-     * \return BoundaryTypes
      * \note yields undefined behaviour of the scv is not on the boundary
      */
     template<class FVElementGeometry>
