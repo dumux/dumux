@@ -54,6 +54,25 @@ bool equal(const Dune::FieldVector<ctype, dim>& p0,
     });
 }
 
+template<typename GridGeometry, typename ctype, int dim>
+bool isOnDomainBoundary(const GridGeometry& gridGeometry,
+                        const Dune::FieldVector<ctype, dim>& pos)
+{
+    const auto tol = tolerance(gridGeometry);
+    const auto& min = gridGeometry.bBoxMin();
+    const auto& max = gridGeometry.bBoxMax();
+
+    bool onBoundary = false;
+    for (int i = 0; i < dim; ++i)
+    {
+        if (pos[i] < min[i] - tol) return false;
+        if (pos[i] > max[i] + tol) return false;
+        if (equal(pos[i], min[i], tol) || equal(pos[i], max[i], tol))
+            onBoundary = true;
+    }
+    return onBoundary;
+}
+
 template<typename GridView,
          bool caching = false,
          typename Traits = Dumux::DefaultCCTpfaGridGeometryTraits<GridView>>
@@ -63,7 +82,7 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
     Dumux::CCTpfaGridGeometry<GridView, caching, Traits> gridGeometry{gridView};
     timer.stop();
     std::cout << "Construction took " << timer.elapsed() << " seconds\n";
-    return;
+
     std::size_t numScv = 0;
     std::size_t numScvf = 0;
     for (const auto& element : elements(gridView))
@@ -92,7 +111,6 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
         int scvDofIdx = -1;
         for (const auto& scv : scvs(localView))
         {
-            count++;
             scvDofIdx = static_cast<std::size_t>(scv.dofIndex());
             if (!equal(scv.center(), element.geometry().center(), tol))
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv center");
@@ -106,6 +124,7 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv geometry volume");
             if (localView.indexInElement(scv) != count)
                 DUNE_THROW(Dune::InvalidStateException, "Unexpected scv indexin element");
+            count++;
         }
 
         if (count != 1)
@@ -144,7 +163,6 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
         count = 0;
         for (const auto& scvf : scvfs(localView))
         {
-            count++;
             const auto c = scvf.center();
             auto d = c - element.geometry().center();
             d /= d.two_norm();
@@ -181,11 +199,10 @@ void testCCTpfaGridGeometry(const GridView& gridView, const std::size_t expected
                         DUNE_THROW(Dune::InvalidStateException, "insiceScv(flipScvf) != outsideScv(scvf)");
                 }
             }
-            else if (!equal(c[0], gridGeometry.bBoxMin()[0], tol) &&
-                     !equal(c[0], gridGeometry.bBoxMax()[0], tol) &&
-                     !equal(c[1], gridGeometry.bBoxMin()[1], tol) &&
-                     !equal(c[1], gridGeometry.bBoxMax()[1], tol))
-                DUNE_THROW(Dune::InvalidStateException, "Unexpected boundary face position");
+            else if (!isOnDomainBoundary(gridGeometry, c))
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected boundary face position: " << c);
+
+            count++;
         }
 
         if (count != element.subEntities(1))
