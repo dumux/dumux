@@ -115,6 +115,32 @@ struct RichardsNCModelTraits
     static constexpr bool useMoles() { return useMol; }
 };
 
+/*!
+ * \ingroup RichardsNCModel
+ * \brief Traits class for the Richards n-components model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam DT The diffusion type
+ * \tparam EDM The effective diffusivity model
+ */
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, class DT, class EDM>
+struct RichardsNCVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+    using DiffusionType = DT;
+    using EffectiveDiffusivityModel = EDM;
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -177,7 +203,7 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    using NCTraits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
+    using NCTraits = RichardsNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 
 public:
     using type = RichardsNCVolumeVariables<NCTraits>;
@@ -249,7 +275,7 @@ private:
     using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using DT = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
     using EDM = GetPropType<TypeTag, Properties::EffectiveDiffusivityModel>;
-    using BaseTraits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
+    using BaseTraits = RichardsNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, DT, EDM>;
 
     using ETCM = GetPropType< TypeTag, Properties::ThermalConductivityModel>;
     template<class BaseTraits, class ETCM>
