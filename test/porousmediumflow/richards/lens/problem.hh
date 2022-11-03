@@ -70,7 +70,6 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
-        bothPhases = Indices::bothPhases,
 
         // world dimension
         dimWorld = GridView::dimensionworld
