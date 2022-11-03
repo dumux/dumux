@@ -189,12 +189,6 @@ template<class TypeTag, class MyTypeTag>
 struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or nonwetting phase
 
 //////////////////////////////////////////////////////////////
-// Additional properties used by the richards model
-//////////////////////////////////////////////////////////////
-template<class TypeTag, class MyTypeTag>
-struct EnableWaterDiffusionInAir { using type = UndefinedProperty; }; //!< Property for turning Richards into extended Richards
-
-//////////////////////////////////////////////////////////////
 // Additional properties used by the 3pwateroil model:
 //////////////////////////////////////////////////////////////
 template<class TypeTag, class MyTypeTag>
