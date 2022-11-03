@@ -103,38 +103,6 @@ public:
 
     using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
-    /*!
-     * \brief Returns the advective flux over a sub control volume face.
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param elemVolVars All volume variables for the element
-     * \param elemFaceVars The face variables
-     * \param scvf The sub control volume face
-     * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
-     */
-    template<class UpwindTerm>
-    [[deprecated("Will be removed after release 3.6. Use interface with additional fvGeometry parameter instead.")]]
-    static Scalar advectiveFluxForCellCenter(const Problem& problem,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const ElementFaceVariables& elemFaceVars,
-                                             const SubControlVolumeFace &scvf,
-                                             UpwindTerm upwindTerm)
-    {
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-        const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
-
-        const Scalar flux = (upwindWeight * upwindTerm(upstreamVolVars) +
-                            (1.0 - upwindWeight) * upwindTerm(downstreamVolVars))
-                            * velocity * Extrusion::area(scvf) * scvf.directionSign();
-
-        return flux * extrusionFactor_(elemVolVars, scvf);
-    }
 
     /*!
      * \brief Returns the advective flux over a sub control volume face.
@@ -450,53 +418,6 @@ public:
         return lateralFlux;
     }
 
-    /*!
-     * \brief Returns the momentum flux over an inflow or outflow boundary face.
-     *
-     * \verbatim
-     *                    scvf      //
-     *              ---------=======//               == and # staggered half-control-volume
-     *              |      ||      #// current scvf
-     *              |      ||      #//               # staggered boundary face over which fluxes are calculated
-     *              |      ||      x~~~~> vel.Self
-     *              |      ||      #//               x dof position
-     *        scvf  |      ||      #//
-     *              --------========//               -- element
-     *                   scvf       //
-     *                                              // boundary
-     * \endverbatim
-     */
-    [[deprecated("Will be removed after release 3.6. Use interface with additional fvGeometry parameter instead.")]]
-    FacePrimaryVariables inflowOutflowBoundaryFlux(const Problem& problem,
-                                                   const Element& element,
-                                                   const SubControlVolumeFace& scvf,
-                                                   const ElementVolumeVariables& elemVolVars,
-                                                   const ElementFaceVariables& elemFaceVars) const
-    {
-        FacePrimaryVariables inOrOutflow(0.0);
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-
-        // Advective momentum flux.
-        if (problem.enableInertiaTerms())
-        {
-            const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
-                                    insideVolVars : outsideVolVars;
-
-            inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
-        }
-
-        // Apply a pressure at the boundary.
-        const Scalar boundaryPressure = normalizePressure
-                                        ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
-                                           problem.initial(scvf)[Indices::pressureIdx])
-                                        : problem.dirichlet(element, scvf)[Indices::pressureIdx];
-        inOrOutflow += boundaryPressure;
-
-        // Account for the orientation of the face at the boundary,
-        return inOrOutflow * scvf.directionSign() * Extrusion::area(scvf) * insideVolVars.extrusionFactor();
-    }
 
     /*!
      * \brief Returns the momentum flux over an inflow or outflow boundary face.
