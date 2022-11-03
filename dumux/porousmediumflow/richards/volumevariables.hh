@@ -30,27 +30,13 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/typetraits/state.hh>
-#include <dumux/common/deprecated.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
-#include <dumux/porousmediumflow/richardsextended/primaryvariableswitch.hh>
-
 namespace Dumux {
-
-namespace Detail {
-//! Helper structs to conditionally use a primary variable switch or not
-struct VolVarsWithPVSwitch
-{
-    using PrimaryVariableSwitch = ExtendedRichardsPrimaryVariableSwitch;
-};
-
-struct VolVarsWithOutPVSwitch
-{};
-} // end namespace Detail
 
 /*!
  * \ingroup RichardsModel
@@ -63,8 +49,6 @@ template <class Traits>
 class RichardsVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
 , public EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >
-, public std::conditional_t<Traits::ModelTraits::enableMolecularDiffusion(),
-                            Detail::VolVarsWithPVSwitch, Detail::VolVarsWithOutPVSwitch>
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >;
@@ -74,8 +58,6 @@ class RichardsVolumeVariables
 
     static constexpr int numFluidComps = ParentType::numFluidComponents();
     static constexpr int numPhases = ParentType::numFluidPhases();
-
-    using EffDiffModel = typename Traits::EffectiveDiffusivityModel;
 
     // checks if the fluid system uses the Richards model index convention
     static constexpr auto fsCheck = ModelTraits::checkFluidSystem(typename Traits::FluidSystem{});
@@ -91,8 +73,6 @@ public:
     //! Export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
     using Indices = typename Traits::ModelTraits::Indices;
-    //! If water diffusion in air is enabled
-    static constexpr bool enableWaterDiffusionInAir() { return Dumux::Deprecated::ExtendedRichardsHelper<ModelTraits::enableMolecularDiffusion()>::isExtendedRichards(); }
 
     //! Export phase indices
     static constexpr auto liquidPhaseIdx = Traits::FluidSystem::phase0Idx;
@@ -123,114 +103,7 @@ public:
 
         //update porosity before calculating the effective properties depending on it
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
-
-        if constexpr (enableWaterDiffusionInAir())
-        {
-            const auto& priVars = elemSol[scv.localDofIndex()];
-            const auto phasePresence = priVars.state();
-
-            typename FluidSystem::ParameterCache paramCache;
-            auto getEffectiveDiffusionCoefficient = [&](int phaseIdx, int compIIdx, int compJIdx)
-            {
-                return EffDiffModel::effectiveDiffusionCoefficient(*this, phaseIdx, compIIdx, compJIdx);
-            };
-
-            if (phasePresence == Indices::gasPhaseOnly)
-            {
-                moleFraction_[liquidPhaseIdx] = 1.0;
-                massFraction_[liquidPhaseIdx] = 1.0;
-                moleFraction_[gasPhaseIdx] = priVars[Indices::switchIdx];
-
-                const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
-                ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));
-
-                //X_w = x_w* M_w/ M_avg
-                massFraction_[gasPhaseIdx] = priVars[Indices::switchIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
-
-                fluidState_.setSaturation(liquidPhaseIdx, 0.0);
-                fluidState_.setSaturation(gasPhaseIdx, 1.0);
-
-                EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState_, solidState_);
-
-                // get pc for sw = 0.0
-                const Scalar pc = fluidMatrixInteraction.pc(0.0);
-
-                // set the wetting pressure
-                fluidState_.setPressure(liquidPhaseIdx, problem.nonwettingReferencePressure() - pc);
-                fluidState_.setPressure(gasPhaseIdx, problem.nonwettingReferencePressure());
-
-                // set molar densities
-                if constexpr (enableWaterDiffusionInAir())
-                {
-                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
-                }
-
-                // density and viscosity
-                paramCache.updateAll(fluidState_);
-                fluidState_.setDensity(liquidPhaseIdx, FluidSystem::density(fluidState_, paramCache, liquidPhaseIdx));
-                fluidState_.setDensity(gasPhaseIdx, FluidSystem::density(fluidState_, paramCache, gasPhaseIdx));
-                fluidState_.setViscosity(liquidPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, liquidPhaseIdx));
-
-                // compute and set the enthalpy
-                fluidState_.setEnthalpy(liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, liquidPhaseIdx));
-                fluidState_.setEnthalpy(gasPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, gasPhaseIdx));
-
-                //binary diffusion coefficients
-                paramCache.updateAll(fluidState_);
-                effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(gasPhaseIdx,
-                                                                       FluidSystem::comp1Idx,
-                                                                       FluidSystem::comp0Idx);
-            }
-            else if (phasePresence == Indices::bothPhases)
-            {
-                completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
-
-                // if we want to account for diffusion in the air phase
-                // use Raoult to compute the water mole fraction in air
-                if constexpr (enableWaterDiffusionInAir())
-                {
-                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
-                    moleFraction_[liquidPhaseIdx] = 1.0;
-
-                    moleFraction_[gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonwettingReferencePressure();
-
-                    const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
-                    ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));
-
-                    //X_w = x_w* M_w/ M_avg
-                    massFraction_[gasPhaseIdx] = moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)/averageMolarMassGasPhase;
-
-                    // binary diffusion coefficients
-                    paramCache.updateAll(fluidState_);
-                    effectiveDiffCoeff_ = getEffectiveDiffusionCoefficient(gasPhaseIdx,
-                                                                           FluidSystem::comp1Idx,
-                                                                           FluidSystem::comp0Idx);
-                }
-            }
-            else if (phasePresence == Indices::liquidPhaseOnly)
-            {
-                completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
-
-                if constexpr (enableWaterDiffusionInAir())
-                {
-                    molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
-                    molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
-                    moleFraction_[liquidPhaseIdx] = 1.0;
-                    moleFraction_[gasPhaseIdx] = 0.0;
-                    massFraction_[liquidPhaseIdx] = 1.0;
-                    massFraction_[gasPhaseIdx] = 0.0;
-
-                    // binary diffusion coefficients (none required for liquid phase only)
-                    effectiveDiffCoeff_ = 0.0;
-                }
-            }
-        }
-        else
-        {
-            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
-        }
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         //////////
         // specify the other parameters
@@ -449,95 +322,15 @@ public:
     Scalar waterContent(const int phaseIdx = liquidPhaseIdx) const
     { return saturation(phaseIdx) * solidState_.porosity(); }
 
-    /*!
-     * \brief Returns the mole fraction of a given component in a
-     *        given phase within the control volume in \f$[-]\f$.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    Scalar moleFraction(const int phaseIdx, const int compIdx) const
-    {
-        static_assert(enableWaterDiffusionInAir());
-        if (compIdx != FluidSystem::comp0Idx)
-            DUNE_THROW(Dune::InvalidStateException, "There is only one component for Richards!");
-        return moleFraction_[phaseIdx];
-    }
-
-    /*!
-     * \brief Returns the mole fraction of a given component in a
-     *        given phase within the control volume in \f$[-]\f$.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
-    Scalar massFraction(const int phaseIdx, const int compIdx) const
-    {
-        static_assert(enableWaterDiffusionInAir());
-        if (compIdx != FluidSystem::comp0Idx)
-            DUNE_THROW(Dune::InvalidStateException, "There is only one component for Richards!");
-        return massFraction_[phaseIdx];
-    }
-
-    /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume in \f$[mol/m^3]\f$.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar molarDensity(const int phaseIdx) const
-    {
-        static_assert(enableWaterDiffusionInAir());
-        return molarDensity_[phaseIdx];
-    }
-
-    /*!
-     * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     */
-    Scalar diffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    {
-        assert(enableWaterDiffusionInAir());
-        assert(phaseIdx == gasPhaseIdx);
-        assert(compIIdx != compJIdx);
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState_, phaseIdx);
-        return FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, compIIdx, compJIdx);
-    }
-
-    /*!
-     * \brief Returns the effective diffusion coefficients for a phase in \f$[m^2/s]\f$.
-     */
-    Scalar effectiveDiffusionCoefficient(int phaseIdx, int compIIdx, int compJIdx) const
-    {
-        assert(enableWaterDiffusionInAir());
-        assert(phaseIdx == gasPhaseIdx);
-        assert(compIIdx != compJIdx);
-        return effectiveDiffCoeff_;
-    }
-
 protected:
     FluidState fluidState_; //!< the fluid state
     SolidState solidState_;
     Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
     PermeabilityType permeability_; //!< the intrinsic permeability
     Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
-    Scalar moleFraction_[numPhases]; //!< The water mole fractions in water and air
-    Scalar massFraction_[numPhases]; //!< The water mass fractions in water and air
-    Scalar molarDensity_[numPhases]; //!< The molar density of water and air
 
     // Effective diffusion coefficients for the phases
     Scalar effectiveDiffCoeff_;
-
-private:
-    //! returns bothPhases in case the priVars don't provide any state
-    template<class PriVars>
-    auto getState_(const PriVars& priVars)
-    {
-        if constexpr (Detail::priVarsHaveState<PriVars>())
-            return priVars.state();
-        else
-            return Indices::bothPhases;
-    }
 
 };
 } // end namespace Dumux

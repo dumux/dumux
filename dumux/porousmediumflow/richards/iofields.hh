@@ -35,7 +35,6 @@ namespace Dumux {
  * \ingroup RichardsModel
  * \brief Adds I/O fields specific to the Richards model.
  */
-template <bool enableWaterDiffusionInAir>
 class RichardsIOFields
 {
 public:
@@ -69,26 +68,14 @@ public:
         if(gravity)
             out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::phase0Idx); },
                                   IOName::pressureHead());
-        if constexpr (enableWaterDiffusionInAir)
-            out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::phase1Idx, FS::comp0Idx); },
-                                  IOName::moleFraction<FS>(FS::phase1Idx, FS::comp0Idx));
         out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::phase0Idx); },
                               IOName::waterContent());
-
-        if constexpr (Detail::priVarsHaveState<typename VV::PrimaryVariables>())
-            out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
-                                  IOName::phasePresence());
     }
 
     template<class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
-        using Indices = typename ModelTraits::Indices;
-
-        if (state == Indices::gasPhaseOnly)
-            return IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::phase0Idx);
-        else
-            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
+        return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 

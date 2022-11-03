@@ -94,7 +94,6 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -125,7 +124,6 @@ namespace Dumux {
  *
  * \tparam enableDiff specifies if diffusion of water in air is to be considered.
  */
-template<bool enableDiff>
 struct RichardsModelTraits
 {
     using Indices = RichardsIndices;
@@ -135,7 +133,7 @@ struct RichardsModelTraits
     static constexpr int numFluidComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
-    static constexpr bool enableMolecularDiffusion() { return Dumux::Deprecated::ExtendedRichardsHelper<enableDiff>::isExtendedRichards(); }
+    static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
 
     //! The Richards model has some assumptions on the fluid systems
@@ -211,15 +209,7 @@ struct LocalResidual<TypeTag, TTag::Richards> { using type = RichardsLocalResidu
 
 //! Set the vtk output fields specific to this model
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::Richards>
-{
-private:
-    static constexpr bool enableWaterDiffusionInAir
-        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
-
-public:
-    using type = RichardsIOFields<enableWaterDiffusionInAir>;
-};
+struct IOFields<TypeTag, TTag::Richards> { using type = RichardsIOFields; };
 
 template<class TypeTag>
 struct VelocityOutput<TypeTag, TTag::Richards>
@@ -232,7 +222,7 @@ struct VelocityOutput<TypeTag, TTag::Richards>
 
 //! The model traits
 template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::Richards> { using type = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>; };
+struct ModelTraits<TypeTag, TTag::Richards> { using type = RichardsModelTraits; };
 
 //! Set the volume variables property
 template<class TypeTag>
@@ -253,29 +243,10 @@ public:
     using type = RichardsVolumeVariables<Traits>;
 };
 
-//! The default richards model computes no diffusion in the air phase
-//! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-template<class TypeTag>
-struct EnableWaterDiffusionInAir<TypeTag, TTag::Richards> { static constexpr bool value = false; };
-
 //! Use the model after Millington (1961) for the effective diffusivity
 template<class TypeTag>
 struct EffectiveDiffusivityModel<TypeTag, TTag::Richards>
 { using type = DiffusivityMillingtonQuirk<GetPropType<TypeTag, Properties::Scalar>>; };
-
-//! The primary variables vector for the richards model
-template<class TypeTag>
-struct PrimaryVariables<TypeTag, TTag::Richards>
-{
-private:
-    using PrimaryVariablesVector = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                                     GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-public:
-    // TODO: After release 3.6, use the default (FieldVector) for Richards and remove the whole property specialization
-    using type = std::conditional_t<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>(),
-                                    SwitchablePrimaryVariables<PrimaryVariablesVector, int>,
-                                    Deprecated::RichardsSwitchablePrimaryVariables<PrimaryVariablesVector, int>>;
-};
 
 /*!
  *\brief The fluid system used by the model.
@@ -331,20 +302,14 @@ template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::RichardsNI>
 {
 private:
-    using IsothermalTraits = RichardsModelTraits<getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>()>;
+    using IsothermalTraits = RichardsModelTraits;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set the vtk output fields specific to th non-isothermal model
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::RichardsNI>
-{
-    static constexpr bool enableWaterDiffusionInAir
-        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
-    using RichardsIOF = RichardsIOFields<enableWaterDiffusionInAir>;
-    using type = EnergyIOFields<RichardsIOF>;
-};
+struct IOFields<TypeTag, TTag::RichardsNI> { using type = EnergyIOFields<RichardsIOFields>; };
 
 //! Set the volume variables property
 template<class TypeTag>
