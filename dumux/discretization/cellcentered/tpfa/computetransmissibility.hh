@@ -38,36 +38,6 @@ namespace Dumux {
  *        sub-control volume face stemming from a given sub-control
  *        volume with corresponding tensor T.
  *
- * \param scvf The sub-control volume face
- * \param scv The neighboring sub-control volume
- * \param T The tensor living in the neighboring scv
- * \param extrusionFactor The extrusion factor of the scv
- */
-template< class SubControlVolumeFace, class SubControlVolume, class Tensor >
-[[deprecated("Will be removed after release 3.6. Use interface with additional fvGeometry parameter instead.")]]
-typename Tensor::field_type computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
-                                                        const SubControlVolume& scv,
-                                                        const Tensor& T,
-                                                        typename SubControlVolume::Traits::Scalar extrusionFactor)
-{
-    using GlobalPosition = typename SubControlVolumeFace::Traits::GlobalPosition;
-    GlobalPosition Knormal;
-    T.mv(scvf.unitOuterNormal(), Knormal);
-
-    auto distanceVector = scvf.ipGlobal();
-    distanceVector -= scv.center();
-    distanceVector /= distanceVector.two_norm2();
-
-    return (Knormal*distanceVector) * extrusionFactor;
-}
-
-/*!
- * \ingroup CCTpfaDiscretization
- * \brief Free function to evaluate the Tpfa transmissibility
- *        associated with the flux (in the form of flux = T*gradU) across a
- *        sub-control volume face stemming from a given sub-control
- *        volume with corresponding tensor T.
- *
  * \param fvGeometry The element-centered control volume geometry
  * \param scvf The sub-control volume face
  * \param scv The neighboring sub-control volume
@@ -90,35 +60,6 @@ typename Tensor::field_type computeTpfaTransmissibility(const FVElementGeometry&
     distanceVector /= distanceVector.two_norm2();
 
     return (Knormal*distanceVector) * extrusionFactor;
-}
-
-/*!
- * \ingroup CCTpfaDiscretization
- * \brief Free function to evaluate the Tpfa transmissibility
- *        associated with the flux (in the form of flux = T*gradU) across a
- *        sub-control volume face stemming from a given sub-control
- *        volume for the case where T is just a scalar
- *
- * \param scvf The sub-control volume face
- * \param scv The neighboring sub-control volume
- * \param t The scalar quantity living in the neighboring scv
- * \param extrusionFactor The extrusion factor of the scv
- */
-template< class SubControlVolumeFace,
-          class SubControlVolume,
-          class Tensor,
-          typename std::enable_if_t<Dune::IsNumber<Tensor>::value, int> = 0 >
-[[deprecated("Will be removed after release 3.6. Use interface with additional fvGeometry parameter instead.")]]
-Tensor computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
-                                   const SubControlVolume &scv,
-                                   Tensor t,
-                                   typename SubControlVolumeFace::Traits::Scalar extrusionFactor)
-{
-    auto distanceVector = scvf.ipGlobal();
-    distanceVector -= scv.center();
-    distanceVector /= distanceVector.two_norm2();
-
-    return t * extrusionFactor * (distanceVector * scvf.unitOuterNormal());
 }
 
 /*!

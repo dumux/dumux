@@ -316,15 +316,6 @@ public:
         return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
     }
 
-    //! Create the sub control volume face geometries on the boundary
-    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
-    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& geometry,
-                                             unsigned int indexInIntersection) const
-    {
-        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
-    }
-
     //! get scvf normal vector
     GlobalPosition normal(const ScvfCornerStorage& scvfCorners,
                           const std::vector<unsigned int>& scvIndices) const
@@ -332,20 +323,6 @@ public:
         auto normal = geo_.corner(1) - geo_.corner(0);
         normal /= normal.two_norm();
         return normal;
-    }
-
-    //! get scv volume
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    Scalar scvVolume(const ScvCornerStorage& scvCorners) const
-    {
-        return (scvCorners[1] - scvCorners[0]).two_norm();
-    }
-
-    //! get scvf area
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    Scalar scvfArea(const ScvfCornerStorage& scvfCorners) const
-    {
-        return 1.0;
     }
 
     //! number of sub control volume faces (number of edges)
@@ -442,15 +419,6 @@ public:
         return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
     }
 
-    //! Create the sub control volume face geometries on the boundary
-    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
-    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeometry,
-                                             unsigned int indexInIntersection) const
-    {
-        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
-    }
-
     //! get scvf normal vector for dim == 2, dimworld == 3
     template <int w = dimWorld>
     typename std::enable_if<w == 3, GlobalPosition>::type
@@ -491,34 +459,6 @@ public:
             normal *= -1;
 
         return normal;
-    }
-
-    //! get scv volume for dim == 2, dimworld == 3
-    template <int w = dimWorld>
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    typename std::enable_if<w == 3, Scalar>::type
-    scvVolume(const ScvCornerStorage& p) const
-    {
-        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
-    }
-
-    //! get scv volume for dim == 2, dimworld == 2
-    template <int w = dimWorld>
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    typename std::enable_if<w == 2, Scalar>::type
-    scvVolume(const ScvCornerStorage& p) const
-    {
-        //! make sure we are using positive volumes
-        //! Cross product of diagonals might be negative, depending on element orientation
-        using std::abs;
-        return 0.5*abs(Dumux::crossProduct(p[3]-p[0], p[2]-p[1]));
-    }
-
-    //! get scvf area
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    Scalar scvfArea(const ScvfCornerStorage& p) const
-    {
-        return (p[1]-p[0]).two_norm();
     }
 
     //! number of sub control volume faces (number of edges)
@@ -639,15 +579,6 @@ public:
                                                             << " type=" << type);
     }
 
-    //! Create the sub control volume face geometries on the boundary
-    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
-    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeometry,
-                                             unsigned int indexInIntersection) const
-    {
-        return getBoundaryScvfCorners(is.indexInInside(), indexInIntersection);
-    }
-
     //! get scvf normal vector
     GlobalPosition normal(const ScvfCornerStorage& p,
                           const std::vector<unsigned int>& scvIndices) const
@@ -661,25 +592,6 @@ public:
             normal *= -1;
 
         return normal;
-    }
-
-    //! get scv volume
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    Scalar scvVolume(const ScvCornerStorage& p) const
-    {
-        // after Grandy 1997, Efficient computation of volume of hexahedron
-        const auto v = p[7]-p[0];
-        return 1.0/6.0 * ( Dumux::tripleProduct(v, p[1]-p[0], p[3]-p[5])
-                         + Dumux::tripleProduct(v, p[4]-p[0], p[5]-p[6])
-                         + Dumux::tripleProduct(v, p[2]-p[0], p[6]-p[3]));
-    }
-
-    //! get scvf area
-    [[deprecated("Will be removed after 3.6. Use volume from geometry/volume.hh")]]
-    Scalar scvfArea(const ScvfCornerStorage& p) const
-    {
-        // after Wolfram alpha quadrilateral area
-        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
     }
 
     //! number of sub control volume faces (number of edges)
