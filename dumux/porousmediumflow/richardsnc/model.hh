@@ -183,11 +183,6 @@ public:
     using type = RichardsNCVolumeVariables<NCTraits>;
 };
 
-//! The default richardsnc model computes no diffusion in the air phase
-//! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-template<class TypeTag>
-struct EnableWaterDiffusionInAir<TypeTag, TTag::RichardsNC> { static constexpr bool value = false; };
-
 /*!
  *\brief The fluid system used by the model.
  *
