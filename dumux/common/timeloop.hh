@@ -598,7 +598,7 @@ private:
 
         if (!checkPoints_.empty())
         {
-            if (Dune::FloatCmp::le(t, checkPoints_.back(), this->timeStepSize()*1e-7))
+            if (t <= checkPoints_.back())
             {
                 if (this->verbose())
                     std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
