@@ -598,10 +598,11 @@ private:
 
         if (!checkPoints_.empty())
         {
-            if (t < checkPoints_.back())
+            if (Dune::FloatCmp::le(t, checkPoints_.back(), this->timeStepSize()*1e-7))
             {
                 if (this->verbose())
-                    std::cerr << "Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
+                    std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
+                              << Fmt::format("because it's earlier than or equal to the last check point (t = {:.5g}) in the queue.\n", checkPoints_.back())
                               << "Checkpoints can only be inserted in ascending order." << std::endl;
                 return;
             }
