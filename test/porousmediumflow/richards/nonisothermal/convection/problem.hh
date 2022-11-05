@@ -91,7 +91,6 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        liquidPhaseOnly = Indices::liquidPhaseOnly,
         liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         temperatureIdx = Indices::temperatureIdx
     };

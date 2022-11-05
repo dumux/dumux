@@ -34,9 +34,9 @@ namespace Dumux {
  * \ingroup ExtendedRichardsModel
  * \brief Adds I/O fields specific to the extended Richards model.
  */
-class ExtendedRichardsIOFields : public RichardsIOFields<false>
+class ExtendedRichardsIOFields : public RichardsIOFields
 {
-    using ParentType = RichardsIOFields<false>;
+    using ParentType = RichardsIOFields;
 public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
@@ -44,40 +44,25 @@ public:
         using VV = typename OutputModule::VolumeVariables;
         using FS = typename VV::FluidSystem;
 
-        // TODO: replace by a call to the base class plus code specific to extended model after release (3.6)
-        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase0Idx); },
-                              IOName::saturation<FS>(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.saturation(FS::phase1Idx); },
-                              IOName::saturation<FS>(FS::phase1Idx));
-        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::phase0Idx); },
-                              IOName::pressure<FS>(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.pressure(FS::phase1Idx); },
-                              IOName::pressure<FS>(FS::phase1Idx));
-        out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
-                              IOName::capillaryPressure());
-        out.addVolumeVariable([](const auto& v){ return v.density(FS::phase0Idx); },
-                              IOName::density<FS>(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::phase0Idx); },
-                              IOName::mobility<FS>(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.relativePermeability(FS::phase0Idx); },
-                              IOName::relativePermeability<FS>(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.porosity(); },
-                              IOName::porosity());
+        ParentType::initOutputModule(out);
 
-        static const bool gravity = getParamFromGroup<bool>(out.paramGroup(), "Problem.EnableGravity");
-
-        if(gravity)
-            out.addVolumeVariable([](const auto& v){ return v.pressureHead(FS::phase0Idx); },
-                                  IOName::pressureHead());
         out.addVolumeVariable([](const auto& v){ return v.moleFraction(FS::phase1Idx, FS::comp0Idx); },
                                   IOName::moleFraction<FS>(FS::phase1Idx, FS::comp0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.waterContent(FS::phase0Idx); },
-                              IOName::waterContent());
         out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
                                   IOName::phasePresence());
     }
 };
 
+    template<class ModelTraits, class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        using Indices = typename ModelTraits::Indices;
+
+        if (state == Indices::gasPhaseOnly)
+            return IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::phase0Idx);
+        else
+            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
+    }
 } // end namespace Dumux
 
 #endif

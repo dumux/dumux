@@ -87,9 +87,6 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     static constexpr auto gasPhaseIdx = FluidSystem::phase1Idx;
     static constexpr auto liquidCompIdx = FluidSystem::comp0Idx;
 
-    static constexpr bool enableWaterDiffusionInAir
-        = getPropValue<TypeTag, Properties::EnableWaterDiffusionInAir>();
-
     //! An element solution that does not compile if the [] operator is used
     struct InvalidElemSol
     {
@@ -121,14 +118,6 @@ public:
         storage[conti0EqIdx] = volVars.porosity()
                                * volVars.density(liquidPhaseIdx)
                                * volVars.saturation(liquidPhaseIdx);
-
-        // for extended Richards we consider water in air
-        if constexpr (enableWaterDiffusionInAir)
-            storage[conti0EqIdx] += volVars.porosity()
-                                    * volVars.molarDensity(gasPhaseIdx)
-                                    * volVars.moleFraction(gasPhaseIdx, liquidCompIdx)
-                                    * FluidSystem::molarMass(liquidCompIdx)
-                                    * volVars.saturation(gasPhaseIdx);
 
         //! The energy storage in the water, air and solid phase
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, liquidPhaseIdx);
@@ -166,16 +155,6 @@ public:
 
         flux[conti0EqIdx] = fluxVars.advectiveFlux(liquidPhaseIdx, upwindTerm);
 
-        // for extended Richards we consider water vapor diffusion in air
-        if constexpr (enableWaterDiffusionInAir)
-        {
-            //check for the reference system and adapt units of the diffusive flux accordingly.
-            if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
-                flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx];
-            else
-                flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx]*FluidSystem::molarMass(liquidCompIdx);
-        }
-
         //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, liquidPhaseIdx);
 
@@ -204,8 +183,6 @@ public:
                                const VolumeVariables& curVolVars,
                                const SubControlVolume& scv) const
     {
-        static_assert(!enableWaterDiffusionInAir,
-                      "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
 
@@ -263,8 +240,6 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
-        static_assert(!enableWaterDiffusionInAir,
-                      "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
         static_assert(FluidSystem::viscosityIsConstant(0),
@@ -339,8 +314,6 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
-        static_assert(!enableWaterDiffusionInAir,
-                      "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
         static_assert(FluidSystem::viscosityIsConstant(0),
@@ -437,8 +410,6 @@ public:
                                        const ElementFluxVariablesCache& elemFluxVarsCache,
                                        const SubControlVolumeFace& scvf) const
     {
-        static_assert(!enableWaterDiffusionInAir,
-                      "richards/localresidual.hh: Analytic Jacobian not implemented for the water diffusion in air version!");
         static_assert(!FluidSystem::isCompressible(0),
                       "richards/localresidual.hh: Analytic Jacobian only supports incompressible fluids!");
         static_assert(FluidSystem::viscosityIsConstant(0),

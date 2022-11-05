@@ -86,24 +86,13 @@ public:
                                const SubControlVolume& scv,
                                const VolumeVariables& volVars) const
     {
-        // TODO: replace by a call to the bass class plus code specific to extended model after release (3.6)
-        // partial time derivative of the phase mass
-        NumEqVector storage(0.0);
-        storage[conti0EqIdx] = volVars.porosity()
-                               * volVars.density(liquidPhaseIdx)
-                               * volVars.saturation(liquidPhaseIdx);
-
+        NumEqVector storage = ParentType::computeStorage(problem, scv, volVars);
         // for extended Richards we consider water in air
         storage[conti0EqIdx] += volVars.porosity()
                                 * volVars.molarDensity(gasPhaseIdx)
                                 * volVars.moleFraction(gasPhaseIdx, liquidCompIdx)
                                 * FluidSystem::molarMass(liquidCompIdx)
                                 * volVars.saturation(gasPhaseIdx);
-
-        //! The energy storage in the water, air and solid phase
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, liquidPhaseIdx);
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, gasPhaseIdx);
-        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
     }
@@ -126,16 +115,9 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        // TODO: replace by a call to the bass class plus code specific to extended model after release (3.6)
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-        NumEqVector flux(0.0);
-        // the physical quantities for which we perform upwinding
-        auto upwindTerm = [](const auto& volVars)
-                          { return volVars.density(liquidPhaseIdx)*volVars.mobility(liquidPhaseIdx); };
-
-        flux[conti0EqIdx] = fluxVars.advectiveFlux(liquidPhaseIdx, upwindTerm);
+        NumEqVector flux = ParentType::computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // for extended Richards we consider water vapor diffusion in air
         //check for the reference system and adapt units of the diffusive flux accordingly.
@@ -143,13 +125,6 @@ public:
             flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx];
         else
             flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(gasPhaseIdx)[liquidCompIdx]*FluidSystem::molarMass(liquidCompIdx);
-
-        //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
-        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, liquidPhaseIdx);
-
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        //! The effective lambda is averaged over both fluid phases and the solid phase
-        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         return flux;
     }

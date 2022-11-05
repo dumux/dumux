@@ -68,11 +68,8 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    enum {
-        // copy some indices for convenience
-        pwIdx = Indices::pressureIdx,
-        bothPhases = Indices::bothPhases,
-    };
+    // copy pressure index for convenience
+    enum { pwIdx = Indices::pressureIdx };
     // Grid and world dimension
     static const int dimWorld = GridView::dimensionworld;
     static const int dim = GridView::dimension;

@@ -36,15 +36,9 @@ struct RichardsIndices
 {
     //! Primary variable index for the wetting phase pressure
     static constexpr int pressureIdx = 0;
-    static constexpr int switchIdx = 0;
 
     //! Equation index for the mass conservation of the wetting phase
     static constexpr int conti0EqIdx = 0;
-
-    // present phases (-> 'pseudo' primary variable)
-    static constexpr int liquidPhaseOnly = 1; //!< Only the liquid phase is present
-    static constexpr int gasPhaseOnly = 2; //!< Only the gas phase is present
-    static constexpr int bothPhases = 3; //!< Both phases are present
 };
 
 } // end namespace Dumux
