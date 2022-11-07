@@ -1,7 +1,9 @@
 # Examples
 
 To get started with DuMu<sup>x</sup>, we recommend the following documented examples. Each example folder contains a ready-to-use DuMu<sup>x</sup> simulation example.
-The description in each folder (best viewed online by following the link) explains each line of the code example.
+Click on the respective example to get to a detailed documentation of the example code (best viewed in a browser).
+For each example in this overview, the model equations and discretization method are described in words
+and the DuMu<sup>x</sup> name of the model is given in parenthesis: e.g. (`OneP`) / (`CCTpfaModel`).
 
 ### [:open_file_folder: Example 1: One-phase flow and tracer transport](1ptracer/README.md)
 
@@ -15,7 +17,10 @@ You learn how to
 * sequentially solve two types of problems after each other:
     * solve a one-phase flow in porous media problem
     * compute the flow field from a pressure solution to pass to a tracer problem
-    * solve an instationary tracer transport problem with a given flow field
+    * solve an unsteady tracer transport problem with a given flow field
+
+__Model equations:__ Single-phase flow Darcy equation and advection-diffusion equation in porous media (`OneP` and `Tracer`)<br />
+__Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
 <td width="20%"><a href="1ptracer/README.md">
@@ -27,15 +32,19 @@ You learn how to
 
 <table><tr><td>
 
-In this example we model a soil contamination problem where DNAPL infiltrates a water-saturated porous medium (two-phase flow).
+In this example we model a soil contamination problem where a
+DNAPL (dense non-aqueous phase liquid) infiltrates a water-saturated porous medium (two-phase flow).
 The initial distribution of DNAPL is read in from a txt-file.
-The grid is adapitvely refined where DNAPL enters the domain, around the plume, and around an injection well.
+The grid is adaptively refined where DNAPL enters the domain, around the plume, and around an injection well.
 You learn how to
 
 * solve a two-phase flow in porous media problem with two immiscible phases
 * set boundary conditions and a simple injection well
 * implement a problem with heterogeneous material parameters
 * use adaptive grid refinement around the saturation front
+
+__Model equations:__ Immiscible two-phase flow Darcy equations in porous media (`TwoP`)<br />
+__Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
 <td width="30%"><a href="2pinfiltration/README.md">
@@ -51,7 +60,10 @@ The shallow water flow model is applied to simulate steady subcritical flow in a
 You learn how to
 
 * solve a shallow water flow problem including bottom friction
-* computate and output (VTK) an analytical reference solution
+* compute and output (VTK) an analytical reference solution
+
+__Model equations:__ 2D shallow water equations (`ShallowWater`)<br />
+__Discretization method:__ Cell-centered finite volumes with Riemann solver (`CCTpfaModel`)
 
 </td>
 <td width="20%"><a href="shallowwaterfriction/README.md">
@@ -69,6 +81,9 @@ You learn how to
 * solve a free flow problem
 * set outflow boundary conditions in the free-flow context
 
+__Model equations:__ 2D Stokes equations (`NavierStokes`)<br />
+__Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
+
 </td>
 <td width="40%"><a href="freeflowchannel/README.md">
 <figure><img src="freeflowchannel/img/setup.png" alt="freeflow result"/></figure></td>
@@ -85,6 +100,9 @@ You learn how to
 * solve a rotation-symmetric problem
 * perform a convergence test against an analytical solution
 * do post-processing in [ParaView](https://www.paraview.org/)
+
+__Model equations:__ (rotation-symmetric) single-phase flow Darcy equation (`OneP`)<br />
+__Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
 <td width="30%"><a href="1protationsymmetry/README.md">
@@ -107,6 +125,9 @@ You learn how to
 * set a complex time loop with checkpoints, reading the check points from a file
 * set complex injection boundary conditions, reading the injection types from a file
 
+__Model equations:__ Miscible two-phase multi-component flow Darcy equations with precipitation and reaction (`TwoPNCMin`)<br />
+__Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
+
 </td>
 <td width="20%"><a href="biomineralization/README.md">
 <figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
@@ -123,6 +144,9 @@ You learn how to
 * solve a single-phase Navier-Stokes flow problem
 * compare the results of Stokes flow (Re = 1) and Navier-Stokes flow (Re = 1000)
 * compare the numerical results with the reference data using the plotting library `matplotlib`
+
+__Model equations:__ Navier-Stokes equations (`NavierStokes`)<br />
+__Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
 
 </td>
 <td width="20%"><a href="liddrivencavity/README.md">
@@ -141,6 +165,9 @@ You learn how to
 
 * solve a single-phase-flow pore-network problem
 * use the total mass flow rate to estimate $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$
+
+__Model equations:__ Single-phase flow pore-network model (`PNMOneP`)<br />
+__Discretization method:__ Pore-network (`PoreNetworkModel`)
 
 </td>
 <td width="20%"><a href="liddrivencavity/README.md">
