@@ -1,0 +1,73 @@
+########################################################################
+# Scenario and parameters
+########################################################################
+
+[Problem]
+EnableGravity = false
+Name = clearance
+
+[Tissue.Problem]
+# Gaussian initial concentration "plume"
+InitialCenter = 100e-6 100e-6 100e-6
+InitialPeakConcentration = 0.001 # mmol/l
+# making InitialStddev large (e.g. 1.0) means same concentration everywhere
+InitialStddev = 1 1 1
+
+[Network.Problem]
+SideConcentration = 0.0
+# 1.0 means the SideConcentration is reached in 1 µm distance from the boundary
+# very high means high transmissibility, low means low transmissibility / high resistance
+SideMembraneCoefficient = 1e-10 # no-flow
+
+[Tissue.SpatialParams]
+Porosity = 0.24 # [-]
+Tortuosity = 0.35 # [-] (Sykova 2008 Diffusion in Brain Extracellular Space)
+
+[Tracer]
+DiffusionCoefficient = 3.25e-10 # m^2/s estimated with Stokes-Einstein-Radius of 7Å = 0.7nm
+MembraneDiffusionFactor = 1e3
+
+########################################################################
+# Grid settings
+########################################################################
+
+[Tissue.Grid]
+LowerLeft = 0 0 0
+UpperRight = 200e-6 200e-6 200e-6 # in m
+Cells = 20 20 20
+
+[Network.Grid]
+File = network.dgf
+
+########################################################################
+# Time settings
+########################################################################
+
+[TimeLoop]
+TEnd = 300 # in s
+DtInitial = 3 # in s
+
+########################################################################
+# Assembly and linear solver settings
+########################################################################
+
+[LinearSolver]
+MaxIterations = 20000
+
+[Tissue.Assembly.NumericDifference]
+PriVarMagnitude = 1e-3
+BaseEpsilon = 1e-2
+
+[Network.Assembly.NumericDifference]
+PriVarMagnitude = 1e-3
+BaseEpsilon = 1e-2
+
+[MixedDimension]
+NumCircleSegments = 20
+
+########################################################################
+# Blood flow model
+########################################################################
+[Component]
+LiquidDensity = 1050
+LiquidDynamicViscosity = 1e-3
