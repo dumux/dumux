@@ -1,0 +1,37 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/problem.md" : [
+        "problem.hh"
+    ],
+
+    "doc/spatialparams.md" : [
+        "spatialparams.hh"
+    ],
+
+    "doc/properties.md" : [
+        "properties.hh"
+    ],
+
+    "doc/main.md" : [
+        "main.cc"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/problem.md",
+            "doc/spatialparams.md",
+            "doc/properties.md",
+            "doc/main.md"
+        ],
+        "subtitles" : [
+            "Problem definition",
+            "Spatial parameters",
+            "Properties",
+            "Main program"
+        ]
+    }
+}

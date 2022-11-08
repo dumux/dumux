@@ -23,7 +23,7 @@ __Model equations:__ Single-phase flow Darcy equation and advection-diffusion eq
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
-<td width="20%"><a href="1ptracer/README.md">
+<td width="35%"><a href="1ptracer/README.md">
 <figure><img src="1ptracer/img/xtracer.gif" alt="Tracer result"/></figure>
 </a></td>
 </tr></table>
@@ -47,7 +47,7 @@ __Model equations:__ Immiscible two-phase flow Darcy equations in porous media (
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
-<td width="30%"><a href="2pinfiltration/README.md">
+<td width="35%"><a href="2pinfiltration/README.md">
 <figure><img src="2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/></figure>
 </a></td>
 </tr></table>
@@ -66,7 +66,7 @@ __Model equations:__ 2D shallow water equations (`ShallowWater`)<br />
 __Discretization method:__ Cell-centered finite volumes with Riemann solver (`CCTpfaModel`)
 
 </td>
-<td width="20%"><a href="shallowwaterfriction/README.md">
+<td width="35%"><a href="shallowwaterfriction/README.md">
 <figure><img src="shallowwaterfriction/img/swe_result.png" alt="swe result"/></figure></td>
 </a></td>
 </tr></table>
@@ -105,7 +105,7 @@ __Model equations:__ (rotation-symmetric) single-phase flow Darcy equation (`One
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="30%"><a href="1protationsymmetry/README.md">
+<td width="35%"><a href="1protationsymmetry/README.md">
 <figure><img src="1protationsymmetry/img/setup.svg" alt="Rotation-symmetric setup"/></figure></td>
 </a></td>
 </tr></table>
@@ -129,7 +129,7 @@ __Model equations:__ Miscible two-phase multi-component flow Darcy equations wit
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="20%"><a href="biomineralization/README.md">
+<td width="35%"><a href="biomineralization/README.md">
 <figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
 </a></td>
 </tr></table>
@@ -149,7 +149,7 @@ __Model equations:__ Navier-Stokes equations (`NavierStokes`)<br />
 __Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
 
 </td>
-<td width="20%"><a href="liddrivencavity/README.md">
+<td width="35%"><a href="liddrivencavity/README.md">
 <figure><img src="liddrivencavity/img/setup.png" alt="liddriven result"/></figure></td>
 </a></td>
 </tr></table>
@@ -170,7 +170,29 @@ __Model equations:__ Single-phase flow pore-network model (`PNMOneP`)<br />
 __Discretization method:__ Pore-network (`PoreNetworkModel`)
 
 </td>
-<td width="20%"><a href="liddrivencavity/README.md">
+<td width="35%"><a href="liddrivencavity/README.md">
 <figure><img src="porenetwork_upscaling/img/result.png" alt="pnm result"/></figure></td>
+</a></td>
+</tr></table>
+
+### [:open_file_folder: Example 9: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
+
+<table><tr><td>
+
+In this example, we compute the spread of a tracer in the blood stream and the embedding tissue (porous medium).
+We couple a 1D advection-diffusion equation on the network with a 3D diffusion equation in the embedding porous medium.
+
+You learn how to
+
+* setup a multi-domain with domains of different dimension
+* read data from a grid file
+* specify input parameters in multi-domain simulations
+
+__Model equations:__ 1D and 3D advection-diffusion equations (`Tracer`)<br />
+__Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
+
+</td>
+<td width="35%"><a href="embedded_network_1d3d/README.md">
+<figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
 </a></td>
 </tr></table>
