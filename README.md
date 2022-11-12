@@ -86,7 +86,7 @@ You can also cite specific releases published on Zenodo:
 
 Automated Testing / Test suite
 ===============================
-* Latest release (3.5): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.5/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.5)
+* Latest release (3.6): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.6/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.6)
 * Master branch (development / unstable): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 
 
@@ -144,7 +144,7 @@ Releases and backwards compatibility policy
 For a detailed description of the backwards compatibility policy,
 please see [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md).
 
-DuMu<sup>x</sup> releases are split into major(e.g. 2.0, 3.0) and minor (e.g. 3.1, 3.2, 3.3) releases.
+DuMu<sup>x</sup> releases are split into major (e.g. 2.0, 3.0) and minor (e.g. 3.1, 3.2, 3.3) releases.
 Major releases are not required to maintain backwards compatibility (see below),
 but would provide a detailed guide on how to update dependent modules.
 For each minor release, maintaining backwards compatibility is strongly encouraged and recommended.
