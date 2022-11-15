@@ -4,7 +4,8 @@ import subprocess
 testList = ["test_mohr_circle",
             "test_point_line_distance",
             "test_stress_drop_law_params",
-            "test_stress_drop_law"]
+            "test_stress_drop_law",
+            "test_constantcementmodel"]
 
 dir = os.path.dirname(__file__)
 os.chdir(dir)

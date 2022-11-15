@@ -11,3 +11,6 @@ dune_add_test(NAME test_mohr_circle
 
 dune_add_test(NAME test_stress_drop_law
               SOURCES test_stress_drop_law.cc)
+
+dune_add_test(NAME test_constantcementmodel
+              SOURCES test_constantcementmodel.cc)
