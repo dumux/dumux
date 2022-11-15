@@ -1,0 +1,116 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 3 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup PoromechanicsTests
+ * \brief Definition of the spatial parameters for the two-phase flow
+ *        sub-problem in the coupled poro-mechanical elp problem.
+ */
+
+#ifndef DUMUX_GEOMECHANICS_ELTWOP_PROPERTIES_HH
+#define DUMUX_GEOMECHANICS_ELTWOP_PROPERTIES_HH
+
+#include <dune/alugrid/grid.hh>
+
+#include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/flux/box/stressdroplaw.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/porousmediumflow/problem.hh>
+
+#include <dumux/material/fluidsystems/brineco2.hh>
+
+#include <dumux/multidomain/traits.hh>
+#include <dumux/geomechanics/poroelastic/couplingmanager.hh>
+
+#include "spatialparams_2p.hh"
+#include "spatialparams_poroelastic.hh"
+
+#include "problem_poroelastic.hh"
+
+#include "test/porousmediumflow/co2/co2tables.hh"
+
+namespace Dumux::Properties {
+
+// Create new type tags
+namespace TTag {
+struct PoroElasticSub { using InheritsFrom = std::tuple<PoroElastic, BoxModel>; };
+} // end namespace TTag
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;};
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
+
+// Set the fluid system for TwoPSubProblem
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PoroElasticSub>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
+};
+
+template<class TypeTag>
+struct StressType<TypeTag, TTag::PoroElasticSub>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElasticStressType = StressDropLaw< Scalar, GridGeometry >;
+public:
+    using type = EffectiveStressLaw< ElasticStressType, GridGeometry >;
+};
+
+// The spatial parameters property
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::PoroElasticSub>
+{
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using type = PoroElasticSpatialParams< GetPropType<TypeTag, Properties::Scalar>,
+                                           GetPropType<TypeTag, Properties::GridGeometry>,
+                                           CouplingManager, FluidSystem>;
+};
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::TwoPSub>
+{
+private:
+    // define traits etc. as below in main
+    using Traits = MultiDomainTraits<Properties::TTag::TwoPSub, Properties::TTag::PoroElasticSub>;
+public:
+    using type = PoroMechanicsCouplingManager< Traits >;
+};
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PoroElasticSub>
+{
+private:
+    // define traits etc. as below in main
+    using Traits = MultiDomainTraits<Properties::TTag::TwoPSub, Properties::TTag::PoroElasticSub>;
+public:
+    using type = PoroMechanicsCouplingManager< Traits >;
+};
+
+
+} // end namespace Dumux::Properties
+
+#endif

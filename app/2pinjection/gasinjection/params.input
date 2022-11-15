@@ -1,0 +1,70 @@
+[TimeLoop]
+Dt = 1 # [s]
+TEnd =1# 86400 # [s]
+MaxTimeStepSize = 100
+[Grid]
+File = fracture.msh
+
+[Problem]
+InjectionRateGas = 1 # kg/s
+EnableGravity = 1
+
+[PoroElastic.Problem]
+Name = poroelastic
+
+[TwoP.Problem]
+Name = twop
+
+[SpatialParams]
+Fault.Permeability = 1e-15 # [m^2]
+Caprock.Permeability = 1e-19 # [m^2]
+Reservoir.Permeability = 1e-13 # [m^2]
+
+Fault.Porosity = 0.3 # [-]
+Caprock.Porosity = 0.1 # [-]
+Reservoir.Porosity = 0.3 # [-]
+
+Shale.Swr = 0.20
+Shale.Snr = 0.05
+Shale.VanGenuchtenN = 1.842
+Shale.VanGenuchtenAlpha = 5.025e-5
+
+OtherLayers.Swr = 0.20
+OtherLayers.Snr = 0.05
+OtherLayers.VanGenuchtenN = 1.842
+OtherLayers.VanGenuchtenAlpha = 5.025e-4
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[MaterialParameters]
+GrainBulkModulus = 30e9
+GrainShearModulus = 12e9
+CementBulkModulus = 71e9
+CementShearModulus = 30e9
+
+Rock.CriticalPorosity = 0.46
+Rock.WellSortedPorosity = 0.42
+
+Fracture.CriticalPorosity = 0.32
+Fracture.WellSortedPorosity = 0.05
+
+[Newton]
+MaxSteps = 25
+TargetSteps = 15
+MaxRelativeShift = 1e-3
+
+[Component]
+SolidDensity = 2260
+
+[Brine]
+Salinity = 0.1
+
+[StressDropLaw]
+InternalFrictionAngle = -30 #always negative
+Cohesion = 4e6 #
+StressDrop =0.2e6 #
+
+[Vtk]
+OutputName = test_gas_injection_showgrid
