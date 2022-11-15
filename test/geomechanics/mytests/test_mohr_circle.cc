@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
         DUNE_THROW(Dune::Exception,"circle center is wrong.");
     }
 
-    if (abs(mohrCircle.radius() - 2.5 > 1e-4)){
+    if (abs(mohrCircle.radius() - 2.5) > 1e-4){
         DUNE_THROW(Dune::Exception,"circle radius is wrong.");
     }
 
