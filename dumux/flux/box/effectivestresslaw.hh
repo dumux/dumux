@@ -117,7 +117,7 @@ public:
                 StressDropLaw stressDropLaw(sigma);
                 const auto& params = problem.spatialParams().stressDropLawParam(element);
 
-                std::cout<< "has Failure: " << stressDropLaw.hasFailure(params) << std::endl;
+                //std::cout<< "has Failure: " << stressDropLaw.hasFailure(params) << std::endl;
                 if (stressDropLaw.hasFailure(params))
                 {
                     problem.spatialParams().setFailure(element);
