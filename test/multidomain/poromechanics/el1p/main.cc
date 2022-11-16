@@ -132,6 +132,9 @@ int main(int argc, char** argv)
     OnePOutputFields::initOutputModule(onePVtkWriter);
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
+    poroMechVtkWriter.addField(poroMechProblem->getStress(0),"EffSigmaX");
+    poroMechVtkWriter.addField(poroMechProblem->getStress(1),"EffSigmaY");
+    poroMechVtkWriter.addField(poroMechSpatialParams->getFailureState(),"hasFailure");
     // write initial solution
     onePVtkWriter.write(0.0);
     poroMechVtkWriter.write(0.0);
@@ -158,6 +161,7 @@ int main(int argc, char** argv)
     onePGridVariables->update(x[onePId]);
     poroMechGridVariables->update(x[poroMechId]);
 
+    poroMechProblem->calculateStress(*poroMechGridVariables,x[poroMechId]);
     // write vtk output
     onePVtkWriter.write(1.0);
     poroMechVtkWriter.write(1.0);

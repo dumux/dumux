@@ -60,8 +60,8 @@ public:
                              std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(gridGeometry)
     , couplingManager_(couplingManagerPtr)
-    , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     , stressDropLawParam_(-45.0,1000,1)
+    , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
         // Young's modulus [Pa]
        Scalar E = 6.e9;
@@ -70,6 +70,9 @@ public:
        // Lame parameters [Pa]
        lameParams_.setLambda( (E * nu) / ((1 + nu)*(1 - 2 * nu)) );
        lameParams_.setMu( E / (2 * (1 + nu)) );
+
+       hasFailure_.resize(gridGeometry->gridView().size(0));
+       std::fill(hasFailure_.begin(), hasFailure_.end(),false);
     }
 
     //! Defines the Lame parameters.
@@ -123,13 +126,20 @@ public:
     { return stressDropLawParam_; }
 
     void setFailure(const Element& element) const
-    { std::cout << "shear failure detected." << std::endl;}
+    { std::cout << "shear failure detected." << std::endl;
+      const auto eIdx = this->gridGeometry().elementMapper().index(element);
+      hasFailure_[eIdx] = true;
+    }
+
+    const auto& getFailureState()
+    { return hasFailure_; }
 
 private:
     std::shared_ptr<const CouplingManager> couplingManager_;
     StressDropLawParam stressDropLawParam_;
     Scalar initPorosity_;
     LameParams lameParams_;
+    mutable std::vector<bool> hasFailure_;
 };
 
 } // end namespace Dumux
