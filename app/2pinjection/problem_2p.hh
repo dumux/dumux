@@ -91,11 +91,12 @@ public:
     //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-      PrimaryVariables values;
-
-      values[pressureIdx] = 1e6 * ((- 500 - globalPos[1])/2000*(24.6-5) + 5);
-      values[saturationNIdx] = 0.0;
-      return values;
+        PrimaryVariables values;
+        // linear change from 5 Mpa to 24.6 Mpa
+        //values[pressureIdx] = 1e6 * ((- 500 - globalPos[1])/2000*(24.6-5) + 5);
+        values[pressureIdx] = 9.81*1e3*-globalPos[1];
+        values[saturationNIdx] = 0.0;
+        return values;
     }
 
     //! Evaluates source terms.
@@ -111,6 +112,7 @@ public:
 
         const GlobalPosition globalPos = scv.center();
         //std::cout << "Global Position: " << globalPos << std::endl;
+        // the injection takes place in the middle cell
         if(std::abs(globalPos[1] + 1500) < 3 && globalPos[0] < 80  )
         {
             //std::cout << "injection takes place" << std::endl;
@@ -130,8 +132,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        if(!initialized_)
+        {
+            values.setAllDirichlet();
+        }
 
+        values.setAllDirichlet();
+        // noflow on the left boundary
         if (globalPos[dimWorld-1] < eps_)
             values.setAllNeumann();
 
@@ -144,7 +151,7 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1.0e-6;
+    static constexpr Scalar eps_ = 1e-6;
     std::string problemName_;
     bool initialized_ = false;
 };

@@ -62,6 +62,14 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
+    using StressType = GetPropType<TypeTag, Properties::StressType>;
+    using StressTensor = typename StressType::StressTensor;
+    using ForceVector = typename StressType::ForceVector;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using FluxVarCache = typename
+    GridVariables::GridFluxVariablesCache::FluxVariablesCache;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 public:
     PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                           std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
@@ -69,6 +77,9 @@ public:
     : ParentType(gridGeometry, spatialParams, paramGroup)
     {
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        stress_[0].resize(gridGeometry->gridView().size(0));
+        stress_[1].resize(gridGeometry->gridView().size(0));
     }
 
     /*!
@@ -89,13 +100,13 @@ public:
 
     //! Evaluates the boundary conditions for a Neumann boundary segment.
     PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    { PrimaryVariables force(0.0); // [Pa]
-      if (globalPos[0] < -500 - eps_)
-        force[1] = - 2260 * 9.8 * 500;
-      if (globalPos[1] > 2000 - eps_)
-        force[0] = - 0.6 *  2260 * 9.8 * 500;
-      return force;
-      }
+    {
+        PrimaryVariables force(0.0); // [Pa]
+        force[1] = - 2260 * 9.8 * -globalPos[1];
+        force[0] = 0.6 * force[1];
+        //std::cout << "At pos"<< globalPos << " Neumann value: " << force << std::endl;
+        return force;
+    }
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
@@ -125,9 +136,41 @@ public:
                             const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
 
+    void calculateStress(const GridVariables& gv,
+                         const SolutionVector& sol)
+    {
+        auto& gg = this->gridGeometry();
+        for (const auto& element : elements(gg.gridView()))
+        {
+            auto fvGeometry = localView(gg);
+            auto elemVolVars = localView(gv.curGridVolVars());
+
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+
+            // evaluate flux variables cache at cell center
+            FluxVarCache fluxVarCache;
+            fluxVarCache.update(*this, element, fvGeometry, elemVolVars, element.geometry().center());
+
+            const auto sigma = StressType::stressTensor(*this, element, fvGeometry, elemVolVars, fluxVarCache);
+
+            const auto eIdx = gg.elementMapper().index(element);
+            for(int dir = 0; dir < dim; dir++)
+            {
+                stress_[dir][eIdx] = sigma[dir];
+            }
+        }
+    }
+
+    auto& getStress(const int& dir) const
+    {
+        return stress_[dir];
+    }
+
 private:
     static constexpr Scalar eps_ = 3e-6;
     std::string problemName_;
+    std::array<std::vector<ForceVector>,2> stress_;
 };
 
 } // end namespace Dumux

@@ -1,0 +1,79 @@
+[TimeLoop]
+Dt = 1 # [s]
+TEnd = 864000#[s]
+MaxTimeStepSize = 3600
+
+[Grid]
+File = 2pinjection.msh
+
+[Problem]
+InjectionRateGas = 1 # kg/s
+EnableGravity = 1
+EnableStressDrop = 1
+
+[PoroElastic.Problem]
+Name = poroelastic
+
+[TwoP.Problem]
+Name = twop
+
+[SpatialParams]
+Swr = 0.20
+Snr = 0.05
+VanGenuchtenN = 1.842
+VanGenuchtenAlpha = 5.025e-5
+
+# alpha -> entrypressure for 3 zones
+# e-1 each level
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[MaterialParameters]
+GrainBulkModulus = 38e9 #quartz
+GrainShearModulus = 44e9 #quartz
+CementBulkModulus = 98e9 #calcite
+CementShearModulus = 35e9 #calcite
+
+[LeftFault]
+Porosity = 0.30
+Permeability = 1e-16
+
+[RightFault]
+Porosity = 0.40
+Permeability = 1e-10
+
+[Reservoir]
+Porosity = 0.25
+Permeability = 1e-12
+
+[Caprock]
+Porosity = 0.1
+Permeability = 1e-17
+
+[Rock]
+CriticalPorosity = 0.46
+WellSortedPorosity = 0.42
+
+[Fault]
+CriticalPorosity = 0.46
+WellSortedPorosity = 0.36
+
+[Newton]
+MaxSteps = 25
+TargetSteps = 15
+MaxRelativeShift = 1e-6
+
+[Component]
+SolidDensity = 2260
+
+[Brine]
+Salinity = 0.1
+
+[StressDropLaw]
+InternalFrictionAngle = -30 #always negative
+Cohesion = 1e8 # 1e7 for rock
+StressDrop =2e6 # 2MPa
+
+[Vtk]
+OutputName = test_gas_injection_showgrid

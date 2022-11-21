@@ -30,9 +30,9 @@
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
-#include <dumux/flux/box/stressdroplaw.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/geomechanics/stressstate/stressdroplaw.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/brineco2.hh>
@@ -90,23 +90,26 @@ struct Grid<TypeTag, TTag::PoroElasticSub> { using type = Dune::ALUGrid<2, 2, Du
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticSubProblem<TypeTag>; };
 
-// Set the fluid system for TwoPSubProblem
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PoroElasticSub>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
-};
-
 template<class TypeTag>
 struct StressType<TypeTag, TTag::PoroElasticSub>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElasticStressType = StressDropLaw< Scalar, GridGeometry >;
+    using ElasticStressType = HookesLaw< Scalar, GridGeometry >;
+    using StressTensor = typename ElasticStressType::StressTensor;
+    using MohrSpaceTypeTraitsImpl = MohrSpaceTypeTraits<Scalar,StressTensor>;
+    using StressDropLawType = StressDropLaw<Scalar,StressTensor,MohrSpaceTypeTraitsImpl>;
 public:
-    using type = EffectiveStressLaw< ElasticStressType, GridGeometry >;
+    using type = EffectiveStressLaw< ElasticStressType,StressDropLawType,GridGeometry >;
+};
+
+// Set the fluid system for TwoPSubProblem
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PoroElasticSub>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::BrineCO2<Scalar, GeneratedCO2Tables::CO2Tables>;
 };
 
 // The spatial parameters property

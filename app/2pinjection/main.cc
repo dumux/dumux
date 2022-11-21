@@ -140,7 +140,9 @@ int main(int argc, char** argv)
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
     // write initial solution
-    twoPVtkWriter.addField(twoPProblem->spatialParams().getOutPut(),"region");
+    twoPVtkWriter.addField(poroMechProblem->getStress(0),"EffSigmaX");
+    twoPVtkWriter.addField(poroMechProblem->getStress(1),"EffSigmaY");
+    twoPVtkWriter.addField(poroMechSpatialParams->getFailureState(),"hasFailure");
     twoPVtkWriter.write(0.0);
     poroMechVtkWriter.write(0.0);
 
@@ -166,22 +168,40 @@ int main(int argc, char** argv)
     // HACK: set the previous solution pointer in the coupling manager
     couplingManager->setPreviousSolutionPointer(&xOld);
 
+    bool initialized = false;
     // time loop
     timeLoop->start(); do
     {
+        if(!initialized)
+        {
+            timeLoop->setTimeStepSize(0.001);
+        }
+
         // solve the non-linear system with time step control
         nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
 
-        // stop initializing
-        if (timeLoop->time() == 0)
-            twoPProblem->isInitialized(true);
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
         twoPGridVariables->advanceTimeStep();
         poroMechGridVariables->advanceTimeStep();
+
+        // stop initializing
+        if (timeLoop->time() > 0.0 && !initialized)
+        {
+            std::cout << "\nchange initializatio state." << std::endl;
+            twoPProblem->isInitialized(true);
+            twoPSpatialParams->isInitialized(true);
+            poroMechSpatialParams->isInitialized(true);
+            initialized = true;
+            timeLoop->setTimeStepSize(dt);
+        }
+
+        // calculate effective stress output
+        poroMechProblem->calculateStress(*poroMechGridVariables,x[poroMechId]);
 
         // write vtk output
         twoPVtkWriter.write(timeLoop->time());
@@ -202,6 +222,10 @@ int main(int argc, char** argv)
         // std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
         // std::cout << "***************************************" << std::endl;
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        if(poroMechSpatialParams->hasFailure())
+        { timeLoop->setTimeStepSize(0.1);}
+        poroMechSpatialParams->resetFailureState();
     } while (!timeLoop->finished());
 
 

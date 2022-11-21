@@ -24,11 +24,17 @@
 #ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 
+#include <algorithm>
+
 #include <dumux/geomechanics/lameparams.hh>
 #include <dumux/geomechanics/poroelastic/fvspatialparams.hh>
-#include <dumux/geomechanics/stressdroplawparams.hh>
+#include <dumux/geomechanics/stressstate/stressdroplawparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
-#include <dumux/material/fluidmatrixinteractions/constantcementmodel.hh>
+#include <dumux/geomechanics/stressstate/constantcementmodel.hh>
+
+#include <dumux/geomechanics/stressstate/stressdroplawparams.hh>
+#include <dumux/geomechanics/stressstate/math/mohrspace.hh>
+#include "regionindex.hh"
 namespace Dumux {
 
 /*!
@@ -51,12 +57,8 @@ class PoroElasticSpatialParams : public FVPoroElasticSpatialParams< GridGeometry
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using ConstantCementModel = ConstantCementModel<Scalar>;
-    using StressDropLawParams = StressDropLawParams<Scalar>;
-    static constexpr int regionNum = 3;
-    enum Region{
-        Fault, Caprock, Reservoir
-    };
-    static constexpr Region AllRegions[] = {Fault, Caprock, Reservoir};
+
+    using StressDropLawParams = StressDropLawParams<Scalar,Line<Scalar>>;
 
 public:
     //! Export the type of the lame parameters
@@ -67,31 +69,35 @@ public:
     : ParentType(gridGeometry)
     , couplingManager_(couplingManagerPtr)
     , rockModel_{makeModel("Rock")}
-    , fractureModel_{makeModel("Fracture")}
-    , stressDropLawParams_{makeStressDropLawParams()}
+    , faultModel_{makeModel("Fault")}
+    , stressDropLawParam_{makeStressDropLawParams()}
     {
-        for (const auto& region : AllRegions)
+        for (const auto& zoneType : AllZoneTypes)
         {
-            initPorosity_[region] = getParam<Scalar>("SpatialParams."+regionName[region]+".Porosity");
+            initPorosity_[zoneType] = getParam<Scalar>(ZoneName.at(zoneType)+".Porosity");
         }
+
+        hasFailure_.resize(gridGeometry->gridView().size(0));
+        std::fill(hasFailure_.begin(), hasFailure_.end(),false);
     }
 
     //! Defines the Lame parameters.
     template<class ElemVolVars, class FluxVarsCache>
-    const LameParams& lameParams(const Element& element,
+    const LameParams lameParams(const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElemVolVars& elemVolVars,
                                  const FluxVarsCache& fluxVarsCach) const
     {
-        const auto region = regionAtPos(element.geometry().center());
-        const Scalar initPorosity = initPorosity_[region];
+        const GlobalPosition& center = element.geometry().center();
+
+        const auto zoneType = zoneTypeAtPos(center);
+        const Scalar& initPorosity = initPorosity_.at(zoneType);
 
         const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        const GlobalPosition center = element.geometry().center();
         const Scalar porosity = PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, center, elemSol, initPorosity);
 
-        if( region == Region::Fault)
-            return fractureModel_.effectiveLameModuli(porosity);
+        if( zoneType == ZoneType::LeftFault || zoneType == ZoneType::RightFault)
+            return faultModel_.effectiveLameModuli(porosity);
         else
             return rockModel_.effectiveLameModuli(porosity);
 
@@ -104,7 +110,7 @@ public:
                     const ElementSolution& elemSol) const
 
     {
-        const Scalar initPorosity = initPorosity_[regionAtPos(scv.center())];
+        const Scalar initPorosity = initPorosity_.at(zoneTypeAtPos(scv.center()));
         return PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, scv, elemSol, initPorosity);
     }
 
@@ -132,14 +138,20 @@ public:
                                  const ElementVolumeVariables& elemVolVars,
                                  const FluxVarsCache& fluxVarsCache) const
     {
-        // get porous medium flow volume variables from coupling manager
-        const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
+        if (!initialized_)
+        {
+            return -9.81*1e3*element.geometry().center()[1];
+        }
+        else{
+            // get porous medium flow volume variables from coupling manager
+            const auto& pmFlowVolVars = couplingManager().getPMFlowVolVars(element);
 
-        Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
-        Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);
-        Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
-        Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
-        return (pw * Sw + pn * Sn);
+            Scalar pw = pmFlowVolVars.pressure(FluidSystem::phase0Idx);
+            Scalar pn = pmFlowVolVars.pressure(FluidSystem::phase1Idx);
+            Scalar Sw = pmFlowVolVars.saturation(FluidSystem::phase0Idx);
+            Scalar Sn = pmFlowVolVars.saturation(FluidSystem::phase1Idx);
+            return (pw * Sw + pn * Sn);
+        }
     }
 
     //! Returns the Biot coefficient of the porous medium.
@@ -154,25 +166,42 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
-    const StressDropLawParams& stressDropLawParams() const
-    { return stressDropLawParams_; }
+    StressDropLawParams stressDropLawParam(const Element& element) const
+    { return stressDropLawParam_; }
 
-    const StressDropLawParams makeStressDropLawParams()
-    {
-        Scalar phi = getParam<Scalar>("StressDropLaw.InternalFrictionAngle");
-        Scalar sigma = getParam<Scalar>("StressDropLaw.Cohesion");
-        Scalar stressDrop = getParam<Scalar>("StressDropLaw.StressDrop");
-        return StressDropLawParams(phi, sigma, stressDrop);
+    void setFailure(const Element& element) const
+    { std::cout << "shear failure detected." << std::endl;
+      const auto eIdx = this->gridGeometry().elementMapper().index(element);
+      hasFailure_[eIdx] = true;
     }
+
+    const auto& getFailureState()
+    { return hasFailure_; }
+
+    void resetFailureState()
+    {
+        std::fill(hasFailure_.begin(), hasFailure_.end(),false);
+    }
+
+    bool hasFailure() const
+    {
+        return std::any_of(hasFailure_.begin(), hasFailure_.end(),
+                           [&](const auto& val){return val;});
+    }
+
+    void isInitialized(const bool& state)
+    {
+        initialized_ = state;
+    }
+
 private:
     std::shared_ptr<const CouplingManager> couplingManager_;
 
-    const std::array<std::string, regionNum> regionName = {"Fault", "Caprock", "Reservoir"};
 
     ConstantCementModel makeModel(const std::string& groupname)
     {
-        Scalar phiCrit{getParam<Scalar>("MaterialParameters."+groupname+".CriticalPorosity")};
-        Scalar phib{getParam<Scalar>("MaterialParameters."+groupname+".WellSortedPorosity")};
+        Scalar phiCrit{getParam<Scalar>(groupname+".CriticalPorosity")};
+        Scalar phib{getParam<Scalar>(groupname+".WellSortedPorosity")};
 
         Scalar Ks{getParam<Scalar>("MaterialParameters.GrainBulkModulus")};
         Scalar Gs{getParam<Scalar>("MaterialParameters.GrainShearModulus")};
@@ -182,52 +211,21 @@ private:
         return ConstantCementModel(phiCrit, phib, Ks, Gs, Kc, Gc);
     }
 
-    Region regionAtPos(const GlobalPosition& globalPos) const
+    StressDropLawParams makeStressDropLawParams()
     {
-        using std::tan;
-        using std::abs;
-
-        // check on Fault
-        // Fault 1000m long
-        // (x - (-1500))
-        // each fault has width of 10 m
-        static const Scalar width = 10;
-        static const GlobalPosition leftFaultCenter = {500,-1500};
-        static const GlobalPosition rightFaultCenter = {1500,-1500};
-
-        if (abs(globalPos[1] - leftFaultCenter[1]) < 500 + eps_)
-        {
-            static const Scalar tan_80 = tan(80.0/180*M_PI);
-            //std::cout << M_PI << std::endl;
-            //std::cout << tan_80 << std::endl;
-            Scalar localLeftFractureCenter = (globalPos[1] - leftFaultCenter[1]) /tan_80 + leftFaultCenter[0];
-
-            // the left fault
-            if (std::abs(localLeftFractureCenter - globalPos[0]) < width/2 + eps_)
-                return Region::Fault;
-
-            // the right fault
-            if (std::abs(localLeftFractureCenter + rightFaultCenter[0] - leftFaultCenter[0] - globalPos[0]) < width/2 + eps_)
-                return Region::Fault;
-        }
-
-        // the upper caprock
-        if (globalPos[1] > -1450 -eps_ && globalPos[1] < -1300 + eps_ )
-            return Region::Caprock;
-
-        // the lower caprock
-        if (globalPos[1] > -1700 -eps_ && globalPos[1] < -1550 + eps_ )
-            return Region::Caprock;
-
-        // else
-        return Region::Reservoir;
+        Scalar phi = getParam<Scalar>("StressDropLaw.InternalFrictionAngle");
+        Scalar sigma = getParam<Scalar>("StressDropLaw.Cohesion");
+        Scalar stressDrop = getParam<Scalar>("StressDropLaw.StressDrop");
+        return StressDropLawParams(phi, sigma, stressDrop);
     }
+
     ConstantCementModel rockModel_;
-    ConstantCementModel fractureModel_;
+    ConstantCementModel faultModel_;
     std::vector<bool> isFracture_;
-    std::array<Scalar,regionNum> initPorosity_;
-    LameParams lameParams_;
-    StressDropLawParams stressDropLawParams_;
+    std::map<ZoneType,Scalar> initPorosity_;
+    StressDropLawParams stressDropLawParam_;
+    mutable std::vector<bool> hasFailure_;
+    bool initialized_ = false;
     Scalar eps_ = 3e-6;
 };
 

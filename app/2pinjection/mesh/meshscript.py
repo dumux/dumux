@@ -29,6 +29,8 @@ fractureMidPoint = np.array([(500,-1500),(1500,-1500)])
 ## mesh refinement
 transfinite = np.array([[20,5,40,5,20],
                        [10,10,20,10,10]])
+#transfinite = np.array([[50,5,40,5,20],
+#                       [20,10,40,10,20]])
 coefficient = np.array([[-1.2,1,-0.1,1,1.2],
                       [-1.2,1,1,1,1.2]])
 progression = np.array([[1,1,0,1,1],
