@@ -177,11 +177,31 @@ public:
      */
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                    const bool considerPreviousTimeStep = false) const
     {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
         const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
-        const auto elemSol = elementSolution(element, this->curSol(freeFlowMassIndex), gg);
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
         return evalSolution(element, element.geometry(), gg, elemSol, scvf.ipGlobal())[pressureIdx];
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume
+     */
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const SubControlVolume<freeFlowMomentumIndex>& scv,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolution(element, element.geometry(), gg, elemSol, scv.dofPosition())[pressureIdx];
     }
 
     /*!
@@ -245,11 +265,11 @@ public:
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = scv.elementIndex();
-            const auto& scv = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
+            const auto& scvI = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
 
             const auto& volVars = considerPreviousTimeStep ?
-                this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                : this->momentumCouplingContext_()[0].curElemVolVars[scv];
+                this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
+                : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
 
             return volVars.density();
         }
@@ -279,19 +299,23 @@ public:
     }
 
     /*!
-     * \brief Returns the pressure at a given sub control volume face.
+     * \brief Returns the effective viscosity at a given sub control volume face.
      */
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                              const bool considerPreviousTimeStep = false) const
     {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
             const auto& scv = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
-            const auto& volVars = this->momentumCouplingContext_()[0].curElemVolVars[scv];
+            const auto& volVars = considerPreviousTimeStep ?
+                this->momentumCouplingContext_()[0].prevElemVolVars[scv]
+                : this->momentumCouplingContext_()[0].curElemVolVars[scv];
             return volVars.viscosity();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
@@ -306,7 +330,9 @@ public:
             Scalar mu = 0.0;
             for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
             {
-                const auto& volVars = this->momentumCouplingContext_()[0].curElemVolVars[scv];
+                const auto& volVars = considerPreviousTimeStep ?
+                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
                 mu += volVars.viscosity()*shapeValues[scv.indexInElement()][0];
             }
 
@@ -316,7 +342,52 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                 "Viscosity interpolation for discretization scheme " << MassDiscretizationMethod{}
             );
+    }
 
+    /*!
+     * \brief Returns the effective viscosity at a given sub control volume.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolume<freeFlowMomentumIndex>& scv,
+                              const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
+
+        if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
+        {
+            const auto eIdx = fvGeometry.elementIndex();
+            const auto& scvI = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
+            const auto& volVars = considerPreviousTimeStep ?
+                this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
+                : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
+            return volVars.viscosity();
+        }
+        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box)
+        {
+            // TODO: cache the shape values when Box method is used
+            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+            const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
+            std::vector<ShapeValue> shapeValues;
+            const auto ipLocal = element.geometry().local(scv.dofPosition());
+            localBasis.evaluateFunction(ipLocal, shapeValues);
+
+            Scalar mu = 0.0;
+            for (const auto& scvI : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            {
+                const auto& volVars = considerPreviousTimeStep ?
+                    this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
+                mu += volVars.viscosity()*shapeValues[scvI.indexInElement()][0];
+            }
+
+            return mu;
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented,
+                "Viscosity interpolation for discretization scheme " << MassDiscretizationMethod{}
+            );
     }
 
      /*!
