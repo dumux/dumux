@@ -851,12 +851,13 @@ public:
      */
     Scalar effectiveViscosity(const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const SubControlVolume& scv) const
+                              const SubControlVolume& scv,
+                              const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().effectiveViscosityAtPos(scv.dofPosition());
         else
-            return couplingManager_->effectiveViscosity(element, fvGeometry, scv);
+            return couplingManager_->effectiveViscosity(element, fvGeometry, scv, isPreviousTimeStep);
     }
 
     /*!
