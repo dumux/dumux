@@ -162,6 +162,7 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
+    nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
