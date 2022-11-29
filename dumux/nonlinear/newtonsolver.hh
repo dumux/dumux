@@ -659,6 +659,7 @@ public:
 
             if (enableShiftCriterion_)
                 std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
+
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << Fmt::format(", residual = {:.4e}", residualNorm_);
             else if (enableResidualCriterion_)
@@ -1030,9 +1031,6 @@ private:
                 converged = newtonConverged();
             }
 
-            // tell solver we are done
-            newtonEnd(vars, uLastIter);
-
             // reset state if Newton failed
             if (!newtonConverged())
             {
@@ -1046,6 +1044,9 @@ private:
 
             // tell solver we converged successfully
             newtonSucceed();
+
+            // tell solver we are done
+            newtonEnd(vars, uLastIter);
 
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();

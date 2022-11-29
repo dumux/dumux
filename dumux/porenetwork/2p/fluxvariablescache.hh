@@ -68,15 +68,25 @@ public:
         // take the average surface tension of both adjacent pores TODO: is this correct?
         surfaceTension_ = 0.5*(elemVolVars[0].surfaceTension() + elemVolVars[1].surfaceTension());
 
-        pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        pcMax_ = pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        pcAvg_ = 0.5 * (pc_ + std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure()));
 
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        auto pcOutsidePore = outsideVolVars.capillaryPressure();
+        auto pcInsidePore = insideVolVars.capillaryPressure();
         const auto& elemSol = elementSolution(element, elemVolVars, fvGeometry);
         const auto& spatialParams = problem.spatialParams();
-        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
-        // open a file to write the analytical pcEntry and Sw for comparison purposes   
-        std::ofstream file("analytical_SwEntry");
-        file << std::setprecision(15) << "pcEntry: " << pcEntry_ << " Sw: " << fluidMatrixInteraction.sw(pcEntry_) << std::endl;
+        auto fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, outsideScv, elemSol);
+        if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
+            fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
+
+        if (!invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else
+            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
 
         regInvasionInterval_[0] = pcEntry_;
         regSnapoffInterval_[1] = pcSnapoff_;
@@ -366,6 +376,8 @@ private:
     Scalar throatInscribedRadius_;
     Scalar pcEntry_;
     Scalar pcSnapoff_;
+    Scalar pcMax_;
+    Scalar pcAvg_;
     Scalar pc_;
     Scalar surfaceTension_;
     bool invaded_;
