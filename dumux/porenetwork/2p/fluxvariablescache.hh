@@ -88,10 +88,6 @@ public:
         else
             pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
 
-        // open a file to write the analytical pcEntry and Sw for comparison purposes   
-        std::ofstream file("analytical_SwEntry");
-        file << std::setprecision(15) << "pcEntry: " << pcEntry_ << " Sw: " << fluidMatrixInteraction.sw(pcEntry_) << std::endl;
-
         regInvasionInterval_[0] = pcEntry_;
         regSnapoffInterval_[1] = pcSnapoff_;
 
@@ -252,7 +248,7 @@ public:
      * \brief Returns the curvature radius within the throat.
      */
     Scalar curvatureRadius() const
-    { return surfaceTension_ / pcAvg_;}
+    { return surfaceTension_ / pc_;}
 
     /*!
      * \brief Returns the cross-sectional area of a wetting layer within
