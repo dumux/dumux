@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+TEnd = 1 # [s]
 
 [Grid]
 File = ./grids/1dGrid.dgf
@@ -13,9 +13,9 @@ VtpOutputFrequency = 1 # Write every n-th time step. 0 only writes a file if an 
 CapillaryPressure = 5000
 EnableGravity = false
 UseFixedPressureAndSaturationBoundary = false
-Source = 1e-2
 InletTemperature = 288.15
 OutletTemperature = 283.15
+Source = 1e-5
 
 [Vtk]
 AddVelocity = 1
