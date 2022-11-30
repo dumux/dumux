@@ -277,7 +277,7 @@ private:
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
                 cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
-                    geometryHelper,
+                    geometryHelper.getScvCorners(scvLocalIdx),
                     scvLocalIdx,
                     eIdx,
                     dofIdxGlobal
@@ -293,8 +293,10 @@ private:
                 std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                              static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
+                const auto& corners = geometryHelper.getScvfCorners(scvfLocalIdx);
                 cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
-                    geometryHelper,
+                    corners,
+                    geometryHelper.normal(corners, localScvIndices),
                     element,
                     elementGeometry,
                     scvfLocalIdx,
@@ -322,7 +324,8 @@ private:
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                         cache_.scvfs_[eIdx].emplace_back(
-                            geometryHelper,
+                            geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
+                            intersection.centerUnitOuterNormal(),
                             intersection,
                             isGeometry,
                             isScvfLocalIdx,

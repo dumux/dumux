@@ -322,7 +322,7 @@ private:
         scvs_.reserve(elementGeometry.corners());
         using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
-            scvs_.emplace_back(geometryHelper,
+            scvs_.emplace_back(geometryHelper.getScvCorners(scvLocalIdx),
                                scvLocalIdx,
                                eIdx_,
                                gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim));

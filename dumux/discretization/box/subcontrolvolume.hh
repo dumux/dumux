@@ -56,7 +56,7 @@ struct BoxDefaultScvGeometryTraits
     using GeometryTraits = BoxMLGeometryTraits<Scalar>;
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld, GeometryTraits>;
     using CornerStorage = typename GeometryTraits::template CornerStorage<dim, dimWorld>::Type;
-    using GlobalPosition = typename CornerStorage::value_type;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
 };
 
 /*!
@@ -76,7 +76,6 @@ class BoxSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using CornerStorage = typename T::CornerStorage;
     static constexpr int dim = Geometry::mydimension;
 
 public:
@@ -89,20 +88,21 @@ public:
     BoxSubControlVolume() = default;
 
     // the constructor in the box case
-    template<class GeometryHelper>
-    BoxSubControlVolume(const GeometryHelper& geometryHelper,
+    template<class Corners>
+    BoxSubControlVolume(const Corners& corners,
                         LocalIndexType scvIdx,
                         GridIndexType elementIndex,
                         GridIndexType dofIndex)
-    : corners_(geometryHelper.getScvCorners(scvIdx))
-    , center_(Dumux::center(corners_))
+    : dofPosition_(corners[0])
+    , center_(Dumux::center(corners))
     , elementIndex_(elementIndex)
     , localDofIdx_(scvIdx)
     , dofIndex_(dofIndex)
     {
+        // The corner list is defined such that the first entry is the vertex itself
         volume_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
-            [&](unsigned int i){ return corners_[i]; }
+            [&](unsigned int i){ return corners[i]; }
         );
     }
 
@@ -140,8 +140,7 @@ public:
     // The position of the dof this scv is embedded in
     const GlobalPosition& dofPosition() const
     {
-        // The corner list is defined such that the first entry is the vertex itself
-        return corners_[0];
+        return dofPosition_;
     }
 
     //! The global index of the element this scv is embedded in
@@ -151,7 +150,7 @@ public:
     }
 
 private:
-    CornerStorage corners_;
+    GlobalPosition dofPosition_;
     GlobalPosition center_;
     Scalar volume_;
     GridIndexType elementIndex_;
