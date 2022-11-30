@@ -51,8 +51,6 @@ template<class GV, class T = BoxDefaultScvfGeometryTraits<GV> >
 class BoxFacetCouplingSubControlVolumeFace
 : public SubControlVolumeFaceBase<BoxFacetCouplingSubControlVolumeFace<GV, T>, T>
 {
-    using ThisType = BoxSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;

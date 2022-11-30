@@ -268,7 +268,7 @@ private:
             scvs_[eIdx].clear();
             scvs_[eIdx].reserve(elementGeometry.corners());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
-                scvs_[eIdx].emplace_back(geometryHelper,
+                scvs_[eIdx].emplace_back(geometryHelper.getScvCorners(scvLocalIdx),
                                          scvLocalIdx,
                                          eIdx,
                                          this->vertexMapper().subIndex(element, scvLocalIdx, dim));

@@ -56,7 +56,7 @@ struct BoxDefaultScvfGeometryTraits
     using GeometryTraits = BoxMLGeometryTraits<Scalar>;
     using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, GeometryTraits>;
     using CornerStorage = typename GeometryTraits::template CornerStorage<dim-1, dimWorld>::Type;
-    using GlobalPosition = typename CornerStorage::value_type;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
     using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
 };
 
@@ -77,7 +77,6 @@ class BoxSubControlVolumeFace
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
     static constexpr int dim = Geometry::mydimension;
@@ -92,16 +91,16 @@ public:
     BoxSubControlVolumeFace() = default;
 
     //! Constructor for inner scvfs
-    template<class GeometryHelper, class Element>
-    BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
+    template<class Corners, class Element>
+    BoxSubControlVolumeFace(const Corners& corners,
+                            const GlobalPosition& normal,
                             const Element& element,
                             const typename Element::Geometry& elemGeometry,
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
-    : corners_(geometryHelper.getScvfCorners(scvfIndex))
-    , center_(Dumux::center(corners_))
-    , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
+    : center_(Dumux::center(corners))
+    , unitOuterNormal_(normal)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(boundary)
@@ -109,30 +108,30 @@ public:
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
-            [&](unsigned int i){ return corners_[i]; }
+            [&](unsigned int i){ return corners[i]; }
         );
     }
 
     //! Constructor for boundary scvfs
-    template<class GeometryHelper, class Intersection>
-    BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
+    template<class Corners, class Intersection>
+    BoxSubControlVolumeFace(const Corners& corners,
+                            const GlobalPosition& normal,
                             const Intersection& intersection,
                             const typename Intersection::Geometry& isGeometry,
                             LocalIndexType indexInIntersection,
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
-    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
-    , center_(Dumux::center(corners_))
-    , unitOuterNormal_(intersection.centerUnitOuterNormal())
+    : center_(Dumux::center(corners))
+    , unitOuterNormal_(normal)
     , scvfIndex_(scvfIndex)
-    , scvIndices_(std:: move(scvIndices))
+    , scvIndices_(std::move(scvIndices))
     , boundary_(boundary)
     , boundaryFlag_{intersection}
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
             Dune::GeometryTypes::cube(dim),
-            [&](unsigned int i){ return corners_[i]; }
+            [&](unsigned int i){ return corners[i]; }
         );
     }
 
@@ -198,7 +197,6 @@ public:
     }
 
 private:
-    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;

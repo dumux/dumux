@@ -416,10 +416,12 @@ private:
             const auto dofIdxGlobal = gridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
-            scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
-                                                  scvLocalIdx,
-                                                  eIdx_,
-                                                  dofIdxGlobal);
+            scvs_[scvLocalIdx] = SubControlVolume(
+                geometryHelper.getScvCorners(scvLocalIdx),
+                scvLocalIdx,
+                eIdx_,
+                dofIdxGlobal
+            );
         }
 
         // construct the sub control volume faces
@@ -434,12 +436,16 @@ private:
             std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                          static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
-            scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
-                                                        element,
-                                                        elementGeometry,
-                                                        scvfLocalIdx,
-                                                        std::move(localScvIndices),
-                                                        false);
+            const auto& corners = geometryHelper.getScvfCorners(scvfLocalIdx);
+            scvfs_[scvfLocalIdx] = SubControlVolumeFace(
+                corners,
+                geometryHelper.normal(corners, localScvIndices),
+                element,
+                elementGeometry,
+                scvfLocalIdx,
+                std::move(localScvIndices),
+                false
+            );
         }
 
         // construct the sub control volume faces on the domain boundary
@@ -456,13 +462,16 @@ private:
                     const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                     std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
-                    scvfs_.emplace_back(geometryHelper,
-                                        intersection,
-                                        isGeometry,
-                                        isScvfLocalIdx,
-                                        scvfLocalIdx,
-                                        std::move(localScvIndices),
-                                        true);
+                    scvfs_.emplace_back(
+                        geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
+                        intersection.centerUnitOuterNormal(),
+                        intersection,
+                        isGeometry,
+                        isScvfLocalIdx,
+                        scvfLocalIdx,
+                        std::move(localScvIndices),
+                        true
+                    );
 
                     scvfBoundaryGeometryKeys_.emplace_back(std::array<LocalIndexType, 2>{{
                         static_cast<LocalIndexType>(intersection.indexInInside()),
