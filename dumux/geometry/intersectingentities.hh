@@ -172,6 +172,20 @@ inline std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry:
 intersectingEntities(const Geometry& geometry,
                      const BoundingBoxTree<EntitySet>& tree)
 {
+    using IP = typename IntersectionPolicy::DefaultPolicy<Geometry, typename EntitySet::Entity::Geometry>;
+    return intersectingEntities(geometry, tree, IP{});
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all intersections between a geometry and a bounding box tree
+ */
+template<class Geometry, class EntitySet, class IntersectionPolicy>
+inline std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>>
+intersectingEntities(const Geometry& geometry,
+                     const BoundingBoxTree<EntitySet>& tree,
+                     IntersectionPolicy intersectionPolicy)
+{
     // check if the world dimensions match
     static_assert(int(Geometry::coorddimension) == int(EntitySet::dimensionworld),
         "Can only intersect geometry and bounding box tree of same world dimension");
@@ -206,7 +220,7 @@ intersectingEntities(const Geometry& geometry,
     // Call the recursive find function to find candidates
     intersectingEntities(geometry, tree,
                          bBox, tree.numBoundingBoxes() - 1,
-                         intersections);
+                         intersections, intersectionPolicy);
 
     return intersections;
 }
@@ -223,6 +237,23 @@ void intersectingEntities(const Geometry& geometry,
                           std::vector<IntersectionInfo<Geometry::coorddimension,
                                                        typename Geometry::ctype,
                                                        typename EntitySet::ctype>>& intersections)
+{
+    using IP = typename IntersectionPolicy::DefaultPolicy<Geometry, typename EntitySet::Entity::Geometry>;
+    intersectingEntities(geometry, tree, bBox, nodeIdx, intersections, IP{});
+}
+/*!
+ * \ingroup Geometry
+ * \brief Compute intersections with point for all nodes of the bounding box tree recursively
+ */
+template<class Geometry, class EntitySet, class IntersectionPolicy>
+void intersectingEntities(const Geometry& geometry,
+                          const BoundingBoxTree<EntitySet>& tree,
+                          const std::array<typename Geometry::ctype, 2*Geometry::coorddimension>& bBox,
+                          std::size_t nodeIdx,
+                          std::vector<IntersectionInfo<Geometry::coorddimension,
+                                                       typename Geometry::ctype,
+                                                       typename EntitySet::ctype>>& intersections,
+                          IntersectionPolicy intersectionPolicy)
 {
     // if the two bounding boxes don't intersect we can stop searching
     static constexpr int dimworld = Geometry::coorddimension;
@@ -241,15 +272,14 @@ void intersectingEntities(const Geometry& geometry,
 
         const auto geometryTree = tree.entitySet().entity(eIdxB).geometry();
         using GeometryTree = std::decay_t<decltype(geometryTree)>;
-        using Policy = IntersectionPolicy::DefaultPolicy<Geometry, GeometryTree>;
-        using IntersectionAlgorithm = GeometryIntersection<Geometry, GeometryTree, Policy>;
+        using IntersectionAlgorithm = GeometryIntersection<Geometry, GeometryTree, IntersectionPolicy>;
         using Intersection = typename IntersectionAlgorithm::Intersection;
         Intersection intersection;
 
         if (IntersectionAlgorithm::intersection(geometry, geometryTree, intersection))
         {
-            static constexpr int dimIntersection = Policy::dimIntersection;
-            if (dimIntersection >= 2)
+            static constexpr int dimIntersection = IntersectionPolicy::dimIntersection;
+            if constexpr (dimIntersection >= 2)
             {
                 const auto triangulation = triangulate<dimIntersection, dimworld>(intersection);
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
@@ -277,6 +307,20 @@ inline std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntityS
 intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                      const BoundingBoxTree<EntitySet1>& treeB)
 {
+    using IP = typename IntersectionPolicy::DefaultPolicy<typename EntitySet0::Entity::Geometry, typename EntitySet1::Entity::Geometry>;
+    return intersectingEntities(treeA, treeB, IP{});
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all intersections between two bounding box trees
+ */
+template<class EntitySet0, class EntitySet1, class IntersectionPolicy>
+inline std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>>
+intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
+                     const BoundingBoxTree<EntitySet1>& treeB,
+                     IntersectionPolicy intersectionPolicy)
+{
     // check if the world dimensions match
     static_assert(int(EntitySet0::dimensionworld) == int(EntitySet1::dimensionworld),
         "Can only intersect bounding box trees of same world dimension");
@@ -288,7 +332,7 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
     intersectingEntities(treeA, treeB,
                          treeA.numBoundingBoxes() - 1,
                          treeB.numBoundingBoxes() - 1,
-                         intersections);
+                         intersections, intersectionPolicy);
 
     return intersections;
 }
@@ -304,6 +348,23 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                           std::vector<IntersectionInfo<EntitySet0::dimensionworld,
                                                        typename EntitySet0::ctype,
                                                        typename EntitySet1::ctype>>& intersections)
+{
+    using IP = typename IntersectionPolicy::DefaultPolicy<typename EntitySet0::Entity::Geometry, typename EntitySet1::Entity::Geometry>;
+    intersectingEntities(treeA, treeB, nodeA, nodeB, intersections, IP{});
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all intersections between two all bounding box tree nodes recursively
+ */
+template<class EntitySet0, class EntitySet1, class IntersectionPolicy>
+void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
+                          const BoundingBoxTree<EntitySet1>& treeB,
+                          std::size_t nodeA, std::size_t nodeB,
+                          std::vector<IntersectionInfo<EntitySet0::dimensionworld,
+                                                       typename EntitySet0::ctype,
+                                                       typename EntitySet1::ctype>>& intersections,
+                          IntersectionPolicy intersectionPolicy)
 {
     // Get the bounding box for the current node
     const auto& bBoxA = treeA.getBoundingBoxNode(nodeA);
@@ -330,17 +391,16 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 
         using GeometryA = std::decay_t<decltype(geometryA)>;
         using GeometryB = std::decay_t<decltype(geometryB)>;
-        using Policy = IntersectionPolicy::DefaultPolicy<GeometryA, GeometryB>;
-        using IntersectionAlgorithm = GeometryIntersection<GeometryA, GeometryB, Policy>;
+        using IntersectionAlgorithm = GeometryIntersection<GeometryA, GeometryB, IntersectionPolicy>;
         using Intersection = typename IntersectionAlgorithm::Intersection;
 
         if (Intersection intersection; IntersectionAlgorithm::intersection(geometryA, geometryB, intersection))
         {
-            static constexpr int dimIntersection = Policy::dimIntersection;
+            static constexpr int dimIntersection = IntersectionPolicy::dimIntersection;
 
             // intersection is returned as a point cloud for dim >= 2
             // so we have to triangulate first
-            if (dimIntersection >= 2)
+            if constexpr (dimIntersection >= 2)
             {
                 const auto triangulation = triangulate<dimIntersection, dimworld>(intersection);
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
