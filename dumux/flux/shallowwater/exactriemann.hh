@@ -223,16 +223,18 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
 
         if (ds > dmin)
         {
-            const auto gel = sqrt(0.5*grav * (ds+dl)/(ds*dl)); // constant factor without physical meaning
-            const auto ger = sqrt(0.5*grav * (ds+dr)/(ds*dr)); // constant factor without physical meaning
+            // function g in (Toro, 2001)
+            const auto gel = sqrt(0.5*grav * (ds+dl)/(ds*dl)); 
+            const auto ger = sqrt(0.5*grav * (ds+dr)/(ds*dr));
             ds = (gel * dl + ger * dr - (ur-ul))/(gel + ger);
         }
 
         //Start Newton-Raphson loop ds = hstar
         ds = max(ds, tol);
-        auto d0 = ds; // initial water depth for the iterative solver
+        auto d0 = ds; // initial guess water depth
 
-        Scalar fl = 0.0, fr = 0.0, fld = 0.0, frd = 0.0; // helper functions (left and right) and their derivatives, needed in interative Rieman solvers for wet-bed case.
+        // helper functions (left and right) and their derivatives
+        Scalar fl = 0.0, fr = 0.0, fld = 0.0, frd = 0.0;
 
         for (int i=0; i <= maxsteps; ++i)
         {
@@ -248,7 +250,7 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
 
             else // wave is shock wave (or bore)
             {
-                const auto ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl)); // constant factor needed within the helper functions fl and fr and their derivatives fld and frd.
+                const auto ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl)); // function g in (Toro, 2001)
                 fl = (ds - dl) * ges;
                 fld = ges - 0.25 * grav * (ds - dl)/(ges * ds * ds);
             }
@@ -269,7 +271,7 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
             }
 
             ds -= (fl + fr + ur - ul)/(fld + frd);
-            const auto cha = abs(ds - d0)/(0.5*(ds + d0)); // error wihtin the iterative solution
+            const auto cha = abs(ds - d0)/(0.5*(ds + d0));
 
             if (cha <= tol)
             {
