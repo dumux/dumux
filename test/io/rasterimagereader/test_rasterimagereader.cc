@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <dumux/io/rasterimagereader.hh>
+#include <dumux/io/rasterimagewriter.hh>
 #include <dumux/io/container.hh>
 
 ////////////////////////
@@ -41,6 +42,13 @@ int main(int argc, char** argv)
 
     // read an ASCII image without applying Dune's cell ordering (origin at upper left)
     auto blackAndWhiteImageASCII = NetPBMReader::readPBM("blackwhite_j.pbm", false);
+    auto blackAndWhiteImageASCIIOutput = blackAndWhiteImageASCII;
+    for (int i = 0; i < blackAndWhiteImageASCII.size(); i++)
+    {
+        if (i < 5)
+            blackAndWhiteImageASCIIOutput[i] = 1;
+    }
+    NetPBMWriter::write("blackwhite_j_new.pbm", blackAndWhiteImageASCIIOutput, false);
 
     // create a 2D array to show the image in the terminal
     std::vector<std::vector<bool>> printableBlackAndWhiteImage;
@@ -87,7 +95,6 @@ int main(int argc, char** argv)
         std::cout << "Reading black/white (binary) failed" << std::endl;
         return 1;
     }
-
     std::cout << std::endl;
 
     // test file where the dimensions are given in the same line as the magic number and comments are present
@@ -125,6 +132,14 @@ int main(int argc, char** argv)
 
     // read an ASCII image without applying Dune's cell ordering (origin at upper left)
     auto grayScaleImageASCII = NetPBMReader::template readPGM<std::size_t>("grayscale_j.pgm", false);
+    auto grayScaleImageASCIIOutput = grayScaleImageASCII;
+    for (int i = 0; i < grayScaleImageASCII.size(); i++)
+    {
+        if (i < 5)
+            grayScaleImageASCIIOutput[i] = 125;
+    }
+    NetPBMWriter::write("grayscale_j_new.pgm", grayScaleImageASCIIOutput, false);
+
     std::vector<std::vector<std::uint8_t>> printableGrayScaleImage;
     printableGrayScaleImage.resize(grayScaleImageASCII.header().nRows, std::vector<std::uint8_t>(grayScaleImageASCII.header().nCols));
     NetPBMReader::fillImage(printableGrayScaleImage, grayScaleImageASCII);

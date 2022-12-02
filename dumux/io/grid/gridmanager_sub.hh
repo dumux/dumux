@@ -34,6 +34,7 @@
 #if HAVE_DUNE_SUBGRID
 #include <dune/subgrid/subgrid.hh>
 #include <dumux/io/rasterimagereader.hh>
+#include <dumux/io/rasterimagewriter.hh>
 #endif
 
 #ifndef DUMUX_IO_GRID_MANAGER_HH
