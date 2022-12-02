@@ -1,3 +1,22 @@
+Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
+=============================================
+
+### General changes / structure
+
+
+### Improvements and Enhancements
+
+- __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+
+### Deprecated properties/classes/functions/files, to be removed after 3.7:
+
+
+### New experimental features (possibly subject to backwards-incompatible changes in the future)
+
+
 Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
 =============================================
 
