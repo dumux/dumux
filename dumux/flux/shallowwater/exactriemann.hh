@@ -168,8 +168,8 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
             {
                 const auto shl = ul - cl; //wave speed at head left
                 const auto shr = ur + cr; //wave speed at head right
-                const auto ssl = ul + 2.0 * cl;
-                const auto ssr = ur - 2.0 * cr;
+                const auto ssl = ul + 2.0 * cl; // wave speed of a wet/dry front for a left dry state
+                const auto ssr = ur - 2.0 * cr; // wave speed of a wet/dry front for a right dry state
 
                 if(s <= shl)
                 {
@@ -223,15 +223,17 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
 
         if (ds > dmin)
         {
-            const auto gel = sqrt(0.5*grav * (ds+dl)/(ds*dl));
+            // function g in (Toro, 2001)
+            const auto gel = sqrt(0.5*grav * (ds+dl)/(ds*dl)); 
             const auto ger = sqrt(0.5*grav * (ds+dr)/(ds*dr));
             ds = (gel * dl + ger * dr - (ur-ul))/(gel + ger);
         }
 
         //Start Newton-Raphson loop ds = hstar
         ds = max(ds, tol);
-        auto d0 = ds;
+        auto d0 = ds; // initial guess water depth
 
+        // helper functions (left and right) and their derivatives
         Scalar fl = 0.0, fr = 0.0, fld = 0.0, frd = 0.0;
 
         for (int i=0; i <= maxsteps; ++i)
@@ -239,16 +241,16 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
             //Compute fl,fr,fld,frd
 
             //first left side
-            if (ds <= dl)
+            if (ds <= dl) // wave is rarefaction wave (or depression)
             {
                 const auto c = sqrt(grav * ds);
                 fl = 2.0 * (c-cl);
                 fld = grav/c;
             }
 
-            else
+            else // wave is shock wave (or bore)
             {
-                const auto ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl));
+                const auto ges = sqrt(0.5 * grav * (ds+dl)/(ds*dl)); // function g in (Toro, 2001)
                 fl = (ds - dl) * ges;
                 fld = ges - 0.25 * grav * (ds - dl)/(ges * ds * ds);
             }
@@ -308,10 +310,10 @@ RiemannSolution<Scalar> exactRiemann(const Scalar dl,
             const auto ges = sqrt(0.5*grav*(ds + dr)/(ds*dr));
             fr = (ds - dr) * ges;
         }
-
         //exact Riemann solver sstar = ustar
-        const auto us = 0.5*(ul + ur) + 0.5*(fr - fl); // u_star
-        const auto cs = sqrt(grav*ds); // c_star
+        const auto us = 0.5*(ul + ur) + 0.5*(fr - fl); // velocity in the star region (u_star)
+        const auto cs = sqrt(grav*ds); // wave speed in the star region
+
 
         /***********************  computation of u and d *******************/
         //left wave
