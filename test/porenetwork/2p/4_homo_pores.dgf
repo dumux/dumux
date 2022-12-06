@@ -1,0 +1,22 @@
+DGF
+% Vertex parameters: PoreInscribedRadius PoreLabel
+% Element parameters: ThroatInscribedRadius ThroatLength ThroatLabel
+Vertex
+parameters 2
+0.5e-3 1e-5 -1
+1.0e-3 1e-5 -1
+0.0e-3 1e-5 2
+1.5e-3 1e-5 1
+
+#
+SIMPLEX
+parameters 3
+2 0 1e-5 1e-4 2
+0 1 1e-5 1e-4 -1
+1 3 1e-5 1e-4 1
+
+
+#
+BOUNDARYDOMAIN
+default 1
+#
