@@ -24,14 +24,25 @@
 #ifndef DUMUX_IO_GRID_CPGRIDMANAGER_HH
 #define DUMUX_IO_GRID_CPGRIDMANAGER_HH
 
+#include <config.h>
+
 #if HAVE_OPM_GRID
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <opm/grid/CpGrid.hpp>
+
+#if DUNE_VERSION_GTE(OPM_GRID, 2022, 10)
+#include <opm/input/eclipse/Parser/Parser.hpp>
+#include <opm/input/eclipse/Parser/ParseContext.hpp>
+#include <opm/input/eclipse/Deck/Deck.hpp>
+#include <opm/input/eclipse/EclipseState/EclipseState.hpp>
+#else
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
+#endif
 
 #include <dumux/common/parameters.hh>
 

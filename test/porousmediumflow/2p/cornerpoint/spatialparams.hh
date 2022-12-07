@@ -26,7 +26,13 @@
 #define DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 
 #if HAVE_OPM_GRID
+#include <dune/common/version.hh>
+
+#if DUNE_VERSION_GTE(OPM_GRID, 2022, 10)
+#include <opm/input/eclipse/Deck/Deck.hpp>
+#else
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#endif
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
@@ -66,11 +72,19 @@ public:
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");
 
+        const auto getDeckData = [&] (const auto& name) {
+#if DUNE_VERSION_GTE(OPM_GRID, 2022, 10)
+        return (*deck_)[deck->index(name)[0]].getRawDoubleData();
+#else
+        return deck_->getKeyword(name).getRawDoubleData();
+#endif
+        };
+
         const std::vector<int>& globalCell = this->gridGeometry().gridView().grid().globalCell();
 
         if (deck_->hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PORO").getRawDoubleData();
+            std::vector<double> eclVector = getDeckData("PORO");
             porosity_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -83,7 +97,7 @@ public:
 
         if (deck_->hasKeyword("PERMX")) {
             std::cout << "Found PERMX..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PERMX").getRawDoubleData();
+            std::vector<double> eclVector = getDeckData("PERMX");
             permX_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -97,7 +111,7 @@ public:
 
         if (deck_->hasKeyword("PERMZ")) {
             std::cout << "Found PERMZ..." << std::endl;
-            std::vector<double> eclVector = deck_->getKeyword("PERMZ").getRawDoubleData();
+            std::vector<double> eclVector = getDeckData("PERMZ");
             permZ_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
