@@ -34,7 +34,9 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
 #include "problem.hh"
@@ -54,16 +56,24 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 #endif
 } // end namespace TTag
 
+// template<class TypeTag>
+// struct Formulation<TypeTag, TTag::DrainageProblem>
+// { static constexpr auto value = TwoPFormulation::p1s0; };
+
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
 
+// Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
+
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DrainageProblem>
@@ -75,6 +85,8 @@ private:
 public:
     using type = PoreNetwork::TwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
+
+
 
 // Set the grid type
 template<class TypeTag>
