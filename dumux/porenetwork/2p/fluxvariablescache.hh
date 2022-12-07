@@ -156,6 +156,14 @@ public:
         regBoundaryNonwettingThroatAreaSnapoff_[0] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaSnapoff_[0];
         regBoundaryNonwettingThroatAreaSnapoff_[1] = totalThroatCrossSectionalArea - regBoundaryWettingThroatAreaSnapoff_[1];
 
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            saturationEpsilon_[phaseIdx] = false;
+            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
+                saturationEpsilon_[phaseIdx] = true;
+            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
+                saturationEpsilon_[phaseIdx] = true;
+        }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -171,6 +179,9 @@ public:
             );
         }
     }
+
+    bool saturationEpsilon(const int phaseIdx) const
+    { return saturationEpsilon_[phaseIdx]; }
 
     /*!
      * \brief Returns the throats's cross-sectional shape.
@@ -367,11 +378,13 @@ public:
     Scalar regBoundaryNonWettingThroatAreaSnapoff(const int Idx) const
     { return regBoundaryNonwettingThroatAreaSnapoff_[Idx]; }
 
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
     std::array<Scalar, numPhases> transmissibility_;
     std::array<Scalar, numPhases> throatCrossSectionalArea_;
+    std::array<bool, numPhases> saturationEpsilon_;
     Scalar throatLength_;
     Scalar throatInscribedRadius_;
     Scalar pcEntry_;

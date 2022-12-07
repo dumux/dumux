@@ -137,6 +137,8 @@ public:
 
             if (phaseIdx == wPhaseIdx)
             {
+                if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                    return 0.0;
                 if (!invaded) // not invaded in last time step
                 {
                     if ( pc < invasionLeft )
@@ -178,6 +180,8 @@ public:
             }
             else // non-wetting phase
             {
+                if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                    return 0.0;
                 if (!invaded)
                 {
                     // the regularization interval is [pce, pce + reg]
