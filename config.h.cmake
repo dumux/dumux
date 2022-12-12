@@ -43,6 +43,12 @@
 /* Define the path to dumux */
 #define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
 
+/* Define the major version of opm-grid */
+#define OPM_GRID_VERSION_MAJOR ${OPM_GRID_VERSION_MAJOR}
+
+/* Define the minor version of opm-grid */
+#define OPM_GRID_VERSION_MINOR ${OPM_GRID_VERSION_MINOR}
+
 /* Define to 1 if gnuplot was found */
 #cmakedefine HAVE_GNUPLOT 1
 
