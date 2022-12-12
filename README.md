@@ -133,7 +133,12 @@ Contributing
 
 Contributions are highly welcome. Please ask questions over the [mailing list](mailto:dumux@listserv.uni-stuttgart.de).
 Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
-before opening issues and merge requests. For bug reports contact us
+before opening issues and merge requests. 
+
+Bug/issue reports or vulnerabilities
+======================================
+
+For bug reports or to report any detected security vulnerabilities contact us
 over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues). For bug fixes,
 feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
 or send us formatted patches.
