@@ -74,9 +74,9 @@ public:
 
         const auto getDeckData = [&] (const auto& name) {
 #if DUNE_VERSION_GTE(OPM_GRID, 2022, 10)
-        return (*deck_)[deck->index(name)[0]].getRawDoubleData();
+            return (*deck_)[deck->index(name)[0]].getRawDoubleData();
 #else
-        return deck_->getKeyword(name).getRawDoubleData();
+            return deck_->getKeyword(name).getRawDoubleData();
 #endif
         };
 
