@@ -158,9 +158,7 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluxVariablesCache = GetPropTypeOr<TypeTag,
-        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
-    >;
+    using FluxVariablesCache = GetPropType<TypeTag, Properties:: FluxVariablesCache>;
     using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem, FluxVariablesCache>;
 public:
     using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
