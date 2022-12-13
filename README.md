@@ -53,7 +53,10 @@ files if you want to redistribute your program to third parties. If
 this is unacceptable to you, please [contact us][6] for a commercial
 license.
 
-See the file [LICENSE.md](LICENSE.md) for full copying permissions.
+See the file [LICENSE.md](LICENSE.md) for copying permissions.
+For a curated list of contributors see [AUTHORS.md](AUTHORS.md).
+If you notice that a contributor is missing on the list,
+please [contact us][6] or open a merge request adding the name.
 
 How to cite
 ============
