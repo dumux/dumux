@@ -57,8 +57,8 @@
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/volumevariables.hh>
 
-#include "volumevariables.hh"
 #include "indices.hh"
 
 namespace Dumux {
@@ -191,7 +191,7 @@ private:
 
     using Traits = NavierStokesMomentumPQ1BubbleVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
-    using type = NavierStokesMomentumPQ1BubbleVolumeVariables<Traits>;
+    using type = NavierStokesMomentumCVFEVolumeVariables<Traits>;
 };
 
 // This is the default (model not coupled with a mass (pressure) discretization)
