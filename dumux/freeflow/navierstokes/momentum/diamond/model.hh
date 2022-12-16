@@ -56,7 +56,8 @@
 #include <dumux/flux/fourierslaw.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
-#include "localresidual.hh"
+#include <dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh>
+
 #include "volumevariables.hh"
 #include "indices.hh"
 
@@ -172,7 +173,7 @@ public:
 //! The local residual
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::NavierStokesMomentumDiamond>
-{ using type = NavierStokesMomentumDiamondResidual<TypeTag>; };
+{ using type = NavierStokesMomentumCVFELocalResidual<TypeTag>; };
 
 //! Set the volume variables property
 template<class TypeTag>
