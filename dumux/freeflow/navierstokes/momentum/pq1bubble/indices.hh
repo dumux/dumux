@@ -24,18 +24,15 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_INDICES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_INDICES_HH
 
-#include <dumux/freeflow/navierstokes/momentum/diamond/indices.hh>
+
+#warning "This header is deprecated and will be removed after 3.7"
+
+#include <dumux/freeflow/navierstokes/momentum/cvfe/indices.hh>
 
 namespace Dumux {
 
-/*!
- * \ingroup NavierStokesModel
- * \brief The common indices for the isothermal Navier-Stokes model.
- *
- * \tparam dimension The dimension of the problem
- */
 template <int dimension>
-using NavierStokesMomentumPQ1BubbleIndices = NavierStokesMomentumDiamondIndices<dimension>;
+using NavierStokesMomentumPQ1BubbleIndices [[deprecated("Use NavierStokesMomentumCVFEIndices")]] = NavierStokesMomentumCVFEIndices<dimension>;
 
 } // end namespace Dumux
 

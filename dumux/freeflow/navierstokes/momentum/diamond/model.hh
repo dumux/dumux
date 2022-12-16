@@ -58,8 +58,7 @@
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/volumevariables.hh>
-
-#include "indices.hh"
+#include <dumux/freeflow/navierstokes/momentum/cvfe/indices.hh>
 
 namespace Dumux {
 
@@ -102,7 +101,7 @@ struct NavierStokesMomentumDiamondModelTraits
     { return TurbulenceModel::none; }
 
     //! the indices
-    using Indices = NavierStokesMomentumDiamondIndices<dim()>;
+    using Indices = NavierStokesMomentumCVFEIndices<dim()>;
 };
 
 /*!
