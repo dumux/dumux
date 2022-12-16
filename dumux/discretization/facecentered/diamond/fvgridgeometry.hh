@@ -153,6 +153,10 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
+    //! If a face / d.o.f. is on the boundary
+    bool dofOnBoundary(GridIndexType dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
     //! Return a reference to the dof mapper
     const DofMapper& dofMapper() const
     { return dofMapper_; }
@@ -232,6 +236,8 @@ private:
         cache_.scvfs_.resize(numElements);
         cache_.hasBoundaryScvf_.resize(numElements, false);
 
+        boundaryDofIndices_.assign(numDofs(), false);
+
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
@@ -293,9 +299,15 @@ private:
             {
                 if (onDomainBoundary_(intersection))
                 {
+                    // store information that the face dof is on a boundary
+                    const LocalIndexType localFacetIndex = intersection.indexInInside();
+                    const auto dofIndex = dofMapper().subIndex(element, localFacetIndex, 1);
+                    boundaryDofIndices_[dofIndex] = true;
+
+                    // and that the element has a boundary face
                     cache_.hasBoundaryScvf_[eIdx] = true;
 
-                    const LocalIndexType localFacetIndex = intersection.indexInInside();
+                    // add boundary scvf
                     const auto geo = intersection.geometry();
                     cache_.scvfs_[eIdx].emplace_back(
                         geo.center(),
@@ -358,6 +370,9 @@ private:
     {
         return intersection.boundary() && intersection.neighbor();
     }
+
+    // faces on the boundary
+    std::vector<bool> boundaryDofIndices_;
 
     DofMapper dofMapper_;
 
