@@ -24,6 +24,8 @@
 #ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_PQ1BUBBLE_HH
 #define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_PQ1BUBBLE_HH
 
+#warning "This file is deprecated and will be removed after 3.7. Use CVFEFreeFlowCouplingManager."
+
 #include <memory>
 #include <tuple>
 #include <vector>
@@ -403,17 +405,18 @@ public:
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
 
-        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element);
+        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(element);
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element, eIdx);
 
         const auto& fvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
         const auto& localBasis = fvGeometry.feLocalBasis();
 
-        // interpolate velocity at scvf
-        VelocityVector velocity(0.0);
         std::vector<ShapeValue> shapeValues;
         const auto ipLocal = element.geometry().local(scvf.ipGlobal());
         localBasis.evaluateFunction(ipLocal, shapeValues);
 
+        // interpolate velocity at scvf
+        VelocityVector velocity(0.0);
         for (const auto& scv : scvs(fvGeometry))
             velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
@@ -601,12 +604,12 @@ public:
         // for this we have to color the elements so that we don't get
         // race conditions when writing into the global matrix
         // each color can be assembled using multiple threads
-        const auto& grid = this->problem(domainId).gridGeometry().gridView().grid();
+        const auto& grid = this->problem(freeFlowMassIndex).gridGeometry().gridView().grid();
         for (const auto& elements : elementSets_)
         {
-            Dumux::parallelFor(elements.size(), [&](const std::size_t n)
+            Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
             {
-                const auto element = grid.entity(elements[n]);
+                const auto element = grid.entity(elements[eIdx]);
                 assembleElement(element);
             });
         }

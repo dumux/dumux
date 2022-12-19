@@ -21,10 +21,8 @@
  * \ingroup MultiDomain
  * \brief Freeflow coupling managers (Navier-Stokes mass-momentum coupling)
  */
-#ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_DIAMOND_HH
-#define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_DIAMOND_HH
-
-#warning "This file is deprecated and will be removed after 3.7. Use CVFEFreeFlowCouplingManager."
+#ifndef DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_CVFE_HH
+#define DUMUX_MULTIDOMAIN_FREEFLOW_COUPLING_MANAGER_CVFE_HH
 
 #include <memory>
 #include <tuple>
@@ -49,15 +47,17 @@
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/assembly/coloring.hh>
 
+#include "typetraits.hh"
+
 namespace Dumux {
 
 /*!
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for free flow systems
- * \note coupling manager for the face-centered diamond discretization scheme
+ * \note coupling manager for control volume finite element schemes
  */
 template<class Traits>
-class FCDiamondFreeFlowCouplingManager
+class CVFEFreeFlowCouplingManager
 : public CouplingManager<Traits>
 {
     using ParentType = CouplingManager<Traits>;
@@ -584,9 +584,17 @@ public:
      */
     void computeColorsForAssembly()
     {
-        // use coloring of the mass discretization for both domains
-        // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
-        elementSets_ = computeColoring(this->problem(freeFlowMassIndex).gridGeometry()).sets;
+        if constexpr (MomentumDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+        {
+            // use coloring of the mass discretization for both domains
+            // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
+            elementSets_ = computeColoring(this->problem(freeFlowMassIndex).gridGeometry()).sets;
+        }
+        else
+        {
+            // use coloring of the momentum discretization for both domains
+            elementSets_ = computeColoring(this->problem(freeFlowMomentumIndex).gridGeometry()).sets;
+        }
     }
 
     /*!
@@ -771,10 +779,32 @@ private:
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
 
-//! we support multithreaded assembly
+namespace Detail {
+
+// declaration (specialize for different discretization types)
+template<class Traits, class DiscretizationMethod = typename Detail::MomentumDiscretizationMethod<Traits>::type>
+struct CouplingManagerSupportsMultithreadedAssemblySelector;
+
+template<class Traits, class D>
+struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::CVFE<D>>
+{ using type = std::true_type; };
+
+// disabled for now
+// the infrastructure for multithreaded assembly is implemented (see code in the class above)
+// but the current implementation seems to have a bug and may cause race conditions.
+// The result is different when running in parallel. After this has been fixed activate multithreaded assembly
+// by removing this specialization
+template<class Traits>
+struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::PQ1Bubble>
+{ using type = std::false_type; };
+
+} // end namespace Detail
+
+//! whether we support multithreaded assembly
 template<class T>
-struct CouplingManagerSupportsMultithreadedAssembly<FCDiamondFreeFlowCouplingManager<T>>
-: public std::true_type {};
+struct CouplingManagerSupportsMultithreadedAssembly<CVFEFreeFlowCouplingManager<T>>
+: public Detail::CouplingManagerSupportsMultithreadedAssemblySelector<T>::type
+{};
 
 } // end namespace Dumux
 

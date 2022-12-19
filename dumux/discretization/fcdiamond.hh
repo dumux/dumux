@@ -105,7 +105,7 @@ template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
 { using type = CVFELocalResidual<TypeTag>; };
 
-//! The flux variables cache class for models involving flow in porous media
+//! The flux variables cache type
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
 {

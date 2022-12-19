@@ -25,7 +25,9 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_PQ1BUBBLE_VOLUME_VARIABLES_HH
 
-#include <dumux/freeflow/navierstokes/momentum/diamond/volumevariables.hh>
+#warning "This header is deprecated and will be removed after 3.7"
+
+#include <dumux/freeflow/navierstokes/momentum/cvfe/volumevariables.hh>
 
 namespace Dumux {
 
@@ -34,7 +36,7 @@ namespace Dumux {
  * \brief Volume variables for the single-phase Navier-Stokes model.
  */
 template <class Traits>
-using NavierStokesMomentumPQ1BubbleVolumeVariables = NavierStokesMomentumDiamondVolumeVariables<Traits>;
+using NavierStokesMomentumPQ1BubbleVolumeVariables [[deprecated("Use NavierStokesMomentumCVFEVolumeVariables")]] = NavierStokesMomentumCVFEVolumeVariables<Traits>;
 
 } // end namespace Dumux
 

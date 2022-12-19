@@ -45,163 +45,20 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_MODEL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_DIAMOND_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/properties.hh>
-#include <dumux/freeflow/nonisothermal/model.hh>
-#include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/iofields.hh>
+#warning "This file is deprecated and will be removed after 3.7. Use NavierStokesMomentumCVFE type tag."
 
-#include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/discretization/method.hh>
-#include <dumux/flux/fourierslaw.hh>
-#include <dumux/flux/fluxvariablescaching.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 
-#include "localresidual.hh"
-#include "volumevariables.hh"
-#include "indices.hh"
-
-namespace Dumux {
-
-/*!
- * \ingroup NavierStokesModel
- * \brief Traits for the Navier-Stokes model
- *
- * \tparam dimension The dimension of the problem
- */
-template<int dimension>
-struct NavierStokesMomentumDiamondModelTraits
-{
-    //! The dimension of the model
-    static constexpr int dim() { return dimension; }
-
-    //! There are as many momentum balance equations as dimensions
-    //! and one mass balance equation.
-    static constexpr int numEq() { return dim(); }
-
-    //! The number of phases is 1
-    static constexpr int numFluidPhases() { return 1; }
-
-    //! The number of components is 1
-    static constexpr int numFluidComponents() { return 1; }
-
-    //! Enable advection
-    static constexpr bool enableAdvection() { return true; }
-
-    //! The one-phase model has no molecular diffusion
-    static constexpr bool enableMolecularDiffusion() { return false; }
-
-    //! The model is isothermal
-    static constexpr bool enableEnergyBalance() { return false; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
-
-    //! the indices
-    using Indices = NavierStokesMomentumDiamondIndices<dim()>;
-};
-
-/*!
- * \ingroup NavierStokesModel
- * \brief Traits class for the volume variables of the Navier-Stokes model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam MT The model traits
- */
-template<class PV, class FSY, class FST, class MT>
-struct NavierStokesMomentumDiamondVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using ModelTraits = MT;
-};
-
-} // end namespace Dumux
-
-// \{
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase Navier-Stokes model
 ///////////////////////////////////////////////////////////////////////////
 namespace Dumux::Properties {
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, isothermal Navier-Stokes model
-struct NavierStokesMomentumDiamond { using InheritsFrom = std::tuple<FreeFlow>; };
+struct NavierStokesMomentumDiamond { using InheritsFrom = std::tuple<NavierStokesMomentumCVFE>; };
 } // end namespace TTag
-
-///////////////////////////////////////////////////////////////////////////
-// default property values for the isothermal single phase model
-///////////////////////////////////////////////////////////////////////////
-//!< states some specifics of the Navier-Stokes model
-template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::NavierStokesMomentumDiamond>
-{
-private:
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    static constexpr auto dim = GridView::dimension;
-public:
-    using type = NavierStokesMomentumDiamondModelTraits<dim>;
-};
-
-/*!
- * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
- */
-template<class TypeTag>
-struct FluidState<TypeTag, TTag::NavierStokesMomentumDiamond>{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-public:
-    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
-};
-
-//! The local residual
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::NavierStokesMomentumDiamond>
-{ using type = NavierStokesMomentumDiamondResidual<TypeTag>; };
-
-//! Set the volume variables property
-template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::NavierStokesMomentumDiamond>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
-    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
-
-    using Traits = NavierStokesMomentumDiamondVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumDiamondVolumeVariables<Traits>;
-};
-
-// This is the default (model not coupled with a mass (pressure) discretization)
-// i.e. the pressure is supplied via the problem as an analytical solution
-// or from a separate computation
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::NavierStokesMomentumDiamond>
-{
-    struct EmptyCouplingManager {};
-    using type = EmptyCouplingManager;
-};
 
 } // end namespace Dumux::Properties
 
