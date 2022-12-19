@@ -42,13 +42,13 @@
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
-namespace Dumux {
-namespace Properties {
+namespace Dumux::Properties {
 
 //! Type tag for the box scheme.
 // Create new type tags
@@ -97,6 +97,17 @@ public:
     using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
+//! The flux variables cache type
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::BoxModel>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = CVFEFluxVariablesCache<Scalar, GridGeometry>;
+};
+
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::BoxModel>
@@ -113,9 +124,9 @@ template<class TypeTag>
 struct BaseLocalResidual<TypeTag, TTag::BoxModel>
 { using type = CVFELocalResidual<TypeTag>; };
 
-} // namespace Properties
+} // namespace Dumux::Properties
 
-namespace Detail {
+namespace Dumux::Detail {
 
 template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethods::Box>
@@ -130,8 +141,6 @@ public:
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
 };
 
-} // end namespace Detail
-
-} // namespace Dumux
+} // end namespace Dumux:Detail
 
 #endif
