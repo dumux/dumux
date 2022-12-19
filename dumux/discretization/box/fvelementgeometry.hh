@@ -189,6 +189,10 @@ public:
     const Element& element() const
     { return *element_; }
 
+    //! The bound element's index in the grid view
+    GridIndexType elementIndex() const
+    { return eIdx_; }
+
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
     { return ggCache_->gridGeometry(); }
@@ -362,6 +366,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element's index in the grid view
+    GridIndexType elementIndex() const
+    { return eIdx_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
