@@ -103,6 +103,8 @@ public:
     using DiscretizationMethod = DiscretizationMethods::Box;
     static constexpr DiscretizationMethod discMethod{};
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -118,13 +120,18 @@ public:
     //! export the grid view type
     using GridView = GV;
 
-    //! Constructor
-    BoxFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
     , cache_(*this)
     {
         update_();
     }
+
+    //! Constructor
+    BoxFVGridGeometry(const GridView& gridView)
+    : BoxFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -440,6 +447,8 @@ public:
     using DiscretizationMethod = DiscretizationMethods::Box;
     static constexpr DiscretizationMethod discMethod{};
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
     //! export the type of sub control volume
@@ -455,13 +464,18 @@ public:
     //! export the grid view type
     using GridView = GV;
 
-    //! Constructor
-    BoxFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
     , cache_(*this)
     {
         update_();
     }
+
+    //! Constructor
+    BoxFVGridGeometry(const GridView& gridView)
+    : BoxFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
