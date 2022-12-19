@@ -24,10 +24,22 @@
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_MASS_1P_LOCAL_RESIDUAL_HH
 
+#include <type_traits>
+
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 
 namespace Dumux {
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits class to be specialized for problems to add auxiliary fluxes
+ * \note This can be used, for example, to implement flux stabilization terms
+ */
+template<class Problem>
+struct ImplementsAuxiliaryFluxNavierStokesMassOneP
+: public std::false_type
+{};
 
 /*!
  * \ingroup NavierStokesModel
@@ -79,7 +91,7 @@ public:
     }
 
     /*!
-     * \brief Evaluatex the mass flux over a face of a sub control volume.
+     * \brief Evaluate the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
@@ -97,7 +109,14 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        return fluxVars.flux(0);
+        auto flux = fluxVars.flux(0);
+
+        // the auxiliary flux is enabled if the trait is specialized for the problem
+        // this can be used, for example, to implement flux stabilization terms
+        if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
+            flux += problem.auxiliaryFlux(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+
+        return flux;
     }
 };
 
