@@ -412,7 +412,8 @@ private:
                         sumError[velIdx] += vError * vError * Extrusion::volume(fvGeometry, scv);
                         sumReference[velIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                     }
-                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond
+                                       || GridGeometry::discMethod == DiscretizationMethods::box)
                     {
                         totalVolume_ += Extrusion::volume(fvGeometry, scv);
                         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
