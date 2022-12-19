@@ -70,6 +70,23 @@ dumux_add_test(NAME test_ff_stokes_donea
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                              -Problem.Name test_ff_stokes_donea -Problem.UseNeumann false")
 
+dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
+               LABELS freeflow navierstokes
+               SOURCES main.cc
+               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_box_stabilized-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_box_stabilized-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_box_stabilized params.input
+                                 -Problem.Name test_ff_stokes_donea_box_stabilized -Problem.UseNeumann true
+                                 -Problem.AddBoxStabilization true")
+
 dumux_add_test(NAME test_ff_stokes_donea_donut
                LABELS freeflow navierstokes
                TARGET test_ff_stokes_donea
@@ -146,6 +163,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex params.input
                              -Problem.Name donea_momentum_simplex -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
 
+# tests with pq1bubble
 dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                SOURCES main_momentum.cc
                LABELS freeflow navierstokes donea
