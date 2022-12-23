@@ -59,7 +59,6 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::zeroeq> : public RANSProblemBase
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -105,6 +104,7 @@ public:
      *
      * \param curSol The solution vector.
      */
+    template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
         ParentType::updateDynamicWallProperties(curSol);
@@ -238,6 +238,7 @@ public:
 
 private:
 
+    template<class SolutionVector>
     void calculateRoughnessLength_(const SolutionVector& curSol)
     {
         bool printedRangeWarning = false;

@@ -69,7 +69,6 @@ class RANSProblemBase : public NavierStokesStaggeredProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -140,6 +139,7 @@ public:
      *
      * \param curSol The solution vector.
      */
+    template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
         std::cout << "Update dynamic wall properties." << std::endl;
@@ -433,6 +433,7 @@ private:
         }
     }
 
+    template<class SolutionVector>
     void calculateCCVelocities_(const SolutionVector& curSol)
     {
         auto fvGeometry = localView(this->gridGeometry());
@@ -662,6 +663,7 @@ private:
         }
     }
 
+    template<class SolutionVector>
     void storeViscosities_(const SolutionVector& curSol)
     {
         // calculate or call all secondary variables
