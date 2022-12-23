@@ -66,7 +66,6 @@ class RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon> : public RANSProblemBa
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FacePrimaryVariables = GetPropType<TypeTag, Properties::FacePrimaryVariables>;
@@ -114,6 +113,7 @@ public:
      *
      * \param curSol The solution vector.
      */
+    template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
         ParentType::updateDynamicWallProperties(curSol);
