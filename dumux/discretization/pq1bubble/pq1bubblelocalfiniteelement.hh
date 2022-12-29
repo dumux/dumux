@@ -99,8 +99,8 @@ public:
         const auto bubble = evaluateBubble_(x);
         out.resize(size());
         out.back() = bubble;
-        for (int i = 0; i < numDofs-1; ++i)
-            out[i] -= pq1AtCenter_[i]*out.back();
+        // for (int i = 0; i < numDofs-1; ++i)
+        //     out[i] -= pq1AtCenter_[i]*out.back();
     }
 
     /*!
@@ -118,9 +118,9 @@ public:
 
         const auto bubbleJacobian = evaluateBubbleJacobian_(x);
 
-        for (int i = 0; i < numDofs-1; ++i)
-            for (int k = 0; k < dim; ++k)
-                out[i][0][k] -= pq1AtCenter_[i]*bubbleJacobian[0][k];
+        // for (int i = 0; i < numDofs-1; ++i)
+        //     for (int k = 0; k < dim; ++k)
+        //         out[i][0][k] -= pq1AtCenter_[i]*bubbleJacobian[0][k];
 
         out.resize(size());
         out.back() = bubbleJacobian;
@@ -159,49 +159,51 @@ private:
     // evaluate bubble function at x
     typename Traits::RangeType evaluateBubble_(const typename Traits::DomainType& x) const
     {
-        if constexpr (type() == Dune::GeometryTypes::simplex(dim))
-        {
-            if constexpr (dim == 2)
-                return 27*x[0]*x[1]*(1-x[0]-x[1]);
-            else if constexpr (dim == 3)
-                return 256*x[0]*x[1]*x[2]*(1-x[0]-x[1]-x[2]);
-        }
-        else if constexpr (type() == Dune::GeometryTypes::cube(dim))
-        {
-            if constexpr (dim == 2)
-                return 16*x[0]*x[1]*(1-x[0])*(1-x[1]);
-            else if constexpr (dim == 3)
-                return 64*x[0]*x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]);
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type());
+        return 1.0;
+        // if constexpr (type() == Dune::GeometryTypes::simplex(dim))
+        // {
+        //     if constexpr (dim == 2)
+        //         return 27*x[0]*x[1]*(1-x[0]-x[1]);
+        //     else if constexpr (dim == 3)
+        //         return 256*x[0]*x[1]*x[2]*(1-x[0]-x[1]-x[2]);
+        // }
+        // else if constexpr (type() == Dune::GeometryTypes::cube(dim))
+        // {
+        //     if constexpr (dim == 2)
+        //         return 16*x[0]*x[1]*(1-x[0])*(1-x[1]);
+        //     else if constexpr (dim == 3)
+        //         return 64*x[0]*x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]);
+        // }
+        // else
+        //     DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type());
     }
 
     // evaluate bubble function at x
     typename Traits::JacobianType evaluateBubbleJacobian_(const typename Traits::DomainType& x) const
     {
-        if constexpr (type() == Dune::GeometryTypes::simplex(dim))
-        {
-            if constexpr (dim == 2)
-                return {{27*(x[1]*(1-x[0]-x[1]) - x[0]*x[1]),
-                         27*(x[0]*(1-x[0]-x[1]) - x[0]*x[1])}};
-            else if constexpr (dim == 3)
-                return {{256*(x[1]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
-                         256*(x[0]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
-                         256*(x[0]*x[1]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2])}};
-        }
-        else if constexpr (type() == Dune::GeometryTypes::cube(dim))
-        {
-            if constexpr (dim == 2)
-                return {{16*(x[1]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[1])),
-                         16*(x[0]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[0]))}};
-            else if constexpr (dim == 3)
-                return {{64*(x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[1]))*(1-x[2]),
-                         64*(x[0]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[2]),
-                         64*(x[0]*x[1]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[1])}};
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type() << " dim = " << dim);
+        return { 0.0 };
+        // if constexpr (type() == Dune::GeometryTypes::simplex(dim))
+        // {
+        //     if constexpr (dim == 2)
+        //         return {{27*(x[1]*(1-x[0]-x[1]) - x[0]*x[1]),
+        //                  27*(x[0]*(1-x[0]-x[1]) - x[0]*x[1])}};
+        //     else if constexpr (dim == 3)
+        //         return {{256*(x[1]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
+        //                  256*(x[0]*x[2]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2]),
+        //                  256*(x[0]*x[1]*(1-x[0]-x[1]-x[2]) - x[0]*x[1]*x[2])}};
+        // }
+        // else if constexpr (type() == Dune::GeometryTypes::cube(dim))
+        // {
+        //     if constexpr (dim == 2)
+        //         return {{16*(x[1]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[1])),
+        //                  16*(x[0]*(1-x[0])*(1-x[1]) - x[0]*x[1]*(1-x[0]))}};
+        //     else if constexpr (dim == 3)
+        //         return {{64*(x[1]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[1]))*(1-x[2]),
+        //                  64*(x[0]*x[2]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[2]),
+        //                  64*(x[0]*x[1]*(1-x[0])*(1-x[1])*(1-x[2]) - x[0]*x[1]*x[2]*(1-x[0]))*(1-x[1])}};
+        // }
+        // else
+        //     DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type() << " dim = " << dim);
     }
 
     PQ1FiniteElement pq1FiniteElement_;

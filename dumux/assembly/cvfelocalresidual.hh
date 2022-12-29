@@ -89,6 +89,11 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using FeLocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
+    using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+    using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
@@ -103,26 +108,40 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
-        if (!scvf.boundary())
+        if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
         {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            residual[insideScv.localDofIndex()] += flux;
-
-            // for control-volume finite element schemes with overlapping control volumes
-            if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
+            if (!scvf.isOverlapping())
             {
-                if (!scvf.isOverlapping())
+                const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+                if (!scvf.boundary())
+                {
+                    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                    const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                    residual[insideScv.localDofIndex()] += flux;
                     residual[outsideScv.localDofIndex()] -= flux;
+                }
+                else
+                {
+                    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                    residual[insideScv.localDofIndex()] += flux;
+                }
             }
-            else
-                residual[outsideScv.localDofIndex()] -= flux;
         }
         else
         {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            residual[insideScv.localDofIndex()] += flux;
+            const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+            if (!scvf.boundary())
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                residual[insideScv.localDofIndex()] += flux;
+                residual[outsideScv.localDofIndex()] -= flux;
+            }
+            else
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                residual[insideScv.localDofIndex()] += flux;
+            }
         }
     }
 
@@ -208,6 +227,62 @@ public:
         storage /= this->timeLoop().timeStepSize();
 
         residual[scv.localDofIndex()] += storage;
+    }
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVolVars The volume variables associated with the element stencil
+     * \param scv The sub-control volume over which we integrate the source term
+     * \note This is the default implementation for all models as sources are computed
+     *       in the user interface of the problem
+     *
+     */
+    NumEqVector computeSource(const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const ElementVolumeVariables& elemVolVars,
+                              const SubControlVolume &scv) const
+    {
+        auto source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
+
+        if constexpr (Detail::hasScvfIsOverlapping<SubControlVolume>())
+        {
+            if (scv.isOverlapping())
+            {
+                const auto geometry = element.geometry();
+                const auto& localBasis = fvGeometry.feLocalBasis();
+
+                const auto h = diameter(geometry);
+                auto velocity = elemVolVars[scv].velocity();
+                static const auto stabParam = getParam<Scalar>("Problem.StabilizationParameter", 1.0);
+                velocity *= 1.0/(stabParam*h*h);
+                source -= velocity;
+
+                // compute the gradN in the center of the element
+                const auto ipLocal = geometry.local(scv.center());
+                const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+                std::vector<ShapeJacobian> shapeJacobian;
+                localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+                std::vector<GlobalPosition> gradN;
+                gradN.resize(fvGeometry.numScv());
+                for (const auto& scv : scvs(fvGeometry))
+                    jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
+
+                Dune::FieldVector<Scalar, GridView::dimensionworld> gradP(0.0);
+                for (const auto& scv : scvs(fvGeometry))
+                    if (!scv.isOverlapping())
+                        gradP.axpy(problem.couplingManager().pressure(element, fvGeometry, scv), gradN[scv.indexInElement()]);
+
+                source -= gradP;
+            }
+        }
+
+        return source;
     }
 
 private:
