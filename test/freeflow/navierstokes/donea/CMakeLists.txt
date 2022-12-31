@@ -2,7 +2,7 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                SOURCES main_momentum.cc
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -12,7 +12,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum -Problem.Name donea_momentum")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea_momentum
                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND ( DUNE_ISTL_VERSION VERSION_GREATER_EQUAL 2.8 ) )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum -Problem.Name donea_momentum")
 
 dumux_add_test(NAME test_ff_stokes_donea_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=0
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_ff_stokes_donea_nocaching
                              -Problem.Name test_ff_stokes_donea_nocaching -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               TARGET test_ff_stokes_donea_nocaching
               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -46,7 +46,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_nocaching
                              -Problem.Name test_ff_stokes_donea_donut_nocaching -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               TARGET test_ff_stokes_donea_nocaching
               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -59,7 +59,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
                              --zeroThreshold {"connectivity":1e6})
 
 dumux_add_test(NAME test_ff_stokes_donea
-              LABELS freeflow navierstokes
+              LABELS freeflow navierstokes donea
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=1
@@ -70,8 +70,25 @@ dumux_add_test(NAME test_ff_stokes_donea
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                              -Problem.Name test_ff_stokes_donea -Problem.UseNeumann false")
 
+dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
+               LABELS freeflow navierstokes donea
+               SOURCES main.cc
+               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_box_stabilized-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_box_stabilized-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_box_stabilized params.input
+                                 -Problem.Name test_ff_stokes_donea_box_stabilized -Problem.UseNeumann true
+                                 -Problem.AddBoxStabilization true")
+
 dumux_add_test(NAME test_ff_stokes_donea_donut
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea
                CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -83,7 +100,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut
                                -Problem.Name test_ff_stokes_donea_donut -Problem.UseNeumann false")
 
 dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
-               LABELS freeflow navierstokes
+               LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea
                CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -146,6 +163,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex params.input
                              -Problem.Name donea_momentum_simplex -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
 
+# tests with pq1bubble
 dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                SOURCES main_momentum.cc
                LABELS freeflow navierstokes donea
