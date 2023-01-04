@@ -17,21 +17,13 @@ try:
     import numpy as np
     import fieldcompare.mesh as meshcompare
     import fieldcompare.tabular as tabularcompare
-    from fieldcompare import FieldDataComparator, protocols
+    from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
+    from fieldcompare.mesh import MeshFieldsComparator
     from fieldcompare.predicates import FuzzyEquality
     from fieldcompare.io import CSVFieldReader, read
 
     protocols.MeshFields = meshcompare.MeshFields
     protocols.TabularFields = tabularcompare.TabularFields
-
-    def printFieldCompareResult(fieldComps) -> None:
-        """Formatted output of a field comparison"""
-        for fieldComp in fieldComps:
-            print(f"-- Comparison of field '{fieldComp.name}': {fieldComp.status}")
-            if not fieldComp:
-                print(f"  -- Report: {fieldComp.report}")
-                print(f"  -- Predicate used: {fieldComp.predicate}")
-        print(f"-- Summary: {fieldComps.status} ({fieldComps.report})\n")
 
     def makePredicateSelector(
         relThreshold,
@@ -53,38 +45,6 @@ try:
 
         return _selector
 
-    def _fieldcompareMeshDataImpl(sourceFields, referenceFields, predicateSelector):
-        """Mesh data comparison with resorting if the initial comparison failed"""
-        compare = FieldDataComparator(source=sourceFields, reference=referenceFields)
-        result = compare(predicate_selector=predicateSelector)
-
-        # try sorting points
-        if not result.domain_equality_check:
-            print("-- Meshes did not compare equal. Retrying with sorted points...")
-            sourceFields = meshcompare.sort_points(meshcompare.strip_orphan_points(sourceFields))
-            referenceFields = meshcompare.sort_points(
-                meshcompare.strip_orphan_points(referenceFields)
-            )
-        else:
-            return result
-
-        compare = FieldDataComparator(source=sourceFields, reference=referenceFields)
-        result = compare(predicate_selector=predicateSelector)
-
-        # try sorting cells
-        if not result.domain_equality_check:
-            print("-- Meshes did not compare equal. Retrying with sorted cells...")
-            sourceFields = meshcompare.sort_cells(sourceFields)
-            referenceFields = meshcompare.sort_cells(referenceFields)
-        else:
-            return result
-
-        compare = FieldDataComparator(source=sourceFields, reference=referenceFields)
-        result = compare(predicate_selector=predicateSelector)
-
-        if not result.domain_equality_check:
-            raise RuntimeError("FAILED: Meshes did not compare equal.")
-        return result
 
     def fieldcompareMeshData(source, ref, relThreshold, absThreshold=0.0, zeroValueThreshold=None):
         """Compares mesh data with the fieldcompare library"""
@@ -105,13 +65,14 @@ try:
         if not isinstance(referenceFields, protocols.MeshFields):
             raise IOError("Reference file could not been identified as mesh file!")
 
-        result = _fieldcompareMeshDataImpl(
-            sourceFields,
-            referenceFields,
-            makePredicateSelector(relThreshold, absThreshold, zeroValueThreshold),
+        compare = MeshFieldsComparator(source=sourceFields, reference=referenceFields)
+        result = compare(
+            predicate_selector=makePredicateSelector(relThreshold, absThreshold, zeroValueThreshold),
+            fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
+            reordering_callback=lambda msg: print(f"-- {msg}"),
         )
 
-        printFieldCompareResult(result)
+        print(f"-- Summary: {result.status} ({result.report})\n")
 
         if not result:
             return 1
@@ -145,10 +106,11 @@ try:
                 absThreshold,
                 zeroValueThreshold,
                 lambda name: f"row {float(name.strip('field_'))}",
-            )
+            ),
+            fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
         )
 
-        printFieldCompareResult(result)
+        print(f"-- Summary: {result.status} ({result.report})\n")
 
         if not result:
             return 1
