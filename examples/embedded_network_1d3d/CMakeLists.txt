@@ -17,6 +17,6 @@ dumux_add_test(
     COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
     CMD_ARGS --script fuzzyData --delimiter " "
              --files ${CMAKE_SOURCE_DIR}/test/references/example_embedded_network_1d3d-reference.dat
-                     ${CMAKE_CURRENT_BINARY_DIR}/clearance_tracer_amounts.dat.dat
+                     ${CMAKE_CURRENT_BINARY_DIR}/clearance_tracer_amounts.dat
                      --command "${CMAKE_CURRENT_BINARY_DIR}/example_embedded_network_1d3d"
 )
