@@ -20,6 +20,7 @@ dumux_add_test(NAME test_richards_benchmark_infiltration_tpfa
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
                         --relative 0.05
+                        --delimiter " "
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_benchmark_tpfa_theta_deltaeta_ana_loam_0-reference.dat
                                 ${CMAKE_CURRENT_BINARY_DIR}/theta_deltaeta_ana_loam_0.dat
                                 ${CMAKE_SOURCE_DIR}/test/references/test_richards_benchmark_tpfa_theta_deltaeta_num_loam_1-reference.dat
@@ -54,6 +55,7 @@ dumux_add_test(NAME test_richards_benchmark_evaporation_tpfa
                TIMEOUT 3600
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzyData
+                        --delimiter " "
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_benchmark_tpfa_rate_analytical_clay-reference.dat
                                 ${CMAKE_CURRENT_BINARY_DIR}/rate_analytical_clay.dat
                                 ${CMAKE_SOURCE_DIR}/test/references/test_richards_benchmark_tpfa_rate_analytical_loam1-reference.dat
