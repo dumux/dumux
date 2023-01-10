@@ -10,7 +10,7 @@ dumux_add_test(NAME test_1pni_conduction_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_conduction_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_box-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_box params_conduction.input -Problem.Name test_1pni_conduction_box"
-                       --zeroThreshold {"velocity_liq \(m/s\)":1e-8})
+                       --fieldAbsTolerances {"velocity_liq \(m/s\)":1e-8})
 
 add_executable(test_1pni_convection_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_1pni_convection_box PUBLIC TYPETAG=OnePNIConvectionBox)

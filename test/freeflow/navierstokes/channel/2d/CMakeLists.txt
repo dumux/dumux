@@ -83,4 +83,4 @@ dumux_add_test(NAME test_ff_stokesni_channel_conduction
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction-00004.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel params_conduction.input
                              -Problem.Name test_ff_stokesni_channel_conduction"
-                             --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
+                             --fieldAbsTolerances {"velocity_liq \(m/s\)":1e-20})

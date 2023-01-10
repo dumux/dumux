@@ -19,7 +19,7 @@ try:
     import fieldcompare.tabular as tabularcompare
     from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
     from fieldcompare.mesh import MeshFieldsComparator
-    from fieldcompare.predicates import FuzzyEquality
+    from fieldcompare.predicates import DefaultEquality, ScaledTolerance
     from fieldcompare.io import CSVFieldReader, read
 
     protocols.MeshFields = meshcompare.MeshFields
@@ -28,33 +28,29 @@ try:
     def makePredicateSelector(
         relThreshold,
         absThreshold,
-        zeroValueThreshold,
+        fieldAbsTolerances,
         sourceFieldNameTransform=lambda name: name,
     ):
         """Create a predicate selector for fieldcompare emulates the Dumux behaviour"""
 
-        def _selector(
-            sourceField: protocols.Field, referenceField: protocols.Field
-        ) -> protocols.Predicate:
+        def _selector(sourceField: protocols.Field, _: protocols.Field) -> protocols.Predicate:
             sourceFieldName = sourceFieldNameTransform(sourceField.name)
-            magnitude = np.max(np.abs(referenceField.values))
-            _absThreshold = max(
-                float(zeroValueThreshold.get(sourceFieldName, 0.0)), magnitude * absThreshold
-            )
-            return FuzzyEquality(abs_tol=_absThreshold, rel_tol=relThreshold)
+            absTol = fieldAbsTolerances.get(sourceFieldName)
+            absTol = ScaledTolerance(base_tolerance=absThreshold) if absTol is None else absTol
+            return DefaultEquality(abs_tol=absTol, rel_tol=relThreshold)
 
         return _selector
 
     def fieldcompareMeshData(
-        source, ref, absThreshold=0.0, relThreshold=1e-7, zeroValueThreshold=None
+        source, ref, absThreshold=0.0, relThreshold=1e-7, fieldAbsTolerances=None
     ):
         """Compares mesh data with the fieldcompare library"""
 
         print(f"-- Comparing {source} and {ref}")
 
-        zeroValueThreshold = zeroValueThreshold or {}
-        if zeroValueThreshold:
-            print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
+        fieldAbsTolerances = fieldAbsTolerances or {}
+        if fieldAbsTolerances:
+            print(f"-- Using the following absolute tolerances: {fieldAbsTolerances}")
 
         # read the files
         sourceFields = read(source)
@@ -67,13 +63,17 @@ try:
             raise IOError("Reference file could not been identified as mesh file!")
 
         # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
-        sourceFields.domain.set_tolerances(abs_tol=1e-2, rel_tol=1.5e-7)
-        referenceFields.domain.set_tolerances(abs_tol=1e-2, rel_tol=1.5e-7)
+        sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
+        referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
 
-        compare = MeshFieldsComparator(source=sourceFields, reference=referenceFields)
+        compare = MeshFieldsComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ["rank", "process rank"],
+        )
         result = compare(
             predicate_selector=makePredicateSelector(
-                relThreshold, absThreshold, zeroValueThreshold
+                relThreshold, absThreshold, fieldAbsTolerances
             ),
             fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
             reordering_callback=lambda msg: print(f"-- {msg}"),
@@ -87,15 +87,15 @@ try:
 
     # pylint: disable=too-many-arguments
     def fieldcompareCSVData(
-        source, ref, delimiter, absThreshold=0.0, relThreshold=1e-7, zeroValueThreshold=None
+        source, ref, delimiter, absThreshold=0.0, relThreshold=1e-7, fieldAbsTolerances=None
     ):
         """Compares CSV data with the fieldcompare library"""
 
         print(f"-- Comparing {source} and {ref}")
 
-        zeroValueThreshold = zeroValueThreshold or {}
-        if zeroValueThreshold:
-            print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
+        fieldAbsTolerances = fieldAbsTolerances or {}
+        if fieldAbsTolerances:
+            print(f"-- Using the following absolute tolerances: {fieldAbsTolerances}")
 
         sourceFields = CSVFieldReader(delimiter=delimiter, use_names=False).read(source)
         referenceFields = CSVFieldReader(delimiter=delimiter, use_names=False).read(ref)
@@ -111,7 +111,7 @@ try:
             predicate_selector=makePredicateSelector(
                 relThreshold,
                 absThreshold,
-                zeroValueThreshold,
+                fieldAbsTolerances,
                 lambda name: f"row {float(name.strip('field_'))}",
             ),
             fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
@@ -189,6 +189,16 @@ def readCmdParameters():
             ' a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}'
         ),
     )
+    parser.add_argument(
+        "-t",
+        "--fieldAbsTolerances",
+        type=json.loads,
+        default="{}",
+        help=(
+            "Absolute tolerances for specific fields"
+            ' a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}'
+        ),
+    )
     args = vars(parser.parse_args())
 
     # check parameters
@@ -238,9 +248,9 @@ def _fuzzyMeshComparison(args):
             source, ref = ref, source
         relThreshold = args["relative"]
         absThreshold = args["absolute"]
-        zeroValueThreshold = args["zeroThreshold"]
+        fieldAbsTolerances = args["fieldAbsTolerances"]
         numFailed += fieldcompareMeshData(
-            source, ref, absThreshold, relThreshold, zeroValueThreshold
+            source, ref, absThreshold, relThreshold, fieldAbsTolerances
         )
 
     return int(numFailed > 0)
@@ -257,9 +267,9 @@ def _fuzzyDataComparison(args):
         delimiter = args["delimiter"]
         relThreshold = args["relative"]
         absThreshold = args["absolute"]
-        zeroValueThreshold = args["zeroThreshold"]
+        fieldAbsTolerances = args["fieldAbsTolerances"]
         numFailed += fieldcompareCSVData(
-            source, ref, delimiter, absThreshold, relThreshold, zeroValueThreshold
+            source, ref, delimiter, absThreshold, relThreshold, fieldAbsTolerances
         )
 
     return int(numFailed > 0)
