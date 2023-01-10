@@ -169,6 +169,8 @@ test cpp:
     DUMUX_NUM_THREADS: 4
   script:
     - |
+      git clone --branch=feature/improve-fuzzy-equality https://gitlab.com/dglaeser/fieldcompare.git
+      pushd fieldcompare && pip install . && cd ..
       pushd build-cmake
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
