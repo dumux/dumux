@@ -66,7 +66,11 @@ try:
         sourceFields.domain.set_tolerances(abs_tol=1e-6, rel_tol=1.5e-7)
         referenceFields.domain.set_tolerances(abs_tol=1e-6, rel_tol=1.5e-7)
 
-        compare = MeshFieldsComparator(source=sourceFields, reference=referenceFields)
+        compare = MeshFieldsComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ["rank", "process rank"],
+        )
         result = compare(
             predicate_selector=makePredicateSelector(
                 relThreshold, absThreshold, zeroValueThreshold
