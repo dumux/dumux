@@ -37,8 +37,7 @@ try:
             sourceField: protocols.Field, referenceField: protocols.Field
         ) -> protocols.Predicate:
             sourceFieldName = sourceFieldNameTransform(sourceField.name)
-            absTol = zeroValueThreshold.get(sourceFieldName, AbsoluteToleranceEstimate(rel_tol=absThreshold))
-            return DefaultEquality(abs_tol=absTol, rel_tol=relThreshold)
+            return DefaultEquality(abs_tol=AbsoluteToleranceEstimate(rel_tol=absThreshold), rel_tol=relThreshold)
 
         return _selector
 
