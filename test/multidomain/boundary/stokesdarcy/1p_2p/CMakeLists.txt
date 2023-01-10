@@ -12,5 +12,4 @@ dumux_add_test(NAME test_md_boundary_darcy2p_stokes1p_vertical
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p_stokes1p_vertical_darcy-00024.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p_stokes1p_vertical params.input
-                             -Vtk.OutputName test_md_boundary_darcy2p_stokes1p_vertical"
-                             --zeroThreshold {"velocity_liq \(m/s\)_0":1e-14,"velocity_gas \(m/s\)":1e-15})
+                             -Vtk.OutputName test_md_boundary_darcy2p_stokes1p_vertical")
