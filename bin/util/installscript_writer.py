@@ -208,7 +208,9 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
 
 
             def installModule(subFolder, url, branch, revision):
-                targetFolder = url.rstrip(".git").split("/")[-1]
+                targetFolder = url.split("/")[-1]
+                if targetFolder.endswith(".git"):
+                    targetFolder = targetFolder[:-4]
                 if not os.path.exists(targetFolder):
                     runFromSubFolder(['git', 'clone', url, targetFolder], '.')
                     runFromSubFolder(['git', 'checkout', branch], subFolder)
