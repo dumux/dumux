@@ -1,19 +1,21 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+TEnd = 500000 # [s]
 
 [Grid]
-File = ../1p/grids/pnm_converted.dgf
+File = 40_low.dgf
+
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
+ThroatCrossSectionShape = Circle
 
 [Problem]
-Name = test_pnm_2p
+Name = drainage
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
 DistributeByVolume = false
+NonWettingMassFlux = 5e-10
 
 [Vtk]
 AddVelocity = 1
@@ -31,4 +33,8 @@ Verbosity = true
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 0.1
+RegPercentage = 1e-3
+
+[Component]
+LiquidKinematicViscosity = 4e-4
+LiquidDensity = 963
