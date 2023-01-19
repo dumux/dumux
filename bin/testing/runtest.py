@@ -24,6 +24,7 @@ try:
     protocols.MeshFields = meshcompare.MeshFields
     protocols.TabularFields = tabularcompare.TabularFields
 
+    # pylint: disable=too-many-arguments
     def makePredicateSelector(
         relThreshold,
         absThreshold,
@@ -43,7 +44,12 @@ try:
         return _selector
 
     def fieldcompareMeshData(
-        source, ref, absThreshold=0.0, relThreshold=1e-7, zeroValueThreshold=None
+        source,
+        ref,
+        absThreshold=0.0,
+        relThreshold=1e-7,
+        zeroValueThreshold=None,
+        ignoreFields=None,
     ):
         """Compares mesh data with the fieldcompare library"""
 
@@ -67,10 +73,17 @@ try:
         sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
         referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
 
-        compare = MeshFieldsComparator(source=sourceFields, reference=referenceFields)
+        ignoreFields = ignoreFields or []
+        compare = MeshFieldsComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ignoreFields,
+        )
         result = compare(
             predicate_selector=makePredicateSelector(
-                relThreshold, absThreshold, zeroValueThreshold
+                relThreshold=relThreshold,
+                absThreshold=absThreshold,
+                zeroValueThreshold=zeroValueThreshold,
             ),
             fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
             reordering_callback=lambda msg: print(f"-- {msg}"),
@@ -82,9 +95,14 @@ try:
             return 1
         return 0
 
-    # pylint: disable=too-many-arguments
     def fieldcompareCSVData(
-        source, ref, delimiter, absThreshold=0.0, relThreshold=1e-7, zeroValueThreshold=None
+        source,
+        ref,
+        delimiter,
+        absThreshold=0.0,
+        relThreshold=1e-7,
+        zeroValueThreshold=None,
+        ignoreFields=None,
     ):
         """Compares CSV data with the fieldcompare library"""
 
@@ -103,13 +121,18 @@ try:
         if not isinstance(referenceFields, protocols.TabularFields):
             raise IOError("Reference file could not been identified as CSV-like file!")
 
-        compare = FieldDataComparator(source=sourceFields, reference=referenceFields)
+        ignoreFields = ignoreFields or []
+        compare = FieldDataComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ignoreFields,
+        )
         result = compare(
             predicate_selector=makePredicateSelector(
-                relThreshold,
-                absThreshold,
-                zeroValueThreshold,
-                lambda name: f"row {float(name.strip('field_'))}",
+                relThreshold=relThreshold,
+                absThreshold=absThreshold,
+                zeroValueThreshold=zeroValueThreshold,
+                sourceFieldNameTransform=lambda name: f"row {float(name.strip('field_'))}",
             ),
             fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
         )
@@ -186,6 +209,12 @@ def readCmdParameters():
             ' a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}'
         ),
     )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        nargs="+",
+        help=("Space separated list of fields to ignore in the comparison"),
+    )
     args = vars(parser.parse_args())
 
     # check parameters
@@ -236,8 +265,14 @@ def _fuzzyMeshComparison(args):
         relThreshold = args["relative"]
         absThreshold = args["absolute"]
         zeroValueThreshold = args["zeroThreshold"]
+        ignoreFields = args["ignore"]
         numFailed += fieldcompareMeshData(
-            source, ref, absThreshold, relThreshold, zeroValueThreshold
+            source,
+            ref,
+            absThreshold,
+            relThreshold,
+            zeroValueThreshold,
+            ignoreFields,
         )
 
     return int(numFailed > 0)
@@ -255,8 +290,15 @@ def _fuzzyDataComparison(args):
         relThreshold = args["relative"]
         absThreshold = args["absolute"]
         zeroValueThreshold = args["zeroThreshold"]
+        ignoreFields = args["ignore"]
         numFailed += fieldcompareCSVData(
-            source, ref, delimiter, absThreshold, relThreshold, zeroValueThreshold
+            source,
+            ref,
+            delimiter,
+            absThreshold,
+            relThreshold,
+            zeroValueThreshold,
+            ignoreFields,
         )
 
     return int(numFailed > 0)
