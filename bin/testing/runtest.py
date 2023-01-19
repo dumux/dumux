@@ -14,12 +14,11 @@ import json
 
 
 try:
-    import numpy as np
     import fieldcompare.mesh as meshcompare
     import fieldcompare.tabular as tabularcompare
     from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
     from fieldcompare.mesh import MeshFieldsComparator
-    from fieldcompare.predicates import FuzzyEquality
+    from fieldcompare.predicates import DefaultEquality, ScaledTolerance
     from fieldcompare.io import CSVFieldReader, read
 
     protocols.MeshFields = meshcompare.MeshFields
@@ -33,15 +32,13 @@ try:
     ):
         """Create a predicate selector for fieldcompare emulates the Dumux behaviour"""
 
-        def _selector(
-            sourceField: protocols.Field, referenceField: protocols.Field
-        ) -> protocols.Predicate:
+        def _selector(sourceField: protocols.Field, _: protocols.Field) -> protocols.Predicate:
             sourceFieldName = sourceFieldNameTransform(sourceField.name)
-            magnitude = np.max(np.abs(referenceField.values))
-            _absThreshold = max(
-                float(zeroValueThreshold.get(sourceFieldName, 0.0)), magnitude * absThreshold
+            absTol = zeroValueThreshold.get(
+                sourceFieldName,
+                ScaledTolerance(base_tolerance=absThreshold),
             )
-            return FuzzyEquality(abs_tol=_absThreshold, rel_tol=relThreshold)
+            return DefaultEquality(abs_tol=absTol, rel_tol=relThreshold)
 
         return _selector
 
@@ -67,8 +64,8 @@ try:
             raise IOError("Reference file could not been identified as mesh file!")
 
         # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
-        sourceFields.domain.set_tolerances(abs_tol=1e-2, rel_tol=1.5e-7)
-        referenceFields.domain.set_tolerances(abs_tol=1e-2, rel_tol=1.5e-7)
+        sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
+        referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
 
         compare = MeshFieldsComparator(source=sourceFields, reference=referenceFields)
         result = compare(
