@@ -105,13 +105,21 @@ for curFile in args["files"]:
 
     pvPythonVersion = GetParaViewVersion()
     # apply and configure PlotOverLine filter
-    if pvPythonVersion >= 5.9:
+    if pvPythonVersion >= 5.11:
+        plotOverLine = PlotOverLine()
+        plotOverLine.Resolution = args["resolution"]
+        plotOverLine.Point1 = args["point1"]
+        plotOverLine.Point2 = args["point2"]
+    elif pvPythonVersion >= 5.9:
         plotOverLine = PlotOverLine(Source="Line")
+        plotOverLine.Source.Resolution = args["resolution"]
+        plotOverLine.Source.Point1 = args["point1"]
+        plotOverLine.Source.Point2 = args["point2"]
     else:
         plotOverLine = PlotOverLine(Source="High Resolution Line Source")
-    plotOverLine.Source.Resolution = args["resolution"]
-    plotOverLine.Source.Point1 = args["point1"]
-    plotOverLine.Source.Point2 = args["point2"]
+        plotOverLine.Source.Resolution = args["resolution"]
+        plotOverLine.Source.Point1 = args["point1"]
+        plotOverLine.Source.Point2 = args["point2"]
 
     # write output to csv writer
     writer = CreateWriter(csvFileName, plotOverLine)
