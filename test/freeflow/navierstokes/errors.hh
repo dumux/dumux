@@ -231,9 +231,9 @@ private:
     template<class Error>
     void printError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}") const
     {
-        logFile << Fmt::format(", " + format, error[Indices::pressureIdx]);
+        logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[Indices::pressureIdx]));
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(", " + format, error[Indices::velocity(dirIdx)]);
+            logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[Indices::velocity(dirIdx)]));
     }
 
     std::vector<std::string> errorNames_(const std::string& e) const
@@ -676,9 +676,9 @@ private:
     {
         using MassIndices = typename MassProblem::Indices;
         using MomIndices = typename MomentumProblem::Indices;
-        logFile << Fmt::format(", " + format, error[MassIndices::pressureIdx]);
+        logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[MassIndices::pressureIdx]));
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::format(", " + format, error[MomIndices::velocity(dirIdx)+1]);
+            logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[MomIndices::velocity(dirIdx)+1]));
     }
 
     std::string name_;
