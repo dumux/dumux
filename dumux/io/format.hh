@@ -40,6 +40,9 @@ using Dumux::Detail::fmt::format;
 using Dumux::Detail::fmt::format_to;
 using Dumux::Detail::fmt::format_to_n;
 using Dumux::Detail::fmt::formatted_size;
+using Dumux::Detail::fmt::vformat;
+using Dumux::Detail::fmt::vformat_to;
+using Dumux::Detail::fmt::make_format_args;
 
 } // end namespace Dumux::Fmt
 
