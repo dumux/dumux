@@ -7,6 +7,7 @@ default:
 stages:
   - configure
   - linting
+  - check
   - select
   - build
   - test
@@ -29,7 +30,7 @@ configure:
   script:
     - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
-      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD}\"" >> opts_file.opts
+      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current configure
     - dunecontrol --opts=opts_file.opts --current make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
@@ -89,6 +90,15 @@ codespell:
     - job: configure
       artifacts: true
 
+cppcheck:
+  stage: check
+  script:
+    - cppcheck --project=build-cmake/compile_commands.json
+    - cppcheck test
+    - cppcheck examples
+  needs:
+    - job: configure
+      artifacts: true
 
 select tests:
   stage: select
