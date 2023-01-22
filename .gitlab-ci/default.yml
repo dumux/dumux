@@ -7,7 +7,6 @@ default:
 stages:
   - configure
   - linting
-  - check
   - select
   - build
   - test
@@ -91,11 +90,10 @@ codespell:
       artifacts: true
 
 cppcheck:
-  stage: check
+  stage: linting
   script:
-    - cppcheck --project=build-cmake/compile_commands.json
-    - cppcheck test
-    - cppcheck examples
+    - cppcheck -j8 -f --error-exitcode=1 --inline-suppr --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:dumux/io/format/fmt/*
+
   needs:
     - job: configure
       artifacts: true
@@ -171,6 +169,8 @@ compile cpp:
       artifacts: true
     - job: select tests
       artifacts: true
+    - job: cppcheck
+      artifacts: false
 
 
 test cpp:
