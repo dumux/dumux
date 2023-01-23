@@ -300,9 +300,8 @@ public:
 
         std::vector<OutputValueType> data;
         data.reserve(image.size()*image[0].size());
-        for (const auto& row: image)
-            for (const auto col : row)
-                data.push_back(col);
+        for (const auto& row : image)
+            data.insert(data.end(), row.begin(), row.end());
 
         return data;
     }
@@ -478,8 +477,6 @@ private:
     static std::vector<ValueType> readPGMDataBinary_(std::ifstream& infile,
                                                      const HeaderData& headerData)
     {
-        std::string inputLine;
-
         // check the size of the binary part of the file
         const auto curPos = infile.tellg();
         infile.seekg(0, std::ios::end);
