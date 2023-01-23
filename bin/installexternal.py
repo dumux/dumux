@@ -7,11 +7,12 @@ import os
 import shutil
 import re
 import urllib.request
-import tarfile
 import sys
 import subprocess
 import argparse
 import textwrap
+import pathlib
+import tarfile as _unsafe_tarfile
 
 
 # pylint: disable=C0103,W0212,W0622,C0116
@@ -31,6 +32,113 @@ class ChoicesAction(argparse._StoreAction):
 
     def _get_subactions(self):
         return self._choices_actions
+
+
+class TarSafe(_unsafe_tarfile.TarFile):
+    """
+    A safe subclass of the TarFile class for interacting with tar files.
+    Runs all necessary checks for the safety of a tarfile (tar).
+
+    Adapted from the code https://github.com/beatsbears/tarsafe
+    which has the following license:
+
+    MIT License
+
+    Copyright (c) 2020 Andrew Scott
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.directory = os.getcwd()
+
+    @classmethod
+    def open(cls, name=None, mode="r", fileobj=None, bufsize=_unsafe_tarfile.RECORDSIZE, **kwargs):
+        """
+        Open a tar archive
+        """
+        # pylint: disable=consider-using-with
+        return super().open(name, mode, fileobj, bufsize, **kwargs)
+
+    def extract(self, member, path="", set_attrs=True, *, numeric_owner=False):
+        """
+        Override the parent extract method and add safety checks.
+        """
+        self._safetar_check()
+        super().extract(member, path, set_attrs=set_attrs, numeric_owner=numeric_owner)
+
+    def extractall(self, path=".", members=None, *, numeric_owner=False):
+        """
+        Override the parent extractall method and add safety checks.
+        """
+        self._safetar_check()
+        super().extractall(path, members, numeric_owner=numeric_owner)
+
+    def _safetar_check(self):
+        """
+        Runs all necessary checks for the safety of a tarfile.
+        """
+        for tarinfo in iter(self):
+            if self._is_traversal_attempt(tarinfo=tarinfo):
+                raise IOError(f"TarSafe: Attempted directory traversal for member: {tarinfo.name}")
+            if self._is_unsafe_symlink(tarinfo=tarinfo):
+                raise IOError(
+                    f"TarSafe: Attempted directory traversal"
+                    f" via symlink for member: {tarinfo.linkname}"
+                )
+            if self._is_unsafe_link(tarinfo=tarinfo):
+                raise IOError(
+                    f"TarSafe: Attempted directory traversal"
+                    f" via link for member: {tarinfo.linkname}"
+                )
+            if tarinfo.ischr() or tarinfo.isblk():
+                raise IOError("TarSafe: tarfile returns true for isblk() or ischr()")
+
+    def _is_traversal_attempt(self, tarinfo):
+        if not os.path.abspath(os.path.join(self.directory, tarinfo.name)).startswith(
+            self.directory
+        ):
+            return True
+        return False
+
+    def _is_unsafe_symlink(self, tarinfo):
+        if tarinfo.issym():
+            symlink_file = pathlib.Path(
+                os.path.normpath(os.path.join(self.directory, tarinfo.linkname))
+            )
+            if not os.path.abspath(os.path.join(self.directory, symlink_file)).startswith(
+                self.directory
+            ):
+                return True
+        return False
+
+    def _is_unsafe_link(self, tarinfo):
+        if tarinfo.islnk():
+            link_file = pathlib.Path(
+                os.path.normpath(os.path.join(self.directory, tarinfo.linkname))
+            )
+            if not os.path.abspath(os.path.join(self.directory, link_file)).startswith(
+                self.directory
+            ):
+                return True
+        return False
 
 
 # pylint: enable=C0103,W0212,W0622,C0116
@@ -107,7 +215,7 @@ parser.add_argument(
 parser.add_argument("--opm-branch", default="release/2021.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.3", help="Mmesh branch to be checked out.")
 
-args = vars(parser.parse_args())
+cmdArgs = vars(parser.parse_args())
 
 
 def runCommand(command, currentDir="."):
@@ -198,7 +306,7 @@ def installFromTarball(package, parameters, externalDir, finalMessage):
     # Start Installation if the flag download is set to false.
     if not parameters["download"]:
         # Extract
-        with tarfile.open(package + ".tar.gz") as tarArchive:
+        with TarSafe.open(package + ".tar.gz") as tarArchive:
             tarArchive.extractall()
             shutil.move(os.path.commonprefix(tarArchive.getnames()), package)  # rename
 
@@ -398,4 +506,4 @@ MESSAGES = {
 #################################################################
 #################################################################
 # Start download/configuration/cleaning tasks
-showMessage(installExternal(args))
+showMessage(installExternal(cmdArgs))
