@@ -434,10 +434,10 @@ private:
     CurveTypeVector curveType_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;
-    Scalar xRangeIsSet_;
+    bool xRangeIsSet_;
     Scalar yRangeMin_;
     Scalar yRangeMax_;
-    Scalar yRangeIsSet_;
+    bool yRangeIsSet_;
     std::string xLabel_;
     std::string yLabel_;
     std::string plotOptions_;
