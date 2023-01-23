@@ -59,10 +59,10 @@
 namespace Dumux {
 
 template<class Error>
-void writeError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}")
+void writeError_(std::ofstream& logFile, const Error& error)
 {
     for (const auto& e : error)
-        logFile << Fmt::format(", " + format, e);
+        logFile << Fmt::format(", {:.5e}", e);
 }
 
 template<class Problem, class GridVariables, class SolutionVector>

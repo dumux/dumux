@@ -15,6 +15,12 @@ void testString(const std::string_view result, const std::string_view expected)
         DUNE_THROW(Dune::Exception, "Unexpected result: " << result << ", expected " << expected);
 }
 
+template <typename... Args>
+std::string dynamicFmtPrint(std::string_view fmt, Args&&... args)
+{
+    return Dumux::Fmt::vformat(fmt, Dumux::Fmt::make_format_args(args...));
+}
+
 int main(int argc, char* argv[])
 {
     using namespace Dumux;
@@ -52,13 +58,15 @@ int main(int argc, char* argv[])
 
     // formatted_size
     {
-        std::string_view fmt{"{}"};
         int num = 42;
-        const auto bufferSize = Fmt::formatted_size(fmt, num);
+        const auto bufferSize = Fmt::formatted_size("{}", num);
         if (bufferSize != 2)
             DUNE_THROW(Dune::Exception, "Unexpected computed buffer size: " << bufferSize << ", expected 2 for storing '42'");
     }
 
+    // dynamic format string
+    for (int i = 0; i < 10; ++i)
+        dynamicFmtPrint(std::to_string(i) + " = {} = {}\n", i, i);
 
     return 0;
 }
