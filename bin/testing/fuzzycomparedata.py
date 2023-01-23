@@ -11,6 +11,10 @@ import json
 import sys
 from fuzzycomparevtu import isFuzzyEqualText
 
+# Note: these issues can be improved on by factoring out functions
+# but we ignore it for know ("legacy code")
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+
 
 def compareData(
     dataFile1,
@@ -19,8 +23,9 @@ def compareData(
     absolute=1.5e-7,
     relative=1e-2,
     zeroValueThreshold=None,
+    ignoreFields=None,
     verbose=True,
-):  # pylint: disable=too-many-arguments
+):
     """take two data files and compare them. Returns an exit key as returnvalue.
 
     Arguments:
@@ -40,6 +45,8 @@ def compareData(
         A dictionary of parameter value pairs that set the threshold under
         which a number is treated as zero for a certain parameter. Use this parameter if
         you have to avoid comparisons of very small numbers for a certain parameter.
+    ignoreFields: list
+        A list of field names to be ignored in the comparison
     verbose : bool
         If the script should produce informative output. Enabled by default as the details
         give the tester a lot more information on why tests fail.
@@ -53,6 +60,11 @@ def compareData(
         )
 
     zeroValueThreshold = zeroValueThreshold or {}
+
+    # implement ignoring fields by setting a very high threshold
+    if ignoreFields is not None:
+        for field in ignoreFields:
+            zeroValueThreshold[field] = 1e100
 
     # construct element tree from data files
     with open(dataFile1, "r") as data1:
@@ -128,6 +140,12 @@ if __name__ == "__main__":
             'e.g. {"vel":1e-7,"delP":1.0}'
         ),
     )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        nargs="+",
+        help=("Space separated list of fields to ignore in the comparison"),
+    )
     args = vars(parser.parse_args())
 
     sys.exit(
@@ -139,5 +157,6 @@ if __name__ == "__main__":
             args["relative"],
             args["zeroThreshold"],
             args["verbose"],
+            args["ignore"],
         )
     )

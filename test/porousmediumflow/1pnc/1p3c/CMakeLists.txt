@@ -20,4 +20,4 @@ dumux_add_test(NAME test_1pnc_maxwellstefan_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_maxwellstefan_box-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_box-00005.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_maxwellstefan_box params.input -Problem.Name test_1pnc_maxwellstefan_box"
-                        --zeroThreshold {"velocity_Gas \(m/s\)":1e-13})
+                        --zeroThreshold {"velocity_Gas \(m/s\)":1e-12})

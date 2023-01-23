@@ -11,8 +11,130 @@ import os
 import sys
 import subprocess
 import json
-from fuzzycomparevtu import compareVTK
-from fuzzycomparedata import compareData
+
+
+try:
+    from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
+    from fieldcompare.mesh import MeshFieldsComparator
+    from fieldcompare.predicates import DefaultEquality, ScaledTolerance
+    from fieldcompare.io import read_as
+
+    # pylint: disable=too-many-arguments
+    def makePredicateSelector(
+        relThreshold,
+        absThreshold,
+        zeroValueThreshold,
+        sourceFieldNameTransform=lambda name: name,
+    ):
+        """Create a predicate selector for fieldcompare emulates the Dumux behaviour"""
+
+        def _selector(sourceField: protocols.Field, _: protocols.Field) -> protocols.Predicate:
+            sourceFieldName = sourceFieldNameTransform(sourceField.name)
+            absTol = zeroValueThreshold.get(
+                sourceFieldName,
+                ScaledTolerance(base_tolerance=absThreshold),
+            )
+            return DefaultEquality(abs_tol=absTol, rel_tol=relThreshold)
+
+        return _selector
+
+    def fieldcompareMeshData(
+        source,
+        ref,
+        absThreshold=0.0,
+        relThreshold=1e-7,
+        zeroValueThreshold=None,
+        ignoreFields=None,
+    ):
+        """Compares mesh data with the fieldcompare library"""
+
+        print(f"-- Comparing {source} and {ref}")
+
+        zeroValueThreshold = zeroValueThreshold or {}
+        if zeroValueThreshold:
+            print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
+
+        # read the files
+        sourceFields = read_as("mesh", source)
+        referenceFields = read_as("mesh", ref)
+
+        # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
+        sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
+        referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
+
+        ignoreFields = ignoreFields or []
+        compare = MeshFieldsComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ignoreFields,
+        )
+        result = compare(
+            predicate_selector=makePredicateSelector(
+                relThreshold=relThreshold,
+                absThreshold=absThreshold,
+                zeroValueThreshold=zeroValueThreshold,
+            ),
+            fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
+            reordering_callback=lambda msg: print(f"-- {msg}"),
+        )
+
+        print(f"-- Summary: {result.status} ({result.report})\n")
+
+        if not result:
+            return 1
+        return 0
+
+    def fieldcompareCSVData(
+        source,
+        ref,
+        delimiter,
+        absThreshold=0.0,
+        relThreshold=1e-7,
+        zeroValueThreshold=None,
+        ignoreFields=None,
+    ):
+        """Compares CSV data with the fieldcompare library"""
+
+        print(f"-- Comparing {source} and {ref}")
+
+        zeroValueThreshold = zeroValueThreshold or {}
+        if zeroValueThreshold:
+            print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
+
+        sourceFields = read_as("dsv", source, delimiter=delimiter, use_names=False)
+        referenceFields = read_as("dsv", ref, delimiter=delimiter, use_names=False)
+
+        ignoreFields = ignoreFields or []
+        compare = FieldDataComparator(
+            source=sourceFields,
+            reference=referenceFields,
+            field_exclusion_filter=lambda name: name in ignoreFields,
+        )
+        result = compare(
+            predicate_selector=makePredicateSelector(
+                relThreshold=relThreshold,
+                absThreshold=absThreshold,
+                zeroValueThreshold=zeroValueThreshold,
+                sourceFieldNameTransform=lambda name: f"row {float(name.strip('field_'))}",
+            ),
+            fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
+        )
+
+        print(f"-- Summary: {result.status} ({result.report})\n")
+
+        if not result:
+            return 1
+        return 0
+
+    BACKEND = "fieldcompare"
+
+
+# fall back to Dumux legacy backend if we don't have fieldcompare
+except ImportError:
+    from fuzzycomparevtu import compareVTK as fieldcompareMeshData
+    from fuzzycomparedata import compareData as fieldcompareCSVData
+
+    BACKEND = "legacy"
 
 
 def readCmdParameters():
@@ -70,6 +192,12 @@ def readCmdParameters():
             ' a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}'
         ),
     )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        nargs="+",
+        help=("Space separated list of fields to ignore in the comparison"),
+    )
     args = vars(parser.parse_args())
 
     # check parameters
@@ -98,69 +226,102 @@ def readCmdParameters():
     return args
 
 
+def _exactComparison(args):
+    """Exact comparison driver"""
+    returnCode = 0
+    for i in range(0, len(args["files"]) // 2):
+        print("\nExact comparison...")
+        result = subprocess.call(["diff", args["files"][i * 2], args["files"][(i * 2) + 1]])
+        if result:
+            returnCode = 1
+    return returnCode
+
+
+def _fuzzyMeshComparison(args):
+    """Fuzzy mesh comparison driver"""
+    numFailed = 0
+    for i in range(0, len(args["files"]) // 2):
+        print(f"\nFuzzy data comparison with {BACKEND} backend")
+        source, ref = args["files"][i * 2], args["files"][(i * 2) + 1]
+        if "reference" in source and "reference" not in ref:
+            source, ref = ref, source
+        relThreshold = args["relative"]
+        absThreshold = args["absolute"]
+        zeroValueThreshold = args["zeroThreshold"]
+        ignoreFields = args["ignore"]
+        numFailed += fieldcompareMeshData(
+            source,
+            ref,
+            absThreshold,
+            relThreshold,
+            zeroValueThreshold,
+            ignoreFields,
+        )
+
+    return int(numFailed > 0)
+
+
+def _fuzzyDataComparison(args):
+    """Fuzzy data comparison driver"""
+    numFailed = 0
+    for i in range(0, len(args["files"]) // 2):
+        print(f"\nFuzzy data comparison with {BACKEND} backend")
+        source, ref = args["files"][i * 2], args["files"][(i * 2) + 1]
+        if "reference" in source and "reference" not in ref:
+            source, ref = ref, source
+        delimiter = args["delimiter"]
+        relThreshold = args["relative"]
+        absThreshold = args["absolute"]
+        zeroValueThreshold = args["zeroThreshold"]
+        ignoreFields = args["ignore"]
+        numFailed += fieldcompareCSVData(
+            source,
+            ref,
+            delimiter,
+            absThreshold,
+            relThreshold,
+            zeroValueThreshold,
+            ignoreFields,
+        )
+
+    return int(numFailed > 0)
+
+
+def _scriptComparison(args):
+    """Script comparison driver"""
+    returnCode = 0
+    for i in range(0, len(args["files"]) // 2):
+        print(f"\n{args['script']} comparison")
+        result = subprocess.call(args["script"], args["files"][i * 2], args["files"][(i * 2) + 1])
+        if result:
+            returnCode = 1
+    return returnCode
+
+
 def runRegressionTest(args):
     """Run regression test scripts against reference data"""
 
     # exact comparison?
     if args["script"] == ["exact"]:
-        returnCode = 0
-        for i in range(0, len(args["files"]) // 2):
-            print("\nExact comparison...")
-            result = subprocess.call(["diff", args["files"][i * 2], args["files"][(i * 2) + 1]])
-            if result:
-                returnCode = 1
-        sys.exit(returnCode)
+        sys.exit(_exactComparison(args))
 
-    # fuzzy comparison?
+    # fuzzy mesh comparison?
     elif args["script"] == ["fuzzy"] or args["script"] == [
         os.path.dirname(os.path.abspath(__file__)) + "/fuzzycomparevtu.py"
     ]:
-        returnCode = 0
-        for i in range(0, len(args["files"]) // 2):
-            print("\nFuzzy comparison...")
-            result = compareVTK(
-                args["files"][i * 2],
-                args["files"][(i * 2) + 1],
-                relative=args["relative"],
-                absolute=args["absolute"],
-                zeroValueThreshold=args["zeroThreshold"],
-            )
-            if result:
-                returnCode = 1
-        sys.exit(returnCode)
+        sys.exit(_fuzzyMeshComparison(args))
 
-    # fuzzy comparison of data sets?
+    # fuzzy comparison of CSV-like data sets?
     elif args["script"] == ["fuzzyData"]:
-        returnCode = 0
-        for i in range(0, len(args["files"]) // 2):
-            print("\nFuzzy data comparison...")
-            result = compareData(
-                args["files"][i * 2],
-                args["files"][(i * 2) + 1],
-                args["delimiter"],
-                relative=args["relative"],
-                absolute=args["absolute"],
-                zeroValueThreshold=args["zeroThreshold"],
-            )
-            if result:
-                returnCode = 1
-        sys.exit(returnCode)
+        sys.exit(_fuzzyDataComparison(args))
 
     # other script?
     else:
-        returnCode = 0
-        for i in range(0, len(args["files"]) // 2):
-            print(f"\n{args['script']} comparison...")
-            result = subprocess.call(
-                args["script"], args["files"][i * 2], args["files"][(i * 2) + 1]
-            )
-            if result:
-                returnCode = 1
-        sys.exit(returnCode)
+        sys.exit(_scriptComparison(args))
 
 
 def runTest():
-    """Run a DuMux test"""
+    """DuMux test driver"""
 
     args = readCmdParameters()
 

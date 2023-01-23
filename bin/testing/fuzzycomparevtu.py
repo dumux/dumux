@@ -19,7 +19,15 @@ import functools
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
 
 
-def compareVTK(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold=None, verbose=True):
+def compareVTK(
+    vtk1,
+    vtk2,
+    absolute=1.5e-7,
+    relative=1e-2,
+    zeroValueThreshold=None,
+    ignoreFields=None,
+    verbose=True,
+):
     """take two vtk files and compare them. Returns an exit key as returnvalue.
 
     Arguments:
@@ -41,6 +49,8 @@ def compareVTK(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold=No
         A dictionary of parameter value pairs that set the threshold under
         which a number is treated as zero for a certain parameter. Use this parameter if
         you have to avoid comparisons of very small numbers for a certain parameter.
+    ignoreFields: list
+        A list of field names to be ignored in the comparison
     verbose : bool
         If the script should produce informative output. Enabled by default as the details
         give the tester a lot more information on why tests fail.
@@ -53,6 +63,11 @@ def compareVTK(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold=No
         root2 = ET.fromstring(vtk2File.read())
 
     zeroValueThreshold = zeroValueThreshold or {}
+
+    # implement ignoring fields by setting a very high threshold
+    if ignoreFields is not None:
+        for field in ignoreFields:
+            zeroValueThreshold[field] = 1e100
 
     # convert parallel vtu to sequential vtu if necessary
     convertedFromParallelVtu = False
@@ -668,6 +683,12 @@ if __name__ == "__main__":
             'e.g. {"vel":1e-7,"delP":1.0}'
         ),
     )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        nargs="+",
+        help=("Space separated list of fields to ignore in the comparison"),
+    )
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
     parser.add_argument("--no-verbose", dest="verbose", action="store_false")
     parser.set_defaults(verbose=True)
@@ -681,5 +702,6 @@ if __name__ == "__main__":
             args["relative"],
             args["zeroThreshold"],
             args["verbose"],
+            args["ignore"],
         )
     )

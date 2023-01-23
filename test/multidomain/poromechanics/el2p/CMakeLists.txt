@@ -12,5 +12,4 @@ dumux_add_test(NAME test_md_poromechanics_el2p
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el2p_poroelastic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p_poroelastic-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p params.input
-                                                              -Vtk.OutputName test_md_poromechanics_el2p"
-                       --zeroThreshold {"u":1e-14})
+                                                              -Vtk.OutputName test_md_poromechanics_el2p")

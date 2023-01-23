@@ -92,7 +92,12 @@ select tests:
   stage: select
   script:
     - |
-      if [[ -n "$MR_TARGET_BRANCH_NAME" ]]; then
+      if [[ -n "$DUMUX_SKIP_TEST_SELECTION" ]]; then
+        echo "Skipping test selection, build/test stages will consider all tests!"
+        touch affectedtests.json
+        touch changedfiles.txt
+
+      elif [[ -n "$MR_TARGET_BRANCH_NAME" ]]; then
           echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
           python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
                                                  --target-tree origin/$MR_TARGET_BRANCH_NAME
