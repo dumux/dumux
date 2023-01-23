@@ -52,9 +52,8 @@ int main(int argc, char* argv[])
 
     // formatted_size
     {
-        std::string_view fmt{"{}"};
         int num = 42;
-        const auto bufferSize = Fmt::formatted_size(fmt, num);
+        const auto bufferSize = Fmt::formatted_size("{}", num);
         if (bufferSize != 2)
             DUNE_THROW(Dune::Exception, "Unexpected computed buffer size: " << bufferSize << ", expected 2 for storing '42'");
     }
