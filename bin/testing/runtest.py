@@ -14,15 +14,10 @@ import json
 
 
 try:
-    import fieldcompare.mesh as meshcompare
-    import fieldcompare.tabular as tabularcompare
     from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
     from fieldcompare.mesh import MeshFieldsComparator
     from fieldcompare.predicates import DefaultEquality, ScaledTolerance
-    from fieldcompare.io import CSVFieldReader, read
-
-    protocols.MeshFields = meshcompare.MeshFields
-    protocols.TabularFields = tabularcompare.TabularFields
+    from fieldcompare.io import read_as
 
     # pylint: disable=too-many-arguments
     def makePredicateSelector(
@@ -60,14 +55,8 @@ try:
             print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
 
         # read the files
-        sourceFields = read(source)
-        referenceFields = read(ref)
-
-        # some type checking to be sure we are comparing meshes
-        if not isinstance(sourceFields, protocols.MeshFields):
-            raise IOError("Source file could not been identified as mesh file!")
-        if not isinstance(referenceFields, protocols.MeshFields):
-            raise IOError("Reference file could not been identified as mesh file!")
+        sourceFields = read_as("mesh", source)
+        referenceFields = read_as("mesh", ref)
 
         # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
         sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
@@ -112,14 +101,8 @@ try:
         if zeroValueThreshold:
             print(f"-- Using the following absolute thresholds: {zeroValueThreshold}")
 
-        sourceFields = CSVFieldReader(delimiter=delimiter, use_names=False).read(source)
-        referenceFields = CSVFieldReader(delimiter=delimiter, use_names=False).read(ref)
-
-        # some type checking to be sure we are comparing CSV data
-        if not isinstance(sourceFields, protocols.TabularFields):
-            raise IOError("Source file could not been identified as CSV-like file!")
-        if not isinstance(referenceFields, protocols.TabularFields):
-            raise IOError("Reference file could not been identified as CSV-like file!")
+        sourceFields = read_as("dsv", source, delimiter=delimiter, use_names=False)
+        referenceFields = read_as("dsv", ref, delimiter=delimiter, use_names=False)
 
         ignoreFields = ignoreFields or []
         compare = FieldDataComparator(
