@@ -3,7 +3,7 @@ DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
 
 [Grid]
-File = ./grids/1dGrid.dgf
+File = ../1p/grids/pnm_converted.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 

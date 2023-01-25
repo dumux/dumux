@@ -6,11 +6,11 @@ TEnd = 500000 # [s]
 File = 40_low.dgf
 
 PoreGeometry = Cube
-ThroatCrossSectionShape = Circle
+ThroatCrossSectionShape = Square
 
 [Problem]
 Name = drainage
-VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
@@ -24,12 +24,14 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+MaxTimeStepDivisions = 20
 
 [InvasionState]
 Verbosity = true
 #AccuracyCriterion = 0.99
 
 [SpatialParams]
+RegularizationLowSw = 0.01
 HighSwRegularizationMethod = Spline
 
 [Regularization]

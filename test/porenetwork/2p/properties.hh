@@ -56,9 +56,9 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 #endif
 } // end namespace TTag
 
-// template<class TypeTag>
-// struct Formulation<TypeTag, TTag::DrainageProblem>
-// { static constexpr auto value = TwoPFormulation::p1s0; };
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DrainageProblem>
+{ static constexpr auto value = TwoPFormulation::p1s0; };
 
 // Set the problem property
 template<class TypeTag>

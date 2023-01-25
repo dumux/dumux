@@ -127,8 +127,8 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
+        values[pwIdx] = 1.0e5;
+        values[snIdx] = 1.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
@@ -185,7 +185,7 @@ public:
         if (isInletPore_(dofIdxGlobal))
             values[snIdx] = 0.5;
         else
-            values[snIdx] = 0.0;
+            values[snIdx] = 1.0;
 
 #if !ISOTHERMAL
         values[temperatureIdx] = 273.15 + 10;
@@ -228,12 +228,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == 2;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == 1;
     }
 
     int vtpOutputFrequency_;
