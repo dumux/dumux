@@ -137,8 +137,10 @@ public:
 
             if (phaseIdx == wPhaseIdx)
             {
-                if (fluxVarsCache.saturationEpsilon(phaseIdx))
-                    return 0.0;
+                // if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                //     return 0.0;
+                // else
+                //     return std::min(elemVolVars[0].saturation(0), elemVolVars[1].saturation(0))*4e-14;
                 if (!invaded) // not invaded in last time step
                 {
                     if ( pc < invasionLeft )
@@ -180,8 +182,11 @@ public:
             }
             else // non-wetting phase
             {
-                if (fluxVarsCache.saturationEpsilon(phaseIdx))
-                    return 0.0;
+                // if (fluxVarsCache.saturationEpsilon(phaseIdx))
+                //     return 0.0;
+                // else
+                //     return (1.0 - std::min(elemVolVars[0].saturation(0), elemVolVars[1].saturation(0)))*4e-14;
+
                 if (!invaded)
                 {
                     // the regularization interval is [pce, pce + reg]
