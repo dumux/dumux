@@ -23,6 +23,7 @@ variables:
   REFERENCE_SHA: ""
   CXX_MAX_STANDARD: "17"
   DUMUX_ENABLE_CPPCHECK: ""
+  DUMUX_ENABLE_DOXYGEN_BUILD: ""
 
 
 configure:
@@ -140,6 +141,22 @@ select tests:
   needs:
     - job: configure
       artifacts: true
+
+
+doxygen:
+  stage: build
+  rules:
+  - if: $DUMUX_ENABLE_DOXYGEN_BUILD == "true"
+    when: always
+  script:
+    - cd build-cmake
+    - make doxygen_dumux
+  needs:
+    - job: configure
+      artifacts: true
+  artifacts:
+    paths:
+      - build-cmake/doc/doxygen
 
 
 compile cpp:
