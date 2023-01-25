@@ -83,10 +83,10 @@ public:
         if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
             fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
 
-        if (!invaded)
-            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-        else
-            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        // if (!invaded)
+        //     pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        // else
+        //     pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
 
         regInvasionInterval_[0] = pcEntry_;
         regSnapoffInterval_[1] = pcSnapoff_;
