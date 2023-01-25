@@ -251,23 +251,23 @@ private:
 
             if (verbose_)
             {
-                // const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
-                // const std::array sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
-                // const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, result.localScvIdxWithCriticalPc, 1);
-                // if (result.event == EventType::invasion)
-                // {
-                //     std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
-                //     std::cout << " pc: " << *pcMax;
-                //     std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
-                //     std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
-                // }
-                // else
-                // {
-                //     std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
-                //     std::cout << " pc: " << *pcMax;
-                //     std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
-                //     std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
-                // }
+                const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
+                const std::array sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
+                const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, result.localScvIdxWithCriticalPc, 1);
+                if (result.event == EventType::invasion)
+                {
+                    std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
+                else
+                {
+                    std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
             }
 
             return result;
