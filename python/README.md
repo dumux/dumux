@@ -29,7 +29,13 @@ git clone https://gitlab.dune-project.org/core/dune-grid.git
 git clone https://gitlab.dune-project.org/core/dune-localfunctions.git
 git clone https://gitlab.dune-project.org/core/dune-istl.git
 git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+
+cp dumux/cmake.opts .
 ```
+
+Enable shared libraries as required for the Python bindings by adding the flag in `cmake.opts` (see
+comments inside the `.opts` file). Not setting this option is often responsible for error messages
+related to parameters not being found.
 
 Create and activate a new virtual environment in which the
 Python modules will be installed in editable mode (symlinked)
