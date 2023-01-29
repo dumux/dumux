@@ -270,33 +270,6 @@ def removeFolder(modulePath, subFolder):
             removeAddSubdirectoryCommand(parentCML, subFolderName)
     shutil.rmtree(subFolderPath)
 
-def guideAddLicenseFile(modulePath, baseFolder, readme):
-    """Optionally add a GPLv3 LICENSE.md file to the new module"""
-    addLicense = queryYesNo("Do you want to add a GPLv3 license file as LICENSE.md?")
-    if addLicense:
-        # delete existing license file
-        moduleLicense = os.path.join(newModulePath, "LICENSE")
-        if os.path.exists(moduleLicense):
-            os.remove(moduleLicense)
-        # copy the LICENCE file from dumux
-        licensePath = os.path.join(baseFolder, "dumux/bin/license_for_module_extraction/gplv3.md")
-        if not os.path.exists(licensePath):
-            print("WARNING: Could not find the GPLv3 license file. Skipping license file addition.")
-        else:
-            # copy GPLv3 license file to new module
-            newLicensePath = os.path.join(newModulePath, "LICENSE.md")   
-            shutil.copy(licensePath, newLicensePath)
-            # commit license to git
-            runGitCommand(modulePath, "git add LICENSE.md")
-            runGitCommand(modulePath, 'git commit -m "Add GLPv3 license file"')
-            # include license information to README.md
-            appendFileContent(readme, infoReadmeLicense())
-            runGitCommand(modulePath, "git add README.md")
-            runGitCommand(modulePath, 'git commit -m "Add license information to README.md"')
-            # check if license file was added
-            if os.path.exists(newLicensePath):
-                print("License file was successfully added to the new module.")
-    print("\n")
 
 def guideFolderDeletion(modulePath, candidates):
     """Interactive process to delete folders that may not be needed"""
@@ -386,6 +359,34 @@ def guideRepositoryInitialization(modulePath):
         pushMainBranch(modulePath, remoteURL)
 
     return remoteURL
+
+
+def guideAddLicenseFile(modulePath, baseFolder, readme):
+    """Optionally add a GPLv3 LICENSE.md file to the new module"""
+    addLicense = queryYesNo("Do you want to add a GPLv3 license file as LICENSE.md?")
+    if addLicense:
+        # delete existing license file
+        moduleLicense = os.path.join(newModulePath, "LICENSE")
+        if os.path.exists(moduleLicense):
+            os.remove(moduleLicense)
+        # copy the LICENCE file from dumux
+        licensePath = os.path.join(baseFolder, "dumux/LICENSE.md")
+        if not os.path.exists(licensePath):
+            print("WARNING: Could not find the GPLv3 license file. Skipping license file addition.")
+        else:
+            # copy GPLv3 license file to new module
+            shutil.copy(licensePath, newModulePath)
+            # commit license to git
+            runGitCommand(modulePath, "git add LICENSE.md")
+            runGitCommand(modulePath, 'git commit -m "Add GPLv3 as LICENSE.md file"')
+            # include license information to README.md
+            appendFileContent(readme, infoReadmeLicense())
+            runGitCommand(modulePath, "git add README.md")
+            runGitCommand(modulePath, 'git commit -m "Add license information to README.md"')
+            # check if license file was added
+            if os.path.exists(os.path.join(modulePath, "LICENSE.md")):
+                print("License file was successfully added to the new module.")
+    print("\n")
 
 
 def dependenciesAndPatches(modulePath, skip=None):
@@ -539,6 +540,7 @@ def infoReadmeMain(moduleDirectory, subFolder, sourceFiles):
     """
     ).format(moduleDirectory, subFolderString, sourceString)
 
+
 def infoReadmeLicense():
     """License part of the README.md document"""
     return textwrap.dedent(
@@ -551,6 +553,7 @@ def infoReadmeLicense():
 
         """
     )
+
 
 def infoReadmeInstallation(remoteURL, installScriptName, newModuleName):
     """Installation part of the README.md document"""
