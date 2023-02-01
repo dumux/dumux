@@ -36,10 +36,7 @@ template<class Variables>
 using DetectPVSwitch = typename Variables::VolumeVariables::PrimaryVariableSwitch;
 
 template<class Variables>
-using GetPVSwitch = Dune::Std::detected_or<int, DetectPVSwitch, Variables>;
-
-template<class Variables>
-using PrimaryVariableSwitch = typename GetPVSwitch<Variables>::type;
+using PrimaryVariableSwitch = Dune::Std::detected_or_t<int, DetectPVSwitch, Variables>;
 
 } // end namespace Detail
 
@@ -48,7 +45,7 @@ using PrimaryVariableSwitch = typename GetPVSwitch<Variables>::type;
  * \brief Helper boolean to check if the given variables involve primary variable switching.
  */
 template<class Variables>
-inline constexpr bool hasPriVarsSwitch = typename Detail::GetPVSwitch<Variables>::value_t();
+inline constexpr bool hasPriVarsSwitch = Dune::Std::is_detected<Detail::DetectPVSwitch, Variables>();
 
 /*!
  * \ingroup Nonlinear

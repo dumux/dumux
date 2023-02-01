@@ -34,9 +34,6 @@ namespace Detail {
 template<class Assembler, class Index>
 using DetectPVSwitchMultiDomain = typename Assembler::template GridVariables<Index::value>::VolumeVariables::PrimaryVariableSwitch;
 
-template<class Assembler, std::size_t i>
-using GetPVSwitchMultiDomain = Dune::Std::detected_or<int, DetectPVSwitchMultiDomain, Assembler, Dune::index_constant<i>>;
-
 } // end namespace Detail
 
 /*!
@@ -56,10 +53,12 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
     static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
 
     template<std::size_t i>
-    using PrimaryVariableSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::type;
+    using PrimaryVariableSwitch =
+      Dune::Std::detected_or_t<int, Detail::DetectPVSwitchMultiDomain, Assembler, Dune::index_constant<i>>;
 
     template<std::size_t i>
-    using HasPriVarsSwitch = typename Detail::GetPVSwitchMultiDomain<Assembler, i>::value_t; // std::true_type or std::false_type
+    using HasPriVarsSwitch =
+      Dune::Std::is_detected<Detail::DetectPVSwitchMultiDomain, Assembler, Dune::index_constant<i>>; // std::true_type or std::false_type
 
     template<std::size_t i>
     using PrivarSwitchPtr = std::unique_ptr<PrimaryVariableSwitch<i>>;
