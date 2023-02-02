@@ -132,7 +132,7 @@ pylint build-cmake/python/dumux
 ```
 
 Pylint needs to be able to check imports so the modules need to be properly set up
-with `setup-dunepy.py` (see above). The `pylint` configuration file `dumux/.pylintrc` can
+with `setup-python-env.sh` for Dune versions 2.8 or older (see above). The `pylint` configuration file `dumux/.pylintrc` can
 be used to configure `pylint`. Some exceptions or other parameters than the default
 might be sensible in the future but generally advice given by `pylint` leads to better code.
 Different from `black`, `pylint` does no itself fix the code, you need to do this yourself.
