@@ -93,6 +93,15 @@ public:
     }
 
     /*!
+     * \brief Return the bed surface inside the sub-control volume.
+     *
+     */
+    Scalar curvature() const
+    {
+        return priVars_[Indices::curvatureIdx];
+    }
+
+    /*!
      * \brief Return the fluid density
      *
      */

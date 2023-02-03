@@ -44,6 +44,7 @@ public:
         out.addVolumeVariable([](const VolumeVariables& v){ return v.waterDepth(); }, "waterDepth");
         out.addVolumeVariable([](const VolumeVariables& v){ return v.velocity(0); }, "velocityX");
         out.addVolumeVariable([](const VolumeVariables& v){ return v.velocity(1); }, "velocityY");
+        out.addVolumeVariable([](const VolumeVariables& v){ return v.curvature(); }, "kappa");
         out.addVolumeVariable([](const VolumeVariables& v){ return v.bedSurface(); }, "bedSurface");
         out.addVolumeVariable([](const VolumeVariables& v){ return v.bedSurface() + v.waterDepth(); }, "freeSurface");
     }
@@ -61,6 +62,7 @@ public:
             case 0 : name = "waterDepth";
             case 1 : name = "velocityX";
             case 2 : name = "velocityY";
+            case 3 : name = "curvature";
         }
 
         return name;

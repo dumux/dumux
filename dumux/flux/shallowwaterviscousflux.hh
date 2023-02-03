@@ -70,7 +70,7 @@ static constexpr bool implementsFrictionLaw()
  * For now the calculation of the shallow water viscous momentum flux is implemented
  * strictly for 2D depth-averaged models (i.e. 3 equations).
  */
-template<class NumEqVector, typename std::enable_if_t<NumEqVector::size() == 3, int> = 0>
+template<class NumEqVector, typename std::enable_if_t<NumEqVector::size() == 4, int> = 0>
 class ShallowWaterViscousFlux
 {
 
@@ -231,9 +231,42 @@ public:
         const auto uViscousFlux = turbViscosity * interfaceWaterDepth * gradU;
         const auto vViscousFlux = turbViscosity * interfaceWaterDepth * gradV;
 
+        const auto gradFreeSurfaceNormal = [&]()
+        {
+            const auto freeSurfaceLeft = insideVolVars.waterDepth() + problem.spatialParams().bedSurface(element, insideScv);
+            const auto freeSurfaceRight = outsideVolVars.waterDepth() + problem.spatialParams().bedSurface(element, outsideScv);
+            const auto& cellCenterToCellCenter = outsideScv.center() - insideScv.center();
+            const auto distance = cellCenterToCellCenter.two_norm();
+            const auto& unitNormal = scvf.unitOuterNormal();
+            const auto direction = (unitNormal*cellCenterToCellCenter)/distance;
+            return (freeSurfaceRight-freeSurfaceLeft)*direction/distance;
+        }();
+
         localFlux[0] = 0.0;
         localFlux[1] = -uViscousFlux * scvf.area();
         localFlux[2] = -vViscousFlux * scvf.area();
+        localFlux[3] = gradFreeSurfaceNormal * scvf.area();
+
+        static const bool addCurvature = getParamFromGroup<bool>(
+            problem.paramGroup(), "ShallowWater.AddCurvature", false
+        );
+
+        if (addCurvature)
+        {
+            const auto kappaNormal = [&]
+            {
+                const auto curvatureLeft = insideVolVars.curvature();
+                const auto curvatureRight = outsideVolVars.curvature();
+                const auto& unitNormal = scvf.unitOuterNormal();
+                return std::array<Scalar, 2>{
+                    -72e-3*0.5*(curvatureRight+curvatureLeft)*unitNormal[0],
+                    -72e-3*0.5*(curvatureRight+curvatureLeft)*unitNormal[1]
+                };
+            }();
+
+            localFlux[1] -= kappaNormal[0];
+            localFlux[2] -= kappaNormal[1];
+        }
 
         return localFlux;
     }

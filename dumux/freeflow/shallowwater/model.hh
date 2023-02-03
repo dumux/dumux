@@ -95,7 +95,7 @@ struct ShallowWaterModelTraits
 {
     using Indices = ShallowWaterIndices;
 
-    static constexpr int numEq() { return 3; }
+    static constexpr int numEq() { return 4; }
     static constexpr int numPhases() { return 1; }
 
     //! Enable advection
