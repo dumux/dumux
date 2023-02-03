@@ -99,6 +99,26 @@ public:
             DUNE_THROW(ParameterException, "Please supply a grid file in " << prefix << "Grid.File or " << prefix << "Grid.UpperRight/Cells.");
         }
     }
+
+    void init(const Dune::FieldVector<ct, dim>& lowerLeft,
+              const Dune::FieldVector<ct, dim>& upperRight,
+              const std::array<int, dim>& cells,
+              const std::string& paramGroup = "")
+    {
+        const auto overlap = getParamFromGroup<int>(paramGroup, "Grid.Overlap", 1);
+        if (overlap == 0)
+            DUNE_THROW(Dune::NotImplemented, "dune-spgrid does currently not support zero overlap!");
+        const auto periodic = getParamFromGroup<std::bitset<dim>>(paramGroup, "Grid.Periodic", std::bitset<dim>{});
+        using IntArray = std::array<int, dim>;
+        IntArray spOverlap; spOverlap.fill(overlap);
+        using Domain = typename Grid::Domain;
+        std::vector< typename Domain::Cube > cubes;
+        cubes.push_back( typename Domain::Cube( lowerLeft, upperRight ) );
+        Domain domain( cubes, typename Domain::Topology( static_cast<unsigned int>(periodic.to_ulong()) ) );
+        ParentType::gridPtr() = std::make_shared<Grid>( domain, cells, spOverlap );
+        ParentType::maybeRefineGrid(paramGroup);
+        ParentType::loadBalance();
+    }
 };
 
 #endif // HAVE_DUNE_SPGRID
