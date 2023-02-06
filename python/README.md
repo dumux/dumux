@@ -23,13 +23,19 @@ this documentation in the future.
 Checkout the `master` branch of the Dune core modules and DuMu<sup>x</sup>
 
 ```
-git clone https://gitlab.dune-project.org/core/dune-common
-git clone https://gitlab.dune-project.org/core/dune-geometry
-git clone https://gitlab.dune-project.org/core/dune-grid
-git clone https://gitlab.dune-project.org/core/dune-localfunctions
-git clone https://gitlab.dune-project.org/core/dune-istl
-git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
+git clone https://gitlab.dune-project.org/core/dune-common.git
+git clone https://gitlab.dune-project.org/core/dune-geometry.git
+git clone https://gitlab.dune-project.org/core/dune-grid.git
+git clone https://gitlab.dune-project.org/core/dune-localfunctions.git
+git clone https://gitlab.dune-project.org/core/dune-istl.git
+git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+
+cp dumux/cmake.opts .
 ```
+
+Enable shared libraries as required for the Python bindings by adding the flag in `cmake.opts` (see
+comments inside the `.opts` file). Not setting this option is often responsible for error messages
+related to parameters not being found.
 
 Create and activate a new virtual environment in which the
 Python modules will be installed in editable mode (symlinked)
@@ -54,12 +60,12 @@ this documentation in the future.
 Checkout the `releases/2.8` branch of the Dune core modules and DuMu<sup>x</sup> 3.5
 
 ```
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-common
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-geometry
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-grid
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-localfunctions
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-istl
-git clone -b releases/3.5 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-common.git
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-geometry.git
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-grid.git
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-localfunctions.git
+git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-istl.git
+git clone -b releases/3.5 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 cp dumux/cmake.opts .
 ```
@@ -92,7 +98,7 @@ Replace the path with the path to the MPI library on your system.
 Run your first DuMu<sup>x</sup> Python test
 
 ```
-python3 dumux/test/python/test_py_gridgeometry.py
+python3 dumux/test/python/test_gridgeometry.py
 ```
 
 The Python bindings are based on just-in-time compilation of C++ code,
@@ -126,7 +132,7 @@ pylint build-cmake/python/dumux
 ```
 
 Pylint needs to be able to check imports so the modules need to be properly set up
-with `setup-dunepy.py` (see above). The `pylint` configuration file `dumux/.pylintrc` can
+with `setup-python-env.sh` for Dune versions 2.8 or older (see above). The `pylint` configuration file `dumux/.pylintrc` can
 be used to configure `pylint`. Some exceptions or other parameters than the default
 might be sensible in the future but generally advice given by `pylint` leads to better code.
 Different from `black`, `pylint` does no itself fix the code, you need to do this yourself.
