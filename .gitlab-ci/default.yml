@@ -35,6 +35,8 @@ configure:
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
     - |
       if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
+        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+        python3 -m pip install -r requirements.txt
         cp -r /dune/modules/dune-common/build-cmake/dune-env build-cmake
       fi
   artifacts:
