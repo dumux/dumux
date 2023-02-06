@@ -1,0 +1,7 @@
+numpy
+matplotlib
+pylint~=2.14.0
+flake8~=6.0.0
+black~=22.0
+codespell~=2.2.2
+fieldcompare[all]~=0.1.0
