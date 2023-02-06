@@ -103,12 +103,12 @@ public:
     void init(const Dune::FieldVector<ct, dim>& lowerLeft,
               const Dune::FieldVector<ct, dim>& upperRight,
               const std::array<int, dim>& cells,
-              const std::string& paramGroup = "")
+              const std::string& paramGroup = "",
+              const int overlap = 1,
+              const std::bitset<dim> periodic = std::bitset<dim>{})
     {
-        const auto overlap = getParamFromGroup<int>(paramGroup, "Grid.Overlap", 1);
         if (overlap == 0)
             DUNE_THROW(Dune::NotImplemented, "dune-spgrid does currently not support zero overlap!");
-        const auto periodic = getParamFromGroup<std::bitset<dim>>(paramGroup, "Grid.Periodic", std::bitset<dim>{});
         using IntArray = std::array<int, dim>;
         IntArray spOverlap; spOverlap.fill(overlap);
         using Domain = typename Grid::Domain;
