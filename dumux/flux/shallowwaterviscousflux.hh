@@ -242,10 +242,26 @@ public:
             return (freeSurfaceRight-freeSurfaceLeft)*direction/distance;
         }();
 
+        static const Scalar curvatureStabilizationParam = getParamFromGroup<Scalar>(
+            problem.paramGroup(), "ShallowWater.CurvatureStabilizationParameter", 0.1
+        );
+
+        // stabilization
+        const auto gradCurvatureNormal = [&]()
+        {
+            const auto curvatureLeft = insideVolVars.curvature();
+            const auto curvatureRight = outsideVolVars.curvature();
+            const auto& cellCenterToCellCenter = outsideScv.center() - insideScv.center();
+            const auto distance = cellCenterToCellCenter.two_norm();
+            const auto& unitNormal = scvf.unitOuterNormal();
+            const auto direction = (unitNormal*cellCenterToCellCenter)/distance;
+            return curvatureStabilizationParam*distance*distance*(curvatureRight-curvatureLeft)*direction/distance;
+        }();
+
         localFlux[0] = 0.0;
         localFlux[1] = -uViscousFlux * scvf.area();
         localFlux[2] = -vViscousFlux * scvf.area();
-        localFlux[3] = gradFreeSurfaceNormal * scvf.area();
+        localFlux[3] = (gradFreeSurfaceNormal + gradCurvatureNormal) * scvf.area();
 
         static const bool addCurvature = getParamFromGroup<bool>(
             problem.paramGroup(), "ShallowWater.AddCurvature", false
