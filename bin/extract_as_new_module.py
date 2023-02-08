@@ -361,6 +361,46 @@ def guideRepositoryInitialization(modulePath):
     return remoteURL
 
 
+def guideAddLicenseFile(modulePath, readme):
+    """Optionally add a GPLv3 license to the new module"""
+    addLicense = queryYesNo(
+        "Do you want to add a GPLv3 license file as LICENSES/GPL-3.0-or-later.txt?"
+    )
+    if addLicense:
+        moduleLicenseLocation = os.path.join(newModulePath, "LICENSES/GPL-3.0-or-later.txt")
+        # download the GPL license file from the GNU website to the LICENSES directory
+        os.makedirs(os.path.dirname(moduleLicenseLocation), exist_ok=True)
+        licenseURL = "https://www.gnu.org/licenses/gpl-3.0.txt"
+        downloadCommand = ["wget", "-O", moduleLicenseLocation, licenseURL]
+        try:
+            subprocess.run(downloadCommand, check=True)
+        except subprocess.CalledProcessError:
+            print(
+                f"WARNING: Could not download the GPLv3 license file from {licenseURL}."
+                " Skipping license file addition."
+            )
+            # remove the LICENSES directory if it only contains the empty license file
+            fileCount = len(os.listdir(os.path.dirname(moduleLicenseLocation)))
+            if os.path.exists(moduleLicenseLocation) and fileCount == 1:
+                shutil.rmtree(os.path.dirname(moduleLicenseLocation))
+            # remove only the license file if it is not the only file in the LICENSES directory
+            elif os.path.exists(moduleLicenseLocation):
+                os.remove(moduleLicenseLocation)
+        else:
+            print(
+                "License file was downloaded and added to the new module."
+                " Please check if the license file is correct."
+            )
+            # commit license to git
+            runGitCommand(modulePath, "git add LICENSES/GPL-3.0-or-later.txt")
+            runGitCommand(modulePath, 'git commit -m "Add GPLv3 as GPL-3.0-or-later.txt file"')
+            # include license information to README.md
+            appendFileContent(readme, infoReadmeLicense())
+            runGitCommand(modulePath, "git add README.md")
+            runGitCommand(modulePath, 'git commit -m "Add license information to README.md"')
+    print("\n")
+
+
 def dependenciesAndPatches(modulePath, skip=None):
     """Determine the module's dependencies"""
     try:
@@ -511,6 +551,22 @@ def infoReadmeMain(moduleDirectory, subFolder, sourceFiles):
 
     """
     ).format(moduleDirectory, subFolderString, sourceString)
+
+
+def infoReadmeLicense():
+    """License part of the README.md document"""
+    return textwrap.dedent(
+        """\
+
+        ## License
+
+        This project is licensed under the terms and conditions of the GNU General Public
+        License (GPL) version 3 or - at your option - any later version.
+        The GPL can be found under [GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt)
+        provided in the `LICENSES` directory located at the topmost of the source code tree.
+
+    """
+    )
 
 
 def infoReadmeInstallation(remoteURL, installScriptName, newModuleName):
@@ -682,6 +738,9 @@ if __name__ == "__main__":
     remoteURL = guideRepositoryInitialization(newModulePath)
     if not remoteURL:
         print(noRemoteURLInfo(newModuleName))
+
+    # optionally add a license file
+    guideAddLicenseFile(newModulePath, newReadme)
 
     # make install script & finalize readme
     deps = dependenciesAndPatches(newModulePath, [modulePath])
