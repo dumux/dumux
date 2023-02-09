@@ -92,8 +92,9 @@ codespell:
 cppcheck:
   stage: linting
   script:
-    - cppcheck -j8 -f --error-exitcode=1 --inline-suppr --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:dumux/io/format/fmt/*
-
+    - cppcheck -j8 --error-exitcode=1 --inline-suppr -idumux/io/format/fmt/ --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:dumux/io/format/fmt/*
+    - cppcheck -j8 --error-exitcode=1 --inline-suppr -idumux/io/format/fmt/ --suppress=*:*/dune/* --suppress=*:dumux/io/format/fmt/* test
+    - cppcheck -j8 --error-exitcode=1 --inline-suppr -idumux/io/format/fmt/ --suppress=*:*/dune/* --suppress=*:dumux/io/format/fmt/* examples
   needs:
     - job: configure
       artifacts: true
