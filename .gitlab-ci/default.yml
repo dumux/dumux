@@ -22,6 +22,7 @@ variables:
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
   CXX_MAX_STANDARD: "17"
+  DUMUX_ENABLE_CPPCHECK: ""
 
 
 configure:
@@ -98,6 +99,8 @@ cppcheck:
   needs:
     - job: configure
       artifacts: true
+  rules:
+    - if: $DUMUX_ENABLE_CPPCHECK == "true"
 
 select tests:
   stage: select
@@ -172,6 +175,7 @@ compile cpp:
       artifacts: true
     - job: cppcheck
       artifacts: false
+      optional: true
 
 
 test cpp:
