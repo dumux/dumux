@@ -19,6 +19,7 @@ struct MyOtherVector {
     double resize;
 };
 
+// cppcheck-suppress internalAstError
 const auto hasResize = isValid([](auto&& a) -> decltype(a.resize(std::size_t(1))) { });
 
 // using the check function

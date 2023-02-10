@@ -112,6 +112,7 @@ full-dune-master-gcc-cpp-20:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04
     CXX_MAX_STANDARD: "20"
+    DUMUX_ENABLE_CPPCHECK: "true"
 
 ##################################
 # additional scheduled pipelines #
