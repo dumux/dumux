@@ -237,9 +237,7 @@ public:
             const auto freeSurfaceRight = outsideVolVars.waterDepth() + problem.spatialParams().bedSurface(element, outsideScv);
             const auto& cellCenterToCellCenter = outsideScv.center() - insideScv.center();
             const auto distance = cellCenterToCellCenter.two_norm();
-            const auto& unitNormal = scvf.unitOuterNormal();
-            const auto direction = (unitNormal*cellCenterToCellCenter)/distance;
-            return (freeSurfaceRight-freeSurfaceLeft)*direction/distance;
+            return (freeSurfaceRight-freeSurfaceLeft)/distance;
         }();
 
         static const Scalar curvatureStabilizationParam = getParamFromGroup<Scalar>(
