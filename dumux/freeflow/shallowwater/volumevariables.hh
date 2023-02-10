@@ -93,8 +93,7 @@ public:
     }
 
     /*!
-     * \brief Return the fluid density
-     *
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the fluid
      */
     Scalar density(int phaseIdx = 0) const
     {
@@ -104,7 +103,19 @@ public:
 
         // call with hard-coded sensible default values for water/river applications for now
         return FluidSystem::density(283.15, 1e5);
+    }
 
+    /*!
+     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid
+     */
+    Scalar viscosity(int phaseIdx = 0) const
+    {
+        static_assert(FluidSystem::viscosityIsConstant(0),
+            "The shallow water model assumes fluids with constant viscosity"
+        );
+
+        // call with hard-coded sensible default values for water/river applications for now
+        return FluidSystem::viscosity(283.15, 1e5);
     }
 
 private:
