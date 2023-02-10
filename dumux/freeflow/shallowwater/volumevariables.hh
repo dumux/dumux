@@ -110,7 +110,7 @@ public:
      */
     Scalar viscosity(int phaseIdx = 0) const
     {
-        static_assert(!FluidSystem::viscosityIsConstant(0),
+        static_assert(FluidSystem::viscosityIsConstant(0),
             "The shallow water model assumes fluids with constant viscosity"
         );
 
