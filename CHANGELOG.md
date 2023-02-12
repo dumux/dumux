@@ -8,6 +8,8 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 - __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
 
+- __Shallow water equations__: Added new friction law `FrictionLawViscousNoSlip` for viscous thin film flow
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 
