@@ -218,7 +218,7 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *gridVariables_);
+            localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
     }
 
