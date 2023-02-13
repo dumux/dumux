@@ -1,0 +1,13 @@
+[TimeLoop]
+TEnd = 5.0
+Dt = 0.1
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 100 100
+Overlap = 0
+
+[Problem]
+Name = diffusion
+DiffusionCoefficient = 0.0001
