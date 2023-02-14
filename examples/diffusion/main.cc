@@ -41,7 +41,6 @@ class DiffusionTestProblem : public FVProblem<TypeTag>
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<2>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
