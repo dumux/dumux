@@ -76,6 +76,10 @@ struct PQ1 {
     static std::string name() { return "box"; }
 };
 
+struct PQ2 {
+    static std::string name() { return "pq2"; }
+};
+
 struct CR_RT {
     static std::string name() { return "fcdiamond"; }
 };
@@ -107,6 +111,11 @@ using FCDiamond = CVFE<CVFEMethods::CR_RT>;
  */
 using PQ1Bubble = CVFE<CVFEMethods::PQ1Bubble>;
 
+/*
+ * \brief Control-volume finite element scheme based on
+ *        quadratic Lagrangian elements
+ */
+using PQ2 = CVFE<CVFEMethods::PQ2>;
 
 /*
  * \brief Staggered-grid finite volume scheme (old)
@@ -145,6 +154,7 @@ struct None : public Utility::Tag<None> {
 inline constexpr CCTpfa cctpfa{};
 inline constexpr CCMpfa ccmpfa{};
 inline constexpr Box box{};
+inline constexpr PQ2 pq2{};
 inline constexpr PQ1Bubble pq1bubble{};
 inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
