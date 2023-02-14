@@ -164,7 +164,7 @@ int main(int argc, char** argv)
     SolutionVector sol(gridGeometry->numDofs());
 
     // create a random initial field
-    std::mt19937 gen(0.0); // seed is 0 for deterministic results
+    std::mt19937 gen(0); // seed is 0 for deterministic results
     std::uniform_real_distribution<> dis(0.0, 1.0);
     for (int n = 0; n < sol.size(); ++n)
         sol[n] = dis(gen);
