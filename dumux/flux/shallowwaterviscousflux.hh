@@ -53,7 +53,7 @@ static constexpr bool implementsFrictionLaw()
 
 /*!
  * \ingroup Flux
- * \brief Compute the shallow water viscous momentum flux due to (turbulent) viscosity.
+ * \brief Compute the shallow water viscous momentum flux due to viscosity.
  *
  * The viscous momentum flux
  * \f[
@@ -64,8 +64,10 @@ static constexpr bool implementsFrictionLaw()
  * \int_{S_f} \nu_t h \mathbf{\nabla} \mathbf{u} \cdot \mathbf{n_f} dS
  * \f]
  *
- * The turbulent viscosity \f$ \nu_t \f$ is calculated by adding a vertical (Elder-like)
- * and a horizontal (Smagorinsky-like) part.
+ * The effective kinematic viscosity \f$ \nu_t \f$
+ * can be calculated by adding a vertical (Elder-like)
+ * and a horizontal (Smagorinsky-like) part. This enabled by setting
+ * "ShallowWater.UseMixingLengthTurbulenceModel" to "true".
  *
  * For now the calculation of the shallow water viscous momentum flux is implemented
  * strictly for 2D depth-averaged models (i.e. 3 equations).
@@ -127,18 +129,23 @@ public:
         const auto waterDepthRight = outsideVolVars.waterDepth();
         const auto averageDepth = 2.0*(waterDepthLeft*waterDepthRight)/(waterDepthLeft + waterDepthRight);
 
-        // compute the turbulent viscosity contribution
-        const Scalar turbViscosity = [&]()
+        const Scalar effectiveKinematicViscosity = [&]()
         {
-            // The (constant) background turbulent viscosity
-            static const auto turbBGViscosity = getParamFromGroup<Scalar>(problem.paramGroup(), "ShallowWater.TurbulentViscosity", 1.0e-6);
+            // The background viscosity, per default this is just the fluid viscosity (e.g. for the viscous flow regime)
+            // The default may be overwritten by the user, by setting the parameter "ShallowWater.TurbulentViscosity" to
+            // enable setting a background viscosity that already contains some effects of turbulence
+            static const auto backgroundKinematicViscosity = getParamFromGroup<Scalar>(
+                problem.paramGroup(), "ShallowWater.TurbulentViscosity", insideVolVars.viscosity()/insideVolVars.density()
+            );
 
             // Check whether the mixing-length turbulence model is used
-            static const auto useMixingLengthTurbulenceModel = getParamFromGroup<bool>(problem.paramGroup(), "ShallowWater.UseMixingLengthTurbulenceModel", false);
+            static const auto useMixingLengthTurbulenceModel = getParamFromGroup<bool>(
+                problem.paramGroup(), "ShallowWater.UseMixingLengthTurbulenceModel", false
+            );
 
             // constant eddy viscosity equal to the prescribed background eddy viscosity
             if (!useMixingLengthTurbulenceModel)
-                return turbBGViscosity;
+                return backgroundKinematicViscosity;
 
             using SpatialParams = typename Problem::SpatialParams;
             using E = typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity;
@@ -217,7 +224,7 @@ public:
                 const auto turbViscosityH = mixingLengthSquared * sqrt(2.0*gradU*gradU + 2.0*gradV*gradV);
 
                 // Total turbulent viscosity
-                return turbBGViscosity + sqrt(turbViscosityV*turbViscosityV + turbViscosityH*turbViscosityH);
+                return backgroundKinematicViscosity + sqrt(turbViscosityV*turbViscosityV + turbViscosityH*turbViscosityH);
             }
         }();
 
@@ -228,8 +235,8 @@ public:
         const auto freeSurfaceOutside = outsideVolVars.waterDepth() + outsideVolVars.bedSurface();
         const auto interfaceWaterDepth = max(min(freeSurfaceInside , freeSurfaceOutside) - max(insideVolVars.bedSurface(),outsideVolVars.bedSurface()),0.0);
         const auto& [gradU, gradV] = gradVelocity;
-        const auto uViscousFlux = turbViscosity * interfaceWaterDepth * gradU;
-        const auto vViscousFlux = turbViscosity * interfaceWaterDepth * gradV;
+        const auto uViscousFlux = effectiveKinematicViscosity * interfaceWaterDepth * gradU;
+        const auto vViscousFlux = effectiveKinematicViscosity * interfaceWaterDepth * gradV;
 
         localFlux[0] = 0.0;
         localFlux[1] = -uViscousFlux * scvf.area();

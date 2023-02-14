@@ -1,0 +1,17 @@
+[Problem]
+Name = poiseuilleflow
+BedSlope = 0.000005 # [-] slope of the bed in m/m (positive downwards in positive x-direction)
+Gravity = 9.81 # [m/s^2] gravitational acceleration
+WaterDepth = 0.001 # [m]
+
+[ShallowWater]
+EnableViscousFlux = true
+UseMixingLengthTurbulenceModel = false
+
+[Grid]
+LowerLeft = 0.0 -0.05
+UpperRight = 1.0 0.05
+Cells = 20 2
+
+[Newton]
+EnablePartialReassembly = true
