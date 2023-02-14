@@ -88,6 +88,7 @@ template<class TypeTag>
 class DiffusionModelLocalResidual
 : public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
+    // the base local residual is selected depending on the chosen discretization scheme
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -163,30 +164,45 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
 
-namespace Dumux {
-
-struct DiffusionModelModelTraits
-{
-    struct Indices
-    {
-        static constexpr int concentration0Idx = 0;
-        static constexpr int massBalanceEq0Idx = 0;
-    };
-
-    static constexpr int numEq() { return 1; }
-};
-
-namespace Properties {
+namespace Dumux::Properties {
 
 namespace TTag {
-struct DiffusionModel { using InheritsFrom = std::tuple<ModelProperties>; };
+struct DiffusionModel {};
 } // end namespace TTag
 
+//! Set the default type of scalar values to double
+template<class TypeTag>
+struct Scalar<TypeTag, TTag:: DiffusionModel >
+{ using type = double; };
+
+//! Set the default primary variable vector to a vector of size of number of equations
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag:: DiffusionModel >
+{
+    using type = Dune::FieldVector<
+        GetPropType<TypeTag, Properties::Scalar>,
+        GetPropType<TypeTag, Properties::ModelTraits>::numEq()
+    >;
+};
+
+//! Set the model traits property
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::DiffusionModel>
-{ using type = DiffusionModelModelTraits; };
+{
+    struct Traits
+    {
+        struct Indices
+        {
+            static constexpr int concentration0Idx = 0;
+            static constexpr int massBalanceEq0Idx = 0;
+        };
+
+        static constexpr int numEq() { return 1; }
+    };
+
+    using type = Traits;
+};
 
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::DiffusionModel>
@@ -205,7 +221,6 @@ struct VolumeVariables<TypeTag, TTag::DiffusionModel>
     using type = DiffusionModelVolumeVariables<Traits>;
 };
 
-} // end namespace Properties
-} // end namespace Dumux
+} // end namespace Dumux::Properties
 
 #endif
