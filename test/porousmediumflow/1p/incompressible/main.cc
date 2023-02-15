@@ -37,7 +37,6 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/linear/pdesolver.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -147,9 +146,18 @@ int main(int argc, char** argv)
     using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // solver the linear problem
-    LinearPDESolver solver(assembler, linearSolver);
-    solver.solve(x);
+    // Solve the linear problem:
+    // The recommended way would be to use the `LinearPDESolver` class like this:
+    // LinearPDESolver solver(assembler, linearSolver);
+    // solver.solve(x);
+    // But here we want to test that the assembler interface functions work as expected.
+    // Note that the assembler also provides an `assembleJacobianAndResidual` function,
+    // which would typically be more efficient for this purpose (tested elsewhere).
+    assembler->assembleJacobian(x);
+    assembler->assembleResidual(x);
+    auto deltaX = x;
+    linearSolver->solve(assembler->jacobian(), deltaX, assembler->residual());
+    x -= deltaX;
 
     // output result to vtk
     vtkWriter.write(1.0);
