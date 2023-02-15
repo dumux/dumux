@@ -490,6 +490,15 @@ public:
             return true;
     }
 
+    template<class LocalKey>
+    LocalIndexType localKeyToLocalScvIndex(const LocalKey& localKey) const
+    {
+        if(localKey.codim() == dim)
+            return localKey.subEntity();
+        else
+            return boxHelper_.numScv() + localKey.subEntity();
+    }
+
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
     Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
