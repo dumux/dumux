@@ -285,9 +285,11 @@ private:
             assert(localCoefficients.size() == geometryHelper.numScv());
             // construct the sub control volumes
             cache_.scvs_[eIdx].resize(geometryHelper.numScv());
+            std::vector<LocalIndexType> scvIdxMap(geometryHelper.numScv());
             for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
             {
                 auto scvLocalIdx = geometryHelper.localKeyToLocalScvIndex(localCoefficients.localKey(keyIdx));
+                scvIdxMap[scvLocalIdx] = keyIdx;
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
                 cache_.scvs_[eIdx][keyIdx] = SubControlVolume(
                     geometryHelper.scvVolume(scvLocalIdx, corners),
@@ -306,7 +308,8 @@ private:
             LocalIndexType scvfLocalIdx = 0;
             for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
             {
-                const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
+                const auto scvPairTemp = geometryHelper.getScvPairForScvf(scvfLocalIdx);
+                std::array<LocalIndexType, 2> scvPair = {scvIdxMap[scvPairTemp[0]], scvIdxMap[scvPairTemp[1]]};
                 const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
                 const auto area = Dumux::convexPolytopeVolume<dim-1>(
                     geometryHelper.getInteriorScvfGeometryType(scvfLocalIdx),
@@ -338,7 +341,8 @@ private:
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < numBoundaryScvf; ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        const auto scvPair = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
+                        const auto scvPairTemp = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
+                        std::array<LocalIndexType, 2> scvPair = {scvIdxMap[scvPairTemp[0]], scvIdxMap[scvPairTemp[1]]};
                         const auto corners = geometryHelper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx);
                         const auto area = Dumux::convexPolytopeVolume<dim-1>(
                             geometryHelper.getBoundaryScvfGeometryType(localFacetIndex, isScvfLocalIdx),
