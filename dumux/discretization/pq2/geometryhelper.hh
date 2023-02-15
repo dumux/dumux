@@ -459,9 +459,19 @@ public:
         {
             localIsScvfIndex -= numBoxScvf;
             const LocalIndexType insideScvIdx
-                = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localFacetIndex, 1, localIsScvfIndex, dim-1));
+                = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localFacetIndex, 1, localIsScvfIndex, dim-1))
+                + boxHelper_.numScv();
             return { insideScvIdx, insideScvIdx };
         }
+    }
+
+    bool isOverlappingBoundaryScvf(unsigned int localFacetIndex, unsigned int localIsScvfIndex) const
+    {
+        const auto numBoxScvf = referenceElement(geo_).size(localFacetIndex, 1, dim);
+        if (localIsScvfIndex < numBoxScvf)
+            return false;
+        else
+            return true;
     }
 
     bool isOverlappingScvf(unsigned int localScvfIndex) const
