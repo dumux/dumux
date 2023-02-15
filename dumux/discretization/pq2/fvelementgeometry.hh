@@ -73,7 +73,7 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
-    //! the maximum number of scvs per element (2^dim for cubes)
+    //! the maximum number of scvs per element (here for cubes)
     // ToDo get this from GG
     static constexpr std::size_t maxNumElementScvs = (1<<dim)+ dim*(1<<(dim-1));
 
