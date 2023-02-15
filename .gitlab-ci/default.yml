@@ -48,10 +48,8 @@ configure:
 
 black (python):
   stage: linting
-  image: registry.gitlab.com/pipeline-components/black:latest
   script:
   # only check the python folder for now (Python code related to bindings)
-  # TODO: maybe extend this to the utility scripts?
     - black --check --verbose -- python
     - black --check --verbose -- test/python
     - black --check --verbose -- bin
