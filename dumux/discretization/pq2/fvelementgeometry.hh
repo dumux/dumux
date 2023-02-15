@@ -61,7 +61,7 @@ class PQ2FVElementGeometry<GG, true>
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
-    //using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = PQ2GeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
 public:
@@ -75,7 +75,7 @@ public:
     using GridGeometry = GG;
     //! the maximum number of scvs per element (2^dim for cubes)
     // ToDo get this from GG
-    static constexpr std::size_t maxNumElementScvs = (1<<dim) + 1;
+    static constexpr std::size_t maxNumElementScvs = (1<<dim)+ dim*(1<<(dim-1));
 
     //! Constructor
     PQ2FVElementGeometry(const GGCache& ggCache)
@@ -120,11 +120,17 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
-    // //! Get a local finite element basis
-    // const FeLocalBasis& feLocalBasis() const
-    // {
-    //     return gridGeometry().feCache().get(element_->type()).localBasis();
-    // }
+    //! Get a local finite element basis
+    const FeLocalBasis& feLocalBasis() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! Get a local finite element basis
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
+    }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -199,9 +205,6 @@ public:
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
-        if (scv.isOverlapping())
-            DUNE_THROW(Dune::NotImplemented, "Geometry of overlapping scv");
-
         assert(isBound());
         const auto geo = element().geometry();
         const GeometryHelper helper(geo);
@@ -223,7 +226,7 @@ public:
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {
-                Dune::GeometryTypes::cube(dim-1),
+                helper.getBoundaryScvfGeometryType(localFacetIndex, localScvfIdx),
                 helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
             };
         }
