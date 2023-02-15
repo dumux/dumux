@@ -78,12 +78,12 @@ public:
     PQ2SubControlVolume() = default;
 
     PQ2SubControlVolume(const Scalar& volume,
-                              const GlobalPosition& dofPosition,
-                              const GlobalPosition& center,
-                              const LocalIndexType indexInElement,
-                              const GridIndexType eIdx,
-                              const GridIndexType dofIdx,
-                              bool overlapping = false)
+                        const GlobalPosition& dofPosition,
+                        const GlobalPosition& center,
+                        const LocalIndexType indexInElement,
+                        const GridIndexType eIdx,
+                        const GridIndexType dofIdx,
+                        bool overlapping = false)
 
     : center_(center)
     , dofPosition_(dofPosition)

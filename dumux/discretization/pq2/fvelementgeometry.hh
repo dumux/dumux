@@ -208,9 +208,10 @@ public:
         assert(isBound());
         const auto geo = element().geometry();
         const GeometryHelper helper(geo);
+        const auto idx =  helper.localKeyToLocalScvIndex(this->feLocalCoefficients().localKey(scv.indexInElement()));
         return {
-            helper.getScvGeometryType(scv.indexInElement()),
-            helper.getScvCorners(scv.indexInElement())
+            helper.getScvGeometryType(idx),
+            helper.getScvCorners(idx)
         };
     }
 
