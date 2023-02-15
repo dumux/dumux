@@ -146,7 +146,13 @@ int main(int argc, char** argv)
     using LinearSolver = LINEARSOLVER;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // solver the linear problem
+    // Solve the linear problem:
+    // The recommended way would be to use the `LinearPDESolver` class like this:
+    // LinearPDESolver solver(assembler, linearSolver);
+    // solver.solve(x);
+    // But here we want to test that the assembler interface functions work as expected.
+    // Note that the assembler also provides an `assembleJacobianAndResidual` function,
+    // which would typically be more efficient for this purpose (tested elsewhere).
     assembler->assembleJacobian(x);
     assembler->assembleResidual(x);
     auto deltaX = x;
