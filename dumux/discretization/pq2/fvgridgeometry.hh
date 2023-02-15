@@ -276,20 +276,24 @@ private:
             auto elementGeometry = element.geometry();
             const auto refElement = referenceElement(elementGeometry);
 
+            const auto& localCoefficients = this->feCache().get(element.type()).localCoefficients();
+
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
             numScv_ += geometryHelper.numScv();
+            assert(localCoefficients.size() == geometryHelper.numScv());
             // construct the sub control volumes
             cache_.scvs_[eIdx].resize(geometryHelper.numScv());
-            for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
+            for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
             {
+                auto scvLocalIdx = geometryHelper.localKeyToLocalScvIndex(localCoefficients.localKey(keyIdx));
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
-                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
+                cache_.scvs_[eIdx][keyIdx] = SubControlVolume(
                     geometryHelper.scvVolume(scvLocalIdx, corners),
                     geometryHelper.dofPosition(scvLocalIdx),
                     Dumux::center(corners),
-                    scvLocalIdx,
+                    keyIdx,
                     eIdx,
                     geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
