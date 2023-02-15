@@ -45,7 +45,7 @@ template <class ct>
 struct PQ2MLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
 {
     // we use static vectors to store the corners as we know
-    // the maximum number of corners in advance (2^dim)
+    // the maximum number of corners in advance
     template< int mydim, int cdim >
     struct CornerStorage
     {
