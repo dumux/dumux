@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
 #include <dumux/discretization/method.hh>
 
@@ -44,7 +45,6 @@
 #include <dumux/discretization/pq2/fvelementgeometry.hh>
 #include <dumux/discretization/pq2/subcontrolvolume.hh>
 #include <dumux/discretization/pq2/subcontrolvolumeface.hh>
-//#include <dumux/discretization/pq2/pq2fecache.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
@@ -55,13 +55,13 @@ struct PQ2MapperTraits :public DefaultMapperTraits<GridView>
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
     /**
-     * \brief layout for edges and vertices
+     * \brief layout for vertices and edges
      *
      */
     static Dune::MCMGLayout layout()
     {
         return [](Dune::GeometryType gt, int dimgrid) {
-            return (gt.dim() == 1) || (gt.dim() == 0);
+            return (gt.dim() == 0) || (gt.dim() == 1);
         };
     }
 };
@@ -128,7 +128,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    // using FeCache = Dumux::PQ2FECache<CoordScalar, Scalar, dim>;
+    using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 2>;
     //! export the grid view type
     using GridView = GV;
 
@@ -176,8 +176,8 @@ public:
     }
 
     //! The finite element cache for creating local FE bases
-    // const FeCache& feCache() const
-    // { return feCache_; }
+    const FeCache& feCache() const
+    { return feCache_; }
 
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
@@ -427,7 +427,7 @@ private:
 
     DofMapper dofMapper_;
 
-    //const FeCache feCache_;
+    const FeCache feCache_;
 
     std::size_t numScv_;
     std::size_t numScvf_;
