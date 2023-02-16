@@ -509,16 +509,13 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for
-     * an element (for cell-centered models)
-     * or vertex (for box / vertex-centered models)
+     * \brief Evaluate the initial value for a entity
      *
-     * \param entity The dof entity (element or vertex)
+     * \param entity The dof entity
      */
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
-        static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
         return asImp_().initialAtPos(entity.geometry().center());
     }
 
