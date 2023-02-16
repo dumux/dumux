@@ -8,6 +8,7 @@ add_subdirectory(facecentered)
 add_subdirectory(fem)
 add_subdirectory(porenetwork)
 add_subdirectory(pq1bubble)
+add_subdirectory(pq2)
 add_subdirectory(projection)
 add_subdirectory(staggered)
 
