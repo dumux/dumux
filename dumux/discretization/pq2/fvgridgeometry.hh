@@ -319,7 +319,7 @@ private:
                 cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
                     Dumux::center(corners),
                     area,
-                    geometryHelper.normal(corners, scvPair),
+                    geometryHelper.normal(corners, scvPairTemp),
                     std::move(scvPair),
                     scvfLocalIdx,
                     geometryHelper.isOverlappingScvf(scvfLocalIdx)
