@@ -472,7 +472,6 @@ private:
     template<class ParallelTraits>
     void solveParallel_(Matrix& A, Vector& x, Vector& b)
     {
-#if DUNE_VERSION_GT_REV(DUNE_ISTL,2,7,0)
         using LinearOperator = typename ParallelTraits::LinearOperator;
 
         if (firstCall_)
@@ -486,9 +485,6 @@ private:
 
         // solve linear system
         solver->apply(x, b, result_);
-#else
-        DUNE_THROW(Dune::NotImplemented, "Parallel solvers only available for dune-istl > 2.7.0");
-#endif
     }
 #endif // HAVE_MPI
 
