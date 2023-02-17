@@ -108,6 +108,18 @@ public:
     /*!
      * \brief Returns the velocity at a given position.
      */
+    VelocityVector interpolateVelocity(const FVElementGeometry& fvGeometry, const GlobalPosition& pos) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocityAtPos(fvGeometry, pos);
+        else
+            DUNE_THROW(Dune::NotImplemented, "interpolation not implemented");
+    }
+
+
+    /*!
+     * \brief Returns the velocity at a given position.
+     */
     VelocityVector velocityAtPos(const GlobalPosition&) const
     {
         DUNE_THROW(Dune::NotImplemented, "velocityAtPos not implemented");
