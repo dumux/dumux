@@ -198,41 +198,43 @@ struct BlockTypeHelper<S, true>
 template<class SolutionVector>
 using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<SolutionVector>::value>::type;
 
-template<class Scalar, class Residual, class LinearSolver, class Assembler>
-auto normOfResidual(const Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
--> std::enable_if_t<hasDynamicIndexAccess<Residual>(), Scalar>
+template<class Residual, class LinearSolver, class Assembler>
+typename Assembler::Scalar normOfResidual(const Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
 {
-    using HasState = decltype(isValid(Detail::hasState())(residual[0]));
-
-    if constexpr (Detail::hasNorm<LinearSolver, Residual>())
+    if constexpr (Dune::IsNumber<Residual>::value)
         return linearSolver.norm(residual);
-    else if constexpr (HasState{})
+
+    else if constexpr (hasStaticIndexAccess<Residual>() && !hasDynamicIndexAccess<Residual>())
     {
-        using OriginalBlockType = Detail::BlockType<Residual>;
-        constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
-
-        using BlockType = Dune::FieldVector<Scalar, blockSize>;
-        using BlockVector = Dune::BlockVector<BlockType>;
-
-        if constexpr (Detail::hasNorm<LinearSolver, BlockVector>())
-        {
-            BlockVector resTmp; resTmp.resize(residual.size());
-            Detail::assign(resTmp, residual);
-            return linearSolver.norm(resTmp);
-        }
+        if constexpr (Detail::hasNorm<LinearSolver, Residual>())
+            return linearSolver.norm(residual);
+        else
+            return assembler.normOfResidual(residual);
     }
     else
-        return assembler.normOfResidual(residual);
-}
+    {
+        using HasState = decltype(isValid(Detail::hasState())(residual[0]));
 
-template<class Scalar, class Residual, class LinearSolver, class Assembler>
-auto normOfResidual(const Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
--> std::enable_if_t<hasStaticIndexAccess<Residual>() && !hasDynamicIndexAccess<Residual>(), Scalar>
-{
-    if constexpr (Detail::hasNorm<LinearSolver, Residual>())
-        return linearSolver.norm(residual);
-    else
-        return assembler.normOfResidual(residual);
+        if constexpr (Detail::hasNorm<LinearSolver, Residual>())
+            return linearSolver.norm(residual);
+        else if constexpr (HasState{})
+        {
+            using OriginalBlockType = Detail::BlockType<Residual>;
+            constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
+
+            using BlockType = Dune::FieldVector<typename OriginalBlockType::scalar_type, blockSize>;
+            using BlockVector = Dune::BlockVector<BlockType>;
+
+            if constexpr (Detail::hasNorm<LinearSolver, BlockVector>())
+            {
+                BlockVector resTmp; resTmp.resize(residual.size());
+                Detail::assign(resTmp, residual);
+                return linearSolver.norm(resTmp);
+            }
+        }
+        else
+            return assembler.normOfResidual(residual);
+    }
 }
 
 } // end namespace Detail
@@ -546,7 +548,7 @@ public:
         try
         {
             if (numSteps_ == 0)
-                initialResidual_ = Detail::normOfResidual<Scalar>(this->assembler().residual(), this->linearSolver(), this->assembler());
+                initialResidual_ = Detail::normOfResidual(this->assembler().residual(), this->linearSolver(), this->assembler());
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
@@ -913,7 +915,7 @@ protected:
         else
             this->assembler().assembleResidual(vars);
 
-        reduction_ = Detail::normOfResidual<Scalar>(this->assembler().residual(), this->linearSolver(), this->assembler());
+        reduction_ = Detail::normOfResidual(this->assembler().residual(), this->linearSolver(), this->assembler());
         reduction_ /= initialResidual_;
     }
 
