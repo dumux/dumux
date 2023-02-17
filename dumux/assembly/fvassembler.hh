@@ -241,8 +241,8 @@ public:
         });
     }
 
-    //! compute a residual's vector norm
-    [[deprecated("Use the linear solver's norm. Will be deleted after 3.6")]]
+    //! compute a residual's vector norm (this is a temporary interface introduced during the deprecation perid)
+    [[deprecated("Use the linear solver's norm. Will be deleted after 3.7")]]
     Scalar normOfResidual(const ResidualType& residual) const
     {
         // issue a warning if the calculation is used in parallel with overlap
@@ -280,7 +280,7 @@ public:
     }
 
     //! compute the residual and return it's vector norm
-    [[deprecated("Use assembleResidual and the linear solver's norm. Will be deleted after 3.6")]]
+    [[deprecated("Use assembleResidual and the linear solver's norm. Will be deleted after 3.7")]]
     Scalar residualNorm(const SolutionVector& curSol) const
     {
         ResidualType residual(numDofs());
