@@ -351,7 +351,7 @@ public:
                                 const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
 #if HAVE_MPI
-    , isParallel_(Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+    , isParallel_(gridView.comm().size() > 1)
 #endif
     {
         firstCall_ = true;
