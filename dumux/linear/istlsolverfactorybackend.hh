@@ -114,7 +114,7 @@ public:
      *
      * \param paramGroup the parameter group for parameter lookup
      */
-    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter.")]]
+    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter. Will be removed after 3.7.")]]
     OldIstlSolverFactoryBackend(const std::string& paramGroup = "")
     : paramGroup_(paramGroup)
     , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
@@ -133,7 +133,7 @@ public:
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
-    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter.")]]
+    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter. Will be removed after 3.7.")]]
     OldIstlSolverFactoryBackend(const typename LinearSolverTraits::GridView& gridView,
                                 const typename LinearSolverTraits::DofMapper& dofMapper,
                                 const std::string& paramGroup = "")
