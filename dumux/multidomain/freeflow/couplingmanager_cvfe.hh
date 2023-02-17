@@ -406,7 +406,7 @@ public:
         // interpolate velocity at scvf
         VelocityVector velocity(0.0);
         for (const auto& scv : scvs(fvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+            velocity.axpy(shapeValues[scv.indexInElement()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
         return velocity;
     }
@@ -427,7 +427,31 @@ public:
         localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
 
         for (const auto& scv : scvs(momentumFvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+            velocity.axpy(shapeValues[scv.indexInElement()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+
+        return velocity;
+    }
+
+    /*!
+     * \brief Returns the velocity at the element center.
+     */
+    template<class GlobalPosition>
+    VelocityVector velocityAtPos(const FVElementGeometry<freeFlowMassIndex>& fvGeometry, const GlobalPosition& pos) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), fvGeometry.element());
+
+        const auto& momentumFvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
+        const auto& localBasis = momentumFvGeometry.feLocalBasis();
+
+        std::vector<ShapeValue> shapeValues;
+        const auto ipLocal = fvGeometry.element().geometry().local(pos);
+        localBasis.evaluateFunction(ipLocal, shapeValues);
+
+        // interpolate velocity at scvf
+        VelocityVector velocity(0.0);
+
+        for (const auto& scv : scvs(momentumFvGeometry))
+            velocity.axpy(shapeValues[scv.indexInElement()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
         return velocity;
     }
