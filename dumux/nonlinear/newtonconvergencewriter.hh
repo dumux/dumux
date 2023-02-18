@@ -34,12 +34,12 @@ namespace Dumux {
 
 //! provide an interface as a form of type erasure
 //! this is the minimal requirements a convergence write passed to a newton method has to fulfill
-template <class SolutionVector>
+template <class SolutionVector, class ResidualVector>
 struct ConvergenceWriterInterface
 {
     virtual ~ConvergenceWriterInterface() = default;
 
-    virtual void write(const SolutionVector &uLastIter, const SolutionVector &deltaU, const SolutionVector &residual) {}
+    virtual void write(const SolutionVector &uLastIter, const ResidualVector &deltaU, const ResidualVector &residual) {}
 };
 
 /*!
@@ -50,8 +50,8 @@ struct ConvergenceWriterInterface
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class GridGeometry, class SolutionVector>
-class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
+template <class GridGeometry, class SolutionVector, class ResidualVector>
+class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector, ResidualVector>
 {
     using GridView = typename GridGeometry::GridView;
     static constexpr auto numEq = SolutionVector::block_type::dimension;
@@ -112,8 +112,8 @@ public:
     { id_ = newId; iteration_ = 0UL; }
 
     void write(const SolutionVector& uLastIter,
-               const SolutionVector& deltaU,
-               const SolutionVector& residual) override
+               const ResidualVector& deltaU,
+               const ResidualVector& residual) override
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 

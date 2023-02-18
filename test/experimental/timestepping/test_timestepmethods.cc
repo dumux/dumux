@@ -106,9 +106,8 @@ class ScalarLinearSolver
 public:
     void setResidualReduction(double residualReduction) {}
 
-    template<class Vector>
-    bool solve(const double& A, Vector& x, const Vector& b) const
-    { x[0] = b[0]/A; return true; }
+    bool solve(const double& A, double& x, const double& b) const
+    { x = b/A; return true; }
 
     double norm(const double residual) const
     {

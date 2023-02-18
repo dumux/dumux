@@ -50,7 +50,7 @@ class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reas
     using typename ParentType::Backend;
     using typename ParentType::SolutionVector;
 
-    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
+    static constexpr bool assemblerExportsVariables = Detail::PDESolver::assemblerExportsVariables<Assembler>;
 
     template<std::size_t i>
     using PrimaryVariableSwitch =

@@ -12,6 +12,15 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
+contain `Dumux`-specific types like `SwitchablePrimaryVariables` as block types. The latter is native to the linear algebra backend.
+The only supported linear algebra backend at the moment is Dune (common/istl). If you have implemented your own assembler or
+PDE solver, you may also now need to follow this distinction in the assembler and solver interfaces. Moreover, you may need to
+use specialized assign and numeric operations in case your code allows for custom block types. If you are using the classes
+from the `Dumux` namespace, no change should be necessary in user code in the majority of cases.
+
+- __NewtonConvergenceWriter__: The convergence writer now takes three template arguments.
+The new and last argument is the `ResidualType` (see above).
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.7:
 

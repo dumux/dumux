@@ -87,7 +87,7 @@ struct supportsPartialReassembly
 {
     template<class Assembler>
     auto operator()(Assembler&& a)
-    -> decltype(a.assembleJacobianAndResidual(std::declval<const typename Assembler::ResidualType&>(),
+    -> decltype(a.assembleJacobianAndResidual(std::declval<const typename Assembler::SolutionVector&>(),
                                               std::declval<const PartialReassembler<Assembler>*>()))
     {}
 };
@@ -150,16 +150,16 @@ auto maxRelativeShift(const V& v1, const V& v2)
 template<class To, class From>
 void assign(To& to, const From& from)
 {
-    if constexpr (std::is_assignable<To&, From>::value)
-        to = from;
-
-    else if constexpr (hasStaticIndexAccess<To>() && hasStaticIndexAccess<To>() && !hasDynamicIndexAccess<From>() && !hasDynamicIndexAccess<From>())
+    if constexpr (hasStaticIndexAccess<To>() && hasStaticIndexAccess<To>() && !hasDynamicIndexAccess<From>() && !hasDynamicIndexAccess<From>())
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<To::N()>{}, [&](auto i){
             assign(to[Dune::index_constant<i>{}], from[Dune::index_constant<i>{}]);
         });
     }
+
+    else if constexpr (std::is_assignable<To&, From>::value)
+        to = from;
 
     else if constexpr (hasDynamicIndexAccess<To>() && hasDynamicIndexAccess<From>())
         for (decltype(to.size()) i = 0; i < to.size(); ++i)
@@ -219,16 +219,17 @@ class NewtonSolver : public PDESolver<Assembler, LinearSolver>
 protected:
     using Backend = VariablesBackend<typename ParentType::Variables>;
     using SolutionVector = typename Backend::DofVector;
-
+    using ResidualVector = typename Assembler::ResidualType;
+    using LinearAlgebraNativeBackend = VariablesBackend<ResidualVector>;
 private:
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
-    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
+    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector, ResidualVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
 
     // enable models with primary variable switch
     // TODO: Always use ParentType::Variables once we require assemblers to export variables
-    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
+    static constexpr bool assemblerExportsVariables = Detail::PDESolver::assemblerExportsVariables<Assembler>;
     using PriVarSwitchVariables
         = std::conditional_t<assemblerExportsVariables,
                              typename ParentType::Variables,
@@ -424,7 +425,7 @@ public:
             this->assembler().assembleResidual(initVars);
 
             // dummy vector, there is no delta before solving the linear system
-            auto delta = Backend::zeros(Backend::size(initSol));
+            ResidualVector delta = LinearAlgebraNativeBackend::zeros(Backend::size(initSol));
             convergenceWriter_->write(initSol, delta, this->assembler().residual());
         }
 
@@ -501,7 +502,7 @@ public:
      *
      * \param deltaU The difference between the current and the next solution
      */
-    void solveLinearSystem(SolutionVector& deltaU)
+    void solveLinearSystem(ResidualVector& deltaU)
     {
         auto& b = this->assembler().residual();
         bool converged = false;
@@ -572,7 +573,7 @@ public:
      */
     void newtonUpdate(Variables& vars,
                       const SolutionVector& uLastIter,
-                      const SolutionVector& deltaU)
+                      const ResidualVector& deltaU)
     {
         if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonUpdateShift_(uLastIter, deltaU);
@@ -621,7 +622,7 @@ public:
         else
         {
             auto uCurrentIter = uLastIter;
-            uCurrentIter -= deltaU;
+            Backend::axpy(-1.0, deltaU, uCurrentIter);
             solutionChanged_(vars, uCurrentIter);
 
             if (enableResidualCriterion_)
@@ -945,7 +946,8 @@ private:
 
             // the given solution is the initial guess
             auto uLastIter = Backend::dofs(vars);
-            auto deltaU = Backend::dofs(vars);
+            ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
+            Detail::assign(deltaU, Backend::dofs(vars));
 
             // setup timers
             Dune::Timer assembleTimer(false);
@@ -1090,10 +1092,10 @@ private:
      * \param deltaU The difference between the current and the next solution
      */
     virtual void newtonUpdateShift_(const SolutionVector &uLastIter,
-                                    const SolutionVector &deltaU)
+                                    const ResidualVector &deltaU)
     {
         auto uNew = uLastIter;
-        uNew -= deltaU;
+        Backend::axpy(-1.0, deltaU, uNew);
         shift_ = Detail::maxRelativeShift<Scalar>(uLastIter, uNew);
 
         if (comm_.size() > 1)
@@ -1102,7 +1104,7 @@ private:
 
     virtual void lineSearchUpdate_(Variables &vars,
                                    const SolutionVector &uLastIter,
-                                   const SolutionVector &deltaU)
+                                   const ResidualVector &deltaU)
     {
         Scalar lambda = 1.0;
         auto uCurrentIter = uLastIter;
@@ -1129,13 +1131,13 @@ private:
     //! \note method must update the gridVariables, too!
     virtual void choppedUpdate_(Variables& vars,
                                 const SolutionVector& uLastIter,
-                                const SolutionVector& deltaU)
+                                const ResidualVector& deltaU)
     {
         DUNE_THROW(Dune::NotImplemented,
                    "Chopped Newton update strategy not implemented.");
     }
 
-    virtual bool solveLinearSystem_(SolutionVector& deltaU)
+    virtual bool solveLinearSystem_(ResidualVector& deltaU)
     {
         return solveLinearSystemImpl_(this->linearSolver(),
                                       this->assembler().jacobian(),
@@ -1152,31 +1154,14 @@ private:
      * Specialization for regular vector types (not MultiTypeBlockVector)
      *
      */
-    template<class V = SolutionVector>
+    template<class V = ResidualVector>
     typename std::enable_if_t<!isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
-        //! Copy into a standard block vector.
-        //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
-        //! primary variables vector in combination with UMFPack or SuperLU as their interfaces are hard coded
-        //! to this field vector type in Dune ISTL
-        //! Could be avoided for vectors that already have the right type using SFINAE
-        //! but it shouldn't impact performance too much
-        using OriginalBlockType = Detail::BlockType<SolutionVector>;
-        constexpr auto blockSize = Detail::blockSize<OriginalBlockType>();
-
-        using BlockType = Dune::FieldVector<Scalar, blockSize>;
-        Dune::BlockVector<BlockType> xTmp; xTmp.resize(Backend::size(b));
-        Dune::BlockVector<BlockType> bTmp(xTmp);
-
-        Detail::assign(bTmp, b);
-        const int converged = ls.solve(A, xTmp, bTmp);
-        Detail::assign(x, xTmp);
-
-        return converged;
+        return ls.solve(A, x, b);
     }
 
 
@@ -1189,13 +1174,13 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class V = ResidualVector>
     typename std::enable_if_t<linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
         return ls.solve(A, x, b);
@@ -1211,13 +1196,13 @@ private:
      * We copy the matrix into a 1x1 block BCRS matrix before solving.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class V = ResidualVector>
     typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 
@@ -1229,7 +1214,7 @@ private:
         assert(numRows == M.M());
 
         // create the vector the IterativeSolver backend can handle
-        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+        const auto bTmp = VectorConverter<ResidualVector>::multiTypeToBlockVector(b);
         assert(bTmp.size() == numRows);
 
         // create a blockvector to which the linear solver writes the solution
@@ -1242,7 +1227,7 @@ private:
 
         // copy back the result y into x
         if(converged)
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
+            VectorConverter<ResidualVector>::retrieveValues(x, y);
 
         return converged;
     }
@@ -1292,10 +1277,10 @@ private:
             reportParams();
     }
 
-    template<class Sol>
-    void updateDistanceFromLastLinearization_(const Sol& u, const Sol& uDelta)
+    template<class SolA, class SolB>
+    void updateDistanceFromLastLinearization_(const SolA& u, const SolB& uDelta)
     {
-        if constexpr (Dune::IsNumber<Sol>::value)
+        if constexpr (Dune::IsNumber<SolA>::value)
         {
             auto nextPriVars = u;
             nextPriVars -= uDelta;
@@ -1319,9 +1304,9 @@ private:
         }
     }
 
-    template<class ...Args>
-    void updateDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<Args...>& uLastIter,
-                                              const Dune::MultiTypeBlockVector<Args...>& deltaU)
+    template<class ...ArgsA, class...ArgsB>
+    void updateDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<ArgsA...>& uLastIter,
+                                              const Dune::MultiTypeBlockVector<ArgsB...>& deltaU)
     {
         DUNE_THROW(Dune::NotImplemented, "Reassembly for MultiTypeBlockVector");
     }

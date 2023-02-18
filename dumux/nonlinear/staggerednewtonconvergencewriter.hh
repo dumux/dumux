@@ -43,8 +43,8 @@ namespace Dumux {
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class GridGeometry, class SolutionVector>
-class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
+template <class GridGeometry, class SolutionVector, class ResidualVector>
+class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector, ResidualVector>
 {
     using GridView = typename GridGeometry::GridView;
 
@@ -122,8 +122,8 @@ public:
     { id_ = newId; iteration_ = 0UL; }
 
     void write(const SolutionVector& uLastIter,
-               const SolutionVector& deltaU,
-               const SolutionVector& residual) override
+               const ResidualVector& deltaU,
+               const ResidualVector& residual) override
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 

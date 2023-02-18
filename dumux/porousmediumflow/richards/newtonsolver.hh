@@ -50,6 +50,7 @@ class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 
     using typename ParentType::Backend;
     using typename ParentType::SolutionVector;
+    using typename ParentType::ResidualVector;
 
 public:
     using ParentType::ParentType;
@@ -67,10 +68,10 @@ private:
      */
     void choppedUpdate_(Variables &varsCurrentIter,
                         const SolutionVector &uLastIter,
-                        const SolutionVector &deltaU) final
+                        const ResidualVector &deltaU) final
     {
         auto uCurrentIter = uLastIter;
-        uCurrentIter -= deltaU;
+        Backend::axpy(-1.0, deltaU, uCurrentIter);
 
         // do not clamp anything after 5 iterations
         if (this->numSteps_ <= 4)

@@ -38,23 +38,24 @@ template <class FirstRow, class ... Args>
 class MultiTypeBlockMatrix;
 } // end namespace Dune
 
-namespace Dumux {
-namespace Detail {
+namespace Dumux::Detail::PDESolver {
 
 template<class Assembler>
 using AssemblerVariablesType = typename Assembler::Variables;
 
 template<class Assembler>
-inline constexpr bool exportsVariables = Dune::Std::is_detected_v<AssemblerVariablesType, Assembler>;
+inline constexpr bool assemblerExportsVariables = Dune::Std::is_detected_v<AssemblerVariablesType, Assembler>;
 
-template<class A, bool exports = exportsVariables<A>> struct VariablesChooser;
+template<class A, bool exports = assemblerExportsVariables<A>> struct VariablesChooser;
 template<class A> struct VariablesChooser<A, true> { using Type = AssemblerVariablesType<A>; };
-template<class A> struct VariablesChooser<A, false> { using Type = typename A::ResidualType; };
+template<class A> struct VariablesChooser<A, false> { using Type = typename A::SolutionVector; };
 
 template<class Assembler>
 using AssemblerVariables = typename VariablesChooser<Assembler>::Type;
 
-} // end namespace Detail
+} // end namespace Dumux::Detail::PDESolver
+
+namespace Dumux {
 
 /*!
  * \ingroup Common
@@ -79,7 +80,7 @@ public:
     using LinearSolver = LS;
 
     //! export the type of variables that represent a numerical solution
-    using Variables = Detail::AssemblerVariables<Assembler>;
+    using Variables = Detail::PDESolver::AssemblerVariables<Assembler>;
 
     /*!
      * \brief Constructor

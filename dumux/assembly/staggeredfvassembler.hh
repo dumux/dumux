@@ -62,10 +62,11 @@ class StaggeredFVAssembler : public MultiDomainFVAssembler<StaggeredMultiDomainT
                                               diffMethod, isImplicit>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
 public:
+    using typename ParentType::ResidualType;
+    using typename ParentType::SolutionVector;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using CouplingManager = typename ParentType::CouplingManager;
@@ -83,7 +84,7 @@ public:
         this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
-    //! The constructor for instationary problems
+    //! The constructor for time-dependent problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
                          std::shared_ptr<const GridGeometry> gridGeometry,
                          std::shared_ptr<GridVariables> gridVariables,

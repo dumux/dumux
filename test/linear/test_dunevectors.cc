@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     static_assert(std::is_same_v<Vector1, typename Dumux::Detail::NativeDuneVectorType<Vector1S>::type>);
     static_assert(std::is_same_v<Vector2, typename Dumux::Detail::NativeDuneVectorType<Vector2S>::type>);
 
-    // indentity maps
+    // identity maps
     static_assert(std::is_same_v<Vector1, typename Dumux::Detail::NativeDuneVectorType<Vector1>::type>);
     static_assert(std::is_same_v<Vector2, typename Dumux::Detail::NativeDuneVectorType<Vector2>::type>);
     static_assert(std::is_same_v<Vector3, typename Dumux::Detail::NativeDuneVectorType<Vector3>::type>);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     static_assert(std::is_same_v<BlockVector12, typename Dumux::Detail::NativeDuneVectorType<BlockVector1S2S>::type>);
     static_assert(std::is_same_v<BlockVector23, typename Dumux::Detail::NativeDuneVectorType<BlockVector2S3>::type>);
 
-    // indentity maps
+    // identity maps
     static_assert(std::is_same_v<BlockVector11, typename Dumux::Detail::NativeDuneVectorType<BlockVector11>::type>);
     static_assert(std::is_same_v<BlockVector12, typename Dumux::Detail::NativeDuneVectorType<BlockVector12>::type>);
     static_assert(std::is_same_v<BlockVector13, typename Dumux::Detail::NativeDuneVectorType<BlockVector13>::type>);
