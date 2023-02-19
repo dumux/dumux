@@ -14,7 +14,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea_momentum
-               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND ( DUNE_ISTL_VERSION VERSION_GREATER_EQUAL 2.8 ) )"
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy --zeroThreshold {"rank":100}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum-reference.vtu

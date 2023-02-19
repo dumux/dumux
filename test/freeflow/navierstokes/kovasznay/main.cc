@@ -41,9 +41,11 @@
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
@@ -143,7 +145,9 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = Dumux::UzawaBiCGSTABBackend<LinearSolverTraits<GridGeometry>>; // if rho \neq 1, use UMFPack rather than BIGCStab
+    using LinearSolver = Dumux::UzawaBiCGSTABIstlSolver<
+        LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>
+    >; // if rho \neq 1, use UMFPack rather than BIGCStab
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

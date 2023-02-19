@@ -49,7 +49,9 @@ The following files contain the nonlinear Newtown method, the linear solver and 
 
 ```cpp
 #include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 ```
@@ -222,7 +224,9 @@ Additionally the linear and non-linear solvers are set
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     //We set the linear solver
-    using LinearSolver = Dumux::ILU0BiCGSTABBackend;
+    using LinearSolver = ILUBiCGSTABIstlSolver<
+        LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>
+    >;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //We set the non-linear solver

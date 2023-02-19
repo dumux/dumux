@@ -98,6 +98,7 @@ dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff_ug
                LABELS porousmediumflow 1p
                SOURCES main.cc
                CMAKE_GUARD dune-uggrid_FOUND
+               COMPILE_DEFINITIONS LINEARSOLVER=ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
                COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleFCDiamond NUMDIFFMETHOD=DiffMethod::numeric
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -111,7 +112,7 @@ dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff_ug
 dumux_add_test(NAME test_1p_incompressible_pq1bubble_numdiff
                LABELS porousmediumflow 1p
                SOURCES main.cc
-               COMPILE_DEFINITIONS LINEARSOLVER=ILU0BiCGSTABBackend
+               COMPILE_DEFINITIONS LINEARSOLVER=ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressiblePQ1Bubble NUMDIFFMETHOD=DiffMethod::numeric
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS  --script fuzzy
@@ -126,7 +127,7 @@ dumux_add_test(NAME test_1p_incompressible_pq1bubble_numdiff_ug
                SOURCES main.cc
                CMAKE_GUARD dune-uggrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-               COMPILE_DEFINITIONS LINEARSOLVER=ILU0BiCGSTABBackend
+               COMPILE_DEFINITIONS LINEARSOLVER=ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressiblePQ1Bubble NUMDIFFMETHOD=DiffMethod::numeric
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS  --script fuzzy
