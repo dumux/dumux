@@ -25,6 +25,8 @@
 #ifndef DUMUX_PARALLEL_AMGBACKEND_HH
 #define DUMUX_PARALLEL_AMGBACKEND_HH
 
+#warning "This header is deprecated. Use the AMG solver from dumux/linear/istlsolvers.hh"
+
 #include <memory>
 
 #include <dune/common/exceptions.hh>
@@ -38,14 +40,11 @@
 
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/solvercategory.hh>
 
 namespace Dumux {
 
-/*!
- * \ingroup Linear
- * \brief A linear solver based on the ISTL AMG preconditioner
- *        and the ISTL BiCGSTAB solver.
- */
+// OLD AMG Backend. Use the new one from dumux/linear/istlsolvers.hh
 template <class LinearSolverTraits>
 class AMGBiCGSTABBackend : public LinearSolver
 {
@@ -55,6 +54,7 @@ public:
      *
      * \param paramGroup the parameter group for parameter lookup
      */
+    [[deprecated("Use new AMGBiCGSTABIstlSolver<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter from dumux/linear/istlsolvers.hh.")]]
     AMGBiCGSTABBackend(const std::string& paramGroup = "")
     : LinearSolver(paramGroup)
     , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
@@ -72,6 +72,7 @@ public:
      * \param dofMapper an index mapper for dof entities
      * \param paramGroup the parameter group for parameter lookup
      */
+    [[deprecated("Use new AMGBiCGSTABIstlSolver<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter from dumux/linear/istlsolvers.hh.")]]
     AMGBiCGSTABBackend(const typename LinearSolverTraits::GridView& gridView,
                        const typename LinearSolverTraits::DofMapper& dofMapper,
                        const std::string& paramGroup = "")
@@ -81,8 +82,11 @@ public:
 #endif
     {
 #if HAVE_MPI
-        if (isParallel_)
-            phelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (isParallel_)
+                phelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+        }
 #endif
         checkAvailabilityOfDirectSolver_();
     }
@@ -135,6 +139,9 @@ public:
     {
         return result_;
     }
+
+    template<class Vector>
+    Scalar norm(const Vector& x) const = delete;
 
 private:
     //! see https://gitlab.dune-project.org/core/dune-istl/-/issues/62
