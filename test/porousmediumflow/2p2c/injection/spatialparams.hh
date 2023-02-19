@@ -108,7 +108,7 @@ public:
      *
      * \param globalPos The global position
      */
-    const auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
+    auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
         if (isFineMaterial_(globalPos))
             return makeFluidMatrixInteraction(finePcKrSwCurve_);
