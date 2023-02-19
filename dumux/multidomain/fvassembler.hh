@@ -295,13 +295,10 @@ public:
         });
     }
 
-    //! compute the residual and return it's vector norm
-    Scalar residualNorm(const SolutionVector& curSol)
+    //! compute a residual's vector norm (this is a temporary interface introduced during the deprecation period)
+    [[deprecated("Use the linear solver's norm. Will be deleted after 3.7")]]
+    Scalar normOfResidual(ResidualType& residual) const
     {
-        ResidualType residual;
-        setResidualSize_(residual);
-        assembleResidual(residual, curSol);
-
         // calculate the squared norm of the residual
         Scalar resultSquared = 0.0;
 
@@ -347,6 +344,16 @@ public:
 
         using std::sqrt;
         return sqrt(resultSquared);
+    }
+
+    //! compute the residual and return it's vector norm
+    [[deprecated("Use norm(curSol) provided by the linear solver class instead. Will be deleted after 3.7")]]
+    Scalar residualNorm(const SolutionVector& curSol)
+    {
+        ResidualType residual;
+        setResidualSize_(residual);
+        assembleResidual(residual, curSol);
+        return normOfResidual(residual);
     }
 
     /*!
@@ -736,7 +743,7 @@ private:
     std::shared_ptr<ResidualType> residual_;
 
     //! Issue a warning if the calculation is used in parallel with overlap. This could be a static local variable if it wasn't for g++7 yielding a linker error.
-    bool warningIssued_;
+    mutable bool warningIssued_;
 
     //! if multithreaded assembly is enabled
     bool enableMultithreading_ = false;

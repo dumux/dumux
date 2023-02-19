@@ -244,12 +244,10 @@ public:
         });
     }
 
-    //! compute the residual and return it's vector norm
-    Scalar residualNorm(const SolutionVector& curSol) const
+    //! compute a residual's vector norm (this is a temporary interface introduced during the deprecation period)
+    [[deprecated("Use the linear solver's norm. Will be deleted after 3.7")]]
+    Scalar normOfResidual(ResidualType& residual) const
     {
-        ResidualType residual(numDofs());
-        assembleResidual(residual, curSol);
-
         // issue a warning if the calculation is used in parallel with overlap
         static bool warningIssued = false;
 
@@ -282,6 +280,15 @@ public:
 
         using std::sqrt;
         return sqrt(result2);
+    }
+
+    //! compute the residual and return it's vector norm
+    [[deprecated("Use assembleResidual and the linear solver's norm. Will be deleted after 3.7")]]
+    Scalar residualNorm(const SolutionVector& curSol) const
+    {
+        ResidualType residual(numDofs());
+        assembleResidual(residual, curSol);
+        return normOfResidual(residual);
     }
 
     /*!
