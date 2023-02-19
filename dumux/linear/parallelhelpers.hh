@@ -33,16 +33,13 @@
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/common/gridcapabilities.hh>
 
-namespace Dumux {
+namespace Dumux::Detail {
 
-/*!
- * \ingroup Linear
- * \brief A parallel helper class providing a nonoverlapping
- *        decomposition of all degrees of freedom
- */
-// operator that resets result to zero at constrained DOFS
+template<class LinearSolverTraits, bool canCommunicate = false>
+class ParallelISTLHelperImpl {};
+
 template<class LinearSolverTraits>
-class ParallelISTLHelper
+class ParallelISTLHelperImpl<LinearSolverTraits, true>
 {
     using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
@@ -291,7 +288,7 @@ class ParallelISTLHelper
 
 public:
 
-    ParallelISTLHelper(const GridView& gridView, const DofMapper& mapper)
+    ParallelISTLHelperImpl(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
         if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
@@ -466,7 +463,23 @@ private:
     //!< vector to identify ghost dofs (ghostMarker_: this dof is on a ghost entity; contains and unspecified value otherwise)
     std::vector<std::size_t> isGhost_;
 
-}; // class ParallelISTLHelper
+};
+
+} // end namespace Dumux::Detail
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief A parallel helper class providing a parallel
+ *        decomposition of all degrees of freedom
+ */
+template<class LinearSolverTraits>
+using ParallelISTLHelper =
+    Detail::ParallelISTLHelperImpl<
+        LinearSolverTraits, LinearSolverTraits::canCommunicate
+    >;
+
 
 template<class GridView, class DofMapper, int dofCodim>
 class ParallelVectorHelper
