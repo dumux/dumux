@@ -51,7 +51,12 @@
 #include <dumux/common/variablesbackend.hh>
 
 #include <dumux/io/format.hh>
+
+// remove after deprecated code is removed (after 3.7)
+#define DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#undef DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
+
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
 
