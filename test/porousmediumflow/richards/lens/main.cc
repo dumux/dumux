@@ -34,6 +34,8 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+
 #include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 
@@ -143,7 +145,9 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
+
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver

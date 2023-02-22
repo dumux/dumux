@@ -51,15 +51,19 @@
 #include <dumux/common/variablesbackend.hh>
 
 #include <dumux/io/format.hh>
+
+// remove after deprecated code is removed (after 3.7)
+#define DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#undef DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
+
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
 #include "primaryvariableswitchadapter.hh"
 
-namespace Dumux {
-namespace Detail {
+namespace Dumux::Detail::Newton {
 
 // Helper boolean that states if the assembler exports grid variables
 template<class Assembler> using AssemblerGridVariablesType = typename Assembler::GridVariables;
@@ -181,23 +185,18 @@ void assign(To& to, const From& from)
         DUNE_THROW(Dune::Exception, "Values are not assignable to each other!");
 }
 
-template<class T, std::enable_if_t<Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
-constexpr std::size_t blockSize() { return 1; }
+template<class Residual, class LinearSolver, class Assembler>
+typename Assembler::Scalar residualNorm(Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
+{
+    if constexpr (Detail::Newton::hasNorm<LinearSolver, Residual>())
+        return linearSolver.norm(residual);
+    else // fallback to deprecated interface
+        return assembler.normOfResidual(residual);
+}
 
-template<class T, std::enable_if_t<!Dune::IsNumber<std::decay_t<T>>::value, int> = 0>
-constexpr std::size_t blockSize() { return std::decay_t<T>::size(); }
+} // end namespace Dumux::Detail::Newton
 
-template<class S, bool isScalar = false>
-struct BlockTypeHelper
-{ using type = std::decay_t<decltype(std::declval<S>()[0])>; };
-template<class S>
-struct BlockTypeHelper<S, true>
-{ using type = S; };
-
-template<class SolutionVector>
-using BlockType = typename BlockTypeHelper<SolutionVector, Dune::IsNumber<SolutionVector>::value>::type;
-
-} // end namespace Detail
+namespace Dumux {
 
 /*!
  * \ingroup Nonlinear
@@ -233,7 +232,7 @@ private:
     using PriVarSwitchVariables
         = std::conditional_t<assemblerExportsVariables,
                              typename ParentType::Variables,
-                             Detail::PriVarSwitchVariables<Assembler>>;
+                             Detail::Newton::PriVarSwitchVariables<Assembler>>;
     using PrimaryVariableSwitchAdapter = Dumux::PrimaryVariableSwitchAdapter<PriVarSwitchVariables>;
 
 public:
@@ -417,6 +416,7 @@ public:
                 priVarSwitchAdapter_->initialize(initVars, this->assembler().gridVariables());
         }
 
+
         const auto& initSol = Backend::dofs(initVars);
 
         // write the initial residual if a convergence writer was set
@@ -504,26 +504,14 @@ public:
      */
     void solveLinearSystem(ResidualVector& deltaU)
     {
-        auto& b = this->assembler().residual();
         bool converged = false;
 
         try
         {
             if (numSteps_ == 0)
-            {
-                if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-                    initialResidual_ = this->linearSolver().norm(b);
-
-                else
-                {
-                    Scalar norm2 = b.two_norm2();
-                    if (comm_.size() > 1)
-                        norm2 = comm_.sum(norm2);
-
-                    using std::sqrt;
-                    initialResidual_ = sqrt(norm2);
-                }
-            }
+                initialResidual_ = Detail::Newton::residualNorm(
+                    this->assembler().residual(), this->linearSolver(), this->assembler()
+                );
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
@@ -885,24 +873,16 @@ protected:
     {
         // we assume that the assembler works on solution vectors
         // if it doesn't export the variables type
-        if constexpr (Detail::hasNorm<LinearSolver, SolutionVector>())
-        {
-            if constexpr (!assemblerExportsVariables)
-                this->assembler().assembleResidual(Backend::dofs(vars));
-            else
-                this->assembler().assembleResidual(vars);
-            residualNorm_ = this->linearSolver().norm(this->assembler().residual());
-        }
+        if constexpr (!assemblerExportsVariables)
+            this->assembler().assembleResidual(Backend::dofs(vars));
         else
-        {
-            if constexpr (!assemblerExportsVariables)
-                residualNorm_ = this->assembler().residualNorm(Backend::dofs(vars));
-            else
-                residualNorm_ = this->assembler().residualNorm(vars);
-        }
+            this->assembler().assembleResidual(vars);
 
-        reduction_ = residualNorm_;
-        reduction_ /= initialResidual_;
+        residualNorm_ = Detail::Newton::residualNorm(
+            this->assembler().residual(), this->linearSolver(), this->assembler()
+        );
+
+        reduction_ = residualNorm_/initialResidual_;
     }
 
     bool enableResidualCriterion() const
@@ -947,7 +927,7 @@ private:
             // the given solution is the initial guess
             auto uLastIter = Backend::dofs(vars);
             ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
-            Detail::assign(deltaU, Backend::dofs(vars));
+            Detail::Newton::assign(deltaU, Backend::dofs(vars));
 
             // setup timers
             Dune::Timer assembleTimer(false);
@@ -1071,7 +1051,7 @@ private:
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
-    -> typename std::enable_if_t<decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
+    -> typename std::enable_if_t<decltype(isValid(Detail::Newton::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars, partialReassembler_.get());
     }
@@ -1079,7 +1059,7 @@ private:
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
-    -> typename std::enable_if_t<!decltype(isValid(Detail::supportsPartialReassembly())(assembler))::value, void>
+    -> typename std::enable_if_t<!decltype(isValid(Detail::Newton::supportsPartialReassembly())(assembler))::value, void>
     {
         this->assembler().assembleJacobianAndResidual(vars);
     }
@@ -1096,7 +1076,7 @@ private:
     {
         auto uNew = uLastIter;
         Backend::axpy(-1.0, deltaU, uNew);
-        shift_ = Detail::maxRelativeShift<Scalar>(uLastIter, uNew);
+        shift_ = Detail::Newton::maxRelativeShift<Scalar>(uLastIter, uNew);
 
         if (comm_.size() > 1)
             shift_ = comm_.max(shift_);
@@ -1197,6 +1177,7 @@ private:
      *
      */
     template<class LS = LinearSolver, class V = ResidualVector>
+    [[deprecated("After 3.7 Newton will no longer support conversion of multitype matrices for solvers that don't support this feature!")]]
     typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
@@ -1286,7 +1267,7 @@ private:
             nextPriVars -= uDelta;
 
             // add the current relative shift for this degree of freedom
-            auto shift = Detail::maxRelativeShift<Scalar>(u, nextPriVars);
+            auto shift = Detail::Newton::maxRelativeShift<Scalar>(u, nextPriVars);
             distanceFromLastLinearization_[0] += shift;
         }
         else
@@ -1298,7 +1279,7 @@ private:
                 nextPriVars -= uDelta[i];
 
                 // add the current relative shift for this degree of freedom
-                auto shift = Detail::maxRelativeShift<Scalar>(currentPriVars, nextPriVars);
+                auto shift = Detail::Newton::maxRelativeShift<Scalar>(currentPriVars, nextPriVars);
                 distanceFromLastLinearization_[i] += shift;
             }
         }

@@ -39,7 +39,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -197,7 +199,7 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
+    // the assembler with time loop for transient problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(problem0, problem1),
                                                  std::make_tuple(fvGridGeometry0, fvGridGeometry1),
@@ -205,7 +207,7 @@ int main(int argc, char** argv)
                                                  couplingManager, timeLoop, oldSol);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver = AMGBiCGSTABIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

@@ -36,7 +36,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -142,7 +145,7 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

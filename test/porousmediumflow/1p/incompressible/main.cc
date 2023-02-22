@@ -25,7 +25,7 @@
 #include <config.h>
 
 #ifndef LINEARSOLVER
-#define LINEARSOLVER SSORCGBackend
+#define LINEARSOLVER SSORCGIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
 #endif
 
 #include <ctime>
@@ -36,6 +36,10 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/common/properties.hh>
@@ -162,8 +166,9 @@ int main(int argc, char** argv)
     // output result to vtk
     vtkWriter.write(1.0);
 
-    // output residual norm (test assembler interface)
-    std::cout << "Residual norm: " << assembler->residualNorm(x) << std::endl;
+    // output residual norm (test assembler/solver interface)
+    assembler->assembleResidual(x);
+    std::cout << "Residual norm: " << linearSolver->norm(assembler->residual()) << std::endl;
 
     timer.stop();
 

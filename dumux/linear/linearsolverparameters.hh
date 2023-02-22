@@ -32,7 +32,16 @@
 #include <dune/common/parametertree.hh>
 #include <dumux/common/parameters.hh>
 
+namespace Dumux::Detail::LinearSolverParameters {
+template <typename T>
+using GVDetector = typename T::GridView;
+
+template <typename T>
+constexpr bool hasGridView = Dune::Std::is_detected<GVDetector, T>::value;
+} // end namespace Dumux::Detail::LinearSolverParameters
+
 namespace Dumux {
+
 /*!
  * \ingroup Linear
  * \brief Generates a parameter tree required for the linear solvers and precondioners of the Dune ISTL
@@ -65,7 +74,10 @@ public:
         params["preconditioner.relaxation"] = "1.0";
         params["preconditioner.verbosity"] = "0";
         params["preconditioner.defaultAggregationSizeMode"] = "isotropic";
-        params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        if constexpr (Detail::LinearSolverParameters::hasGridView<LinearSolverTraits>)
+            params["preconditioner.defaultAggregationDimension"] = std::to_string(LinearSolverTraits::GridView::dimension);
+        else
+            params["preconditioner.defaultAggregationDimension"] = "3";
         params["preconditioner.maxLevel"] = "100";
         params["ParameterGroup"] = paramGroup;
         params["preconditioner.ParameterGroup"] = paramGroup;
