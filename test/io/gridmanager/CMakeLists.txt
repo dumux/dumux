@@ -24,7 +24,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_ug_parallel
                LABELS unit io
                CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy --ignore  "process ran"
+               CMD_ARGS --script fuzzy --ignore  "process rank"
                         --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-360"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0003-cake-3d-ug-360.pvtu
