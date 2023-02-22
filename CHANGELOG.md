@@ -10,6 +10,9 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 - __Shallow water equations__: Added new friction law `FrictionLawViscousNoSlip` for viscous thin film flow
 
+- __Projection__: In addition to the L2-projector projecting between different grids added a helper that
+computes the L2-projection of analytic functions in to discrete FEM spaces (requires `dune-functions`).
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
