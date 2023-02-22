@@ -37,9 +37,9 @@
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/utility.hh>
 #include <dumux/linear/solver.hh>
-#include <dumux/linear/amgbackend.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
+#include <dumux/linear/parallelmatrixadapter.hh>
 
 namespace Dumux::Example {
 
@@ -134,7 +134,7 @@ public:
     void setup(const MatrixType& m)
     {
         preconditioner_ = std::make_unique<BlockDiagILU0Preconditioner<MatrixType, VectorType, VectorType>>(m);
-        linearOperator_ = std::make_shared<Dune::MatrixAdapter<MatrixType, VectorType, VectorType>>(m);
+        linearOperator_ = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<MatrixType, VectorType, VectorType>>(m);
         solver_ = std::make_unique<Dune::BiCGSTABSolver<VectorType>>(*linearOperator_, *preconditioner_, this->residReduction(), this->maxIter(), this->verbosity());
 
         isSetup_ = true;

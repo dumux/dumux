@@ -42,6 +42,7 @@
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
+#include <dumux/linear/parallelmatrixadapter.hh>
 
 namespace Dumux {
 
@@ -1040,7 +1041,7 @@ public:
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
         BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
-        Dune::MatrixAdapter<Matrix, Vector, Vector> op(M);
+        Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector> op(M);
         Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
                                             this->maxIter(), this->verbosity());
         auto bTmp(b);
@@ -1078,7 +1079,7 @@ public:
     bool solve(const Matrix& M, Vector& x, const Vector& b)
     {
         BlockDiagILU0Preconditioner<Matrix, Vector, Vector> preconditioner(M);
-        Dune::MatrixAdapter<Matrix, Vector, Vector> op(M);
+        Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector> op(M);
         static const int restartGMRes = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.GMResRestart");
         Dune::RestartedGMResSolver<Vector> solver(op, preconditioner, this->residReduction(), restartGMRes,
                                                   this->maxIter(), this->verbosity());
@@ -1284,7 +1285,7 @@ public:
 
         BlockDiagAMGPreconditioner<Matrix, Vector, Vector> preconditioner(linearOperator, criterion, smootherArgs);
 
-        Dune::MatrixAdapter<Matrix, Vector, Vector> op(m);
+        Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector> op(m);
         Dune::BiCGSTABSolver<Vector> solver(op, preconditioner, this->residReduction(),
                                             this->maxIter(), this->verbosity());
         auto bTmp(b);
