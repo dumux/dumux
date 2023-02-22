@@ -45,7 +45,7 @@ You learn how to
 
 __Model equations:__ Immiscible two-phase flow Darcy equations in porous media (`TwoP`)<br />
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
-
+0
 </td>
 <td width="35%"><a href="2pinfiltration/README.md">
 <figure><img src="2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/></figure>
@@ -194,5 +194,15 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </td>
 <td width="35%"><a href="embedded_network_1d3d/README.md">
 <figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
+</a></td>
+</tr></table>
+
+### [:open_file_folder: Example 10: A random concentration field diffusing](diffusion/README.md)
+<table><tr><td>
+In this example a 2D domain is initialized with a random concentration field that is then subject to diffusion while neglecting convection.
+
+</td>
+<td width="35%"><a href="diffusion/README.md">
+<figure><img src="diffusion/img/diffusion.png" alt="diffusion"/></figure></td>
 </a></td>
 </tr></table>
