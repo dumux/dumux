@@ -203,6 +203,6 @@ In this example a 2D domain is initialized with a random concentration field tha
 
 </td>
 <td width="35%"><a href="diffusion/README.md">
-<figure><img src="diffusion/img/diffusion.png" alt="diffusion"/></figure></td>
+<figure><img src="diffusion/img/diffusion.gif" alt="diffusion"/></figure></td>
 </a></td>
 </tr></table>
