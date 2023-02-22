@@ -27,6 +27,8 @@
 #include <memory>
 #include <array>
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -37,6 +39,7 @@
 
 #include <dumux/common/initialize.hh>
 
+#include <dumux/common/integrate.hh>
 #include <dumux/discretization/projection/l2_projection.hh>
 
 int main (int argc, char *argv[])
@@ -72,6 +75,15 @@ int main (int argc, char *argv[])
     vtkWriter.addVertexData(projected, Dune::VTK::FieldInfo("u_p", Dune::VTK::FieldInfo::Type::scalar, 1));
     vtkWriter.addVertexData(interpolated, Dune::VTK::FieldInfo("u_i", Dune::VTK::FieldInfo::Type::scalar, 1));
     vtkWriter.write("test_l2_projection");
+
+    auto l2ErrorProjected = Dumux::integrateL2Error(grid->leafGridView(), analytic, projected, 5);
+    auto l2ErrorInterpolated = Dumux::integrateL2Error(grid->leafGridView(), analytic, interpolated, 5);
+
+    std::cout << "L2-Error of L2-projected discrete solution: " << l2ErrorProjected << std::endl;
+    std::cout << "L2-Error of interpolated discrete solution: " << l2ErrorInterpolated << std::endl;
+
+    if (l2ErrorProjected > l2ErrorInterpolated)
+        DUNE_THROW(Dune::Exception, "L2-error of L2-projected solution is larger than the interpolated solution");
 
     return 0;
 }
