@@ -68,7 +68,6 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
@@ -87,8 +86,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::NoOpFunctor>
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+    template <class ResidualVector, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::NoOpFunctor>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
                                      const PartialReassembler* partialReassembler,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = CouplingFunction{})
     {
@@ -202,7 +201,8 @@ public:
     /*!
      * \brief Assemble the residual only
      */
-    void assembleResidual(SolutionVector& res)
+    template<class ResidualVector>
+    void assembleResidual(ResidualVector& res)
     {
         this->asImp_().bindLocalViews();
         const auto residual = this->evalLocalResidual();

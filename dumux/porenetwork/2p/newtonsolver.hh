@@ -41,7 +41,7 @@ template<class Assembler, class LinearSolver,
 class TwoPNewtonSolver : public Dumux::NewtonSolver<Assembler, LinearSolver>
 {
     using ParentType =  Dumux::NewtonSolver<Assembler, LinearSolver>;
-    using SolutionVector = typename Assembler::ResidualType;
+    using SolutionVector = typename ParentType::SolutionVector;
 
 public:
     using ParentType::ParentType;

@@ -41,6 +41,7 @@
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/dunevectors.hh>
 #include <dumux/parallel/multithreading.hh>
 
 #include "couplingjacobianpattern.hh"
@@ -119,7 +120,7 @@ public:
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;
-    using ResidualType = SolutionVector;
+    using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
 
     using CouplingManager = CMType;
 
@@ -354,7 +355,7 @@ public:
      *        sparsity pattern of the jacobian matrix.
      */
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
-                         std::shared_ptr<SolutionVector> r)
+                         std::shared_ptr<ResidualType> r)
     {
         jacobian_ = A;
         residual_ = r;
@@ -371,7 +372,7 @@ public:
     void setLinearSystem()
     {
         jacobian_ = std::make_shared<JacobianMatrix>();
-        residual_ = std::make_shared<SolutionVector>();
+        residual_ = std::make_shared<ResidualType>();
 
         setJacobianBuildMode(*jacobian_);
         setJacobianPattern_(*jacobian_);
@@ -466,7 +467,7 @@ public:
     { return *jacobian_; }
 
     //! the full residual vector
-    SolutionVector& residual()
+    ResidualType& residual()
     { return *residual_; }
 
     //! the solution of the previous time step
@@ -524,7 +525,7 @@ private:
     /*!
      * \brief Resizes the residual
      */
-    void setResidualSize_(SolutionVector& res) const
+    void setResidualSize_(ResidualType& res) const
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(res)), [&](const auto domainId)
@@ -536,7 +537,7 @@ private:
     {
         if(!residual_)
         {
-            residual_ = std::make_shared<SolutionVector>();
+            residual_ = std::make_shared<ResidualType>();
             setResidualSize_(*residual_);
         }
 
@@ -671,8 +672,8 @@ private:
     }
 
     // build periodic constraints into the system matrix
-    template<std::size_t i, class JacRow, class Sol, class GG>
-    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Sol& res, const GG& gridGeometry, const Sol& curSol)
+    template<std::size_t i, class JacRow, class Res, class GG, class Sol>
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
     {
         if constexpr (GG::discMethod == DiscretizationMethods::box || GG::discMethod == DiscretizationMethods::fcstaggered)
         {
@@ -732,7 +733,7 @@ private:
 
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
-    std::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<ResidualType> residual_;
 
     //! Issue a warning if the calculation is used in parallel with overlap. This could be a static local variable if it wasn't for g++7 yielding a linker error.
     bool warningIssued_;

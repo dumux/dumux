@@ -5,3 +5,6 @@ dumux_add_test(NAME test_linearsolver
 dumux_add_test(NAME test_scalarproducts
                SOURCES test_scalarproducts.cc
                LABELS linear unit)
+dumux_add_test(NAME test_dunevectors
+               SOURCES test_dunevectors.cc
+               LABELS linear unit)

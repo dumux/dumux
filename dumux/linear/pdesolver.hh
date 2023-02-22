@@ -42,7 +42,13 @@
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/pdesolver.hh>
+#include <dumux/common/variablesbackend.hh>
+
+// remove after deprecated code is removed (after 3.7)
+#define DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#undef DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
+
 #include <dumux/linear/matrixconverter.hh>
 
 namespace Dumux {
@@ -63,10 +69,16 @@ class LinearPDESolver : public PDESolver<Assembler, LinearSolver>
     using ParentType = PDESolver<Assembler, LinearSolver>;
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
-    using SolutionVector = typename Assembler::ResidualType;
+    using SolutionVector = typename Assembler::SolutionVector;
+    using ResidualVector = typename Assembler::ResidualType;
     using TimeLoop = TimeLoopBase<Scalar>;
+    using Backend = VariablesBackend<typename ParentType::Variables>;
+    using LinearAlgebraNativeBackend = VariablesBackend<ResidualVector>;
+    static constexpr bool assemblerExportsVariables = Detail::PDESolver::assemblerExportsVariables<Assembler>;
 
 public:
+    using typename ParentType::Variables;
+
     /*!
      * \brief The Constructor
      */
@@ -86,7 +98,7 @@ public:
     /*!
      * \brief Solve a linear PDE system
      */
-    void solve(SolutionVector& uCurrentIter) override
+    void solve(Variables& vars) override
     {
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -104,9 +116,9 @@ public:
         // linearize the problem at the current solution
         assembleTimer.start();
         if (reuseMatrix_)
-            this->assembler().assembleResidual(uCurrentIter);
+            this->assembler().assembleResidual(vars);
         else
-            this->assembler().assembleJacobianAndResidual(uCurrentIter);
+            this->assembler().assembleJacobianAndResidual(vars);
         assembleTimer.stop();
 
         ///////////////
@@ -127,9 +139,8 @@ public:
         // solve the resulting linear equation system
         solveTimer.start();
 
-        // set the delta vector to zero before solving the linear system!
-        SolutionVector deltaU(uCurrentIter);
-        deltaU = 0;
+        // set the delta vector to zero
+        ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
 
         // solve by calling the appropriate implementation depending on whether the linear solver
         // is capable of handling MultiType matrices or not
@@ -150,8 +161,11 @@ public:
 
         // update the current solution and secondary variables
         updateTimer.start();
-        uCurrentIter -= deltaU;
-        this->assembler().updateGridVariables(uCurrentIter);
+        auto uCurrent = Backend::dofs(vars);
+        Backend::axpy(-1.0, deltaU, uCurrent);
+        Backend::update(vars, uCurrent);
+        if constexpr (!assemblerExportsVariables)
+            this->assembler().updateGridVariables(Backend::dofs(vars));
         updateTimer.stop();
 
         if (verbose_) {
@@ -209,7 +223,7 @@ public:
 
 private:
 
-    virtual bool solveLinearSystem_(SolutionVector& deltaU)
+    virtual bool solveLinearSystem_(ResidualVector& deltaU)
     {
         return solveLinearSystemImpl_(this->linearSolver(),
                                       this->assembler().jacobian(),
@@ -226,34 +240,14 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-    template<class V = SolutionVector>
+    template<class V = ResidualVector>
     typename std::enable_if_t<!isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
-        //! Copy into a standard block vector.
-        //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
-        //! primary variables vector in combination with UMFPack or SuperLU as their interfaces are hard coded
-        //! to this field vector type in Dune ISTL
-        //! Could be avoided for vectors that already have the right type using SFINAE
-        //! but it shouldn't impact performance too much
-        constexpr auto blockSize = JacobianMatrix::block_type::rows;
-        using BlockType = Dune::FieldVector<Scalar, blockSize>;
-        Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
-        Dune::BlockVector<BlockType> bTmp(xTmp);
-        for (unsigned int i = 0; i < b.size(); ++i)
-            for (unsigned int j = 0; j < blockSize; ++j)
-                bTmp[i][j] = b[i][j];
-
-        const int converged = ls.solve(A, xTmp, bTmp);
-
-        for (unsigned int i = 0; i < x.size(); ++i)
-            for (unsigned int j = 0; j < blockSize; ++j)
-                x[i][j] = xTmp[i][j];
-
-        return converged;
+        return ls.solve(A, x, b);
     }
 
 
@@ -266,13 +260,13 @@ private:
      * Specialization for linear solvers that can handle MultiType matrices.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class V = ResidualVector>
     typename std::enable_if_t<linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
         return ls.solve(A, x, b);
@@ -288,13 +282,14 @@ private:
      * We copy the matrix into a 1x1 block BCRS matrix before solving.
      *
      */
-    template<class LS = LinearSolver, class V = SolutionVector>
+    template<class LS = LinearSolver, class V = ResidualVector>
+    [[deprecated("After 3.7 LinearPDESolver will no longer support conversion of multitype matrices for solvers that don't support this feature!")]]
     typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
                               isMultiTypeBlockVector<V>(), bool>
     solveLinearSystemImpl_(LinearSolver& ls,
                            JacobianMatrix& A,
-                           SolutionVector& x,
-                           SolutionVector& b)
+                           ResidualVector& x,
+                           ResidualVector& b)
     {
         assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
 

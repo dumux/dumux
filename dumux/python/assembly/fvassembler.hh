@@ -38,7 +38,7 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
     using Problem = typename FVAssembler::Problem;
     using GridGeometry = typename FVAssembler::GridGeometry;
     using GridVariables = typename FVAssembler::GridVariables;
-    using SolutionVector = typename FVAssembler::ResidualType;
+    using SolutionVector = typename FVAssembler::SolutionVector;
 
     static_assert(std::is_same_v<GridGeometry, typename Problem::GridGeometry>);
     cls.def(pybind11::init([](std::shared_ptr<const Problem> problem,

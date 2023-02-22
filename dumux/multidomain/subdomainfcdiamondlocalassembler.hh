@@ -57,7 +57,6 @@ class SubDomainFaceCenteredDiamondLocalAssemblerBase : public FaceCenteredDiamon
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -106,8 +105,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class JacobianMatrixRow, class GridVariablesTuple>
-    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSolutionVector& res, GridVariablesTuple& gridVariables)
+    template<class JacobianMatrixRow, class SubResidual, class GridVariablesTuple>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidual& res, GridVariablesTuple& gridVariables)
     {
         auto assembleCouplingBlocks = [&](const auto& residual)
         {

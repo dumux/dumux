@@ -73,7 +73,8 @@ public:
     { return 0.0; }
 
     //! Perform axpy operation (y += a * x)
-    static void axpy(Scalar a, const DofVector& x, DofVector& y)
+    template<class OtherDofVector>
+    static void axpy(Scalar a, const OtherDofVector& x, DofVector& y)
     { y += a*x; }
 };
 
@@ -102,8 +103,12 @@ public:
     { DofVector d; d.resize(size); return d; }
 
     //! Perform axpy operation (y += a * x)
-    static void axpy(typename DofVector::field_type a, const DofVector& x, DofVector& y)
-    { y.axpy(a, x); }
+    template<class OtherDofVector>
+    static void axpy(typename DofVector::field_type a, const OtherDofVector& x, DofVector& y)
+    {
+        for (typename DofVector::size_type i = 0; i < y.size(); ++i)
+            y[i].axpy(a, x[i]);
+    }
 };
 
 /*!
@@ -145,9 +150,16 @@ public:
     }
 
     //! Perform axpy operation (y += a * x)
-    template<class Scalar, std::enable_if_t< Dune::IsNumber<Scalar>::value, int> = 0>
-    static void axpy(Scalar a, const DofVector& x, DofVector& y)
-    { y.axpy(a, x); }
+    template<class Scalar, class OtherDofVector, std::enable_if_t< Dune::IsNumber<Scalar>::value, int> = 0>
+    static void axpy(Scalar a, const OtherDofVector& x, DofVector& y)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numBlocks>{}, [&](auto i) {
+            DofBackend<std::decay_t<decltype(y[Dune::index_constant<i>{}])>>::axpy(
+                a, x[Dune::index_constant<i>{}], y[Dune::index_constant<i>{}]
+            );
+        });
+    }
 };
 
 namespace Detail {

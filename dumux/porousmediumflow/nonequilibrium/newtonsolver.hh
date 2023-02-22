@@ -27,6 +27,7 @@
 #ifndef DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 #define DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 
+#include <dumux/common/pdesolver.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 namespace Dumux {
@@ -43,7 +44,7 @@ class NonEquilibriumNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 
     using typename ParentType::Backend;
     using typename ParentType::SolutionVector;
-    static constexpr bool assemblerExportsVariables = Detail::exportsVariables<Assembler>;
+    static constexpr bool assemblerExportsVariables = Detail::PDESolver::assemblerExportsVariables<Assembler>;
 
 public:
     using ParentType::ParentType;

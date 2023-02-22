@@ -113,8 +113,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
-    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
+    template<class JacobianMatrixRow, class SubResidual, class GridVariablesTuple>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidual& res, GridVariablesTuple& gridVariables)
     {
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
@@ -125,8 +125,8 @@ public:
     /*!
      * \brief Assemble the residual only
      */
-    template<class SubSol>
-    void assembleResidual(SubSol& res)
+    template<class SubResidual>
+    void assembleResidual(SubResidual& res)
     {
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
@@ -325,8 +325,8 @@ public:
 private:
 
     //! Assembles the residuals and derivatives for the cell center dofs.
-    template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
-    auto assembleJacobianAndResidualImpl_(Dune::index_constant<cellCenterId>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
+    template<class JacobianMatrixRow, class SubResidual, class GridVariablesTuple>
+    auto assembleJacobianAndResidualImpl_(Dune::index_constant<cellCenterId>, JacobianMatrixRow& jacRow, SubResidual& res, GridVariablesTuple& gridVariables)
     {
         auto& gridVariablesI = *std::get<domainId>(gridVariables);
         const auto cellCenterGlobalI = problem().gridGeometry().elementMapper().index(this->element());
@@ -347,8 +347,8 @@ private:
     }
 
     //! Assembles the residuals and derivatives for the face dofs.
-    template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
-    void assembleJacobianAndResidualImpl_(Dune::index_constant<faceId>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
+    template<class JacobianMatrixRow, class SubResidual, class GridVariablesTuple>
+    void assembleJacobianAndResidualImpl_(Dune::index_constant<faceId>, JacobianMatrixRow& jacRow, SubResidual& res, GridVariablesTuple& gridVariables)
     {
         auto& gridVariablesI = *std::get<domainId>(gridVariables);
         const auto residual = this->asImp_().assembleFaceJacobianAndResidualImpl(jacRow[domainId], gridVariablesI);

@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
+    // the assembler with time loop for time-dependent problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
@@ -124,8 +124,8 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    //the convergence writer
-    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<GridGeometry, SolutionVector>;
+    // the convergence writer
+    using NewtonConvergenceWriter = Dumux::NewtonConvergenceWriter<GridGeometry, SolutionVector, typename Assembler::ResidualType>;
     auto convergenceWriter = std::make_shared<NewtonConvergenceWriter>(*gridGeometry);
     nonLinearSolver.attachConvergenceWriter(convergenceWriter);
 

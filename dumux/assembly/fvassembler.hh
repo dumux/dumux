@@ -34,9 +34,11 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/gridcapabilities.hh>
+#include <dumux/common/typetraits/vector.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/dunevectors.hh>
 
 #include <dumux/assembly/coloring.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -123,7 +125,6 @@ class FVAssembler
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr bool isBox = GridGeo::discMethod == DiscretizationMethods::box;
 
@@ -133,11 +134,13 @@ class FVAssembler
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using GridGeometry = GridGeo;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
+
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using ResidualType = SolutionVector;
+    using GridGeometry = GridGeo;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     /*!
      * \brief The constructor for stationary problems
@@ -287,7 +290,7 @@ public:
      *        sparsity pattern of the jacobian matrix.
      */
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
-                         std::shared_ptr<SolutionVector> r)
+                         std::shared_ptr<ResidualType> r)
     {
         jacobian_ = A;
         residual_ = r;
@@ -310,7 +313,7 @@ public:
     {
         jacobian_ = std::make_shared<JacobianMatrix>();
         jacobian_->setBuildMode(JacobianMatrix::random);
-        residual_ = std::make_shared<SolutionVector>();
+        residual_ = std::make_shared<ResidualType>();
 
         setResidualSize_();
         setJacobianPattern_();
@@ -355,7 +358,7 @@ public:
     { return *jacobian_; }
 
     //! The residual vector (rhs)
-    SolutionVector& residual()
+    ResidualType& residual()
     { return *residual_; }
 
     //! The solution of the previous time step
@@ -437,7 +440,7 @@ private:
     {
         if(!residual_)
         {
-            residual_ = std::make_shared<SolutionVector>();
+            residual_ = std::make_shared<ResidualType>();
             setResidualSize_();
         }
 
@@ -525,7 +528,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
@@ -546,7 +549,7 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const SolutionVector& curSol, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
@@ -568,7 +571,7 @@ private:
 
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
-    std::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<ResidualType> residual_;
 
     //! element sets for parallel assembly
     bool enableMultithreading_ = false;

@@ -65,7 +65,6 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using SubSolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -114,8 +113,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class JacobianMatrixRow, class GridVariablesTuple>
-    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSolutionVector& res, GridVariablesTuple& gridVariables)
+    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidualVector& res, GridVariablesTuple& gridVariables)
     {
         this->asImp_().bindLocalViews();
 
@@ -156,7 +155,8 @@ public:
     /*!
      * \brief Assemble the residual only
      */
-    void assembleResidual(SubSolutionVector& res)
+    template<class SubResidualVector>
+    void assembleResidual(SubResidualVector& res)
     {
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());

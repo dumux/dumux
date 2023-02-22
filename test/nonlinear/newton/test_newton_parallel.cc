@@ -79,7 +79,7 @@ public:
         if (rank_ == 1 && timeLoop_->timeStepSize() > 0.4)
             DUNE_THROW(Dune::Exception, "Assembly failed (for testing) on process " << rank_);
 
-        x[0] = b[0]/A;
+        x = b/A;
         return true;
     }
 
