@@ -37,6 +37,19 @@ dumux_add_test(TARGET test_richards_lens_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa")
 
+# test thread-parallel preconditioners
+set(DUMUX_TEST_PAR_SMOOTHERS par_mt_jac;par_mt_sor;par_mt_ssor)
+foreach(_precond ${DUMUX_TEST_PAR_SMOOTHERS})
+    dumux_add_test(NAME test_richards_lens_tpfa_precond_${_precond}
+                   TARGET test_richards_lens_tpfa
+                   LABELS porousmediumflow richards
+                   COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                   CMD_ARGS --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_${_precond}-00007.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_${_precond} -LinearSolver.Preconditioner.Type ${_precond}")
+endforeach()
+
 dumux_add_test(NAME test_richards_lens_tpfa_analyticdiff
               SOURCES main.cc
               LABELS porousmediumflow richards
