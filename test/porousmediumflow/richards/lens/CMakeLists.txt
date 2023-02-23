@@ -102,7 +102,7 @@ dumux_add_test(NAME test_richards_lens_mpfa_parallel_yasp
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --ignore "process rank":100
+              CMD_ARGS --script fuzzy --ignore "process rank"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_mpfa_parallel_yasp-00007.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
