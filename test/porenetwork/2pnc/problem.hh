@@ -136,7 +136,7 @@ public:
         }
         else if (isOutletPore_(scv))
         {
-            values.setState(Indices::firstPhaseOnly);
+            values.setState(Indices::bothPhases);
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::switchIdx] = 0.0;
 #if !ISOTHERMAL
@@ -221,12 +221,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == 2;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == 1;
     }
 
     int vtpOutputFrequency_;
