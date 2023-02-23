@@ -1,45 +1,36 @@
-% Introduction to DuMux - Overview and Available Models
-% The DuMux Development Team, IWS-LH2, University of Stuttgart
-% January 26, 2023
+# Localresidual
 
-# History and Structure
-<!--![DuMux logo](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/doc/logo/dumux_logo_hires_whitebg.png)-->
-
-## DuMu$^\mathsf{x}$ is a DUNE module
-
-![](fig/dumux_dune_module.png)
-
-# Available Models
-
-## Models: 1p -- one-phase
-
-* Standard Darcy approach for the conservation of momentum
+* Is a representation of the discretized differential equations - the differential equations are implented in residual form such as
 
 $$
-v = - \frac{\textbf{K}}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf{g}} \right)
+\underbrace{\varPhi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}}_{1}
+- \nabla \cdot \left( \varrho_\alpha \frac{k_{r,\alpha}}{\mu_\alpha} \boldsymbol{K}\left( \nabla p_\alpha - \varrho_\alpha \boldsymbol{g} \right) \right)
+- q_\alpha
+= 0
 $$
 
-* Balance equation
+which describes the mass balance of a multi-phase model. Or in general
 
 $$
-\phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf{K}}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf{g}} \right) \right\rbrace = q
+r(\boldsymbol{u})
+= \underbrace{\frac{\partial S(\boldsymbol{u})}{\partial t}}_{1)}
+- \underbrace{\nabla \cdot \boldsymbol{F(\boldsymbol{u})} }_{2)}
+- \underbrace{q}_{3)}
+= 0
 $$
 
-* Primary variable: $p$
+where 1) describes the storage term which handles changes over time, 2) stands for the flux term, which can have advective or diffusive character and 3) is the source/sink term for one specific sub-control volume.
+
+* The individual terms of the local residual are computed for EACH sub-control volume and the values are stored in a vector which has an entry for each sub-control volume.
+
+* Called by: LocalAssembler to compute entries in the jacobian and residual
+
+* Source term is basically a right-hand side, can be used for anything that cannot be described within the storage or flux term
 
 
-# Model Components
+## Functionalities
+* evalStorage()
+* computeSource()
+* computeFlux()
 
-## Model components: VTK output fields
-
-* Each model provides `...VtkOutputFields`, a class where the default output fields are set by employing a `VtkOutputModule vtk` via, e.g.,
-```cpp
-   vtk.addVolumeVariable( [](const auto& v)
-                          { return v.saturation(FS::phase1Idx); },
-                          "S_n" );
-```
-
-* In addition to the default fields, custom fields can be added to the output by defining a function `void addFieldsToWriter(VtkWriter& vtk)` in the problem class.
 
