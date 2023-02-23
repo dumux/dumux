@@ -13,5 +13,5 @@
 
 ```mermaid
 flowchart TD
-    A[Newton] -->|calls| B[linearSolver]
+    A[Newton] -->|"solve()"| B[linearSolver]
 ```
