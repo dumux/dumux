@@ -184,7 +184,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_alu_parallel
               TIMEOUT 300
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --ignore "rank":100
+              CMD_ARGS --script fuzzy --ignore "rank"
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_e_markers_alu -Problem.Name fracture_alu_parallel"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_alu_parallel-00000.pvtu
