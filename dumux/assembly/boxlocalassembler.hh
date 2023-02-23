@@ -416,6 +416,7 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -453,6 +454,7 @@ public:
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
+                    elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
                     return this->evalLocalStorageResidual();
                 };
 
