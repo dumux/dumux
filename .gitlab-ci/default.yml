@@ -213,7 +213,7 @@ test python:
         mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
       fi
     - |
-      if ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt"); then
+      if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
         if [ ! -s changedfiles.txt ]; then
           echo "Skipping test selection: considering all Python tests."
         else
