@@ -33,7 +33,8 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -42,6 +43,55 @@
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
 #include "properties.hh"
+
+template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
+auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
+                   std::shared_ptr<MassGG> massGridGeometry,
+                   std::shared_ptr<MomP> momentumProblem,
+                   MomIdx momentumIdx, MassIdx massIdx)
+{
+    Vector dirichletDofs;
+    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+    dirichletDofs = 0.0;
+
+    auto fvGeometry = localView(*momentumGridGeometry);
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        if constexpr (MomGG::discMethod == Dumux::DiscretizationMethods::pq1bubble)
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                }
+            }
+        }
+        else if constexpr (MomGG::discMethod == Dumux::DiscretizationMethods::fcdiamond)
+        {
+            fvGeometry.bind(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                if (scvf.boundary())
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][fvGeometry.scv(scvf.insideScvIdx()).dofIndex()][i] = 1.0;
+                }
+            }
+        }
+        else
+            DUNE_THROW(Dune::NotImplemented, "dirichletDof help for discretization " << MomGG::discMethod);
+    }
+
+    return dirichletDofs;
+}
 
 int main(int argc, char** argv)
 {
@@ -132,12 +182,26 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the linear solver
-    using LinearSolver = UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-    nonLinearSolver.solve(x);
+    // the linearize and solve
+    if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
+    {
+        using Matrix = typename Assembler::JacobianMatrix;
+        using Vector = typename Assembler::ResidualType;
+        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
+    else
+    {
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
 
     // write vtk output
     vtkWriter.write(1.0);

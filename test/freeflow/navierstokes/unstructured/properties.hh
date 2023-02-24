@@ -39,8 +39,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -57,8 +56,8 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct DFGChannelTest {};
-struct DFGChannelTestMomentumDiamond { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct DFGChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumPQ1Bubble, PQ1BubbleModel>; };
+struct DFGChannelTestMomentumDiamond { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
+struct DFGChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct DFGChannelTestMassTpfa { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
 struct DFGChannelTestMassBox { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, BoxModel>; };
 struct DFGChannelTestMassDiamond { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, FaceCenteredDiamondModel>; };

@@ -24,6 +24,26 @@ BaseEpsilon = 0.01
 PriVarMagnitude = 0.2 0.2
 BaseEpsilon = 0.01
 
+[LinearSolver]
+MaxIterations = 500
+ResidualReduction = 1e-10
+SymmetrizeDirichlet = true
+DirectSolverForVelocity = false
+GMResRestart = 500
+Type = gmres
+Verbosity = 1
+
+[LinearSolver.Preconditioner]
+Mode = Triangular
+Iterations = 5
+AmgSmootherIterations = 2
+AmgDefaultAggregationDimension = 2
+AmgMinAggregateSize = 2
+AmgMaxAggregateSize = 2
+AmgAdditive = false
+AmgGamma = 1 # 1: V-cycle 2: W-cycle
+AmgCriterionSymmetric = true
+
 [Newton]
 MinSteps = 1
 EnableAbsoluteResidualCriterion = true
