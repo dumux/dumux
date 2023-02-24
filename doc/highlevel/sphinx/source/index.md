@@ -8,5 +8,7 @@
 ```{toctree}
 :caption: 'Contents:'
 :maxdepth: 1
+overview
+newtonloop
 classes
 ```

@@ -6,4 +6,6 @@
 linearsolver
 newtonsolver
 assembler
+localresidual
+localresidual2
 ```

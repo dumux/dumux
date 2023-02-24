@@ -63,3 +63,4 @@ mermaid_theme = "default"
 
 # specify the Mermaid version to use (optional)
 mermaid_version = "8.10.2"
+myst_enable_extensions=["amsmath"]
