@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>localResidual &#8212; Dumux Highlevel 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://unpkg.com/mermaid@8.10.2/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="assembler" href="assembler.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="localresidual">
+<h1>localResidual<a class="headerlink" href="#localresidual" title="Permalink to this headline">¶</a></h1>
+<p>The localResidual contains the actual PDE of the problem one wants to solve. In general, one is interested in PDE’s of the form</p>
+<div class="math notranslate nohighlight">
+\[ \underbrace{\frac{\partial S(\boldsymbol{u})}{\partial t}}_{1)}
+- \underbrace{\nabla \cdot \boldsymbol{F(\boldsymbol{u})} }_{2)}
+- \underbrace{q}_{3)}
+= 0\]</div>
+<p>where 1) describes the storage term which handles changes over time, 2) stands for the flux term, which can have advective or diffusive character and 3) is the source/sink term.</p>
+<p>The localResidual is defined as LHS-RHS evaluated for one sub-control-volume.</p>
+<div class="math notranslate nohighlight">
+\[r(\boldsymbol{u})
+= \underbrace{\frac{\partial S(\boldsymbol{u})}{\partial t}}_{1)}
+- \underbrace{\nabla \cdot \boldsymbol{F(\boldsymbol{u})} }_{2)}
+- \underbrace{q(\boldsymbol{u})}_{3)}\]</div>
+<section id="functionalities">
+<h2>Functionalities<a class="headerlink" href="#functionalities" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>evalFluxAndSource()</p>
+<ol class="arabic simple">
+<li><p>evalSource()</p></li>
+<li><p>evalFlux()</p></li>
+</ol>
+</li>
+<li><p>evalStorage()</p></li>
+</ol>
+</section>
+<section id="connected-classes">
+<h2>Connected Classes<a class="headerlink" href="#connected-classes" title="Permalink to this headline">¶</a></h2>
+<div class="mermaid">
+               flowchart LR
+   1[localAssembler] --&gt; 2[localResidual]
+   click 1 &quot;./localassembler.html&quot;
+        </div></section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Dumux Highlevel</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newtonloop.html">Newton Loop</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="classes.html">Classes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="classes.html">Classes</a><ul>
+      <li>Previous: <a href="assembler.html" title="previous chapter">assembler</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Leon Keim.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="_sources/localresidual.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
