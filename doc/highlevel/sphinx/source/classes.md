@@ -8,4 +8,8 @@ newtonsolver
 assembler
 localresidual
 localresidual2
+grid
+gridmanager
+gridgeometry
+gridview
 ```

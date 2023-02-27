@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>assembler &#8212; Dumux Highlevel 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -12,7 +12,9 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="https://unpkg.com/mermaid@8.10.2/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -36,15 +38,15 @@
           <div class="body" role="main">
             
   <section id="assembler">
-<h1>assembler<a class="headerlink" href="#assembler" title="Permalink to this headline">¶</a></h1>
-<table class="colwidths-auto docutils align-default">
+<h1>assembler<a class="headerlink" href="#assembler" title="Permalink to this heading">¶</a></h1>
+<table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="text-left head"><p>The assembler is used to calculate the global Jacobian-matrix and the global residual vector. </br> In order to do so, it uses a discretization specific localAssembler. </br> The assembler creates a shared_ptr of the Jacobian-matrix and a shared_ptr of the residual.</p></th>
+<tr class="row-odd"><th class="head text-left"><p>The assembler is used to calculate the global Jacobian-matrix and the global residual vector. </br> In order to do so, it uses a discretization specific localAssembler. </br> The assembler creates a shared_ptr of the Jacobian-matrix and a shared_ptr of the residual.</p></th>
 </tr>
 </thead>
 </table>
 <section id="key-functionalites">
-<h2>Key functionalites<a class="headerlink" href="#key-functionalites" title="Permalink to this headline">¶</a></h2>
+<h2>Key functionalites<a class="headerlink" href="#key-functionalites" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>assembleJacobianAndResidual()</p>
 <ol class="arabic simple">
@@ -54,7 +56,7 @@
 </ol>
 </section>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
 <div class="mermaid">
             flowchart LR
     A(newtonSolver) --&gt;|&quot;assembleJacobianAndResidual()&quot;| B(assembler)
@@ -109,7 +111,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -126,7 +128,7 @@
       &copy;2023, Leon Keim.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |

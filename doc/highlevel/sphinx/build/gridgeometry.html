@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Newton Loop &#8212; Dumux Highlevel 0.1 documentation</title>
+    <title>gridgeometry &#8212; Dumux Highlevel 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -19,8 +19,6 @@
     <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Classes" href="classes.html" />
-    <link rel="prev" title="Overview" href="overview.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -37,32 +35,17 @@
 
           <div class="body" role="main">
             
-  <section id="newton-loop">
-<h1>Newton Loop<a class="headerlink" href="#newton-loop" title="Permalink to this heading">¶</a></h1>
-<p>A Newton algorithm is an iterative method used to solve non-linear equations, including non-linear partial differential equations (PDEs). It works by starting with an initial guess for the solution to the PDE, and then iteratively improving that guess until a solution is found. The algortihm is implemented in <a class="reference internal" href="newtonsolver.html#newtonsolver"><span class="std std-ref">newtonSolver</span></a>.</p>
-<p>Here’s how it works in more detail:</p>
+  <section id="gridgeometry">
+<h1>gridgeometry<a class="headerlink" href="#gridgeometry" title="Permalink to this heading">¶</a></h1>
+<p>A grid geometry is an abstraction of a finite-volume discretization. Given a <a class="reference internal" href="gridview.html#gridview"><span class="std std-ref">gridview</span></a>, the grid geometry constructs all geometrical and topological data necessary to evaluate the discrete equation resulting from a given finite volume scheme.</p>
+<section id="functionalities">
+<h2>Functionalities<a class="headerlink" href="#functionalities" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p>Start with an initial guess for the solution to the PDE.</p></li>
-<li><p>Use the PDE and the initial guess to form a linearized equation, called the Newton equation [<a class="reference internal" href="assembler.html#assembler"><span class="std std-ref">assembler</span></a>, <a class="reference internal" href="localassembler.html#localassembler"><span class="std std-ref">localAssembler</span></a>, <a class="reference internal" href="localresidual.html#localresidual"><span class="std std-ref">localResidual</span></a>]</p></li>
-<li><p>Solve the Newton equation to obtain a correction to the initial guess.[<a class="reference internal" href="linearsolver.html#linearsolver"><span class="std std-ref">linearSolver</span></a>]</p></li>
-<li><p>Add the correction to the initial guess to obtain a new guess for the solution to the PDE.</p></li>
-<li><p>Repeat steps 2-4 until the solution converges to a desired level of accuracy.</p></li>
+<li><p>elementMapper()</p></li>
+<li><p>vertexMapper()</p></li>
+<li><p>boundingBox()</p></li>
 </ol>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
-<div class="mermaid">
-            flowchart LR
-    A(newtonSolver) --&gt;|&quot;assembleJacobianAndResidual()&quot;| B(assembler)
-    A --&gt;|&quot;solve()&quot;| C(linearSolver)
-    B --&gt;|&quot;assembleJacobianAndResidual()&quot;| D(localAssembler)
-    D --&gt;|&quot;evalFluxAndSourceResidual()&quot;| E(localResidual)
-    D --&gt;|&quot;evalStorageResidual()&quot;| E
-    click A &quot;./newtonsolver.html&quot;
-    click B &quot;./assembler.html&quot;
-    click C &quot;./linearsolver.html&quot;
-    click D &quot;./localassembler.html&quot;
-    click E &quot;./localresidiual.html&quot;
-        </div></section>
+</section>
 </section>
 
 
@@ -83,9 +66,9 @@
 
 <h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Newton Loop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="newtonloop.html">Newton Loop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="classes.html">Classes</a></li>
 </ul>
 
@@ -93,8 +76,6 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="overview.html" title="previous chapter">Overview</a></li>
-      <li>Next: <a href="classes.html" title="next chapter">Classes</a></li>
   </ul></li>
 </ul>
 </div>
@@ -128,7 +109,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
-      <a href="_sources/newtonloop.md.txt"
+      <a href="_sources/gridgeometry.md.txt"
           rel="nofollow">Page source</a>
     </div>
 
