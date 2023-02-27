@@ -24,7 +24,8 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_diamond
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_diamond-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond params.input
-                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond -Problem.EnableInertiaTerms false")
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond -Problem.EnableInertiaTerms false
+                             -LinearSolver.UseIterativeSolver true")
 
 # Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
@@ -50,7 +51,8 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params.input
-                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms false")
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms false
+                             -LinearSolver.UseIterativeSolver true")
 
 # Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
