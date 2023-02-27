@@ -234,9 +234,9 @@ private:
             return Result{}; //nothing happened
         }
 
-        if (*pcMax > pcEntry)
+        if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMin <= pcSnapoff)
+        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff)
            invadedAfterSwitch = false;
 
         invadedCurrentTimeStep_[eIdx] = invadedAfterSwitch;

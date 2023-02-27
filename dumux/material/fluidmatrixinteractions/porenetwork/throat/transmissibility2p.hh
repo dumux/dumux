@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Fluidmatrixinteractions
  * \ingroup PoreNetworkModels
  * \brief Implementation of the transmissibility laws for throats
  */
@@ -129,7 +130,7 @@ struct RansohoffRadke
                                                     const FluxVariablesCache& fluxVarsCache)
     {
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.curvatureRadiusEntry(0);
+        const Scalar rC = fluxVarsCache.curvatureRadiusInvasion(0);
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
         const auto numCorners = Throat::numCorners(shape);
@@ -137,7 +138,7 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.entryWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            result += fluxVarsCache.entryWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
         return result;
     }
@@ -161,7 +162,7 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.snapoffWettingLayerArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            result += fluxVarsCache.snapoffWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
         return result;
     }
@@ -179,7 +180,7 @@ struct RansohoffRadke
     {
         const Scalar Kw = entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rCdelta = fluxVarsCache.curvatureRadiusEntry(1);
+        const Scalar rCdelta = fluxVarsCache.curvatureRadiusInvasion(1);
 
         const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
         const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
@@ -188,10 +189,10 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar deltaKw = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            deltaKw += fluxVarsCache.deltaPcEntryWettingLayerArea(i) * rCdelta*rCdelta / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            deltaKw += fluxVarsCache.epsilonEntryWettingLayerArea(i) * rCdelta * rCdelta / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
-        const auto deltaPc = fluxVarsCache.deltaPc();
-        auto result = (deltaKw - Kw)/deltaPc;
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (deltaKw - Kw)/epsilonPc;
         return result;
     }
 
@@ -217,10 +218,10 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar deltaKw = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            deltaKw += fluxVarsCache.deltaPcSnapoffWettingLayerArea(i) * rCdelta*rCdelta / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            deltaKw += fluxVarsCache.epsilonSnapoffWettingLayerArea(i) * rCdelta * rCdelta / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
-        const auto deltaPc = fluxVarsCache.deltaPc();
-        auto result = (deltaKw - Kw)/deltaPc;
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (deltaKw - Kw)/epsilonPc;
         return result;
     }
 };
@@ -316,9 +317,9 @@ struct BakkeOren
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar aNwCrit = fluxVarsCache.regularBoundaryNonWettingThroatAreaEntry(0);
-        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
+        const Scalar aNwCrit = fluxVarsCache.regBoundaryNonwettingThroatAreaInvasion(0);
+        const Scalar rEff = 0.5 * (sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar result = rEff * rEff * aNwCrit / (8.0 * throatLength);
         return result;
     }
 
@@ -336,7 +337,7 @@ struct BakkeOren
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar aNwCrit = fluxVarsCache.regularBoundaryNonWettingThroatAreaSnapoff(0);
+        const Scalar aNwCrit = fluxVarsCache.regBoundaryNonWettingThroatAreaSnapoff(0);
         const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
         return result;
@@ -357,11 +358,11 @@ struct BakkeOren
         const Scalar Kn = entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar aNwCritDelta = fluxVarsCache.regularBoundaryNonWettingThroatAreaEntry(1);
+        const Scalar aNwCritDelta = fluxVarsCache.regBoundaryNonwettingThroatAreaInvasion(1);
         const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
-        const auto deltaPc = fluxVarsCache.deltaPc();
-        auto result = (KnDelta - Kn)/deltaPc;
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (KnDelta - Kn)/epsilonPc;
         return result;
     }
 
@@ -380,11 +381,11 @@ struct BakkeOren
         const Scalar Kn = snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar aNwCritDelta = fluxVarsCache.regularBoundaryNonWettingThroatAreaSnapoff(1);
+        const Scalar aNwCritDelta = fluxVarsCache.regBoundaryNonWettingThroatAreaSnapoff(1);
         const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
-        const auto deltaPc = fluxVarsCache.deltaPc();
-        auto result = (KnDelta - Kn)/deltaPc;
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (KnDelta - Kn)/epsilonPc;
         return result;
     }
 };

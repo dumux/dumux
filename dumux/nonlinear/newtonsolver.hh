@@ -1069,8 +1069,6 @@ private:
                 converged = newtonConverged();
             }
 
-            // tell solver we are done
-            newtonEnd(vars, uLastIter);
 
             // reset state if Newton failed
             if (!newtonConverged())
@@ -1085,6 +1083,9 @@ private:
 
             // tell solver we converged successfully
             newtonSucceed();
+
+            // tell solver we are done
+            newtonEnd(vars, uLastIter);
 
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
