@@ -193,7 +193,7 @@ public:
 
     Scalar norm(const XVector& x) const
     {
-#if HAVE_MPI
+#if 1
         if constexpr (LinearSolverTraits::canCommunicate)
         {
             if (solverCategory_ == Dune::SolverCategory::nonoverlapping)
