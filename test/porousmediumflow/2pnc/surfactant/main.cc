@@ -33,7 +33,8 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include "properties.hh"
 
@@ -100,7 +101,8 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
