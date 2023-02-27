@@ -32,6 +32,13 @@ namespace Dumux {
 
 namespace Detail {
 
+    struct Average
+    {
+        template<class A, class B>
+        static void apply(A& a, const B& b)
+        { a = 0.5*(a+b);  }
+    };
+
     struct SetEqual
     {
         template<class A, class B>
@@ -134,6 +141,7 @@ using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Deta
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
-} // end namespace Dumux
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandleAverage = VectorCommDataHandle<Mapper, Vector, codim, Detail::Average, DataType>;} // end namespace Dumux
 
 #endif
