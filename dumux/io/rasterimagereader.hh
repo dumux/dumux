@@ -25,6 +25,7 @@
 #define DUMUX_RASTER_IMAGE_READER_HH
 
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <fstream>
