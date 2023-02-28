@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesProblem
+ * \copydoc Dumux::NavierStokesStaggeredProblem
  */
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_PROBLEM_HH
