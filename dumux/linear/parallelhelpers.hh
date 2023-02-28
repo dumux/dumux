@@ -30,6 +30,8 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/multitypeblockvector.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/common/gridcapabilities.hh>
 
@@ -489,7 +491,7 @@ public:
     : gridView_(gridView), mapper_(mapper)
     {}
 
-    // \brief Make a vector of the box model consistent.
+    //! \brief Make a vector consistent for non-overlapping domain decomposition methods
     template<class Block, class Alloc>
     void makeNonOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
     {
@@ -502,6 +504,13 @@ public:
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+    }
+
+    //! \brief Make a vector consistent for non-overlapping domain decomposition methods
+    template<class... Blocks>
+    void makeNonOverlappingConsistent(Dune::MultiTypeBlockVector<Blocks...>& v) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "makeNonOverlappingConsistent for Dune::MultiTypeBlockVector");
     }
 
 private:
