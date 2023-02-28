@@ -282,11 +282,6 @@
  */
     /*!
      * \ingroup Discretization
-     * \defgroup BoxDiscretization Box FV scheme
-     * \brief The box method is a collocated finite volume scheme with control volumes centered at grid nodes.
-     */
-    /*!
-     * \ingroup Discretization
      * \defgroup CCDiscretization Cell-centered FV scheme
      * \brief Finite volume schemes with degrees of freedom located at grid cell centers.
      */
@@ -306,25 +301,33 @@
      * \brief Control-volume finite element schemes (e.g. box method)
      * Control-volume finite element schemes are based on finite element basis functions for interpolation but define control volumes to construct a finite volume scheme. They can be interpreted both as finite volume or as (Petrov-Galerkin) finite element scheme.
      */
-    /*!
-     * \ingroup Discretization
-     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV schemes
-     * \brief Staggered finite volume schemes with degrees of freedom at cell-centers and facets. In these implementations, momentum control volumes exist.
-     */
         /*!
-         * \ingroup FaceCenteredStaggeredDiscretization
+         * \ingroup CVFEDiscretization
          * \defgroup DiamondDiscretization Diamond discretization scheme
          * \brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
          */
+
         /*!
-         * \ingroup FaceCenteredStaggeredDiscretization
-         * \defgroup FaceCenteredStaggeredStaggeredDiscretization MAC scheme
-         * \brief Finite-volume marker-and-cell scheme.
+         * \ingroup CVFEDiscretization
+         * \defgroup BoxDiscretization Box FV scheme
+         * \brief The box method is a collocated finite volume scheme with control volumes centered at grid nodes.
          */
+
+        /*!
+         * \ingroup CVFEDiscretization
+         * \defgroup PQ1BubbleDiscretization PQ1 bubble scheme
+         * \brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
+         */
+    /*!
+     * \ingroup Discretization
+     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV schemes
+     * \brief Discretization for the momentum balance of the Navier-Stokes equations. Can be used to build a marker-and-cell scheme (MAC) together with Tpfa for the discretization of the mass balance equation.
+     */
     /*!
      * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes do not explicitly exist, but the implementation uses workarounds.
+     * \note This is an outdated implementation of the MAC scheme and will be replaced.
      */
     /*!
      * \ingroup Discretization
@@ -335,11 +338,6 @@
      * \ingroup Discretization
      * \defgroup PoreNetworkDiscretization Pore network model discretization
      * \brief The pore-network model discretization.
-     */
-    /*!
-     * \ingroup Discretization
-     * \defgroup PQ1BubbleDiscretization PQ1 bubble scheme
-     * \brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
      */
 /* ***************** Experimental ******************/
 /*!
