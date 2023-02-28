@@ -308,17 +308,17 @@
      */
     /*!
      * \ingroup Discretization
-     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV scheme
-     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes exist.
+     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV schemes
+     * \brief Staggered finite volume schemes with degrees of freedom at cell-centers and facets. In these implementations, momentum control volumes exist.
      */
         /*!
          * \ingroup FaceCenteredStaggeredDiscretization
-         * \defgroup DiamondDiscretization
+         * \defgroup DiamondDiscretization Diamond discretization scheme
          * \brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
          */
         /*!
          * \ingroup FaceCenteredStaggeredDiscretization
-         * \defgroup FaceCenteredStaggeredStaggeredDiscretization
+         * \defgroup FaceCenteredStaggeredStaggeredDiscretization MAC scheme
          * \brief Finite-volume marker-and-cell scheme.
          */
     /*!
