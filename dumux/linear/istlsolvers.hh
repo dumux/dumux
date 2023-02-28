@@ -144,12 +144,18 @@ public:
         initializeParameters_(paramGroup);
 #if HAVE_MPI
         solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
-        if (solverCategory_ != Dune::SolverCategory::sequential)
+        if constexpr (LinearSolverTraits::canCommunicate)
         {
-            parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-            communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
-            scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
-            parallelHelper_->createParallelIndexSet(*communication_);
+
+            if (solverCategory_ != Dune::SolverCategory::sequential)
+            {
+                parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
+                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
+                parallelHelper_->createParallelIndexSet(*communication_);
+            }
+            else
+                scalarProduct_ = std::make_shared<ScalarProduct>();
         }
         else
             scalarProduct_ = std::make_shared<ScalarProduct>();
@@ -174,10 +180,13 @@ public:
         solverCategory_ = Detail::solverCategory(gridView);
         scalarProduct_ = scalarProduct;
         communication_ = communication;
-        if (solverCategory_ != Dune::SolverCategory::sequential)
+        if constexpr (LinearSolverTraits::canCommunicate)
         {
-            parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-            parallelHelper_->createParallelIndexSet(communication);
+            if (solverCategory_ != Dune::SolverCategory::sequential)
+            {
+                parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+                parallelHelper_->createParallelIndexSet(communication);
+            }
         }
     }
 #endif

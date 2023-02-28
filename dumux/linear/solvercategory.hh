@@ -37,7 +37,15 @@ Dune::SolverCategory::Category solverCategory(const GridView& gridView)
             return Dune::SolverCategory::overlapping;
     }
     else
-        return Dune::SolverCategory::sequential;
+    {
+        if (gridView.comm().size() > 1)
+            DUNE_THROW(Dune::InvalidStateException,
+                "Attempt to construct parallel solver but LinearSolverTraits::canCommunicate is false. " <<
+                "Maybe the grid implementation does not support distributed parallelism."
+            );
+    }
+
+    return Dune::SolverCategory::sequential;
 }
 
 } // end namespace Dumux::Detail
