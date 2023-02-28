@@ -143,9 +143,10 @@ public:
     {
         initializeParameters_(paramGroup);
 #if HAVE_MPI
+        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
         if constexpr (LinearSolverTraits::canCommunicate)
         {
-            solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
+
             if (solverCategory_ != Dune::SolverCategory::sequential)
             {
                 parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
@@ -157,10 +158,7 @@ public:
                 scalarProduct_ = std::make_shared<ScalarProduct>();
         }
         else
-        {
-            solverCategory_ = Dune::SolverCategory::sequential;
             scalarProduct_ = std::make_shared<ScalarProduct>();
-        }
 #else
         solverCategory_ = Dune::SolverCategory::sequential;
         scalarProduct_ = std::make_shared<ScalarProduct>();
