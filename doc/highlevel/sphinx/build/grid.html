@@ -19,6 +19,7 @@
     <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gridmanager" href="gridmanager.html" />
     <link rel="prev" title="localResidual" href="localresidual.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -62,7 +63,32 @@ The grid is an abstract concept and consists of several entities: vertices, edge
 <li><p>OPMGrid (Open Porous Media Grid): supports corner-point format</p></li>
 <li><p><a class="reference external" href="https://www.dune-project.org/groups/grid/">Many more</a></p></li>
 </ul>
-<p>Within Dumux, the grid type is set within the <code class="docutils literal notranslate"><span class="pre">properties.hh</span></code> file. Standard grids like YASPGrid, AlbertaGrid and OneDGrid are included in the dune-grid core module. Using other grid types requires downloading the respective DUNE module.</p>
+<p>Within Dumux, the grid type is set within the <code class="docutils literal notranslate"><span class="pre">properties.hh</span></code> file. Standard grids like YASPGrid, AlbertaGrid and OneDGrid are included in the dune-grid core module. Using other grid types requires downloading the respective DUNE module. The <a class="reference external" href="https://gitlab.dune-project.org/core/dune-grid/-/blob/master/dune/grid/common/grid.hh">base implementation</a> of the grid data member is part of the dune-grid module.</p>
+<section id="key-functionalites">
+<h2>Key functionalites<a class="headerlink" href="#key-functionalites" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>maxLevel()</p></li>
+<li><p>size()</p></li>
+<li><p>levelGridView()</p></li>
+<li><p>leafGridView()</p></li>
+<li><p>globalRefine()</p></li>
+<li><p>mark()</p></li>
+<li><p>preAdapt()</p></li>
+<li><p>postAdapt()</p></li>
+<li><p>comm()</p></li>
+<li><p>loadBalance()</p></li>
+</ol>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<div class="mermaid">
+            flowchart LR
+    A(Grid) --&gt;|&quot;template parameter for declaration&quot;| B(gridManager)
+    B --&gt;|&quot;init()&quot;| C(grid)
+    click A &quot;./grid.html&quot;
+    click B &quot;./gridmanager.html&quot;
+    click C &quot;./grid.html&quot;
+        </div></section>
 </section>
 
 
@@ -95,6 +121,7 @@ The grid is an abstract concept and consists of several entities: vertices, edge
   <li><a href="index.html">Documentation overview</a><ul>
   <li><a href="classes.html">Classes</a><ul>
       <li>Previous: <a href="localresidual.html" title="previous chapter">localResidual</a></li>
+      <li>Next: <a href="gridmanager.html" title="next chapter">gridmanager</a></li>
   </ul></li>
   </ul></li>
 </ul>

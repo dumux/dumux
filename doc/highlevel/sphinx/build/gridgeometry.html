@@ -19,6 +19,7 @@
     <script>mermaid.initialize({startOnLoad:true});</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="gridview" href="gridview.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -37,15 +38,35 @@
             
   <section id="gridgeometry">
 <h1>gridgeometry<a class="headerlink" href="#gridgeometry" title="Permalink to this heading">¶</a></h1>
-<p>A grid geometry is an abstraction of a finite-volume discretization. Given a <a class="reference internal" href="gridview.html#gridview"><span class="std std-ref">gridview</span></a>, the grid geometry constructs all geometrical and topological data necessary to evaluate the discrete equation resulting from a given finite volume scheme.</p>
+<p>A grid geometry is an abstraction of a finite-volume discretization and differs from discretization to discretization. Given a <a class="reference internal" href="gridview.html#gridview"><span class="std std-ref">gridview</span></a>, the grid geometry constructs all geometrical and topological data necessary to evaluate the discrete equation resulting from a given finite volume scheme. All grid geometries inherit from the <a class="reference external" href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/discretization/basicgridgeometry.hh">basic grid geometry</a>.</p>
 <section id="functionalities">
 <h2>Functionalities<a class="headerlink" href="#functionalities" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p>elementMapper()</p></li>
+<li><p>update()</p></li>
+<li><p>gridView()</p></li>
 <li><p>vertexMapper()</p></li>
-<li><p>boundingBox()</p></li>
+<li><p>elementMapper()</p></li>
+<li><p>boundingBoxTree()</p></li>
+<li><p>elementMap()</p></li>
+<li><p>element()</p></li>
+<li><p>bBoxMin()</p></li>
+<li><p>bBoxMax()</p></li>
 </ol>
 </section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<div class="mermaid">
+            flowchart LR
+    A(Grid) --&gt;|&quot;template parameter for declaration&quot;| B(gridManager)
+    B --&gt;|&quot;init()&quot;| C(grid)
+    C --&gt;|&quot;gridView()&quot;| D(gridView)
+    D --&gt; |&quot;argument for constructor&quot;| E(gridgeometry)
+    click A &quot;./grid.html&quot;
+    click B &quot;./gridmanager.html&quot;
+    click C &quot;./grid.html&quot;
+    click D &quot;./gridview.html&quot;
+    click E &quot;./gridgeometry.html&quot;
+        </div></section>
 </section>
 
 
@@ -66,16 +87,19 @@
 
 <h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newtonloop.html">Newton Loop</a></li>
-<li class="toctree-l1"><a class="reference internal" href="classes.html">Classes</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="classes.html">Classes</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="classes.html">Classes</a><ul>
+      <li>Previous: <a href="gridview.html" title="previous chapter">gridview</a></li>
+  </ul></li>
   </ul></li>
 </ul>
 </div>

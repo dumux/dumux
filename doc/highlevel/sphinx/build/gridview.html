@@ -38,7 +38,29 @@
             
   <section id="gridview">
 <h1>gridview<a class="headerlink" href="#gridview" title="Permalink to this heading">¶</a></h1>
-<p>A gridView is a representation of the grid given a hierarchical view and provides read-only access to certain parts of the grid. A LeafGridView is a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a hierarchy) while a LevelGridView is a view on all elements of a given level of a refinement hierarchy. The grid view is given by the grid. The leaf grid view can be accessed by <code class="docutils literal notranslate"><span class="pre">gridManager.grid().leafGridView()</span></code>.</p>
+<p>A gridView is a representation of the grid given a hierarchical view and provides read-only access to certain parts of the grid. A LeafGridView is a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a hierarchy) while a LevelGridView is a view on all elements of a given level of a refinement hierarchy. The grid view is given by the grid. The leaf grid view can be accessed by <code class="docutils literal notranslate"><span class="pre">gridManager.grid().leafGridView()</span></code>, the level grid view by <code class="docutils literal notranslate"><span class="pre">gridManager.grid().levelGridView()</span></code>. The <a class="reference external" href="https://gitlab.dune-project.org/core/dune-grid/-/blob/master/dune/grid/common/defaultgridview.hh">default grid view</a> is part of the dune-grid module</p>
+<section id="functionalities">
+<h2>Functionalities<a class="headerlink" href="#functionalities" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>grid()</p></li>
+<li><p>size()</p></li>
+<li><p>comm()</p></li>
+<li><p>overlapSize()</p></li>
+<li><p>ghostSize()</p></li>
+</ol>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<div class="mermaid">
+            flowchart LR
+    A(Grid) --&gt;|&quot;template parameter for declaration&quot;| B(gridManager)
+    B --&gt;|&quot;init()&quot;| C(grid)
+    C --&gt;|&quot;gridView()&quot;| D(gridView)
+    click A &quot;./grid.html&quot;
+    click B &quot;./gridmanager.html&quot;
+    click C &quot;./grid.html&quot;
+    click D &quot;./gridview.html&quot;
+        </div></section>
 </section>
 
 

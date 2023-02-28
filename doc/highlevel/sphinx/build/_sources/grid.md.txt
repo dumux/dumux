@@ -22,4 +22,27 @@ Depending on the needs, one has to choose the proper grid. Some grids and what c
 * OPMGrid (Open Porous Media Grid): supports corner-point format
 * [Many more](https://www.dune-project.org/groups/grid/)
 
-Within Dumux, the grid type is set within the `properties.hh` file. Standard grids like YASPGrid, AlbertaGrid and OneDGrid are included in the dune-grid core module. Using other grid types requires downloading the respective DUNE module.
+Within Dumux, the grid type is set within the `properties.hh` file. Standard grids like YASPGrid, AlbertaGrid and OneDGrid are included in the dune-grid core module. Using other grid types requires downloading the respective DUNE module. The [base implementation](https://gitlab.dune-project.org/core/dune-grid/-/blob/master/dune/grid/common/grid.hh) of the grid data member is part of the dune-grid module.
+
+
+### Key functionalites
+1. maxLevel()
+2. size()
+3. levelGridView()
+4. leafGridView()
+5. globalRefine()
+6. mark()
+7. preAdapt()
+8. postAdapt()
+9. comm()
+10. loadBalance()
+
+### Overview
+```{mermaid}
+flowchart LR
+    A(Grid) -->|"template parameter for declaration"| B(gridManager)
+    B -->|"init()"| C(grid)
+    click A "./grid.html"
+    click B "./gridmanager.html"
+    click C "./grid.html"
+```
