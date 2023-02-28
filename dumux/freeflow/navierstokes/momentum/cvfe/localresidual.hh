@@ -90,6 +90,7 @@ public:
      * \param fvGeometry The finite-volume geometry of the element
      * \param scv The sub-control volume over which we integrate the storage term
      * \param volVars The volume variables associated with the scv
+     * \param isPreviousStorage If set to true, the storage term is evaluated on the previous time level.
      *
      */
     NumEqVector computeStorage(const Problem& problem,
