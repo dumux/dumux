@@ -231,7 +231,7 @@ test python:
         # up the dune environment.
         if [[ -d /dune/modules/opm-common ]]; then
           cp /dune/modules/dune-common/cmake/modules/FindSuiteSparse.cmake /dune/modules/opm-common/cmake/Modules/FindSuiteSparse.cmake
-          cp /dune/modules/dune-grid/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
+          cp /dune/modules/dune-istl/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
         fi
 
         source bin/testing/ci-setup-python-env.sh
