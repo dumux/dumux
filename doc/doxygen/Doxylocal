@@ -1,8 +1,8 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
-PROJECT_NAME          = "DuMuX" # a hack to get a version number but no title (is in the logo already), also see css (under #projectname)
-PROJECT_BRIEF         = "DUNE for Multi-{Phase, Component, Scale, Physics, ...} flow and transport in porous media"
+PROJECT_NAME          = "DuMuX"
+PROJECT_BRIEF         = "DUNE for Multi-{Phase, Component, Scale, Physics, Domain, ...} flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
@@ -23,9 +23,15 @@ LAYOUT_FILE            = @srcdir@/DoxygenDumuxLayout.xml
 
 HTML_HEADER            = @srcdir@/header.html
 
-HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css
+HTML_EXTRA_FILES       = @srcdir@/doxygen-awesome-darkmode-toggle.js \
+                         @srcdir@/doxygen-awesome-fragment-copy-button.js \
+                         @srcdir@/doxygen-awesome-paragraph-link.js \
+                         @srcdir@/doxygen-awesome-interactive-toc.js \
 
-HTML_FILE_EXTENSION    = .xhtml
+HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \
+                         @srcdir@/custom.css
+
+HTML_FILE_EXTENSION    = .html
 
 USE_MATHJAX            = YES
 
@@ -48,8 +54,7 @@ DOT_GRAPH_MAX_NODES    = 100
 
 DOT_IMAGE_FORMAT       = svg
 
-# uncomment for the website
-# SHORT_NAMES           = NO
+SHORT_NAMES           = NO
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES

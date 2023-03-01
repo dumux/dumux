@@ -1,0 +1,198 @@
+/*https://bryce.io/gitlab-corners/*/
+.gitlab-corner-wrapper{
+    overflow:hidden;
+    width:100px;
+    height:100px;
+    position:absolute;
+    top:0;
+    right:0
+}
+.gitlab-corner{
+    position:absolute;
+    top:-16px;
+    right:-50px;
+    transform:rotate(45deg);
+    background:#eee;
+    border:#eee solid 44px;
+    border-bottom:none;
+    border-top:#eee solid 16px
+}
+.gitlab-corner svg{
+    width:60px;
+    height:60px;
+    margin-bottom:-4px
+}
+.cls-r-1{
+    fill:#dd1f26
+}
+.cls-r-2{
+    fill:#f36e38
+}
+.cls-r-3{
+    fill:#ff8016
+}
+.cls-r-4{
+    fill:#009147
+}
+.cls-r-5{
+    fill:#2e358e
+}
+.cls-r-6{
+    fill:#672f8f
+}
+.gitlab-corner:hover .cls-r-1{
+    animation:rC1 .6s
+}
+.gitlab-corner:hover .cls-r-2{
+    animation:rC2 .6s
+}
+.gitlab-corner:hover .cls-r-3{
+    animation:rC3 .6s
+}
+.gitlab-corner:hover .cls-r-4{
+    animation:rC4 .6s
+}
+.gitlab-corner:hover .cls-r-5{
+    animation:rC5 .6s
+}
+.gitlab-corner:hover .cls-r-6{
+    animation:rC6 .6s
+}
+@keyframes rC1{
+    15%{
+        fill:#dd1f26
+    }
+    30%{
+        fill:#f36e38
+    }
+    45%{
+        fill:#ff8016
+    }
+    60%{
+        fill:#009147
+    }
+    75%{
+        fill:#2e358e
+    }
+    90%{
+        fill:#672f8f
+    }
+    100%{
+        fill:#dd1f26
+    }
+}
+@keyframes rC2{
+    15%{
+        fill:#f36e38
+    }
+    30%{
+        fill:#ff8016
+    }
+    45%{
+        fill:#009147
+    }
+    60%{
+        fill:#2e358e
+    }
+    75%{
+        fill:#672f8f
+    }
+    90%{
+        fill:#dd1f26
+    }
+    100%{
+        fill:#f36e38
+    }
+}
+@keyframes rC3{
+    15%{
+        fill:#ff8016
+    }
+    30%{
+        fill:#009147
+    }
+    45%{
+        fill:#2e358e
+    }
+    60%{
+        fill:#672f8f
+    }
+    75%{
+        fill:#dd1f26
+    }
+    90%{
+        fill:#f36e38
+    }
+    100%{
+        fill:#ff8016
+    }
+}
+@keyframes rC4{
+    15%{
+        fill:#009147
+    }
+    30%{
+        fill:#2e358e
+    }
+    45%{
+        fill:#672f8f
+    }
+    60%{
+        fill:#dd1f26
+    }
+    75%{
+        fill:#f36e38
+    }
+    90%{
+        fill:#ff8016
+    }
+    100%{
+        fill:#009147
+    }
+}
+@keyframes rC5{
+    15%{
+        fill:#2e358e
+    }
+    30%{
+        fill:#672f8f
+    }
+    45%{
+        fill:#dd1f26
+    }
+    60%{
+        fill:#f36e38
+    }
+    75%{
+        fill:#ff8016
+    }
+    90%{
+        fill:#009147
+    }
+    100%{
+        fill:#2e358e
+    }
+}
+@keyframes rC6{
+    15%{
+        fill:#672f8f
+    }
+    30%{
+        fill:#dd1f26
+    }
+    45%{
+        fill:#f36e38
+    }
+    60%{
+        fill:#ff8016
+    }
+    75%{
+        fill:#009147
+    }
+    90%{
+        fill:#2e358e
+    }
+    100%{
+        fill:#672f8f
+    }
+}
