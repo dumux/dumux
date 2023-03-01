@@ -410,7 +410,7 @@
  *  - __Fluid state:__ <br> @copydoc FluidStates
  *  - __Solid state:__ <br> @copydoc SolidStates
  *  - __Fluid system:__ <br> @copydoc Fluidsystems
- *  - __Solid system:__ <br> @copydoc Solidsystems
+ *  - __Solid system:__ <br> @copydoc SolidSystems
  *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
  */
     /*!
