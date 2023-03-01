@@ -23,7 +23,7 @@ LAYOUT_FILE            = @srcdir@/DoxygenDumuxLayout.xml
 
 HTML_HEADER            = @srcdir@/header.html
 
-HTML_EXTRA_STYLESHEET  = @srcdir@/customdoxygendumux.css
+HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css
 
 HTML_FILE_EXTENSION    = .xhtml
 
@@ -50,3 +50,9 @@ DOT_IMAGE_FORMAT       = svg
 
 # uncomment for the website
 # SHORT_NAMES           = NO
+
+# Settings required for doxygen-awesome theme
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
+HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
