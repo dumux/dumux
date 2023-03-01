@@ -1,16 +1,14 @@
 /*!
  * \file
  *
- * \brief documentation for the doxygen main page
+ * \brief DuMuX Documentation main page
  */
 
-/** \mainpage DuMu<sup>X</sup> Documentation
+/** \mainpage DuMuX Documentation
 
 \section intro Introduction
 
-Welcome to the DuMu<sup>X</sup> documentation pages. This documentation has been
-generated using <a href="http://www.doxygen.org/index.html">Doxygen</a>, a free source code documentation system for
-documenting C/C++ code.
+Welcome to the DuMu<sup>X</sup> documentation pages.
 
 \section mods Modules
 
