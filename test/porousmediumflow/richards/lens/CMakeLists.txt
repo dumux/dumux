@@ -116,7 +116,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"S_liq":1e-3,"water content":1e-3}
+              CMD_ARGS --script fuzzy --ignore "process rank"--zeroThreshold {"S_liq":1e-3,"water content":1e-3}
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_parallel_yasp_restart-00004.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
@@ -132,7 +132,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_ug
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+              CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_ug-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_ug params.input -Problem.Name test_richards_lens_box_parallel_ug")
@@ -143,7 +143,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_ug
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+              CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_ug-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_ug params.input -Problem.Name test_richards_lens_tpfa_parallel_ug")
@@ -154,7 +154,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_alu
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+              CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_alu-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_alu params.input -Problem.Name test_richards_lens_box_parallel_alu")
@@ -165,7 +165,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_alu
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+              CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_alu-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_alu params.input -Problem.Name test_richards_lens_tpfa_parallel_alu")
