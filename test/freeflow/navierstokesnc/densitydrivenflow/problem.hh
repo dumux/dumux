@@ -122,6 +122,12 @@ public:
         useWholeLength_ = getParam<bool>("Problem.UseWholeLength");
         FluidSystem::init();
         deltaRho_.resize(this->gridGeometry().numCellCenterDofs());
+        name_ = getParam<std::string>("Problem.Name")
+#if PRECONDITIONER_TEST==1
+        +"PRECONDITIONER_TEST"
+#endif
+        ;
+
     }
 
    /*!
@@ -259,7 +265,10 @@ public:
     const std::vector<Scalar>& getDeltaRho() const
     { return deltaRho_; }
 
-
+    const std::string& name() const
+    {
+        return name_;
+    }
 
     // \}
 
@@ -272,6 +281,8 @@ private:
     const Scalar eps_;
     bool useWholeLength_;
     std::vector<Scalar> deltaRho_;
+
+    std::string name_;
 };
 } // end namespace Dumux
 

@@ -22,3 +22,23 @@ MaxRelativeShift = 1e-8
 
 [Vtk]
 WriteFaceData = false
+
+
+[LinearSolver]
+ResidualReduction = 1e-2
+Verbosity = 0
+
+[LinearSolver.Preconditioner]
+Verbosity = 0
+Iterations = 2
+SimpleSolverVerbosity = 0
+SimpleSolverType = cgsolver
+SimpleSolverResidualReduction = 0.1
+InvertSchurComplementA = false
+RelaxationP = 0.7
+RelaxationU = 0.3
+UseDiagonalInSchurComplement = true
+UseDiagonalInUpdate = true
+DirectSolverForA = false
+DirichletHack = true
+DirectVelocitySolver = false

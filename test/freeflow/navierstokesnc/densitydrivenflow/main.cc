@@ -45,6 +45,13 @@
 
 #include "problem.hh"
 
+#if PRECONDITIONER_TEST==1
+#include <dumux/linear/linearsolvertraits.hh>
+#ifndef IMPLICIT_EULER
+#define IMPLICIT_EULER true
+#endif
+
+#endif
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -111,7 +118,15 @@ int main(int argc, char** argv) try
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addField(problem->getDeltaRho(), "deltaRho");
     vtkWriter.write(0.0);
+#if PRECONDITIONER_TEST==1
+    // the assembler with time loop for instationary problem
+    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric, IMPLICIT_EULER>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
+    // the linear solver
+    using LinearSolver = SimpleBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
+#else
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
@@ -119,6 +134,7 @@ int main(int argc, char** argv) try
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

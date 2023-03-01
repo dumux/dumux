@@ -424,8 +424,14 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
     static_assert(Dumux::isMultiTypeBlockMatrix<M>::value && M::M() == 2 && M::N() == 2, "SeqSimple expects a 2x2 MultiTypeBlockMatrix.");
     static_assert(l== 1, "SeqSimple expects a block level of 1.");
 
-    using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
-    using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+//     using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_5][Dune::Indices::_5])>;
+//     using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_5])>;
+
+    template<std::size_t i, std::size_t j>
+    using A = std::decay_t<decltype(std::declval<M>()[Dune::index_constant<i>{}][Dune::index_constant<j>{}])>;
+
+    template<std::size_t i>
+    using U = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
 
     using Comm = Dune::Amg::SequentialInformation;
     using LinearOperator = Dune::MatrixAdapter<A, U, U>;
