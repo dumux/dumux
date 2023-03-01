@@ -2,7 +2,7 @@
 # please us '+=' to add file/directories to the lists
 
 PROJECT_NAME          = "DuMuX"
-PROJECT_BRIEF         = "DUNE for Multi-{Phase, Component, Scale, Physics, Domain, ...} flow and transport in porous media"
+PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
@@ -29,6 +29,8 @@ HTML_EXTRA_FILES       = @srcdir@/doxygen-awesome-darkmode-toggle.js \
                          @srcdir@/doxygen-awesome-interactive-toc.js \
 
 HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \
+                         @srcdir@/doxygen-awesome-sidebar-only.css \
+                         @srcdir@/doxygen-awesome-sidebar-only-darkmode-toggle.css \
                          @srcdir@/custom.css
 
 HTML_FILE_EXTENSION    = .html
@@ -58,6 +60,7 @@ SHORT_NAMES           = NO
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES
+TREEVIEW_WIDTH         = 420
 DISABLE_INDEX = NO
 FULL_SIDEBAR = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
