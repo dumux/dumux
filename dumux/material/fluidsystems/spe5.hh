@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::Spe5
  */
 #ifndef DUMUX_SPE5_FLUID_SYSTEM_HH
@@ -34,7 +34,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief The fluid system for the SPE-5 benchmark problem.
  *
  * A three-phase fluid system featuring gas, oil and water as phases and the seven

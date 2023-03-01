@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::H2OHeavyOil
  */
 #ifndef DUMUX_H2O_HEAVYOIL_FLUID_SYSTEM_HH
@@ -39,7 +39,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A compositional fluid system with water and heavy oil
  *        components in both the liquid and the gas phase.
  */

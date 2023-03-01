@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
@@ -43,7 +43,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A three-phase fluid system featuring gas, NAPL and water as phases and
  *        distilled water \f$(\mathrm{H_2O})\f$ and air (Pseudo component composed of
  *        \f$\mathrm{79\%\;N_2}\f$, \f$\mathrm{20\%\;O_2}\f$ and Mesitylene \f$(\mathrm{C_6H_3(CH_3)_3})\f$ as components.

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::NullParameterCache
  */
 #ifndef DUMUX_NULL_PARAMETER_CACHE_HH
@@ -28,7 +28,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief The a parameter cache which does nothing
  */
 class NullParameterCache : public ParameterCacheBase<NullParameterCache> {};

@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::H2OAir
  */
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH
@@ -43,7 +43,7 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Policy for the H2O-air fluid system
  */
 template<bool fastButSimplifiedRelations = false>
@@ -55,7 +55,7 @@ struct H2OAirDefaultPolicy
 };
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  *
  * \brief A compositional two-phase fluid system with water and air as
  *        components in both, the liquid and the gas phase.

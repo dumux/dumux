@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::LiquidPhaseTwoC
  */
 #ifndef DUMUX_LIQUID_TWOC_PHASE_HH
@@ -36,7 +36,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A liquid phase consisting of a two components,
  *        a main component and a conservative tracer component
  */

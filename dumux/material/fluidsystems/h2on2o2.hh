@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
@@ -48,7 +48,7 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Policy for the H2O-N2-O2 fluid system
  */
 template<bool fastButSimplifiedRelations = false>
@@ -62,7 +62,7 @@ struct H2ON2O2DefaultPolicy
 };
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A two-phase (water and air) fluid system
  *        with water, nitrogen and oxygen as components.
  *
