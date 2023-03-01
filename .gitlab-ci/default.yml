@@ -219,6 +219,21 @@ test python:
         else
           echo "Detected changes in the Python bindings/Python code: considering all Python tests."
         fi
+
+        # WARNING: this is a hack, but probably requires an upstream fix in DUNE?
+        # The issue is that the JIT compilation setup fails with cmake errors when
+        # opm is present. Cmake complains that the SuperLU::SuperLU target is not found
+        # (and maybe also SuiteSparse). OPM has its own find modules for these two, and 
+        # (maybe) overwrites some compiler flags. Upstream fixes would be to either allow
+        # "deactivation" of certain python modules (here: opm), or fixing the incompatibility
+        # of the find modules (although this doesn't appear to be an issue in C++). For now,
+        # one fix is to overwrite the find modules in opm with those of dune before setting
+        # up the dune environment.
+        if [[ -d /dune/modules/opm-common ]]; then
+          cp /dune/modules/dune-common/cmake/modules/FindSuiteSparse.cmake /dune/modules/opm-common/cmake/Modules/FindSuiteSparse.cmake
+          cp /dune/modules/dune-grid/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
+        fi
+
         source bin/testing/ci-setup-python-env.sh
         pushd build-cmake
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
