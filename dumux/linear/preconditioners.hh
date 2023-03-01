@@ -458,7 +458,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
             // convenience variables
             const auto& deltaP = x;
             auto& rhs = y;
-            std::cout << "x = " << x << " aend dann y = " << y << std::endl;
+
             using namespace Dune::Indices;
             auto& B = m_[_0][_1];
             auto& C = m_[_1][_0];
