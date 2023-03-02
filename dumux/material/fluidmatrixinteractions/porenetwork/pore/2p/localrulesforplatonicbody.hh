@@ -588,7 +588,6 @@ private:
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \ingroup PoreNetworkModels
  * \brief A default configuration for using the VanGenuchten material law
  */
 template<Pore::Shape shape, typename Scalar = double>
@@ -599,7 +598,6 @@ using TwoPLocalRulesPlatonicBodyDefault = SingleShapeTwoPLocalRules<Scalar,
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \ingroup PoreNetworkModels
  * \brief A default configuration without regularization for using the VanGenuchten material law
  */
 template<Pore::Shape shape, typename Scalar = double>

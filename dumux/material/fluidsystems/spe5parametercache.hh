@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::Spe5ParameterCache
  */
 #ifndef SPE5_PARAMETER_CACHE_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Specifies the parameters required by the SPE5 problem which
  *        are despondent on the thermodynamic state.
  */

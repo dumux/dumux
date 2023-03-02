@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::ParameterCacheBase
  */
 #ifndef DUMUX_PARAMETER_CACHE_BASE_HH
@@ -27,7 +27,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief The base class of the parameter cache classes for fluid systems
  */
 template <class Implementation>

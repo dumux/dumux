@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_FLUID_SYSTEM_HH
@@ -84,7 +84,7 @@ namespace Dumux::FluidSystems::Detail {
 namespace Dumux::FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Default policy for the Brine-CO2 fluid system
  */
 template<bool salinityIsConstant, bool fastButSimplifiedRelations = false>
@@ -95,7 +95,7 @@ struct BrineCO2DefaultPolicy
 };
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A compositional fluid with brine (H2O & NaCl) and carbon dioxide as
  *        components in both the liquid and the gas (supercritical) phase.
  *

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::TwoPOneC
  */
 #ifndef DUMUX_2P_1C_FLUID_SYSTEM_HH
@@ -37,7 +37,7 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A two-phase fluid system with only one component.
  */
 template <class Scalar, class ComponentType>

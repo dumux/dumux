@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::ThreePImmiscible
  */
 #ifndef DUMUX_3P_IMMISCIBLE_FLUID_SYSTEM_HH
@@ -40,7 +40,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A fluid system for three-phase models assuming immiscibility and
  *        thermodynamic equilibrium
  *

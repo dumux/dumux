@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::OnePGas
  */
 #ifndef DUMUX_GAS_PHASE_HH
@@ -37,7 +37,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A gaseous phase consisting of a single component
  */
 template <class Scalar, class ComponentT>

@@ -3,6 +3,8 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 ### General changes / structure
 
+- __Testing/CI__: One of the CI pipelines now includes a build of the `doxygen` documentation. The result of this
+build can be downloaded from the job artifacts.
 
 ### Improvements and Enhancements
 

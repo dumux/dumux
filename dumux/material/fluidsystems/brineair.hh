@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_FLUID_SYSTEM_HH
@@ -48,7 +48,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Policy for the brine-air fluid system
  */
 template<bool fastButSimplifiedRelations = false>
@@ -60,7 +60,7 @@ struct BrineAirDefaultPolicy
 };
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A compositional two-phase fluid system with a liquid and a gaseous phase
  *        and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
  *

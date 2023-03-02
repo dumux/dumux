@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesProblem
+ * \copydoc Dumux::NavierStokesMassProblem
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_MASS_PROBLEM_HH

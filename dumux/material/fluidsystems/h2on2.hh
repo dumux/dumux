@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copydoc Dumux::FluidSystems::H2ON2
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_HH
@@ -43,7 +43,7 @@
 namespace Dumux {
 namespace FluidSystems {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief Policy for the H2O-N2 fluid system
  */
 template<bool fastButSimplifiedRelations = false>
@@ -57,7 +57,7 @@ struct H2ON2DefaultPolicy
 };
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  *
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
  *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.

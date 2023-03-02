@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A fluid system for brine, i.e. H2O with dissolved NaCl.
  */
 #ifndef DUMUX_BRINE_FLUID_SYSTEM_HH
@@ -38,7 +38,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A compositional single phase fluid system consisting of
  *        two components, which are H2O and NaCl.
  */

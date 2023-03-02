@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::OnePAdapter
  */
 #ifndef DUMUX_FLUIDSYTEMS_ONEP_ADAPTER_HH
@@ -35,7 +35,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief An adapter for multi-phase fluid systems to be used with (compositional) one-phase models
  * \tparam MPFluidSystem the multi-phase fluid system to be adapted
  * \tparam phase the index of the phase we choose from the multi-phase fluid system

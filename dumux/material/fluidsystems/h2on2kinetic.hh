@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copydoc Dumux::FluidSystems::H2ON2Kinetic
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
@@ -39,7 +39,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
  *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models. TODO: Is this fluid system necessary??
  */

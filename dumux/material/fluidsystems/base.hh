@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::Base
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
@@ -34,7 +34,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
-* \ingroup Fluidsystems
+* \ingroup FluidSystems
 * \brief Fluid system base class.
 *
 * \note Always derive your fluid system from this class to be sure

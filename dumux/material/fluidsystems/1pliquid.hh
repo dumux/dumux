@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::OnePLiquid
  */
 #ifndef DUMUX_LIQUID_PHASE_HH
@@ -37,7 +37,7 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup Fluidsystems
+ * \ingroup FluidSystems
  * \brief A liquid phase consisting of a single component
  */
 template <class Scalar, class ComponentT>
