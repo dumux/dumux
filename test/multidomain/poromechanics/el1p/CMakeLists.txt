@@ -33,7 +33,7 @@ dumux_add_test(NAME test_md_poromechanics_el1p_parallel_yasp
 dumux_add_test(NAME test_md_poromechanics_el1p_parallel_ug
                SOURCES main.cc
                LABELS multidomain poromechanics 1p poroelastic
-               CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
+               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS  --script fuzzy
