@@ -17,6 +17,13 @@ find_package(PVPython QUIET)
 find_package(Kokkos QUIET)
 include(AddKokkosFlags)
 
+# test if compiler supports std::format
+check_cxx_symbol_exists(
+  "__cpp_lib_format"
+  "format"
+  DUMUX_HAVE_STD_FORMAT
+)
+
 # possibly link against TBB
 # even if an older version is found
 # otherwise we get linker errors

@@ -30,12 +30,27 @@
 #ifndef DUMUX_IO_FORMAT_HH
 #define DUMUX_IO_FORMAT_HH
 
+#if __has_include(<format>) // cppcheck-suppress preprocessorErrorDirective
+#include <format>
+#endif
+
 #include <dumux/io/format/fmt/format.h>
 #include <dumux/io/format/fmt/ranges.h>
 
 //! Formatting tools in the style of std::format (C++20)
 namespace Dumux::Fmt {
 
+#if __cpp_lib_format
+// use std::format from C++20
+using std::format;
+using std::format_to;
+using std::format_to_n;
+using std::formatted_size;
+using std::vformat;
+using std::vformat_to;
+using std::make_format_args;
+#else
+// use fallback fmt library
 using Dumux::Detail::fmt::format;
 using Dumux::Detail::fmt::format_to;
 using Dumux::Detail::fmt::format_to_n;
@@ -43,6 +58,7 @@ using Dumux::Detail::fmt::formatted_size;
 using Dumux::Detail::fmt::vformat;
 using Dumux::Detail::fmt::vformat_to;
 using Dumux::Detail::fmt::make_format_args;
+#endif
 
 } // end namespace Dumux::Fmt
 
