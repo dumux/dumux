@@ -1,6 +1,6 @@
 # Newton Loop
 
-A Newton algorithm is an iterative method used to solve non-linear equations, including non-linear partial differential equations (PDEs). It works by starting with an initial guess for the solution to the PDE, and then iteratively improving that guess until a solution is found. The algortihm is implemented in {ref}`newtonSolver`.
+A Newton algorithm is an iterative method used to solve non-linear equations, including non-linear partial differential equations (PDEs). It works by starting with an initial guess for the solution to the PDE, and then iteratively improving that guess until a solution is found. The algorithm is implemented in {ref}`newtonSolver`.
 
 Here's how it works in more detail:
 

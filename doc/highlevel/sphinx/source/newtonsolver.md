@@ -1,6 +1,6 @@
 ## newtonSolver
 
-|The newtonSolver class is used to execute the newton algorithm described in {ref}`Newton Loop`. The assembly of the linear system is instanciated. Furthermore, a linear solver is used to solve the linear system of equations. In the newtonSolver class the evaluation of the solution is done.|
+|The newtonSolver class is used to execute the newton algorithm described in {ref}`Newton Loop`. The assembly of the linear system is instantiated. Furthermore, a linear solver is used to solve the linear system of equations. In the newtonSolver class the evaluation of the solution is done.|
 | :--- |
 
 ### Key functionalities

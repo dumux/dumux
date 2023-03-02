@@ -2,7 +2,7 @@
 1) mkdir python-environments && cd python-environments
 2) virtualenv --python=python3 sphinx (sphinx here is just the name)
 3) source sphinx/bin/activate
-4) Install the following packages within the python evironment (need to be done only once):
+4) Install the following packages within the python environment (need to be done only once):
 4.1) sudo apt-get install python3-sphinx
 4.2) pip install myst-parser
 4.3) pip install sphinxcontrib-mermaid

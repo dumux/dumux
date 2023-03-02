@@ -15,7 +15,7 @@ Depending on the needs, one has to choose the proper grid. Some grids and what c
 * [OneDGrid](https://gitlab.dune-project.org/core/dune-grid) (One Dimensional Grid): 1D, adaptive
 * [ALUGrid](https://gitlab.dune-project.org/extensions/dune-alugrid) (adaptive, loadbalancing, unstructured Grid): adaptive, loadbalancing, unstructured
 * [UGGrid](https://gitlab.dune-project.org/staging/dune-uggrid) (Unstructured Grid): 2D/3D, unstructured grid, can be refined
-* [FoamGrid](https://gitlab.dune-project.org/extensions/dune-foamgrid): 1D/2D grids in physcial space of arbitrary dimension, no manifold structures expected. Best for simulating foams, discrete fracture networks, network flow problems
+* [FoamGrid](https://gitlab.dune-project.org/extensions/dune-foamgrid): 1D/2D grids in physical space of arbitrary dimension, no manifold structures expected. Best for simulating foams, discrete fracture networks, network flow problems
 * [SPGrid](https://gitlab.dune-project.org/extensions/dune-spgrid) (Sparse Paged Grid): structured, parallel
 * [MMESHGrid](https://gitlab.dune-project.org/samuel.burbulla/dune-mmesh): can handle moving, physical interfaces
 * [SubGrid](https://gitlab.dune-project.org/extensions/dune-subgrid): allows to mark subset of a grid's elements and these elements can be treated in a hierarchy of their own
