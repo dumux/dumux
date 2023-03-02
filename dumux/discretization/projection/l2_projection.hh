@@ -64,7 +64,7 @@ public:
     {}
 
     template <class Function>
-    CoefficientVector project(Function&& function, const Params& params = Params{})
+    CoefficientVector project(Function&& function, const Params& params = Params{}) const
     {
         CoefficientVector projection, rhs;
         projection.resize(feBasis_.size());
