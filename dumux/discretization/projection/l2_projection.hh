@@ -23,6 +23,7 @@
  */
 #ifndef DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 #define DUMUX_DISCRETIZATION_L2_PROJECTION_HH
+#if HAVE_DUNE_FUNCTIONS
 
 #include <vector>
 
@@ -31,6 +32,7 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/functions/gridviewfunction.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -162,4 +164,5 @@ private:
 
 } // end namespace Dumux
 
+#endif // HAVE_DUNE_FUNCTIONS
 #endif
