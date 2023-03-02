@@ -1,0 +1,6 @@
+flowchart LR
+    A(newtonSolver) -->|"assembleJacobianAndResidual()"| B(assembler)
+    A -->|"solve()"| C(linearSolver)
+    click A "./newtonsolver.html"
+    click B "./assembler.html"
+    click C "./linearsolver.html"

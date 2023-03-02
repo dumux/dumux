@@ -6,14 +6,27 @@ PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
-INPUT                 += @srcdir@/mainpage.txt \
+INPUT                 += @srcdir@/mainpage.md \
                          @srcdir@/modules.txt \
-                         @top_srcdir@/dumux \
-                         @srcdir@/extradoc/parameterlist.txt
+                         @srcdir@/highleveldocs/highleveldocu.md \
+                         @srcdir@/highleveldocs/classes.md \
+                         @srcdir@/highleveldocs/overview.md \
+                         @srcdir@/highleveldocs/assembler.md \
+                         @srcdir@/highleveldocs/localassembler.md \
+                         @srcdir@/highleveldocs/localresidual.md \
+                         @srcdir@/highleveldocs/newtonsolver.md \
+                         @srcdir@/highleveldocs/newtonloop.md \
+                         @srcdir@/highleveldocs/linearsolver.md \
+                         @srcdir@/highleveldocs/gridgeometry.md \
+                         @srcdir@/highleveldocs/gridvariables.md
+
+
+USE_MDFILE_AS_MAINPAGE = @srcdir@/mainpage.md
 
 EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
 
-EXAMPLE_PATH          += @srcdir@/extradoc
+EXAMPLE_PATH          += @srcdir@/extradoc \
+                         @srcdir@/graphs/
 
 IMAGE_PATH             = @srcdir@/images
 
@@ -40,7 +53,9 @@ USE_MATHJAX            = YES
 
 EXCLUDE_PATTERNS       = *_.hh
 
-ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
+ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\"" \
+                         mermaid{1}="@htmlonly <div class=\"mermaid\"> ^^ @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly ^^ </div> @endhtmlonly"
+
 
 # enable client side searching
 SEARCHENGINE           = YES
@@ -53,11 +68,18 @@ CITE_BIB_FILES         = @top_srcdir@/doc/handbook/dumux-handbook.bib
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 
+# When the TOC_INCLUDE_HEADINGS tag is set to a non-zero value, all headings up
+# to that level are automatically included in the table of contents, even if
+# they do not have an id attribute.
+TOC_INCLUDE_HEADINGS   = 0
+
 DOT_GRAPH_MAX_NODES    = 100
 
 DOT_IMAGE_FORMAT       = svg
 
 SHORT_NAMES           = NO
+
+DISABLE_INDEX          = YES
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES

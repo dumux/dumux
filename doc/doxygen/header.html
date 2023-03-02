@@ -49,6 +49,7 @@ $mathjax
 $extrastylesheet
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
 <!-- https://bryce.io/gitlab-corners/ -->
 <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux" class="gitlab-corner" aria-label="View source on GitLab">
@@ -88,5 +89,15 @@ $extrastylesheet
  </tbody>
 </table>
 </div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#f4f4ff',
+      secondaryColor: 'rgba(244,244,255,0.9)',
+      tertiaryColor: '#F9FAFC',
+    },
+  });
 <!--END TITLEAREA-->
 <!-- end header part -->
