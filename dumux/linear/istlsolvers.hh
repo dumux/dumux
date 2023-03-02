@@ -39,6 +39,7 @@
 #include <dumux/linear/operators.hh>
 #include <dumux/linear/scalarproducts.hh>
 #include <dumux/linear/preconditioners.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dune/istl/foreach.hh>
 
@@ -938,7 +939,7 @@ public:
         using LOP = TupleLinearOperator<Vector, Matrix, decltype(prec->linearOperators())>;
         auto op = std::make_shared<LOP>(prec->linearOperators(), A);
 
-        auto rank = Dune::MPIHelper::getCollectiveCommunication().rank();
+        auto rank = Dune::MPIHelper::getCommunication().rank();
         if (rank != 0)
             params_["verbose"] = "0";
         InverseOperator solver(op, scalarProduct_, prec, params_);
