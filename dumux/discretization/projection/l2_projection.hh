@@ -32,7 +32,7 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/functions/gridviewfunction.hh>
+#include <dune/functions/gridfunctions/gridviewfunction.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/assembly/jacobianpattern.hh>
