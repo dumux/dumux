@@ -23,6 +23,7 @@ INPUT                 += @srcdir@/mainpage.md \
                          @srcdir@/highleveldocs/gridvariables.md \
                          @srcdir@/highleveldocs/gridvolumevariables.md \
                          @srcdir@/highleveldocs/volumevariables.md \
+                         @srcdir@/highleveldocs/elementvolumevariables.md \
 
 
 

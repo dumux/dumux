@@ -8,5 +8,8 @@ If caching is enabled, a gridVolumeVariables object (e.g., curGridVolVars) creat
 Since the smallest entity of a volume is a sub-control-volume in Dumux, the length of the vector is the number of sub-control-volumes.
 One can access entities of that vector with the respective sub-control-volume-index.
 The localAssembler gets access to all needed entities of that vector. This includes all sub-control-volumes of that element.
+In that case the elementVolumeVariables only forward the entries of the globally stored vector.
 
-@subpage volumevariables
+In the case of disabled caching, there is no global vector created.
+
+- @subpage elementvolumevariables
