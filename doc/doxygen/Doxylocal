@@ -6,6 +6,8 @@ PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
+
+
 INPUT                 += @srcdir@/mainpage.md \
                          @srcdir@/modules.txt \
                          @srcdir@/highleveldocs/highleveldocu.md \
@@ -18,7 +20,10 @@ INPUT                 += @srcdir@/mainpage.md \
                          @srcdir@/highleveldocs/newtonloop.md \
                          @srcdir@/highleveldocs/linearsolver.md \
                          @srcdir@/highleveldocs/gridgeometry.md \
-                         @srcdir@/highleveldocs/gridvariables.md
+                         @srcdir@/highleveldocs/gridvariables.md \
+                         @srcdir@/highleveldocs/gridvolumevariables.md \
+                         @srcdir@/highleveldocs/volumevariables.md \
+
 
 
 USE_MDFILE_AS_MAINPAGE = @srcdir@/mainpage.md
@@ -26,7 +31,7 @@ USE_MDFILE_AS_MAINPAGE = @srcdir@/mainpage.md
 EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
 
 EXAMPLE_PATH          += @srcdir@/extradoc \
-                         @srcdir@/graphs/
+                         @srcdir@/graphs/ \
 
 IMAGE_PATH             = @srcdir@/images
 
