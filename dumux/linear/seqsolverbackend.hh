@@ -382,58 +382,6 @@ private:
 };
 
 
-template<class Vector, class ScalarProductTuple>
-class TupleScalarProduct : public Dune::ScalarProduct<Vector>
-{
-    using field_type = typename Dune::ScalarProduct<Vector>::field_type;
-    using real_type = typename Dune::ScalarProduct<Vector>::real_type;
-
-public:
-    /*!
-     * \param comm The communication object for syncing overlap and copy
-     * data points.
-     * \param cat parallel solver category (nonoverlapping or overlapping)
-     */
-    TupleScalarProduct (const ScalarProductTuple& sps)
-    : sps_(sps)
-    {}
-
-    /*! \brief Dot product of two vectors.
-     *       It is assumed that the vectors are consistent on the interior+border
-     *       partition.
-     */
-    field_type dot (const Vector& x, const Vector& y) const override
-    {
-        field_type result(0);
-
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(x)), [&](const auto i)
-        {
-            result += std::get<i>(sps_)->dot(x[i], y[i]);
-        });
-
-        return result;
-    }
-
-    /*! \brief Norm of a right-hand side vector.
-     *       The vector must be consistent on the interior+border partition
-     */
-    real_type norm (const Vector& x) const override
-    {
-        using std::sqrt;
-        return sqrt(dot(x, x));
-    }
-
-    //! Category of the scalar product (see SolverCategory::Category)
-    Dune::SolverCategory::Category category() const
-    {
-        return Dune::SolverCategory::overlapping;
-    }
-
-private:
-    const ScalarProductTuple& sps_;
-};
-
 // \}
 
 } // end namespace Dumux

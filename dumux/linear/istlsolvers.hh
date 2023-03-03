@@ -39,7 +39,6 @@
 #include <dumux/linear/operators.hh>
 #include <dumux/linear/scalarproducts.hh>
 #include <dumux/linear/preconditioners.hh>
-#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dune/istl/foreach.hh>
 
@@ -868,6 +867,32 @@ namespace Dumux {
 template<class LSTraits, class LATraits>
 using SuperLUIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::SuperLU>;
 
+} // namespace Dumux
+
+#endif // HAVE_SUPERLU
+
+#if HAVE_UMFPACK
+#include <dune/istl/umfpack.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief Direct linear solver using the UMFPack library.
+ *
+ * See: Davis, Timothy A. (2004). "Algorithm 832". ACM Transactions on
+ * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
+ * http://faculty.cse.tamu.edu/davis/suitesparse.html
+ */
+template<class LSTraits, class LATraits>
+using UMFPackIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::UMFPack>;
+
+} // end namespace Dumux
+
+#endif // HAVE_UMFPACK
+
+namespace Dumux {
+
 /*!
  * \ingroup Linear
  * \brief Linear solvers preconditioned by a block-diagonal AMG
@@ -886,19 +911,7 @@ class BlockDiagAMGPreconditionedSolver : public LinearSolver
     template<std::size_t i>
     using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
 
-    template<std::size_t i>
-    using ScalarProduct = std::shared_ptr<Dune::ScalarProduct<VecBlockType<i>>>;
-    using ScalarProductTuple = typename makeFromIndexedType<std::tuple,
-                                                            ScalarProduct,
-                                                            std::make_index_sequence<numBlocks>
-                                                           >::type;
-
-    template<std::size_t i>
-    using Comm = std::shared_ptr<Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>>;
-    using CommTuple = typename makeFromIndexedType<std::tuple,
-                                                   Comm,
-                                                   std::make_index_sequence<numBlocks>
-                                                  >::type;
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
 
     template<std::size_t i>
     using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
@@ -998,8 +1011,8 @@ public:
 
 private:
 
-    template <class ParallelTraits, class Comm, class SP, class PH>
-    void prepareCommAndScalarProduct_(std::shared_ptr<Comm>& comm, SP& scalarProduct, PH& parHelper, Category& category)
+    template <class ParallelTraits, class PH>
+    void prepareComm_(std::shared_ptr<Comm>& comm, PH& parHelper, Category& category)
     {
         if constexpr (ParallelTraits::isNonOverlapping)
             category = Dune::SolverCategory::nonoverlapping;
@@ -1008,7 +1021,6 @@ private:
 
         comm = std::make_shared<Comm>(parHelper.gridView().comm(), category);
         parHelper.createParallelIndexSet(*comm);
-        scalarProduct = std::make_shared<typename ParallelTraits::ScalarProduct>(*comm);
     }
 
     template<class GridViewTuple, class DofMapperTuple, std::size_t... Is>
@@ -1027,29 +1039,26 @@ private:
             using DiagBlock = std::decay_t<decltype(std::declval<Matrix>()[i][i])>;
             using RHSBlock = VecBlockType<i>;
 
-            auto& comm = std::get<i>(comms_);
-            auto& scalarProduct = std::get<i>(scalarProducts_);
             auto& parHelper = *std::get<i>(parHelpers_);
 
             if (LSTraits::isNonOverlapping(parHelper.gridView()))
             {
                 using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
+                prepareComm_<PTraits>(comms_[i], parHelper, categories_[i]);
             }
             else
             {
                 using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
-                prepareCommAndScalarProduct_<PTraits>(comm, scalarProduct, parHelper, categories_[i]);
+                prepareComm_<PTraits>(comms_[i], parHelper, categories_[i]);
             }
         });
 
-        scalarProduct_ = std::make_shared<TupleScalarProduct<Vector, ScalarProductTuple>>(scalarProducts_);
+        scalarProduct_ = std::make_shared<ParallelMultiTypeScalarProduct<Vector, Comm>>(comms_);
     }
 
     ParallelHelperTuple parHelpers_;
-    CommTuple comms_;
-    ScalarProductTuple scalarProducts_;
-    std::shared_ptr<TupleScalarProduct<Vector, ScalarProductTuple>> scalarProduct_;
+    std::array<std::shared_ptr<Comm>, numBlocks> comms_;
+    std::shared_ptr<ParallelMultiTypeScalarProduct<Vector, Comm>> scalarProduct_;
     std::array<Category, numBlocks> categories_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
@@ -1068,33 +1077,5 @@ using BlockDiagAMGGMResSolver = BlockDiagAMGPreconditionedSolver<LinearSolverTra
                                                                 >;
 
 } // end namespace Dumux
-
-#endif // HAVE_SUPERLU
-
-#if HAVE_UMFPACK
-#include <dune/istl/umfpack.hh>
-#include <dune/common/version.hh>
-
-namespace Dumux {
-
-/*!
- * \ingroup Linear
- * \brief Direct linear solver using the UMFPack library.
- *
- * See: Davis, Timothy A. (2004). "Algorithm 832". ACM Transactions on
- * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
- * http://faculty.cse.tamu.edu/davis/suitesparse.html
- */
-template<class LSTraits, class LATraits>
-using UMFPackIstlSolver = Detail::DirectIstlSolver<
-    LSTraits, LATraits, Dune::UMFPack
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,10)
-    , false // no need to convert multi-type matrix anymore
-#endif
->;
-
-} // end namespace Dumux
-
-#endif // HAVE_UMFPACK
 
 #endif

@@ -49,7 +49,7 @@ public:
     using real_type = typename Dune::FieldTraits<field_type>::real_type;
     using communication_type = C;
 
-    ParallelMultiTypeScalarProduct (const std::array<std::shared_ptr<const communication_type>, numSubDomains>& comms)
+    ParallelMultiTypeScalarProduct (const std::array<std::shared_ptr<communication_type>, numSubDomains>& comms)
     : comms_(comms)
     {}
 
@@ -111,7 +111,7 @@ public:
     }
 
 private:
-    std::array<std::shared_ptr<const communication_type>, numSubDomains> comms_;
+    std::array<std::shared_ptr<communication_type>, numSubDomains> comms_;
 };
 
 } // end namespace Dumux
