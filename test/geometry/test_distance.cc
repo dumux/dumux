@@ -225,10 +225,10 @@ void runTests()
                 const auto& expectedCenter = firstTriangle.center();
                 const auto expectedRadius = (firstTriangle.corner(0) - expectedCenter).two_norm();
                 if ((sphere.center() - expectedCenter).two_norm() > 1e-12*expectedRadius)
-                    DUNE_THROW(Dune::InvalidStateException, Fmt::format(
-                        "Wrong circumsphere center. Expected {}, got {}.",
-                        expectedCenter, sphere.center()
-                    ));
+                    DUNE_THROW(Dune::InvalidStateException,
+                        "Wrong circumsphere center. Expected "
+                        << expectedCenter << " got " << sphere.center()
+                    );
 
                 if (Dune::FloatCmp::ne(sphere.radius(), expectedRadius))
                     DUNE_THROW(Dune::InvalidStateException, Fmt::format(
