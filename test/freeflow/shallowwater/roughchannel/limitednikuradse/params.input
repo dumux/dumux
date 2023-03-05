@@ -1,0 +1,20 @@
+[Problem]
+Name = roughchannel
+BedSlope = 0.001 # [-]
+Gravity = 9.81 # [m/s^2]
+Discharge = -1.00 # [m^2/s] discharge per meter at the inflow boundary
+WaterDepthOutflow = 0.2 # [m] water depth at the outflow boundary
+Ks = 0.15 # [-]
+RoughnessHeight = 0.15 # [m]
+
+[TimeLoop]
+TEnd = 900.0 # [s]
+MaxTimeStepSize = 60.0 # [s]
+DtInitial = 1.0 # [s]
+
+[Grid]
+UpperRight = 500.0 5.0
+Cells = 500 5
+
+[Newton]
+EnablePartialReassembly = true
