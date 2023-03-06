@@ -371,8 +371,11 @@ public:
         for (std::size_t i = 0; i < update.size(); ++i)
         {
             auto tmp = currentDefect[i];
-            tmp *= inverseDiagonalElements_[i];
-            update[i] = tmp;
+            for (int ii=0; ii < inverseDiagonalElements_[i].size(); ++ii)
+            {
+                tmp[ii] *= inverseDiagonalElements_[i][ii];
+                update[i][ii]= tmp[ii];
+            }
         }
     }
 
@@ -403,7 +406,11 @@ private:
             res = 0;
             tmp[i] = 1.0;
             op_->apply(tmp, res);
-            inverseDiagonalElements_[i] = 1.0/res[i];
+            for (int ii = 0; ii < inverseDiagonalElements_[i].size(); ++ii)
+            {
+                inverseDiagonalElements_[i][ii] = 1.0/res[i][ii];
+            }
+
         }
 
         timer.stop();
@@ -427,19 +434,19 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
 //     using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
 //     using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
 
-    using A = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
-    using U = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
-    using D = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>;
-    using V = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
-    using B = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_1])>;
-    using C = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_0])>;
+    using AType = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
+    using UType = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+    using DType = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_1])>;
+    using VType = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_1])>;
+    using BType = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_1])>;
+    using CType = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_1][Dune::Indices::_0])>;
 
     using Comm = Dune::Amg::SequentialInformation;
-    using LinearOperator = Dune::MatrixAdapter<A, U, U>;
-    using Smoother = Dune::SeqSSOR<A, U, U>;
-    using AMGSolverForA = Dune::Amg::AMG<LinearOperator, U, Smoother, Comm>;
+    using LinearOperator = Dune::MatrixAdapter<AType, UType, UType>;
+    using Smoother = Dune::SeqSSOR<AType, UType, UType>;
+    using AMGSolverForA = Dune::Amg::AMG<LinearOperator, UType, Smoother, Comm>;
 
-    class SimpleOperator : public Dune::LinearOperator<U, U>
+    class SimpleOperator : public Dune::LinearOperator<VType, VType>
     {
     public:
 
@@ -453,7 +460,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
               The input vector is consistent and the output must also be
            consistent on the interior+border partition.
          */
-        void apply (const U& x, U& y) const final
+        void apply (const VType& x, VType& y) const final
         {
             // convenience variables
             const auto& deltaP = x;
@@ -468,7 +475,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
 
             // B * deltP
             // rhsTmp has different size than rhs
-            auto rhsTmp = V(B.N());
+            auto rhsTmp = UType(B.N());
             B.mv(deltaP, rhsTmp);
 
             // diag(A)^-1 * B * deltaP
@@ -482,9 +489,9 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
         }
 
         //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-        void applyscaleadd (typename U::field_type alpha, const U& x, U& y) const final
+        void applyscaleadd (typename VType::field_type alpha, const VType& x, VType& y) const final
         {
-            auto tmp = U(y.size());
+            auto tmp = VType(y.size());
             apply(x, tmp);
             y.axpy(alpha, tmp);
         }
@@ -501,7 +508,7 @@ class SeqSimple : public Dune::Preconditioner<X,Y>
         const M& m_;
 
         //! Applies the effect of A^-1 or diag(A)^-1 (depending on what is chosen in setSolver)
-        std::function<void(U&, U&)> solver_;
+        std::function<void(UType&, UType&)> solver_;
     };
 
 public:
@@ -585,13 +592,13 @@ public:
         // the SIMPLE algorithm
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
-            // 1. Solve A*uNew + B*p = f for uNew
+            // 1. Solve A*uNew = f - B*p for uNew
             auto uRhs = f;
             B.mmv(p, uRhs);
             auto uNew = u;
             applySolverForA_(uNew, uRhs);
 
-            // 2. Solve (D + C * diag(A)^-1 * B) * deltaP = -g + C * uNew + D*p for deltaP
+            // 2. Solve (D - C * diag(A)^-1 * B) * deltaP = -g + C * uNew + D*p for deltaP
             auto pRhs = g;
             pRhs *= -1.0;
             C.umv(uNew, pRhs);
@@ -602,7 +609,7 @@ public:
 
             // 3. Calculate correction of u:
             // deltaU = (-diag(A^-1) * B) * deltaP
-            auto deltaU = U(B.N());
+            auto deltaU = UType(B.N());
             B.mv(deltaP, deltaU);
 
             if (useDiagonalInUpdate_)
@@ -654,7 +661,7 @@ private:
     {
 #if HAVE_UMFPACK
             using namespace Dune::Indices;
-            umfPackSolverForA_ = std::make_unique<Dune::UMFPack<A>>(matrix_[_0][_0]);
+            umfPackSolverForA_ = std::make_unique<Dune::UMFPack<AType>>(matrix_[_0][_0]);
 #else
             DUNE_THROW(Dune::InvalidStateException, "UMFPack not available. Use LinearSolver.Preconditioner.DirectVelocitySolver = false.");
 #endif
@@ -664,9 +671,9 @@ private:
     {
         auto linearOperator = std::make_shared<SimpleOperator>(matrix_);
         if (useDiagonalInSchurComplement_)
-            linearOperator->setSolver([&](U& a, U& b) { applyInverseOfDiagonalOfA_(a); });
+            linearOperator->setSolver([&](UType& a, UType& b) { applyInverseOfDiagonalOfA_(a); });
         else
-            linearOperator->setSolver([&](U& a, U& b) { applySolverForA_(a, b); });
+            linearOperator->setSolver([&](UType& a, UType& b) { applySolverForA_(a, b); });
 
         Dune::ParameterTree treeSchurComplementSolver;
         treeSchurComplementSolver["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
@@ -679,24 +686,24 @@ private:
         {
             Dune::ParameterTree treePreconditioner;
             treePreconditioner["verbose"] = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverVerbosity", "0");
-            schurComplementPreconditioner_ = std::make_shared<SeqJacobiMatrixFree<V, V>>(linearOperator, treePreconditioner);
+            schurComplementPreconditioner_ = std::make_shared<SeqJacobiMatrixFree<VType, VType>>(linearOperator, treePreconditioner);
         }
         else
-            schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<V, V>>();
+            schurComplementPreconditioner_ = std::make_shared<Dune::Richardson<VType, VType>>();
 
         static const auto schurComplementSolverType = getParamFromGroup<std::string>(paramGroup_, "LinearSolver.Preconditioner.SimpleSolverType", "restartedgmressolver");
 
         if (schurComplementSolverType == "restartedgmressolver")
-            schurComplementSolver_ = std::make_unique<Dune::RestartedGMResSolver<V>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+            schurComplementSolver_ = std::make_unique<Dune::RestartedGMResSolver<VType>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
         else if (schurComplementSolverType == "bicgstabsolver")
-            schurComplementSolver_ = std::make_unique<Dune::BiCGSTABSolver<V>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+            schurComplementSolver_ = std::make_unique<Dune::BiCGSTABSolver<VType>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
         else if (schurComplementSolverType == "cgsolver")
-            schurComplementSolver_ = std::make_unique<Dune::CGSolver<V>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
+            schurComplementSolver_ = std::make_unique<Dune::CGSolver<VType>>(linearOperator, schurComplementPreconditioner_, treeSchurComplementSolver);
         else
             DUNE_THROW(Dune::InvalidStateException, schurComplementSolverType << "not supported. Use restartedgmressolver, bicgstabsolver or cgsolver");
     }
 
-    void applyInverseOfDiagonalOfA_(U& x) const
+    void applyInverseOfDiagonalOfA_(UType& x) const
     {
         using namespace Dune::Indices;
         const auto& A = matrix_[_0][_0];
@@ -739,10 +746,10 @@ private:
     const int verbosity_;
 
     std::unique_ptr<AMGSolverForA> amgSolverForA_;
-    std::unique_ptr<Dune::IterativeSolver<V,V>> schurComplementSolver_;
-    std::shared_ptr<Dune::Preconditioner<V,V>> schurComplementPreconditioner_;
+    std::unique_ptr<Dune::IterativeSolver<VType,VType>> schurComplementSolver_;
+    std::shared_ptr<Dune::Preconditioner<VType,VType>> schurComplementPreconditioner_;
 #if HAVE_UMFPACK
-    std::unique_ptr<Dune::UMFPack<A>> umfPackSolverForA_;
+    std::unique_ptr<Dune::UMFPack<AType>> umfPackSolverForA_;
 #endif
     const std::string paramGroup_;
     const bool useDirectVelocitySolverForA_;
