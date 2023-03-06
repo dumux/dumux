@@ -44,65 +44,12 @@
 #include <dune/functions/gridfunctions/gridviewfunction.hh>
 
 #include <dumux/common/entitymap.hh>
-#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/common/tabulated2dfunction.hh>
+
 #include <dumux/geometry/intersectingentities.hh>
-#include <dumux/discretization/projection/projector.hh>
+#include <dumux/discretization/projection/l2_projection.hh>
 
 namespace Dumux {
-namespace BSplineFunctionDetail {
-
-// Exposes the intersections interface a gridview with itself
-template<class GridView>
-class IdentityIntersectionEntitySet
-{
-    using ctype = typename GridView::ctype;
-    using Entity = typename GridView::template Codim<0>::Entity;
-
-    class IntersectionEntity
-    {
-    public:
-        IntersectionEntity(const Entity& entity) : entity_(entity) {}
-        decltype(auto) geometry() const { return entity_.geometry(); }
-        constexpr std::size_t numDomainNeighbors() const { return 1; }
-        constexpr std::size_t numTargetNeighbors() const { return 1; }
-        const Entity& domainEntity(unsigned int n = 0) const { return entity_; }
-        const Entity& targetEntity(unsigned int n = 0) const { return entity_; }
-
-    private:
-        Entity entity_;
-    };
-
-    template<typename ElementIterator>
-    class IntersectionEntityIterator
-    : public Dune::ForwardIteratorFacade<
-        IntersectionEntityIterator<ElementIterator>,
-        IntersectionEntity,
-        IntersectionEntity
-    >
-    {
-    public:
-        IntersectionEntityIterator(ElementIterator it) : it_(it) {}
-        bool equals(const IntersectionEntityIterator& other) const { return other.it_ == it_; }
-        IntersectionEntity dereference() const { return {*it_}; }
-        void increment() { ++it_; }
-
-    private:
-        ElementIterator it_;
-    };
-
-public:
-    IdentityIntersectionEntitySet(const GridView& gv) : gv_(gv) {}
-    auto ibegin() const { return IntersectionEntityIterator{gv_.template begin<0>()}; }
-    auto iend() const { return IntersectionEntityIterator{gv_.template end<0>()}; }
-    std::size_t size() const { return gv_.size(0); }
-    friend auto intersections(const IdentityIntersectionEntitySet& set)
-    { return Dune::IteratorRange{set.ibegin(), set.iend()}; }
-
-private:
-    const GridView gv_;
-};
-
-} // namespace BSplineFunctionDetail
 
 /*!
  * \ingroup Common
@@ -203,16 +150,20 @@ private:
                 Dune::InvalidStateException,
                 "Length of the samples vector does not match the given domain dimensions"
             );
+        // For generality, this could be a wrapped DiscreteGlobalBasisFunction
+        // with lagrange(1) and efficient (structured) cell lookup in operator()
+        static_assert(dim == 2);
+        Dumux::Tabulated2DFunction tabulatedData{
+            min_[0], max_[0], cells_[0] + 1,
+            min_[1], max_[1], cells_[1] + 1
+        };
+        for (int j = 0; j < cells_[1] + 1; ++j)
+            for (int i = 0; i < cells_[0] + 1; ++i)
+                tabulatedData.setSamplePoint(i, j, samples[j*(cells_[0] + 1) + i]);
 
-        const auto sampleBasis = Dune::Functions::BasisFactory::makeBasis(
-            gridView_(),
-            Dune::Functions::BasisFactory::lagrange<1, Range>()
-        );
-        const auto intersections = BSplineFunctionDetail::IdentityIntersectionEntitySet{gridView_()};
-        const auto projector = Dumux::makeProjector(sampleBasis, basis_, intersections);
-        return castBlockVector_<Range>(
-            projector.project(castBlockVector_<ProjectionRange>(samples))
-        );
+        return castBlockVector_<Range>(Dumux::L2Projection{basis_}.project([&] (const auto& x) {
+            return tabulatedData(x[0], x[1]);
+        }));
     }
 
     template<typename To, typename From, std::enable_if_t<!std::is_same_v<From, To>, bool> = true>
