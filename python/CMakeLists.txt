@@ -1,5 +1,4 @@
 add_subdirectory(dumux)
-configure_file(setup.py.in setup.py)
 
 # link properties.hh needed by the Python bindings
 # to determine the list of properties
