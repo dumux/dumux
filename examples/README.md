@@ -224,3 +224,15 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 <figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
 </a></td>
 </tr></table>
+
+### [:open_file_folder: Example 11: The Cahn-Hilliard model, a nonlinear PDE](cahn_hilliard/README.md)
+
+<table><tr><td>
+
+In this example we simulate the separation of two immiscible phases using the Cahn-Hilliard model.
+
+</td>
+<td width="35%"><a href="cahn_hilliard/README.md">
+<figure><img src="cahn_hilliard/img/animation.gif" alt="phase distribution"/></figure></td>
+</a></td>
+</tr></table>
