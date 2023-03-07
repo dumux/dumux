@@ -23,7 +23,11 @@ include(DuneMacros)
 
 # start a dune project with information from dune.module
 dune_project()
-dune_enable_all_packages(MODULE_LIBRARIES dumux_fmt dumux_parameters)
+if (DUMUX_HAVE_STD_FORMAT)
+  dune_enable_all_packages(MODULE_LIBRARIES dumux_parameters)
+else()
+  dune_enable_all_packages(MODULE_LIBRARIES dumux_fmt dumux_parameters)
+endif()
 
 # enforce C++-17
 dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)

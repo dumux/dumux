@@ -170,9 +170,11 @@ public:
             break;
             case 12:
                 if (firstCall)
-                    std::cout << Fmt::format("  ┌{0:─^{2}}┐\n"
-                                             "  │{1: ^{2}}│\n"
-                                             "  └{0:─^{2}}┘\n", "", Fmt::format("DuMuX {} \u2661", DUMUX_VERSION), 20);
+                {
+                    std::cout << "  ┌──────────────────┐" << std::endl;
+                    std::cout << Fmt::format("  │{:^20}│", Fmt::format("DuMuX {} \u2661", DUMUX_VERSION)) << std::endl;
+                    std::cout << "  └──────────────────┘" << std::endl;
+                }
                 else
                     std::cout << "\n" << std::endl;
             break;
