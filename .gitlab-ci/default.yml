@@ -68,7 +68,7 @@ pylint-flake8 (python):
       fi
     - |
       if [ -d build-cmake/python/dumux ] ; then
-        source bin/testing/ci-setup-python-env.sh
+        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         flake8 build-cmake/python/dumux
       fi
@@ -250,7 +250,7 @@ test python:
           rm -r /dune/modules/dune-common/build-cmake/dune-env
           mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
         fi
-        source bin/testing/ci-setup-python-env.sh
+        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pushd build-cmake
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
