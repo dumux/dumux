@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup CVFEDiscretization
- * \brief The grid volume variables class for box models
+ * \brief The grid volume variables class for control-volume finite element methods
  */
 #ifndef DUMUX_DISCRETIZATION_CVFE_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CVFE_GRID_VOLUMEVARIABLES_HH
@@ -32,7 +32,7 @@
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cvfe/elementvolumevariables.hh>
-#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 
 namespace Dumux {
 

@@ -28,7 +28,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 
 namespace Dumux {
 

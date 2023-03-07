@@ -24,15 +24,12 @@
 #ifndef DUMUX_DISCRETIZATION_EVAL_GRADIENTS_HH
 #define DUMUX_DISCRETIZATION_EVAL_GRADIENTS_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/typetraits/state.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
-#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
-#include <dumux/discretization/pq1bubble/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 
 #include "evalsolution.hh"
 
@@ -111,7 +108,7 @@ auto evalCVFEGradients(const Element& element,
 } // end namespace Detail
 
 /*!
- * \brief Evaluates the gradient of a given box element solution to a given global position.
+ * \brief Evaluates the gradient of a given CVFE element solution to a given global position.
  * \ingroup Discretization
  *
  * \param element The element
@@ -125,51 +122,7 @@ template<class Element, class FVElementGeometry, class PrimaryVariables>
 auto evalGradients(const Element& element,
                    const typename Element::Geometry& geometry,
                    const typename FVElementGeometry::GridGeometry& gridGeometry,
-                   const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                   const typename Element::Geometry::GlobalCoordinate& globalPos,
-                   bool ignoreState = false)
-{
-    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
-}
-
-/*!
- * \brief Evaluates the gradient of a given diamond scheme element solution to a given global position.
- * \ingroup Discretization
- *
- * \param element The element
- * \param geometry The element geometry
- * \param gridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- * \param ignoreState If true, the state of primary variables is ignored
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalGradients(const Element& element,
-                   const typename Element::Geometry& geometry,
-                   const typename FVElementGeometry::GridGeometry& gridGeometry,
-                   const FaceCenteredDiamondElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                   const typename Element::Geometry::GlobalCoordinate& globalPos,
-                   bool ignoreState = false)
-{
-    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
-}
-
-/*!
- * \brief Evaluates the gradient of a given pq1bubble scheme element solution to a given global position.
- * \ingroup Discretization
- *
- * \param element The element
- * \param geometry The element geometry
- * \param gridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- * \param ignoreState If true, the state of primary variables is ignored
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-auto evalGradients(const Element& element,
-                   const typename Element::Geometry& geometry,
-                   const typename FVElementGeometry::GridGeometry& gridGeometry,
-                   const PQ1BubbleElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                   const CVFEElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                    const typename Element::Geometry::GlobalCoordinate& globalPos,
                    bool ignoreState = false)
 {

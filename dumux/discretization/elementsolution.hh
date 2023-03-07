@@ -25,7 +25,7 @@
 #define DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 
 #include <dumux/discretization/cellcentered/elementsolution.hh>
-#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {

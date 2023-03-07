@@ -44,7 +44,7 @@
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
-#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>

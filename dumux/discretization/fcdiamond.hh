@@ -40,6 +40,7 @@
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 
 namespace Dumux::Properties {
 
