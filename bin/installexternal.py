@@ -208,12 +208,12 @@ options.add_argument(
     "--download", action="store_true", default=False, help="Only download the packages."
 )
 
-parser.add_argument("--dune-branch", default="releases/2.8", help="Dune branch to be checked out.")
+parser.add_argument("--dune-branch", default="releases/2.9", help="Dune branch to be checked out.")
 parser.add_argument(
     "--dumux-branch", default="releases/3.6", help="Dumux branch to be checked out."
 )
-parser.add_argument("--opm-branch", default="release/2021.10", help="Opm branch to be checked out.")
-parser.add_argument("--mmesh-branch", default="release/1.3", help="Mmesh branch to be checked out.")
+parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
+parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
 
 cmdArgs = vars(parser.parse_args())
 
