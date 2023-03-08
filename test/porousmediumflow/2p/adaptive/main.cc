@@ -34,7 +34,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -175,7 +176,8 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
@@ -202,7 +204,7 @@ int main(int argc, char** argv)
                 xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
                 gridVariables->updateAfterGridAdaption(x); //!< Initialize the secondary variables to the new (and "new old") solution
                 assembler->updateAfterGridAdaption(); //!< Tell the assembler that the grid changed
-                linearSolver->updateAfterGridAdaption(leafGridView, gridGeometry->dofMapper()); //!< Tell the solver that the grid changed
+                linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper()); //!< Tell the solver that the grid changed
                 problem->computePointSourceMap(); //!< Update the point source map
             }
         }

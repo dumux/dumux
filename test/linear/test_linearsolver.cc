@@ -23,7 +23,8 @@
 #include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/linear/istlsolverfactorybackend.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 namespace Dumux::Test {
 
@@ -41,7 +42,8 @@ void solveWithFactory(M& A, X& x, V& b, const std::string& paramGroup)
 {
     std::cout << std::endl;
 
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<Test::MockGridGeometry>>;
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<Test::MockGridGeometry>,
+                                                  LinearAlgebraTraits<M,V>>;
     LinearSolver solver(paramGroup);
 
     std::cout << "Solving Laplace problem with " << solver.name() << "\n";
@@ -76,7 +78,8 @@ int main(int argc, char* argv[])
         std::cout << std::endl;
 
         const auto testSolverName = "AMGBiCGSTAB";
-        using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<Test::MockGridGeometry>>;
+        using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<Test::MockGridGeometry>,
+                                                   LinearAlgebraTraits<Matrix,Vector>>;
         LinearSolver solver(testSolverName);
 
         std::cout << "Solving Laplace problem with " << solver.name() << "\n";
