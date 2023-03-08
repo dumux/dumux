@@ -1,0 +1,76 @@
+[TimeLoop]
+TEnd = 10
+DtInitial = 1e-5
+
+[Grid]
+PoreGeometry = Sphere
+File = grids/Berea_center_cropped_200_200_dual.dgf
+
+[Problem]
+IsStationary = true
+EnableGravity = false
+InitialTemperature = 300
+EnableHeating = true
+PaddingThickness = 5.345e-06
+
+InletIndex = 5 # for z dir
+OutletIndex = 6
+HeaterIndex = 1
+
+Nu = 1
+Bi = 1
+C0Fluid = 0.1
+C0Solid = 0.45
+CInfFactorFluid = 1
+CInfFactorSolid = 0.50
+ConnectionAreaShapeFactor = 0.55
+
+SourceMode = convection
+FluidTemperatureMode = self
+UseAverageConvectionArea = true
+ConvectionLambaFactor = 0.3 # set to 0.9 for metal
+
+[Void.Problem]
+Name = void
+InitialPressure = 0
+InletPressure = 1e4
+OutletPressure = 0
+InletTemperature = 300
+OutletTemperature = 300
+BottomTemperature = 400
+ThroatConductionType = FancyFactor
+UseRobinInlet = true
+RobinShapeFactor = 1.0
+# EnableCoupling = false
+
+[Solid.Problem]
+Name = solid
+InletTemperature = 300
+BottomTemperature = 400
+ThroatConductionType = FancyFactor
+UseRobinInlet = true
+RobinShapeFactor = 1.0
+# EnableCoupling = false
+
+[Vtk]
+OutputName = test
+AddVelocity = true
+
+[1.Component]
+SolidHeatCapacity = 790 # granite
+SolidDensity = 2700
+SolidThermalConductivity = 2.600038292
+
+# SolidHeatCapacity = 900 # metal
+# SolidDensity = 2700
+# SolidThermalConductivity = 205.0120773
+
+[2.Component]
+LiquidDensity = 1e3 # water
+LiquidKinematicViscosity = 1e-6
+LiquidThermalConductivity = 0.679
+LiquidHeatCapacity = 4.2e3
+ReferenceTemperature = 0.0
+
+[Flux]
+UpwindWeight = 1.0
