@@ -34,7 +34,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -131,7 +132,8 @@ int main(int argc, char** argv)
     auto twoPAssembler = std::make_shared<TwoPAssembler>(twoPProblem, gridGeometry, twoPGridVariables, timeLoop, pOld);
 
     // the linear solver
-    using TwoPLinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using TwoPLinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                                   LinearAlgebraTraitsFromAssembler<TwoPAssembler>>;
     auto twoPLinearSolver = std::make_shared<TwoPLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
@@ -162,10 +164,6 @@ int main(int argc, char** argv)
     auto tracerGridVariables = std::make_shared<TracerGridVariables>(tracerProblem, gridGeometry);
     tracerGridVariables->init(x);
 
-    // the linear solver
-    using TracerLinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
-    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, gridGeometry->dofMapper());
-
      //! the linear system
     using JacobianMatrix = GetPropType<TracerTypeTag, Properties::JacobianMatrix>;
     auto A = std::make_shared<JacobianMatrix>();
@@ -175,6 +173,11 @@ int main(int argc, char** argv)
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto tracerAssembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, tracerGridVariables, timeLoop, xOld);
     tracerAssembler->setLinearSystem(A, r);
+
+    // the linear solver
+    using TracerLinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                                     LinearAlgebraTraitsFromAssembler<TracerAssembler>>;
+    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // set the flux, density and saturation from the 2p problem
     tracerProblem->spatialParams().setVolumeFlux(volumeFlux_);

@@ -29,6 +29,8 @@ The new and last argument is the `ResidualType` (see above).
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.7:
 
+- __AMGBackend__: `AMGBiCGSTABBackend` have been deprecated, use `AMGBiCGSTABIstlSolver` instead 
+- __IstlSolverFactoryBackend__: `IstlSolverFactoryBackend` now require an additional parameter `LinearAlgebraTraits`
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
