@@ -24,12 +24,16 @@ PDE solver, you may also now need to follow this distinction in the assembler an
 use specialized assign and numeric operations in case your code allows for custom block types. If you are using the classes
 from the `Dumux` namespace, no change should be necessary in user code in the majority of cases.
 
+- __Shallow water friction laws__: The friction laws after Manning and Nikuradse do no longer apply a limiter for the water depth. Previously, based on some application-specific assumption a roughness height was calculated that was added to the water depth. This
+height can now be provided as a argument to the respective friction law class constructors
+but defaults to `0.0`.
+
 - __NewtonConvergenceWriter__: The convergence writer now takes three template arguments.
 The new and last argument is the `ResidualType` (see above).
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.7:
 
-- __AMGBackend__: `AMGBiCGSTABBackend` have been deprecated, use `AMGBiCGSTABIstlSolver` instead 
+- __AMGBackend__: `AMGBiCGSTABBackend` have been deprecated, use `AMGBiCGSTABIstlSolver` instead
 - __IstlSolverFactoryBackend__: `IstlSolverFactoryBackend` now require an additional parameter `LinearAlgebraTraits`
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)

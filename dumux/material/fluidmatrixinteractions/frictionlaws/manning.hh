@@ -34,7 +34,8 @@ namespace Dumux {
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the friction law after Manning.
  *
- * The LET mobility model is used to limit the friction for small water depths.
+ * The LET mobility model is used to limit the friction for small water
+ * depths if a roughness height > 0.0 is provided (default roughnessHeight = 0.0).
  */
 
 template <typename VolumeVariables>
@@ -46,10 +47,11 @@ public:
      * \brief Constructor
      *
      * \param gravity Gravity constant (in m/s^2)
-     * \param manningN Manning friction coefficient (in s/m^(1/3))
+     * \param manningN Manning friction coefficient (in s/m^(1/3)
+     * \param roughnessHeight roughness height for limiting (in m) default = 0.0
      */
-    FrictionLawManning(const Scalar gravity, const Scalar manningN)
-    : gravity_(gravity), manningN_(manningN) {}
+    FrictionLawManning(const Scalar gravity, const Scalar manningN, const Scalar roughnessHeight=0.0)
+    : gravity_(gravity), manningN_(manningN), roughnessHeight_(roughnessHeight) {}
 
     /*!
      * \brief Compute the bottom shear stress.
@@ -70,13 +72,12 @@ public:
 
         Dune::FieldVector<Scalar, 2> shearStress(0.0);
 
-        Scalar roughnessHeight = power(25.68/(1.0/manningN_), 6);
-        roughnessHeight = this->limitRoughH(roughnessHeight, volVars.waterDepth());
+        const Scalar artificialWaterDepth = this->limitRoughH(roughnessHeight_, volVars.waterDepth());
         // c has units of m^(1/2)/s so c^2 has units of m/s^2
-        const Scalar c = pow(volVars.waterDepth() + roughnessHeight, 1.0/6.0) * 1.0/(manningN_);
+        const Scalar c = pow(volVars.waterDepth() + artificialWaterDepth, 1.0/6.0) * 1.0/(manningN_);
         const Scalar uv = hypot(volVars.velocity(0), volVars.velocity(1));
-
         const Scalar dimensionlessFactor = gravity_/(c*c);
+
         shearStress[0] = dimensionlessFactor * volVars.velocity(0) * uv * volVars.density();
         shearStress[1] = dimensionlessFactor * volVars.velocity(1) * uv * volVars.density();
 
@@ -86,6 +87,7 @@ public:
 private:
     Scalar gravity_;
     Scalar manningN_;
+    Scalar roughnessHeight_;
 };
 
 } // end namespace Dumux

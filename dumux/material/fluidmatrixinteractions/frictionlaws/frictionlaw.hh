@@ -34,7 +34,8 @@ namespace Dumux {
  * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the abstract base class for friction laws.
  *
- * The LET mobility model is used to limit the friction for small water depths.
+ * A LET mobility model can be used to add an artificial water depth to
+ * limit the friction for small water depths.
  */
 
 template <typename VolumeVariables >
@@ -58,9 +59,16 @@ public:
     /*!
      * \brief Limit the friction for small water depth.
      *
-     * We define a water depth minUpperH. If the water depth is
-     * smaller, we start to limit the friction.
-     * So the friction term gets not extreme large for small water
+     * Compute a small artificial water depth that is added to the
+     * actual water depth to avoid extreme friction values which can
+     * occur for small water depths.
+     *
+     * The function is called with a roughness height, which can be
+     * seen as roughness height of the surface (e.g. grain size). For a
+     * zero roughnessHeight the artificial water depth will be zero.
+     *
+     * A water depth minUpperH  (minUpperH = 2 * roughnessHeight) is
+     * defined for the limiting. Limiting is applied between both
      * depths.
      *
      * ------------------------- minUpperH -----------
@@ -84,10 +92,14 @@ public:
      * \param roughnessHeight roughness height of the representative structure (e.g. largest grain size).
      * \param waterDepth water depth.
      */
-    Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth) const
+    Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth, const Scalar eps=1.0e-12) const
     {
         using std::clamp;
 
+        // return zero if the roughness depth is near zero
+        if (roughnessHeight < eps) return 0.0;
+
+        // calculate the artificial water depth
         const Scalar mobilityMax = 1.0; //!< maximal mobility
 
         const Scalar minUpperH = roughnessHeight * 2.0;
