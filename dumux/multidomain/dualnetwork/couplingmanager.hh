@@ -44,7 +44,7 @@
 
 #include "couplingmapper.hh"
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
  * \ingroup DarcyDarcyCoupling

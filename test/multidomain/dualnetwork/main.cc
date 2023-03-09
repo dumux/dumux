@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 
     // the coupling manager
     using Traits = MultiDomainTraits<SolidTypeTag, VoidTypeTag>;
-    using CouplingManager = PNMHeatTransferCouplingManager<Traits>;
+    using CouplingManager = PoreNetwork::PNMHeatTransferCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector sol;

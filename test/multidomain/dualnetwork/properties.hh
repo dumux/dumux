@@ -58,7 +58,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = SolidSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::SolidSpatialParams<GridGeometry, Scalar>;
 };
 
 // per default the solid system is inert with one constant component
@@ -137,7 +137,7 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = FluidSpatialParams<GridGeometry, Scalar>;
+    using type = PoreNetwork::FluidSpatialParams<GridGeometry, Scalar>;
 };
 
 } // end namespace Dumux::Properties
@@ -151,14 +151,14 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PNMSolidModel>
 {
     using Traits = MultiDomainTraits<TypeTag, Properties::TTag::PNMVoidModel>;
-    using type = PNMHeatTransferCouplingManager<Traits>;
+    using type = PoreNetwork::PNMHeatTransferCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PNMVoidModel>
 {
     using Traits = MultiDomainTraits<Properties::TTag::PNMSolidModel, TypeTag>;
-    using type = PNMHeatTransferCouplingManager<Traits>;
+    using type = PoreNetwork::PNMHeatTransferCouplingManager<Traits>;
 };
 
 } // end namespace Dumux::Properties

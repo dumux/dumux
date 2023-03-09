@@ -29,7 +29,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 
 /*!

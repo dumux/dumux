@@ -34,7 +34,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/entitymap.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
  * \ingroup PoreNetwork

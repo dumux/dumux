@@ -27,7 +27,7 @@
 #include <dumux/porenetwork/solidenergy/spatialparams.hh>
 #include <dumux/porenetwork/1p/spatialparams.hh>
 
-namespace Dumux {
+namespace Dumux::PoreNetwork {
 
 /*!
  * \brief The spatial parameters class.
