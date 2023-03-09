@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PoreNetworkOnePModel
+ * \ingroup PNMSolidEnergyModel
  * \copydoc Dumux::PNMOnePIOFields
  */
 #ifndef DUMUX_PNM_SOLID_ENERGY_IO_FIELDS_HH
@@ -29,8 +29,8 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkOnePNCModel
- * \brief Adds output fields specific to the PNM 1pnc model
+ * \ingroup PNMSolidEnergyModel
+ * \brief Adds output fields specific to the PNM solid-energy model
  */
 class SolidEnergyIOFields
 {

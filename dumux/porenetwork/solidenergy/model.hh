@@ -18,12 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase pore network model.
- *
- * NEW: Adaption to solidenergy based on PorousMediumFlow-SolidEnergy
+ * \ingroup PNMSolidEnergyModel
+ * \brief The energy balance equation for a porous solid in pore-networks based on PorousMediumFlow-SolidEnergy
  */
 
 #ifndef DUMUX_PNM_SOLID_ENERGY_MODEL_HH
@@ -41,29 +37,20 @@
 #include "iofields.hh"
 
 /*!
- * \ingroup Pore network model
- * \brief A one-phase, isothermal flow model using the fully implicit scheme.
+ * \ingroup PNMSolidEnergyModel
+ * \brief The energy balance equation for a porous solid
  *
- * one-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
- */
+ * The energy balance is described by the following equation:
+ \f[
+   \frac{ \partial n c_p \varrho T}{\partial t}
+   - \text{div} \left\lbrace \lambda_\text{pm} \textbf{grad} T \right\rbrace = q,
+ \f]
+ * where \f$n\f$ is the volume fraction of the conducting material, \f$c_p\f$ its specific heat capacity,
+ * \f$\varrho\f$ its density, \f$T\f$ the temperature, and \f$\lambda\f$ the heat conductivity of the porous solid.
+*/
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// properties for the solid-energy model
 ///////////////////////////////////////////////////////////////////////////
 namespace Dumux::Properties {
 
@@ -71,7 +58,7 @@ namespace Dumux::Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the implicit single-phase problems
+//! The type tags for the implicit solid-energy problems
 // Create new type tags
 namespace TTag {
 struct PNMSolidEnergy{ using InheritsFrom = std::tuple<PoreNetworkModel, SolidEnergy>; };

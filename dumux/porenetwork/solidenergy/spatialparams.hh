@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PNMSolidEnergyModel
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters for pore network models.
+ * \brief The spatial parameters for solid-energy models in pore networks.
  */
 #ifndef DUMUX_PNM_SOLID_ENERGY_SPATIAL_PARAMS_HH
 #define DUMUX_PNM_SOLID_ENERGY_SPATIAL_PARAMS_HH
@@ -30,10 +30,8 @@
 namespace Dumux::PoreNetwork {
 
 /*!
+ * \ingroup PNMSolidEnergyModel
  * \ingroup SpatialParameters
- */
-
-/**
  * \brief The base class for spatial parameters for pore network solid models.
  */
 template<class FVGridGeometry, class Scalar>

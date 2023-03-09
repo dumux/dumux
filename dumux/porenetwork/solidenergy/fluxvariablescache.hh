@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Flux variables cache for 1p PNM
+ * \ingroup PNMSolidEnergyModel
+ * \brief Flux variables cache for PNM solid-energy model
  */
 #ifndef DUMUX_PNM_SOLID_ENERGY_FLUXVARIABLESCACHE_HH
 #define DUMUX_PNM_SOLID_ENERGY_FLUXVARIABLESCACHE_HH

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePModel
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
+ * \ingroup PNMSolidEnergyModel
+ * \brief Quantities required by the solid-energy fully implicit model defined on a vertex.
  */
 
 #ifndef DUMUX_PNM_SOLID_ENERGY_VOLUME_VARIABLES_HH
@@ -30,9 +30,9 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PNMOnePModel
+ * \ingroup PNMSolidEnergyModel
  * \brief Contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ *        finite volume in the solid-energy model.
  *
  * \tparam Traits Class encapsulating types to be used by the vol vars
  */
