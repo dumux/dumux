@@ -37,20 +37,30 @@ OPM_FLAGS=""
 # to build opm it might be necessary to set manually the following variables (comment the above line)
 #OPM_FLAGS="
 #-DUSE_MPI=ON
-#-DOPM_CLANG_WITH_STDC++FS=ON
 #"
 
 # set this to "ON" if you want to be able to have the headercheck target
 DUMUX_ENABLE_HEADERCHECK=OFF
+
+# to enable Python bindings
+DUMUX_ENABLE_PYTHON_BINDINGS=""
+#DUMUX_ENABLE_PYTHON_BINDINGS="-DDUNE_ENABLE_PYTHONBINDINGS=1 -DBUILD_SHARED_LIBS=1"
+
+# set multithreading backend, e.g. OpenMP,TBB,Cpp,Kokkos,Serial
+# if left empty, it is automatically set by cmake
+DUMUX_MULTITHREADING_BACKEND=""
+#DUMUX_MULTITHREADING_BACKEND="-DDUMUX_MULTITHREADING_BACKEND=OpenMP"
 
 # for debug opts you can set DCMAKE_BUILD_TYPE to "Debug" or "RelWithDebInfo"
 # you can also do this in any of the CMakeLists.txt in Dumux
 # just rerun cmake again afterwards (run cmake <path-to-build-dir>)
 
 CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR $OPM_FLAGS
--DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS $DUMUX_DISABLE_PROP_MACROS'
--DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare $DUMUX_DISABLE_PROP_MACROS'
--DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall $DUMUX_DISABLE_PROP_MACROS'
+-DCMAKE_CXX_FLAGS_RELEASE='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS'
+-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare'
+-DCMAKE_CXX_FLAGS_RELWITHDEBINFO='$GXX_RELEASE_OPTS $GXX_RELEASE_WARNING_OPTS -g -ggdb -Wall'
 -DCMAKE_BUILD_TYPE=Release
 -DENABLE_HEADERCHECK=$DUMUX_ENABLE_HEADERCHECK
+$DUMUX_ENABLE_PYTHON_BINDINGS
+$DUMUX_MULTITHREADING_BACKEND
 "
