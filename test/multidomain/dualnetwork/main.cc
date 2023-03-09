@@ -30,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/initialize.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -53,6 +54,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // initialize MPI, finalize is done automatically on exit
+    Dumux::initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message
