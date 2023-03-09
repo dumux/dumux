@@ -25,18 +25,18 @@ int main (int argc, char *argv[])
     constexpr double TMin = 0; //73;
     constexpr double TMax = 1; //33;
 
-    const auto getP = [&] (int i, std::size_t n) { return pMin + i*(pMax - pMin)/n; };
-    const auto getT = [&] (int i, std::size_t n) { return TMin + i*(TMax - TMin)/n; };
+    const auto getP = [&] (int i, std::size_t n) { return pMin + i*(pMax - pMin)/(n - 1); };
+    const auto getT = [&] (int i, std::size_t n) { return TMin + i*(TMax - TMin)/(n - 1); };
 
-    Dune::BlockVector<double> samples((nx+1)*(ny+1));
-    for (int j = 0; j < ny+1; ++j)
-        for (int i = 0; i < nx+1; ++i)
-            samples[j*(nx+1) + i] = evaluate(getP(i, nx), getT(j, ny));
+    Dune::BlockVector<double> samples(nx*ny);
+    for (int j = 0; j < ny; ++j)
+        for (int i = 0; i < nx; ++i)
+            samples[j*nx + i] = evaluate(getP(i, nx), getT(j, ny));
 
     Dumux::BSplineFunction function{
         Dune::FieldVector<double, 2>({pMin, TMin}),
         Dune::FieldVector<double, 2>({pMax, TMax}),
-        {{nx+1, ny+1}},
+        {{nx, ny}},
         samples
     };
 
