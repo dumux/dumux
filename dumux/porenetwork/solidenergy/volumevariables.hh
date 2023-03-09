@@ -68,9 +68,6 @@ public:
     Scalar poreInscribedRadius() const
     { return poreInscribedRadius_; }
 
-    [[deprecated("Use poreInscribedRadius")]]
-    Scalar poreRadius() const
-    { return poreInscribedRadius_; }
 
     Scalar poreVolume() const
     { return poreVolume_; }
