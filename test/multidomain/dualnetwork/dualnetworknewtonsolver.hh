@@ -42,7 +42,7 @@ namespace Dumux {
  */
 template <class Assembler, class LinearSolver, class CouplingManager,
           class Reassembler = DefaultPartialReassembler,
-          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator>>
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator>>
 class MultiDomainPNMNewtonSolver : public MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager, Reassembler, Comm>
 {
     using ParentType =  MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager, Reassembler, Comm>;
@@ -88,7 +88,6 @@ private:
                 auto& uLastIterPNM = uLastIter[id];
 
 
-                std::cout << "using crazy chopped update" << std::endl;
                 for (std::size_t i = 0; i < uLastIterPNM.size(); ++i)
                 {
                     if constexpr (VolumeVariables::PrimaryVariables::dimension > 1)
