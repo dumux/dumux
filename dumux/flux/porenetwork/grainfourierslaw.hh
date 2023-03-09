@@ -30,6 +30,8 @@ namespace Dumux::PoreNetwork {
 
 /*!
  * \brief Specialization of Fourier's Law for the pore-network SOLID model.
+ * \note See Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
+ *       and Khan et al (2019) https://doi.org/10.1016/j.compchemeng.2018.12.025 
  */
 template <class Scalar>
 struct TruncatedPyramidGrainFouriersLaw
@@ -103,6 +105,7 @@ struct TruncatedPyramidGrainFouriersLaw
 
 /*!
  * \brief Specialization of Fourier's Law for the pore-network SOLID model.
+ * \note See Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
  */
 template <class Scalar>
 struct SphereCapGrainFouriersLaw
