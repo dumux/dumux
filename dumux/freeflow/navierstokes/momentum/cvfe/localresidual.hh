@@ -155,10 +155,25 @@ public:
         FluxContext context(problem, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
         FluxHelper fluxHelper;
 
+        static const auto addOverlappingFluxes = getParamFromGroup<bool>(problem.paramGroup(), "Flux.AddOverlappingFluxes", true);
+
         NumEqVector flux(0.0);
-        flux += fluxHelper.advectiveMomentumFlux(context);
-        flux += fluxHelper.diffusiveMomentumFlux(context);
-        flux += fluxHelper.pressureContribution(context);
+        if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
+        {
+            if(!scvf.isOverlapping() || addOverlappingFluxes)
+            {
+                flux += fluxHelper.advectiveMomentumFlux(context);
+                flux += fluxHelper.diffusiveMomentumFlux(context);
+                flux += fluxHelper.pressureContribution(context);
+            }
+        }
+        else
+        {
+            flux += fluxHelper.advectiveMomentumFlux(context);
+            flux += fluxHelper.diffusiveMomentumFlux(context);
+            flux += fluxHelper.pressureContribution(context);
+        }
+
         return flux;
     }
 };
