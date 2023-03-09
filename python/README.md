@@ -51,48 +51,6 @@ Run dunecontrol which will setup both C++ and Python bindings and modules.
 ./dune-common/bin/dunecontrol --opts=cmake.opts all
 ```
 
-
-### Example development setup (Dune 2.8)
-
-This section is rather new and experimental. Please help improving
-this documentation in the future.
-
-Checkout the `releases/2.8` branch of the Dune core modules and DuMu<sup>x</sup> 3.5
-
-```
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-common.git
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-geometry.git
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-grid.git
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-localfunctions.git
-git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-istl.git
-git clone -b releases/3.5 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
-
-cp dumux/cmake.opts .
-```
-
-Enable the Python bindings by adding the flag in `cmake.opts` (see comments inside the `.opts` file).
-Then run dunecontrol which also builds the Dune Python bindings.
-
-```
-./dune-common/bin/dunecontrol --opts=cmake.opts all
-```
-
-Add the Python binding modules to your Python path like this and install them with
-the setup environment setup script
-
-```
-source dumux/python/setup-python-env.sh
-```
-
-If you are getting error with loading MPI in Python you might need to preload the MPI library
-
-```
-export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
-```
-
-Replace the path with the path to the MPI library on your system.
-
-
 ### Running a test
 
 Run your first DuMu<sup>x</sup> Python test

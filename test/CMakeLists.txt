@@ -17,7 +17,5 @@ add_subdirectory(discretization)
 
 # if Python bindings are enabled, include Python binding tests
 if(DUMUX_ENABLE_PYTHONBINDINGS)
-  if(${dune-common_VERSION} VERSION_GREATER_EQUAL 2.8)
-    add_subdirectory(python)
-  endif()
+  add_subdirectory(python)
 endif()

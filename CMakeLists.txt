@@ -44,9 +44,6 @@ add_subdirectory(examples EXCLUDE_FROM_ALL)
 # only add bindings folder if Python bindings are enabled
 if(DUMUX_ENABLE_PYTHONBINDINGS)
   add_subdirectory(python)
-  if(${dune-common_VERSION} VERSION_LESS 2.9)
-    dune_python_install_package(PATH "python")
-  endif()
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
