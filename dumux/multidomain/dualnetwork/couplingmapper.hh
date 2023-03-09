@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup StokesDarcyCoupling
+ * \ingroup PoreNetwork
  * \copydoc Dumux::DualNetworkCouplingMapper
  */
 
@@ -36,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup StokesDarcyCoupling
+ * \ingroup PoreNetwork
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
 
