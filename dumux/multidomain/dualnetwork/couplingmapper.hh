@@ -27,6 +27,7 @@
 
 #include <type_traits>
 #include <unordered_map>
+#include <algorithm>
 #include <vector>
 #include <dune/common/iteratorrange.hh>
 

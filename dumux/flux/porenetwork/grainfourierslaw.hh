@@ -24,6 +24,7 @@
 #ifndef DUMUX_FLUX_PNM_GRAIN_FOURIERS_LAW_HH
 #define DUMUX_FLUX_PNM_GRAIN_FOURIERS_LAW_HH
 
+#include <cmath>
 #include <dumux/common/math.hh>
 
 namespace Dumux::PoreNetwork {
