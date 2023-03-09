@@ -1445,7 +1445,7 @@ Differences Between DuMu<sup>x</sup> 2.6 and DuMu<sup>x</sup> 2.7
 
   - The 1p2c volume variables no longer use the method tortuosity() from
     spatial params class, the value is now calculated within the effective
-    diffusivity model. Thus the method is deprecated in the spacial params
+    diffusivity model. Thus the method is deprecated in the spatial params
     classes FVSpatialParamsOneP and ImplicitSpatialParamsOneP.
 
 * Deprecated protected MEMBER VARIABLES, to be removed after 2.7: BEWARE: Older
