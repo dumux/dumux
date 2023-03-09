@@ -129,8 +129,8 @@ struct SphereCapGrainFouriersLaw
             const Scalar R = problem.spatialParams.extendedPoreRadius(scv.dofIndex());
             const Scalar lambda = volVars.solidThermalConductivity();
             const Scalar rC = volVars.poreRadius();
-
-            return (lambda*M_PI*R) / std::atanh(rC/R);
+            using std::atanh;
+            return (lambda*M_PI*R) / atanh(rC/R);
         };
 
         auto insideThermalConducitivity = insideVolVars.solidThermalConductivity();
