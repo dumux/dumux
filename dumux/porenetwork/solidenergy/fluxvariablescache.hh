@@ -25,23 +25,6 @@
 
 namespace Dumux::PoreNetwork {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)
-//! For each type of process there is a base cache storing the data required to compute the respective fluxes
-//! Specializations of the overall cache are provided for combinations of processes
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-/*!
- * \ingroup ImplicitModel
- * \brief The flux variables cache classes for porous media.
- *        Store data required for flux calculation. For each type of physical process (advection, diffusion, heat conduction)
- *        there is a base cache storing the data required to compute the respective fluxes. Specializations of the overall
- *        cache class are provided for different combinations of processes.
- */
-
-//! We only store discretization-related quantities for the box method.
-//! Thus, we need no physics-dependent specialization.
 template<class Scalar>
 class SolidEnergyFluxVariablesCache
 {
