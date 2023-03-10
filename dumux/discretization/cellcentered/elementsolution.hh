@@ -106,7 +106,7 @@ private:
 };
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  */
 template<class Element, class SolutionVector, class GridGeometry>
@@ -122,7 +122,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 }
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
@@ -136,7 +136,7 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
 }
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  * \note This is e.g. used to construct an element solution at Dirichlet boundaries
  */
@@ -150,7 +150,7 @@ auto elementSolution(PrimaryVariables&& priVars)
 }
 
 /*!
- * \ingroup CCDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cell-centered schemes
  * \note This is e.g. used to construct an element solution at Dirichlet boundaries
  */

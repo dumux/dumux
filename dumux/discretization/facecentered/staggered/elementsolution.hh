@@ -123,7 +123,7 @@ private:
 };
 
 /*!
- * \ingroup FaceCenteredStaggeredDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for face-centered staggered schemes
  */
 template<class Element, class SolutionVector, class GridGeometry>
@@ -138,7 +138,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 { return { element, sol, gg }; }
 
 /*!
- * \ingroup FaceCenteredStaggeredDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for face-centered staggered schemes
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
@@ -153,7 +153,7 @@ auto elementSolution(const Element& element, const ElementVolumeVariables& elemV
 { return { element, elemVolVars, gg }; }
 
 /*!
- * \ingroup FaceCenteredStaggeredDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for face-centered staggered schemes
  * \note This is e.g. used to construct an element solution at Dirichlet boundaries
  */

@@ -112,7 +112,7 @@ private:
 };
 
 /*!
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cvfe schemes
  */
 template<class Element, class SolutionVector, class GridGeometry>
@@ -127,7 +127,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 }
 
 /*!
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for cvfe schemes
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
