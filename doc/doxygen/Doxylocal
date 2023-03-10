@@ -1,7 +1,7 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
-PROJECT_NAME          = "DuMuX"
+PROJECT_NAME          = "DuMux"
 PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
@@ -40,7 +40,7 @@ USE_MATHJAX            = YES
 
 EXCLUDE_PATTERNS       = *_.hh
 
-ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
+GENERATE_TODOLIST      = NO
 
 # enable client side searching
 SEARCHENGINE           = YES
