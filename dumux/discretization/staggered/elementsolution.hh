@@ -54,7 +54,7 @@ template<class PrimaryVariables>
 using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for staggered schemes
  * \note This is e.g. used to construct an element solution at Dirichlet boundaries
  */
@@ -67,7 +67,7 @@ auto elementSolution(PrimaryVariables&& priVars)
 }
 
 /*!
- * \ingroup StaggeredDiscretization
+ * \ingroup Discretization
  * \brief  Helper function to create an elementSolution from cell center primary variables
  * \tparam PrimaryVariables The type of the desired primary variables object
  * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object

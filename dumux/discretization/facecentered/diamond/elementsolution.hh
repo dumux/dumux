@@ -111,7 +111,7 @@ private:
 };
 
 /*!
- * \ingroup DiamondDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for face-centered diamond schemes
  */
 template<class Element, class SolutionVector, class GridGeometry>
@@ -126,7 +126,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 }
 
 /*!
- * \ingroup DiamondDiscretization
+ * \ingroup Discretization
  * \brief  Make an element solution for face-centered diamond schemes
  */
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
