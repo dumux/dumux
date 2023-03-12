@@ -430,7 +430,7 @@ int invertCubicPolynomial(SolContainer *sol,
  *
  * Compares an current position vector with a reference vector, and returns true
  * if the position vector is larger.
- * "Larger" in this case means that all the entries of each spacial dimension are
+ * "Larger" in this case means that all the entries of each spatial dimension are
  * larger compared to the reference vector.
  *
  * \param pos Vektor holding the current Position that is to be checked
@@ -456,7 +456,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
  *
  * Compares an current position vector with a reference vector, and returns true
  * if the position vector is smaller.
- * "Smaller" in this case means that all the entries of each spacial dimension are
+ * "Smaller" in this case means that all the entries of each spatial dimension are
  * smaller in comparison with the reference vector.
  *
  * \param pos Vektor holding the current Position that is to be checked
@@ -482,7 +482,7 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
  *
  * Compares an current position vector with two reference vector, and returns true
  * if the position vector lies in between them.
- * "Between" in this case means that all the entries of each spacial dimension are
+ * "Between" in this case means that all the entries of each spatial dimension are
  * smaller in comparison with the larger reference vector as well as larger campared
  * to the smaller reference.
  * This is comfortable to cheack weather the current position is located inside or

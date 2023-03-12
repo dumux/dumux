@@ -201,7 +201,7 @@ public:
     /*!
      * \brief Set whether the matrix should be reused
      * \note If this is set to true, the matrix will not be assembled. Make
-     *       sure there is an assembled matrix that can be resused before
+     *       sure there is an assembled matrix that can be reused before
      *       setting this flag to true.
      */
     void reuseMatrix(bool reuse = true)

@@ -43,7 +43,7 @@ namespace Dumux {
  *        Coupling manager for porous medium flow problems coupled to a poro-mechanical
  *        problem both defined on the same grid. Coupling occurs via the change of porosity
  *        and permeability due to mechanical deformations and the influence of the pore
- *        pressure on the effecive stresses acting on the porous medium.
+ *        pressure on the effective stresses acting on the porous medium.
  *
  * \tparam PMFlowId The porous medium flow domain id
  * \tparam PoroMechId The poro-mechanical domain id

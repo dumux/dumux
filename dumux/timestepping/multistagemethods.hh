@@ -50,7 +50,7 @@ namespace Dumux::Experimental {
  *
  * where \f$ M(x)\f$ is the temporal operator/residual in terms of the solution \f$ x \f$,
  * and \f$ R(x)\f$ is the discrete spatial operator/residual.
- * \f$ M(x)\f$ usually corresponds to the conserved quanity (e.g. mass), and \f$ R(x)\f$
+ * \f$ M(x)\f$ usually corresponds to the conserved quantity (e.g. mass), and \f$ R(x)\f$
  * contains the rest of the residual. We can then construct \f$ m \f$-stage time discretization methods.
  * Integrating from time \f$ t^n\f$ to \f$ t^{n+1}\f$ with time step size \f$ \Delta t^n\f$, we solve:
  *
