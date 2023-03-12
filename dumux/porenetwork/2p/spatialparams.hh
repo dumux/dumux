@@ -32,6 +32,9 @@
 #include <dumux/porenetwork/common/poreproperties.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
+#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
+#include <dumux/io/plotpnmmateriallaw.hh>
+
 namespace Dumux::PoreNetwork {
 
 /*!
@@ -50,6 +53,7 @@ class TwoPSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
+    using MaterialLaw = Dumux::PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyRegularization<Scalar, Dumux::PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBody<Dumux::PoreNetwork::Pore::Shape::cube>>;
 
     TwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -222,6 +226,91 @@ public:
             return cornerHalfAngles_[eIdx];
         }
     }
+
+     /*!
+     * \brief Plots the pore scale capillary pressure-saturation curve
+     */
+    template<class VolumeVariables, class DofIndices, class Problem>
+    void plotPcSw(const DofIndices& dofIndices,
+                  const Problem& problem,
+                  const Scalar lowerSat = 0.0,
+                  const Scalar upperSat = 1.0,
+                  std::string plotName = "") const
+    {
+        if (dofIndices.empty())
+            return;
+
+        PlotLocalRules<MaterialLaw, Scalar> plot;
+        auto fvGeometry = localView(this->gridGeometry());
+
+        DofIndices handledDofs;
+        handledDofs.reserve(dofIndices.size());
+
+        auto dofFound = [&](const auto& dofs, const auto dofIdx)
+        {
+            return std::find(dofs.begin(), dofs.end(), dofIdx) != dofs.end();
+        };
+
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            // check if we already plotted all dofs
+            if (handledDofs.size() == dofIndices.size())
+                return;
+
+            fvGeometry.bindElement(element);
+
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                // make sure to plot each dof only once
+                if (!dofFound(handledDofs, scv.dofIndex()) && dofFound(dofIndices, scv.dofIndex()))
+                {
+                    handledDofs.push_back(scv.dofIndex());
+                    plot.template plotPcOverSw<VolumeVariables>(problem, element, fvGeometry, scv, lowerSat, upperSat, plotName);
+                }
+            }
+        }
+    }
+
+    //  /*!
+    //  * \brief Plots the throat transmissibilities
+    //  */
+    // template<class VolumeVariables, class ElementIndices, class Problem, class ElementFluxVarsCache>
+    // void plotTransmissibilities(const ElementIndices& elementIndices,
+    //                             const Problem& problem,
+    //                             const ElementFluxVarsCache& elementfluxvarscache) const
+    // {
+    //     if (elementIndices.empty())
+    //         return;
+
+    //     PlotLocalRules<MaterialLaw, Scalar> plot;
+
+    //     ElementIndices handledElements;
+    //     handledElements.reserve(elementIndices.size());
+
+    //     auto elementFound = [&](const auto& elems, const auto eIdx)
+    //     {
+    //         return std::find(elems.begin(), elems.end(), eIdx) != elems.end();
+    //     };
+
+    //     auto fvGeometry = localView(this->gridGeometry());
+
+    //     for (const auto& element : elements(this->gridGeometry().gridView()))
+    //     {
+    //         // check if we already plotted all throats
+    //         if (handledElements.size() == elementIndices.size())
+    //             return;
+
+    //         const auto eIdx = this->gridGeometry().elementMapper().index(element);
+
+    //         // make sure to plot each throat only once
+    //         if (!elementFound(handledElements, eIdx) && elementFound(elementIndices, eIdx))
+    //         {
+    //                 handledElements.push_back(eIdx);
+    //                 fvGeometry.bindElement(element);
+    //                 plot.template plotTransmissibilities<VolumeVariables>(problem, elementfluxvarscache, element, fvGeometry);
+    //         }
+    //     }
+    // }
 
 private:
     std::vector<Dune::ReservedVector<Scalar, 4>> cornerHalfAngles_;
