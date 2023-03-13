@@ -165,6 +165,11 @@ public:
 
     /*!
      * \brief Calculate the molar density \f$\mathrm{[mol/m^3]}\f$ of a fluid phase
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     *
      * \param fluidState The fluid state
      * \param paramCache mutable parameters
      * \param phaseIdx Index of the fluid phase
