@@ -12,6 +12,7 @@ import argparse
 import subprocess
 from util.moduleinfo import getModuleFile
 from util.moduleinfo import extractModuleInfos
+from util.common import queryYesNo
 
 # require python 3
 if sys.version_info[0] < 3:
@@ -37,7 +38,12 @@ if __name__ == "__main__":
 
     parser.add_argument("-m", "--modulepath", required=True, help="the path to the your module")
     parser.add_argument(
-        "-i", "--installScript", required=True, help="Specify the installation script"
+        "-i",
+        "--installScript",
+        required=True,
+        help="Specify the installation script. In order to create portable containers, make sure"
+        " that your installation script uses cmake options such as those in dumux/docker.opts (to"
+        " avoid hardware-specific compiler flags).",
     )
     parser.add_argument(
         "-t", "--templateFolder", required=False, help="Specify the folder with the template files"
@@ -55,19 +61,29 @@ if __name__ == "__main__":
     # get folder with the template files
     templateFolder = args["templateFolder"]
     if not templateFolder:
-        templateFolder = os.path.join(__file__, "../dumux/docker")
+        templateFolder = os.path.join(os.path.dirname(__file__), "../docker")
         print(f"Folder with template files not given. Defaulting to '{templateFolder}'.")
     if not os.path.exists(templateFolder):
         sys.exit(f"Template folder {templateFolder} could not be found")
+
+    print(
+        "--> Ready to create the Dockerfile. In order to create portable containers, make sure that"
+        " your installation script uses cmake options that do not set any hardware-specific"
+        " compiler flags. For instance, you may use 'dumux/docker.opts'."
+    )
+    useCurrentCmakeOpts = queryYesNo("Do you understand the implications and want to continue?")
+    if not useCurrentCmakeOpts:
+        sys.exit("Abort.")
 
     print("*" * 54)
     print("\n-- Creating a Docker image for module " + moduleName + " --\n")
     print("*" * 54)
 
     if os.path.exists("docker"):
-        print("\nA docker folder already exists. Continue anyway? - will be overwritten - [y/N]\n")
-        delete = input()
-        if delete in ("y", "Y"):
+        delete = queryYesNo(
+            "\nA docker folder already exists. Continue anyway? - will be overwritten"
+        )
+        if delete:
             shutil.rmtree("docker")
             print("--> Deleted old docker folder.")
         else:
@@ -133,11 +149,9 @@ if __name__ == "__main__":
         },
     )
     print("--> Created Dockerfile. You can adapt it to your needs.")
-    print()
-    print("Do you want to directly build the Docker image? [y/N]")
 
-    build = input()
-    if build in ("y", "Y"):
+    build = queryYesNo("Do you want to directly build the Docker image?")
+    if build:
         print("Building Docker image... this may take several minutes.")
         try:
             os.chdir("docker")
