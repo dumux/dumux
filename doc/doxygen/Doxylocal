@@ -11,6 +11,8 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
+FILE_PATTERNS         = *.md,*.cc,*.hh
+
 EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
 
 EXAMPLE_PATH          += @srcdir@/extradoc
