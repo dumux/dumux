@@ -162,10 +162,9 @@ public:
 
     // \}
 
-    using ParentType::evalCouplingResidual;
+    using CouplingManager<Traits>::evalCouplingResidual;
 
     /*!
-     * \ingroup MultiDomain
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
      *        at the degree of freedom with index dofIdxGlobalJ of domain j
      *
@@ -362,7 +361,12 @@ public:
 
     /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
-     *        the given domain I element's residual depends on.
+     *        the given domain I scv's residual depends on.
+     *
+     * \param domainI the domain index of domain i
+     * \param elementI the coupled element of domain í
+     * \param scvI the sub-control volume of domain i
+     * \param domainJ the domain index of domain j
      */
     template<std::size_t j>
     const CouplingStencilType& couplingStencil(Dune::index_constant<freeFlowMomentumIndex> domainI,
@@ -417,24 +421,7 @@ public:
      */
     // \{
 
-    /*!
-     * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
-     *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
-     *
-     * \param domainI the domain index of domain i
-     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
-     * \param domainJ the domain index of domain j
-     * \param dofIdxGlobalJ the index of the degree of freedom of domain j whose solution changed
-     * \param priVarsJ the new solution at the degree of freedom of domain j with index dofIdxGlobalJ
-     * \param pvIdxJ the index of the primary variable of domain j which has been updated
-     *
-     * \note this concerns all data that is used in the evaluation of the element residual and depends on
-     *       the primary variables at the degree of freedom location with index dofIdxGlobalJ
-     * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
-     *        as localAssemblerI.element()
-     * \note  per default, we update the solution vector, if the element residual of domain i depends on more than
-     *        the primary variables of domain j update the other dependent data here by overloading this function
-     */
+    //! \copydoc CouplingManager::updateCouplingContext
     template<std::size_t i, std::size_t j, class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
