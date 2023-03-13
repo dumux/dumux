@@ -115,8 +115,6 @@ private:
     };
 public:
 
-    using ParentType::couplingStencil;
-    using ParentType::updateCouplingContext;
     using CouplingData = StokesDarcyCouplingData<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
 
     //! Constructor
@@ -262,9 +260,9 @@ public:
         }
     }
 
-    /*!
-     * \brief Update the coupling context for the Darcy residual w.r.t. Darcy DOFs
-     */
+    using StaggeredCouplingManager<MDTraits>::updateCouplingContext;
+
+    //! \copydoc StaggeredCouplingManager::updateCouplingContext
     template<class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
@@ -276,18 +274,16 @@ public:
         this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
-    /*!
-     * \brief Update the coupling context for the Darcy residual w.r.t. the Stokes cell-center DOFs (DarcyToCC)
-     */
+    //! \copydoc StaggeredCouplingManager::updateCouplingContext
     template<class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<stokesCellCenterIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<stokesCellCenterIdx>& priVars,
+                               const PrimaryVariables<stokesCellCenterIdx>& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVarsJ;
 
         for (auto& data : darcyCouplingContext_)
         {
@@ -297,48 +293,44 @@ public:
                 continue;
 
             using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVars);
+            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVarsJ);
 
             for(const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(elemSol, this->problem(stokesIdx), data.element, scv);
         }
     }
 
-    /*!
-     * \brief Update the coupling context for the Darcy residual w.r.t. the Stokes face DOFs (DarcyToFace)
-     */
+    //! \copydoc StaggeredCouplingManager::updateCouplingContext
     template<class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<darcyIdx> domainI,
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<stokesFaceIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<stokesFaceIdx>& priVars,
+                               const PrimaryVariables<stokesFaceIdx>& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVarsJ;
 
         for (auto& data : darcyCouplingContext_)
         {
             for(const auto& scvf : scvfs(data.fvGeometry))
             {
                 if(scvf.dofIndex() == dofIdxGlobalJ)
-                    data.velocity[scvf.directionIndex()] = priVars;
+                    data.velocity[scvf.directionIndex()] = priVarsJ;
             }
         }
     }
 
-    /*!
-     * \brief Update the coupling context for the Stokes cc residual w.r.t. the Darcy DOFs (FaceToDarcy)
-     */
+    //! \copydoc StaggeredCouplingManager::updateCouplingContext
     template<std::size_t i, class LocalAssemblerI, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
                                Dune::index_constant<darcyIdx> domainJ,
                                const std::size_t dofIdxGlobalJ,
-                               const PrimaryVariables<darcyIdx>& priVars,
+                               const PrimaryVariables<darcyIdx>& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol(domainJ)[dofIdxGlobalJ] = priVars;
+        this->curSol(domainJ)[dofIdxGlobalJ] = priVarsJ;
 
         for (auto& data : stokesCouplingContext_)
         {
@@ -403,14 +395,20 @@ public:
      */
     // \{
 
+    using StaggeredCouplingManager<MDTraits>::couplingStencil;
+
     /*!
-     * \brief The Stokes cell center coupling stencil w.r.t. Darcy DOFs
+     * \brief The Stokes cell center coupling stencil w.r.t. Darcy DOFs.
+     *
+     * \param domainI The Stokes domain index.
+     * \param elementI The Sokes domain element.
+     * \param domainJ The Darcy domain index.
      */
     const CouplingStencil& couplingStencil(Dune::index_constant<stokesCellCenterIdx> domainI,
-                                           const Element<stokesIdx>& element,
+                                           const Element<stokesIdx>& elementI,
                                            Dune::index_constant<darcyIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(elementI);
         if(stokesCellCenterCouplingStencils_.count(eIdx))
             return stokesCellCenterCouplingStencils_.at(eIdx);
         else
@@ -420,22 +418,30 @@ public:
     /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
      *        the given domain I element's residual depends on.
+     *
+     * \param domainI the index of the domain in which the given element lives.
+     * \param elementI the coupled element of domainI
+     * \param domainJ the domain index of the coupled domain
      */
     template<std::size_t i, std::size_t j>
     const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
-                                           const Element<i>& element,
+                                           const Element<i>& elementI,
                                            Dune::index_constant<j> domainJ) const
     { return emptyStencil_; }
 
     /*!
-     * \brief The coupling stencil of domain I, i.e. which domain J dofs
-     *        the given domain I element's residual depends on.
+     * \brief Return the Stokes cell indices that influence the residual of
+     *        an element in the Darcy domain.
+     *
+     * \param domainI The darcy domain index.
+     * \param elementI The element in the Darcy domain.
+     * \param domainJ the domain index of the Stokes domain
      */
     const CouplingStencil& couplingStencil(Dune::index_constant<darcyIdx> domainI,
-                                           const Element<darcyIdx>& element,
+                                           const Element<darcyIdx>& elementI,
                                            Dune::index_constant<stokesCellCenterIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(elementI);
         if(darcyToStokesCellCenterCouplingStencils_.count(eIdx))
             return darcyToStokesCellCenterCouplingStencils_.at(eIdx);
         else
@@ -443,14 +449,18 @@ public:
     }
 
     /*!
-     * \brief The coupling stencil of domain I, i.e. which domain J dofs
-     *        the given domain I element's residual depends on.
+     * \brief Return the Stokes face indices that influence the residual of
+     *        an element in the Darcy domain.
+     *
+     * \param domainI The darcy domain index.
+     * \param elementI The element in the Darcy domain.
+     * \param domainJ the domain index of the Stokes domain
      */
     const CouplingStencil& couplingStencil(Dune::index_constant<darcyIdx> domainI,
-                                           const Element<darcyIdx>& element,
+                                           const Element<darcyIdx>& elementI,
                                            Dune::index_constant<stokesFaceIdx> domainJ) const
     {
-        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(elementI);
         if (darcyToStokesFaceCouplingStencils_.count(eIdx))
             return darcyToStokesFaceCouplingStencils_.at(eIdx);
         else
@@ -458,23 +468,31 @@ public:
     }
 
     /*!
-     * \brief The coupling stencil of domain I, i.e. which domain J DOFs
-     *        the given domain I element's residual depends on.
+     * \brief Return the dof indices of a subdomain that influence the residual of
+     *        a sub-control volume face of the Stokes domain.
+     *
+     * \param domainI the index of the domain in which the given element lives.
+     * \param scvfI the coupled sub-control volume face of the Stokes domain
+     * \param domainJ the domain index of the coupled domain
      */
     template<std::size_t i, std::size_t j>
     const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
-                                           const SubControlVolumeFace<stokesIdx>& scvf,
+                                           const SubControlVolumeFace<stokesIdx>& scvfI,
                                            Dune::index_constant<j> domainJ) const
     { return emptyStencil_; }
 
     /*!
-     * \brief The coupling stencil of a Stokes face w.r.t. Darcy DOFs
+     * \brief The coupling stencil of a Stokes face w.r.t. Darcy DOFs.
+     *
+     * \param domainI the index of the Stokes domain
+     * \param scvfI the coupled subcontrolvolume face of the Stokes domain
+     * \param domainJ the index of the Darcy domain
      */
     const CouplingStencil& couplingStencil(Dune::index_constant<stokesFaceIdx> domainI,
-                                           const SubControlVolumeFace<stokesIdx>& scvf,
+                                           const SubControlVolumeFace<stokesIdx>& scvfI,
                                            Dune::index_constant<darcyIdx> domainJ) const
     {
-        const auto faceDofIdx = scvf.dofIndex();
+        const auto faceDofIdx = scvfI.dofIndex();
         if(stokesFaceCouplingStencils_.count(faceDofIdx))
             return stokesFaceCouplingStencils_.at(faceDofIdx);
         else
