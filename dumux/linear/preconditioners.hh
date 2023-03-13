@@ -106,7 +106,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param mat The matrix to operate on.
+     * \param op The linear operator.
      * \param params Collection of parameters.
      */
     SeqUzawa(const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& op, const Dune::ParameterTree& params)

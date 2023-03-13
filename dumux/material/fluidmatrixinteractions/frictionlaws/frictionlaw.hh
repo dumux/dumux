@@ -91,6 +91,7 @@ public:
      *
      * \param roughnessHeight roughness height of the representative structure (e.g. largest grain size).
      * \param waterDepth water depth.
+     * \param eps If the roughness height falls below this threshold, this function returns zero.
      */
     Scalar limitRoughH(const Scalar roughnessHeight, const Scalar waterDepth, const Scalar eps=1.0e-12) const
     {

@@ -43,7 +43,7 @@ namespace Dumux {
  * \param c a function returning the ith corner (in Dune reference element order)
  *         e.g. `[&](unsigned int i){ return corners[i]; }`, where `corners` is a
  *         random access container storing the corners, and the returned corner is stored
- *         in a container (e.g. Dune::FieldVector) that has `::value_type` and `::dimension`.
+ *         in a container (e.g. Dune::FieldVector) that exports `value_type` and `dimension`.
  * \tparam dim the dimension of the geometry
  * \tparam CornerF the function type (is deduced)
  * \return volume of the geometry or NaN signalling not implemented
