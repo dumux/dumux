@@ -113,7 +113,6 @@ class BrineCO2
 , public Detail::BrineCO2Indices<Policy::useConstantSalinity()>
 {
     using ThisType = BrineCO2<Scalar, CO2Table, H2OType, Policy>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     // binary coefficients
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table>;
@@ -338,7 +337,7 @@ public:
             H2O::init(startTemp, endTemp, tempSteps, startPressure, endPressure, pressureSteps);
     }
 
-    using Base::density;
+    using Base<Scalar, ThisType>::density;
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -371,16 +370,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::molarDensity;
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
-     */
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx)
     {
@@ -402,7 +393,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
@@ -429,33 +420,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::fugacityCoefficient;
-    /*!
-     * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
-     *        phase.
-     *
-     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
-     * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
-     * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
-     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
-     *
-     * \f[
-     f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
-     \f]
-     * where \f$\mathrm{p_\alpha}\f$ is the pressure of the fluid phase.
-     *
-     * The fugacity itself is just an other way to express the
-     * chemical potential \f$\mathrm{\zeta^\kappa_\alpha}\f$ of the component:
-     *
-     * \f[
-     f^\kappa_\alpha := \exp\left\{\frac{\zeta^\kappa_\alpha}{k_B T_\alpha} \right\}
-     \f]
-     * where \f$\mathrm{k_B}\f$ is Boltzmann's constant.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component
-     */
+    using Base<Scalar, ThisType>::fugacityCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::fugacityCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState& fluidState,
                                       int phaseIdx,
@@ -510,8 +476,7 @@ public:
     }
 
     /*!
-     * \brief Returns the equilibrium concentration of the dissolved component
-     *        in a phase.
+     * \brief Returns the equilibrium mole fraction of the dissolved component in a phase.
      * \param fluidState An arbitrary fluid state
      * \param paramCache Parameter cache
      * \param phaseIdx The index of the fluid phase to consider
@@ -544,7 +509,7 @@ public:
     }
 
 
-    using Base::diffusionCoefficient;
+    using Base<Scalar, ThisType>::diffusionCoefficient;
     /*!
      * \brief Calculate the molecular diffusion coefficient for a
      *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
@@ -574,15 +539,8 @@ public:
     static Scalar diffusionCoefficient(const FluidState& fluidState, int phaseIdx, int compIdx)
     { DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients"); }
 
-    using Base::binaryDiffusionCoefficient;
-    /*!
-     * \brief Given the phase compositions, return the binary
-     *        diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIIdx Index of the component i
-     * \param compJIdx Index of the component j
-     */
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
+    // \copydoc Base<Scalar,ThisType>::binaryDiffusionCoefficient(const FluidState&,int,int,int)
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,
                                              int phaseIdx,
@@ -631,13 +589,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::enthalpy;
-    /*!
-     * \brief Given the phase composition, return the specific
-     *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
+    using Base<Scalar, ThisType>::enthalpy;
+    // \copydoc Base<Scalar,ThisType>::enthalpy(const FluidState&,int)
     template <class FluidState>
     static Scalar enthalpy(const FluidState& fluidState, int phaseIdx)
     {
@@ -710,7 +663,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-    using Base::thermalConductivity;
+    using Base<Scalar, ThisType>::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An arbitrary fluid state
@@ -734,9 +687,9 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::heatCapacity;
+    using Base<Scalar, ThisType>::heatCapacity;
     /*!
-     * \copybrief Base::heatCapacity
+     * \copybrief Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
      *
      * \note We employ the heat capacity of the pure phases.
      *
