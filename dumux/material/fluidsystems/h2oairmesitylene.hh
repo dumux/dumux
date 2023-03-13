@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FluidSystems
- * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
+ * \copybrief Dumux::FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH
@@ -56,7 +56,6 @@ class H2OAirMesitylene
     : public Base<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
     using ThisType = H2OAirMesitylene<Scalar, H2OType>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     using NAPL = Components::Mesitylene<Scalar>;
@@ -233,7 +232,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-    using Base::density;
+    using Base<Scalar, ThisType>::density;
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -279,16 +278,8 @@ public:
                + NAPL::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
     }
 
-    using Base::molarDensity;
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
-     */
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
     {
@@ -312,7 +303,7 @@ public:
         }
     }
 
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
     /*!
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      * \param fluidState The fluid state
@@ -387,7 +378,7 @@ public:
     }
 
 
-    using Base::diffusionCoefficient;
+    using Base<Scalar, ThisType>::diffusionCoefficient;
     /*!
      * \brief Given all mole fractions, return the diffusion
      *        coefficient in \f$\mathrm{[m^2/s]}\f$ of a component in a phase.
@@ -458,7 +449,8 @@ public:
         return 0;
     }
 
-    using Base::binaryDiffusionCoefficient;
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::binaryDiffusionCoefficient(const FluidState&,int,int,int)
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -468,7 +460,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::binaryDiffusionCoefficient()");
     }
 
-    using Base::fugacityCoefficient;
+    using Base<Scalar, ThisType>::fugacityCoefficient;
     /*!
      * \brief Returns the fugacity coefficient \f$\mathrm{[-]}\f$ of a component in a
      *        phase.
@@ -531,7 +523,7 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::kelvinVaporPressure()");
     }
 
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
     /*!
      * \brief Given all mole fractions in a phase, return the specific
      *        phase enthalpy \f$\mathrm{[J/kg]}\f$.
@@ -614,12 +606,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-    using Base::heatCapacity;
-    /*!
-     * \brief Return the heat capacity in \f$\mathrm{[J/(kg K)]}\f$.
-     * \param fluidState The fluid state
-     * \param phaseIdx The index of the phase
-     */
+    using Base<Scalar, ThisType>::heatCapacity;
+    //! \copydoc Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
@@ -627,12 +615,8 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAirMesitylene::heatCapacity()");
     }
 
-    using Base::thermalConductivity;
-    /*!
-     * \brief Return the thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
-     * \param fluidState The fluid state
-     * \param phaseIdx The index of the phase
-     */
+    using Base<Scalar, ThisType>::thermalConductivity;
+    //! \copydoc Base<Scalar,ThisType>::thermalConductivity(const FluidState&,int)
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
