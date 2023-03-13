@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FluidSystems
- * \brief @copybrief Dumux::FluidSystems::TwoPOneC
+ * \copybrief Dumux::FluidSystems::TwoPOneC
  */
 #ifndef DUMUX_2P_1C_FLUID_SYSTEM_HH
 #define DUMUX_2P_1C_FLUID_SYSTEM_HH
@@ -36,6 +36,7 @@
 
 namespace Dumux {
 namespace FluidSystems {
+
 /*!
  * \ingroup FluidSystems
  * \brief A two-phase fluid system with only one component.
@@ -45,7 +46,6 @@ class TwoPOneC
     : public Base<Scalar, TwoPOneC<Scalar, ComponentType> >
 {
     using ThisType = TwoPOneC<Scalar, ComponentType>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using Component = ComponentType;
 
 public:
@@ -265,13 +265,8 @@ public:
         }
     }
 
-    /*!
-     * \brief Calculate the density [kg/m^3] of a fluid phase
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    using Base::density;
+    using Base<Scalar, ThisType>::density;
+    //! \copydoc Base<Scalar,ThisType>::density(const FluidState&,int)
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           int phaseIdx)
@@ -293,16 +288,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    using Base::molarDensity;
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the molar mass \f$M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
-     */
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
     {
@@ -316,13 +303,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    /*!
-     * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
+    //! \copydoc Base<Scalar,ThisType>::viscosity(const FluidState&,int)
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             int phaseIdx)
@@ -357,6 +339,7 @@ public:
         return Component::vaporTemperature(pressure);
     }
 
+    using Base<Scalar, ThisType>::fugacityCoefficient;
     /*!
      * \brief Calculate the fugacity coefficient [-] of an individual
      *        component in a fluid phase
@@ -384,7 +367,6 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
-    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -410,15 +392,8 @@ public:
     }
 
 
-    /*!
-     * \brief Calculate the molecular diffusion coefficient for a
-     *        component in a fluid phase [mol^2 * s / (kg*m^3)]
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
-    using Base::diffusionCoefficient;
+    using Base<Scalar, ThisType>::diffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::diffusionCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -428,17 +403,8 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
-    /*!
-     * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient for components
-     *        \f$i\f$ and \f$j\f$ in this phase.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIIdx The index of the first component to consider
-     * \param compJIdx The index of the second component to consider
-     */
-    using Base::binaryDiffusionCoefficient;
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::binaryDiffusionCoefficient(const FluidState&,int,int,int)
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -447,13 +413,8 @@ public:
 
     { DUNE_THROW(Dune::NotImplemented, "Binary Diffusion coefficients"); }
 
-    /*!
-     * \brief Calculate specific enthalpy [J/kg].
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
+    //! \copydoc Base<Scalar,ThisType>::enthalpy(const FluidState&,int)
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
@@ -473,15 +434,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    /*!
-     * \brief Thermal conductivity of a fluid phase [W/(m K)].
-     *
-     * Use the conductivity of vapor and liquid water at 100°C
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    using Base::thermalConductivity;
+    using Base<Scalar, ThisType>::thermalConductivity;
+    //! \copydoc Base<Scalar,ThisType>::thermalConductivity(const FluidState&,int)
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const int phaseIdx)
@@ -500,14 +454,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
-    /*!
-     * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/kg / K]}\f$.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    using Base::heatCapacity;
+    using Base<Scalar, ThisType>::heatCapacity;
+    //! \copydoc Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
