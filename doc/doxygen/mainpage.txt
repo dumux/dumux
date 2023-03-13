@@ -12,7 +12,7 @@ Welcome to the DuMu<sup>X</sup> documentation pages.
 
 \section mods Modules
 
-The best way to start is from the <a href="modules.html">Modules</a> page which gives
+The best way to start is from the <a href="modules.html">Models and main components</a> page which gives
 you access to the documentation by category.
 
 \section params Parameters
