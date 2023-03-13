@@ -4,9 +4,34 @@
  * \brief This file contains all module definitions for the doxygen documentation.
  *
  */
+/* ***************** Top groups ******************/
+/*!
+ * \defgroup Core Core functionality and concepts
+ * \brief Core functionality and concepts
+ */
+/*!
+ * \defgroup Models Mathematical models
+ * \brief The mathematical models implemented in DuMu<sup>x</sup>
+ */
+/*!
+ * \defgroup Material Constitutive modeling
+ * \brief Constitutive model framework, material models, fluids, solids.
+ */
+/*!
+ * \defgroup MultiDomain Multidomain framework
+ * \brief Coupling of several regular DuMu<sup>x</sup> problems
+ *
+ * The multi domain module allows coupling regular DuMu<sup>x</sup> problems.
+ * Several coupling modes are currently available.
+ */
+/*!
+ * \defgroup Experimental Experimental
+ * \brief Experimental features
+ */
 
 /* ***************** Porousmediumflow ******************/
 /*!
+ * \ingroup Models
  * \defgroup PorousmediumflowModels Porous-Medium Flow Models
  * \brief Single and multi-phase models for flow and transport in porous materials
  */
@@ -15,158 +40,159 @@
      * \defgroup OnePModel 1p
      * \brief Single-phase (immiscible) Darcy flow
      *
-     * For a detailed model description see porousmediumflow/1p/model.hh
+     * \copydoc dumux/porousmediumflow/1p/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCModel 1pnc
      * \brief Single-phase, multi-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/1pnc/model.hh
+     * \copydoc dumux/porousmediumflow/1pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup OnePNCMinModel 1pncmin
      * \brief Single-phase, multi-component Darcy flow with mineralization
      *
-     * For a detailed model description see porousmediumflow/1pncmin/model.hh
+     * \copydoc dumux/porousmediumflow/1pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPModel 2p
      * \brief Two-phase (immiscible) Darcy flow
      *
-     * For a detailed model description see porousmediumflow/2p/model.hh
+     * \copydoc dumux/porousmediumflow/2p/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPOneCModel 2p1c
      * \brief Two-phase, one-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/2p1c/model.hh
+     * \copydoc dumux/porousmediumflow/2p1c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPTwoCModel 2p2c
      * \brief Two-phase, two-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/2p2c/model.hh
+     * \copydoc dumux/porousmediumflow/2p2c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCModel 2pnc
      * \brief two-phase, multi-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/2pnc/model.hh
+     * \copydoc dumux/porousmediumflow/2pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCMinModel 2pncmin
      * \brief Two-phase, multi-component Darcy flow with mineralization
      *
-     * For a detailed model description see porousmediumflow/2pncmin/model.hh
+     * \copydoc dumux/porousmediumflow/2pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePModel 3p
      * \brief Three-phase (immiscible) Darcy flow
      *
-     * For a detailed model description see porousmediumflow/3p/model.hh
+     * \copydoc dumux/porousmediumflow/3p/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePThreeCModel 3p3c
      * \brief Three-phase, three-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/3p3c/model.hh
+     * \copydoc dumux/porousmediumflow/3p3c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup ThreePWaterOilModel 3pwateroil
      * \brief Three-phase, two-component Darcy flow with water (liquid & gas) and oil
      *
-     * For a detailed model description see porousmediumflow/3pwateroil/model.hh
+     * \copydoc dumux/porousmediumflow/3pwateroil/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup BoxDFMModel boxdfm
      * \brief Vertex-centered, continuous-pressure, conforming lower-dimensional discrete-fracture model
      *
-     * For a detailed model description see porousmediumflow/boxdfm/model.hh
+     * \copydoc dumux/porousmediumflow/boxdfm/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup CO2Model CO2
      * \brief Two-phase, two-component Darcy flow specialized for supercritical CO<sub>2</sub> storage
      *
-     * For a detailed model description see porousmediumflow/co2/model.hh
+     * \copydoc dumux/porousmediumflow/co2/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup MineralizationModel mineralization
      * \brief Model adding components that can precipitate as a solid phase to a standard Darcy flow model
      *
-     * For a detailed model description see porousmediumflow/mineralization/model.hh
+     * \copydoc dumux/porousmediumflow/mineralization/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup MPNCModel mpnc
      * \brief Generalized multi-phase, multi-component Darcy flow
      *
-     * For a detailed model description see porousmediumflow/mpnc/model.hh
+     * \copydoc dumux/porousmediumflow/mpnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup NonEquilibriumModel NonEquilibrium
+     * \defgroup NonEquilibriumModel nonequilibrium
      * \brief Model that adds nonequilibrium equations to another porous medium flow model (only used in MPNCModel currently)
      *
-     * For a detailed model description see porousmediumflow/nonequilibrium/model.hh
+     * \copydoc dumux/porousmediumflow/nonequilibrium/model.hh
      */
         /*!
          * \ingroup NonEquilibriumModel
-         * \defgroup ThermalNonEquilibriumModel ThermalNonEquilibrium
+         * \defgroup ThermalNonEquilibriumModel thermal-nonequilibrium
          * \brief Model that adapts the energy localresidual to thermal nonequilibrium
          *
-         * For a detailed model description see porousmediumflow/nonequilibrium/thermal/localresidual.hh
+         * \copydoc dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh
          */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup NIModel nonisothermal
+     * \defgroup NIModel non-isothermal
      * \brief Model that adds an energy equation (thermal equilibrium) to another porous medium flow model
      *
-     * For a detailed model description see porousmediumflow/nonisothermal/model.hh
+     * \copydoc dumux/porousmediumflow/nonisothermal/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
      * \defgroup RichardsModel Richards
      * \brief Richards flow
      *
-     * For a detailed model description see porousmediumflow/richards/model.hh
+     * \copydoc dumux/porousmediumflow/richards/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup RichardsNCModel Richards nc
+     * \defgroup RichardsNCModel Richards multi-component
      * \brief Richards multi-component flow
      *
-     * For a detailed model description see porousmediumflow/richardsnc/model.hh
+     * \copydoc dumux/porousmediumflow/richardsnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup SolidEnergyModel Solid energy
+     * \defgroup SolidEnergyModel solid-energy
      * \brief Energy equation for the solid (general heat equation)
      *
-     * For a detailed model description see porousmediumflow/solidenergy/model.hh
+     * \copydoc dumux/porousmediumflow/solidenergy/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TracerModel Tracer
+     * \defgroup TracerModel tracer
      * \brief Multi-component advection-diffusion-reaction model with given velocity field
      *
-     * For a detailed model description see porousmediumflow/tracer/model.hh
+     * \copydoc dumux/porousmediumflow/tracer/model.hh
      */
 
 /* ***************** FreeflowModels ******************/
 /*!
+ * \ingroup Models
  * \defgroup FreeflowModels Free Flow Models
  * \brief Single-phase models based on the Navier-Stokes equation
  */
@@ -175,28 +201,28 @@
      * \defgroup NavierStokesModel Navier-Stokes
      * \brief Single-phase Navier-Stokes flow
      *
-     * For a detailed model description see freeflow/navierstokes/model.hh
+     * \copydoc dumux/freeflow/navierstokes/model.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup RANSModel Reynolds-Averaged Navier-Stokes
      * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
      *
-     * For a detailed model description see freeflow/rans/model.hh
+     * \copydoc dumux/freeflow/rans/model.hh
      */
         /*!
          * \ingroup RANSModel
          * \defgroup ZeroEqModel 0-Eq. Models
          * \brief Zero-equation or algebraic turbulence models
          *
-         * For a detailed model description see freeflow/rans/zeroeq/model.hh
+         * \copydoc dumux/freeflow/rans/zeroeq/model.hh
          */
         /*!
          * \ingroup RANSModel
          * \defgroup OneEqModel 1-Eq. Models
          * \brief One-equation turbulence model by Spalart-Allmaras
          *
-         * For a detailed model description see freeflow/rans/oneeq/model.hh
+         * \copydoc dumux/freeflow/rans/oneeq/model.hh
          */
         /*!
          * \ingroup RANSModel
@@ -208,51 +234,54 @@
              * \defgroup KEpsilonModel K-epsilon model
              * \brief K-epsilon model
              *
-             * For a detailed model description see freeflow/rans/twoeq/kepsilon/model.hh
+             * \copydoc dumux/freeflow/rans/twoeq/kepsilon/model.hh
              */
             /*!
              * \ingroup TwoEqModel
              * \defgroup KOmegaModel K-omega model
              * \brief K-omega model
              *
-             * For a detailed model description see freeflow/rans/twoeq/komega/model.hh
+             * \copydoc dumux/freeflow/rans/twoeq/komega/model.hh
              */
             /*!
              * \ingroup TwoEqModel
              * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
              * \brief Low-Re k-epsilon model
              *
-             * For a detailed model description see freeflow/rans/twoeq/lowrekepsilon/model.hh
+             * \copydoc dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh
              */
             /*!
              * \ingroup TwoEqModel
              * \defgroup SSTModel SST model
              * \brief SST model
              *
-             * For a detailed model description see freeflow/rans/twoeq/sst/model.hh
+             * \copydoc dumux/freeflow/rans/twoeq/sst/model.hh
              */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNCModel Compositional
      * \brief Single-phase multi-component free-flow flow models
      *
-     * For a detailed model description see freeflow/compositional/navierstokesncmodel.hh
+     * \copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup FreeflowNIModel Nonisothermal
      * \brief An energy equation adaptor for isothermal free-flow models
      *
-     * For a detailed model description see freeflow/nonisothermal/model.hh
+     * \copydoc dumux/freeflow/nonisothermal/model.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup ShallowWaterModel 2D shallow water model
      * \brief Two-dimensional shallow water flow (depth-averaged)
      *
-     * For a detailed model description see freeflow/shallowwater/model.hh
+     * \copydoc dumux/freeflow/shallowwater/model.hh
      */
+
+/* ***************** Geomechanics ******************/
 /*!
+ * \ingroup Models
  * \defgroup Geomechanics Geomechanics Models
  * \brief Models taking into account solid deformation
  */
@@ -261,28 +290,32 @@
      * \defgroup Elastic Solid mechanics w/o fluid pressure
      * \brief Models linear elastic deformation of a solid. Disregards fluid pressure.
      *
-     * For a detailed model description see geomechanics/elastic/model.hh
+     * \copydoc dumux/geomechanics/elastic/model.hh
      */
     /*!
      * \ingroup Geomechanics
      * \defgroup PoroElastic Solid mechanics with fluid pressure
      * \brief Models linear elastic deformation of a solid. Takes fluid pressure into account.
      *
-     * For a detailed model description see geomechanics/poroelastic/model.hh
+     * \copydoc dumux/geomechanics/poroelastic/model.hh
      */
+
+/* ***************** Geometry ******************/
 /*!
+ * \ingroup Core
  * \defgroup Geometry Geometry
  * \brief Algorithms for geometry computations (intersections, distances, ...).
  */
 
 /* ***************** Discretization ******************/
 /*!
+ * \ingroup Core
  * \defgroup Discretization Discretization schemes
  * \brief The discretization schemes available in DuMu<sup>x</sup>
  */
     /*!
      * \ingroup Discretization
-     * \defgroup CCDiscretization Cell-centered FV scheme
+     * \defgroup CCDiscretization Cell-centered Finite Volume Methods
      * \brief Finite volume schemes with degrees of freedom located at grid cell centers.
      */
         /*!
@@ -297,7 +330,7 @@
          */
     /*!
      * \ingroup Discretization
-     * \defgroup CVFEDiscretization CVFE
+     * \defgroup CVFEDiscretization Control-volume Finite Element Methods
      * \brief Control-volume finite element schemes (e.g. box method)
      * Control-volume finite element schemes are based on finite element basis functions for interpolation but define control volumes to construct a finite volume scheme. They can be interpreted both as finite volume or as (Petrov-Galerkin) finite element scheme.
      */
@@ -320,33 +353,31 @@
          */
     /*!
      * \ingroup Discretization
-     * \defgroup FaceCenteredStaggeredDiscretization Face-centered staggered FV schemes
+     * \defgroup FaceCenteredStaggeredDiscretization Staggered Grid Finite Volume Method
      * \brief Discretization for the momentum balance of the Navier-Stokes equations. Can be used to build a marker-and-cell scheme (MAC) together with Tpfa for the discretization of the mass balance equation.
      */
     /*!
      * \ingroup Discretization
      * \defgroup StaggeredDiscretization Staggered FV scheme
+     * \internal
      * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets. In this implementation, momentum control volumes do not explicitly exist, but the implementation uses workarounds.
      * \note This is an outdated implementation of the MAC scheme and will be replaced.
      */
     /*!
      * \ingroup Discretization
-     * \defgroup FEMDiscretization Finite element method
+     * \defgroup FEMDiscretization Finite Element Methods
      * \brief The finite element method
      */
     /*!
      * \ingroup Discretization
-     * \defgroup PoreNetworkDiscretization Pore network model discretization
+     * \defgroup PoreNetworkDiscretization Pore-network Models
      * \brief The pore-network model discretization.
      */
-/* ***************** Experimental ******************/
-/*!
- * \defgroup Experimental Experimental
- * \brief Experimental features.
- */
+
 /* ***************** Flux ******************/
 /*!
- * \defgroup Flux Flux
+ * \ingroup Core
+ * \defgroup Flux Numerical flux approximations
  * \brief Everything flux related in DuMu<sup>x</sup>
  */
     /*!
@@ -394,163 +425,132 @@
      * \defgroup ShallowWaterFlux Flux related to the shallow water model
      * \brief Flux related to the shallow water model
      */
+
 /* ***************** Material ******************/
 /*!
- * \defgroup Material Material and Fluid Framework
- * \brief The material and fluid framework with constitutive laws and mixture physics
- * \par
- * Short description of the most important concepts of the material and fluid framework:
+ * \ingroup Material
+ * \defgroup Binarycoefficients Relations for binary mixtures
+ * \brief Binary coefficients such as binary diffusion coefficients, Henry coefficients.
  *
- *  - __Binary coefficient:__ <br>  @copydoc Binarycoefficients
- *  - __Chemistry:__ <br> @copydoc Chemistry
- *  - __Component:__ <br> @copydoc Components
- *  - __Constraint solvers:__ <br> @copydoc ConstraintSolvers
- *  - __Equation of state:__ <br> @copydoc EOS
- *  - __Fluid-Matrix Interactions:__ <br> @copydoc Fluidmatrixinteractions
- *  - __Fluid state:__ <br> @copydoc FluidStates
- *  - __Solid state:__ <br> @copydoc SolidStates
- *  - __Fluid system:__ <br> @copydoc FluidSystems
- *  - __Solid system:__ <br> @copydoc SolidSystems
- *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
+ *  Binary coefficients describe the relations
+ *  of a mixture of two components. Typical binary coefficients are
+ *  Henry coefficients or binary molecular diffusion
+ *  coefficients.
  */
-    /*!
-     * \ingroup Material
-     * \defgroup Binarycoefficients Binary Coefficients
-     * \brief Binary coefficients
-     *
-     *  Binary coefficients describe the relations
-     *  of a mixture of two components. Typical binary coefficients are
-     *  Henry coefficients or binary molecular diffusion
-     *  coefficients. So far, the programming interface for accessing binary
-     *  coefficients has not been standardized in Dumux.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup Chemistry Chemistry
-     * \brief Chemical reactions
-     *
-     * Chemical reactions can be relevant for all thermodynamic relations
-     * for the liquid and gas phase of multiple chemical species
-     * The main purpose is to provide a convenient way to access these
-     * relationships via source or sink terms.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup Components Components
-     * \brief thermodynamics of single chemical species or fixed mixtures of species
-     *
-     * Components provide the thermodynamic relations for the liquid,
-     * gaseous and/or solid state of a single
-     * chemical species or a _fixed_ mixture of species.
-     * Fluid systems use components to compute thermodynamic quantities of phases.
-     */
-        /*!
-         * \ingroup Components
-         * \defgroup IAPWS IAPWS
-         * \brief Tabulated values according to the International Association for the Properties of Water and Steam (IAPWS)
-         */
-    /*!
-     * \ingroup Material
-     * \defgroup ConstraintSolvers Constraint Solvers
-     * \brief Constraint solvers converting primary to secondary variables
-     *
-     * Constraint solvers are auxiliary tools to
-     * make sure that a fluid state is consistent with some thermodynamic
-     * constraints. All constraint solvers specify a well defined set of
-     * input variables and make sure that the resulting fluid state is
-     * consistent with a given set of thermodynamic equations.
-     * Constraint solvers connect the thermodynamic relations expressed by
-     * fluid systems with the thermodynamic quantities stored by fluid
-     * states. Using them is not mandatory for models, but given the fact
-     * that some thermodynamic constraints can be quite complex to solve,
-     * sharing this code between models makes sense.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup EOS Equation of State
-     * \brief Equations of state
-     *
-     * Equations of state (EOS) are auxiliary
-     * classes which provide relations between a fluid phase's temperature,
-     * pressure, composition and density. Since these classes are only used
-     * internally in fluid systems, their programming interface is
-     * currently ad-hoc.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup Fluidmatrixinteractions Fluid-Matrix Interactions
-     * \brief e.g. pc-Sw, kr-Sw relations, effective diffusion coefficients
-     *
-     * Some parameters are functions of the fluid state as well as parameters of
-     * the matrix. For example the capillary pressure is a function of the phase saturation
-     * and the shape parameter \f$\lambda\f$ which is dependent on the material. All such relations
-     * are gathered in this module.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup FluidStates Fluid States
-     * \brief Fluid states are responsible for representing the
-     * complete thermodynamic configuration of a system at a given spatial
-     * and temporal position.
-     *
-     * A fluid state always provides access methods
-     * to __all__ thermodynamic quantities, but the concept of a fluid state does not
-     * mandate what assumptions are made to store these thermodynamic
-     * quantities. What fluid states also do __not__ do is to make sure
-     * that the thermodynamic state which they represent is physically
-     * possible.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup Fluidsystems Fluid Systems
-     * \brief Fluid systems express the thermodynamic relations (functions).
-     *
-     * Since functions do
-     *  not exhibit any internal state, fluid systems are stateless classes,
-     *  i.e. all member functions are static. This is a conscious
-     *  decision since the thermodynamic state of the system is expressed by
-     *  a fluid state!
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup SolidStates Solid States
-     * \brief Solid states are responsible for representing all relevant
-     * thermodynamic quantities of solid systems.
-     *
-     * A solid state provides access methods
-     * to __all__ thermodynamic quantities, but the concept of a solid state does not
-     * mandate what assumptions are made to store these thermodynamic
-     * quantities. What solid states also do __not__ do is to make sure
-     * that the thermodynamic state which they represent is physically
-     * possible.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup SolidSystems Solid Systems
-     * \brief Solid systems express the thermodynamic relations (functions).
-     *
-     * Since functions do
-     *  not exhibit any internal state, solid systems are stateless classes,
-     *  i.e. all member functions are static. This is a conscious
-     *  decision since the thermodynamic state of the system is expressed by
-     *  a solid state!
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup SpatialParameters Spatial parameters
-     * \brief Spatial parameters.
-     *
-     * Spatial parameters.
-     */
+/*!
+ * \ingroup Material
+ * \defgroup Chemistry Chemical constitutive models
+ * \brief Chemical reaction models
+ *
+ * Chemical reactions can be relevant for all thermodynamic relations
+ * for the liquid and gas phase of multiple chemical species
+ * The main purpose is to provide a convenient way to access these
+ * relationships via source or sink terms.
+ */
+/*!
+ * \ingroup Material
+ * \defgroup Components Thermodynamical properties of chemical species
+ * \brief Thermodynamical properties of single chemical species or fixed mixtures of species (\f$ \text{CO}_2, \text{H}_2\text{O}, \text{Air}, ... \f$)
+ *
+ * Components provide the thermodynamic relations for the liquid,
+ * gaseous and/or solid state of a single
+ * chemical species or a _fixed_ mixture of species.
+ * Fluid systems use components to compute thermodynamic quantities of phases.
+ * An example would be the dynamic viscosity at different temperatures and pressures.
+ */
+   /*!
+   * \ingroup Components
+   * \defgroup IAPWS IAPWS
+   * \brief Tabulated values according to the International Association for the Properties of Water and Steam (IAPWS)
+   */
+/*!
+ * \ingroup Material
+ * \defgroup ConstraintSolvers Constraint solvers for thermodynamic constraints of mixtures
+ * \brief Constraint solvers converting primary to secondary variables
+ *
+ * Constraint solvers are auxiliary tools to
+ * make sure that a fluid state is consistent with some thermodynamic
+ * constraints. All constraint solvers specify a well defined set of
+ * input variables and make sure that the resulting fluid state is
+ * consistent with a given set of thermodynamic equations.
+ * Constraint solvers connect the thermodynamic relations expressed by
+ * fluid systems with the thermodynamic quantities stored by fluid
+ * states. Using them is not mandatory for models, but given the fact
+ * that some thermodynamic constraints can be quite complex to solve,
+ * sharing this code between models makes sense.
+ */
+/*!
+ * \ingroup Material
+ * \defgroup EOS Equations of State
+ * \brief Thermodynamic equations relating state variables (e.g. temperature, pressure, density)
+ *
+ * Equations of state (EOS) are provided in the form of auxiliary
+ * classes which provide interfaces to query relations between a fluid phase's temperature,
+ * pressure, composition and density.
+ */
+/*!
+ * \ingroup Material
+ * \defgroup Fluidmatrixinteractions Fluid-matrix interactions
+ * \brief Constitutive relations such as pc-Sw relations, kr-Sw relations, effective diffusion coefficients, friction laws
+ *
+ * Constitutive models for interaction of fluids and solids. The relations depend on the fluid state
+ * as well as material parameters of the matrix. For example, in porous media theory,
+ * capillary pressure is often expressed as a function of the phase saturation
+ * and some shape parameter \f$\lambda\f$ which is dependent on the material (Brooks-Corey model).
+ */
+/*!
+ * \ingroup Material
+ * \defgroup FluidStates Fluid States
+ * \brief Fluid states represent the thermodynamic configuration of a system
+ *
+ * A fluid state always provides access methods
+ * to __all__ thermodynamic quantities, but the concept of a fluid state does not
+ * mandate what assumptions are made to store these thermodynamic
+ * quantities. Not that fluid states do __not__ make sure
+ * that the thermodynamic state which they represent is physically
+ * possible, they simply store the variables specified.
+ */
+/*!
+ * \ingroup Material
+ * \defgroup FluidSystems Fluid Systems
+ * \brief Fluid systems express the thermodynamic relations (functions).
+ */
+/*!
+ * \ingroup Material
+ * \defgroup SolidStates Solid States
+ * \brief Solid states are responsible for representing all relevant
+ * thermodynamic quantities of solid systems.
+ *
+ * A solid state provides access methods
+ * to __all__ thermodynamic quantities, but the concept of a solid state does not
+ * mandate what assumptions are made to store these thermodynamic
+ * quantities. What solid states also do __not__ do is to make sure
+ * that the thermodynamic state which they represent is physically
+ * possible.
+ */
+/*!
+ * \ingroup Material
+ * \defgroup SolidSystems Solid Systems
+ * \brief Solid systems express the thermodynamic relations (functions).
+ */
+/*!
+ * \ingroup Material
+ * \defgroup SpatialParameters Spatial parameters
+ * \brief Spatial parameters.
+ *
+ * Spatial parameters.
+ */
 
 /* ***************** Adaptive ******************/
 /*!
- * \defgroup Adaptive Adaptive
- * \brief Adaptive grids
+ * \ingroup Core
+ * \defgroup Adaptive Tools for adaptive grids
+ * \brief Tools for simulations using adaptive grids
  */
 
 /* ***************** Assembly and Solvers ******************/
 /*!
+ * \ingroup Core
  * \defgroup AssemblyAndSolvers Assembly and Solvers
  * \brief Assembling matrices and vectors, solvers for linear and nonlinear equations
  */
@@ -575,74 +575,65 @@
      * \brief Files for communication of parallel solvers
      */
 
- /* ***************** Common ******************/
+/* ***************** Properties/Traits ******************/
 /*!
- * \defgroup Common Common
- * \brief Common classes, functions, properties and concepts
+ * \ingroup Core
+ * \defgroup Properties Properties
+ * \brief Basic properties of all models in DuMu<sup>x</sup>
  */
-    /*!
-     * \ingroup Common
-     * \defgroup Properties Properties
-     * \brief Basic properties of all models in DuMu<sup>x</sup>
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Typetraits Typetraits
-     * \brief Basic Type traits in DuMu<sup>x</sup>
-     */
+/*!
+ * \ingroup Core
+ * \defgroup Typetraits Typetraits
+ * \brief Basic Type traits in DuMu<sup>x</sup>
+ */
 
 /* ***************** InputOutput ******************/
 /*!
+ * \ingroup Core
  * \defgroup InputOutput Input Output
  * \brief Input and output of data and grids
  */
 
 /* ***************** MultiDomain ******************/
 /*!
- * \defgroup MultiDomain Multidomain simulations
- * \brief Coupling of several regular DuMu<sup>x</sup> problems
- *
- * The multi domain module allows coupling regular DuMu<sup>x</sup> problems.
- * Several coupling modes are currently available.
+ * \ingroup MultiDomain
+ * \defgroup BoundaryCoupling Boundary coupling mode
+ * \brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
  */
-    /*!
-     * \ingroup MultiDomain
-     * \defgroup BoundaryCoupling Boundary coupling mode
-     * \brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
-     */
-        /*!
-         * \ingroup BoundaryCoupling
-         * \defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
-         * \brief Couples domains with equal-dimension multi-physics problems in a Darcy-Darcy coupling.
-         */
-        /*!
-         * \ingroup BoundaryCoupling
-         * \defgroup FreeFlowPoreNetworkCoupling Free flow-Pore network domain coupling
-         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Pore network coupling.
-         */
-        /*!
-         * \ingroup BoundaryCoupling
-         * \defgroup FreeFlowPorousMediumCoupling Free flow-Porous medium domain coupling
-         * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Porous medium coupling.
-         */
-        /*!
-         * \ingroup BoundaryCoupling
-         * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
-         * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
-         */
-    /*!
-     * \ingroup MultiDomain
-     * \defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
-     * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
-     */
-    /*!
-     * \ingroup MultiDomain
-     * \defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
-     * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
-     */
+   /*!
+   * \ingroup BoundaryCoupling
+   * \defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
+   * \brief Couples domains with equal-dimension multi-physics problems in a Darcy-Darcy coupling.
+   */
+   /*!
+   * \ingroup BoundaryCoupling
+   * \defgroup FreeFlowPoreNetworkCoupling Free flow-Pore network domain coupling
+   * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Pore network coupling.
+   */
+   /*!
+   * \ingroup BoundaryCoupling
+   * \defgroup FreeFlowPorousMediumCoupling Free flow-Porous medium domain coupling
+   * \brief Couples domains with equal-dimension multi-physics problems in a Free flow-Porous medium coupling.
+   */
+   /*!
+   * \ingroup BoundaryCoupling
+   * \defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
+   * \brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
+   */
+/*!
+ * \ingroup MultiDomain
+ * \defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
+ * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
+ */
+/*!
+ * \ingroup MultiDomain
+ * \defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
+ * \brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
+ */
 
  /* ***************** PoreNetwork ******************/
  /*!
+  * \ingroup Models
   * \defgroup PoreNetworkModels Pore-Network Models
   * \brief Single and multi-phase models for flow and transport in pore networks
   */
@@ -651,19 +642,19 @@
       * \defgroup PNMOnePModel 1p
       * \brief Single-phase (immiscible) flow
       *
-      * For a detailed model description see porenetwork/1p/model.hh
+      * \copydoc dumux/porenetwork/1p/model.hh
       */
      /*!
       * \ingroup PoreNetworkModels
       * \defgroup PNMOnePNCModel 1pnc
       * \brief Single-phase, multi-component flow
       *
-      * For a detailed model description see porenetwork/1pnc/model.hh
+      * \copydoc dumux/porenetwork/1pnc/model.hh
       */
      /*!
       * \ingroup PoreNetworkModels
       * \defgroup PNMTwoPModel 2p
       * \brief Two-phase (immiscible) flow
       *
-      * For a detailed model description see porenetwork/2p/model.hh
+      * \copydoc dumux/porenetwork/2p/model.hh
       */
