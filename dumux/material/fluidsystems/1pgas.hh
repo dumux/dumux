@@ -45,7 +45,6 @@ class OnePGas
 : public Base<Scalar, OnePGas<Scalar, ComponentT> >
 {
     using ThisType = OnePGas<Scalar, ComponentT>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     static_assert(ComponentTraits<ComponentT>::hasGasState, "The component does not implement a gas state!");
 
@@ -186,10 +185,8 @@ public:
     static Scalar density(Scalar temperature, Scalar pressure)
     {  return Component::gasDensity(temperature, pressure); }
 
-    using Base::density;
-    /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
-     */
+    using Base<Scalar, ThisType>::density;
+    //! \copydoc Base<Scalar,ThisType>::density(const FluidState&,int)
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           const int phaseIdx)
@@ -206,20 +203,14 @@ public:
      * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
      *
      * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     * \param temperature The temperature at which to evaluate the molar density
+     * \param pressure The pressure at which to evaluate the molar density
      */
     static Scalar molarDensity(Scalar temperature, Scalar pressure)
     { return Component::gasMolarDensity(temperature, pressure); }
 
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
-     */
-    using Base::molarDensity;
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState &fluidState,
                                const int phaseIdx)
@@ -244,10 +235,8 @@ public:
     static const Scalar enthalpy(Scalar temperature, Scalar pressure)
     {  return Component::gasEnthalpy(temperature, pressure); }
 
-    /*!
-     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
-     */
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
+    //! \copydoc Base<Scalar,ThisType>::enthalpy(const FluidState&,int)
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            const int phaseIdx)
@@ -272,10 +261,8 @@ public:
     static Scalar viscosity(Scalar temperature, Scalar pressure)
     {  return Component::gasViscosity(temperature, pressure); }
 
-    using Base::viscosity;
-    /*!
-     * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
-     */
+    using Base<Scalar, ThisType>::viscosity;
+    //! \copydoc Base<Scalar,ThisType>::viscosity(const FluidState&,int)
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
                             const int phaseIdx)
@@ -284,14 +271,8 @@ public:
                          fluidState.pressure(phaseIdx));
     }
 
-    using Base::fugacityCoefficient;
-    /*!
-     * \copybrief Base::fugacityCoefficient
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::fugacityCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::fugacityCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -309,14 +290,8 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
-    using Base::diffusionCoefficient;
-    /*!
-     *  \copybrief Base::diffusionCoefficient
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::diffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::diffusionCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -325,15 +300,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Not applicable: Diffusion coefficients");
     }
 
-    using Base::binaryDiffusionCoefficient;
-    /*!
-     * \copybrief Base::binaryDiffusionCoefficient
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIIdx The index of the component to consider
-     * \param compJIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::binaryDiffusionCoefficient(const FluidState&,int,int,int)
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -352,10 +320,8 @@ public:
     static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
     { return Component::gasThermalConductivity(temperature, pressure); }
 
-    using Base::thermalConductivity;
-    /*!
-     * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
-     */
+    using Base<Scalar, ThisType>::thermalConductivity;
+    //! \copydoc Base<Scalar,ThisType>::thermalConductivity(const FluidState&,int)
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       const int phaseIdx)
@@ -372,10 +338,8 @@ public:
     static Scalar heatCapacity(Scalar temperature, Scalar pressure)
     { return Component::gasHeatCapacity(temperature, pressure); }
 
-    using Base::heatCapacity;
-    /*!
-     * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
-     */
+    using Base<Scalar, ThisType>::heatCapacity;
+    //! \copydoc Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                const int phaseIdx)
