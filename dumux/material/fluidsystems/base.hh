@@ -164,10 +164,10 @@ public:
     }
 
     /*!
-     * \brief Calculate the molar density \f$\mathrm{[mol/m^3]}\f$ of a fluid phase
-     * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
+     * \brief Calculate the molar density \f$\mathrm{[mol/m^3]}\f$ of a fluid phase.
      *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$ after
      * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      *
      * \param fluidState The fluid state
@@ -261,9 +261,7 @@ public:
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
-     * \param fluidState The fluid state
-     * \param phaseIdx Index of the fluid phase
-     * \param compIdx Index of the component
+     *
      * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
@@ -278,6 +276,9 @@ public:
      *
      * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
+     * \param fluidState The fluid state
+     * \param phaseIdx Index of the fluid phase
+     * \param compIdx Index of the component
      */
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
@@ -290,10 +291,7 @@ public:
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
-     * \param fluidState The fluid state
-     * \param paramCache mutable parameters
-     * \param phaseIdx Index of the fluid phase
-     * \param compIdx Index of the component
+     *
      * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
@@ -308,6 +306,11 @@ public:
      *
      * where \f$\mathrm{p_\alpha}\f$ and \f$\mathrm{T_\alpha}\f$ are the fluid phase'
      * pressure and temperature.
+     *
+     * \param fluidState The fluid state
+     * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
+     * \param compIdx Index of the component
      */
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
@@ -435,16 +438,15 @@ public:
     /*!
      * \brief Specific isobaric heat capacity \f$c_{p,\alpha}\f$ of a fluid phase \f$\mathrm{[J/(kg*K)]}\f$.
      *
-     * \param fluidState represents all relevant thermodynamic quantities of a fluid system
-     * \param paramCache mutable parameters
-     * \param phaseIdx Index of the fluid phase
-     *
      * Given a fluid state, an up-to-date parameter cache and a phase index, this method
      * computes the isobaric heat capacity \f$c_{p,\alpha}\f$ of the fluid phase. The isobaric
      * heat capacity is defined as the partial derivative of the specific enthalpy \f$h_\alpha\f$
      * to the fluid pressure \f$p_\alpha\f$:
      *
      * \f$ c_{p,\alpha} = \frac{\partial h_\alpha}{\partial p_\alpha} \f$
+     * \param fluidState represents all relevant thermodynamic quantities of a fluid system
+     * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
