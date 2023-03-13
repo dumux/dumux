@@ -11,6 +11,8 @@ INPUT                 += @srcdir@/mainpage.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
+FILE_PATTERNS         = *.md,*.cc,*.hh
+
 EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
 
 EXAMPLE_PATH          += @srcdir@/extradoc
@@ -65,3 +67,10 @@ TREEVIEW_WIDTH         = 420
 DISABLE_INDEX = NO
 FULL_SIDEBAR = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
+
+# Do no repeat in the description
+REPEAT_BRIEF = NO
+# Display the brief description
+BRIEF_MEMBER_DESC = YES
+# Omit the detailed section when there is none specified
+ALWAYS_DETAILED_SEC = NO
