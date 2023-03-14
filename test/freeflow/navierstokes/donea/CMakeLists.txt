@@ -56,7 +56,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Grid.File grids/donut_twisted.dgf
                              -Problem.Name test_ff_stokes_donea_donut_twisted_nocaching -Problem.UseNeumann false"
-                             --zeroThreshold {"connectivity":1e6})
+                             --ignore "connectivity")
 
 dumux_add_test(NAME test_ff_stokes_donea
               LABELS freeflow navierstokes donea
@@ -110,7 +110,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                                -Grid.File grids/donut_twisted.dgf
                                -Problem.Name test_ff_stokes_donea_donut_twisted -Problem.UseNeumann false"
-                               --zeroThreshold {"connectivity":1e6})
+                               --ignore "connectivity")
 
 # tests with diamond scheme
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad

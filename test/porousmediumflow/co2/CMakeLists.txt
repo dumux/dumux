@@ -17,7 +17,7 @@ dumux_add_test(NAME test_co2_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_box-00028.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box"
-                        --zeroThreshold {"porosity":1})
+                        --ignore "porosity")
 
 dumux_add_test(NAME test_co2_tpfa
                LABELS porousmediumflow co2
@@ -63,7 +63,7 @@ dumux_add_test(NAME test_co2_box_parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy --zeroThreshold {"porosity":1} --ignore "process rank"
+               CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_box_parallel-00028.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box_parallel")
@@ -91,7 +91,7 @@ dumux_add_test(NAME test_co2ni_box
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box-00028.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box"
-                        --zeroThreshold {"porosity":1})
+                        --ignore "porosity")
 
 dumux_add_test(NAME test_co2ni_tpfa
                SOURCES main.cc
@@ -111,7 +111,7 @@ dumux_add_test(NAME test_co2ni_box_parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --script fuzzy --zeroThreshold {"porosity":1} --ignore "process rank"
+               CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_box_parallel-00028.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box_parallel")
