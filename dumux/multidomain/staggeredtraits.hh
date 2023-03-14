@@ -40,6 +40,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/matrix.hh>
 
+#include <dumux/linear/dunevectors.hh>
+
 #include "traits.hh"
 
 namespace Dumux {
@@ -152,6 +154,9 @@ struct SubDomainSolutionVectorImpl<SubDomainTypeTag, 1>
  *       //! the solution vector type
  *       using SolutionVector = ...
  *
+ *       //! the residual vector type
+ *       using ResidualVector = ...
+ *
  *       //! the jacobian type
  *       using JacobianMatrix = ...
  * \endcode
@@ -181,6 +186,9 @@ private:
     template<std::size_t id>
     using SubDomainSolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
 
+    template<std::size_t id>
+    using SubDomainResidualVector = typename Detail::NativeDuneVectorType<SubDomainSolutionVector<id>>::type;
+
 public:
 
     /*
@@ -197,6 +205,7 @@ public:
         using GridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
         using GridVariables = typename Detail::Staggered::SubDomainGridVariablesImpl<SubDomainTypeTag, id>::type;
         using SolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;
+        using ResidualVector = typename Detail::NativeDuneVectorType<SolutionVector>::type;
         using PrimaryVariables = typename Detail::Staggered::SubDomainPrimaryVariablesImpl<SubDomainTypeTag, id>::type;
     };
 
@@ -212,6 +221,9 @@ public:
 
     //! the solution vector type
     using SolutionVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SubDomainSolutionVector, Indices>::type;
+
+    //! the residual vector type
+    using ResidualVector = typename makeFromIndexedType<Dune::MultiTypeBlockVector, SubDomainResidualVector, Indices>::type;
 
     //! the jacobian type
     using JacobianMatrix = typename Detail::MultiDomainMatrixType<SubDomainJacobianMatrix, Indices, Scalar>::type;

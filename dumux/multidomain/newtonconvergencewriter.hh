@@ -43,7 +43,7 @@ namespace Dumux {
  *       Newton iterations just come after each other in the pvd file.
  */
 template <class MDTraits>
-class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typename MDTraits::SolutionVector>
+class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typename MDTraits::SolutionVector,typename MDTraits::ResidualVector>
 {
     template<std::size_t id>
     using SubDomainGridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
@@ -51,12 +51,15 @@ class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typ
     using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<SubDomainGridGeometry>;
 
     using SolutionVector = typename MDTraits::SolutionVector;
+    using ResidualVector = typename MDTraits::ResidualVector;
 
     template<std::size_t id>
     using SubDomainSolutionVector = typename MDTraits::template SubDomain<id>::SolutionVector;
+    template<std::size_t id>
+    using SubDomainResidualVector = typename MDTraits::template SubDomain<id>::ResidualVector;
 
     template<std::size_t id>
-    using SubDomainNewtonConvergenceWriter = NewtonConvergenceWriter<SubDomainGridGeometry<id>, SubDomainSolutionVector<id>>;
+    using SubDomainNewtonConvergenceWriter = NewtonConvergenceWriter<SubDomainGridGeometry<id>, SubDomainSolutionVector<id>, SubDomainResidualVector<id>>;
 
     using ConvergenceWriterPtrTuple = typename MDTraits::template TupleOfSharedPtr<SubDomainNewtonConvergenceWriter>;
 
@@ -100,8 +103,8 @@ public:
     }
 
     void write(const SolutionVector& uLastIter,
-               const SolutionVector& deltaU,
-               const SolutionVector& residual) override
+               const ResidualVector& deltaU,
+               const ResidualVector& residual) override
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<MDTraits::numSubDomains>{}, [&](auto&& id)

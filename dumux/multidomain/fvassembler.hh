@@ -41,7 +41,6 @@
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
-#include <dumux/linear/dunevectors.hh>
 #include <dumux/parallel/multithreading.hh>
 
 #include "couplingjacobianpattern.hh"
@@ -120,7 +119,7 @@ public:
 
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;
-    using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
+    using ResidualType = typename MDTraits::ResidualVector;
 
     using CouplingManager = CMType;
 
