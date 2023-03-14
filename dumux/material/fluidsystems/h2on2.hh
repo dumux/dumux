@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FluidSystems
- * \brief @copydoc Dumux::FluidSystems::H2ON2
+ * \copybrief Dumux::FluidSystems::H2ON2
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_HH
@@ -42,6 +42,7 @@
 
 namespace Dumux {
 namespace FluidSystems {
+
 /*!
  * \ingroup FluidSystems
  * \brief Policy for the H2O-N2 fluid system
@@ -67,7 +68,6 @@ class H2ON2
     : public Base<Scalar, H2ON2<Scalar, Policy> >
 {
     using ThisType = H2ON2<Scalar, Policy>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
@@ -351,7 +351,7 @@ public:
             H2O::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
     }
 
-    using Base::density;
+    using Base<Scalar, ThisType>::density;
     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
@@ -404,19 +404,8 @@ public:
         return (rho_gH2O + rho_gN2);
     }
 
-    using Base::molarDensity;
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density for the simple relation is defined by the
-     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component
-     *
-     * The molar density for the complrex relation is defined by the
-     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
-     */
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Dumux::FluidSystems::Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
     {
@@ -447,7 +436,7 @@ public:
         return rho_gH2O + rho_gN2;
     }
 
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$
      *
@@ -455,10 +444,10 @@ public:
      * See Reid et al. (1987)  \cite reid1987 <BR>
      * 4th edition, McGraw-Hill, 1987, 407-410
      * 5th edition, McGraw-Hill, 20001, p. 9.21/22
-     * \note Compositional effects for a liquid mixture have to be implemented.
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
+     * \note Compositional effects for a liquid mixture have to be implemented.
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
@@ -513,34 +502,8 @@ public:
         }
     }
 
-    using Base::fugacityCoefficient;
-    /*!
-     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
-     *        component in a fluid phase
-     *
-     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ of
-     * component \f$\mathrm{\kappa}\f$ in phase \f$\mathrm{\alpha}\f$ is connected to
-     * the fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
-     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
-     *
-     * \f[
-     f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
-     \f]
-     * where \f$\mathrm{p_\alpha}\f$ is the pressure of the fluid phase.
-     *
-     * The quantity "fugacity" itself is just an other way to express
-     * the chemical potential \f$\mathrm{\zeta^\kappa_\alpha}\f$ of the
-     * component. It is defined via
-     *
-     * \f[
-     f^\kappa_\alpha := \exp\left\{\frac{\zeta^\kappa_\alpha}{k_B T_\alpha} \right\}
-     \f]
-     * where \f$\mathrm{k_B = 1.380\cdot10^{-23}\;J/K}\f$ is the Boltzmann constant.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::fugacityCoefficient;
+    //! \copydoc Dumux::FluidSystems::Base<Scalar,ThisType>::fugacityCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -564,30 +527,8 @@ public:
         return 1.0;
     }
 
-    using Base::diffusionCoefficient;
-    /*!
-     * \brief Calculate the molecular diffusion coefficient for a
-     *        component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
-     *
-     * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
-     * gradient of the chemical potential and follows the law
-     *
-     * \f[ J = - D \mathbf{grad} \mu_\kappa \f]
-     *
-     * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
-     * \f$\mathrm{D}\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the
-     * diffusive flux. \f$\mathrm{mu_\kappa}\f$ is connected to the component's
-     * fugacity \f$\mathrm{f_\kappa}\f$ by the relation
-     *
-     * \f[ \mu_\kappa = R T_\alpha \mathrm{ln} \frac{f_\kappa}{p_\alpha} \f]
-     *
-     * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
-     * pressure and temperature.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::diffusionCoefficient;
+    //! \copydoc Dumux::FluidSystems::Base<Scalar,ThisType>::diffusionCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
                                        int phaseIdx,
@@ -596,17 +537,8 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
     }
 
-    using Base::binaryDiffusionCoefficient;
-    /*!
-     * \brief Given a phase's composition, temperature and pressure,
-     *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
-     *        \f$i\f$ and \f$j\f$ in this phase.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIIdx The index of the first component to consider
-     * \param compJIdx The index of the second component to consider
-     */
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
+    //! \copydoc Dumux::FluidSystems::Base<Scalar,ThisType>::binaryDiffusionCoefficient(const FluidState&,int,int,int)
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
@@ -636,7 +568,7 @@ public:
                     << " in phase " << phaseIdx << " is unavailable!\n");
     }
 
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
     /*!
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy \f$\mathrm{[J/kg]}\f$.
@@ -711,7 +643,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-    using Base::thermalConductivity;
+    using Base<Scalar, ThisType>::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      *
@@ -749,14 +681,8 @@ public:
         }
     }
 
-    using Base::heatCapacity;
-    /*!
-     * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/(kg K)]}\f$.
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     */
+    using Base<Scalar, ThisType>::heatCapacity;
+    //! \copydoc Dumux::FluidSystems::Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)

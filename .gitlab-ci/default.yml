@@ -151,6 +151,14 @@ doxygen:
   script:
     - cd build-cmake
     - make doxygen_dumux
+    - |
+      if [ -s doc/doxygen/doxyerr.log ]; then
+          echo "Doxygen warnings generated:"
+          cat doc/doxygen/doxyerr.log
+          exit 1;
+      else
+          echo "No Doxygen warnings generated"
+      fi;
   needs:
     - job: configure
       artifacts: true
@@ -234,7 +242,7 @@ test python:
         # WARNING: this is a hack, but probably requires an upstream fix in DUNE?
         # The issue is that the JIT compilation setup fails with cmake errors when
         # opm is present. Cmake complains that the SuperLU::SuperLU target is not found
-        # (and maybe also SuiteSparse). OPM has its own find modules for these two, and 
+        # (and maybe also SuiteSparse). OPM has its own find modules for these two, and
         # (maybe) overwrites some compiler flags. Upstream fixes would be to either allow
         # "deactivation" of certain python modules (here: opm), or fixing the incompatibility
         # of the find modules (although this doesn't appear to be an issue in C++). For now,

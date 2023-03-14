@@ -46,7 +46,6 @@ template< class Scalar, class H2OType = Components::TabulatedComponent<Dumux::Co
 class Brine : public Base< Scalar, Brine<Scalar, H2OType>>
 {
     using ThisType = Brine<Scalar, H2OType>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     //! export the involved components
@@ -216,7 +215,7 @@ public:
         }
     }
 
-    using Base::density;
+    using Base<Scalar, ThisType>::density;
     /*!
      * \brief Return the phase density [kg/m^3].
      * \note The density is computed as a function of the salt mass fraction, pressure and temperature.
@@ -224,7 +223,8 @@ public:
      * It is presented by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207) \cite batzle1992,
      * better description and comparison with other approaches in Adams and Bachu, 2002
      * (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
-     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the phase for which to compute the density (for compatibility, should be `liquidPhaseIdx`)
      */
     template <class FluidState>
     static Scalar density(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -253,14 +253,8 @@ public:
         return density;
     }
 
-    using Base::fugacityCoefficient;
-    /*!
-     * \copybrief Base::fugacityCoefficient
-     *
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     * \param compIdx The index of the component to consider
-     */
+    using Base<Scalar, ThisType>::fugacityCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::fugacityCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -278,7 +272,7 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
     /*!
      * \brief Return the viscosity of the phase.
      * \note The viscosity is computed as a function of the salt mass fraction and temperature.
@@ -287,6 +281,8 @@ public:
      * better description and comparison with other approaches in Adams and Bachu, 2002 (DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002.
      * However, the equation given in Adams and Bachu, 2002(DOI: 10.1046/j.1468-8123.2002.00041.x) \cite adams2002
      * is obviously wrong when compared to the original by Batzle and Wang, 1992 (DOI: 10.1190/1.1443207)  \cite batzle1992.
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the phase for which to compute the viscosity (for compatibility, should be `liquidPhaseIdx`)
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
@@ -334,7 +330,7 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Invalid component index " << compIdx);
     }
 
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        return its specific enthalpy \f$\mathrm{[J/kg]}\f$.
@@ -383,34 +379,23 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-    using Base::molarDensity;
-    /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$ of
-     *        the fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density for the simple relation is defined by the
-     * mass density \f$\rho_\alpha\f$ and the average molar mass of the phase \f$M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
-     */
+    using Base<Scalar, ThisType>::molarDensity;
+    //! \copydoc Base<Scalar,ThisType>::molarDensity(const FluidState&,int)
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx = liquidPhaseIdx)
     {
         return density(fluidState, phaseIdx)/fluidState.averageMolarMass(phaseIdx);
     }
 
-    using Base::diffusionCoefficient;
-    /*!
-     * \brief Returns the diffusion coefficient \f$\mathrm{[-]}\f$
-     *        of a component in a phase.
-     */
+    using Base<Scalar, ThisType>::diffusionCoefficient;
+    //! \copydoc Base<Scalar,ThisType>::diffusionCoefficient(const FluidState&,int,int)
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState& fluidState, int phaseIdx, int compIdx)
     {
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::Brine::diffusionCoefficient()");
     }
 
-    using Base::binaryDiffusionCoefficient;
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
@@ -450,7 +435,7 @@ public:
          DUNE_THROW(Dune::InvalidStateException, "Invalid phase index: " << phaseIdx);
     }
 
-    using Base::thermalConductivity;
+    using Base<Scalar, ThisType>::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState An arbitrary fluid state
@@ -472,14 +457,8 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index: " << phaseIdx);
     }
 
-    using Base::heatCapacity;
-    /*!
-     * \brief Specific isobaric heat capacity of a fluid phase.
-     *        \f$\mathrm{[J/(kg*K)}\f$.
-     * \param fluidState An arbitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
-     *
-     */
+    using Base<Scalar, ThisType>::heatCapacity;
+    //! \copydoc Base<Scalar,ThisType>::heatCapacity(const FluidState&,int)
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState, int phaseIdx)
     {

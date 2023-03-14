@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup FluidSystems
- * \brief @copybrief Dumux::FluidSystems::ThreePImmiscible
+ * \copybrief Dumux::FluidSystems::ThreePImmiscible
  */
 #ifndef DUMUX_3P_IMMISCIBLE_FLUID_SYSTEM_HH
 #define DUMUX_3P_IMMISCIBLE_FLUID_SYSTEM_HH
@@ -68,7 +68,7 @@ class ThreePImmiscible
     static_assert((Gas::numComponents == 1), "Gas has more than one component");
 
     using ThisType = ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas>;
-    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
+
 public:
     /****************************************
      * Fluid phase related static parameters
@@ -349,11 +349,8 @@ public:
         }
     }
 
-    using Base::density;
-    /*!
-     * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
-     *
-     */
+    using Base<Scalar, ThisType>::density;
+    //! \copydoc Base<Scalar,ThisType>::density(const FluidState&,int)
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           int phaseIdx)
@@ -372,7 +369,7 @@ public:
         }
     }
 
-    using Base::molarDensity;
+    using Base<Scalar, ThisType>::molarDensity;
     /*!
      * \brief The molar density \f$\rho_{mol,\alpha}\f$
      *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
@@ -400,7 +397,7 @@ public:
         }
     }
 
-    using Base::viscosity;
+    using Base<Scalar, ThisType>::viscosity;
     /*!
      * \brief Return the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
      * \param fluidState The fluid state of the two-phase model
@@ -424,7 +421,7 @@ public:
         }
     }
 
-    using Base::fugacityCoefficient;
+    using Base<Scalar, ThisType>::fugacityCoefficient;
     /*!
      * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
@@ -458,7 +455,7 @@ public:
         return std::numeric_limits<Scalar>::infinity();
     }
 
-    using Base::diffusionCoefficient;
+    using Base<Scalar, ThisType>::diffusionCoefficient;
     /*!
      * \brief Calculate the binary molecular diffusion coefficient for
      *        a component in a fluid phase \f$\mathrm{[mol^2 * s / (kg*m^3)]}\f$
@@ -491,7 +488,7 @@ public:
                    " immiscibility is assumed");
     }
 
-    using Base::binaryDiffusionCoefficient;
+    using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
     /*!
      * \brief Given a phase's composition, temperature and pressure,
      *        return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for components
@@ -513,7 +510,7 @@ public:
                    " immiscibility is assumed");
     }
 
-    using Base::enthalpy;
+    using Base<Scalar, ThisType>::enthalpy;
     /*!
      * \brief Return the specific enthalpy of a fluid phase \f$\mathrm{[J/kg]}\f$.
      * \param fluidState The fluid state of the two-phase model
@@ -537,7 +534,7 @@ public:
         }
     }
 
-    using Base::thermalConductivity;
+    using Base<Scalar, ThisType>::thermalConductivity;
     /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param fluidState The fluid state of the two-phase model
@@ -561,7 +558,7 @@ public:
         }
     }
 
-    using Base::heatCapacity;
+    using Base<Scalar, ThisType>::heatCapacity;
     /*!
      * @copybrief Base::thermalConductivity
      *
