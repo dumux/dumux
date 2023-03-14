@@ -18,7 +18,7 @@ dumux_add_test(NAME test_1p_periodic_tpfa_parallel
               CMAKE_GUARD dune-spgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --zeroThreshold {"process rank":100}
+                        --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_1p_periodic_tpfa_parallel-00001.pvtu
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_parallel")

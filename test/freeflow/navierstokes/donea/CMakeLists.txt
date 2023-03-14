@@ -16,7 +16,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                TARGET test_ff_stokes_donea_momentum
                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS      --script fuzzy --zeroThreshold {"rank":100}
+               CMD_ARGS      --script fuzzy --ignore "rank"
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_fcstaggered_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum -Problem.Name donea_momentum")
@@ -56,7 +56,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted_nocaching
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_nocaching params.input
                              -Grid.File grids/donut_twisted.dgf
                              -Problem.Name test_ff_stokes_donea_donut_twisted_nocaching -Problem.UseNeumann false"
-                             --zeroThreshold {"connectivity":1e6})
+                             --ignore "connectivity")
 
 dumux_add_test(NAME test_ff_stokes_donea
               LABELS freeflow navierstokes donea
@@ -110,7 +110,7 @@ dumux_add_test(NAME test_ff_stokes_donea_donut_twisted
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                                -Grid.File grids/donut_twisted.dgf
                                -Problem.Name test_ff_stokes_donea_donut_twisted -Problem.UseNeumann false"
-                               --zeroThreshold {"connectivity":1e6})
+                               --ignore "connectivity")
 
 # tests with diamond scheme
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
@@ -132,7 +132,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad_parallel
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS      --script fuzzy --zeroThreshold {"rank":100}
+               CMD_ARGS      --script fuzzy --ignore "rank"
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_quad-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_quad_fcdiamond_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad
@@ -157,7 +157,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex_parallel
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS      --script fuzzy --zeroThreshold {"rank":100}
+               CMD_ARGS      --script fuzzy --ignore "rank"
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_simplex-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-donea_momentum_simplex_fcdiamond_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex params.input
