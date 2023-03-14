@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup DiamondDiscretization
- * \copydoc Dumux::FaceCenteredDiamondElementSolution
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_ELEMENT_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_ELEMENT_SOLUTION_HH
