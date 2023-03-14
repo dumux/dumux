@@ -33,10 +33,9 @@
 
 #include <dumux/common/typetraits/state.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
-#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
-#include <dumux/discretization/pq1bubble/elementsolution.hh>
 
 namespace Dumux {
 
@@ -165,7 +164,7 @@ template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
                               const typename FVElementGeometry::GridGeometry& gridGeometry,
-                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const CVFEElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)
 {
@@ -189,10 +188,12 @@ PrimaryVariables evalSolution(const Element& element,
 template<class Element, class FVElementGeometry, class PrimaryVariables>
 PrimaryVariables evalSolution(const Element& element,
                               const typename Element::Geometry& geometry,
-                              const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                              const CVFEElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                               const typename Element::Geometry::GlobalCoordinate& globalPos,
                               bool ignoreState = false)
 {
+    static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box, "Only implemented for the Box method");
+
     // determine if all states are the same at all vertices
     using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
     bool allStatesEqual = ignoreState || Detail::allStatesEqual(elemSol, HasState{});
@@ -289,54 +290,6 @@ PrimaryVariables evalSolution(const Element& element,
                               bool ignoreState = false)
 {
     return elemSol[0];
-}
-
-/*!
- * \brief Interpolates a given diamond scheme element solution at a given global position.
- *        Uses the finite element cache of the grid geometry.
- * \ingroup Discretization
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param gridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- * \param ignoreState If true, the state of primary variables is ignored
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-PrimaryVariables evalSolution(const Element& element,
-                              const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::GridGeometry& gridGeometry,
-                              const FaceCenteredDiamondElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                              const typename Element::Geometry::GlobalCoordinate& globalPos,
-                              bool ignoreState = false)
-{
-    return Detail::evalCVFESolution(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
-}
-
-/*!
- * \brief Interpolates a given pq1bubble scheme element solution at a given global position.
- *        Uses the finite element cache of the grid geometry.
- * \ingroup Discretization
- *
- * \return the interpolated primary variables
- * \param element The element
- * \param geometry The element geometry
- * \param gridGeometry The finite volume grid geometry
- * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
- * \param ignoreState If true, the state of primary variables is ignored
- */
-template<class Element, class FVElementGeometry, class PrimaryVariables>
-PrimaryVariables evalSolution(const Element& element,
-                              const typename Element::Geometry& geometry,
-                              const typename FVElementGeometry::GridGeometry& gridGeometry,
-                              const PQ1BubbleElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
-                              const typename Element::Geometry::GlobalCoordinate& globalPos,
-                              bool ignoreState = false)
-{
-    return Detail::evalCVFESolution(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
 }
 
 } // namespace Dumux

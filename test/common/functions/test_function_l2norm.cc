@@ -15,7 +15,7 @@
 #include <dumux/multidomain/glue.hh>
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/discretization/basegridgeometry.hh>
-#include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 int main (int argc, char *argv[])

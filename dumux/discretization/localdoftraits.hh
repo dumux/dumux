@@ -18,13 +18,17 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup BoxDiscretization
- * \brief The local element solution class for the box method
+ * \ingroup Discretization
+ * \brief Element-specific traits of grid geometries / discretization schemes
  */
-#ifndef DUMUX_BOX_ELEMENT_SOLUTION_HH
-#define DUMUX_BOX_ELEMENT_SOLUTION_HH
+#ifndef DUMUX_DISCRETIZATION_LOCAL_DOF_TRAITS_HH
+#define DUMUX_DISCRETIZATION_LOCAL_DOF_TRAITS_HH
 
-#include <dumux/discretization/cvfe/elementsolution.hh>
-#warning "This header is deprecated and will be removed after release 3.7. Include dumux/discretization/cvfe/elementsolution.hh"
+namespace Dumux::Detail {
+
+template<class GridView, class DiscretizationMethod>
+struct LocalDofTraits;
+
+} // end namespace Dumux::Detail
 
 #endif

@@ -59,6 +59,29 @@ struct CVFE : public Utility::Tag<CVFE<DM>> {
     static std::string name() { return DM::name(); }
 };
 
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<class DM>
+struct IsCVFE : public std::false_type {};
+
+template<class DM>
+struct IsCVFE<CVFE<DM>> : public std::true_type {};
+
+} // end namespace Detail
+#endif
+
+/*
+ * \brief Template variable that is true when the discretization method DM is a CVFE schemes
+ */
+template<class DM>
+inline constexpr bool isCVFE = Detail::IsCVFE<DM>::value;
+
+
+/*
+ * \brief Various control volume finite element discretization methods
+ */
 namespace CVFEMethods {
 
 struct PQ1 {

@@ -35,7 +35,7 @@
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 #include <dumux/assembly/entitycolor.hh>
 #include <dumux/assembly/partialreassembler.hh>
-#include <dumux/discretization/facecentered/diamond/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 
 #include "volvardeflectionhelper_.hh"
 
