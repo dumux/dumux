@@ -9,9 +9,8 @@ else()
   execute_process(COMMAND ${CMAKE_COMMAND} "-E" "create_symlink" "${CMAKE_SOURCE_DIR}/dumux/common/properties.hh" "${CMAKE_CURRENT_BINARY_DIR}/properties.hh")
 endif()
 
-dune_python_install_package(
+dune_python_configure_bindings(
   PATH "."
   PACKAGENAME dumux
-  DEPENDS _common
   CMAKE_METADATA_FLAGS DUNE_OPTS_FILE
 )
