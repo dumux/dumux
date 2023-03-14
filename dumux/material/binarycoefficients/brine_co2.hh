@@ -26,10 +26,14 @@
 
 #include <dune/common/math.hh>
 
+#include <type_traits>
+#include <dune/common/debugstream.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/co2.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/idealgas.hh>
 
 namespace Dumux::BinaryCoeff {
@@ -38,10 +42,15 @@ namespace Dumux::BinaryCoeff {
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
  */
-template<class Scalar, class CO2Tables, bool verbose = true>
+template<class Scalar, class CO2Impl = Components::SimpleCO2<Scalar>, bool verbose = true>
 class Brine_CO2 {
-    using H2O = Dumux::Components::H2O<Scalar>;
-    using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
+    using H2O = Components::H2O<Scalar>;
+
+    static constexpr bool rawCO2Table = Deprecated::BrineCO2Helper<CO2Impl>::isRawTable();
+    using CO2Component = typename std::conditional_t< rawCO2Table,
+                                                      Components::CO2<Scalar, CO2Impl>,
+                                                      CO2Impl >;
+    using CO2 = CO2Component;
     using IdealGas = Dumux::IdealGas<Scalar>;
     static constexpr int lPhaseIdx = 0; // index of the liquid phase
     static constexpr int gPhaseIdx = 1; // index of the gas phase
@@ -378,12 +387,12 @@ private:
  * molfraction of H2O has been assumed to be a constant value
  * For use with the actual brine_co2_system this class still needs to be adapted
  */
-template<class Scalar, class CO2Tables, bool verbose = true>
+template<class Scalar, class CO2Impl = Components::SimpleCO2<Scalar>, bool verbose = true>
 class Brine_CO2_Old
 {
-    using H2O = Dumux::Components::H2O<Scalar>;
-    using Brine = Dumux::Components::Brine<Scalar,H2O>;
-    using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
+    using H2O = Components::H2O<Scalar>;
+    using Brine = Components::Brine<Scalar,H2O>;
+    using CO2 = CO2Impl;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:

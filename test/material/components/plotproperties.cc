@@ -56,6 +56,7 @@
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/o2.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/sodiumion.hh>
 #include <dumux/material/components/trichloroethene.hh>
@@ -377,6 +378,8 @@ int main(int argc, char *argv[])
         plotStuff< Components::NaCl<double> >(openPlotWindow);
     else if (compName == "O2")
         plotStuff< Components::O2<double> >(openPlotWindow);
+    else if (compName == "SimpleCO2")
+        plotStuff< Components::SimpleCO2<double>  >(openPlotWindow);
     else if (compName == "SimpleH2O")
         plotStuff< Components::SimpleH2O<double>  >(openPlotWindow);
     else if (compName == "SodiumIon")

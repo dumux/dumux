@@ -69,12 +69,12 @@
 namespace Dumux::FluidSystems {
 
 template <class Scalar,
-          class CO2Table,
+          class CO2Impl = Components::SimpleCO2<Scalar>,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar>> >
 class BioMinSimpleChemistryFluid
-: public Base<Scalar, BioMinSimpleChemistryFluid<Scalar, CO2Table, H2OType> >
+: public Base<Scalar, BioMinSimpleChemistryFluid<Scalar, CO2Impl, H2OType> >
 {
-    using ThisType = BioMinSimpleChemistryFluid<Scalar, CO2Table, H2OType>;
+    using ThisType = BioMinSimpleChemistryFluid<Scalar, CO2Impl, H2OType>;
     using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 // [[/codeblock]]
@@ -84,7 +84,7 @@ class BioMinSimpleChemistryFluid
 // [[codeblock]]
 public:
     // We use convenient declarations that we derive from the property system
-    typedef Components::CO2<Scalar, CO2Table> CO2;
+    using CO2 = CO2Impl;
     using H2O = H2OType;
     // export the underlying brine fluid system for the liquid phase, as brine is used as a "pseudo component"
     using Brine = Dumux::FluidSystems::ICPComplexSalinityBrine<Scalar, H2OType>;
@@ -97,7 +97,7 @@ public:
     using SuspendedBiomass = Components::SuspendedBiomass<Scalar>;
 
     // We define the binary coefficients file, which accounts for the interactions of the main fluids in our setup, water/brine and CO2
-    using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table, true>;
+    using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Impl, true>;
 
     // the type of parameter cache objects. this fluid system does not
     // cache anything, so it uses Dumux::NullParameterCache

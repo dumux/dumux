@@ -130,6 +130,12 @@ dumux_add_test(NAME plot_o2
               CMD_ARGS "O2"
               LABELS unit material)
 
+dumux_add_test(NAME plot_simpleco2
+              TARGET plot_component
+              COMMAND ./plot_component
+              CMD_ARGS "SimpleCO2"
+              LABELS unit material)
+
 dumux_add_test(NAME plot_simpleh2o
               TARGET plot_component
               COMMAND ./plot_component

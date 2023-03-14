@@ -41,9 +41,6 @@ The subsequent documentation is structured as follows:
 [[_TOC_]]
 
 
-[@Span1996]: https://aip.scitation.org/doi/abs/10.1063/1.555991 "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressures up to 800 MPa"
-
-
 ## The biofilm component (`biofilm.hh`)
 
 This file contains the __solid component class__ which defines the name, molar mass and density of biofilm

@@ -36,6 +36,7 @@
 // subsequently specialize those `properties` for our `TypeTag`, which we want to
 // modify or for which no meaningful default can be set.
 #include <dumux/common/properties.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/porousmediumflow/2pncmin/model.hh>
 
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
@@ -47,7 +48,6 @@
 // We include the necessary material files
 #include <examples/biomineralization/material/fluidsystems/biominsimplechemistry.hh>
 #include <examples/biomineralization/material/solidsystems/biominsolids.hh>
-#include <examples/biomineralization/material/co2tables.hh>
 
 // We include the problem and spatial parameters headers used for this simulation.
 #include "problem.hh"
@@ -93,9 +93,9 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MICPColumnSimpleChemistry>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using CO2Tables = BiomineralizationCO2Tables::CO2Tables;
+    using CO2Impl = Components::SimpleCO2<Scalar>;
     using H2OTabulated = Components::TabulatedComponent<Components::H2O<Scalar>>;
-    using type = Dumux::FluidSystems::BioMinSimpleChemistryFluid<Scalar, CO2Tables, H2OTabulated>;
+    using type = Dumux::FluidSystems::BioMinSimpleChemistryFluid<Scalar, CO2Impl, H2OTabulated>;
 };
 
 // We set the solidSystem  used for our simulation

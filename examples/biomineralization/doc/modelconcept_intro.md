@@ -222,8 +222,10 @@ the volume fractions of biofilm and calcite increase:
 
 
 ## Fluid properties
-The density and the viscosity of the CO<sub>2</sub> phase are calculated using
-the relation given by [@Span1996] and [@Fenghour1998] respectively.
+The density of the CO<sub>2</sub> phase is calculated using
+an ideal gas assumption as the pressures are low enough.
+The viscosity of the CO<sub>2</sub> phase is calculated using
+the relation given by [@Fenghour1998].
 In these calculations, the effects of the small amounts of water and oxygen are neglected.
 The density and the viscosity of the aqueous phase are calculated
 according to [@Batzle1992] as a function of salinity.
@@ -258,4 +260,3 @@ For the solubility of oxygen in the aqueous phase, Henry's law is used.
 [@Hommel2016]: https://elib.uni-stuttgart.de/handle/11682/8787 "Modelling biogeochemical and mass transport processes in the subsurface: investigation of microbially induced calcite precipitation"
 [@Lauchnor2015]: http://dx.doi.org/10.1111/jam.12804 "Whole cell kinetics of ureolysis by Sporosarcina pasteurii"
 [@Mitchell2008]: https://www.sciencedirect.com/science/article/pii/S0896844608002040 "Resilience of planktonic and biofilm cultures to supercritical CO<sub>2</sub>"
-[@Span1996]: https://aip.scitation.org/doi/abs/10.1063/1.555991 "A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressures up to 800 MPa"

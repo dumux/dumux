@@ -35,6 +35,9 @@ The new and last argument is the `ResidualType` (see above).
 
 - __AMGBackend__: `AMGBiCGSTABBackend` have been deprecated, use `AMGBiCGSTABIstlSolver` instead
 - __IstlSolverFactoryBackend__: `IstlSolverFactoryBackend` now require an additional parameter `LinearAlgebraTraits`
+- __BrineCO2__: Fluidsystem `BrineCO2` and binary coefficients `Brine_CO2` receiving a `CO2Table` as
+template parameter has been deprecated. Pass a component instead, use `Components::CO2<CO2Table>` to
+keep using a tabulated component.
 
 ### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
