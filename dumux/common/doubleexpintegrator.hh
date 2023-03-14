@@ -1,5 +1,14 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
+//
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightInfo: Copyright John D. Cook
+// SPDX-License-Identifier: BSD-2-Clause
+// Modified after the original version at
+// https://www.codeproject.com/Articles/31550/Fast-Numerical-Integration licensed under
+// BSD-2-Clause. All Changes are licensed under GPL-3.0-or-later.
+//
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
