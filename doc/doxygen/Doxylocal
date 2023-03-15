@@ -6,10 +6,12 @@ PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
-INPUT                 += @srcdir@/mainpage.txt \
+INPUT                 += @srcdir@/main.md \
                          @srcdir@/modules.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
+
+USE_MDFILE_AS_MAINPAGE = @srcdir@/main.md
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
