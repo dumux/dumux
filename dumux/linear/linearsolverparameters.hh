@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux::Detail::LinearSolverParameters {
