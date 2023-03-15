@@ -40,11 +40,11 @@ Note: The blood flow solver is currently not documented in detail. This might be
 We solve the following coupled, mixed-dimensional PDE system:
 
 ```math
-\begin{align}
+\begin{aligned}
 	 \frac{ \partial (\phi_\mathrm{T} \varrho_\mathrm{T} x_\mathrm{T})}{\partial t} - \nabla\cdot \left( \phi_\mathrm{T} D_{\text{app},\mathrm{T}} \varrho_\mathrm{T} \nabla x_\mathrm{T} \right) &= \hat{q} \Phi_\Lambda & \text{in} \quad \Omega, \\
 	 \frac{\partial (A_\mathrm{B} \varrho_\mathrm{B} x_\mathrm{B})}{\partial t} - \frac{\partial}{\partial s}  \left( A_\mathrm{B} D_{\text{app},A_\mathrm{B}} \varrho_\mathrm{B} \frac{ \partial x_\mathrm{B}}{\partial s} \right) &= -\hat{q} & \text{on} \quad \Lambda, \\
      \hat{q} &= - \int_P C_M D \bar{\varrho} ( x_\mathrm{T} - \Pi x_\mathrm{B}) \mathrm{d}\zeta,
-\end{align}
+\end{aligned}
 ```
 
 where the subscript T and B denote the tissue and the network (blood flow) compartment,
