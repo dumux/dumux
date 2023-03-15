@@ -7,11 +7,14 @@ PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @srcdir@/main.md \
+                         @srcdir@/installation.md \
+                         @srcdir@/getting-started.md \
                          @srcdir@/modules.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
 USE_MDFILE_AS_MAINPAGE = @srcdir@/main.md
+TOC_INCLUDE_HEADINGS   = 4
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
@@ -71,8 +74,8 @@ SHORT_NAMES           = NO
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES
 TREEVIEW_WIDTH         = 420
-DISABLE_INDEX = NO
-FULL_SIDEBAR = NO
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
 
 # Do no repeat in the description
