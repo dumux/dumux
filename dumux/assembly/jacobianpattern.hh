@@ -32,108 +32,6 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern for the box method
- */
-template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethods::box), int> = 0>
-Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
-{
-    const auto numDofs = gridGeometry.numDofs();
-    Dune::MatrixIndexSet pattern;
-    pattern.resize(numDofs, numDofs);
-
-    // matrix pattern for implicit Jacobians
-    if constexpr (isImplicit)
-    {
-        static constexpr int dim = std::decay_t<decltype(gridGeometry.gridView())>::dimension;
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-            {
-                const auto globalI = gridGeometry.vertexMapper().subIndex(element, vIdx, dim);
-                for (unsigned int vIdx2 = 0; vIdx2 < element.subEntities(dim); ++vIdx2)
-                {
-                    const auto globalJ = gridGeometry.vertexMapper().subIndex(element, vIdx2, dim);
-                    pattern.add(globalI, globalJ);
-
-                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
-                    {
-                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
-                        pattern.add(globalIP, globalI);
-                        pattern.add(globalI, globalIP);
-                        if (globalI > globalIP)
-                            pattern.add(globalIP, globalJ);
-                    }
-                }
-            }
-        }
-    }
-
-    // matrix pattern for explicit Jacobians -> diagonal matrix
-    else
-    {
-        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-            pattern.add(globalI, globalI);
-    }
-
-    return pattern;
-}
-
-/*!
- * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern for the pq1bubble method
- */
-template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethods::pq1bubble), int> = 0>
-Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
-{
-    const auto numDofs = gridGeometry.numDofs();
-    Dune::MatrixIndexSet pattern;
-    pattern.resize(numDofs, numDofs);
-
-    // matrix pattern for implicit Jacobians
-    if constexpr (isImplicit)
-    {
-        static constexpr int dim = std::decay_t<decltype(gridGeometry.gridView())>::dimension;
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            const auto eIdx = gridGeometry.dofMapper().index(element);
-            pattern.add(eIdx, eIdx);
-            for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-            {
-                const auto globalI = gridGeometry.dofMapper().subIndex(element, vIdx, dim);
-                pattern.add(eIdx, globalI);
-                pattern.add(globalI, eIdx);
-                for (unsigned int vIdx2 = 0; vIdx2 < element.subEntities(dim); ++vIdx2)
-                {
-                    const auto globalJ = gridGeometry.dofMapper().subIndex(element, vIdx2, dim);
-                    pattern.add(globalI, globalJ);
-
-                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
-                    {
-                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
-                        pattern.add(globalIP, globalI);
-                        pattern.add(globalI, globalIP);
-                        if (globalI > globalIP)
-                            pattern.add(globalIP, globalJ);
-                    }
-                }
-            }
-        }
-    }
-
-    // matrix pattern for explicit Jacobians -> diagonal matrix
-    else
-    {
-        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-            pattern.add(globalI, globalI);
-    }
-
-    return pattern;
-}
-
-/*!
- * \ingroup Assembly
  * \brief Helper function to generate Jacobian pattern for cell-centered methods
  */
 template<bool isImplicit, class GridGeometry,
@@ -307,42 +205,53 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 
 /*!
  * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern for the face-centered diamond
+ * \brief Compute the Jacobian matrix sparsity pattern for control volume finite element schemes
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethods::fcdiamond), int> = 0>
+         typename std::enable_if_t<DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>, int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     // resize the jacobian and the residual
     const auto numDofs = gridGeometry.numDofs();
     Dune::MatrixIndexSet pattern(numDofs, numDofs);
 
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
+    // matrix pattern for implicit Jacobians
+    if constexpr (isImplicit)
     {
-        fvGeometry.bind(element);
-        for (const auto& scv : scvs(fvGeometry))
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
-            const auto globalI = scv.dofIndex();
-            for (const auto& scvJ : scvs(fvGeometry))
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
             {
-                const auto globalJ = scvJ.dofIndex();
-                pattern.add(globalI, globalJ);
-
-                if (gridGeometry.isPeriodic())
+                const auto globalI = scv.dofIndex();
+                for (const auto& scvJ : scvs(fvGeometry))
                 {
-                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
-                    {
-                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
-                        pattern.add(globalIP, globalI);
-                        pattern.add(globalI, globalIP);
+                    const auto globalJ = scvJ.dofIndex();
+                    pattern.add(globalI, globalJ);
 
-                        if (globalI > globalIP)
-                            pattern.add(globalIP, globalJ);
+                    if (gridGeometry.isPeriodic())
+                    {
+                        if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
+                        {
+                            const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
+                            pattern.add(globalIP, globalI);
+                            pattern.add(globalI, globalIP);
+
+                            if (globalI > globalIP)
+                                pattern.add(globalIP, globalJ);
+                        }
                     }
                 }
             }
         }
+    }
+
+    // matrix pattern for explicit Jacobians -> diagonal matrix
+    else
+    {
+        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+            pattern.add(globalI, globalI);
     }
 
     return pattern;
