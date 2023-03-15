@@ -81,6 +81,11 @@ public:
 
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
+
+        // const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        // if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
+        //     return 0;
+
         const Scalar transmissibility = fluxVarsCache.transmissibility(phaseIdx);
         using std::isfinite;    
         assert(isfinite(transmissibility));
@@ -134,6 +139,8 @@ public:
             // regularization interval for snapoff event
             const Scalar snapoffLeft = fluxVarsCache.regSnapoffInterval(0);
             const Scalar snapoffRight = fluxVarsCache.regSnapoffInterval(1);
+
+            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
 
             if (phaseIdx == wPhaseIdx)
             {
@@ -202,11 +209,15 @@ public:
                                                                 slopes[0], slopes[1]); // m0, m1
                         return optionalKnSpline_.eval(pc);
                     }
+                    else if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
+                        return 0;
                     else
                         return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
                 else
                 {
+                    if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
+                        return 0;
                     // the regularzazion interval is [pcs - reg, pcs]
                     if (pc < snapoffLeft)
                         return 0.0;
