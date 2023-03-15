@@ -56,7 +56,7 @@ with the tensor $\mathbf{\Lambda}_K$ associated with control volume $K$, the dis
 
 \begin{figure} [ht]
 \centering
-\includegraphics[width=0.4\linewidth,keepaspectratio]{png/cctpfa.png}
+\includegraphics[width=0.7\linewidth,keepaspectratio]{png/cctpfa.png}
 \caption{Two neighboring control volumes sharing the face $\sigma$.}
 \label{pc:cctpfa}
 \end{figure}
@@ -107,8 +107,8 @@ Using these conditions, the intermediate face unknowns ${u}_\sigma$ can be elimi
 
 \begin{figure} [ht]
 \centering
-\includegraphics[width=0.8\linewidth,keepaspectratio]{pdf/mpfa_iv.pdf}
-\caption{Interaction region for the Mpfa-O method. The graphic on the right illustrates how the sub-control volume $L^v$ and face $\sigma^v_2$ are embedded in cell $L$. Note that the face stencils for all sub-control volume faces in the depicted interaction region are $\mathcal{S}_{\sigma^v_i} = \{ K,L,M \}$, meaning that the fluxes over the sub-control volume faces depend on the three cell unknowns $u_K, u_L, u_M$.}
+\includegraphics[width=0.8\linewidth,keepaspectratio]{png/mpfa_iv.png}
+\caption{Interaction region for the Mpfa-O method. The graphic on the right illustrates how the sub-control volume $L_v$ and face $\sigma^v_2$ are embedded in cell $L$. Note that the face stencils for all sub-control volume faces in the depicted interaction region are $\mathcal{S}_{\sigma^v_i} = \{ K,L,M \}$, meaning that the fluxes over the sub-control volume faces depend on the three cell unknowns $u_K, u_L, u_M$.}
 \label{pc:interactionRegion_mpfa}
 \end{figure}
 
@@ -120,19 +120,19 @@ with $t_{K,\sigma},t_{L,\sigma}$ as defined in equation \eqref{eq:conormalDecTpf
 
 In the following, a multi-point flux approximation method (Mpfa-O method), which was introduced in \citet{A3:aavatsmark:2002}, is presented. The main difference to the Tpfa scheme is the fact that a consistent discrete gradient is constructed, i.e. the term $\nabla u \cdot \mathbf{d}^{\bot}_{K,\sigma}$ is not neglected.
 
-For this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$). This divides each cell into sub-control volumes $K^v$. Analogously, each face is sub-divided into sub-control volume faces $\sigma^v$, see Figure \ref{pc:interactionRegion_mpfa}. We allow for piecewise constant $\mathbf{\Lambda}$ (denoted as $\mathbf{\Lambda}_K$ for each cell $K$) and construct discrete gradients $\nabla_\mathcal{D}^{K^v} u$ (per sub-control volume $K^v$).
+For this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$). This divides each cell into sub-control volumes $K_v$. Analogously, each face is sub-divided into sub-control volume faces $\sigma^v$, see Figure \ref{pc:interactionRegion_mpfa}. Note that for the Tpfa method sub-control volumes and control volumes coincide. Also, we allow for piecewise constant $\mathbf{\Lambda}$ (denoted as $\mathbf{\Lambda}_K$ for each cell $K$) and construct discrete gradients $\nabla_\mathcal{D}^{K_v} u$ (per sub-control volume $K_v$).
 In the following, we restrict our discussion to the two-dimensional setup that is shown in Figure \ref{pc:interactionRegion_mpfa}.
 Here, the discrete gradients are constructed to be consistent such that the following conditions hold:
 \begin{equation}
-\nabla_\mathcal{D}^{K^v} u \cdot (\mathbf{x}_{\sigma^v_1}- \mathbf{x}_{K}) = u_{\sigma^v_1} - u_K, \quad \nabla_\mathcal{D}^{K^v} u \cdot (\mathbf{x}_{\sigma^v_3}- \mathbf{x}_{K}) = u_{\sigma^v_3} - u_K.
+\nabla_\mathcal{D}^{K_v} u \cdot (\mathbf{x}_{\sigma^v_1}- \mathbf{x}_{K}) = u_{\sigma^v_1} - u_K, \quad \nabla_\mathcal{D}^{K_v} u \cdot (\mathbf{x}_{\sigma^v_3}- \mathbf{x}_{K}) = u_{\sigma^v_3} - u_K.
 \end{equation}
-Thus, a discrete gradient (for sub-control volume $K^v$) that fulfills  these conditions is given as
+Thus, a discrete gradient (for sub-control volume $K_v$) that fulfills  these conditions is given as
 \begin{equation}
-\nabla_\mathcal{D}^{K^v} u  = \mathbb{D}^{-T}_{K^v}
+\nabla_\mathcal{D}^{K_v} u  = \mathbb{D}^{-T}_{K_v}
  \begin{bmatrix}
   u_{\sigma^v_1} - u_K \\
   u_{\sigma^v_3} - u_K
- \end{bmatrix}, \qquad \text{ with }\; \mathbb{D}_{K^v} :=
+ \end{bmatrix}, \qquad \text{ with }\; \mathbb{D}_{K_v} :=
   \begin{bmatrix}
    \mathbf{x}_{\sigma^v_1}- \mathbf{x}_K & \mathbf{x}_{\sigma^v_3} - \mathbf{x}_K
  \end{bmatrix}.
@@ -141,7 +141,7 @@ Thus, a discrete gradient (for sub-control volume $K^v$) that fulfills  these co
 
 This enables us to write the discrete flux across $\sigma^v_1$ from cell $K$ as follows:
 \begin{equation}
-    F_{K, \sigma^v_1} := - |\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_K \nabla_\mathcal{D}^{K^v} u.
+    F_{K, \sigma^v_1} := - |\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_K \nabla_\mathcal{D}^{K_v} u.
     \label{eq:discreteFlux}
 \end{equation}
 Inserting the discrete gradient, yields
@@ -149,7 +149,7 @@ Inserting the discrete gradient, yields
     F_{K, \sigma^v_1} = \omega_{K,\sigma^v_1\sigma^v_1}(u_K - u_{\sigma^v_1}) + \omega_{K,\sigma^v_1 \sigma^v_3}(u_K - u_{\sigma^v_3}),
     \label{eq:discreteFluxRef}
 \end{equation}
-with $(\omega_{K,\sigma^v_1\sigma^v_1},\omega_{K,\sigma^v_1 \sigma^v_3})^T = |\sigma^v_1| \mathbb{D}^{-1}_{K^v}\mathbf{\Lambda}_K \mathbf{n}_{\sigma^v_1}$. These values are calculated in \Dumux by using the function \texttt{computeMpfaTransmissibility}.
+with $(\omega_{K,\sigma^v_1\sigma^v_1},\omega_{K,\sigma^v_1 \sigma^v_3})^T = |\sigma^v_1| \mathbb{D}^{-1}_{K_v}\mathbf{\Lambda}_K \mathbf{n}_{\sigma^v_1}$. These values are calculated in \Dumux by using the function \texttt{computeMpfaTransmissibility}.
 \\ \ \\
 To deduce a cell-centered scheme, the introduced face unknowns $u_{\sigma^v_i}$ have to be eliminated. This is done by enforcing flux continuity for each sub-control volume face, i.e.
 \begin{align}
@@ -173,35 +173,31 @@ for each cell $K$ and sub-control volume face $\sigma^v_i$.
 The so called box method unites the advantages of the finite-volume (FV) and
 finite-element (FE) methods.
 
-First, the model domain $\Omega$ is discretized with a FE mesh consisting of nodes
-$i$ and corresponding elements $E_k$. Then, a secondary FV mesh is constructed
-by connecting the midpoints and barycenters of the elements surrounding node
-$i$ creating a box $B_i$ around node $i$ (see Figure \ref{pc:box}a).
+First, the model domain $\Omega$ is discretized using a FE mesh consisting of nodes and elements, see the primary grid in Figure \ref{pc:box}. Then, a secondary FV mesh is constructed
+by connecting the face barycenters and element barycenters, thus creating a control volume $B_v$, also called box, with node $v$ in the center (see Figure \ref{pc:box}). When referring to faces, we mean entities of codimension 1 with respect to the element dimension.
 
 \begin{figure} [ht]
-\includegraphics[width=0.8\linewidth,keepaspectratio]{png/box_disc.png}
-\caption{\label{pc:box} Discretization of the box method}
+\centering
+\includegraphics[width=0.8\linewidth,keepaspectratio]{png/box.png}
+\caption{\label{pc:box} Control volume for the box method.}
 \end{figure}
 
-The FE mesh divides the box $B_i$ into subcontrolvolumes (scv's) $b^k_i$
-(see Figure \ref{pc:box}b). Figure \ref{pc:box}c shows the finite element $E_k$
-and the scv's $b^k_i$ inside $E_k$, which belong to four different boxes $B_i$.
-Also necessary for the discretization are the faces of the subcontrolvolumes (scvf's)
-$e^k_{ij}$ between the scv's $b^k_i$ and $b^k_j$, where $|e^k_{ij}|$ is the length
-of the scvf. The integration points $x^k_{ij}$ on $e^k_{ij}$ and the outer normal
-vector $\mathbf n^k_{ij}$ are also to be defined (see Figure \ref{pc:box}c).
+Control volumes $B_v$ are partitioned into sub-control volumes (scvs) such that each sub-control volume is the intersection of the control volume with a different primal grid element, $M_v =
+B_v \cap M$, see Figure \ref{pc:box}. The faces of $B_v$ are partitioned into sub-control volume faces $\sigma_k$ analogously and $|\sigma_k|$ denotes the measure of sub-control volume face $k$.
+Finally, the integration points $x_k$ which lie on the scvfs and the outer normal
+vectors $\mathbf n_{\sigma_k}$ also need to be defined, see Figure \ref{pc:box} for reference.
 
 The advantage of the FE method is that unstructured grids can be used, while the
 FV method is mass conservative. The idea is to apply the FV method (balance of
-fluxes across the interfaces) to each FV box $B_i$  and to get the fluxes across
-the interfaces $e^k_{ij}$ at the integration points $x^k_{ij}$ from the FE approach.
+fluxes across the interfaces) to each control volume and to get the fluxes across
+the sub-control volume faces at the integration points $x_k$ from the FE approach.
 Consequently, at each scvf the following expression results:
 
 \begin{equation}
-   f(\tilde u(x^k_{ij})) \cdot \mathbf n^k_{ij} \: |e^k_{ij}| \qquad \textrm{with}
-   \qquad \tilde u(x^k_{ij}) = \sum_i N_i(x^k_{ij}) \cdot \hat u_i .
+   f(\tilde u(x_k)) \cdot \mathbf n_{\sigma_k} \: |\sigma_k| \qquad \textrm{with}
+   \qquad \tilde u(x_k) = \sum_i N_i(x_k) \cdot \hat u_i,
 \end{equation}
-
+where $N_i$ represents the basis function of the finite element ansatz at node $i$. The basis functions are defined such that $N_i(x_j)=\delta_{ij}$ with $\delta_{ij}$ being the Kronecker delta.
 In the following, the discretization of the balance equation is going to be derived.
 From the \textsc{Reynolds} transport theorem follows the general balance equation:
 
@@ -294,7 +290,7 @@ Inserting definition \eqref{eq:weightingFunctions} into equation \eqref{eq:weigh
   \int_{B_j} \frac{\partial \tilde u}{\partial t} \, \mathrm{d}x + \int_{\partial B_j}  F(\tilde u) \cdot \mathbf n \, \mathrm{d}\Gamma_{B_j} - \int_{B_j} q \, \mathrm{d}x  \overset {!}{=} \: 0,
 \label{eq:BoxMassBlance}
 \end{equation}
-which has to hold for every box $B_j$.
+which has to hold for every control volume $B_j$.
 
 The first term in equation \eqref{eq:BoxMassBlance} can be written as
 \begin{equation}
@@ -308,7 +304,7 @@ are replaced by some mass lumped terms $M^{lump}_{i,j}$ which are defined as
   0 &j \neq i,\\
            \end{cases}
 \end{equation}
-where $|B_j|$ is the volume of the FV box $B_j$ associated with node $j$.
+where $|B_j|$ is the volume of the FV control volume $B_j$ associated with node $j$.
 The application of this assumption yields
 
 \begin{equation}
