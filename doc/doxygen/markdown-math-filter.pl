@@ -48,7 +48,7 @@
 #   possible.
 # - Modifiers:
 #     s: Allow '.' to match newlines
-#     g: Replace all occurences
+#     g: Replace all occurrences
 #     e: Evaluate replacement as perl code, so we can switch between
 #        replacements depending on the matched alternative, using the '//'
 #        (definedness) operator.
