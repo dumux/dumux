@@ -24,6 +24,8 @@
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
 
+#include <type_traits>
+#include <dune/common/exceptions.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
@@ -83,12 +85,10 @@ public:
         using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
         if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
-        else if constexpr (
-            MomGG::discMethod == DiscretizationMethods::fcdiamond
-            || MomGG::discMethod == DiscretizationMethods::pq1bubble
-            || MomGG::discMethod == DiscretizationMethods::box
-        )
+        else if constexpr (DiscretizationMethods::isCVFE<typename MomGG::DiscretizationMethod>)
             calculateVelocityForCVFESchemes_(velocity, element, fvGeometry, elemVolVars);
+        else
+            DUNE_THROW(Dune::NotImplemented, "Navier-Stokes velocity output for scheme " << MomGG::discMethod);
     }
 
 private:
