@@ -6,8 +6,11 @@ PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
+
 INPUT                 += @srcdir@/mainpage.txt \
-                         @srcdir@/modules.txt \
+                         @srcdir@/modules.md \
+                         @srcdir@/modules_2.md \
+                         @srcdir@/testpage.md \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
