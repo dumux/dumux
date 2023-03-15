@@ -50,7 +50,7 @@ We solve the following coupled, mixed-dimensional PDE system:
 where the subscript T and B denote the tissue and the network (blood flow) compartment,
 $`x`$ is the tracer mole fraction, $`\varrho`$ the molar density of the mixture, $`\phi`$ is the porosity,
 $`A_\mathrm{B}`$ denotes the network (vessel lumen) cross-sectional area, $`\vert P \vert`$ is the cross-sectional perimeter value,
-$`D`$ is the free diffusion coefficient, $`D_{\text{app}`$ apparent diffusion coefficients and $C_M$ a membrane diffusivity factor.
+$`D`$ is the free diffusion coefficient, $`D_{\text{app}}`$ apparent diffusion coefficients and $C_M$ a membrane diffusivity factor.
 Furthermore, isothermal conditions with a homogeneous temperature distribution of constant $`T=37^\circ C`$ are assumed.
 The 1D network PDE is formulated in terms of the local axial coordinate $`s`$.
 
