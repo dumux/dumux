@@ -251,9 +251,7 @@ public:
         values[pwIdx] = 1e5;
         values[snIdx] = 0.0;
 
-        using MaterialLaw = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<PoreNetwork::Pore::Shape::cube>;
         const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteraction(element, scv, 0);
-
         if (isInletPore_(scv))
             values[snIdx] = 1.0 - fluidMatrixInteraction.sw(pcEpisopde_[step_]);
 

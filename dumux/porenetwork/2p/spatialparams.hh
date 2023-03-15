@@ -53,7 +53,7 @@ class TwoPSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    using MaterialLaw = Dumux::PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyRegularization<Scalar, Dumux::PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBody<Dumux::PoreNetwork::Pore::Shape::cube>>;
+    using MaterialLaw = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<PoreNetwork::Pore::Shape::cube>;
 
     TwoPSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)

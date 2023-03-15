@@ -38,8 +38,6 @@ namespace Dumux
 template<class MaterialLaw, class Scalar>
 class PlotLocalRules
 {
-    using MaterialLawParams = typename MaterialLaw::Params<Scalar>;
-
     template<class VV>
     class PseudoElemVolVars
     {
