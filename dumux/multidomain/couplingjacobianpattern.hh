@@ -72,47 +72,6 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 /*!
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
- *        for the box scheme
- */
-template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::box), int> = 0>
-Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
-                                                Dune::index_constant<i> domainI,
-                                                const GridGeometryI& gridGeometryI,
-                                                Dune::index_constant<j> domainJ,
-                                                const GridGeometryJ& gridGeometryJ)
-{
-    const auto numDofsI = gridGeometryI.numDofs();
-    const auto numDofsJ = gridGeometryJ.numDofs();
-    Dune::MatrixIndexSet pattern;
-    pattern.resize(numDofsI, numDofsJ);
-
-    // matrix pattern for implicit Jacobians
-    if (isImplicit)
-    {
-        static constexpr int dim = std::decay_t<decltype(gridGeometryI.gridView())>::dimension;
-        for (const auto& elementI : elements(gridGeometryI.gridView()))
-        {
-            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
-            for (std::size_t vIdxLocal = 0; vIdxLocal < elementI.subEntities(dim); ++vIdxLocal)
-            {
-                const auto globalI = gridGeometryI.vertexMapper().subIndex(elementI, vIdxLocal, dim);
-                for (const auto globalJ : stencil)
-                    pattern.add(globalI, globalJ);
-            }
-        }
-    }
-
-    // matrix pattern for explicit Jacobians
-    // -> diagonal matrix, so coupling block is empty
-    // just return the empty pattern
-
-    return pattern;
-}
-
-/*!
- * \ingroup MultiDomain
- * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for the staggered scheme (degrees of freedom on cell centers)
  */
 template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
@@ -217,10 +176,10 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 /*!
  * \ingroup MultiDomain
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
- *        for the diamond scheme
+ *        for control-volume finite element schemes (CVFE)
  */
 template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::fcdiamond), int> = 0>
+         typename std::enable_if_t<DiscretizationMethods::isCVFE<typename GridGeometryI::DiscretizationMethod>, int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
                                                 const GridGeometryI& gridGeometryI,
@@ -230,45 +189,7 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     Dune::MatrixIndexSet pattern;
 
     // matrix pattern for implicit Jacobians
-    if (isImplicit)
-    {
-        pattern.resize(gridGeometryI.numDofs(),  gridGeometryJ.numDofs());
-        for (const auto& elementI : elements(gridGeometryI.gridView()))
-        {
-            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
-            for (std::size_t localFacetIndex = 0; localFacetIndex < elementI.subEntities(1); ++localFacetIndex)
-            {
-                const auto globalI = gridGeometryI.dofMapper().subIndex(elementI, localFacetIndex, 1);
-                for (const auto globalJ : stencil)
-                    pattern.add(globalI, globalJ);
-            }
-        }
-    }
-
-    // matrix pattern for explicit Jacobians
-    // -> diagonal matrix, so coupling block is empty
-    // just return the empty pattern
-
-    return pattern;
-}
-
-/*!
- * \ingroup MultiDomain
- * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
- *        for the pq1bubble scheme
- */
-template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::pq1bubble), int> = 0>
-Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
-                                                Dune::index_constant<i> domainI,
-                                                const GridGeometryI& gridGeometryI,
-                                                Dune::index_constant<j> domainJ,
-                                                const GridGeometryJ& gridGeometryJ)
-{
-    Dune::MatrixIndexSet pattern;
-
-    // matrix pattern for implicit Jacobians
-    if (isImplicit)
+    if constexpr (isImplicit)
     {
         pattern.resize(gridGeometryI.numDofs(),  gridGeometryJ.numDofs());
         auto fvGeometry = localView(gridGeometryI);
