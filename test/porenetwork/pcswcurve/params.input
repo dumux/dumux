@@ -3,7 +3,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 TEnd = 1e12 # [s]
-MaxTimeStepSize = 1e-3
+MaxTimeStepSize = 1e6
 MaxDtNonEquilibrium = 1e-3
 
 [Grid]
@@ -50,12 +50,16 @@ OutletPoreLabel = 3
 AddVelocity = 1
 
 [Newton]
-MaxSteps = 20
+MaxSteps = 10
 TargetSteps = 4
-MaxRelativeShift = 1e-7
-MaxTimeStepDivisions = 20
+MaxRelativeShift = 1e-4
+MaxTimeStepDivisions = 40
 PlausibilityCheck = true
+
+[Regularization]
+RegPercentage = 1e-2
 
 [InvasionState]
 AccuracyCriterion = 0.999
 RestrictInvasionToGlobalCapillaryPressure = true
+# BlockNonwettingPhaseAtThroatLabel = 3

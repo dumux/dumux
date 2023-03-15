@@ -194,21 +194,21 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton solver
-        static const Scalar increasedTimeStepShiftThreshold = getParam<Scalar>("Problem.IncreasedTimeStepShiftThreshold", 1e-8);
-        static const Scalar maxDtNonEquilibrium = getParam<Scalar>("TimeLoop.MaxDtNonEquilibrium", 1e-5);
-        const Scalar newTimeStepSize = problem->dSwDt() > increasedTimeStepShiftThreshold ? maxDtNonEquilibrium : nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize());
-        if (problem->dSwDt() > increasedTimeStepShiftThreshold)
-        {
-            std::cout << "Temporal change in saturation " << problem->dSwDt() << " is greater than threshold " << increasedTimeStepShiftThreshold << ". ";
-            std::cout <<"Setting new time step to " << newTimeStepSize << std::endl;
-        }
-        else
-        {
-            std::cout << "Temporal change in saturation " << problem->dSwDt() << " is smaller than threshold " << increasedTimeStepShiftThreshold << ". ";
-            std::cout <<"Setting new time step to " << newTimeStepSize << std::endl;
-        }
-        timeLoop->setTimeStepSize(newTimeStepSize);
-        // timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        // static const Scalar increasedTimeStepShiftThreshold = getParam<Scalar>("Problem.IncreasedTimeStepShiftThreshold", 1e-8);
+        // static const Scalar maxDtNonEquilibrium = getParam<Scalar>("TimeLoop.MaxDtNonEquilibrium", 1e-5);
+        // const Scalar newTimeStepSize = problem->dSwDt() > increasedTimeStepShiftThreshold ? maxDtNonEquilibrium : nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize());
+        // if (problem->dSwDt() > increasedTimeStepShiftThreshold)
+        // {
+        //     std::cout << "Temporal change in saturation " << problem->dSwDt() << " is greater than threshold " << increasedTimeStepShiftThreshold << ". ";
+        //     std::cout <<"Setting new time step to " << newTimeStepSize << std::endl;
+        // }
+        // else
+        // {
+        //     std::cout << "Temporal change in saturation " << problem->dSwDt() << " is smaller than threshold " << increasedTimeStepShiftThreshold << ". ";
+        //     std::cout <<"Setting new time step to " << newTimeStepSize << std::endl;
+        // }
+        // timeLoop->setTimeStepSize(newTimeStepSize);
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
