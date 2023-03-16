@@ -63,7 +63,7 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
-    using GeometryHelper = PQ1BubbleGeometryHelper<GridView, typename GG::SubControlVolume, typename GG::SubControlVolumeFace>;
+    using GeometryHelper = typename GG::GeometryHelper;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
