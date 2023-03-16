@@ -23,4 +23,7 @@ An overview of all available parameters is given in \ref parameterlist.txt.
 
 An overview of special features implemented in the DuMu<sup>X</sup>-test-problems will be available soon.
 
+\section highlevel Highlevel
+The highlevel document can be seen here \ref highlevel_doc
+
 */

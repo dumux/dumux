@@ -1,8 +1,7 @@
-###### Testgroup
+@file
 
 @defgroup test2 Test2
 @brief Test2
-###### Discrtization
 
 @defgroup staggered Staggered
 @brief Staggered brief

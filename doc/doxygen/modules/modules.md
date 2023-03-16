@@ -1,4 +1,4 @@
-###### core
+@page modules
 
 @defgroup Core Core functionality and concepts
 @brief Core functionality and concepts
@@ -525,3 +525,5 @@ Spatial parameters.
 
 @copydoc dumux/porenetwork/2p/model.hh
 @ingroup PoreNetworkModels
+
+\include{modules_2.md}

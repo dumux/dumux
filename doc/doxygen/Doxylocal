@@ -8,11 +8,12 @@ PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 
 INPUT                 += @srcdir@/mainpage.txt \
-                         @srcdir@/modules.md \
-                         @srcdir@/modules_2.md \
+                         @srcdir@/modules.txt \
                          @srcdir@/testpage.md \
                          @top_srcdir@/dumux \
-                         @srcdir@/extradoc/parameterlist.txt
+                         @srcdir@/extradoc/parameterlist.txt \
+                         @srcdir@/highlevel.md \
+                         @srcdir@/fvgeometry.md
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
@@ -82,3 +83,5 @@ REPEAT_BRIEF = NO
 BRIEF_MEMBER_DESC = YES
 # Omit the detailed section when there is none specified
 ALWAYS_DETAILED_SEC = NO
+
+GENERATE_TOC_DEPTH = 2
