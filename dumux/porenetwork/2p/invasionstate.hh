@@ -216,6 +216,7 @@ private:
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
@@ -264,7 +265,7 @@ private:
                 else
                 {
                     std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
-                    std::cout << " pc: " << *pcMax;
+                    std::cout << " pc: " << *pcMin;
                     std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
                     std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
                 }
