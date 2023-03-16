@@ -33,7 +33,6 @@
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/co2.hh>
-#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/idealgas.hh>
 
 namespace Dumux::BinaryCoeff {
@@ -42,7 +41,7 @@ namespace Dumux::BinaryCoeff {
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
  */
-template<class Scalar, class CO2Impl = Components::SimpleCO2<Scalar>, bool verbose = true>
+template<class Scalar, class CO2Impl, bool verbose = true>
 class Brine_CO2 {
     using H2O = Components::H2O<Scalar>;
 
@@ -387,7 +386,7 @@ private:
  * molfraction of H2O has been assumed to be a constant value
  * For use with the actual brine_co2_system this class still needs to be adapted
  */
-template<class Scalar, class CO2Impl = Components::SimpleCO2<Scalar>, bool verbose = true>
+template<class Scalar, class CO2Impl, bool verbose = true>
 class Brine_CO2_Old
 {
     using H2O = Components::H2O<Scalar>;

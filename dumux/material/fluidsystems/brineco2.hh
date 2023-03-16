@@ -36,7 +36,6 @@
 #include <dumux/material/fluidstates/adapter.hh>
 
 #include <dumux/material/components/brine.hh>
-#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
@@ -107,7 +106,7 @@ struct BrineCO2DefaultPolicy
  * \note This implementation always assumes NaCl stays in the liquid phase.
  */
 template< class Scalar,
-          class CO2Impl = Components::SimpleCO2<Scalar>,
+          class CO2Impl,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>,
           class Policy = BrineCO2DefaultPolicy</*constantSalinity?*/true> >
 class BrineCO2
