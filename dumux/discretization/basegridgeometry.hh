@@ -37,6 +37,9 @@ namespace Dumux {
 namespace Detail {
 template<class T>
 using SpecifiesBaseGridGeometry = typename T::BasicGridGeometry;
+
+template<class T>
+using SpecifiesGeometryHelper = typename T::GeometryHelper;
 } // end namespace Detail
 
 /*!

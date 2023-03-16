@@ -46,6 +46,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using BoxFacetCouplingGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::BoxGeometryHelper<GV, GV::dimension, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 /*!
  * \ingroup FacetCoupling
  * \brief The default traits for the finite volume grid geometry
@@ -105,7 +114,7 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = BoxGeometryHelper<GV, dim, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
+    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
 
 public:
     //! export the discretization method this geometry belongs to

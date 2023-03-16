@@ -49,6 +49,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using BoxDfmGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::BoxDfmGeometryHelper<GV, GV::dimension, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 /*!
  * \ingroup BoxDFMModel
  * \brief The default traits for the box finite volume grid geometry
@@ -109,9 +118,7 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
     static const int dimWorld = GV::dimensionworld;
     static_assert(dim == 2 || dim == 3, "The box-dfm GridGeometry is only implemented in 2 or 3 dimensions.");
 
-    using GeometryHelper = BoxDfmGeometryHelper<GV, dim,
-                                                typename Traits::SubControlVolume,
-                                                typename Traits::SubControlVolumeFace>;
+    using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
 public:
     //! export the discretization method this geometry belongs to

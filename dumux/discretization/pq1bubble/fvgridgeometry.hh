@@ -49,6 +49,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 template <class GridView>
 struct PQ1BubbleMapperTraits :public DefaultMapperTraits<GridView>
 {
@@ -106,9 +115,7 @@ class PQ1BubbleFVGridGeometry
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = PQ1BubbleGeometryHelper<
-        GV, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace
-    >;
+    using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
 
     static_assert(dim > 1, "Only implemented for dim > 1");
 
