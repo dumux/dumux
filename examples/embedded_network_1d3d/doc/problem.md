@@ -13,8 +13,8 @@ conditions and implements the coupling source terms. The file contains two
 problem classes: `TissueTransportProblem` and `NetworkTransportProblem` for the
 respective subdomains. The subdomain problem classes specify boundary and initial
 conditions for the subdomains separately. For this setup, we specify boundary fluxes
-(Neumann or Robin-type boundary conditions, weakly imposed) called
---somewhat not general enough--`Neumann` in DuMu<sup>x</sup>.
+via the `neumann` function (note that despite its name, the function allows you to
+implement both Neumann or Robin-type boundary conditions, weakly imposed).
 
 The subdomain problems are coupled to each other. This is evident from the
 coupling manager pointer that is stored in each subdomain problem (and the
