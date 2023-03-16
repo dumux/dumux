@@ -103,8 +103,6 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -126,6 +124,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
@@ -470,6 +470,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)

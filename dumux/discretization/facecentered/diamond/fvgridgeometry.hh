@@ -89,7 +89,6 @@ class FaceCenteredDiamondFVGridGeometry
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
-    using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
 
     using Scalar = typename GV::ctype;
 
@@ -118,6 +117,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export the finite element cache type
     using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")

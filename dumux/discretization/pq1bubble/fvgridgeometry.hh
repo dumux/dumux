@@ -115,8 +115,6 @@ class PQ1BubbleFVGridGeometry
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
-
     static_assert(dim > 1, "Only implemented for dim > 1");
 
 public:
@@ -138,6 +136,8 @@ public:
     using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     PQ1BubbleFVGridGeometry(const GridView gridView)

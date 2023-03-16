@@ -114,8 +114,6 @@ class BoxFacetCouplingFVGridGeometry<Scalar, GV, true, Traits>
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -135,6 +133,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template<class FacetGridView, class CodimOneGridAdapter>
@@ -423,6 +423,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template<class FacetGridView, class CodimOneGridAdapter>
