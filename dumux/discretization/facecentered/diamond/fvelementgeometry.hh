@@ -56,7 +56,7 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using LocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
-    using GeometryHelper = typename GG::GeometryHelper;
+    using GeometryHelper = typename GGCache::GeometryHelper;
 
 public:
     //! export type of subcontrol volume face
