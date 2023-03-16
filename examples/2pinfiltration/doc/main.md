@@ -48,8 +48,9 @@ In Dumux, a property system is used to specify the model. For this, different pr
 We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
 
 ```cpp
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 ```
 
@@ -267,7 +268,8 @@ and set the assembler with the time loop because we have an instationary problem
 We set the linear solver and the non-linear solver
 
 ```cpp
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

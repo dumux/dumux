@@ -128,7 +128,7 @@ public:
     bool solve(const Matrix& m, Vector& x, const Vector& b)
     {
         setup(m);
-        solve(x, b);
+        return solve(x, b);
     }
 
     void setup(const MatrixType& m)

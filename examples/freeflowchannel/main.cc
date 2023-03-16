@@ -42,7 +42,9 @@
 // The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
 #include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 
@@ -182,7 +184,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // We use UMFPack as direct linear solver within each Newton iteration.
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // This example considers a linear problem (incompressible Stokes flow), therefore

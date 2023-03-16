@@ -47,8 +47,9 @@ and the assembler for the linear systems arising from finite volume discretizati
 (box-scheme, tpfa-approximation, mpfa-approximation).
 
 ```cpp
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 ```
@@ -174,7 +175,8 @@ Within the time loop, we will use this assembler in each time step to assemble t
 We initialize the linear solver.
 
 ```cpp
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 ```
 
