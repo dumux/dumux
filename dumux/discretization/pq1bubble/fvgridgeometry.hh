@@ -136,8 +136,6 @@ public:
     using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     PQ1BubbleFVGridGeometry(const GridView gridView)
@@ -212,6 +210,9 @@ private:
     {
         friend class PQ1BubbleFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
+
         explicit PQ1BubbleGridGeometryCache(const PQ1BubbleFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
@@ -258,6 +259,8 @@ public:
     using Cache = PQ1BubbleGridGeometryCache;
 
 private:
+    using GeometryHelper = typename Cache::GeometryHelper;
+
     void update_()
     {
         cache_.clear_();

@@ -117,8 +117,6 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export the finite element cache type
     using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
@@ -193,6 +191,9 @@ private:
     {
         friend class FaceCenteredDiamondFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
+
         explicit FCDiamondGridGeometryCache(const FaceCenteredDiamondFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
@@ -232,6 +233,7 @@ public:
     //! this alias should only be used by the local view implementation
     using Cache = FCDiamondGridGeometryCache;
 private:
+    using GeometryHelper = typename Cache::GeometryHelper;
 
     //! update all fvElementGeometries
     void update_()

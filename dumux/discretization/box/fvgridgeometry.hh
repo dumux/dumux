@@ -124,8 +124,6 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
@@ -207,6 +205,9 @@ private:
     {
         friend class BoxFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
+
         explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
@@ -253,6 +254,8 @@ public:
     using Cache = BoxGridGeometryCache;
 
 private:
+    using GeometryHelper = typename Cache::GeometryHelper;
+
     void update_()
     {
         cache_.clear_();
@@ -470,8 +473,6 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
@@ -553,6 +554,9 @@ private:
     {
         friend class BoxFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
+
         explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
