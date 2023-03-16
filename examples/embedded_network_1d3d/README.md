@@ -13,10 +13,11 @@ __Table of contents__. This description is structured as follows:
 ## Problem set-up
 In this example we simulate clearance of a substance present in the tissue through the blood. The tissue
 cube is assigned no-flux/symmetry boundary conditions assuming that identical cubes are mirrored on all sides.
-Therefore the tracer has to cross the vessel wall into the network (vessel lumen). In then get transported
-in the blood stream by advection and diffusion. In the network, inlet tracer mole fraction is zero and at
-the outlet the mole fraction gradient is zero, making the tracer being transported out by advection only.
-We write out VTK output and the total tracer concentration in the tissue as text file, in every time step.
+Therefore, the tracer has to cross the vessel wall into the network (vessel lumen). It then gets transported
+in the blood stream by advection and diffusion. In the network, the tracer mole fraction is zero at the inlet
+and at the outlet the mole fraction gradient is zero. Thus, the tracer is transported out of the domain by advection only.
+VTK output is written in every time step, and the total tracer concentration in the tissue is written into a text file
+along the simulation.
 
 ## Network data and blood flow
 The domain consists of a small blood vessel network embedded
@@ -49,7 +50,7 @@ We solve the following coupled, mixed-dimensional PDE system:
 
 where the subscript T and B denote the tissue and the network (blood flow) compartment,
 $`x`$ is the tracer mole fraction, $`\varrho`$ the molar density of the mixture, $`\phi`$ is the porosity,
-$`A_\mathrm{B}`$ denotes the network (vessel lumen) cross-sectional area, $`\vert P \vert`$ is the cross-sectional perimeter value,
+$`A_\mathrm{B}`$ denotes the network (vessel lumen) cross-sectional area, $`P`$ denotes the cross-sectional perimeter,
 $`D`$ is the free diffusion coefficient, $`D_{\text{app}}`$ apparent diffusion coefficients and $C_M$ a membrane diffusivity factor.
 Furthermore, isothermal conditions with a homogeneous temperature distribution of constant $`T=37^\circ C`$ are assumed.
 The 1D network PDE is formulated in terms of the local axial coordinate $`s`$.
@@ -89,16 +90,16 @@ property system in `properties.hh` where the `Problem` property is specialized f
 (`NetworkTransportModel` and `TissueTransportModel`). These models are passed in the main function to the assembler.
 
 Secondly, the spatial parameters (`spatialparams.hh`) are classes that specify (possibly) spatially varying parameter.
-On such parameter is the radius field for the network. In the class `NetworkSpatialParams`, the radius field is
+One such parameter is the radius field for the network. In the class `NetworkSpatialParams`, the radius field is
 read from the grid file `network.dgf` (which is in the very simple, human-readable Dune Grid Format).
 As for the problem, spatial parameters have to be added to the model by specializing the `SpatialParams` property
 for the model in `properties.hh`.
 
 Apart from problem and spatial params, the model (`properties.hh`) also has other configurable parameters.
-(In fact most of the inner workings of the assembler can be configured like this.) One example is the grid manager
+(In fact most of the inner workings of the assembler can be configured like this.) One example is the grid type
 used for each model. Dune provides specialized implementations for certain grid types behind a common interface.
 In this exercise, we use a structured Cartesian grid (`YaspGrid`) for the tissue domain and an embedded network
-grid manager (`FoamGrid`) for the network.
+grid (`FoamGrid`) for the network.
 With the model configuration through the property system in mind, we can better understand the main program (`main.cc`)
 and how the boundary conditions and parameter setting make their way into the assembler.
 

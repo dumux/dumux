@@ -20,6 +20,8 @@
 #ifndef DUMUX_EXAMPLE_BLOODFLOW_SOLVER_HH
 #define DUMUX_EXAMPLE_BLOODFLOW_SOLVER_HH
 
+#include <memory>
+
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/exceptions.hh>
@@ -439,17 +441,24 @@ std::vector<double> computeBloodVolumeFluxes(const GridGeometry& gridGeometry, c
     gridVariables->init(sol);
 
     // debug output
-    // VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, sol, problem->name());
-    // GetPropType<TypeTag, Properties::IOFields>::initOutputModule(vtkWriter);
-    // vtkWriter.addVelocityOutput(
-    //     std::make_shared<PorousMediumFlowVelocityOutput<
-    //         GridVariables, GetPropType<TypeTag, Properties::FluxVariables>
-    //     >>(*gridVariables)
-    // );
-    // vtkWriter.addField(problem->spatialParams().getRadii(), "radius");
-    // vtkWriter.addField(problem->spatialParams().getTortuousVesselFactors(), "vessel tortuosity factor");
-    // vtkWriter.addField(problem->spatialParams().getBoundaryPressure(), "pBC");
-    // vtkWriter.write(0.0, Dune::VTK::OutputType::appendedraw);
+    using VTKOutputModule = VtkOutputModule<GridVariables, SolutionVector>;
+    std::unique_ptr<VTKOutputModule> vtkWriter;
+
+    static const bool writeVTK = getParam<bool>("BloodFlow.WriteVTK", false);
+    if (writeVTK)
+    {
+        vtkWriter = std::make_unique<VTKOutputModule>(*gridVariables, sol, problem->name());
+        GetPropType<TypeTag, Properties::IOFields>::initOutputModule(*vtkWriter);
+        vtkWriter->addVelocityOutput(
+            std::make_shared<PorousMediumFlowVelocityOutput<
+                GridVariables, GetPropType<TypeTag, Properties::FluxVariables>
+            >>(*gridVariables)
+        );
+        vtkWriter->addField(problem->spatialParams().getRadii(), "radius");
+        vtkWriter->addField(problem->spatialParams().getViscosityFactors(), "vessel tortuosity factor");
+        vtkWriter->addField(problem->spatialParams().getBoundaryPressure(), "pBC");
+        vtkWriter->write(0.0, Dune::VTK::OutputType::appendedraw);
+    }
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
@@ -459,8 +468,8 @@ std::vector<double> computeBloodVolumeFluxes(const GridGeometry& gridGeometry, c
     NewtonSolver nonLinearSolver(assembler, linearSolver);
     nonLinearSolver.solve(sol);
 
-    // // write vtk output
-    // vtkWriter.write(1.0, Dune::VTK::OutputType::appendedraw);
+    if (writeVTK)
+        vtkWriter->write(1.0, Dune::VTK::OutputType::appendedraw);
     std::cout << "Flow computation took " << timer.elapsed() << " seconds." << std::endl;
 
     return problem->computeVolumeFluxes(sol, *gridVariables);
