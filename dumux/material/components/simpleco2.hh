@@ -88,7 +88,7 @@ public:
 
     /*!
      * \brief Specific enthalpy of CO2 \f$\mathrm{[J/kg]}\f$.
-     *        source: Shomate Equation for a temperature range of 298. to 1200°C.
+     *        source: Shomate Equation for a temperature range of 298. to 1200K.
      *        with components published by NIST  \cite NIST
      *        https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=1&Type=JANAFG&Table=on
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
@@ -105,7 +105,7 @@ public:
         constexpr double e = -0.136638;
         constexpr double f = -403.6075;
         constexpr double h = -393.5224;
-        return (a*t + b*t*t/2 + c*t*t*t/3 + d*t*t*t*t/4 - e/t -h)*1000/molarMass(); //conversion from kJ/mol to J/kg
+        return (a*t + b*t*t/2 + c*t*t*t/3 + d*t*t*t*t/4 - e/t +f -h)*1000/molarMass(); //conversion from kJ/mol to J/kg
     }
 
     /*!
@@ -246,7 +246,7 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of CO2 \f$\mathrm{[J/(kg*K)]}\f$.
-     *        source: Shomate Equation for a temperature range of 298. to 1200°C.
+     *        source: Shomate Equation for a temperature range of 298. to 1200K.
      *        with components published by NIST  \cite NIST
      *        https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=1&Type=JANAFG&Table=on
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

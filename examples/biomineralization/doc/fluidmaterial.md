@@ -123,7 +123,7 @@ which are needed to model biomineralization.
 
 // we include all necessary fluid components
 #include <dumux/material/fluidstates/adapter.hh>
-#include <dumux/material/components/co2.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/sodiumion.hh>
@@ -152,7 +152,7 @@ which are needed to model biomineralization.
 
 ### The fluidsystem class
 In the BioMinSimpleChemistryFluid fluid system, we define all functions needed to describe the fluids and their properties accounted for in our simulation.
-The simplified biogeochemistry biomineralization fluid system requires the CO2 tables and the H2OType as template parameters.
+The simplified biogeochemistry biomineralization fluid system requires the CO2 component and the H2OType as template parameters.
 We enter the namespace Dumux. All Dumux functions and classes are in a namespace Dumux, to make sure they don`t clash with symbols from other libraries you may want to use in conjunction with Dumux.
 
 ```cpp
