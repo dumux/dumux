@@ -377,7 +377,9 @@ The following files contain the multi-domain Newton solver, the available linear
 systems arising from the staggered-grid discretization.
 
 ```cpp
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
@@ -589,7 +591,7 @@ iteration. Here, we use the direct linear solver UMFPack.
 the linear solver
 
 ```cpp
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 ```
 

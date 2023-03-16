@@ -384,7 +384,9 @@ systems arising from the staggered-grid discretization.
 
 ```cpp
 #include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 ```
@@ -565,7 +567,7 @@ This is where the Jacobian matrix for the Newton solver is assembled.
 We use UMFPack as direct linear solver within each Newton iteration.
 
 ```cpp
-    using LinearSolver = Dumux::UMFPackBackend;
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 ```
 
