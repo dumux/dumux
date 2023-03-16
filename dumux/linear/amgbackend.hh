@@ -25,7 +25,7 @@
 #ifndef DUMUX_PARALLEL_AMGBACKEND_HH
 #define DUMUX_PARALLEL_AMGBACKEND_HH
 
-#warning "This header is deprecated. Use the AMG solver from dumux/linear/istlsolvers.hh"
+#warning "This header is deprecated and will be removed after release 3.7. Use the AMG solver from dumux/linear/istlsolvers.hh"
 
 #include <memory>
 
