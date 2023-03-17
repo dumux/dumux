@@ -49,6 +49,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using BoxDfmGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::BoxDfmGeometryHelper<GV, GV::dimension, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 /*!
  * \ingroup BoxDFMModel
  * \brief The default traits for the box finite volume grid geometry
@@ -109,10 +118,6 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
     static const int dimWorld = GV::dimensionworld;
     static_assert(dim == 2 || dim == 3, "The box-dfm GridGeometry is only implemented in 2 or 3 dimensions.");
 
-    using GeometryHelper = BoxDfmGeometryHelper<GV, dim,
-                                                typename Traits::SubControlVolume,
-                                                typename Traits::SubControlVolumeFace>;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::Box;
@@ -132,6 +137,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! Export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template< class FractureGridAdapter >
@@ -451,6 +458,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export the geometry helper type
+    using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template< class FractureGridAdapter >

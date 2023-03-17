@@ -48,6 +48,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using FaceCenteredDiamondGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::DiamondGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 /*!
  * \ingroup DiamondDiscretization
  * \brief The default traits for the face-centered diamond finite volume grid geometry
@@ -80,7 +89,6 @@ class FaceCenteredDiamondFVGridGeometry
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
-    using GeometryHelper = DiamondGeometryHelper<GV, typename Traits::SubControlVolume, typename Traits::SubControlVolumeFace>;
 
     using Scalar = typename GV::ctype;
 
@@ -183,6 +191,9 @@ private:
     {
         friend class FaceCenteredDiamondFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
+
         explicit FCDiamondGridGeometryCache(const FaceCenteredDiamondFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
@@ -222,6 +233,7 @@ public:
     //! this alias should only be used by the local view implementation
     using Cache = FCDiamondGridGeometryCache;
 private:
+    using GeometryHelper = typename Cache::GeometryHelper;
 
     //! update all fvElementGeometries
     void update_()

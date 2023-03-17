@@ -191,9 +191,7 @@ class BoxFacetCouplingFVElementGeometry<GG, false>
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 
-    using GeometryHelper = BoxGeometryHelper<GridView, dim,
-                                             typename GG::SubControlVolume,
-                                             typename GG::SubControlVolumeFace>;
+    using GeometryHelper = typename GG::GeometryHelper;
 public:
     //! export type of the element
     using Element = typename GridView::template Codim<0>::Entity;

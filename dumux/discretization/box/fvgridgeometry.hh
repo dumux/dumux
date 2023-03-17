@@ -45,6 +45,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+template<class GV, class T>
+using BoxGeometryHelper_t = Dune::Std::detected_or_t<
+    Dumux::BoxGeometryHelper<GV, GV::dimension, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    SpecifiesGeometryHelper,
+    T
+>;
+} // end namespace Detail
+
 /*!
  * \ingroup BoxDiscretization
  * \brief The default traits for the box finite volume grid geometry
@@ -93,10 +102,6 @@ class BoxFVGridGeometry<Scalar, GV, true, Traits>
     using CoordScalar = typename GV::ctype;
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-
-    using GeometryHelper = BoxGeometryHelper<GV, dim,
-                                             typename Traits::SubControlVolume,
-                                             typename Traits::SubControlVolumeFace>;
 
 public:
     //! export the discretization method this geometry belongs to
@@ -200,6 +205,9 @@ private:
     {
         friend class BoxFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
+
         explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
@@ -246,6 +254,8 @@ public:
     using Cache = BoxGridGeometryCache;
 
 private:
+    using GeometryHelper = typename Cache::GeometryHelper;
+
     void update_()
     {
         cache_.clear_();
@@ -544,6 +554,9 @@ private:
     {
         friend class BoxFVGridGeometry;
     public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxGeometryHelper_t<GV, Traits>;
+
         explicit BoxGridGeometryCache(const BoxFVGridGeometry& gg)
         : gridGeometry_(&gg)
         {}
