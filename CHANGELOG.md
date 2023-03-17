@@ -15,6 +15,8 @@ build can be downloaded from the job artifacts.
 - __Projection__: In addition to the L2-projector projecting between different grids added a helper that
 computes the L2-projection of analytic functions in to discrete FEM spaces (requires `dune-functions`).
 
+- __Poromechanics__: Fixed a bug in `PoroElasticLocalResidual`, where the average density between fluid and solid was computed incorrectly, potentially leading to unphysical body forces.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
