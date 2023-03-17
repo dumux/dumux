@@ -278,7 +278,10 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
     enum { dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension };
 
-    static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
+    static constexpr bool enableGridFluxVarsCache
+        = GridVariables::GridFluxVariablesCache::cachingEnabled;
+    static constexpr bool solutionDependentFluxVarsCache
+        = GridVariables::GridFluxVariablesCache::FluxVariablesCache::isSolDependent;
 
 public:
 
@@ -299,6 +302,7 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vector of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -348,6 +352,12 @@ public:
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     deflectionHelper.deflect(elemSol, scv, this->problem());
+                    if constexpr (solutionDependentFluxVarsCache)
+                    {
+                        elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+                        if constexpr (enableGridFluxVarsCache)
+                            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+                    }
                     return this->evalLocalResidual();
                 };
 
@@ -382,6 +392,12 @@ public:
                 elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
             }
         }
+
+        // restore original state of the flux vars cache in case of global caching.
+        // In the case of local caching this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
+        if constexpr (enableGridFluxVarsCache)
+            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+
         return origResiduals;
     }
 

@@ -54,6 +54,8 @@ class CVFEFluxVariablesCache
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 
 public:
+    //! whether the cache needs an update when the solution changes
+    static bool constexpr isSolDependent = false;
 
     //! update the cache for an scvf
     template< class Problem, class ElementVolumeVariables >

@@ -17,6 +17,10 @@ computes the L2-projection of analytic functions in to discrete FEM spaces (requ
 
 - __Poromechanics__: Fixed a bug in `PoroElasticLocalResidual`, where the average density between fluid and solid was computed incorrectly, potentially leading to unphysical body forces.
 
+- __Box/CVFE/Porenetwork Assembly bugfix__: The flux variables caches are now updated when comuting the Jacobian.
+Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such
+that the resulting Jacobian was only an approximation.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
@@ -25,6 +29,10 @@ The only supported linear algebra backend at the moment is Dune (common/istl). I
 PDE solver, you may also now need to follow this distinction in the assembler and solver interfaces. Moreover, you may need to
 use specialized assign and numeric operations in case your code allows for custom block types. If you are using the classes
 from the `Dumux` namespace, no change should be necessary in user code in the majority of cases.
+
+- __Box/CVFE/Porenetwork FluxVariablesCache__: The `FluxVariablesCache` class used with CVFE method are now required to have an interface
+variable `isSolDependent` that states whether the cache depends on the solution. This is used in the assembler to correctly update the cache. The `ElementFluxVariablesCache` classes with caching disabled now need a method `update` that updates the caches on demand. The
+`GridFluxVariablesCache` classes with caching enabled now need a method `updateElement` equivalent to `update` for the corresponding localView for caching disabled.
 
 - __Shallow water friction laws__: The friction laws after Manning and Nikuradse do no longer apply a limiter for the water depth. Previously, based on some application-specific assumption a roughness height was calculated that was added to the water depth. This
 height can now be provided as a argument to the respective friction law class constructors
