@@ -48,6 +48,8 @@
 #include <dumux/porousmediumflow/tracer/model.hh>
 // effective diffusion coefficient model
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+// general multidomain traits
+#include <dumux/multidomain/traits.hh>
 // 1d-3d coupling manager with surface average operator
 #include <dumux/multidomain/embedded/couplingmanager1d3d_average.hh>
 

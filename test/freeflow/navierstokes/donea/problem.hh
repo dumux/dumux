@@ -30,6 +30,8 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/localresidual.hh>
 

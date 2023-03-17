@@ -20,6 +20,7 @@
 #ifndef DUMUX_TRACER_FLUID_SYSTEM_HH
 #define DUMUX_TRACER_FLUID_SYSTEM_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux  {

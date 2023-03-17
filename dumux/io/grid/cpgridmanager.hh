@@ -46,6 +46,8 @@
 
 #include <dumux/common/parameters.hh>
 
+#if HAVE_ECL_INPUT
+
 namespace Dumux {
 
 /*!
@@ -105,6 +107,10 @@ private:
 };
 
 } // end namespace Dumux
+
+#else
+#warning "Eclipse input support in opm-common is required to use the cornerpoint grid manager"
+#endif // HAVE_ECL_INPUT
 
 #endif // HAVE_OPM_GRID
 
