@@ -71,8 +71,7 @@ class FVProblem
     using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
                                      std::vector<PointSource> >;
 
-    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
-    static constexpr bool isPQ1Bubble = GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
     static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethods::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -143,9 +142,9 @@ public:
     auto boundaryTypes(const Element &element,
                        const SubControlVolume &scv) const
     {
-        if (!isBox && !isPQ1Bubble)
+        if (!isCVFE)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scv) called for cell-centered method.");
+                       "boundaryTypes(..., scv) called for non-CVFE method.");
 
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scv.dofPosition());
@@ -161,9 +160,9 @@ public:
     auto boundaryTypes(const Element &element,
                        const SubControlVolumeFace &scvf) const
     {
-        if (isBox || isPQ1Bubble)
+        if (isCVFE)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scvf) called for box method.");
+                       "boundaryTypes(..., scvf) called for CVFE method.");
 
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scvf.ipGlobal());
@@ -195,9 +194,9 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         // forward it to the method which only takes the global coordinate
-        if (isBox || isPQ1Bubble)
+        if (isCVFE)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for box method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for CVFE method.");
         }
         else
             return asImp_().dirichletAtPos(scvf.ipGlobal());
@@ -214,9 +213,9 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isBox && !isStaggered && !isPQ1Bubble)
+        if (!isCVFE && !isStaggered)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than box or staggered method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than CVFE or staggered method.");
         }
         else
             return asImp_().dirichletAtPos(scv.dofPosition());
