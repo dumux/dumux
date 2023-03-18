@@ -35,7 +35,7 @@
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/assembly/fcdiamondlocalassembler.hh>
+#include <dumux/assembly/cvfelocalassembler.hh>
 
 namespace Dumux {
 
@@ -51,9 +51,9 @@ namespace Dumux {
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation, DiffMethod dm, bool implicit>
-class SubDomainFaceCenteredDiamondLocalAssemblerBase : public FaceCenteredDiamondLocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
+class SubDomainFaceCenteredDiamondLocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
 {
-    using ParentType = FaceCenteredDiamondLocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>;
+    using ParentType = CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using SolutionVector = typename Assembler::SolutionVector;
@@ -288,7 +288,7 @@ public:
      * \brief Update the additional domain derivatives for coupled models.
      */
     template<class JacobianMatrixDiagBlock, class GridVariables>
-    void maybeEvalAdditionalDomainDerivatives(const ElementResidualVector& origResiduals, const JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    void maybeEvalAdditionalDomainDerivatives(const ElementResidualVector& origResiduals, JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         this->couplingManager().evalAdditionalDomainDerivatives(domainI, *this, origResiduals, A, gridVariables);
     }
