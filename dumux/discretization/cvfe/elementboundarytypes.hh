@@ -54,47 +54,21 @@ public:
                 const typename FVElementGeometry::Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-        using GridGeometry = typename FVElementGeometry::GridGeometry;
-
-        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
-            if (!fvGeometry.hasBoundaryScvf())
-                return;
-
         bcTypes_.resize(fvGeometry.numScv());
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        // boundary dofs always have boundary corresponding faces
-        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+        for (const auto& scv : scvs(fvGeometry))
         {
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                {
-                    const auto localIndex = fvGeometry.scv(scvf.insideScvIdx()).localDofIndex();
-                    bcTypes_[localIndex] = problem.boundaryTypes(element, scvf);
-                    hasDirichlet_ = hasDirichlet_ || bcTypes_[localIndex].hasDirichlet();
-                    hasNeumann_ = hasNeumann_ || bcTypes_[localIndex].hasNeumann();
-                }
-            }
-        }
+            const auto scvIdxLocal = scv.localDofIndex();
+            bcTypes_[scvIdxLocal].reset();
 
-        // generally, single vertices maybe on the boundary even if the face is not
-        // in this case we need a different mechanism
-        else
-        {
-            for (const auto& scv : scvs(fvGeometry))
+            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
-                const auto scvIdxLocal = scv.localDofIndex();
-                bcTypes_[scvIdxLocal].reset();
-
-                if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
-                {
-                    bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
-                    hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();
-                    hasNeumann_ = hasNeumann_ || bcTypes_[scvIdxLocal].hasNeumann();
-                }
+                bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
+                hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || bcTypes_[scvIdxLocal].hasNeumann();
             }
         }
     }

@@ -29,8 +29,6 @@
 #include <type_traits>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/evalgradients.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 namespace Dumux {

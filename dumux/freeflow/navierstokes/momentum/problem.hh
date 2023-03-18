@@ -568,9 +568,9 @@ class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::CVFE<DM>>
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
-    static constexpr bool isVertexCentered
-        = GridGeometry::discMethod == DiscretizationMethods::box
-        || GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<
+        typename GridGeometry::DiscretizationMethod
+    >;
 
 public:
     //! These types are used in place of the typical NumEqVector type.
@@ -674,9 +674,9 @@ public:
     BoundaryTypes boundaryTypes(const Element& element,
                                 const SubControlVolume& scv) const
     {
-        if (!isVertexCentered)
+        if (!isCVFE)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scv) called for for a non vertex-centered method.");
+                       "boundaryTypes(..., scv) called for for a non CVFE method.");
 
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scv.dofPosition());
@@ -692,9 +692,9 @@ public:
     BoundaryTypes boundaryTypes(const Element& element,
                                 const SubControlVolumeFace& scvf) const
     {
-        if (isVertexCentered)
+        if (isCVFE)
             DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scvf) called for a vertex-centered method.");
+                       "boundaryTypes(..., scvf) called for a CVFE method.");
 
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scvf.ipGlobal());
@@ -710,8 +710,8 @@ public:
     DirichletValues dirichlet(const Element& element, const SubControlVolume& scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isVertexCentered)
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for a non vertex-centered method.");
+        if (!isCVFE)
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for a non CVFE method.");
         else
             return asImp_().dirichletAtPos(scv.dofPosition());
     }
@@ -726,8 +726,8 @@ public:
     DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         // forward it to the method which only takes the global coordinate
-        if (isVertexCentered)
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for vertex-centered method.");
+        if (isCVFE)
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for CVFE method.");
         else
             return asImp_().dirichletAtPos(scvf.ipGlobal());
     }

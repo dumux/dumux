@@ -21,6 +21,9 @@ computes the L2-projection of analytic functions in to discrete FEM spaces (requ
 Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such
 that the resulting Jacobian was only an approximation.
 
+- __Box/Diamond/Bubble/CVFE Assembly__: All CVFE schemes now use the same element solution and
+the same assembler. The old assemblers have been deleted (see below).
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
@@ -40,6 +43,18 @@ but defaults to `0.0`.
 
 - __NewtonConvergenceWriter__: The convergence writer now takes three template arguments.
 The new and last argument is the `ResidualType` (see above).
+
+- __FaceCenteredDiamond__: The boundary treatment now follows the other control-volume
+finite element schemes. This means that problem's `boundaryTypes` and `dirichlet` interfaces
+are called with a sub-control volume as argument instead of
+a sub-control volume face. The integration point of the scvf corresponds
+to the dofPosition of the scv. In case you have been using the
+`FaceCenteredDiamond` discretization and not the `boundaryTypesAtPos` and `dirichletAtPos`
+version you will face an exception. Replace the functions by the version with an `scv`.
+The change is made in the attempt to unify assembly for CVFE schemes
+
+- __Box/Diamond/Bubble/CVFE Assembly__: The classes `BoxLocalAssembler`, `FaceCenteredDiamondLocalAssembler`, `PQ1BubbleLocalAssembler`, `BoxSubdomainLocalAssembler`, `FaceCenteredDiamondSubdomainLocalAssembler`, `PQ1BubbleSubdomainLocalAssembler` and corresponding
+headers have been replaced by `CVFELocalAssembler` and `CVFESubdomainLocalAssembler`.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.7:
 

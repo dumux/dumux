@@ -47,22 +47,20 @@
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
 
-#include "boxlocalassembler.hh"
+#include "cvfelocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
-#include "fcdiamondlocalassembler.hh"
-#include "pq1bubblelocalassembler.hh"
 
 namespace Dumux::Detail {
 
 template<class DiscretizationMethod>
 struct LocalAssemblerChooser;
 
-template<>
-struct LocalAssemblerChooser<DiscretizationMethods::Box>
+template<class DM>
+struct LocalAssemblerChooser<DiscretizationMethods::CVFE<DM>>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
-    using type = BoxLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+    using type = CVFELocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<>
@@ -84,20 +82,6 @@ struct LocalAssemblerChooser<DiscretizationMethods::FCStaggered>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
-};
-
-template<>
-struct LocalAssemblerChooser<DiscretizationMethods::FCDiamond>
-{
-    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
-    using type = FaceCenteredDiamondLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
-};
-
-template<>
-struct LocalAssemblerChooser<DiscretizationMethods::PQ1Bubble>
-{
-    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
-    using type = PQ1BubbleLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>

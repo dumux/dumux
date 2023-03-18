@@ -19,31 +19,36 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief An assembler for Jacobian and residual contribution per element for multidomain problems
+ * \brief An assembler for Jacobian and residual contribution per element (CVFE methods) for multidomain problems
  */
-#ifndef DUMUX_MULTIDOMAIN_PQ1BUBBLE_SUBDOMAIN_LOCAL_ASSEMBLER_HH
-#define DUMUX_MULTIDOMAIN_PQ1BUBBLE_SUBDOMAIN_LOCAL_ASSEMBLER_HH
+#ifndef DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
+#define DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
 
+#include <dune/common/reservedvector.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
+#include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/assembly/pq1bubblelocalassembler.hh>
+#include <dumux/assembly/cvfelocalassembler.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief A base class for PQ1Bubble local assemblers
+ * \brief A base class for all CVFE subdomain local assemblers
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
@@ -51,12 +56,15 @@ namespace Dumux {
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation, DiffMethod dm, bool implicit>
-class SubDomainPQ1BubbleLocalAssemblerBase : public PQ1BubbleLocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
+class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
 {
-    using ParentType = PQ1BubbleLocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>;
+    using ParentType = CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using LocalResidualValues = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = typename Assembler::SolutionVector;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -67,6 +75,8 @@ class SubDomainPQ1BubbleLocalAssemblerBase : public PQ1BubbleLocalAssembler<Type
     using GridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -83,7 +93,7 @@ public:
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
     // the constructor
-    explicit SubDomainPQ1BubbleLocalAssemblerBase(
+    explicit SubDomainCVFELocalAssemblerBase(
         const Assembler& assembler,
         const Element& element,
         const SolutionVector& curSol,
@@ -155,11 +165,11 @@ public:
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (auto&& scv : scvs(this->fvGeometry()))
+        for (const auto& scv : scvs(this->fvGeometry()))
         {
             const auto& curVolVars = elemVolVars[scv];
             auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
-            source *= -scv.volume()*curVolVars.extrusionFactor();
+            source *= -Extrusion::volume(this->fvGeometry(), scv)*curVolVars.extrusionFactor();
             residual[scv.localDofIndex()] = std::move(source);
         }
 
@@ -228,9 +238,9 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief The PQ1Bubble scheme multidomain local assembler
+ * \brief The CVFE scheme multidomain local assembler
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
@@ -238,33 +248,34 @@ private:
  * \tparam implicit whether the assembler is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
-class SubDomainPQ1BubbleLocalAssembler;
+class SubDomainCVFELocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup PQ1BubbleDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief Control-volume fe staggered scheme multi domain local assembler using numeric differentiation and implicit time discretization
+ * \brief CVFE scheme multi domain local assembler using numeric differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
-class SubDomainPQ1BubbleLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainPQ1BubbleLocalAssemblerBase<id, TypeTag, Assembler,
-             SubDomainPQ1BubbleLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, DiffMethod::numeric, /*implicit=*/true>
+class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
+: public SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, DiffMethod::numeric, true >
 {
-    using ThisType = SubDomainPQ1BubbleLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainPQ1BubbleLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
+    using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
+    using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    enum { dim = GridView::dimension };
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    static constexpr int dim = GridView::dimension;
 
     static constexpr bool enableGridFluxVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridFluxVariablesCache::cachingEnabled;
     static constexpr bool enableGridVolVarsCache = GetPropType<TypeTag, Properties::GridVariables>::GridVolumeVariables::cachingEnabled;
@@ -288,7 +299,7 @@ public:
      * \brief Update the additional domain derivatives for coupled models.
      */
     template<class JacobianMatrixDiagBlock, class GridVariables>
-    void maybeEvalAdditionalDomainDerivatives(const ElementResidualVector& origResiduals, const JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    void maybeEvalAdditionalDomainDerivatives(const ElementResidualVector& origResiduals, JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         this->couplingManager().evalAdditionalDomainDerivatives(domainI, *this, origResiduals, A, gridVariables);
     }
@@ -296,8 +307,6 @@ public:
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
@@ -318,22 +327,23 @@ public:
         {
             // Update ourself after the context has been modified. Depending on the
             // type of caching, other objects might have to be updated. All ifs can be optimized away.
-            if constexpr (enableGridFluxVarsCache)
+            if (enableGridFluxVarsCache)
             {
-                if constexpr (enableGridVolVarsCache)
+                if (enableGridVolVarsCache)
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
                 else
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
             }
             else
             {
-                if constexpr (enableGridVolVarsCache)
+                if (enableGridVolVarsCache)
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
                 else
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
         };
 
+        // get element stencil information
         const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
         const auto& curSolJ = this->curSol(domainJ);
         for (const auto globalJ : stencil)
@@ -356,14 +366,14 @@ public:
                 };
 
                 // derive the residuals numerically
-                ElementResidualVector partialDerivs(fvGeometry.numScv());
+                ElementResidualVector partialDerivs(element.subEntities(dim));
 
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                 static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
                 static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
 
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDerivs, origResidual,
-                                                            epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
+                                                          epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (const auto& scv : scvs(fvGeometry))
@@ -394,6 +404,7 @@ public:
                             if (internalDirichletConstraints[eqIdx])
                                 A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                         }
+
                     }
                 }
 
@@ -411,6 +422,37 @@ public:
             updateCoupledVariables();
         }
     }
+};
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CVFEDiscretization
+ * \ingroup MultiDomain
+ * \brief CVFE scheme multi domain local assembler using numeric differentiation and explicit time discretization
+ */
+template<std::size_t id, class TypeTag, class Assembler>
+class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, false>, DiffMethod::numeric, false >
+{
+    using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
+    using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/false>;
+
+public:
+    using ParentType::ParentType;
+    //! export element residual vector type
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+
+    /*!
+     * \brief Computes the coupling derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     * \note Since the coupling can only enter sources or fluxes and these are evaluated on
+     *       the old time level (explicit scheme), the coupling blocks are empty.
+     */
+    template<std::size_t otherId, class JacobianBlock, class GridVariables>
+    void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
+                                  const ElementResidualVector& res, GridVariables& gridVariables)
+    {}
 };
 
 } // end namespace Dumux

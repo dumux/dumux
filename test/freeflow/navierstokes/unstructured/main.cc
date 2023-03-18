@@ -58,36 +58,17 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     auto fvGeometry = localView(*momentumGridGeometry);
     for (const auto& element : elements(momentumGridGeometry->gridView()))
     {
-        if constexpr (MomGG::discMethod == Dumux::DiscretizationMethods::pq1bubble)
+        fvGeometry.bind(element);
+        for (const auto& scv : scvs(fvGeometry))
         {
-            fvGeometry.bind(element);
-            for (const auto& scv : scvs(fvGeometry))
+            if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
             {
-                if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
-                {
-                    const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
-                    for (int i = 0; i < bcTypes.size(); ++i)
-                        if (bcTypes.isDirichlet(i))
-                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
-                }
+                const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
+                for (int i = 0; i < bcTypes.size(); ++i)
+                    if (bcTypes.isDirichlet(i))
+                        dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
             }
         }
-        else if constexpr (MomGG::discMethod == Dumux::DiscretizationMethods::fcdiamond)
-        {
-            fvGeometry.bind(element);
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                {
-                    const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
-                    for (int i = 0; i < bcTypes.size(); ++i)
-                        if (bcTypes.isDirichlet(i))
-                            dirichletDofs[momentumIdx][fvGeometry.scv(scvf.insideScvIdx()).dofIndex()][i] = 1.0;
-                }
-            }
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented, "dirichletDof help for discretization " << MomGG::discMethod);
     }
 
     return dirichletDofs;

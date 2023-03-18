@@ -24,8 +24,6 @@
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 
-#include <dumux/discretization/evalgradients.hh>
-
 namespace Dumux {
 
 /*!

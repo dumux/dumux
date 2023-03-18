@@ -185,9 +185,7 @@ public:
                         analyticalVelocityAtDofs_[scv.dofIndex()][scv.dofAxis()]
                             = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
 
-                else if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::fcdiamond
-                                   || MomentumGridGeometry::discMethod == DiscretizationMethods::pq1bubble
-                                   || MomentumGridGeometry::discMethod == DiscretizationMethods::box)
+                else if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>)
                     for (const auto& scv : scvs(fvGeometry))
                         for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
                             analyticalVelocityAtDofs_[scv.dofIndex()][dirIdx]

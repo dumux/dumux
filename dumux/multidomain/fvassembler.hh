@@ -45,11 +45,9 @@
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
-#include "subdomainboxlocalassembler.hh"
+#include "subdomaincvfelocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
-#include "subdomainfcdiamondlocalassembler.hh"
-#include "subdomainpq1bubblelocalassembler.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -153,10 +151,10 @@ private:
         using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
-    template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::Box, id>
+    template<std::size_t id, class DM>
+    struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
-        using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
@@ -169,18 +167,6 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
     {
         using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
-    };
-
-    template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::FCDiamond, id>
-    {
-        using type = SubDomainFaceCenteredDiamondLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
-    };
-
-    template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::PQ1Bubble, id>
-    {
-        using type = SubDomainPQ1BubbleLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
