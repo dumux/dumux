@@ -67,6 +67,7 @@ class BoxDfmFluxVariablesCache
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    static constexpr bool isSolDependent = false;
 
     void update(const Problem& problem,
                 const Element& element,

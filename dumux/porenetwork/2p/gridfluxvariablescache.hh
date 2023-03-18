@@ -106,6 +106,19 @@ public:
         }
     }
 
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void updateElement(const typename FVElementGeometry::Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars)
+    {
+        if constexpr (FluxVariablesCache::isSolDependent)
+        {
+            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+                cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, invasionState().invaded(element));
+        }
+    }
+
     const Problem& problem() const
     { return *problemPtr_; }
 

@@ -44,6 +44,8 @@ class TwoPFluxVariablesCache
     using NumCornerVector = Dune::ReservedVector<Scalar, maxNumCorners>;
 
 public:
+    //! whether the cache needs an update when the solution changes
+    static bool constexpr isSolDependent = true;
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class SubControlVolumeFace>

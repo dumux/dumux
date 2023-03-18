@@ -137,6 +137,25 @@ public:
         return std::move(*this);
     }
 
+    /*!
+     * \brief Update the caches if the volume variables have changed and the cache is solution-dependent
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        if constexpr (FluxVariablesCache::isSolDependent)
+        {
+            for (const auto& scvf : scvfs(fvGeometry))
+                fluxVarsCache_.update(
+                    gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf,
+                    gridFluxVarsCache().invasionState().invaded(element)
+                );
+        }
+    }
+
     //! access operator
     template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const

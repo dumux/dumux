@@ -38,6 +38,8 @@ class OnePFluxVariablesCache
 {
     using Scalar = typename AdvectionType::Scalar;
 public:
+    //! whether the cache needs an update when the solution changes
+    static bool constexpr isSolDependent = true;
 
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables>
     void update(const Problem& problem,

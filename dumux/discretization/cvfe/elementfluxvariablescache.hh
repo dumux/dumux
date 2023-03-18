@@ -123,6 +123,12 @@ public:
         return std::move(*this);
     }
 
+    //! Specialization for the global caching being enabled - do nothing here
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
+
     // access operator
     template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
@@ -226,6 +232,23 @@ public:
     {
         this->bindScvf(element, fvGeometry, elemVolVars, scvf);
         return std::move(*this);
+    }
+
+    /*!
+     * \brief Update the caches if the volume variables have changed and the cache is solution-dependent
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        if constexpr (FluxVariablesCache::isSolDependent)
+        {
+            fluxVarsCache_.resize(fvGeometry.numScvf());
+            for (const auto& scvf : scvfs(fvGeometry))
+                (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
+        }
     }
 
     // access operator
