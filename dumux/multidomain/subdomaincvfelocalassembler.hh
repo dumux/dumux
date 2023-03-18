@@ -19,12 +19,12 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief An assembler for Jacobian and residual contribution per element (box methods) for multidomain problems
+ * \brief An assembler for Jacobian and residual contribution per element (CVFE methods) for multidomain problems
  */
-#ifndef DUMUX_MULTIDOMAIN_BOX_LOCAL_ASSEMBLER_HH
-#define DUMUX_MULTIDOMAIN_BOX_LOCAL_ASSEMBLER_HH
+#ifndef DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
+#define DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/indices.hh>
@@ -46,9 +46,9 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief A base class for all box local assemblers
+ * \brief A base class for all CVFE subdomain local assemblers
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
@@ -56,7 +56,7 @@ namespace Dumux {
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation, DiffMethod dm, bool implicit>
-class SubDomainBoxLocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
+class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>
 {
     using ParentType = CVFELocalAssembler<TypeTag, Assembler, dm, implicit, Implementation>;
 
@@ -93,7 +93,7 @@ public:
     using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
     // the constructor
-    explicit SubDomainBoxLocalAssemblerBase(
+    explicit SubDomainCVFELocalAssemblerBase(
         const Assembler& assembler,
         const Element& element,
         const SolutionVector& curSol,
@@ -189,7 +189,7 @@ public:
     {
         // get some references for convenience
         const auto& element = this->element();
-        const auto& curSol = this->curSol()[domainId];
+        const auto& curSol = this->curSol(domainId);
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
@@ -238,9 +238,9 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief The box scheme multidomain local assembler
+ * \brief The CVFE scheme multidomain local assembler
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
@@ -248,21 +248,21 @@ private:
  * \tparam implicit whether the assembler is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
-class SubDomainBoxLocalAssembler;
+class SubDomainCVFELocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief Box scheme multi domain local assembler using numeric differentiation and implicit time discretization
+ * \brief CVFE scheme multi domain local assembler using numeric differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
-class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler,
-             SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, DiffMethod::numeric, true >
+class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
+: public SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, true>, DiffMethod::numeric, true >
 {
-    using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
+    using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
+    using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -426,17 +426,17 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup BoxDiscretization
+ * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
- * \brief Box scheme multi domain local assembler using numeric differentiation and explicit time discretization
+ * \brief CVFE scheme multi domain local assembler using numeric differentiation and explicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
-class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
-: public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler,
-             SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, false>, DiffMethod::numeric, false >
+class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler,
+             SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, false>, DiffMethod::numeric, false >
 {
-    using ThisType = SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
-    using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/false>;
+    using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>;
+    using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/false>;
 
 public:
     using ParentType::ParentType;
