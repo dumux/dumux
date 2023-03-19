@@ -366,7 +366,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                ElementResidualVector partialDerivs(element.subEntities(dim));
+                ElementResidualVector partialDerivs(fvGeometry.numScv());
 
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                 static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
