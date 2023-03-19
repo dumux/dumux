@@ -101,6 +101,24 @@ cppcheck:
   rules:
     - if: $DUMUX_ENABLE_CPPCHECK == "true"
 
+
+check-example-docs:
+  stage: linting
+  rules:
+  - if: $DUMUX_CHECK_EXAMPLE_DOCS == "true"
+    when: always
+  script:
+    - cd examples
+    - python3 generate_example_docs.py
+    - git diff -G. > example_diff.txt # -G. shows textual diff, ignoring file mode changes
+    - |
+      if [ -s example_diff.txt ]; then
+          cat example_diff.txt
+          echo "Example documentation is not up-to-date. Please rerun 'generate_example_docs.py'"
+          exit 1
+      fi
+
+
 select tests:
   stage: select
   script:
