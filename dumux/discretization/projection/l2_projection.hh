@@ -29,12 +29,15 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/parametertree.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/functions/gridfunctions/gridviewfunction.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 
 namespace Dumux {
@@ -56,12 +59,15 @@ public:
     {
         std::size_t maxIterations{100};
         Scalar residualReduction{1e-13};
+        int verbosity{0};
     };
 
     L2Projection(const FEBasis& feBasis)
     : feBasis_(feBasis)
-    , massMatrix_(createMassMatrix_(feBasis))
-    {}
+    , solver_()
+    {
+        solver_.setMatrix(std::make_shared<Matrix>(createMassMatrix_(feBasis)));
+    }
 
     template <class Function>
     CoefficientVector project(Function&& function, const Params& params = Params{}) const
@@ -103,10 +109,13 @@ public:
         }
 
         // solve projection
-        SSORCGBackend solver;
-        solver.setResidualReduction(params.residualReduction);
-        solver.setMaxIter(params.maxIterations);
-        solver.solve(massMatrix_, projection, rhs);
+        Dune::ParameterTree solverParams;
+        solverParams["maxit"] = std::to_string(params.maxIterations);
+        solverParams["reduction"] = std::to_string(params.residualReduction);
+        solverParams["verbose"] = std::to_string(params.verbosity);
+        auto solver = solver_; // copy the solver to modify the parameters
+        solver.setParams(solverParams);
+        solver.solve(projection, rhs);
 
         return projection;
     }
@@ -159,7 +168,9 @@ private:
     }
 
     const FEBasis& feBasis_;
-    const Matrix massMatrix_;
+    SSORCGIstlSolver<
+        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, CoefficientVector>
+    > solver_;
 };
 
 } // end namespace Dumux
