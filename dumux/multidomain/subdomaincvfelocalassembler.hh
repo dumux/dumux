@@ -26,6 +26,8 @@
 #ifndef DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_SUBDOMAIN_CVFE_LOCAL_ASSEMBLER_HH
 
+#include <type_traits>
+
 #include <dune/common/reservedvector.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
@@ -124,7 +126,7 @@ public:
             using namespace Dune::Hybrid;
             forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
             {
-                if (i != id)
+                if constexpr (std::decay_t<decltype(i)>{} != id)
                     this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
             });
         };
@@ -198,7 +200,7 @@ public:
         couplingManager_.bindCouplingContext(domainId, element, this->assembler());
         fvGeometry.bind(element);
 
-        if (implicit)
+        if constexpr (implicit)
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
@@ -327,16 +329,16 @@ public:
         {
             // Update ourself after the context has been modified. Depending on the
             // type of caching, other objects might have to be updated. All ifs can be optimized away.
-            if (enableGridFluxVarsCache)
+            if constexpr (enableGridFluxVarsCache)
             {
-                if (enableGridVolVarsCache)
+                if constexpr (enableGridVolVarsCache)
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
                 else
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
             }
             else
             {
-                if (enableGridVolVarsCache)
+                if constexpr (enableGridVolVarsCache)
                     this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
                 else
                     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
