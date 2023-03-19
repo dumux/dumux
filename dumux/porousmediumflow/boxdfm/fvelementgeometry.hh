@@ -183,6 +183,21 @@ public:
     const Element& element() const
     { return *element_; }
 
+    // suppress warnings due to current implementation
+    // these interfaces should be used!
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+    //! Create the geometry of a given sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    { return scv.geometry(); }
+
+    //! Create the geometry of a given sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    { return scvf.geometry(); }
+
+    #pragma GCC diagnostic pop
+
 private:
     const GridGeometry* gridGeometryPtr_;
 
@@ -323,6 +338,21 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    // suppress warnings due to current implementation
+    // these interfaces should be used!
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+    //! Create the geometry of a given sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    { return scv.geometry(); }
+
+    //! Create the geometry of a given sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    { return scvf.geometry(); }
+
+    #pragma GCC diagnostic pop
 
 private:
 

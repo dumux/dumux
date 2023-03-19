@@ -198,6 +198,7 @@ public:
     { return corners_.size(); }
 
     //! Returns the corner for a given local index
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -210,7 +211,7 @@ public:
 
     //! Returns the global position of the center of the element facet this scvf is embedded in
     const GlobalPosition& facetCorner() const
-    { return corner(0); }
+    { return corners_[0]; }
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -225,6 +226,7 @@ public:
     { return unitOuterNormal_; }
 
     //! The geometry of the sub control volume face
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
     Geometry geometry() const
     { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
 

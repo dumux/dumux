@@ -235,6 +235,7 @@ public:
     }
 
     //! The positions of the corners
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -242,6 +243,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
     const Geometry geometry() const
     {
         return Geometry(geomType_, corners_);
@@ -301,12 +303,12 @@ public:
         if (dim == 3)
         {
             if (localSubFaceIdx < 2)
-                return (corner(1) - corner(0)).two_norm();
+                return (corners_[1] - corners_[0]).two_norm();
             else
-                return (corner(2) - corner(0)).two_norm();
+                return (corners_[2] - corners_[0]).two_norm();
         }
         else
-            return (corner(1) - corner(0)).two_norm();
+            return (corners_[1] - corners_[0]).two_norm();
     }
 
    /*!

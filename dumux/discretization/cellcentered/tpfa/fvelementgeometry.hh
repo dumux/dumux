@@ -39,6 +39,19 @@
 
 namespace Dumux {
 
+namespace Detail::Tpfa {
+
+template<class GridIndexType>
+auto findLocalIndex(const GridIndexType idx,
+                    const std::vector<GridIndexType>& indices)
+{
+    auto it = std::find(indices.begin(), indices.end(), idx);
+    assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
+    return std::distance(indices.begin(), it);
+}
+
+} // end namespace Detail::Tpfa
+
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
@@ -63,6 +76,7 @@ class CCTpfaFVElementGeometry<GG, true>
     using ThisType = CCTpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
 public:
     //! export type of the element
@@ -194,16 +208,27 @@ public:
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(scvIndices_[0]); }
 
-    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    {
-        assert(isBound());
-        return scv.geometry();
-    }
+    typename Element::Geometry geometry(const SubControlVolume& scv) const
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
-    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    typename GridView::Intersection::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
-        assert(isBound());
-        return scvf.geometry();
+        const auto element = gridGeometryPtr_->element(scvf.insideScvIdx());
+        const auto& scvfIndices = gridGeometryPtr_->scvfIndicesOfScv(scvf.insideScvIdx());
+        const LocalIndexType localScvfIdx = Detail::Tpfa::findLocalIndex(scvf.index(), scvfIndices);
+        LocalIndexType localIdx = 0;
+        for (const auto& intersection : intersections(gridGeometryPtr_->gridView(), element))
+        {
+            if (intersection.neighbor() || intersection.boundary())
+            {
+                if (localIdx == localScvfIdx)
+                    return intersection.geometry();
+                else
+                    ++localIdx;
+            }
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Could not find scvf geometry");
     }
 
 private:
@@ -254,7 +279,7 @@ public:
         if (scvIdx == scvIndices_[0])
             return scvs_[0];
         else
-            return neighborScvs_[findLocalIndex(scvIdx, neighborScvIndices_)];
+            return neighborScvs_[Detail::Tpfa::findLocalIndex(scvIdx, neighborScvIndices_)];
     }
 
     //! Get an element sub control volume face with a global scvf index
@@ -265,7 +290,7 @@ public:
         if (it != scvfIndices_.end())
             return scvfs_[std::distance(scvfIndices_.begin(), it)];
         else
-            return neighborScvfs_[findLocalIndex(scvfIdx, neighborScvfIndices_)];
+            return neighborScvfs_[Detail::Tpfa::findLocalIndex(scvfIdx, neighborScvfIndices_)];
     }
 
     //! Get the scvf on the same face but from the other side
@@ -280,7 +305,7 @@ public:
         }
         else
         {
-            const auto localScvfIdx = findLocalIndex(scvfIdx, neighborScvfIndices_);
+            const auto localScvfIdx = Detail::Tpfa::findLocalIndex(scvfIdx, neighborScvfIndices_);
             const auto localFlippedIndex = flippedNeighborScvfIndices_[localScvfIdx][outsideScvIdx];
             if (localFlippedIndex < scvfs_.size())
                 return scvfs_[localFlippedIndex];
@@ -369,16 +394,27 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-    typename SubControlVolume::Traits::Geometry geometry (const SubControlVolume& scv) const
-    {
-        assert(isBound());
-        return scv.geometry();
-    }
+    typename Element::Geometry geometry(const SubControlVolume& scv) const
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
-    typename SubControlVolumeFace::Traits::Geometry geometry (const SubControlVolumeFace& scvf) const
+    typename GridView::Intersection::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
-        assert(isBound());
-        return scvf.geometry();
+        const auto element = gridGeometryPtr_->element(scvf.insideScvIdx());
+        const auto& scvfIndices = gridGeometryPtr_->scvfIndicesOfScv(scvf.insideScvIdx());
+        const LocalIndexType localScvfIdx = Detail::Tpfa::findLocalIndex(scvf.index(), scvfIndices);
+        LocalIndexType localIdx = 0;
+        for (const auto& intersection : intersections(gridGeometryPtr_->gridView(), element))
+        {
+            if (intersection.neighbor() || intersection.boundary())
+            {
+                if (localIdx == localScvfIdx)
+                    return intersection.geometry();
+                else
+                    ++localIdx;
+            }
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Could not find scvf geometry");
     }
 
 private:
@@ -627,15 +663,6 @@ private:
                 scvfCounter++;
             }
         }
-    }
-
-    const LocalIndexType findLocalIndex(const GridIndexType idx,
-                                        const std::vector<GridIndexType>& indices) const
-    {
-        auto it = std::find(indices.begin(), indices.end(), idx);
-        assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
-        return std::distance(indices.begin(), it);
-
     }
 
     //! Clear all local data

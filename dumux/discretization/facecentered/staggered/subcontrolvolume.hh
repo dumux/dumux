@@ -151,6 +151,7 @@ public:
     bool boundary() const
     { return boundary_; }
 
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).corner(i).")]]
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -158,6 +159,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).")]]
     Geometry geometry() const
     {
         return Geometry(corners_.front(), corners_.back());
