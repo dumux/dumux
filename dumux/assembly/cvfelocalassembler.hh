@@ -90,7 +90,6 @@ public:
 
     void bindLocalViews()
     {
-        std::cout << "hi" << std::endl;
         ParentType::bindLocalViews();
         this->elemBcTypes().update(this->asImp_().problem(), this->element(), this->fvGeometry());
     }
