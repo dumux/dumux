@@ -595,6 +595,31 @@ using ILUBiCGSTABIstlSolver =
 
 /*!
  * \ingroup Linear
+ * \brief An ILU preconditioned GMres solver using dune-istl
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems." SIAM J. Sci. and Stat.
+ * Comput. 7: 856–869.
+ *
+ * Preconditioner: ILU(n) incomplete LU factorization. The order n indicates
+ * fill-in. It can be damped by the relaxation parameter
+ * LinearSolver.PreconditionerRelaxation.\n
+ * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
+ */
+template<class LSTraits, class LATraits>
+using ILURestartedGMResIstlSolver =
+    Detail::IstlIterativeLinearSolver<LSTraits, LATraits,
+        Dune::RestartedGMResSolver<typename LATraits::SingleTypeVector>,
+        Detail::IstlSolvers::IstlDefaultBlockLevelPreconditionerFactory<Dune::SeqILU>,
+        // the Dune::ILU preconditioners don't accept multi-type matrices
+        /*convert multi-type istl types?*/ true
+    >;
+
+/*!
+ * \ingroup Linear
  * \brief An SSOR-preconditioned BiCGSTAB solver using dune-istl
  *
  * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
