@@ -29,6 +29,10 @@
 #warning "This header is deprecated and will be removed after release 3.7."
 #endif
 
+// suppress all secondary deprecation warning from this deprecated file
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 namespace Dumux {
 
 //! The default
@@ -82,5 +86,7 @@ struct linearSolverAcceptsMultiTypeMatrix<UMFPackBackend> : public std::false_ty
 #endif // HAVE_UMFPACK
 
 } // end namespace Dumux
+
+#pragma GCC diagnostic pop
 
 #endif
