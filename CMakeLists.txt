@@ -21,14 +21,15 @@ include(DuneMacros)
 
 # start a dune project with information from dune.module
 dune_project()
+
 if (DUMUX_HAVE_STD_FORMAT)
-  dune_enable_all_packages(MODULE_LIBRARIES dumux_parameters)
+  dune_enable_all_packages(MODULE_LIBRARIES dumux)
 else()
-  dune_enable_all_packages(MODULE_LIBRARIES dumux_fmt dumux_parameters)
+  dune_enable_all_packages(MODULE_LIBRARIES dumux dumux_fmt)
 endif()
 
 # enforce C++-17
-dune_require_cxx_standard(MODULE "DuMuX" VERSION 17)
+target_compile_features(dumux PUBLIC cxx_std_17)
 
 # option for enabling Python bindings
 option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
