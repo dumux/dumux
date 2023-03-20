@@ -32,7 +32,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
@@ -106,7 +109,7 @@ int main(int argc, char** argv)
     const auto boundaryFlux = Dumux::PoreNetwork::BoundaryFlux(*gridVariables, assembler->localResidual(), x);
 
     // the linear solver
-    using LinearSolver = ILU0RestartedGMResBackend;
+    using LinearSolver = ILURestartedGMResIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
