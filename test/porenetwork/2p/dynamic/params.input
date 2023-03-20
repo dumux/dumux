@@ -1,0 +1,46 @@
+[TimeLoop]
+DtInitial = 0.01 # [s]
+TEnd = 5 # [s]
+NumCheckPoints = 1
+
+[Grid]
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+LowerLeft = 0
+UpperRight = 4.5e-3
+NumPores = 10
+MeanPoreInscribedRadius = 200e-6
+ThroatInscribedRadius = 100e-6
+StandardDeviationPoreInscribedRadius = 0
+BoundaryFaceMarker = 2 1
+
+[Problem]
+Name = test_pnm_2p_1d
+VtpOutputFrequency = -1
+EnableGravity = false
+CapillaryPressure = 5000
+NonWettingMassFlux = 5e-8
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+MaxTimeStepDivisions = 20
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+
+[SpatialParams]
+RegularizationLowSw = 0.01
+HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 1e-2
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1000
