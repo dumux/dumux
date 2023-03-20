@@ -36,7 +36,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/common/boundaryflux.hh>
@@ -123,7 +125,7 @@ int main(int argc, char** argv)
     Dune::Timer solverTimer;
     using LinearSolver = ILU0RestartedGMResBackend;
     // using LinearSolver = ILUnRestartedGMResBackend;
-    // using LinearSolver = UMFPackBackend;
+    // using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
