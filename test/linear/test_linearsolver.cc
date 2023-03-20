@@ -83,9 +83,12 @@ int main(int argc, char* argv[])
         LinearSolver solver(testSolverName);
 
         std::cout << "Solving Laplace problem with " << solver.name() << "\n";
-        solver.solve(A, x, b);
-        if (!solver.result().converged)
+        auto result = solver.solve(A, x, b);
+        if (!result.converged)
             DUNE_THROW(Dune::Exception, testSolverName << " did not converge!");
+
+        if (!result)
+            DUNE_THROW(Dune::Exception, "Solver result cannot be implicitly converted to bool");
     }
 
     // IstlSolverFactoryBackend

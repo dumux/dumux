@@ -871,11 +871,11 @@ private:
 };
 
 /*!
- * \brief Prepare linear algebra variables for parallel solvers
+ * \brief Prepare a matrix for parallel solvers
  */
 template<class LinearSolverTraits, class ParallelTraits,
-         class Matrix, class Vector, class ParallelHelper>
-void prepareLinearAlgebraParallel(Matrix& A, Vector& b, ParallelHelper& pHelper)
+         class Matrix, class ParallelHelper>
+void prepareMatrixParallel(Matrix& A, ParallelHelper& pHelper)
 {
     if constexpr (ParallelTraits::isNonOverlapping)
     {
@@ -887,10 +887,37 @@ void prepareLinearAlgebraParallel(Matrix& A, Vector& b, ParallelHelper& pHelper)
         ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
         matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
         matrixHelper.sumEntries(A);
+    }
+}
 
+/*!
+ * \brief Prepare a vector for parallel solvers
+ */
+template<class LinearSolverTraits, class ParallelTraits,
+         class Vector, class ParallelHelper>
+void prepareVectorParallel(Vector& b, ParallelHelper& pHelper)
+{
+    if constexpr (ParallelTraits::isNonOverlapping)
+    {
+        // extend the matrix pattern such that it is usable for a parallel solver
+        // and make right-hand side consistent
+        using GridView = typename LinearSolverTraits::GridView;
+        using DofMapper = typename LinearSolverTraits::DofMapper;
+        static constexpr int dofCodim = LinearSolverTraits::dofCodim;
         ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
         vectorHelper.makeNonOverlappingConsistent(b);
     }
+}
+
+/*!
+ * \brief Prepare linear algebra variables for parallel solvers
+ */
+template<class LinearSolverTraits, class ParallelTraits,
+         class Matrix, class Vector, class ParallelHelper>
+void prepareLinearAlgebraParallel(Matrix& A, Vector& b, ParallelHelper& pHelper)
+{
+    prepareMatrixParallel<LinearSolverTraits, ParallelTraits>(A, pHelper);
+    prepareVectorParallel<LinearSolverTraits, ParallelTraits>(b, pHelper);
 }
 
 /*!

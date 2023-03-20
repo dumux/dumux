@@ -41,7 +41,9 @@
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/vtk/intersectionwriter.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/snappygridmanager.hh>
@@ -175,7 +177,7 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // write vtk output

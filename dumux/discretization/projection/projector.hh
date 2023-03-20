@@ -39,6 +39,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
+#include <dune/common/parametertree.hh>
 
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/matrixindexset.hh>
@@ -46,7 +47,9 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/discretization/functionspacebasis.hh>
 
@@ -74,6 +77,7 @@ public:
     {
         std::size_t maxIterations{100};
         Scalar residualReduction{1e-13};
+        int verbosity{0};
     };
 
     //! delete default constructor
@@ -85,12 +89,14 @@ public:
      *        the L2-projection from a function space into another.
      */
     Projector(Matrix&& massMatrix, Matrix&& projectionMatrix)
-    : massMat_(std::move(massMatrix))
-    , projMat_(std::move(projectionMatrix))
-    , numDofsTarget_(massMat_.N())
+    : massMat_(std::make_shared<Matrix>(std::move(massMatrix)))
+    , projMat_(std::make_shared<Matrix>(std::move(projectionMatrix)))
+    , numDofsTarget_(massMat_->N())
     {
-        if (massMat_.N() != projMat_.N())
-            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_.N() << " vs " << projMat_.N());
+        if (massMat_->N() != projMat_->N())
+            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_->N() << " vs " << projMat_->N());
+
+        massMatrixSolver_.setMatrix(massMat_);
     }
 
     /*!
@@ -107,19 +113,21 @@ public:
               Matrix&& projectionMatrix,
               std::vector<std::size_t>&& indexMap,
               std::size_t numDofsTarget)
-    : massMat_(std::move(massMatrix))
-    , projMat_(std::move(projectionMatrix))
+    : massMat_(std::make_shared<Matrix>(std::move(massMatrix)))
+    , projMat_(std::make_shared<Matrix>(std::move(projectionMatrix)))
     , indexMapTarget_(std::move(indexMap))
     , numDofsTarget_(numDofsTarget)
     {
-        if (indexMapTarget_.size() != massMat_.N())
-            DUNE_THROW(Dune::InvalidStateException, "Target index map size mismatch: " << indexMapTarget_.size() << " vs " << massMat_.N());
+        if (indexMapTarget_.size() != massMat_->N())
+            DUNE_THROW(Dune::InvalidStateException, "Target index map size mismatch: " << indexMapTarget_.size() << " vs " << massMat_->N());
 
-        if (massMat_.N() != projMat_.N())
-            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_.N() << " vs " << projMat_.N());
+        if (massMat_->N() != projMat_->N())
+            DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_->N() << " vs " << projMat_->N());
 
         if (*std::max_element(indexMapTarget_.begin(), indexMapTarget_.end()) > numDofsTarget_)
             DUNE_THROW(Dune::InvalidStateException, "Index map exceeds provided number of dofs in target domain!");
+
+        massMatrixSolver_.setMatrix(massMat_);
     }
 
     /*!
@@ -132,18 +140,21 @@ public:
     Dune::BlockVector<BlockType> project(const Dune::BlockVector<BlockType>& u, const Params& params = Params{}) const
     {
         // be picky about size of u
-        if ( u.size() != projMat_.M())
+        if ( u.size() != projMat_->M())
             DUNE_THROW(Dune::InvalidStateException, "Vector size mismatch");
 
-        Dune::BlockVector<BlockType> up(massMat_.N());
+        Dune::BlockVector<BlockType> up(massMat_->N());
 
         auto rhs = up;
-        projMat_.mv(u, rhs);
+        projMat_->mv(u, rhs);
 
-        SSORCGBackend solver;
-        solver.setResidualReduction(params.residualReduction);
-        solver.setMaxIter(params.maxIterations);
-        solver.solve(massMat_, up, rhs);
+        Dune::ParameterTree solverParams;
+        solverParams["maxit"] = std::to_string(params.maxIterations);
+        solverParams["reduction"] = std::to_string(params.residualReduction);
+        solverParams["verbose"] = std::to_string(params.verbosity);
+        auto solver = massMatrixSolver_; // copy the solver to modify the parameters
+        solver.setParams(solverParams);
+        solver.solve(up, rhs);
 
         // if target space occupies a larger region, fill missing entries with zero
         if (!indexMapTarget_.empty())
@@ -191,8 +202,12 @@ public:
     { return {}; }
 
 private:
-    Matrix massMat_;
-    Matrix projMat_;
+    std::shared_ptr<Matrix> massMat_;
+    std::shared_ptr<Matrix> projMat_;
+
+    SSORCGIstlSolver<
+        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, Dune::BlockVector<Dune::FieldVector<Scalar, 1>>>
+    > massMatrixSolver_;
 
     std::vector<std::size_t> indexMapTarget_;
     std::size_t numDofsTarget_;

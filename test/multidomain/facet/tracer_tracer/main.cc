@@ -37,7 +37,10 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -264,7 +267,7 @@ int main(int argc, char** argv)
                                                       couplingManager);
 
         // the linear solver
-        using LinearSolver = UMFPackBackend;
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
         auto linearSolver = std::make_shared<LinearSolver>();
 
         // the non-linear solver

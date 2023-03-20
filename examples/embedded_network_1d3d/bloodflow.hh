@@ -42,7 +42,9 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -462,7 +464,7 @@ std::vector<double> computeBloodVolumeFluxes(const GridGeometry& gridGeometry, c
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);

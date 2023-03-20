@@ -36,8 +36,10 @@
 #include <dumux/common/parameters.hh> // for getParam
 #include <dumux/common/initialize.hh>
 
-#include <dumux/linear/seqsolverbackend.hh> // for ILU0BiCGSTABBackend
-#include <dumux/linear/pdesolver.hh>        // for LinearPDESolver
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
@@ -103,7 +105,7 @@ void runExample()
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;

@@ -51,6 +51,17 @@
 
 #include <dumux/linear/matrixconverter.hh>
 
+namespace Dumux::Detail::LinearPDESolver {
+
+template <class Solver, class Matrix>
+using SetMatrixDetector = decltype(std::declval<Solver>().setMatrix(std::declval<std::shared_ptr<Matrix>>()));
+
+template<class Solver, class Matrix>
+static constexpr bool linearSolverHasSetMatrix()
+{ return Dune::Std::is_detected<SetMatrixDetector, Solver, Matrix>::value; }
+
+} // end namespace Dumux::Detail::LinearPDESolver
+
 namespace Dumux {
 
 /*!
@@ -63,7 +74,8 @@ namespace Dumux {
  *       defaults of the reference solver, derive your solver from
  *       this class and simply overload the required methods.
  */
-template <class Assembler, class LinearSolver>
+template <class Assembler, class LinearSolver,
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator>>
 class LinearPDESolver : public PDESolver<Assembler, LinearSolver>
 {
     using ParentType = PDESolver<Assembler, LinearSolver>;
@@ -78,22 +90,34 @@ class LinearPDESolver : public PDESolver<Assembler, LinearSolver>
 
 public:
     using typename ParentType::Variables;
+    using Communication = Comm;
 
     /*!
      * \brief The Constructor
      */
     LinearPDESolver(std::shared_ptr<Assembler> assembler,
                     std::shared_ptr<LinearSolver> linearSolver,
+                    const Communication& comm = Dune::MPIHelper::getCommunication(),
                     const std::string& paramGroup = "")
     : ParentType(assembler, linearSolver)
     , paramGroup_(paramGroup)
     , reuseMatrix_(false)
+    , comm_(comm)
     {
         initParams_(paramGroup);
 
         // set the linear system (matrix & residual) in the assembler
         this->assembler().setLinearSystem();
     }
+
+    /*!
+     * \brief The Constructor
+     */
+    LinearPDESolver(std::shared_ptr<Assembler> assembler,
+                    std::shared_ptr<LinearSolver> linearSolver,
+                    const std::string& paramGroup)
+    : LinearPDESolver(assembler, linearSolver, Dune::MPIHelper::getCommunication(), paramGroup)
+    {}
 
     /*!
      * \brief Solve a linear PDE system
@@ -219,12 +243,31 @@ public:
      *       setting this flag to true.
      */
     void reuseMatrix(bool reuse = true)
-    { reuseMatrix_ = reuse; }
+    {
+        reuseMatrix_ = reuse;
+
+        if constexpr (Detail::LinearPDESolver::linearSolverHasSetMatrix<LinearSolver, JacobianMatrix>())
+            if (reuseMatrix_)
+                this->linearSolver().setMatrix(this->assembler().jacobian());
+    }
 
 private:
 
     virtual bool solveLinearSystem_(ResidualVector& deltaU)
     {
+        if constexpr (Detail::LinearPDESolver::linearSolverHasSetMatrix<LinearSolver, JacobianMatrix>())
+        {
+            if (reuseMatrix_)
+                return this->linearSolver().solve(deltaU, this->assembler().residual());
+        }
+        else
+        {
+            if (reuseMatrix_ && comm_.size() > 1)
+                DUNE_THROW(Dune::NotImplemented,
+                    "Reuse matrix for parallel runs with a solver that doesn't support the setMatrix interface"
+                );
+        }
+
         return solveLinearSystemImpl_(this->linearSolver(),
                                       this->assembler().jacobian(),
                                       deltaU,
@@ -333,6 +376,9 @@ private:
 
     //! check if the matrix is supposed to be reused
     bool reuseMatrix_;
+
+    //! The communication object (for distributed memory parallelism)
+    Communication comm_;
 };
 
 } // end namespace Dumux

@@ -39,8 +39,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/io/format.hh>
 #include <dumux/io/gnuplotinterface.hh>
@@ -96,11 +97,6 @@ int main(int argc, char** argv)
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.saturation(0); }, "saturation");
     vtkWriter->addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); }, "pressure");
 
-    using LinearSolver = UMFPackBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
-
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
-
     const auto dt = getParam<double>("TimeLoop.DtInitial");
     const auto checkPoints = getParam<std::vector<double>>("TimeLoop.TEnd");
     const auto tEnd = checkPoints.back();
@@ -111,7 +107,10 @@ int main(int argc, char** argv)
     timeLoop->setCheckPoint(checkPoints);
     int checkPointCounter = 0;
 
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
     using Newton = RichardsNewtonSolver<Assembler, LinearSolver>;
     Newton nonLinearSolver(assembler, linearSolver);
 

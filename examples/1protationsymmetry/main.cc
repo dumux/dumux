@@ -34,8 +34,10 @@
 #include <dumux/common/parameters.hh> // for getParam
 #include <dumux/common/integrate.hh>  // for integrateL2Error
 
-#include <dumux/linear/seqsolverbackend.hh> // for ILU0BiCGSTABBackend
-#include <dumux/linear/pdesolver.hh>        // for LinearPDESolver
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
@@ -134,8 +136,9 @@ int main(int argc, char** argv) try
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = ILU0BiCGSTABBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
     solver.setVerbose(false); // suppress output during solve()
     // [[/codeblock]]

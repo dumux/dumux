@@ -35,7 +35,9 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <test/freeflow/navierstokes/errors.hh>
@@ -97,7 +99,7 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

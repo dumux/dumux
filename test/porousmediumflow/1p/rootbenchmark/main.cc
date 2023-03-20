@@ -31,7 +31,9 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/pdesolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -95,8 +97,8 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = SSORCGBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = SSORCGIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     // the system solver
     using Solver = Dumux::LinearPDESolver<Assembler, LinearSolver>;
