@@ -45,7 +45,9 @@ The following files contains the available linear solver backends and the assemb
 systems arising from finite volume discretizations (box-scheme, tpfa-approximation, mpfa-approximation).
 
 ```cpp
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 ```
@@ -158,7 +160,7 @@ The grid variables are used store variables (primary and secondary variables) on
 ```
 
 We now instantiate the assembler class, assemble the linear system and solve it with the linear
-solver ILUnBiCGSTABBackend (a bi-conjugate gradient solver preconditioned by an incomplete LU-factorization preconditioner).
+solver AMGCGIstlSolver (a conjugate gradient solver preconditioned by an algebraic multigrid).
 Besides that, the time needed for assembly and solve is measured and printed.
 
 ```cpp
@@ -173,10 +175,10 @@ Besides that, the time needed for assembly and solve is measured and printed.
 
     (*r) *= -1.0; // We want to solve `Ax = -r`.
 
-    using LinearSolver = ILUnBiCGSTABBackend;
+    using OnePLinearSolver = AMGCGIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<OnePAssembler>>;
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
-    auto linearSolver = std::make_shared<LinearSolver>();
-    linearSolver->solve(*A, p, *r);
+    auto onePLinearSolver = std::make_shared<OnePLinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
+    onePLinearSolver->solve(*A, p, *r);
     solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
     Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
@@ -199,7 +201,7 @@ problem defined in `problem_1p.hh`. Let us now write this solution to a VTK file
 
     // print overall CPU time required for assembling and solving the 1p problem.
     timer.stop();
-    const auto& comm = Dune::MPIHelper::getCommunication();
+    const auto& comm = leafGridView.comm();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
@@ -291,11 +293,15 @@ Moreover, we define 10 check points in the time loop at which we will write the 
 
 We create and initialize the assembler with a time loop for the transient problem.
 Within the time loop, we will use this assembler in each time step to assemble the linear system.
+As solver we use the ILUBiCGSTABIstlSolver (a bi-conjugate gradient solver preconditioned by an incomplete LU-factorization).
 
 ```cpp
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, gridGeometry, gridVariables, timeLoop, xOld);
     assembler->setLinearSystem(A, r);
+
+    using TracerLinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<TracerAssembler>>;
+    auto tracerLinearSolver = std::make_shared<TracerLinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 ```
 
 The following lines of code initialize the vtk output module, add the velocity output facility
@@ -334,7 +340,7 @@ and the time step sizes used is printed to the terminal.
         // We solve the linear system `A(xOld-xNew) = r`.
         Dune::Timer solveTimer;
         SolutionVector xDelta(x);
-        linearSolver->solve(*A, xDelta, *r);
+        tracerLinearSolver->solve(*A, xDelta, *r);
         solveTimer.stop();
 
         // update the solution vector and the grid variables.
