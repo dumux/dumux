@@ -27,7 +27,7 @@
 #define DUMUX_ONEP_TUBES_TEST_PROBLEM_HH
 
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -249,7 +249,7 @@ private:
 
     Scalar hMax_;
 
-    typename Dune::PQkLocalFiniteElementCache<Scalar, Scalar, dim, 1> feCache_;
+    typename Dune::LagrangeLocalFiniteElementCache<Scalar, Scalar, dim, 1> feCache_;
 };
 
 } // end namespace Dumux
