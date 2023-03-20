@@ -127,8 +127,8 @@ int main(int argc, char** argv)
 
     // the linear solver
     //  using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    using LinearSolver = ILU0BiCGSTABBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NonEquilibriumNewtonSolver<Assembler, LinearSolver>;

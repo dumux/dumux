@@ -126,7 +126,7 @@ int main(int argc, char** argv)
     // the linear solver
     using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

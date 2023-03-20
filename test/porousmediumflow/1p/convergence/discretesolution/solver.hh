@@ -30,7 +30,9 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/pdesolver.hh>
 
 #include <dumux/common/properties.hh>
@@ -107,8 +109,8 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = ILU0BiCGSTABBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     // solver the linear problem
     LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
