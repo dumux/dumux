@@ -34,7 +34,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/partial.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
@@ -276,7 +278,7 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
