@@ -201,7 +201,7 @@ constexpr std::size_t preconditionerBlockLevel() noexcept
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILUnBiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILUnBiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -239,7 +239,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class SORBiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SORBiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -277,7 +277,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class SSORBiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SSORBiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -315,7 +315,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class GSBiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] GSBiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -352,7 +352,7 @@ public:
  * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class JacBiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] JacBiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -389,7 +389,7 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILUnCGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILUnCGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -426,7 +426,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class SORCGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SORCGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -463,7 +463,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class SSORCGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SSORCGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -500,7 +500,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class GSCGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] GSCGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -536,7 +536,7 @@ public:
  * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class JacCGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] JacCGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -574,7 +574,7 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class SSORRestartedGMResBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SSORRestartedGMResBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -611,7 +611,7 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILU0BiCGSTABBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILU0BiCGSTABBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -647,7 +647,7 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILU0CGBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILU0CGBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -684,7 +684,7 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILU0RestartedGMResBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILU0RestartedGMResBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -722,7 +722,7 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-class ILUnRestartedGMResBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] ILUnRestartedGMResBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -782,7 +782,7 @@ public:
  * and user interface." ACM Transactions on Mathematical Software (TOMS) 31(3): 302-325.
  * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
  */
-class SuperLUBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] SuperLUBackend : public LinearSolver
 {
 public:
     using LinearSolver::LinearSolver;
@@ -856,7 +856,7 @@ private:
  *
  * See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details.
  */
-class UMFPackBackend : public LinearSolver
+class [[deprecated("Removed after 3.7. Use solver from istlsolvers.hh")]] UMFPackBackend : public LinearSolver
 {
 public:
 
