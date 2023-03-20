@@ -1,8 +1,6 @@
-# set up project
-project("dumux" C CXX)
-
-# general stuff
 cmake_minimum_required(VERSION 3.13)
+
+project("dumux" C CXX)
 
 if(NOT (dune-common_DIR
         OR dune-common_ROOT
@@ -12,13 +10,13 @@ if(NOT (dune-common_DIR
       ${PROJECT_BINARY_DIR})
 endif()
 
-#find dune-common and set the module path
+# find dune-common and set the module path
 find_package(dune-common)
 
 list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
   "${PROJECT_SOURCE_DIR}/cmake/modules")
 
-#include the dune macros
+# include the dune macros
 include(DuneMacros)
 
 # start a dune project with information from dune.module
