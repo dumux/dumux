@@ -19,9 +19,20 @@ list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
 # include the dune macros
 include(DuneMacros)
 
+# option for enabling Python bindings
+option(DUNE_ENABLE_PYTHONBINDINGS "Enable Dune Python bindings" ON)
+# this option can be used to turn off Dumux Python bindings independent of Dune
+option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Dumux Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
+
+# if Python bindings are enabled with need to build shared libraries
+# we set the default depending on whether the Python bindings are enabled
+option(BUILD_SHARED_LIBS "Build using shared libraries" ${DUMUX_ENABLE_PYTHONBINDINGS})
+if (DUMUX_ENABLE_PYTHONBINDINGS AND NOT BUILD_SHARED_LIBS)
+  message(FATAL_ERROR "Using the Python bindings requires BUILD_SHARED_LIBS=ON")
+endif()
+
 # start a dune project with information from dune.module
 dune_project()
-
 if (DUMUX_HAVE_STD_FORMAT)
   dune_enable_all_packages(MODULE_LIBRARIES dumux)
 else()
@@ -30,9 +41,6 @@ endif()
 
 # enforce C++-17
 target_compile_features(dumux PUBLIC cxx_std_17)
-
-# option for enabling Python bindings
-option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
