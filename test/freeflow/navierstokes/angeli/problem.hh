@@ -308,7 +308,7 @@ private:
     DirichletValues velocityDirichlet_(const Geometry& geo) const
     {
         DirichletValues priVars(0.0);
-        const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
+        const auto& quad = Dune::QuadratureRules<Scalar, Geometry::mydimension>::rule(geo.type(), 3);
         for (auto&& qp : quad)
         {
             const auto w = qp.weight()*geo.integrationElement(qp.position());
