@@ -5,7 +5,29 @@ Click on the respective example to get to a detailed documentation of the exampl
 For each example in this overview, the model equations and discretization method are described in words
 and the DuMu<sup>x</sup> name of the model is given in parenthesis: e.g. (`OneP`) / (`CCTpfaModel`).
 
-### [:open_file_folder: Example 1: One-phase flow and tracer transport](1ptracer/README.md)
+### [:open_file_folder: Example 1: Diffusion equation](diffusion/README.md)
+<table><tr><td>
+
+In this example we create a diffusion equation model and then simulate a diffusive process.
+
+You learn how to
+
+* setup a new simple model equation (diffusion equation)
+* read parameters from a configuration file
+* create a type tag and specialize properties for it
+* generate a randomly distributed intial field (with MPI parallelism)
+* solve a time-depedent diffusion problem in parallel
+
+__Model equations:__ A diffusion equation model fully developed and contained within the example<br />
+__Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
+
+</td>
+<td width="35%"><a href="diffusion/README.md">
+<figure><img src="diffusion/img/diffusion.gif" alt="diffusion"/></figure></td>
+</a></td>
+</tr></table>
+
+### [:open_file_folder: Example 2: One-phase flow and tracer transport](1ptracer/README.md)
 
 <table><tr><td>
 
@@ -29,7 +51,7 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 2: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
+### [:open_file_folder: Example 3: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
 
 <table><tr><td>
 
@@ -47,14 +69,13 @@ You learn how to
 
 __Model equations:__ Immiscible two-phase flow Darcy equations in porous media (`TwoP`)<br />
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
-0
 </td>
 <td width="35%"><a href="2pinfiltration/README.md">
 <figure><img src="2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/></figure>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 3: Shallow water model](shallowwaterfriction/README.md)
+### [:open_file_folder: Example 4: Shallow water model](shallowwaterfriction/README.md)
 
 <table><tr><td>
 
@@ -74,7 +95,7 @@ __Discretization method:__ Cell-centered finite volumes with Riemann solver (`CC
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 4: Freeflow channel](freeflowchannel/README.md)
+### [:open_file_folder: Example 5: Freeflow channel](freeflowchannel/README.md)
 
 <table><tr><td>
 
@@ -94,7 +115,7 @@ __Discretization method:__ Finite volumes with staggered grid arrangement (`Stag
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 5: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
+### [:open_file_folder: Example 6: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
 
 <table><tr><td>
 
@@ -115,7 +136,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 6: Biomineralization](biomineralization/README.md)
+### [:open_file_folder: Example 7: Biomineralization](biomineralization/README.md)
 
 <table><tr><td>
 
@@ -140,7 +161,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 7: Lid-driven cavity](liddrivencavity/README.md)
+### [:open_file_folder: Example 8: Lid-driven cavity](liddrivencavity/README.md)
 
 <table><tr><td>
 
@@ -161,7 +182,7 @@ __Discretization method:__ Finite volumes with staggered grid arrangement (`Stag
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 8: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
+### [:open_file_folder: Example 9: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
 
 <table><tr><td>
 
@@ -182,7 +203,7 @@ __Discretization method:__ Pore-network (`PoreNetworkModel`)
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 9: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
+### [:open_file_folder: Example 10: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
 
 <table><tr><td>
 
@@ -201,15 +222,5 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </td>
 <td width="35%"><a href="embedded_network_1d3d/README.md">
 <figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
-</a></td>
-</tr></table>
-
-### [:open_file_folder: Example 10: A random concentration field diffusing](diffusion/README.md)
-<table><tr><td>
-In this example a 2D domain is initialized with a random concentration field that is then subject to diffusion while neglecting convection.
-
-</td>
-<td width="35%"><a href="diffusion/README.md">
-<figure><img src="diffusion/img/diffusion.gif" alt="diffusion"/></figure></td>
 </a></td>
 </tr></table>
