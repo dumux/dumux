@@ -1,7 +1,6 @@
-<img src="doc/logo/dumux_logo_hires_whitebg.png" alt="dumux logo" width="400"/>
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/b9550fddee9b6d6dddb8fcae8e0d14440f7a55eb/doc/logo/dumux_logo_hires_whitebg.png" alt="dumux logo" width="400"/>
 
-What is DuMu<sup>x</sup>?
-===============
+# What is DuMux?
 
 [DuMu<sup>x</sup>][0] is a simulation toolbox mainly aimed at flow and transport
 processes in porous media. DuMu<sup>x</sup> is based on the [DUNE][1]
@@ -15,19 +14,11 @@ for a more detailed description of the goals and motivations behind DuMu<sup>x</
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 
-Installation
-===============
-
-Have a look at the [installation guide][3] or use the [DuMu<sup>x</sup> handbook][4],
-Chapter 2.
-
-Automated testing of installation: [![installation testing pipeline](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/badges/main/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/-/pipelines?page=1&scope=all&ref=main)
-
-Documentation
-==============
+# Overview
 
 The following resources are useful to get started with DuMu<sup>x</sup>:
 
+* [Installation guide][3] on the [DuMu<sup>x</sup> website](https://dumux.org/)
 * [Getting started guide](https://dumux.org/gettingstarted/) on the [DuMu<sup>x</sup> website](https://dumux.org/)
 * [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf), a detailed DuMu<sup>x</sup> manual,
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
@@ -38,12 +29,13 @@ The following resources are useful to get started with DuMu<sup>x</sup>:
 
 Some helpful code snippets are available in the [Wiki](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/wikis/home).
 
-License
-========
+Automated testing of installation: [![installation testing pipeline](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/badges/main/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-test-installation/-/pipelines?page=1&scope=all&ref=main)
+
+# License
 
 DuMu<sup>x</sup> is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later
-version. The GPL can be [read online][5] or in the [LICENSE.md](LICENSE.md) file
+version. The GPL can be [read online][5] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
 provided in the topmost directory of the DuMu<sup>x</sup> source code tree.
 
 Please note that DuMu<sup>x</sup>' license, unlike DUNE's, does *not* feature a
@@ -53,13 +45,12 @@ files if you want to redistribute your program to third parties. If
 this is unacceptable to you, please [contact us][6] for a commercial
 license.
 
-See the file [LICENSE.md](LICENSE.md) for copying permissions.
-For a curated list of contributors see [AUTHORS.md](AUTHORS.md).
+See the file [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) for copying permissions.
+For a curated list of contributors see [AUTHORS.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/AUTHORS.md).
 If you notice that a contributor is missing on the list,
 please [contact us][6] or open a merge request adding the name.
 
-How to cite
-============
+## How to cite
 
 DuMu<sup>x</sup> is research software and developed at research institutions.
 If you are using DuMu<sup>x</sup> in scientific publications and in
@@ -87,8 +78,8 @@ You can also cite specific releases published on Zenodo:
 
 
 
-Automated Testing / Test suite
-===============================
+# Automated Testing / Test suite
+
 * Latest release (3.6): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.6/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.6)
 * Master branch (development / unstable): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 
@@ -105,9 +96,9 @@ You can build and run tests of a specific label (e.g. `2p` for two-phase flow po
 make -j8 build_2p_tests && ctest -j8 -L ^2p$
 ```
 
-__Running individual tests__
+### Running individual tests
 
-To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder. 
+To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder.
 
 The `dumux_add_test`
 command specifies some important parameters: `NAME` sets the name of the test. There is either `SOURCES` or `TARGET`
@@ -122,7 +113,7 @@ means that the test requires the additional Dune modules `dune-foamgrid` and `du
 external dependencies, have a look at the [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf)
 and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/bin/installexternal.py).
 
-__Test coverage__
+### Test coverage
 
 [![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://pages.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/)
 
@@ -131,23 +122,20 @@ currently doesn't include non-instantiated code, so the real coverage is likely 
 only a few lines of code are never instatiated in the comprehensive test suite.
 
 
-Contributing
-=============
+# Contributing
 
 Contributions are highly welcome. Please ask questions over the [mailing list](mailto:dumux@listserv.uni-stuttgart.de).
 Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
-before opening issues and merge requests. 
+before opening issues and merge requests.
 
-Bug/issue reports or vulnerabilities
-======================================
+# Bug/issue reports or vulnerabilities
 
 For bug reports or to report any detected security vulnerabilities contact us
 over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues). For bug fixes,
 feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
 or send us formatted patches.
 
-Releases and backwards compatibility policy
-============================================
+# Releases and backwards compatibility policy
 
 For a detailed description of the backwards compatibility policy,
 please see [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md).
