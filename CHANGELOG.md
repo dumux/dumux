@@ -9,6 +9,8 @@ build can be downloaded from the job artifacts.
 - __Testing/CI__: The example documentation is now re-generated in the CI in order to verify that the generated README
 files are in sync with the sources from which they are produced.
 
+- __CMake__: Dumux now requires at least CMake version 3.14
+
 ### Improvements and Enhancements
 
 - __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
