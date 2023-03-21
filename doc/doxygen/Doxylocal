@@ -74,7 +74,7 @@ SHORT_NAMES           = NO
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 420
+TREEVIEW_WIDTH         = 320
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
