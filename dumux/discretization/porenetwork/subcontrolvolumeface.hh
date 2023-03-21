@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_PNM_SUBCONTROLVOLUMEFACE_HH
 
+#include <dune/geometry/axisalignedcubegeometry.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
@@ -47,6 +48,8 @@ struct PNMDefaultScvfGeometryTraits
     using Scalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using CornerStorage = std::array<Dune::FieldVector<Scalar, dimWorld>, 1>;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
+
 };
 
 /*!

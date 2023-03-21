@@ -123,11 +123,12 @@ public:
     //! The volume of the sub control volume
     Scalar volume() const
     {
-        return geometry().volume();
+        return geometry_->volume();
     }
 
     //! The geometry of the sub control volume
     // e.g. for integration
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).")]]
     const Geometry& geometry() const
     {
         return *geometry_;
@@ -165,17 +166,17 @@ public:
     }
 
     //! Return the corner for the given local index
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).corner(i).")]]
     GlobalPosition corner(LocalIndexType localIdx) const
     {
-        assert(localIdx < geometry().corners() && "provided index exceeds the number of corners");
-        return geometry().corner(localIdx);
+        return geometry_->corner(localIdx);
     }
 
 private:
     void deepCopy_(const CCSubControlVolume& other)
     {
         if (other.geometry_)
-            geometry_ = std::make_unique<Geometry>(other.geometry());
+            geometry_ = std::make_unique<Geometry>(*other.geometry_);
         else
             geometry_.reset();
         center_ = other.center_;

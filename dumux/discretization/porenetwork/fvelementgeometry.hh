@@ -28,6 +28,8 @@
 #include <array>
 #include <utility>
 
+#include <dune/geometry/type.hh>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
@@ -176,6 +178,20 @@ public:
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(eIdx_); }
 
+    //! Create the geometry of a given sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        const auto geo = element().geometry();
+        return {
+            Dune::GeometryTypes::simplex(dim),
+            std::array{{ geo.corner(scv.indexInElement()), geo.center() }}
+        };
+    }
+
+    //! Create the geometry of a given sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    { return { scvf.center() }; }
+
 private:
     std::optional<Element> element_;
     const GridGeometry* gridGeometryPtr_;
@@ -316,6 +332,20 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
+
+    //! Create the geometry of a given sub control volume
+    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
+    {
+        const auto geo = element().geometry();
+        return {
+            Dune::GeometryTypes::simplex(dim),
+            std::array{{ geo.corner(scv.indexInElement()), geo.center() }}
+        };
+    }
+
+    //! Create the geometry of a given sub control volume face
+    typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
+    { return { scvf.center() }; }
 
 private:
 

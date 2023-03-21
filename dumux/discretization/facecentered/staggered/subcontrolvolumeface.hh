@@ -215,6 +215,7 @@ public:
     std::int_least8_t directionSign() const
     { return outerNormalSign_; }
 
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -222,6 +223,7 @@ public:
     }
 
     //! The geometry of the sub control volume face
+    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
     Geometry geometry() const
     {
         auto inPlaneAxes = std::move(std::bitset<T::dimWorld>{}.set());
