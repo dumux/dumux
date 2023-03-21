@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <dumux/discretization/method.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 

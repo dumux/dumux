@@ -23,6 +23,9 @@
  */
 #ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
+#include <type_traits>
+#include <dune/common/exceptions.hh>
+
 
 namespace Dumux {
 
