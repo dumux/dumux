@@ -167,7 +167,10 @@ public:
     DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         if (ParentType::isMomentumProblem() && interpolateExactVelocity_)
-            return velocityDirichlet_(scvf);
+        {
+            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+            return velocityDirichlet_(fvGeometry.geometry(scvf));
+        }
         else
             return analyticalSolution(scvf.center(), time_);
     }
@@ -275,7 +278,7 @@ public:
         for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
         {
             if (intersection.indexInInside() == scv.indexInElement())
-                return velocityDirichlet_(intersection);
+                return velocityDirichlet_(intersection.geometry());
 
         }
         DUNE_THROW(Dune::InvalidStateException, "No intersection found");
@@ -301,12 +304,11 @@ public:
     }
 
 private:
-    template<class Entity>
-    DirichletValues velocityDirichlet_(const Entity& entity) const
+    template<class Geometry>
+    DirichletValues velocityDirichlet_(const Geometry& geo) const
     {
         DirichletValues priVars(0.0);
-        const auto geo = entity.geometry();
-        const auto& quad = Dune::QuadratureRules<Scalar, decltype(geo)::mydimension>::rule(geo.type(), 3);
+        const auto& quad = Dune::QuadratureRules<Scalar, Geometry::mydimension>::rule(geo.type(), 3);
         for (auto&& qp : quad)
         {
             const auto w = qp.weight()*geo.integrationElement(qp.position());
