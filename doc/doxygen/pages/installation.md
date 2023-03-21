@@ -1,5 +1,7 @@
 # Installation
 
+[TOC]
+
 ## Prerequisites
 
 DuMu<sup>x</sup> builds and runs on **Linux** and **Mac** operating systems.

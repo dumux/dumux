@@ -1,5 +1,7 @@
 # Getting started
 
+[TOC]
+
 ## Installation
 
 Please follow the [installation instructions](installation.md) to install DuMux.
