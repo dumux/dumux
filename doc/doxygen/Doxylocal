@@ -7,8 +7,8 @@ PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
-                         @srcdir@/installation.md \
-                         @srcdir@/getting-started.md \
+                         @srcdir@/pages/installation.md \
+                         @srcdir@/pages/getting-started.md \
                          @srcdir@/modules.txt \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
