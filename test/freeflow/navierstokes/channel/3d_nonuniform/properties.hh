@@ -48,11 +48,10 @@
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -66,8 +65,8 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct ThreeDChannelTest {};
-struct ThreeDChannelTestMomentumDiamond { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumDiamond, FaceCenteredDiamondModel>; };
-struct ThreeDChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumPQ1Bubble, PQ1BubbleModel>; };
+struct ThreeDChannelTestMomentumDiamond { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
+struct ThreeDChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct ThreeDChannelTestMassTpfa { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
 struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag

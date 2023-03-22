@@ -119,7 +119,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_quad-reference.vtu
@@ -144,7 +144,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumDiamond
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_simplex-reference.vtu
@@ -170,7 +170,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumPQ1Bubble
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_quad-reference.vtu
@@ -184,7 +184,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumPQ1Bubble
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_simplex-reference.vtu
