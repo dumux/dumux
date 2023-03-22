@@ -781,6 +781,21 @@ public:
 
     /*!
      * \brief Returns the pressure at a given position.
+     * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
+     */
+    Scalar pressure(const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const GlobalPosition& pos,
+                    const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().pressureAtPos(pos);
+        else
+            return couplingManager_->pressure(element, fvGeometry, pos, isPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given position.
      */
     Scalar pressureAtPos(const GlobalPosition&) const
     {
