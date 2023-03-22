@@ -81,10 +81,11 @@ private:
 
     using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
 
-    using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    using GlobalPosition = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    using VelocityVector = GlobalPosition;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
 
-    static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
+    static_assert(std::is_same_v<GlobalPosition, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
 
     struct MomentumCouplingContext
     {
@@ -192,6 +193,22 @@ public:
                                                    :  this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
         return evalSolution(element, element.geometry(), gg, elemSol, scv.dofPosition())[pressureIdx];
+    }
+
+    /*!
+     * \brief Returns the pressure at a given position
+     */
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const GlobalPosition& pos,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolution(element, element.geometry(), gg, elemSol, pos)[pressureIdx];
     }
 
     /*!
