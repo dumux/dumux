@@ -31,6 +31,8 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>

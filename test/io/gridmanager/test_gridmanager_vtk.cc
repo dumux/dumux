@@ -28,7 +28,8 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 namespace Dumux {
 

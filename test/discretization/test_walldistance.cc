@@ -30,7 +30,9 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dune/grid/yaspgrid.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/geometry/distancefield.hh>
 
 #include <dumux/discretization/method.hh>

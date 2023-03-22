@@ -48,7 +48,8 @@
 #include <dumux/common/initialize.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_ug.hh>
 #include <dumux/io/pointcloudvtkwriter.hh>
 
 #include <dumux/discretization/method.hh>

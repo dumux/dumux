@@ -26,7 +26,7 @@
 #ifndef DUMUX_TEST_IO_GMSHBOUNDARYFLAG_TEST_HH
 #define DUMUX_TEST_IO_GMSHBOUNDARYFLAG_TEST_HH
 
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_base.hh>
 #include <dumux/discretization/method.hh>
 
 #include <iostream>

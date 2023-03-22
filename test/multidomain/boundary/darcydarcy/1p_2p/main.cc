@@ -39,6 +39,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 
 #include <dumux/multidomain/traits.hh>

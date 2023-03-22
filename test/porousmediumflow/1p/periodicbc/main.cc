@@ -39,7 +39,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_sp.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 

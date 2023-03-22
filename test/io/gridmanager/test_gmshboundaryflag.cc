@@ -28,7 +28,7 @@
 #include <dune/alugrid/grid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/discretization/box.hh>
