@@ -2,13 +2,9 @@
 
 [TOC]
 
-## Installation
-
-Please follow the [installation instructions](installation.md) to install DuMux.
-
 ## Running an example
 
-For this example it is assumed that you followed the installation instructions and have a folder with a similar structure:
+For this example it is assumed that you followed the [installation instructions](installation.md) and have a folder with a similar structure:
 
     installation folder
     |- dune-common
