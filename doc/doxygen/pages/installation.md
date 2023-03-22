@@ -19,9 +19,10 @@ Detailed information on supported compiler and CMake versions can be found in th
 The following software is recommended but optional:
 
 * MPI (either OpenMPI, lam, or mpich)
+* SuiteSparse (for the direct solver UMFPack)
 * ParaView (to visualize the results)
-* a browser (to access the GitLab instance and README files)
-* python3 with numpy (to execute a number of different scripts used for installation, testing, post-processing, etc.)
+* A web browser (to access the GitLab instance and README files)
+* Python3 with `numpy` (to execute a number of different scripts used for installation, testing, post-processing, etc.)
 
 
 ## 1. Installation via script
