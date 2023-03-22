@@ -27,8 +27,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/diamond/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/pq1bubble/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
@@ -44,8 +43,8 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct PipeFlow { };
-struct PipeFlowDiamond { using InheritsFrom = std::tuple<NavierStokesMomentumDiamond, FaceCenteredDiamondModel, PipeFlow>; };
-struct PipeFlowPQ1Bubble { using InheritsFrom = std::tuple<NavierStokesMomentumPQ1Bubble, PQ1BubbleModel, PipeFlow>; };
+struct PipeFlowDiamond { using InheritsFrom = std::tuple<NavierStokesMomentumCVFE, FaceCenteredDiamondModel, PipeFlow>; };
+struct PipeFlowPQ1Bubble { using InheritsFrom = std::tuple<NavierStokesMomentumCVFE, PQ1BubbleModel, PipeFlow>; };
 } // end namespace TTag
 
 // the fluid system
