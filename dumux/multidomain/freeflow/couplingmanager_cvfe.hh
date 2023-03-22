@@ -827,6 +827,11 @@ template<class Traits>
 struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::PQ1Bubble>
 { using type = std::false_type; };
 
+// disabled for now
+template<class Traits>
+struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::PQ2>
+{ using type = std::false_type; };
+
 } // end namespace Detail
 
 //! whether we support multithreaded assembly
