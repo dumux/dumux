@@ -26,7 +26,7 @@
 
 #include <cmath>
 #include <dune/grid/yaspgrid.hh>
-
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>

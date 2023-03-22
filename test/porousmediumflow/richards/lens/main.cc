@@ -43,7 +43,9 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
+#include <dumux/io/grid/gridmanager_ug.hh>
 #include <dumux/io/loadsolution.hh>
 
 #include "properties.hh"

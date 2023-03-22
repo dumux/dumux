@@ -34,7 +34,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_sp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/linear/istlsolvers.hh>

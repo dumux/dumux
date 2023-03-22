@@ -44,7 +44,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 
 ////////////////////////
 // the main function

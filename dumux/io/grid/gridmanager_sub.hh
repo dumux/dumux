@@ -29,6 +29,7 @@
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>
+#include <dune/grid/yaspgrid.hh>
 
 // SubGrid specific includes
 #if HAVE_DUNE_SUBGRID
@@ -37,9 +38,7 @@
 #include <dumux/io/rasterimagewriter.hh>
 #endif
 
-#ifndef DUMUX_IO_GRID_MANAGER_HH
-#include <dumux/io/grid/gridmanager.hh>
-#endif
+#include <dumux/io/grid/gridmanager_base.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>

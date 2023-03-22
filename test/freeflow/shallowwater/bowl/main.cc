@@ -36,7 +36,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
