@@ -43,7 +43,7 @@
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
-#include <dumux/discretization/pq2/elementsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -139,6 +139,14 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+};
+
+template<class GridView>
+struct LocalDofTraits<GridView, DiscretizationMethods::PQ2>
+{
+    static constexpr int dim = GridView::dimension;
+    // Dofs are located at the vertices and element
+    static constexpr int numCubeElementDofs = (1<<dim)+ dim*(1<<(dim-1));
 };
 
 } // end namespace Dumux::Detail
