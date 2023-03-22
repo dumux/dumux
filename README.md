@@ -64,32 +64,42 @@ For a curated list of contributors see [AUTHORS.md](https://git.iws.uni-stuttgar
 If you notice that a contributor is missing on the list,
 please [contact us][6] or open a merge request adding the name.
 
-## How to cite
+# How to cite
 
 DuMu<sup>x</sup> is research software and developed at research institutions.
+You can cite **specific releases** via **Zenodo**:
+[![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594).
 If you are using DuMu<sup>x</sup> in scientific publications and in
 the academic context, please cite (at least one of)
 our publications:
 
-* [Koch, T., Gläser, D., Weishaupt, K., Ackermann, S., Beck, M., Becker, B.,
-  Burbulla, S., Class, H., Coltman, E., Emmert, S., Fetzer, T., Grüninger, C.,
-  Heck, K., Hommel, J., Kurz, T., Lipp, M., Mohammadi, F., Scherrer, S.,
-  Schneider, M., Seitz, G., Stadler, L., Utz, M., Weinhardt, F.
-  & Flemisch, B. (_2021_). __DuMu<sup>x</sup> 3 – an open-source simulator for solving flow
-  and transport problems in porous media with a focus on model coupling.__
-  _Computers & Mathematics with Applications_, 81, 423-443.
-  https://doi.org/10.1016/j.camwa.2020.02.012][7]
+**DuMux 3 – an open-source simulator for solving flow and transport problems in porous media with a focus on model coupling.**
+*Computers & Mathematics with Applications*, 81, 423-443, (2021).
+[![dumuxCAMWAbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.camwa.2020.02.012-blue)](https://doi.org/10.1016/j.camwa.2020.02.012) [PDF][7]
 
-* [Flemisch, B., Darcis, M., Erbertseder, K., Faigle, B., Lauser, A.,
-  Mosthaf, K., Müthing, S., Nuske, P., Tatomir, A., Wolff, M.,
-  & Helmig, R. (_2011_). __DuMu<sup>x</sup>: DUNE for multi-{phase,component,scale,physics,…}
-  flow and transport in porous media__.
-  _Advances in Water Resources_, 34(9), 1102–1112.
-  https://doi.org/10.1016/j.advwatres.2011.03.007][2]
+```bib
+@article{Koch2021,
+    doi = {10.1016/j.camwa.2020.02.012},
+    year = {2021}, volume = {81}, pages = {423--443},
+    publisher = {Elsevier {BV}},
+    author = {Timo Koch and Dennis Gläser and Kilian Weishaupt and others},
+    title = {{DuMux} 3 {\textendash} an open-source simulator for solving flow and transport problems in porous media with a focus on model coupling},
+    journal = {Computers \& Mathematics with Applications}}
+```
 
-You can also cite specific releases published on Zenodo:
-[![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594)
+**DuMux: DUNE for multi-{phase,component,scale,physics,…} flow and transport in porous media.**
+*Advances in Water Resources*, 34(9), 1102–1112, (2011)
+[![dumuxAWRbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.advwatres.2011.03.007-blue)](https://doi.org/10.1016/j.advwatres.2011.03.007) [PDF][2]
 
+```bib
+@article{Flemisch2011,
+    doi = {10.1016/j.advwatres.2011.03.007},
+    year = {2011}, volume = {34}, number = {9}, pages = {1102--1112},
+    publisher = {Elsevier {BV}},
+    author = {B. Flemisch and others},
+    title = {{DuMux}: {DUNE} for multi-$\lbrace$phase, component, scale, physics, {\ldots}$\rbrace$ flow and transport in porous media},
+    journal = {Advances in Water Resources}}
+```
 
 
 # Automated Testing / Test suite
