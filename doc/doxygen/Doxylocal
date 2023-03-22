@@ -18,8 +18,8 @@ TOC_INCLUDE_HEADINGS   = 4
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
 #   `markdown-math-filter.pl` for details.
-FILTER_PATTERNS        = *README.md="python3 @srcdir@/markdown-readme-header-filter.py" \
-                         *.md="perl -0777 -p @srcdir@/markdown-math-filter.pl"
+FILTER_PATTERNS        = *README.md="python3 @srcdir@/markdown-readme-header-filter.py -p Introduction -f" \
+                         *.md="python3 @srcdir@/markdown-readme-header-filter.py -f"
 
 FILE_PATTERNS         = *.md,*.cc,*.hh
 

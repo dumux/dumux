@@ -1,35 +1,52 @@
 #!/usr/bin/python3
 
-# Process the main readme (GitLab Markdown) to render properly with doxygen
-# -> Prepend level-1 header (doxygen will use this as caption for the section)
-#    and turn all level-1 headers into level-2 ones. These will then be sub-sections.
-# -> Add labels to headers such that section links within the readme work.
-
-import sys
 import string
+import argparse
+import subprocess
+from os.path import join, dirname, abspath
 
 
-def _remove_punctuations(text: str) -> str:
-    return "".join(filter(lambda c: c not in string.punctuation, text))
-
-
-def _modify_header_level(line: str) -> str:
-    is_level_one_header = line.startswith("# ")
-    return f"#{line}" if is_level_one_header else f"{line}"
+def _filter_characters(text: str) -> str:
+    return "".join(filter(lambda c: c not in string.punctuation and c not in string.digits, text))
 
 
 def _add_header_label(line: str) -> str:
     if not line.startswith("#"):
         return line
     line = line.rstrip("\n")
-    label = _remove_punctuations(line)
+    label = _filter_characters(line)
     label = label.strip(" ").replace(" ", "-").lower()
     return f"{line} {{#{label}}}\n"
 
 
-assert len(sys.argv) > 1
-lines = ["# Introduction\n"]
-with open(sys.argv[1]) as readme:
-    for line in readme:
-        lines.append(_add_header_label(_modify_header_level(line)))
-print("".join(lines))
+def _invoke_and_retrieve_output(cmd) -> str:
+    return subprocess.run(cmd, capture_output=True, text=True).stdout
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process markdown files to be consumed by Doxygen")
+    parser.add_argument("-f", "--file", required=True, help="The markdown file to be processed")
+    parser.add_argument(
+        "-p",
+        "--prepend-header",
+        required=False,
+        help="Adds the given header at the top of the file"
+    )
+    args = vars(parser.parse_args())
+
+    # Invoke math filter to translate GitLab flavoured math to such supported by Doxygen
+    math_conversion_script = join(dirname(abspath(__file__)), "markdown-math-filter.pl")
+    result = _invoke_and_retrieve_output(["perl", "-0777", "-p", math_conversion_script, args["file"]])
+
+    # (maybe) prepend the given header
+    if args["prepend_header"]:
+        result = f"# {args['prepend_header']}\n\n{result}"
+
+    # Give all headers anchors (labels) s.t. doxygen cross-linking works
+    # correctly (may be fixed in the most recent Doxygen version)
+    result_lines = []
+    for line in result.split("\n"):
+        result_lines.append(_add_header_label(line))
+
+    # Print the final result for Doxygen to pick it up
+    print("\n".join(result_lines))
