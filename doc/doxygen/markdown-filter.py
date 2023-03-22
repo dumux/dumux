@@ -20,7 +20,7 @@ def _add_header_label(line: str) -> str:
 
 
 def _invoke_and_retrieve_output(cmd) -> str:
-    return subprocess.run(cmd, capture_output=True, text=True).stdout
+    return subprocess.check_output(cmd, text=True)
 
 
 if __name__ == "__main__":
