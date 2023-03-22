@@ -118,41 +118,14 @@ reconfigure and build DuMux as mentioned above.
 
 Only the following Dune and DuMux versions are compatible:
 
-<table class="table table-hover">
-<tr>
-    <th>DuMux version</th>
-    <th>Dune version</th>
-</tr>
-<tr align="center">
-    <td align="left">3.5, 3.6, 3.7-git</td>
-    <td align="left">2.8, 2.9-git<sup>**</sup></td>
-</tr>
-<tr align="center">
-    <td align="left">3.3, 3.4</td>
-    <td align="left">2.7, 2.8</td>
-</tr>
-<tr align="center">
-    <td align="left">3.1, 3.2</td>
-    <td align="left">2.6<sup>*</sup>, 2.7</td>
-</tr>
-<tr align="center">
-    <td align="left">3.0</td>
-    <td align="left">2.6<sup>*</sup>, 2.7</td>
-</tr>
-<tr align="center">
-    <td align="left">2.9, 2.10, 2.11, 2.12</td>
-    <td align="left">2.4, 2.5, 2.6<sup>*</sup></td>
-</tr>
-<tr align="center">
-    <td align="left">2.6, 2.7, 2.8</td>
-    <td align="left">2.3, 2.4</td>
-</tr>
-<tr align="center">
-    <td align="left">2.5</td>
-    <td align="left">2.2, 2.3</td>
-</tr>
-</table>
+| DuMux version     | Dune version              |
+|-------------------|---------------------------|
+| master            | 2.9, master               |
+| 3.7               | 2.9                       |
+| 3.5, 3.6, 3.7-git | 2.8, 2.9                  |
+| 3.3, 3.4          | 2.7, 2.8                  |
+| 3.1, 3.2          | 2.6<sup>*</sup>, 2.7      |
+| 3.0               | 2.6<sup>*</sup>, 2.7      |
+| 2.10, 2.11, 2.12  | 2.4, 2.5, 2.6<sup>*</sup> |
 
-<sup>*</sup> Please use the most recent corresponding Git branches `releases/2.6` instead of the `2.6.0` tarballs.
-
-<sup>**</sup> Compatibility with Dune `2.9-git` is tested automatically only for DuMux `3.7-git`.
+<sup>*</sup> Use the most recent version of the git branch `releases/2.6` instead of the `2.6.0` tarballs.
