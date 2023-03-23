@@ -121,7 +121,7 @@ You can build and run tests of a specific label (e.g. `2p` for two-phase flow po
 make -j8 build_2p_tests && ctest -j8 -L ^2p$
 ```
 
-### Running individual tests
+## Running individual tests
 
 To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder.
 
@@ -138,7 +138,7 @@ means that the test requires the additional Dune modules `dune-foamgrid` and `du
 external dependencies, have a look at the [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf)
 and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/bin/installexternal.py).
 
-### Test coverage
+## Test coverage
 
 [![coverage report](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/badges/master/coverage.svg)](https://pages.iws.uni-stuttgart.de/dumux-repositories/dumux-coverage/)
 
