@@ -208,11 +208,6 @@ private:
 
         // Block non-wetting phase flux out of the outlet
         static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(problem_.paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{});
-        if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
-        {
-            invadedCurrentTimeStep_[eIdx] = false;
-            return Result{}; // nothing happened
-        }
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
@@ -235,9 +230,11 @@ private:
             return Result{}; //nothing happened
         }
 
+        // if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
+        //     invadedAfterSwitch = false;
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff)
+        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
            invadedAfterSwitch = false;
         invadedCurrentTimeStep_[eIdx] = invadedAfterSwitch;
 

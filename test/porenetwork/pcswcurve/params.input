@@ -62,4 +62,4 @@ RegPercentage = 1e-2
 [InvasionState]
 AccuracyCriterion = 0.999
 RestrictInvasionToGlobalCapillaryPressure = true
-# BlockNonwettingPhaseAtThroatLabel = 3
+BlockNonwettingPhaseAtThroatLabel = 3
