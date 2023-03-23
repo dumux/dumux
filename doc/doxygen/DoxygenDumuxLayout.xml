@@ -3,7 +3,20 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
-    <tab type="modules" visible="yes" title="Models and main components" intro=""/>
+    <!-- We exclude pages as this automatically includes a page for each markdown file-->
+    <!-- <tab type="pages" visible="yes" title="" intro=""/> -->
+    <!-- We manually create the navigation hierarchy of the pages -->
+    <tab type="user" url="@ref installation" visible="yes" title="Installation" intro=""/>
+    <tab type="user" url="@ref getting-started" visible="yes" title="Getting started" intro=""/>
+    <!-- This is how to create a hierarchy (can be removed once we have an example) -->
+    <!-- <tab type="usergroup" title="My Group">
+      <tab type="user" url="@ref mysubpage" title="My Page"/>
+      <tab type="user" url="@ref mysubpage2" title="My Page 2"/>
+    </tab> -->
+    <!-- The modules contains pages for each group and subpages for each subgroup -->
+    <!-- Note that extra documentation can be added to groups in separate markdown files -->
+    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
+    <tab type="modules" visible="yes" title="Module description" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
       <tab type="namespacemembers" visible="yes" title="" intro=""/>
@@ -16,7 +29,6 @@
     </tab>
     <tab type="files" visible="yes" title=""/>
     <tab type="examples" visible="yes" title="" intro=""/>
-    <tab type="pages" visible="yes" title="" intro=""/>
   </navindex>
 
   <!-- Layout definition for a class page -->

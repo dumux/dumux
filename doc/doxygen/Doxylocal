@@ -6,19 +6,24 @@ PROJECT_BRIEF         = "Flow and transport in porous media"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
-INPUT                 += @srcdir@/mainpage.txt \
-                         @srcdir@/modules.txt \
+INPUT                 += @top_srcdir@/README.md \
+                         @srcdir@/pages \
+                         @srcdir@/groups \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
+
+USE_MDFILE_AS_MAINPAGE = @top_srcdir@/README.md
+TOC_INCLUDE_HEADINGS   = 4
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
 #   `markdown-math-filter.pl` for details.
-FILTER_PATTERNS        = *.md="perl -0777 -p @srcdir@/markdown-math-filter.pl"
+FILTER_PATTERNS        = *.md="python3 @srcdir@/markdown-filter.py"
 
 FILE_PATTERNS         = *.md,*.cc,*.hh
 
-EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
+EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
+                         @top_srcdir@/dumux/porenetwork/util/README.md
 
 EXAMPLE_PATH          += @srcdir@/extradoc
 
@@ -68,9 +73,9 @@ SHORT_NAMES           = NO
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 420
-DISABLE_INDEX = NO
-FULL_SIDEBAR = NO
+TREEVIEW_WIDTH         = 320
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
 
 # Do no repeat in the description
