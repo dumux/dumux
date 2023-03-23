@@ -11,52 +11,18 @@ and newly merged Dumux commits on GitLab. Python bindings require Python 3.
 
 ##  Installation
 
-Python bindings are part of the dune core modules >= version 2.8.
-We recommend to use the Dune modules on the master branch to try out
-Python bindings.
-
-### Example development setup (Dune 2.9-git)
-
-This section is rather new and experimental. Please help improving
-this documentation in the future.
-
-Checkout the `master` branch of the Dune core modules and DuMu<sup>x</sup>
-
-```
-git clone https://gitlab.dune-project.org/core/dune-common.git
-git clone https://gitlab.dune-project.org/core/dune-geometry.git
-git clone https://gitlab.dune-project.org/core/dune-grid.git
-git clone https://gitlab.dune-project.org/core/dune-localfunctions.git
-git clone https://gitlab.dune-project.org/core/dune-istl.git
-git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
-
-cp dumux/cmake.opts .
-```
-
-Enable shared libraries as required for the Python bindings by adding the flag in `cmake.opts` (see
-comments inside the `.opts` file). Not setting this option is often responsible for error messages
-related to parameters not being found.
-
-Create and activate a new virtual environment in which the
-Python modules will be installed in editable mode (symlinked)
-
-```
-python3 -m venv venv
-source ./venv/bin/activate
-```
-
-Run dunecontrol which will setup both C++ and Python bindings and modules.
-
-```
-./dune-common/bin/dunecontrol --opts=cmake.opts all
-```
+Python bindings are part of the dune core modules >= version 2.8 and enabled by default for
+versions >= 2.9 and DuMu<sup>x</sup> >= version 3.7.
 
 ### Running a test
 
-Run your first DuMu<sup>x</sup> Python test
+After configuring and installing DuMu<sup>x</sup> with `dunecontrol` (or the installscript) you are
+ready to run the python tests.
+
+Run your first DuMu<sup>x</sup> Python test using the helper script
 
 ```
-python3 dumux/test/python/test_gridgeometry.py
+./build-cmake/run-in-dune-env dumux/test/python/test_gridgeometry.py
 ```
 
 The Python bindings are based on just-in-time compilation of C++ code,
@@ -67,6 +33,38 @@ You can run all currently existing DuMu<sup>x</sup> Python tests with
 ```
 cd dumux/build-cmake
 ctest -L python
+```
+
+### Example development setup (Dune 2.9)
+
+This section is rather new and experimental. Please help improving
+this documentation in the future.
+
+When configuring dune-common, by default, an internal Python virtual environment setup is created
+for the Python bindings in which all following modules' Python bindings are automatically installed
+in editable mode (symlinked). After running `dunecontrol` this internal virtual environment is
+activated with
+
+```
+source ./dune-common/build-cmake/dune-env/bin/activate
+```
+
+Alternatively, to have better control of the virtual environment, you can create and activate a new virtual environment, before running `dunecontrol`. The CMake build system of `dune-common` detects the activated virtual environment and installs Python bindings into that virtual environment (again in editable mode (symlinked)).
+
+```
+python3 -m venv venv
+source ./venv/bin/activate
+./dune-common/bin/bexec rm -r CMakeFiles CMakeCache.txt
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
+```
+
+The helper script `run-in-dune-env` activates the virtual environment and executes python
+scripts passed as arguments. Instead you can manually activate your chosen virtual
+environment (rerunning dunecontrol is not required) and run test scripts directly.
+
+```
+source ./path-to-env/bin/activate
+python3 dumux/test/python/test_gridgeometry.py
 ```
 
 ##  Development
@@ -89,8 +87,7 @@ You can install `pylint` with `pip install pylint` and run it from the dumux top
 pylint build-cmake/python/dumux
 ```
 
-Pylint needs to be able to check imports so the modules need to be properly set up
-with `setup-python-env.sh` for Dune versions 2.8 or older (see above). The `pylint` configuration file `dumux/.pylintrc` can
+The `pylint` configuration file `dumux/.pylintrc` can
 be used to configure `pylint`. Some exceptions or other parameters than the default
 might be sensible in the future but generally advice given by `pylint` leads to better code.
 Different from `black`, `pylint` does no itself fix the code, you need to do this yourself.
