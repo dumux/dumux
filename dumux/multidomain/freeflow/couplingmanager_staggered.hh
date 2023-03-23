@@ -454,9 +454,6 @@ public:
 
     /*!
      * \brief Compute colors for multithreaded assembly
-     *
-     * \param domainI the domain index of domain i
-     * \param assembleElement kernel function to execute for one element
      */
     void computeColorsForAssembly()
     {

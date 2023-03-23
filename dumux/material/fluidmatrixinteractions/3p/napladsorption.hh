@@ -78,7 +78,6 @@ public:
 
    /*!
     * \brief the basis for calculating adsorbed NAPL in storage term
-    * \param params Array of parameters
     */
    Scalar bulkDensTimesAdsorpCoeff () const
    {

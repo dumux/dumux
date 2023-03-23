@@ -192,8 +192,6 @@ public:
 
     /*!
      * \brief Returns whether a given sub control volume face is on a wall
-     *
-     * \param scvf The sub control volume face.
      */
     bool isFlatWallBounded() const
     {
