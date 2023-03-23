@@ -28,11 +28,15 @@
 
 #include <tuple>
 #include <type_traits>
+#include <dune/common/std/type_traits.hh>
 
 namespace Dumux::Properties {
 
 //! a tag to mark properties as undefined
 struct UndefinedProperty {};
+
+//! a mechanism to specify a direct alias for property extraction
+template<class P> struct PropertyAlias;
 
 } // end namespace Dumux::Properties
 
@@ -63,6 +67,48 @@ constexpr auto hasParentTypeTag(int)
 template<class T>
 constexpr std::false_type hasParentTypeTag(...)
 { return {}; }
+
+
+//! detector for value members
+template<class T>
+using ValueMemberDetector = decltype(T::value);
+
+//! specialization if there is no value member
+template<class T, bool hasValueMember = Dune::Std::is_detected_v<ValueMemberDetector, T>>
+struct ValueMember { static constexpr bool value = false; };
+
+//! specialization if there is a value member
+template<class T>
+struct ValueMember<T, true> { static constexpr auto value = T::value; };
+
+//! detect if the tag T has an alias with the same name as that of the property P
+template<class P, class T>
+using DirectMemberPropertyDetector = typename PropertyAlias<P>::template Alias<T>;
+
+//! a property imitating the actual property P that extracts type and value
+//! from alias members of tag T instead of from a property specialization for tag T
+template<class P, class T>
+struct DirectMemberProperty
+{
+    using type = Dune::Std::detected_or_t<UndefinedProperty, DirectMemberPropertyDetector, P, T>;
+    static constexpr auto value = ValueMember<type>::value;
+};
+
+//! detect if the tag T has a template alias with the same name as that of the property P
+template<class P, class T, class TypeTag>
+using DirectTemplateMemberPropertyDetector = typename PropertyAlias<P>::template TemplateAlias<T, TypeTag>;
+
+//! a property imitating the actual property P that extracts type
+//! from template alias members of tag T instead of from a property specialization for tag T
+template<class P, class T, class TypeTag>
+struct DirectTemplateMemberProperty
+{
+    using type = Dune::Std::detected_or_t<
+        UndefinedProperty,
+        DirectTemplateMemberPropertyDetector, P, T, TypeTag
+    >;
+};
+
 
 //! helper alias to concatenate multiple tuples
 template<class ...Tuples>
@@ -104,12 +150,23 @@ struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-     using LastType = Property<TypeTag, LastTypeTag>;
+    using LastType = Property<TypeTag, LastTypeTag>;
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-     using type = std::conditional_t<isDefinedProperty<LastType>(int{}), LastType,
-                                     typename GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, void>::type>;
+    using DirectType = DirectMemberProperty<LastType, LastTypeTag>;
+    using DirectTemplateType = DirectTemplateMemberProperty<LastType, LastTypeTag, TypeTag>;
+    // See below for an explanation of this
+    using type = std::conditional_t<
+        isDefinedProperty<LastType>(int{}), LastType,
+        std::conditional_t<
+            isDefinedProperty<DirectTemplateType>(int{}), DirectTemplateType,
+            std::conditional_t<
+                isDefinedProperty<DirectType>(int{}), DirectType,
+                typename GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, void>::type
+            >
+        >
+    >;
 };
 
 template<class TypeTag, template<class,class> class Property, class FirstTypeTag, class ...Args>
@@ -120,12 +177,28 @@ struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-     using FirstType = Property<TypeTag, FirstTypeTag>;
+    using FirstType = Property<TypeTag, FirstTypeTag>;
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-     using type = std::conditional_t<isDefinedProperty<FirstType>(int{}), FirstType,
-                                     typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type>;
+    using DirectType = DirectMemberProperty<FirstType, FirstTypeTag>;
+    using DirectTemplateType = DirectTemplateMemberProperty<FirstType, FirstTypeTag, TypeTag>;
+    // First we check if the property is specialized for the current type tag
+    // If yes, we found the correct specialization, if no we keep searching.
+    // Second, we check if the type tag contains an alias with the property name.
+    // If yes, we found the correct specialization, if no we keep searching.
+    // Third, we check if the type tag contains a template alias with the property name (template argument is TypeTag)
+    // If yes, we found the correct specialization, if no we the property is undefined (default definition)
+    using type = std::conditional_t<
+        isDefinedProperty<FirstType>(int{}), FirstType,
+        std::conditional_t<
+            isDefinedProperty<DirectTemplateType>(int{}), DirectTemplateType,
+            std::conditional_t<
+                isDefinedProperty<DirectType>(int{}), DirectType,
+                typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type
+            >
+        >
+    >;
 };
 
 //! helper struct to extract get the Property specialization given a TypeTag, asserts that the property is defined
@@ -191,5 +264,48 @@ inline constexpr auto getPropValue() { return GetProp<TypeTag, Property>::value;
 #endif
 
 } // end namespace Dumux
+
+/*!
+ * \ingroup Properties
+ * \brief A preprocessor macro to define properties
+ * \note Every property can only be defined once (names have to be unique to the program)
+ * \note Properties should be defined in the namespace Dumux::Properties
+ * \details The macro defines two components for each property.
+ * The first is the definition of the property. For example for
+ * a property Scalar we get
+ *
+ * \code{.cpp}
+   template<class TypeTag, class MyTypeTag> \
+   struct Scalar { using type = UndefinedProperty; };
+   \endcode
+ *
+ * The second is the specialization of the PropertyAlias template
+ * for the newly defined property. For a property Scalar, we get
+ *
+ * \code{.cpp}
+   template<class ...Args> // specialization for property Scalar
+   struct PropertyAlias<Scalar<Args...>> {
+       template <class MyTypeTag> using Alias = typename MyTypeTag::Scalar;
+       template <class MyTypeTag, class TypeTag> using TemplateAlias = typename MyTypeTag::template Scalar<TypeTag>;
+   };
+   \endcode
+ *
+ * The specialization contains the template alias "Alias" that
+ * can be used to check if a given type tag "MyTypeTag" has an alias member
+ * "Scalar", and a template alias "TemplateAlias" that can be used to check
+ * if a given type tag "MyTypeTag" has a template alias Scalar and can be
+ * instantiated with a given type tag "TypeTag" (this will be the user-
+ * end type tag).
+ */
+#define DUMUX_DEFINE_PROPERTY(Prop) \
+    template<class TypeTag, class MyTypeTag> \
+    struct Prop { \
+        using type = UndefinedProperty; \
+    }; \
+    template<class ...Args> \
+    struct PropertyAlias<Prop<Args...>> { \
+        template <class MyTypeTag> using Alias = typename MyTypeTag::Prop; \
+        template <class MyTypeTag, class TypeTag> using TemplateAlias = typename MyTypeTag::template Prop<TypeTag>; \
+    };
 
 #endif
