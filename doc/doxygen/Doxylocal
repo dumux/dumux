@@ -23,7 +23,8 @@ FILTER_PATTERNS        = *README.md="python3 @srcdir@/markdown-filter.py -p Intr
 
 FILE_PATTERNS         = *.md,*.cc,*.hh
 
-EXCLUDE               += @top_srcdir@/dumux/io/format/fmt
+EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
+                         @top_srcdir@/dumux/porenetwork/util/README.md
 
 EXAMPLE_PATH          += @srcdir@/extradoc
 
