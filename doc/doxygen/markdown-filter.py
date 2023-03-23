@@ -1,9 +1,16 @@
 #!/usr/bin/python3
 
+import sys
 import string
-import argparse
 import subprocess
-from os.path import join, dirname, abspath
+from os.path import join, dirname, abspath, exists
+
+
+THIS_DIR = dirname(__file__)
+DOC_DIR = dirname(THIS_DIR)
+TOP_LEVEL_DIR = dirname(DOC_DIR)
+MAIN_README = abspath(join(TOP_LEVEL_DIR, "README.md"))
+assert exists(MAIN_README)
 
 
 def _filter_characters(text: str) -> str:
@@ -23,30 +30,26 @@ def _invoke_and_retrieve_output(cmd) -> str:
     return subprocess.check_output(cmd, text=True)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process markdown files to be consumed by Doxygen")
-    parser.add_argument("-f", "--file", required=True, help="The markdown file to be processed")
-    parser.add_argument(
-        "-p",
-        "--prepend-header",
-        required=False,
-        help="Adds the given header at the top of the file"
-    )
-    args = vars(parser.parse_args())
+def _is_main_readme_file(path) -> bool:
+    return path == MAIN_README
 
-    # Invoke math filter to translate GitLab flavoured math to such supported by Doxygen
-    math_conversion_script = join(dirname(abspath(__file__)), "markdown-math-filter.pl")
-    result = _invoke_and_retrieve_output(["perl", "-0777", "-p", math_conversion_script, args["file"]])
 
-    # (maybe) prepend the given header
-    if args["prepend_header"]:
-        result = f"# {args['prepend_header']}\n\n{result}"
+assert len(sys.argv[1]) > 1
+filePath = abspath(sys.argv[1])
 
-    # Give all headers anchors (labels) s.t. doxygen cross-linking works
-    # correctly (may be fixed in the most recent Doxygen version)
-    result_lines = []
-    for line in result.split("\n"):
-        result_lines.append(_add_header_label(line))
+# Invoke math filter to translate GitLab flavoured math to such supported by Doxygen
+math_conversion_script = join(dirname(abspath(__file__)), "markdown-math-filter.pl")
+result = _invoke_and_retrieve_output(["perl", "-0777", "-p", math_conversion_script, filePath])
 
-    # Print the final result for Doxygen to pick it up
-    print("\n".join(result_lines))
+# for the main readme, prepend "Introduction" header
+if _is_main_readme_file(filePath):
+    result = f"# Introduction\n\n{result}"
+
+# Give all headers anchors (labels) s.t. doxygen cross-linking works
+# correctly (may be fixed in the most recent Doxygen version)
+result_lines = []
+for line in result.split("\n"):
+    result_lines.append(_add_header_label(line))
+
+# Print the final result for Doxygen to pick it up
+print("\n".join(result_lines))
