@@ -34,6 +34,7 @@
 
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/co2.hh>
+#include <dumux/material/components/defaultco2table.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 
@@ -48,7 +49,6 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
-#include "co2tables.hh"
 
 namespace Dumux::Properties {
 
