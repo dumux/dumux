@@ -18,15 +18,17 @@
  *****************************************************************************/
 
 // In the file `main.cc`, we use the previously defined model to
-// setup the simulation. The setup consist of four steps:
+// setup the simulation. The setup consists of four steps:
 // 1. Define the problem setting boundary conditions and the diffusion coefficient
-// 2. Configure the property system reusing the model defined in Part I
+// 2. Configure the property system reusing the model defined in Part 1
 // 3. Define a function for setting the random initial condition
 // 4. The main program defining all steps of the program
 //
+// __Table of contents__
+//
 // [TOC]
 //
-// We start `model.hh` with the necessary header includes:
+// We start in `main.cc` with the necessary header includes:
 // [[details]] includes
 #include <config.h>
 
@@ -65,7 +67,7 @@
 #include <dumux/assembly/fvassembler.hh>
 // [[/codeblock]]
 //
-// Finally, we include the model defined in Part I
+// Finally, we include the model defined in Part 1.
 #include "model.hh"
 // [[/details]]
 
@@ -73,30 +75,25 @@
 // ## 1. The problem class
 //
 // The problem class implements the boundary conditions. It also provides
-// an interface that is used by the local residual (see Part I) to obtain the diffusion
+// an interface that is used by the local residual (see Part 1) to obtain the diffusion
 // coefficient. The value is read from the parameter configuration tree.
 // [[content]]
 namespace Dumux {
-
 template<class TypeTag>
 class DiffusionTestProblem : public FVProblem<TypeTag>
 {
     // [[details]] boilerplate code
     using ParentType = FVProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
+    using GlobalPosition = typename GridGeometry::LocalView::Element::Geometry::GlobalCoordinate;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     // [[/details]]
-public:
     // In the constructor, we read the diffusion coefficient constant from the
     // parameter tree (which is initialized with the content of `params.input`).
+public:
     DiffusionTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -116,7 +113,7 @@ public:
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return { 0.0 }; }
 
-    // The diffusion coefficient interface is used in the local residual (see Part I)
+    // The diffusion coefficient interface is used in the local residual (see Part 1).
     // We can name this interface however we want as long as we adapt the calling site
     // in the `LocalResidual` class in `model.hh`.
     Scalar diffusionCoefficient() const
@@ -132,14 +129,14 @@ private:
 // ## 2. Property tag and specializations
 //
 // We create a new tag `DiffusionTest` that inherits all properties
-// specialized for the tag `DiffusionModel` (we created this in Part I)
+// specialized for the tag `DiffusionModel` (we created this in Part 1)
 // and the tag `BoxModel` which provides types relevant for the spatial
 // discretization scheme (see [dumux/discretization/box.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/discretization/box.hh)).
 //
 // Here we choose a short form of specializing properties. The property
 // system also recognizes an alias (`using`) with the property name being
 // a member of the specified type tag. Note that we could also use the same mechanism
-// as in (Part I), for example:
+// as in (Part 1), for example:
 // ```code
 // template<class TypeTag>
 // struct Scalar<TypeTag, TTag::DiffusionTest>
@@ -192,6 +189,7 @@ struct DiffusionTest
 // with the lowest rank. Afterwards, we subtract the added rank offset.
 //
 // [[content]]
+// [[codeblock]]
 template<class SolutionVector, class GridGeometry>
 SolutionVector createInitialSolution(const GridGeometry& gg)
 {
@@ -224,6 +222,7 @@ SolutionVector createInitialSolution(const GridGeometry& gg)
 
     return sol;
 }
+// [[/codeblock]]
 // [[/content]]
 //
 // ## 4. The main program
@@ -233,8 +232,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // First, we take case to initialize MPI and the multithreading backend.
-    // This convenience function takes care the everything is setup in the right order and
+    // First, we initialize MPI and the multithreading backend.
+    // This convenience function takes care that everything is setup in the right order and
     // has to be called for every Dumux simulation. `Dumux::initialize` also respects
     // the environment variable `DUMUX_NUM_THREADS` to restrict to amount of available cores
     // for multi-threaded code parts (for example the assembly).
@@ -243,13 +242,13 @@ int main(int argc, char** argv)
     // We initialize parameter tree including command line arguments.
     // This will, per default, read all parameters from the configuration file `params.input`
     // if such as file exists. Then it will look for command line arguments. For example
-    // `./example_diffusion -TimeLoop.TEnd 10` will set the end time to 10 second.
+    // `./example_diffusion -TimeLoop.TEnd 10` will set the end time to $10$ seconds.
     // Command line arguments overwrite settings in the parameter file.
     Parameters::init(argc, argv);
 
-    // We specify an alias for the model type tag
+    // We specify an alias for the model type tag.
     // We will configure the assembler with this type tag that
-    // we specialized all these properties for above and in the model definition (Part I)
+    // we specialized all these properties for above and in the model definition (Part 1).
     // We can extract type information through properties specialized for the type tag
     // using `GetPropType`.
     using TypeTag = Properties::TTag::DiffusionTest;

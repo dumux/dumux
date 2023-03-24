@@ -26,9 +26,11 @@
 // 2. Define the local residual class implementing the discrete equation
 // 3. Specialize important properties of the model such that Dumux knows how to assemble the system matrix
 //
+// __Table of contents__
+//
 // [TOC]
 //
-// We start `model.hh` with the necessary header includes:
+// We start in `model.hh` with the necessary header includes:
 // [[details]] includes
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
@@ -115,11 +117,11 @@ public:
     }
     // [[/codeblock]]
 
-    // **Flux term:** Evaluate the fluxes over a face of a sub control volume
+    // **Flux term:** Evaluate the fluxes over a face of a sub control volume.
     // Here we evaluate the (integrated) flux
     //
     // ```math
-    // F = -D \sum_{B \in \mathcal{B}_K} \left( c_{h,B} \nabla N_B \right) \cdot\boldsymbol{n} \vert \sigma \vert
+    // F_{K,\sigma} = -D \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert
     // ````
     //
     // [[codeblock]]
@@ -149,7 +151,7 @@ public:
         NumEqVector flux;
 
         // Compute the flux with `vtmv` (vector transposed times matrix times vector) or -n^T D ∇c A.
-        // The diffusion coefficient comes from the `problem` (see Part II of the example).
+        // The diffusion coefficient comes from the `problem` (see Part 2 of the example).
         flux[Indices::massBalanceEqIdx] = -1.0*vtmv(
             scvf.unitOuterNormal(), problem.diffusionCoefficient(), gradConcentration
         )*scvf.area();
@@ -166,7 +168,7 @@ public:
 // By specializing properties for our type tag `DiffusionModel`,
 // every other class that knows about the type tag (this will be
 // for example the assembler or the problem), can extract the
-// type information the we specify here.
+// type information that we specify here.
 //
 // Note that these types can be overwritten for specific problem
 // definitions if this is needed (we will show this on the next page).
@@ -185,7 +187,7 @@ template<class TypeTag>
 struct Scalar<TypeTag, TTag::DiffusionModel>
 { using type = double; };
 
-// The model traits specify some information about our equation system
+// The model traits specify some information about our equation system.
 // Here we have just one equation. We still specify indices so in the
 // places where we access primary variables, we can do so with a named variable.
 template<class TypeTag>
@@ -214,7 +216,7 @@ struct PrimaryVariables<TypeTag, TTag::DiffusionModel>
     >;
 };
 
-// The `BasicVolumeVariables` are the simples volume variables
+// The `BasicVolumeVariables` are the simplest class of volume variables.
 // They only store one instance of `PrimaryVariables` for the
 // degree of freedom (here: vertex dof) that they are attached to.
 template<class TypeTag>
