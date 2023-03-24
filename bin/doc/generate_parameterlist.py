@@ -279,6 +279,15 @@ for missingKey in missingParameters:
             "--> Set mode to 'manual' in the input file if it is to be kept otherwise delete it!"
         )
 
+# ignore some parameters
+for k, v in inputDict.items():
+    if (v.get("mode") == "ignore") and (k in parameterDict):
+        logger.info(
+            f"Ignored parameter '{k}' in the parameter list. The parameter"
+            f" mode has been set 'ignore' in {cmdArgs['inputFile']}"
+        )
+        parameterDict.pop(k)
+
 parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 # determine actual entries (from duplicates)
 # and determine maximum occurring column widths
