@@ -20,21 +20,61 @@
 #ifndef DUMUX_EXAMPLES_CAHN_HILLIARD_MODEL_HH
 #define DUMUX_EXAMPLES_CAHN_HILLIARD_MODEL_HH
 
-// # Volume variables, local residual and model traits (`model.hh`)
-// In this example the file `model.hh` contains the classes `CahnHilliardModelVolumeVariables` and
-// `CahnHilliardModelLocalResidual` as well as general model traits and properties.
+// # Cahn-Hilliard equation model definition
 //
-// ## VolumeVariables
+// In the file `model.hh`, we define the model equations and
+// set all default model properties. The setup consist of four steps:
+// 1. Create a model type tag (used to specialize properties)
+// 2. Define the volume variables class computing and storing variables for a control volume
+// 3. Define the local residual class implementing the discrete equation
+// 4. Specialize important properties of the model such that Dumux knows how to assemble the system matrix
 //
-// The volume variables store the local element volume variables, both primary and secondary.
+// We implement the classes
+//
+// * `CahnHilliardModel` (step 1),
+// * `CahnHilliardModelVolumeVariables` (step 2) and
+// * `CahnHilliardModelLocalResidual` (step 3).
+//
+// __Table of contents__
+//
+// [TOC]
+//
+// We start in `model.hh` with the necessary header includes:
+// [[details]] includes
+#include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/numeqvector.hh>
+// [[/details]]
+//
+// ## 1. Property Tag
+//
+// The property tag is simply an empty struct with the name `CahnHilliardModel`.
+//
+// [[content]]
+// [[codeblock]]
+namespace Dumux::Properties::TTag {
+struct CahnHilliardModel {};
+} // end namespace Dumux::Properties::TTag
+// [[/codeblock]]
+// [[/content]]
+//
+// ## 2. The volume variables
+//
+// The volume variables store the control volume variables, both primary and secondary.
+// Let's have a look at the class implementation.
 //
 // [[content]]
 //
-// ### The `CahnHilliardModelVolumeVariables` class
+// We write out a full volume variable class compatible with the Dumux assembly.
+// We have to fulfill the same interface as the [`BasicVolumeVariables`](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/common/volumevariables.hh).
+// To shorten the code, we could also inherit from `BasicVolumeVariables`. However,
+// we want to show the entire interface here as a basis for the implementation of more complex variables.
+// Note that in `update` we could, for example, compute some secondary variable that is a
+// possibly nonlinear function of the primary variables. That secondary variable could be exposed
+// via an interface and then used below in the `CahnHilliardModelLocalResidual` class implementation.
 //
 // [[codeblock]]
 namespace Dumux {
-
 template <class Traits>
 class CahnHilliardModelVolumeVariables
 {
@@ -45,17 +85,14 @@ public:
     using PrimaryVariables = typename Traits::PrimaryVariables;
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
-    // [[/codeblock]]
+// [[/codeblock]]
     //
-    // ### Update variables
-    //
-    // The `update` function stores the local primary variables of the current solution and
-    // potentially recomputes secondary variables.
+    // **Update variables:** The `update` function stores the local primary variables of the current solution and
+    // potentially computes secondary variables. Secondary variables can be nonlinear functions
+    // of the primary variables.
     //
     // [[codeblock]]
-    /*!
-     * \brief Update all quantities for a given control volume
-     */
+    //! Update all quantities for a given control volume
     template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
@@ -66,10 +103,9 @@ public:
     }
     // [[/codeblock]]
     //
-    // ### Access functions
-    //
-    // Named and generic functions to access different primary variables
-    //
+    // **Access functions:** Named and generic functions to access different primary variables.
+    // The volumevariables are also expected to return an extrusion factor.
+    // Here we don't extrude our domain and therefore return $1.0$.
     // [[codeblock]]
     Scalar concentration() const
     { return priVars_[Indices::concentrationIdx]; }
@@ -82,77 +118,53 @@ public:
 
     const PrimaryVariables& priVars() const
     { return priVars_; }
-    // [[/codeblock]]
-    //
-    // ### Extrusion factor
-    //
-    // The volumevariables are also expected to return the extrusion factor
-    //
-    // [[codeblock]]
-    // for compatibility with more general models
+
     Scalar extrusionFactor() const
     { return 1.0; }
-    // [[/codeblock]]
-    //
-    // ### Storage of local variables
-    //
-    // [[codeblock]]
+
 private:
     PrimaryVariables priVars_;
 };
-
 } // end namespace Dumux
 // [[/codeblock]]
 // [[/content]]
 //
-// ## LocalResidual
+// ## 3. The local residual
 //
-// The local residual defines the discretized and integrated partial differential equation through
-// terms for storage, fluxes and sources, with the residual given as
-// d/dt storage + div(fluxes) - sources = 0
-// The individual terms can be further adjusted or replaced in the more specific problem.
+// The local residual assembles the contribution to the residual for
+// all degrees of freedom associated with an element.
+// See [examples/diffusion/doc/model.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/doc/main.md)
+// for a more detailed explanation for control-volume finite element method local residuals.
+// Let's have a look at the class implementation.
 //
 // [[content]]
 //
-// ### Include headers
-//
-// [[codeblock]]
-#include <dumux/common/math.hh>
-// use the property system
-#include <dumux/common/properties.hh>
-// common DuMux vector for discretized equations
-#include <dumux/common/numeqvector.hh>
-// [[/codeblock]]
-//
-// ### The local residual class `CahnHilliardModelLocalResidual` inherits from a base class set in
+// The class `CahnHilliardModelLocalResidual` inherits from a base class set in
 // the model properties, depending on the discretization scheme.
-//
-// [[codeblock]]
+// See [examples/diffusion/doc/model.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/doc/main.md)
+// for details on the `BaseLocalResidual`.
 namespace Dumux {
-
 template<class TypeTag>
 class CahnHilliardModelLocalResidual
 : public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
+    // [[exclude]]
     // the base local residual is selected depending on the chosen discretization scheme
     using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
-    // [[/codeblock]]
-    //
-    // [[details]] alias definitions
-    // [[codeblock]]
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
-    using VolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::VolumeVariables;
 
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
 
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -160,19 +172,14 @@ class CahnHilliardModelLocalResidual
     static constexpr int dimWorld = GridView::dimensionworld;
 public:
     using ParentType::ParentType;
-    // [[/codeblock]]
-    // [[/details]]
+    // [[/exclude]]
     //
-    // ### The storage term
-    // The function `computeStorage` receives the volumevariables at the previous or current time
-    // step and computes the value of the storage terms.
+    // **Storage term:** The function `computeStorage` receives the volume variables
+    // at the previous or current time step and computes the value of the storage terms.
     // In this case the mass balance equation is a conservation equation of the concentration and
     // the equation for the chemical potential does not have a storage term.
     //
     // [[codeblock]]
-    /*!
-     * \brief Evaluate the rate of change of all conserved quantities
-     */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
                                const VolumeVariables& volVars) const
@@ -183,19 +190,19 @@ public:
         return storage;
     }
     // [[/codeblock]]
-    //
-    // ### The flux terms
-    // `computeFlux` computes the fluxes over a subcontrolvolumeface, including the integration over
+
+    // **Flux term:** The function `computeFlux` computes the fluxes
+    // over a sub control volume faces, including the integration over
     // the area of the face.
     //
+    // ```math
+    // \begin{aligned}
+    // F_{K,\sigma,0} &= -M \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert \\
+    // F_{K,\sigma,1} &= -\gamma \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert
+    // \end{aligned}
+    // ````
+    //
     // [[codeblock]]
-    /*!
-     * \brief Evaluate the fluxes over a face of a sub control volume
-     * Here we evaluate the flow rate, F1 = -M∇mu·n A, F2 = -gamma∇c·n A
-     *
-     * TODO: why is this called flux, if we expect it to be integrated already?
-     * computeFluxIntegral?
-     */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -203,38 +210,45 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
+        static_assert(DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>,
+            "This local residual is hard-coded to control-volume finite element schemes");
+
         const auto& fluxVarCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, dimWorld> gradConcentration(0.0);
         Dune::FieldVector<Scalar, dimWorld> gradChemicalPotential(0.0);
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            gradConcentration.axpy(volVars.concentration(), fluxVarCache.gradN(scv.indexInElement()));
-            gradChemicalPotential.axpy(volVars.chemicalPotential(), fluxVarCache.gradN(scv.indexInElement()));
+            // v.axpy(a, w) means v <- v + a*w
+            gradConcentration.axpy(
+                volVars.concentration(),
+                fluxVarCache.gradN(scv.indexInElement())
+            );
+            gradChemicalPotential.axpy(
+                volVars.chemicalPotential(),
+                fluxVarCache.gradN(scv.indexInElement())
+            );
         }
 
-        const auto M = problem.mobility();
-        const auto gamma = problem.surfaceTension();
-
         NumEqVector flux;
-        flux[Indices::massBalanceEqIdx] = -1.0*vtmv(scvf.unitOuterNormal(), M, gradChemicalPotential)*scvf.area();
-        flux[Indices::chemicalPotentialEqIdx] = -1.0*vtmv(scvf.unitOuterNormal(), gamma, gradConcentration)*scvf.area();
+        // Compute the flux with `vtmv` (vector transposed times matrix times vector).
+        // The mobility and surface tension coefficients comes from the `problem` (see Part 2 of the example).
+        flux[Indices::massBalanceEqIdx] = -1.0*vtmv(
+            scvf.unitOuterNormal(), problem.mobility(), gradChemicalPotential
+        )*scvf.area();
+        flux[Indices::chemicalPotentialEqIdx] = -1.0*vtmv(
+            scvf.unitOuterNormal(), problem.surfaceTension(), gradConcentration
+        )*scvf.area();
         return flux;
     }
     // [[/codeblock]]
-    //
-    // ### Source terms
-    //
-    // `computeSource` defines the sources terms at a sub control volume.
+
+    // **Source term:** The function `computeSource` computes the sources terms for a sub control volume.
     // We implement a model-specific source term for the chemical potential equation before
     // deferring further implementation to the problem where we add the derivative of the free
-    // energy. The default implementation of this function also defers the calculation to the
-    // problem.
+    // energy.
     //
     // [[codeblock]]
-    /*!
-     * \brief Calculate the source term of the equation
-     */
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -242,78 +256,43 @@ public:
                               const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
-
+        source[Indices::massBalanceEqIdx] = 0.0;
         source[Indices::chemicalPotentialEqIdx] = elemVolVars[scv].chemicalPotential();
-
         // add contributions from problem (e.g. double well potential)
         source += problem.source(element, fvGeometry, elemVolVars, scv);
-
         return source;
     }
 };
-
 } // end namespace Dumux
 // [[/codeblock]]
 // [[/content]]
 //
-// ## Model properties/traits
+// ## 4. The model properties/traits
 //
-// We set some general model traits and properties, using a TypeTag `CahnHilliardModel`.
-// For this type tag we define a `ModelTraits` struct and set a number of properties by specifying
-// further structs within the `Dumux::Properties` namespace.
+// In the `Dumux::Properties` namespace, we specialize properties for
+// the created type tag `CahnHilliardModel`.
 //
 // [[content]]
-//
-// ### Include the header for the property system and common properties and switch to the
-// `Properties` namespace.
-//
-// [[codeblock]]
-#include <dumux/common/properties.hh>
-
 namespace Dumux::Properties {
-// [[/codeblock]]
-//
-// ### Define the type tag
-//
-// [[codeblock]]
-namespace TTag {
-struct CahnHilliardModel {};
-} // end namespace TTag
-// [[/codeblock]]
-//
-// ### Basic model properties
-//
-// Define some general properties to be used for this modedl such as a datatype for scalars and the
-// default vector for the primary variables. Here we can also use the model traits we specify below.
-//
-// [[codeblock]]
-//! Set the default type of scalar values to double
+
+// The type of the local residual is the class defined above.
 template<class TypeTag>
-struct Scalar<TypeTag, TTag:: CahnHilliardModel >
+struct LocalResidual<TypeTag, TTag::CahnHilliardModel>
+{ using type = CahnHilliardModelLocalResidual<TypeTag>; };
+
+// The default scalar type is double.
+// We compute with double precision floating point numbers.
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::CahnHilliardModel>
 { using type = double; };
 
-//! Set the default primary variable vector to a vector of size of number of equations
-template<class TypeTag>
-struct PrimaryVariables<TypeTag, TTag:: CahnHilliardModel >
-{
-    using type = Dune::FieldVector<
-        GetPropType<TypeTag, Properties::Scalar>,
-        GetPropType<TypeTag, Properties::ModelTraits>::numEq()
-    >;
-};
-// [[/codeblock]]
-//
-// ### Model traits
-//
-// We specify general traits of the implemented model, defining indices (often in `indices.hh`)
-// and the number of equations in the model.
-//
-// [[codeblock]]
-//! Set the model traits property
+// The model traits specify some information about our equation system.
+// Here we have two equations. The indices allow to access primary variables
+// and equations with a named indices.
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 {
-    struct Traits
+    struct type
     {
         struct Indices
         {
@@ -326,22 +305,20 @@ struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 
         static constexpr int numEq() { return 2; }
     };
-
-    using type = Traits;
 };
-// [[/codeblock]]
-//
-// ### Further model properties
-//
-// Define further properties of the model, selecting the local residual and volumevariables defined
-// above.
-//
-// [[codeblock]]
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::CahnHilliardModel>
-{ using type = CahnHilliardModelLocalResidual<TypeTag>; };
 
-//! Set the volume variables property
+// The primary variable vector has entries of type `Scalar` and is
+// as large as the number of equations (here 2) but we keep it general.
+template<class TypeTag>
+struct PrimaryVariables<TypeTag, TTag::CahnHilliardModel>
+{
+    using type = Dune::FieldVector<
+        GetPropType<TypeTag, Properties::Scalar>,
+        GetPropType<TypeTag, Properties::ModelTraits>::numEq()
+    >;
+};
+
+// Finally, the type of the volume variables is the class defined above.
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::CahnHilliardModel>
 {
@@ -355,7 +332,7 @@ struct VolumeVariables<TypeTag, TTag::CahnHilliardModel>
 };
 
 } // end namespace Dumux::Properties
-// [[/codeblock]]
 // [[/content]]
-
+// [[exclude]]
 #endif
+// [[/exclude]]

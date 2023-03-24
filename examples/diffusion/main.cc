@@ -204,7 +204,7 @@ SolutionVector createInitialSolution(const GridGeometry& gg)
     for (int n = 0; n < sol.size(); ++n)
         sol[n] = dis(gen) + rank;
 
-    // We, take the value of the processor with the minimum rank
+    // We take the value of the processor with the minimum rank
     // and subtract the rank offset
     if (gg.gridView().comm().size() > 1)
     {
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(sol);
 
-    // Ww initialize the VTK output module and write out the initial concentration field
+    // We initialize the VTK output module and write out the initial concentration field
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, sol, problem->name());
     vtkWriter.addVolumeVariable([](const auto& vv){ return vv.priVar(0); }, "c");
     vtkWriter.write(0.0);

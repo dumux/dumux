@@ -3,21 +3,21 @@
         "doc/_intro.md"
     ],
 
-    "doc/mainfile.md" : [
-        "doc/mainfile_intro.md",
-        "main.cc"
+    "doc/model.md" : [
+        "doc/_model.md",
+        "model.hh"
     ],
 
-    "doc/modelheader.md" : [
-        "doc/modelheader_intro.md",
-        "model.hh"
+    "doc/main.md" : [
+        "doc/_main.md",
+        "main.cc"
     ],
 
     "navigation" : {
         "mainpage" : "README.md",
         "subpages" : [
-            "doc/modelheader.md",
-            "doc/mainfile.md"
+            "doc/model.md",
+            "doc/main.md"
         ],
         "subtitles" : [
             "Model implementation",

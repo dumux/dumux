@@ -14,6 +14,7 @@ dumux_add_test(NAME example_cahn_hilliard
 dumux_add_test(NAME example_cahn_hilliard_parallel
                LABELS example
                TARGET example_cahn_hilliard
+               CMAKE_GUARD MPI_FOUND
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_cahn_hilliard_parallel_p0-reference.vtu

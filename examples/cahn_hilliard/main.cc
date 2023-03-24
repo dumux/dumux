@@ -17,43 +17,59 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-// # Problem, test properties/traits and main program flow (`main.cc`)
-// In this example the file `main.cc` contains the problem class `CahnHilliardTestProblem`,
-// properties and traits specific to the test case as well as the main program flow in the form of
-// `main` function.
+// # Cahn-Hilliard equation main program
 //
+// The file [`main.cc`](main.cc) contains the problem class `CahnHilliardTestProblem`,
+// properties and traits specific to the test case as well as the `main` function.
+// The setup consists of four steps:
+// 1. Define the problem setting boundary conditions and the diffusion coefficient
+// 2. Configure the property system reusing the model defined in Part 1
+// 3. Define a function for setting the random initial condition
+// 4. The main program defining all steps of the program
+//
+// __Table of contents__
+//
+// [TOC]
+//
+// We start in `main.cc` with the necessary header includes:
+// [[details]] includes
 #include <config.h>
-// ## Problem
-// The __problem class__ defines boundary conditions and extends the storage term defined in the
-// model's localresidual by the derivative of the free energy.
-//
-// [[content]]
-// ### Include headers
-//
-// [[codeblock]]
-// use the property system and runtime parameters
+#include <type_traits>
+#include <random>
+
+#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-// common DuMux vector for discretized equations
 #include <dumux/common/numeqvector.hh>
-// types of boundary conditions to use
 #include <dumux/common/boundarytypes.hh>
-// generic problem for finite volume simulations
 #include <dumux/common/fvproblem.hh>
-// [[/codeblock]]
-//
-// ### The problem class `CahnHilliardTestProblem`
-// In this abstract problem we inherit from the generic `FVProblem`.
-//
-// [[codeblock]]
-namespace Dumux {
 
+#include <dumux/discretization/box.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/assembly/fvassembler.hh>
+
+#include <dune/grid/yaspgrid.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
+
+#include "model.hh"
+// [[/details]]
+
+//
+// ## 1. The problem class
+//
+// The problem class implements boundary conditions and the source term.
+// It also provides an interface that is used by the local residual (see Part 1) to obtain
+// the mobility and surface tension. The values are read from the parameter configuration tree.
+// [[content]]
+namespace Dumux {
 template<class TypeTag>
 class CahnHilliardTestProblem : public FVProblem<TypeTag>
 {
-// [[/codeblock]]
-// [[details]] alias definitions and local variables
-// [[codeblock]]
+    // [[details]] boilerplate code
     using ParentType = FVProblem<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -67,9 +83,9 @@ class CahnHilliardTestProblem : public FVProblem<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-// [[/codeblock]]
-// [[/details]]
-// [[codeblock]]
+    // [[/details]]
+    // In the constructor, we read the parameter constants from the
+    // parameter tree (which is initialized with the content of `params.input`).
 public:
     CahnHilliardTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -78,15 +94,10 @@ public:
         surfaceTension_ = getParam<Scalar>("Problem.SurfaceTension");
         energyScale_ = getParam<Scalar>("Problem.EnergyScale");
     }
-    // [[/codeblock]]
-    //
-    // ### Problem source term
-    //
-    // Here we implement the derivative of the free energy, setting a source for the equation for
-    // the chemical potential. The `computeSource` function in the local residual adds the terms
-    // defined here.
-    //
-    // [[codeblock]]
+
+    // In the `source` function, we implement the derivative of the free energy.
+    // This demonstrates how parts of the local residual can be split into model specific
+    // parts and parts that might change from scenario to scenario.
     template<class ElementVolumeVariables>
     NumEqVector source(const Element &element,
                        const FVElementGeometry& fvGeometry,
@@ -98,13 +109,9 @@ public:
         values[Indices::chemicalPotentialEqIdx] = -energyScale_*2.0*c*(2.0*c*c - 3*c + 1);
         return values;
     }
-    // [[/codeblock]]
-    //
-    // ### Boundary conditions
-    //
+
     // For the boundary we choose boundary flux (or Neumann) conditions for all equations and on
     // every part of the boundary, specifying zero flux everywhere for both equations.
-    //
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
@@ -116,11 +123,10 @@ public:
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return { 0.0, 0.0 }; }
     // [[/codeblock]]
-    //
-    // [[details]] coefficients and private variables
-    // The problem class offers access to the mobility and surface tension coefficients as read from
-    // the parameter file by default `params.input`.
-    //
+
+    // The parameters interfaces are used in the local residual (see Part 1).
+    // We can name this interface however we want as long as we adapt the calling site
+    // in the `LocalResidual` class in `model.hh`.
     // [[codeblock]]
     Scalar mobility() const
     { return mobility_; }
@@ -133,118 +139,48 @@ private:
     Scalar surfaceTension_;
     Scalar energyScale_;
 };
-
 } // end namespace Dumux
 // [[/codeblock]]
-// [[/details]]
 // [[/content]]
+
 //
-// ## Test case properties/traits
-// Within the `Dumux::Properties` namespace we specialize properties and traits to the considered
-// test case by using the test's TypeTag.
+// ## 2. Property tag and specializations
+//
+// We create a new tag `DiffusionTest` that inherits all properties
+// specialized for the tag `DiffusionModel` (we created this in Part 1)
+// and the tag `BoxModel` which provides types relevant for the spatial
+// discretization scheme (see [dumux/discretization/box.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/discretization/box.hh)).
 //
 // [[content]]
-//
-// ### Include headers
-//
-// [[codeblock]]
-// Include the grid to be used
-#include <dune/grid/yaspgrid.hh>
-// The header for the box discretization scheme
-#include <dumux/discretization/box.hh>
-// The model header including the model traits and properties
-#include "model.hh"
-// [[/codeblock]]
-//
-// ### TypeTag `CahnHilliardTest`
-//
-// We define a type tag for the test case, allowing us to further specify properties and traits. To
-// use those set for the Cahn-Hilliard model we inherit from its type tag.
-//
-// [[codeblock]]
-namespace Dumux::Properties {
+namespace Dumux::Properties::TTag {
+struct CahnHilliardTest
+{
+    using InheritsFrom = std::tuple<CahnHilliardModel, BoxModel>;
 
-// Inheriting properties of the Cahn-Hilliard model and the box finite volume discretization
-namespace TTag {
-struct CahnHilliardTest { using InheritsFrom = std::tuple<CahnHilliardModel, BoxModel>; };
-} // end namespace TTag
-// [[/codeblock]]
-//
-// ### Test properties
-//
-// We specify a grid to be used in the test, select our problem class and enable caching.
-//
-// [[codeblock]]
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::CahnHilliardTest>
-{ using type = Dune::YaspGrid<2>; };
+    using Grid = Dune::YaspGrid<2>;
 
-// Select the problem class defined above
-template<class TypeTag>
-struct Problem<TypeTag, TTag::CahnHilliardTest>
-{ using type = CahnHilliardTestProblem<TypeTag>; };
+    template<class TypeTag>
+    using Problem = CahnHilliardTestProblem<TypeTag>;
 
-// Enable caching
-template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::CahnHilliardTest>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::CahnHilliardTest>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::CahnHilliardTest>
-{ static constexpr bool value = true; };
-
+    using EnableGridGeometryCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridFluxVariablesCache = std::true_type;
+};
 } // end namespace Dumux::Properties
-// [[/codeblock]]
 // [[/content]]
 //
-// ## The main program flow
-// The main program flow in the `main` function is often the only content of `main.cc`. It sets up
-// the simulation framework, initializes runtime parameters, creates the grid and storage vectors
-// for the variables, primary and secondary. It specifies and constructs and assembler, which
-// assembles the discretized residual and system matrix (Jacobian of the model residual), as well as
-// linear and nonlinear solvers that solve the resulting linear system and handle the convergence of
-// nonlinear iterations. The time loop controls the time stepping, with adaptive time step size in
-// coordination with the nonlinear solver.
+// ## 3. Creating the initial solution
+//
+// To initialize with a random field in parallel, where each processor
+// creates its own random number sequence, we need to communicate the
+// resulting values on the processor border and overlap.
+// See [Diffusion equation example](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/docs/main.md).
+// for details. Here in addition, we need to provide a custom scatter operation
+// that handles vector types. We only need to communicate the first entry (concentration).
 //
 // [[content]]
-//
-// ### Include headers
-//
 // [[codeblock]]
-// standard header to generate random initial data
-#include <random>
-// common DuMux header for parallelization
-#include <dumux/common/initialize.hh>
-// headers to use the property system and runtime parameters
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-// module for VTK output, to write out fields of interest
-#include <dumux/io/vtkoutputmodule.hh>
-// gridmanager for the grid used in the test
-#include <dumux/io/grid/gridmanager_yasp.hh>
-// headers for linear and non-linear solvers as well as the assembler
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/linear/istlsolvers.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
-#include <dumux/assembly/fvassembler.hh>
-// [[/codeblock]]
-//
-// ### Creating the initial solution
-//
-// We define a helper struct and function to handle communication for parallel runs.
-// For our initial conditions we create a random field of values around a mean of 0.42.
-// The random values are created with an offset based on the processor rank for communication
-// purposes, which is removed afterwards. For more information see the description of the
-// diffusion example
-// [examples/diffusion/doc/main.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/doc/main.md)
-//
-// [[codeblock]]
+// functor for data communication with MPI
 struct MinScatter
 {
     template<class A, class B>
@@ -252,6 +188,7 @@ struct MinScatter
     { a[0] = std::min(a[0], b[0]); }
 };
 
+// create the random initial solution
 template<class SolutionVector, class GridGeometry>
 SolutionVector createInitialSolution(const GridGeometry& gg)
 {
@@ -267,7 +204,8 @@ SolutionVector createInitialSolution(const GridGeometry& gg)
         sol[n][1] = 0.0;
     }
 
-    // Take the value of the processor with the minimum rank and subtract the rank offset
+    // We take the value of the processor with the minimum rank
+    // and subtract the rank offset
     if (gg.gridView().comm().size() > 1)
     {
         Dumux::VectorCommDataHandle<
@@ -285,127 +223,91 @@ SolutionVector createInitialSolution(const GridGeometry& gg)
     return sol;
 }
 // [[/codeblock]]
+// [[/content]]
 //
-// ### The main function
+// ## 4. The main program
 //
-// The main function takes the command line arguments, optionally specifying an input file of
-// parameters and/or individual key-value pairs of runtime parameters.
+// The `main` function sets up the simulation framework, initializes runtime parameters,
+// creates the grid and storage vectors
+// for the variables, primary and secondary. It specifies and constructs and assembler, which
+// assembles the discretized residual and system matrix (Jacobian of the model residual), as well as
+// a linear solver. A Newton method is used to solve the nonlinear equations where in each Newton iteration
+// the Jacobian and the residual needs to be reassembled and the resulting linear system is solved.
+// The time loop controls the time stepping. Here, we let the Newton solver suggest an adaption of
+// the time step size based on the convergence history of the nonlinear solver.
 //
-// [[codeblock]]
+// [[content]]
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    // define the type tag for this problem
-    using TypeTag = Properties::TTag::CahnHilliardTest;
-    // [[/codeblock]]
-    //
-    // We initialize parallelization backends as well as runtime parameters
-    //
-    // [[codeblock]]
-    // maybe initialize MPI and/or multithreading backend
+    // We initialize MPI and/or multithreading backend. When not running
+    // in parallel the MPI setup is skipped.
     Dumux::initialize(argc, argv);
 
-    // initialize parameter tree
+    // Then we initialize parameter tree.
     Parameters::init(argc, argv);
-    // [[/codeblock]]
-    //
-    // ### Grid setup
-    //
-    // Set up the grid as well as a grid geometry to access the (sub-)control-volumes and their
-    // faces
-    //
-    // [[codeblock]]
-    // initialize the grid
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+
+    // We create an alias for the type tag for this problem
+    // and extract type information through properties.
+    using TypeTag = Properties::TTag::CahnHilliardTest;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+
+    // We initialize the grid, grid geometry, problem, solution vector, and grid variables.
+    GridManager<Grid> gridManager;
     gridManager.init();
 
-    // we compute on the leaf grid view
-    const auto& leafGridView = gridManager.grid().leafGridView();
-
-    // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
-    // [[/codeblock]]
-    //
-    // ### Problem setup
-    //
-    // We instantiate also the problem class according to the test properties
-    //
-    // [[codeblock]]
-    // the problem (initial and boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
     auto problem = std::make_shared<Problem>(gridGeometry);
-    // [[/codeblock]]
-    //
-    // ### Applying initial conditions
-    //
-    // After writing the initial data to the storage for previous and current time-step, we
-    // initialize the grid variables, also computing secondary variables.
-    //
-    // [[codeblock]]
-    // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     auto sol = createInitialSolution<SolutionVector>(*gridGeometry);
-    // copy the vector to store state of previous time step
-    auto oldSol = sol;
-
-    // the grid variables
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(sol);
-    // [[/codeblock]]
-    //
-    // ### Initialize VTK output
-    //
-    // [[codeblock]]
-    // initialize the vtk output module
+
+    // We initialize the VTK output module and write out the initial concentration and chemical potential
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, sol, problem->name());
     vtkWriter.addVolumeVariable([](const auto& vv){ return vv.concentration(); }, "c");
     vtkWriter.addVolumeVariable([](const auto& vv){ return vv.chemicalPotential(); }, "mu");
     vtkWriter.write(0.0);
-    // [[/codeblock]]
-    //
-    // ### Set up time loop
-    //
-    // [[codeblock]]
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto dt = getParam<Scalar>("TimeLoop.InitialTimeStepSize");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    // [[/codeblock]]
-    //
-    // ### Assembler, linear and nonlinear solver
-    //
-    // [[codeblock]]
-    // the assembler with time loop for a transient problem
+    // We instantiate time loop using start and end time as well as
+    // the time step size from the parameter tree (`params.input`)
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(
+        getParam<Scalar>("TimeLoop.TStart", 0.0),
+        getParam<Scalar>("TimeLoop.InitialTimeStepSize"),
+        getParam<Scalar>("TimeLoop.TEnd")
+    );
+
+    // We set the maximum time step size allowed in the adaptive time stepping scheme.
+    timeLoop->setMaxTimeStepSize(getParam<Scalar>("TimeLoop.MaxTimeStepSize"));
+
+    // Next, we choose the type of assembler, linear solver and PDE solver
+    // and construct instances of these classes.
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, oldSol);
-
-    // the linear solver
-    using LinearSolver = SSORBiCGSTABIstlSolver<
-        LinearSolverTraits<GridGeometry>,
-        LinearAlgebraTraitsFromAssembler<Assembler>
-    >;
-    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
-
-    // the solver
+    using LinearSolver = SSORBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
     using Solver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+
+    auto oldSol = sol;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, oldSol);
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     Solver solver(assembler, linearSolver);
-    // [[/codeblock]]
-    //
-    // ### Time loop
+
+    // The time loop is where most of the actual computations happen.
+    // We assemble and solve the linear system of equations, update the solution,
+    // write the solution to a VTK file and continue until the we reach the
+    // final simulation time.
     //
     // [[codeblock]]
-    // time loop
     timeLoop->start(); do
     {
-        // assemble & solve
+        // Assemble & solve
+        // Passing the time loop enables the solver to repeat the time step
+        // with a reduced time step size if the Newton solver does not converge.
         solver.solve(sol, *timeLoop);
 
         // make the new solution the old solution
@@ -415,7 +317,7 @@ int main(int argc, char** argv)
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write VTK output
+        // write VTK output (concentration field and chemical potential)
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
@@ -425,13 +327,9 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(solver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
-    // [[/codeblock]]
-    //
-    // ### Finalize
-    //
-    // [[codeblock]]
-    timeLoop->finalize(leafGridView.comm());
 
+    // print the final report
+    timeLoop->finalize(gridGeometry->gridView().comm());
     return 0;
 }
 // [[/codeblock]]
