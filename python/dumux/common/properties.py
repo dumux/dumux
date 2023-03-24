@@ -4,6 +4,7 @@ Property, TypeTag and Model
 """
 
 import os
+import re
 from dataclasses import dataclass
 from typing import List, Union
 from dune.common.hashit import hashIt
@@ -189,8 +190,11 @@ def predefinedProperties():
     propertiesHeader = propertiesHeaderPath()
     with open(propertiesHeader, encoding="utf-8") as header:
         properties = []
+        pattern = re.compile(r"DUMUX_DEFINE_PROPERTY\((.*?)\)")
         for line in header:
-            if line.startswith("struct"):
+            if line.startswith("DUMUX_DEFINE_PROPERTY("):
+                properties.append(pattern.search(line).group(1))
+            elif line.startswith("struct"):
                 properties.append(line.split(" ")[1])
         return properties
 
