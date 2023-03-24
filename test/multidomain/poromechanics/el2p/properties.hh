@@ -36,6 +36,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/components/co2.hh>
+#include <dumux/material/components/defaultco2table.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 
 #include <dumux/multidomain/traits.hh>
@@ -47,7 +48,6 @@
 #include "problem_2p.hh"
 #include "problem_poroelastic.hh"
 
-#include "test/porousmediumflow/co2/co2tables.hh"
 
 namespace Dumux::Properties {
 
