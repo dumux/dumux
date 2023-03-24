@@ -152,7 +152,7 @@ DENSITY_DATA = ",\n".join(DENSITY_DATA)
 ENTHALPY_DATA = ",\n".join(ENTHALPY_DATA)
 
 # write the table by filling the gaps in the template
-with open("co2values.inc.template", "r") as templateFile:
+with open("co2table.hh.template", "r") as templateFile:
     template = Template(templateFile.read())
 
 replacements = {
@@ -167,5 +167,5 @@ replacements = {
     "DATE": date.today().strftime("%B %d, %Y"),
 }
 
-with open("co2values.inc", "w") as tables:
+with open("co2table.hh", "w") as tables:
     tables.write(template.substitute(replacements))

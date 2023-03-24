@@ -61,6 +61,8 @@ The change is made in the attempt to unify assembly for CVFE schemes
 - __Box/Diamond/Bubble/CVFE Assembly__: The classes `BoxLocalAssembler`, `FaceCenteredDiamondLocalAssembler`, `PQ1BubbleLocalAssembler`, `BoxSubdomainLocalAssembler`, `FaceCenteredDiamondSubdomainLocalAssembler`, `PQ1BubbleSubdomainLocalAssembler` and corresponding
 headers have been replaced by `CVFELocalAssembler` and `CVFESubdomainLocalAssembler`.
 
+- __Default CO2 Table__: The new header `defaultco2table.hh` provides the CO2 density and enthalpy values with in the range of 290 K to 340 K and 100 KPa to 100 MPa. The script `make_co2_table.py` now generates the `co2table.hh` for a specified range, which can be directly included in the properties file.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.7:
 
 - __AMGBackend__: `AMGBiCGSTABBackend` have been deprecated, use `AMGBiCGSTABIstlSolver` instead

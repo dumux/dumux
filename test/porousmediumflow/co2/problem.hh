@@ -38,7 +38,6 @@
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 #include <dumux/common/gridcapabilities.hh>
 
-#include "co2tables.hh"
 
 namespace Dumux {
 
