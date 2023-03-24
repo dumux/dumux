@@ -1,0 +1,27 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/model.md" : [
+        "doc/_model.md",
+        "model.hh"
+    ],
+
+    "doc/main.md" : [
+        "doc/_main.md",
+        "main.cc"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/model.md",
+            "doc/main.md"
+        ],
+        "subtitles" : [
+            "Model implementation",
+            "Main program"
+        ]
+    }
+}
