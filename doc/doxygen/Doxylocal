@@ -9,6 +9,7 @@ PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 INPUT                 += @top_srcdir@/README.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
+                         @top_srcdir@/python/README.md \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
@@ -25,7 +26,8 @@ FILE_PATTERNS         = *.md,*.cc,*.hh
 EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
                          @top_srcdir@/dumux/porenetwork/util/README.md
 
-EXAMPLE_PATH          += @srcdir@/extradoc
+EXAMPLE_PATH          += @srcdir@/extradoc \
+                         @top_srcdir@/test/python
 
 IMAGE_PATH             = @srcdir@/images
 
