@@ -11,6 +11,7 @@ and the DuMu<sup>x</sup> name of the model is given in parenthesis: e.g. (`OneP`
 
 In this example, we simulate tracer transport through a confined aquifer with a randomly distributed permeability field.
 We first solve the pressure field, compute the steady state flow field, and then solve the tracer transport equation.
+
 You learn how to
 
 * generate a randomly distributed permeability field
@@ -36,6 +37,7 @@ In this example we model a soil contamination problem where a
 DNAPL (dense non-aqueous phase liquid) infiltrates a water-saturated porous medium (two-phase flow).
 The initial distribution of DNAPL is read in from a txt-file.
 The grid is adaptively refined where DNAPL enters the domain, around the plume, and around an injection well.
+
 You learn how to
 
 * solve a two-phase flow in porous media problem with two immiscible phases
@@ -57,6 +59,7 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 <table><tr><td>
 
 The shallow water flow model is applied to simulate steady subcritical flow in a channel including a bottom friction model.
+
 You learn how to
 
 * solve a shallow water flow problem including bottom friction
@@ -76,6 +79,7 @@ __Discretization method:__ Cell-centered finite volumes with Riemann solver (`CC
 <table><tr><td>
 
 In this example, we simulate a free flow between two plates in two dimensions.
+
 You learn how to
 
 * solve a free flow problem
@@ -95,6 +99,7 @@ __Discretization method:__ Finite volumes with staggered grid arrangement (`Stag
 <table><tr><td>
 
 In this example, a rotation-symmetric solution for the single-phase flow equation is discussed.
+
 You learn how to
 
 * solve a rotation-symmetric problem
@@ -115,6 +120,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 <table><tr><td>
 
 In this example, we simulate microbially-induced calcite precipitation
+
 You learn how to
 
 * solve a reactive transport model including
@@ -139,6 +145,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 <table><tr><td>
 
 In this example, we simulate laminar incompressible flow in a cavity with the Navier-Stokes equations.
+
 You learn how to
 
 * solve a single-phase Navier-Stokes flow problem
