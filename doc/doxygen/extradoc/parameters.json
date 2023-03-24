@@ -341,6 +341,18 @@
             "Whether to refine where source terms are specified"
         ]
     },
+    "Assembly.BoxVolVarsDependOnAllElementDofs": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Whether to update all volvars in the stencil or only update the volVars for the scv whose associated dof has been deflected."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
     "Assembly.FCDiamondVolVarsDependOnAllElementDofs": {
         "defaultValue": [
             "false"
@@ -1509,6 +1521,11 @@
             "Whether to enable the production limiter"
         ]
     },
+    "LinearSolver.DirectSolverForVelocity": {
+        "explanation": [
+            "Whether to use direct solver for the velocity"
+        ]
+    },
     "LinearSolver.GMResRestart": {
         "defaultValue": [
             "10"
@@ -1821,6 +1838,23 @@
             "bool"
         ]
     },
+    "LinearSolver.Preconditioner.MassMatrixWeight": {
+        "explanation": [
+            "The weight of the mass matrix."
+        ]
+    },
+    "LinearSolver.Preconditioner.Mode": {
+        "explanation": [
+            "The mode of the preconditioner."
+        ],
+        "mode": "manual",
+        "type":[
+            "std::string"
+        ],
+        "defaultValue": [
+            "Diagonal"
+        ]
+    },
     "LinearSolver.Preconditioner.ILUOrder": {
         "defaultValue": [
             "0"
@@ -1927,6 +1961,11 @@
         "mode": "manual",
         "type": [
             "int"
+        ]
+    },
+    "LinearSolver.SymmetrizeDirichlet": {
+        "explanation": [
+            "Whether to symmetrize the Dirichlet constraints"
         ]
     },
     "LinearSolver.Type": {
@@ -2287,11 +2326,25 @@
     "ShallowWater.TurbulentViscosity": {
         "explanation": [
             "The (constant) background turbulent viscosity."
+        ],
+        "mode": "manual",
+        "type":  [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "the fluid viscosity "
         ]
     },
     "ShallowWater.UseMixingLengthTurbulenceModel": {
         "explanation": [
             "Whether the mixing-length turbulence model is used."
+        ],
+        "mode": "manual",
+        "defaultValue": [
+            "false"
+        ],
+        "type":  [
+            "bool"
         ]
     },
     "ShallowWater.VerticalCoefficientOfMixingLengthModel": {
