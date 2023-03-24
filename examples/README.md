@@ -22,12 +22,35 @@ __Model equations:__ A diffusion equation model fully developed and contained wi
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="35%"><a href="diffusion/README.md">
+<td width="25%"><a href="diffusion/README.md">
 <figure><img src="diffusion/img/diffusion.gif" alt="diffusion"/></figure></td>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 2: One-phase flow and tracer transport](1ptracer/README.md)
+### [:open_file_folder: Example 2: Cahn-Hilliard equation](cahn_hilliard/README.md)
+
+<table><tr><td>
+
+In this example we simulate the separation of two immiscible phases using the Cahn-Hilliard equation.
+
+You learn how to
+
+* setup a new nonlinear model equation (Cahn-Hilliard equation)
+* setup a model with two governing equations
+* implement a custom volume variables class to name variables
+* generate a randomly distributed vector-valued initial field (with MPI parallelism)
+* solve a time-dependent diffusion problem in parallel
+
+__Model equations:__ A Cahn-Hilliard equation model fully developed and contained within the example<br />
+__Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
+
+</td>
+<td width="25%"><a href="cahn_hilliard/README.md">
+<figure><img src="cahn_hilliard/img/animation.gif" alt="phase distribution" width="400px"/></figure></td>
+</a></td>
+</tr></table>
+
+### [:open_file_folder: Example 3: One-phase flow and tracer transport](1ptracer/README.md)
 
 <table><tr><td>
 
@@ -51,7 +74,7 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 3: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
+### [:open_file_folder: Example 4: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
 
 <table><tr><td>
 
@@ -75,7 +98,7 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 4: Shallow water model](shallowwaterfriction/README.md)
+### [:open_file_folder: Example 5: Shallow water model](shallowwaterfriction/README.md)
 
 <table><tr><td>
 
@@ -95,7 +118,7 @@ __Discretization method:__ Cell-centered finite volumes with Riemann solver (`CC
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 5: Freeflow channel](freeflowchannel/README.md)
+### [:open_file_folder: Example 6: Freeflow channel](freeflowchannel/README.md)
 
 <table><tr><td>
 
@@ -115,7 +138,7 @@ __Discretization method:__ Finite volumes with staggered grid arrangement (`Stag
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 6: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
+### [:open_file_folder: Example 7: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
 
 <table><tr><td>
 
@@ -136,7 +159,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 7: Biomineralization](biomineralization/README.md)
+### [:open_file_folder: Example 8: Biomineralization](biomineralization/README.md)
 
 <table><tr><td>
 
@@ -161,7 +184,7 @@ __Discretization method:__ Vertex-centered finite volumes / control-volume finit
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 8: Lid-driven cavity](liddrivencavity/README.md)
+### [:open_file_folder: Example 9: Lid-driven cavity](liddrivencavity/README.md)
 
 <table><tr><td>
 
@@ -182,7 +205,7 @@ __Discretization method:__ Finite volumes with staggered grid arrangement (`Stag
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 9: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
+### [:open_file_folder: Example 10: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
 
 <table><tr><td>
 
@@ -203,7 +226,7 @@ __Discretization method:__ Pore-network (`PoreNetworkModel`)
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 10: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
+### [:open_file_folder: Example 11: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
 
 <table><tr><td>
 
@@ -222,17 +245,5 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 </td>
 <td width="35%"><a href="embedded_network_1d3d/README.md">
 <figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
-</a></td>
-</tr></table>
-
-### [:open_file_folder: Example 11: The Cahn-Hilliard model, a nonlinear PDE](cahn_hilliard/README.md)
-
-<table><tr><td>
-
-In this example we simulate the separation of two immiscible phases using the Cahn-Hilliard model.
-
-</td>
-<td width="35%"><a href="cahn_hilliard/README.md">
-<figure><img src="cahn_hilliard/img/animation.gif" alt="phase distribution"/></figure></td>
 </a></td>
 </tr></table>
