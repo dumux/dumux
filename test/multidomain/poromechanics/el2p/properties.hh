@@ -47,7 +47,7 @@
 #include "problem_2p.hh"
 #include "problem_poroelastic.hh"
 
-#include "test/porousmediumflow/co2/co2tables.hh"
+#include "dumux/material/components/defaultco2table.hh"
 
 namespace Dumux::Properties {
 

@@ -39,7 +39,8 @@
 #include <dumux/material/binarycoefficients/n2_o2.hh>
 
 #include <dumux/material/components/co2.hh>
-#include <test/porousmediumflow/co2/co2tables.hh>
+//#include <bin/util/co2table.hh.template>
+#include <dumux/material/components/defaultco2table.hh>
 
 template<class Scalar, class BinaryCoefficients>
 int checkBinaryCoefficients()

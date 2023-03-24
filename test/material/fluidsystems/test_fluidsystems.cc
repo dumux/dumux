@@ -63,7 +63,7 @@
 
 // for co2, include the tabulated co2 component and the tables of the co2 test
 #include <dumux/material/components/co2.hh>
-#include <test/porousmediumflow/co2/co2tables.hh>
+#include <dumux/material/components/defaultco2table.hh>
 
 int main()
 {
