@@ -34,6 +34,12 @@ def _is_main_readme_file(path) -> bool:
     return path == MAIN_README
 
 
+def _enable_doxygen_only_content(line: str) -> str:
+    if line.startswith("<!--DOXYGEN_ONLY "):
+        return line.replace("<!--DOXYGEN_ONLY ", "").replace("-->", "")
+    return line
+
+
 assert len(sys.argv[1]) > 1
 filePath = abspath(sys.argv[1])
 
@@ -49,7 +55,7 @@ if _is_main_readme_file(filePath):
 # correctly (may be fixed in the most recent Doxygen version)
 result_lines = []
 for line in result.split("\n"):
-    result_lines.append(_add_header_label(line))
+    result_lines.append(_enable_doxygen_only_content(_add_header_label(line)))
 
 # Print the final result for Doxygen to pick it up
 print("\n".join(result_lines))
