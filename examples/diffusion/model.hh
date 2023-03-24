@@ -60,7 +60,17 @@ struct DiffusionModel {};
 // sub control volume faces (`scvf`). In the local residual, we can implement the
 // constribution for one `scv` (storage and source terms) or one `scvf` (flux terms).
 //
+// Let's have a look at the class implementation.
+//
 // [[content]]
+//
+// The class `DiffusionModelLocalResidual` inherits from something called `BaseLocalResidual`.
+// This base class differs depending on the chosen discretization scheme. For the box method
+// (which is a control-volume finite element scheme) used in this example, the property
+// `BaseLocalResidual` is specialized to `CVFELocalResidual<TypeTag>`
+// in [dumux/discretization/box.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/discretization/box.hh).
+// Since this local residual only works with control-volume finite element schemes due to
+// the flux implementation, we could have also chosen to inherit from `public CVFELocalResidual<TypeTag>`.
 namespace Dumux {
 template<class TypeTag>
 class DiffusionModelLocalResidual
