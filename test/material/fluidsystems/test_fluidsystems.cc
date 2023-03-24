@@ -61,9 +61,9 @@
 #include <dumux/material/fluidstates/saturationoverlay.hh>
 #include <dumux/material/fluidstates/temperatureoverlay.hh>
 
-// for co2, include the tabulated co2 component and the tables of the co2 test
+// for co2, include the tabulated co2 component and the default co2 table
 #include <dumux/material/components/co2.hh>
-#include <test/porousmediumflow/co2/co2tables.hh>
+#include <dumux/material/components/defaultco2table.hh>
 
 int main()
 {
