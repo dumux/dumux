@@ -56,7 +56,7 @@ Box method which is based on $P_1$ basis functions (piece-wise linears)
 and the degrees of freedom are on the nodes. Each node is associate with
 exactly one sub control volume (`scv`) per element and several ($2$ in $\mathbb{R}^2$)
 sub control volume faces (`scvf`). In the local residual, we can implement the
-constribution for one `scv` (storage and source terms) or one `scvf` (flux terms).
+contribution for one `scv` (storage and source terms) or one `scvf` (flux terms).
 
 Let's have a look at the class implementation.
 

@@ -19,7 +19,7 @@ __The main points illustrated in this example are__
 ## Equation and problem description
 
 The scalar diffusion equation on a domain $\Omega \subset \mathbb{R}^2$
-with boundary $\partial\Omega = \Gamma_D \cup \Gamma_N$ composed of Dirichlet and Neummann boundaries
+with boundary $\partial\Omega = \Gamma_D \cup \Gamma_N$ composed of Dirichlet and Neumann boundaries
 reads
 
 ```math
@@ -93,18 +93,18 @@ The simulation result will look something like this.
 By default Dumux will try to speed up the assembly by using shared memory parallelism if a suitable
 backend has been found on your system (one of TBB, OpenMP, Kokkos, C++ parallel algorithms).
 You can limit the number of threads by prepending your executable with `DUMUX_NUM_THREADS=<number>`.
-If you also want to use distributed memory parallelsim with MPI (works better for solvers at the moment),
+If you also want to use distributed memory parallelism with MPI (works better for solvers at the moment),
 run the executable with your MPI environment. Each MPI process will use multi-threading if
 `DUMUX_NUM_THREADS` is larger than $1$.
 
-Running the example with four MPI processes (distribution memory parallelsim)
+Running the example with four MPI processes (distribution memory parallelism)
 each with two threads (shared memory parallelism):
 
 ```sh
 DUMUX_NUM_THREADS=2 mpirun -np 4 ./example_diffusion
 ```
 
-You can set the parameter `Grid.Overlap` to some non-zero integer in `param.input`
+You can set the parameter `Grid.Overlap` to some non-zero integer in `params.input`
 to turn the domain decomposition into an overlapping decomposition where
 `Grid.Overlap` specifies the number of grid cells in the overlap between processes.
 This can help to increase the convergence speed of the linear solver.

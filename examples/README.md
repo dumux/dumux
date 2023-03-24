@@ -15,8 +15,8 @@ You learn how to
 * setup a new simple model equation (diffusion equation)
 * read parameters from a configuration file
 * create a type tag and specialize properties for it
-* generate a randomly distributed intial field (with MPI parallelism)
-* solve a time-depedent diffusion problem in parallel
+* generate a randomly distributed initial field (with MPI parallelism)
+* solve a time-dependent diffusion problem in parallel
 
 __Model equations:__ A diffusion equation model fully developed and contained within the example<br />
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
