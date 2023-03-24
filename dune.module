@@ -1,9 +1,9 @@
 Module: dumux
-Version: 3.7-git
+Version: 3.8-git
 Author: The DuMux Team
 Maintainer: dumux@listserv.uni-stuttgart.de
-Depends: dune-common (>=2.8) dune-grid (>=2.8) dune-localfunctions (>=2.8) dune-istl (>=2.8)
-Suggests: dune-alugrid (>=2.8) dune-foamgrid (>=2.8) dune-uggrid (>=2.8) dune-functions (>=2.8) opm-common opm-grid dune-subgrid (>=2.8) dune-spgrid (>=2.8) dune-mmesh (>=1.2)
+Depends: dune-common (>=2.9) dune-grid (>=2.9) dune-localfunctions (>=2.9) dune-istl (>=2.9)
+Suggests: dune-alugrid (>=2.9) dune-foamgrid (>=2.9) dune-uggrid (>=2.9) dune-functions (>=2.9) opm-common opm-grid dune-subgrid (>=2.9) dune-spgrid (>=2.9) dune-mmesh (>=1.4)
 Description: DuMux is a module for simulation of multi-phase multi-component flow transport in porous media
 URL: https://dumux.org
 Python-Requires: numpy

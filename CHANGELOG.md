@@ -1,6 +1,8 @@
 Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 =============================================
 
+- __Requirements__: DuMux requires Dune >=2.9 and CMake >= 3.14. It was successfully tested with dune-mmesh 1.4 and OPM 2022.10.
+
 ### General changes / structure
 
 - __Testing/CI__: One of the CI pipelines now includes a build of the `doxygen` documentation. The result of this
