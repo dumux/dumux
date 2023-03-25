@@ -11,56 +11,89 @@ Alternatively, you can try to employ MinGW, Cygwin or a Linux Virtual Machine.
 
 In order to build DuMu<sup>x</sup> you need at least the following software:
 
-* C++17 compiler (GCC 9.3 or newer, Clang 10 or newer)
-* CMake (CMake 3.14 or newer)
+* Standard-compliant C++17 compiler supporting the common feature set suppported by GCC 9.3 and Clang 10
+* CMake 3.14 or newer
 * pkg-config
+* The DUNE core modules (>= 2.9), see installation instructions below
 
-Detailed information on supported compiler and CMake versions can be found in the [DuMux handbook](/docs/#handbook).
 The following software is recommended but optional:
 
-* MPI (either OpenMPI, lam, or mpich)
+* MPI (either OpenMPI, lam, or mpich; only OpenMPI support is automatically tested)
 * SuiteSparse (for the direct solver UMFPack)
 * ParaView (to visualize the results)
 * A web browser (to access the GitLab instance and README files)
-* Python3 with `numpy` (to execute a number of different scripts used for installation, testing, post-processing, etc.)
+* Python >= 3.7 with `numpy` (to execute a number of different scripts used for installation, testing, post-processing, etc.)
 
 
-## 1. Installation via script
+## 1. Installing DuMux and DUNE via script
+
+This installation method requires
+
+* `wget` (for automatically downloading dependencies)
+* `git` (for cloning the code repositories)
+* `python3` (>= 3.7)
 
 We provide you with a Python script that facilitates setting up a Dune/DuMux directory
-tree and configures all modules using CMake. Download [installdumux.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py) and place it in a directory where you want to install Dune/DuMux. The script will create a folder "DUMUX" in which all dependencies will be downloaded and built. Note that this installation method requires Python 3.X, `wget` (for automatically downloading dependencies) and `git` (for cloning the code repositories) to be installed on your system.
+tree and configures all modules using CMake. Download [installdumux.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py) and place it in a directory where you want to install Dune/DuMux, for example by running
 
+    wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py
+
+Executing the script creates a folder "DUMUX" in which all dependencies will be downloaded and built.
 Run the script by typing:
 
     python3 installdumux.py
 
 Follow the instructions printed after the script has completed successfully to verify everything works as expected.
 
-For more detailed explanation on installation and building of DuMux, please have a look below or at the [handbook](/docs/#handbook) of the latest release.
+In brief, the script performs the following steps:
 
+* create a folder "DUMUX"
+* clone the DUNE core modules in the current release version
+* clone the DuMux module
+* configure DUNE and DuMux with CMake by using the script `dune-common/bin/dunecontrol` and the options in `dumux/cmake.opts`
+* build the DUNE and DuMux libraries using CMake and generated GNU Makefiles
 
-## 2. Manual installation from source
+Note that this process can take several minutes. The next section will guide
+you through the same process providing the necessary commands for executing each step.
+
+## 2. Manually installing DUNE and Dumux from source
+
+### 2.1 Obtaining the DUNE core modules
 
 DuMux depends on [Dune](https://dune-project.org/).
-You can obtain the required Dune modules in form of binary packages for Debian, Ubuntu and openSUSE, see the [Dune binary packages](http://www.dune-project.org/binary/). The Dune releases can also be obtained as [tarballs](https://www.dune-project.org/releases/). Alternatively, you can use [Git](https://www.dune-project.org/dev/downloadgit/) and download the modules (recommended and described here). To clone the Dune core modules (minimum requirement), you can run:
+Required are the libraries/modules `dune-common`, `dune-geometry`,
+`dune-grid`, `dune-localfunctions`, and `dune-istl`.
+You can obtain the required Dune modules in form of binary packages
+for Debian, Ubuntu and openSUSE, see the [Dune binary packages](http://www.dune-project.org/binary/).
+The Dune releases can also be obtained as [tarballs](https://www.dune-project.org/releases/).
+Alternatively and recommended and described below, you can use [git](https://www.dune-project.org/dev/downloadgit/)
+to download the source code and configure and build with the `dunecontrol` script.
+To clone the Dune core modules, run:
 
     for module in common geometry grid localfunctions istl; do
       git clone -b releases/2.9 https://gitlab.dune-project.org/core/dune-$module.git
     done
 
-Our Git repository (just like Dune's) offers anonymous read access. To clone the 3.7 release version, you can type:
+### 2.2 Obtaining the Dumux source code
+
+To clone the latest 3.7 release version, run
 
     git clone -b releases/3.7 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
-You can clone the master branch (developer version) by typing:
+The master branch (developer version) can be cloned with
 
     git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
-Alternatively, it is also possible to download release tarballs from [Zenodo](https://doi.org/10.5281/zenodo.2479594) or from [GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases).
+Alternatively, it is also possible to download release tarballs
+from [Zenodo](https://doi.org/10.5281/zenodo.2479594) or
+from [GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases).
 
-After obtaining all modules (at least the Dune core modules `dune-common`,`dune-geometry`,`dune-grid`,`dune-istl`,`dune-localfunctions` and `dumux`), DuMux is built together with other Dune modules. Assuming that the Dune core modules and DuMux are folders in the same directory
+### 2.3 Configure and build
 
-    installation folder
+After obtaining all modules (at least `dune-common`,`dune-geometry`,`dune-grid`,`dune-istl`,`dune-localfunctions` and `dumux`),
+DuMux is built together with other Dune modules. Assuming that the Dune core modules and DuMux are folders in the same directory
+
+    DUMUX (installation folder)
     |- dune-common
     |- dune-geometry
     |- dune-grid
@@ -72,15 +105,33 @@ you can configure and build the module stack with the `dunecontrol` helper scrip
 
     ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
 
-This will create a separate build folder called `build-cmake` individually in each module. In case you want to build the module stack in a separate build folder use
+In case you have obtained the DUNE modules via a package manager,
+`dunecontrol` should be an available program in your path environment
+(replace `./dune-common/bin/dunecontrol` by `dunecontrol`).
+
+Running `dunecontrol` will create a build folder called
+`build-cmake` in each of the module folders.
+In case you want to build the module stack in a separate build folder use
 
     ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --builddir=$(pwd)/build all
 
-More details on the Dune build system can be found in the [Dune installation notes](http://www.dune-project.org/doc/installation/). Dune and DuMux rely heavily on compiler optimization. The speed difference between running a compiler-optimized versus a non-optimized DuMux executable can easily exceed a factor of 10.
+More details on the DUNE build system can be found in the [Dune installation notes](http://www.dune-project.org/doc/installation/).
+
+### Compiler options
+
+Dune and DuMux rely heavily on compiler optimization.
+The speed difference between running a compiler-optimized versus a non-optimized DuMux executable can easily exceed a factor of $10$.
 The default `cmake.opts` in `dumux/cmake.opts` already enable compiler optimisations.
 To use debug options use `-DCMAKE_BUILD_TYPE=Debug` instead of `-DCMAKE_BUILD_TYPE=Release` in the `cmake.opts`, or
-add `set(CMAKE_BUILD_TYPE Debug)` to any `CMakeLists.txt` containing a test that you want to compile non-optimised and with debug symbols enabled.
+add `set(CMAKE_BUILD_TYPE Debug)` to any `CMakeLists.txt` containing a test that you want
+to compile non-optimised and with debug symbols enabled.
 
+In case you are running macOS on a recent arm chip (M1, M2) your compiler might not support the flag `-march=native` yet.
+You can replace this flag by a `mcpu=<cpu>` flag, where `<cpu>` is the best match of available option shown by
+`clang --print-supported-cpus`.
+
+Often it makes sense to create and keep around a custom option file for `dunecontrol` tailored
+to your local setup. You can use `dumux/cmake.opts` as a starting point.
 
 ## 3. Install external dependencies via script
 
