@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # add_dumux_doxgen_target
 #
 # make sure, that the doxygen links to todo list, bibliography, etc. are correct
