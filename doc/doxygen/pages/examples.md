@@ -5,6 +5,8 @@ You have run `dunecontrol` and your first example compiled and showed a nice sim
 What now? *How on earth is this going to help me solve my multi-(phase, component, scale, physics) flow and transport problems in porous media systems?*
 A great collection of additional resources can be found below.
 
+[TOC]
+
 ## Documented examples
 
 DuMux comes with a set of [documented examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/examples#open_file_folder-example-1-diffusion-equation).

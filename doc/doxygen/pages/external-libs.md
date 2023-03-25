@@ -16,6 +16,8 @@ for tips on how to install external libraries.
 
 In the following grouped lists, you can find some external modules and external libraries.
 
+[TOC]
+
 ## Grid managers
 
 * `dune-alugrid`: Grid library, comes as a DUNE module. The parallel version needs also a graph partitioner, such as ParMETIS.
