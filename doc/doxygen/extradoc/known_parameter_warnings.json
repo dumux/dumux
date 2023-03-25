@@ -68,5 +68,15 @@
     ],
     "dumux/assembly/pq1bubblelocalassembler.hh": [
         "static const bool updateAllVolVars = getParamFromGroup<bool>("
+    ],
+    "dumux/flux/shallowwaterviscousflux.hh": [
+        "static const auto useMixingLengthTurbulenceModel = getParamFromGroup<bool>(",
+        "static const auto backgroundKinematicViscosity = getParamFromGroup<Scalar>("
+    ],
+    "dumux/linear/stokes_solver.hh": [
+        "const auto mode = getParamFromGroup<std::string>("
+    ],
+    "dumux/assembly/cvfelocalassembler.hh": [
+        "static const bool updateAllVolVars = getParamFromGroup<bool>("
     ]
 }
