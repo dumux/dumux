@@ -341,6 +341,18 @@
             "Whether to refine where source terms are specified"
         ]
     },
+    "Assembly.BoxVolVarsDependOnAllElementDofs": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Whether to update all volvars in the stencil or only update the volVars for the scv whose associated dof has been deflected."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
     "Assembly.FCDiamondVolVarsDependOnAllElementDofs": {
         "defaultValue": [
             "false"
@@ -1509,6 +1521,9 @@
             "Whether to enable the production limiter"
         ]
     },
+    "LinearSolver.DirectSolverForVelocity": {
+        "mode": "ignore"
+    },
     "LinearSolver.GMResRestart": {
         "defaultValue": [
             "10"
@@ -1821,6 +1836,9 @@
             "bool"
         ]
     },
+    "LinearSolver.Preconditioner.MassMatrixWeight": {
+        "mode": "ignore"
+    },
     "LinearSolver.Preconditioner.ILUOrder": {
         "defaultValue": [
             "0"
@@ -1928,6 +1946,9 @@
         "type": [
             "int"
         ]
+    },
+    "LinearSolver.SymmetrizeDirichlet": {
+        "mode": "ignore"
     },
     "LinearSolver.Type": {
         "defaultValue": [
@@ -2287,11 +2308,25 @@
     "ShallowWater.TurbulentViscosity": {
         "explanation": [
             "The (constant) background turbulent viscosity."
+        ],
+        "mode": "manual",
+        "type":  [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "the fluid viscosity "
         ]
     },
     "ShallowWater.UseMixingLengthTurbulenceModel": {
         "explanation": [
             "Whether the mixing-length turbulence model is used."
+        ],
+        "mode": "manual",
+        "defaultValue": [
+            "false"
+        ],
+        "type":  [
+            "bool"
         ]
     },
     "ShallowWater.VerticalCoefficientOfMixingLengthModel": {
@@ -2368,7 +2403,8 @@
     "Vtk.AddVelocity": {
         "explanation": [
             "Whether to enable velocity output"
-        ]
+        ],
+        "defaultValue" :["false"]
     },
     "Vtk.CoordPrecision": {
         "explanation": [
