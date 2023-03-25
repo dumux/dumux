@@ -3,13 +3,11 @@
 <!-- Properties -->
 
 @defgroup Properties Properties and the property systems
-@brief Basic properties of all models in DuMu<sup>x</sup>
 @ingroup Core
 
 <!-- Parameters -->
 
 @defgroup Parameters Parameters and runtime configuration
-@brief Basic properties of all models in DuMu<sup>x</sup>
 @ingroup Core
 
 <!-- Discretization -->
