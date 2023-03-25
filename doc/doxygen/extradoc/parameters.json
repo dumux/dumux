@@ -1522,9 +1522,7 @@
         ]
     },
     "LinearSolver.DirectSolverForVelocity": {
-        "explanation": [
-            "Whether to use direct solver for the velocity"
-        ]
+        "mode": "ignore"
     },
     "LinearSolver.GMResRestart": {
         "defaultValue": [
@@ -1839,21 +1837,7 @@
         ]
     },
     "LinearSolver.Preconditioner.MassMatrixWeight": {
-        "explanation": [
-            "The weight of the mass matrix."
-        ]
-    },
-    "LinearSolver.Preconditioner.Mode": {
-        "explanation": [
-            "The mode of the preconditioner."
-        ],
-        "mode": "manual",
-        "type":[
-            "std::string"
-        ],
-        "defaultValue": [
-            "Diagonal"
-        ]
+        "mode": "ignore"
     },
     "LinearSolver.Preconditioner.ILUOrder": {
         "defaultValue": [
@@ -1964,9 +1948,7 @@
         ]
     },
     "LinearSolver.SymmetrizeDirichlet": {
-        "explanation": [
-            "Whether to symmetrize the Dirichlet constraints"
-        ]
+        "mode": "ignore"
     },
     "LinearSolver.Type": {
         "defaultValue": [
@@ -2421,7 +2403,8 @@
     "Vtk.AddVelocity": {
         "explanation": [
             "Whether to enable velocity output"
-        ]
+        ],
+        "defaultValue" :["false"]
     },
     "Vtk.CoordPrecision": {
         "explanation": [
