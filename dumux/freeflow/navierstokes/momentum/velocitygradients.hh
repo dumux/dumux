@@ -36,6 +36,9 @@ struct SupportsPeriodicity : public std::false_type {};
 
 template<class ct, int dim, template< int > class Ref, class Comm>
 struct SupportsPeriodicity<Dune::SPGrid<ct, dim, Ref, Comm>> : public std::true_type {};
+
+template<class ct, int dim, template< int > class Ref, class Comm>
+struct SupportsPeriodicity<Dune::SubGrid<dim, Dune::SPGrid<ct, dim, Ref, Comm>>> : public std::true_type {};
 }
 
 /*!
