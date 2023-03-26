@@ -18,6 +18,9 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#endif
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
@@ -176,6 +179,71 @@ int main(int argc, char** argv)
         subgridManager.init("RepeatedImage");
         Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("repeatedsubgrid_binary_image");
+    }
+
+#if HAVE_DUNE_SPGRID
+        Dune::Timer timer;
+        using HostGrid = Dune::SPGrid<double, dim>;
+        using HostGridManager = GridManager<HostGrid>;
+        HostGridManager hostGridManager;
+        std::string gridName = "SPGrid";
+        hostGridManager.init(gridName);
+        auto& hostGrid = hostGridManager.grid();
+
+        using SubGridManager = Dumux::GridManager<Dune::SubGrid<dim, HostGrid>>;
+        SubGridManager subGridManager;
+
+        // The subgrid is created from a 3x3 periodic host grid.
+        // Two cells are removed (one internal, one at a boundary) such that all possible intersection cases are seen.
+
+        std::vector<bool> img = {1, 0, 0, 0, 1, 0, 0, 0, 0};
+
+        auto gridSelector = [&hostGrid, &img](const auto& element)
+        {
+            auto eIdx = hostGrid.leafGridView().indexSet().index(element);
+            return img[eIdx] == 0;
+        };
+
+        subGridManager.init(hostGrid, gridSelector, gridName);
+        std::cout << "Constructing a sp host grid and one basic image grid in "  << timer.elapsed() << " seconds.\n";
+        Dune::VTKWriter<SubGridManager::Grid::LeafGridView> vtkWriter(subGridManager.grid().leafGridView());
+        vtkWriter.write("periodic_subgrid_binary_image");
+
+        // The intersections for the periodic subgrid should match the following properties.
+        // Each entry contains a pair with bool values that should match (it.Boundary(), it.Neighbor())
+        std::vector<std::pair<bool, bool>> intersectionProperties {{true, false}, {false, true}, {true, true}, {true, false},
+                                                                   {false, true}, {true, false}, {true, true}, {false, true},
+                                                                   {true, false}, {true, false}, {true, false}, {false, true},
+                                                                   {true, false}, {true, false}, {false, true}, {false, true},
+                                                                   {true, false}, {false, true}, {false, true}, {true, false},
+                                                                   {false, true}, {false, true}, {true, false}, {true, true},
+                                                                   {false, true}, {true, false}, {false, true}, {true, true}};
+        int countSub = 0;
+        int intersectionIdx = 0;
+        for (const auto& element : elements(subGridManager.grid().leafGridView()))
+        {
+            for (auto& intersection : intersections(subGridManager.grid().leafGridView(), element))
+            {
+                if ((intersection.boundary() != intersectionProperties[intersectionIdx].first) ||
+                    (intersection.neighbor() != intersectionProperties[intersectionIdx].second) )
+                    DUNE_THROW(Dune::Exception, "The Subgrid intersection's (" << intersectionIdx << ") properties are incorrect. \n" <<
+                                                "Intersection Center is : " << intersection.geometry().center() <<
+                                                "\n Boundary is " <<  intersection.boundary() << " and should be " <<
+                                                intersectionProperties[intersectionIdx].first <<
+                                                "\n Neighbor is " <<  intersection.neighbor() << " and should be " <<
+                                                intersectionProperties[intersectionIdx].second );
+                if (intersection.boundary())
+                    if (intersection.neighbor())
+                        countSub++;
+            intersectionIdx++;
+            }
+        }
+        if (countSub == 0)
+            DUNE_THROW(Dune::Exception, "subGrid is not periodic!");
+
+#else
+        std::cout << "Skipped test with SPGRID as host grid.\n";
+#endif
     }
 
     return 0;
