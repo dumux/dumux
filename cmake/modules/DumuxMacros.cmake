@@ -17,6 +17,8 @@ find_package(PVPython QUIET)
 find_package(Kokkos QUIET)
 include(AddKokkosFlags)
 
+include(CheckCXXSymbolExists)
+
 # test if compiler supports std::format
 check_cxx_symbol_exists(
   "__cpp_lib_format"
