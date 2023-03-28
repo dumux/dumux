@@ -12,7 +12,7 @@ Alternatively, you can try to employ MinGW, Cygwin or a Linux Virtual Machine.
 In order to build DuMu<sup>x</sup> you need at least the following software:
 
 * C++17 compiler (GCC 9.3 or newer, Clang 10 or newer)
-* CMake (CMake 3.13 or newer)
+* CMake (CMake 3.14 or newer)
 * pkg-config
 
 Detailed information on supported compiler and CMake versions can be found in the [DuMux handbook](/docs/#handbook).
@@ -45,12 +45,12 @@ DuMux depends on [Dune](https://dune-project.org/).
 You can obtain the required Dune modules in form of binary packages for Debian, Ubuntu and openSUSE, see the [Dune binary packages](http://www.dune-project.org/binary/). The Dune releases can also be obtained as [tarballs](https://www.dune-project.org/releases/). Alternatively, you can use [Git](https://www.dune-project.org/dev/downloadgit/) and download the modules (recommended and described here). To clone the Dune core modules (minimum requirement), you can run:
 
     for module in common geometry grid localfunctions istl; do
-      git clone -b releases/2.8 https://gitlab.dune-project.org/core/dune-$module.git
+      git clone -b releases/2.9 https://gitlab.dune-project.org/core/dune-$module.git
     done
 
-Our Git repository (just like Dune's) offers anonymous read access. To clone the 3.6 release version, you can type:
+Our Git repository (just like Dune's) offers anonymous read access. To clone the 3.7 release version, you can type:
 
-    git clone -b releases/3.6 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+    git clone -b releases/3.7 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 You can clone the master branch (developer version) by typing:
 
