@@ -32,10 +32,16 @@
 
 namespace Dumux::Properties {
 
-//! a tag to mark properties as undefined
+/*!
+ * \ingroup Properties
+ * \brief a tag to mark properties as undefined
+ */
 struct UndefinedProperty {};
 
-//! a mechanism to specify a direct alias for property extraction
+/*!
+ * \ingroup Properties
+ * \brief a tag to specify a direct alias for property extraction
+ */
 template<class P> struct PropertyAlias;
 
 } // end namespace Dumux::Properties
@@ -230,7 +236,10 @@ struct GetPropOrImpl
 
 namespace Dumux::Properties {
 
-//! whether the property is defined/specialized for TypeTag
+/*!
+ * \ingroup Properties
+ * \brief whether the property is defined/specialized for TypeTag
+ */
 template<class TypeTag, template<class,class> class Property>
 inline constexpr bool hasDefinedType()
 {
@@ -242,11 +251,17 @@ inline constexpr bool hasDefinedType()
 
 namespace Dumux {
 
-//! get the type of a property
+/*!
+ * \ingroup Properties
+ * \brief get the type of a property
+ */
 template<class TypeTag, template<class,class> class Property>
 using GetProp = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type;
 
-//! get the type of a property or the type T if the property is undefined
+/*!
+ * \ingroup Properties
+ * \brief get the type of a property or the type T if the property is undefined
+ */
 template<class TypeTag, template<class,class> class Property, class T>
 using GetPropOr = typename Properties::Detail::GetPropOrImpl<TypeTag, Property, T>::type;
 
@@ -255,15 +270,25 @@ using GetPropOr = typename Properties::Detail::GetPropOrImpl<TypeTag, Property, 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
-//! get the type alias defined in the property
+
+/*!
+ * \ingroup Properties
+ * \brief get the type alias defined in the property
+ */
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename GetProp<TypeTag, Property>::type;
 
-//! get the type alias defined in the property or the type T if the property is undefined
+/*!
+ * \ingroup Properties
+ * \brief get the type alias defined in the property or the type T if the property is undefined
+ */
 template<class TypeTag, template<class,class> class Property, class T>
 using GetPropTypeOr = typename GetPropOr<TypeTag, Property, T>::type;
 
-//! get the value data member of a property
+/*!
+ * \ingroup Properties
+ * \brief get the value data member of a property
+ */
 template<class TypeTag, template<class,class> class Property>
 inline constexpr auto getPropValue() { return Properties::Detail::GetPropValue<GetProp<TypeTag, Property>>::value; }
 #ifdef __clang__

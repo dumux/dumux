@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Properties
  *
  * \brief _Defines_ all properties used in Dumux.
  * \note Include this to forward declare properties in your headers.
