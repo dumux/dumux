@@ -8,62 +8,62 @@ and distributed memory parallelism.
 
 ## Distributed memory parallelism with MPI
 
-The parallelization in DuMux is based on the model supported by DUNE which is based on Message Passing Interface (MPI) (distributed-
-memory approach). The main idea behind the MPI parallelization is the concept of domain decomposition. For parallel
+Distributed memory parallelism with MPI (Message Passing Interface) is supported through DUNE. The main idea behind the MPI parallelization is the concept of domain decomposition. For parallel
 simulations, the computational domain is split into subdomains and one process (rank) is used to solve the local problem of each subdomain.
 During the global solution process, some data exchange between the ranks/subdomains is needed.
-MPI is used to send data to other ranks and to receive data from other ranks
-The domain decomposition in Dune is handled by the grid managers.
-The grid is partitioned and distributed on several nodes.
-Most grid managers contain own domain decomposition methods to split the computational domain into subdomains.
-Some grid managers also support external tools like METIS, ParMETIS, PTScotch or ZOLTAN for partitioning.
+MPI is used to send data to other ranks and to receive data from other ranks.
 
-On the other hand, linear algebra types such as matrices and vectors do not know that they are in a parallel environment.
-Communication is then handled by the components of the parallel solvers.
+Domain decomposition in DUNE is handled by the grid implementations.
+The grid is partitioned and distributed onto several processes. The `grid.leafGridView()` and `grid.levelGridView()` methods return views on the processor-local partition of the grid. For example, `grid.leafGridView().size(0)` returns the number of elements available on the current processor.
+Most grid implementations contain their own domain decomposition methods to split the computational domain into subdomains. Some grid implementations also support external tools like `METIS`, `ParMETIS`, `PTScotch` or `ZOLTAN` for partitioning. These tools may have to be installed separately. Consult the documentation of the grid implementation.
+
+Linear algebra types such as matrices and vectors do not know that they are in a parallel environment. This means, for example, that the solution vector on each processor only contains the number of degrees of freedom available on that processor and its size is therefore smaller than the global number of degrees of freedom.
+Communication of linear algebra type data is handled by parallel solvers.
 Currently, most solvers in DuMux are also usable as parallel solvers.
-First, the Dumux::AMGBiCGSTABBackend, a parallel AMG-preconditioned BiCGSTAB solver.
-Second, the Dumux::IstlSolverFactoryBackend, which provides a selections of different parallel solvers and preconditioners.
-This backend makes it also possible to choose solver and preconditioner during runtime,
-but this flexibility is achieved by the cost of an increased compile time.
-In order for DuMux simulation to run in parallel, an MPI library (e.g. OpenMPI, MPICH or IntelMPI)
-implementation must be installed on the system. However, not all parts of DuMux can be used in parallel.
-Furthermore, we note that the parallel AMG preconditioner of dune-istl defaults
-to an iterative SSOR coarse grid solver if no direct solver is found on your system.
-Unfortunately, the iterative solver has a very high and hard-coded tolerance as a termination criterion,
-which will not solve the coarse grid system with sufficient accuracy for typical problems in DuMux.
-We therefore recommend to install one of the direct solver libraries supported by dune-istl.
-This is either UMFPack contained in SuiteSparse, or SuperLU, see also the section on [External Libraries](#external-libraries).
 
-## Prepare a parallel application
+The solvers based on dune-istl can be found in dumux/linear/istlsolvers.hh
+and dumux/linear/istlsolverfactorybackend.hh. The latter makes the solver
+configurable via parameters or the command line interface. To use the dune-istl based iterative solvers in parallel, you have to use the constructor receiving a grid view and a dof mapper, and the
+linear solver traits derived from the grid geometry type, e.g.
 
-In order to switch to a parallel solver backend include the respective header
+```cpp
+#include <memory>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
-    #include <dumux/linear/amgbackend.hh> or
-    #include <dumux/linear/istlsolverfactorybackend.hh>
+int main {
 
-Second, the linear solver must be switched to the parallel solver backend
+using GridGeometry = ...;
+using Assembler = ...;
+auto gridGeometry = std::make_shared<GridGeometry>(...);
 
-    using LinearSolver = AMGBiCGSTABBackend<LinearSolverTraits<GridGeometry>>; or
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>>;
+...
 
-The parallel instance of the linear solver has to be constructed with a
-Dune::GridView object and a mapper, in order to construct the parallel index set needed for communication.
+// type of the Linear solver
+using LinearSolver = AMGBiCGSTABIstlSolver<
+    LinearSolverTraits<GridGeometry>>,
+    LinearAlgebraTraitsFromAssembler<Assembler>
+>;
 
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+// construct a parallel Linear solver
+auto linearSolver = std::make_shared<LinearSolver>(
+    gridGeometry->gridView(), gridGeometry->dofMapper()
+);
 
-When using the Dumux::IstlSolverFactoryBackend, solver and preconditioner have to be specified
-in the file params.input by the parameters `LinearSolver.Type` and `LinearSolver.Preconditioner.Type`.
-Possible solvers are bicgstabsolver or restartedgmressolver,
-possible preconditioners ilu or gs.
-Depending on the chosen solver and preconditioner additional parameters can be specified.
-More information about the options
-and the other available solvers and preconditioners can be found in `dune-istl`
-(solvers.hh and preconditioners.hh).
+...
+}
+```
 
-## Run a parallel application
+In order for DuMux simulation to run in parallel, an MPI library (e.g. OpenMPI, MPICH or IntelMPI) implementation must be installed on the system.
 
-The starting procedure for parallel simulations depends on the chosen MPI library.
-Most MPI implementations use the `mpirun` command
+Note that the parallel AMG preconditioner of dune-istl defaults
+to an iterative SSOR coarse grid solver if no direct solver is found on your system. Unfortunately, the iterative solver has a very high and hard-coded tolerance as a termination criterion, which will not solve the coarse grid system with sufficient accuracy for typical problems in DuMux.
+We therefore recommend to install one of the direct solver libraries supported by dune-istl. This is either UMFPack contained in SuiteSparse, or SuperLU, see also the section on [External Libraries](#external-libraries).
+
+## Run a parallel MPI application
+
+The starting procedure for parallel simulations depends on the chosen MPI library. Most MPI implementations use the `mpirun` command
 
 ```sh
    mpirun -np [n_cores] [executable_name]
@@ -85,4 +85,63 @@ like in sequential simulations that can be opened with e.g. ParaView.
 
 ## Shared-memory parallelism and multi-threaded applications
 
-TODO
+Some parts of Dumux application can exploit parallelism with the shared memory model. This is for example used in the Dumux::FVAssembler by default to assemble the residual and stiffness matrix in parallel. Therefore, the assembly will usually be significantly faster on multi-processor machines.
+
+Multithreading is enabled if a multi-threading backend is found. Currently, we support one of `OpenMP`, `TBB`,  C++ parallel algorithms, `Kokkos`. The backend is selected by `CMake` during configure and stored in the variable `DUMUX_MULTITHREADING_BACKEND`. In the `CMake` terminal output during `dunecontrol` (see @ref installation), you may see
+
+    -- Dumux multithreading backed: TBB
+
+or
+
+    -- Dumux multithreading backed: Serial
+
+if no suitable backend could be found. You can switch backends after DuMu<sup>x</sup> has been configured by running in the build folder (e.g. `dumux/build-cmake`)
+
+    cmake -DDUMUX_MULTITHREADING_BACKEND=OpenMP .
+
+CMake will throw an error in case the chosen backend is not available on your system.
+
+### Multi-threaded assembly
+
+If a multi-threading backend is found, the Dumux::FVAssembler runs in parallel per default. The assembly algorithm will first compute an element coloring and then assembly each color in parallel. The coloring prevents data races when writing into caches, the matrix, or the residual vectors. You will see output such as
+
+    Colored 100 elements with 7 colors in 3.4625e-05 seconds.
+
+You may disable multithreaded assembly via the command line
+or the parameter file, e.g.
+
+    ./test_executable -Assembly.Multithreading false
+
+
+### Restricting the number of threads
+
+Per default, the backend decides on the default number of threads
+used. Usually, this will be the number of available threads on your system.
+Often (and very important for running on clusters) you may want to restrict the number of threads used by a DuMu<sup>x</sup> application. You can do
+this with the environment variable `DUMUX_NUM_THREADS`, e.g.
+
+    DUMUX_NUM_THREADS=2 ./test_executable
+
+Try running your application with different number of threads to see
+how much your simulation time reduces.
+
+
+## Hybrid parallel runs
+
+You can combine shared memory and distributed memory parallelism.
+However, note that when using distributed memory parallelism you
+may not profit from additionally using multithreading and it might
+be more efficient to use more MPI processes if more cores are available.
+
+## Which components support parallel computing?
+
+Not all components in DuMu<sup>x</sup> support parallel computing.
+Currently, all supported grid implementations read the grid on the
+main process and distribute after which degrades parallel efficiency.
+Solver components do not support shared memory parallelism per default.
+However, there is for example a parallel matrix operator (Dumux::ParallelMultiTypeMatrixAdapter) and parallel smoothers (Dumux::ParMTSSOR, Dumux::ParMTJac) available that can be used to build custom solvers.
+The multidomain framework and simulations using the multidomain framework do not generally support parallel computing at the moment.
+Some coupling managers (e.g. Dumux::Embedded1d3dCouplingManager) support multi-threaded assembly.
+
+Some operations may require manual communication. See, for example,
+the [diffusion example](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/examples/diffusion) for an example of manual communication to create a random initial solution that is consistent across all processes.
