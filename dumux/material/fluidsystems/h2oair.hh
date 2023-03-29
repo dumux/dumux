@@ -281,7 +281,8 @@ public:
         if (compIdx == H2OIdx)
         {
             const auto t = fluidState.temperature(H2OIdx);
-            if (!useKelvinVaporPressure)
+            // cppcheck-suppress internalAstError
+            if constexpr (!useKelvinVaporPressure)
                 return H2O::vaporPressure(t);
             else
             {

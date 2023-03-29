@@ -95,7 +95,7 @@ public:
         init(useAllElements, paramGroup);
     }
 
-    template<class LowDimElementSelector,
+    template<class LowDimElementSelector, // cppcheck-suppress syntaxError
              typename std::enable_if_t<Dune::models<Concept::LowDimElementSelector<GlobalPosition>, LowDimElementSelector>(), int> = 0>
     void init(const LowDimElementSelector& lowDimElementSelector,
               const std::string& paramGroup = "")

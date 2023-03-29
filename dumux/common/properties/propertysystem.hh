@@ -69,6 +69,27 @@ constexpr std::false_type hasParentTypeTag(...)
 { return {}; }
 
 
+//! detect if the tag T has an alias with the same name as that of the property P
+template<class P, class T>
+using TypeAliasPropertyDetector = typename PropertyAlias<P>::template Alias<T>;
+
+//! a property imitating the actual property P that extracts type and value
+//! from alias members of tag T instead of from a property specialization for tag T
+template<class P, class T>
+struct TypeAliasProperty
+{ using type = Dune::Std::detected_or_t<UndefinedProperty, TypeAliasPropertyDetector, P, T>; };
+
+//! detect if the tag T has a template alias with the same name as that of the property P
+template<class P, class T, class TypeTag>
+using TemplateAliasPropertyDetector = typename PropertyAlias<P>::template TemplateAlias<T, TypeTag>;
+
+//! a property imitating the actual property P that extracts type
+//! from template alias members of tag T instead of from a property specialization for tag T
+template<class P, class T, class TypeTag>
+struct TemplateAliasProperty
+{ using type = Dune::Std::detected_or_t<UndefinedProperty, TemplateAliasPropertyDetector, P, T, TypeTag>; };
+
+
 //! detector for value members
 template<class T>
 using ValueMemberDetector = decltype(T::value);
@@ -81,33 +102,19 @@ struct ValueMember { static constexpr bool value = false; };
 template<class T>
 struct ValueMember<T, true> { static constexpr auto value = T::value; };
 
-//! detect if the tag T has an alias with the same name as that of the property P
+//! extract values from properties specializations
+template<class PropertySpecialization>
+struct GetPropValue { static constexpr auto value = ValueMember<PropertySpecialization>::value; };
+
+//! extract values from type alias properties
 template<class P, class T>
-using DirectMemberPropertyDetector = typename PropertyAlias<P>::template Alias<T>;
+struct GetPropValue<TypeAliasProperty<P, T>>
+{ static constexpr auto value = ValueMember<typename TypeAliasProperty<P, T>::type>::value; };
 
-//! a property imitating the actual property P that extracts type and value
-//! from alias members of tag T instead of from a property specialization for tag T
-template<class P, class T>
-struct DirectMemberProperty
-{
-    using type = Dune::Std::detected_or_t<UndefinedProperty, DirectMemberPropertyDetector, P, T>;
-    static constexpr auto value = ValueMember<type>::value;
-};
-
-//! detect if the tag T has a template alias with the same name as that of the property P
+//! extract values from template alias properties
 template<class P, class T, class TypeTag>
-using DirectTemplateMemberPropertyDetector = typename PropertyAlias<P>::template TemplateAlias<T, TypeTag>;
-
-//! a property imitating the actual property P that extracts type
-//! from template alias members of tag T instead of from a property specialization for tag T
-template<class P, class T, class TypeTag>
-struct DirectTemplateMemberProperty
-{
-    using type = Dune::Std::detected_or_t<
-        UndefinedProperty,
-        DirectTemplateMemberPropertyDetector, P, T, TypeTag
-    >;
-};
+struct GetPropValue<TemplateAliasProperty<P, T, TypeTag>>
+{ static constexpr auto value = ValueMember<typename TemplateAliasProperty<P, T, TypeTag>::type>::value; };
 
 
 //! helper alias to concatenate multiple tuples
@@ -154,8 +161,8 @@ struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-    using DirectType = DirectMemberProperty<LastType, LastTypeTag>;
-    using DirectTemplateType = DirectTemplateMemberProperty<LastType, LastTypeTag, TypeTag>;
+    using DirectType = TypeAliasProperty<LastType, LastTypeTag>;
+    using DirectTemplateType = TemplateAliasProperty<LastType, LastTypeTag, TypeTag>;
     // See below for an explanation of this
     using type = std::conditional_t<
         isDefinedProperty<LastType>(int{}), LastType,
@@ -181,8 +188,8 @@ struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-    using DirectType = DirectMemberProperty<FirstType, FirstTypeTag>;
-    using DirectTemplateType = DirectTemplateMemberProperty<FirstType, FirstTypeTag, TypeTag>;
+    using DirectType = TypeAliasProperty<FirstType, FirstTypeTag>;
+    using DirectTemplateType = TemplateAliasProperty<FirstType, FirstTypeTag, TypeTag>;
     // First we check if the property is specialized for the current type tag
     // If yes, we found the correct specialization, if no we keep searching.
     // Second, we check if the type tag contains an alias with the property name.
@@ -258,7 +265,7 @@ using GetPropTypeOr = typename GetPropOr<TypeTag, Property, T>::type;
 
 //! get the value data member of a property
 template<class TypeTag, template<class,class> class Property>
-inline constexpr auto getPropValue() { return GetProp<TypeTag, Property>::value; }
+inline constexpr auto getPropValue() { return Properties::Detail::GetPropValue<GetProp<TypeTag, Property>>::value; }
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
