@@ -40,6 +40,10 @@ def _enable_doxygen_only_content(line: str) -> str:
     return line
 
 
+def _change_verbatim(line: str) -> bool:
+    return line.count("```") % 2 != 0
+
+
 assert len(sys.argv[1]) > 1
 filePath = abspath(sys.argv[1])
 
@@ -54,8 +58,13 @@ if _is_main_readme_file(filePath):
 # Give all headers anchors (labels) s.t. doxygen cross-linking works
 # correctly (may be fixed in the most recent Doxygen version)
 result_lines = []
+verbatim_environment = False
 for line in result.split("\n"):
-    result_lines.append(_enable_doxygen_only_content(_add_header_label(line)))
+    if _change_verbatim(line):
+        verbatim_environment = not verbatim_environment
+    result_lines.append(
+        line if verbatim_environment else _enable_doxygen_only_content(_add_header_label(line))
+    )
 
 # Print the final result for Doxygen to pick it up
 print("\n".join(result_lines))
