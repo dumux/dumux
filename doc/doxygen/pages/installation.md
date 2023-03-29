@@ -6,12 +6,13 @@
 
 DuMu<sup>x</sup> builds and runs on **Linux** and **Mac** operating systems.
 Installation on Windows is possible but it is definitely not something to try if you are a beginner.
-If you use Windows, we recommend the [Ubuntu bash on Windows](https://msdn.microsoft.com/commandline/wsl/).
+If you use Windows, we recommend the [Ubuntu bash on Windows (WSL)](https://msdn.microsoft.com/commandline/wsl/)
+and a [guide to using Dumux with the WSL can be found in the wiki](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/Installation-of-DuMux-inside-the-Windows-Subsystem-for-Linux-(WSL)).
 Alternatively, you can try to employ MinGW, Cygwin or a Linux Virtual Machine.
 
 In order to build DuMu<sup>x</sup> you need at least the following software:
 
-* Standard-compliant C++17 compiler supporting the common feature set suppported by GCC 9.3 and Clang 10
+* Standard-compliant C++17 compiler supporting the common feature set supported by GCC 9.3 and Clang 10
 * CMake 3.14 or newer
 * pkg-config
 * The DUNE core modules (>= 2.9), see installation instructions below
