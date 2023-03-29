@@ -33,12 +33,12 @@ and motivations behind DuMu<sup>x</sup>.
 
 The following resources are useful to get started with DuMu<sup>x</sup>:
 
-* [Installation guide][3] on the [DuMu<sup>x</sup> website](https://dumux.org/)
-* [Getting started guide](https://dumux.org/gettingstarted/) on the [DuMu<sup>x</sup> website](https://dumux.org/)
+* [Installation guide][3]
+* [Getting started guide](https://dumux.org/docs/doxygen/master/getting-started.html)
+* [Documentation](https://dumux.org/docs/doxygen/master/),
 * [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf), a detailed DuMu<sup>x</sup> manual,
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
 * [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples), with detailed description of code and results,
-* [Class documentation](https://dumux.org/docs/doxygen/master/) generated from the source code,
 * [Mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux),
 * [Changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CHANGELOG.md), where all changes between different release versions are listed and explained.
 
@@ -178,7 +178,7 @@ the degree of backwards compatibility be decided by a vote in one of the monthly
 [0]: https://dumux.org
 [1]: https://dune-project.org/
 [2]: https://dumux.org/documents/dumux_awrpaper.pdf
-[3]: https://dumux.org/installation
+[3]: https://dumux.org/docs/doxygen/master/installation.html
 [4]: https://dumux.org/docs/handbook/master/dumux-handbook.pdf
 [5]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [6]: https://www.iws.uni-stuttgart.de/en/lh2/
