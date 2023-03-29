@@ -2,6 +2,10 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: dumux
 Source: https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
 
+Files: */*.input
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: GPL-3.0-or-later
+
 Files: test/references/*
 Copyright: DuMux Project contributors, see AUTHORS.md in root folder
 License: CC0-1.0
