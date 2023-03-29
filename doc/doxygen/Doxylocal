@@ -9,12 +9,16 @@ PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 INPUT                 += @top_srcdir@/README.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
+                         @srcdir@/README.md \
                          @top_srcdir@/python/README.md \
                          @top_srcdir@/dumux \
                          @srcdir@/extradoc/parameterlist.txt
 
 USE_MDFILE_AS_MAINPAGE = @top_srcdir@/README.md
 TOC_INCLUDE_HEADINGS   = 4
+
+# custom doxygen commands
+ALIASES                += mermaid{1}="@htmlonly <div class=\"mermaid\"> @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly </div> @endhtmlonly"
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
@@ -27,7 +31,8 @@ EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
                          @top_srcdir@/dumux/porenetwork/util/README.md
 
 EXAMPLE_PATH          += @srcdir@/extradoc \
-                         @top_srcdir@/test/python
+                         @top_srcdir@/test/python \
+                         @srcdir@/groups/details
 
 IMAGE_PATH             = @srcdir@/images
 
@@ -36,6 +41,7 @@ EXTRA_PACKAGES        += amsmath,amssymb,units
 LAYOUT_FILE            = @srcdir@/DoxygenDumuxLayout.xml
 
 HTML_HEADER            = @srcdir@/header.html
+HTML_FOOTER            = @srcdir@/footer.html
 
 HTML_EXTRA_FILES       = @srcdir@/doxygen-awesome-darkmode-toggle.js \
                          @srcdir@/doxygen-awesome-fragment-copy-button.js \
