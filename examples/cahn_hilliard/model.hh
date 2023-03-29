@@ -197,7 +197,7 @@ public:
     //
     // ```math
     // \begin{aligned}
-    // F_{K,\sigma,0} &= -M \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert \\
+    // F_{K,\sigma,0} &= -M \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert \cr
     // F_{K,\sigma,1} &= -\gamma \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert
     // \end{aligned}
     // ````
