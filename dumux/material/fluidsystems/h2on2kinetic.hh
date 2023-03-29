@@ -69,36 +69,28 @@ public:
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
 
-        switch (phaseIdx){
+        switch (phaseIdx) {
             case ParentType::liquidPhaseIdx:
-                switch(compIdx){
-                case ParentType::H2OIdx:
-                    return ParentType::H2O::liquidEnthalpy(T, p);
-                case ParentType::N2Idx:
-                    return ParentType::N2::gasEnthalpy(T, p); // TODO: should be liquid enthalpy
-                default:
-                    DUNE_THROW(Dune::NotImplemented,
-                               "wrong index");
-                    break;
-                }// end switch compIdx
-                break;
+                switch(compIdx) {
+                    case ParentType::H2OIdx:
+                        return ParentType::H2O::liquidEnthalpy(T, p);
+                    case ParentType::N2Idx:
+                        return ParentType::N2::gasEnthalpy(T, p); // TODO: should be liquid enthalpy
+                    default:
+                        DUNE_THROW(Dune::NotImplemented, "wrong index");
+                }
             case ParentType::gasPhaseIdx:
-                switch(compIdx){
-                case ParentType::H2OIdx:
-                    return ParentType::H2O::gasEnthalpy(T, p);
-                case ParentType::N2Idx:
-                    return ParentType::N2::gasEnthalpy(T, p);
-                default:
-                    DUNE_THROW(Dune::NotImplemented,
-                               "wrong index");
-                    break;
-                }// end switch compIdx
-                break;
+                switch(compIdx) {
+                    case ParentType::H2OIdx:
+                        return ParentType::H2O::gasEnthalpy(T, p);
+                    case ParentType::N2Idx:
+                        return ParentType::N2::gasEnthalpy(T, p);
+                    default:
+                        DUNE_THROW(Dune::NotImplemented, "wrong index");
+                }
             default:
-                DUNE_THROW(Dune::NotImplemented,
-                           "wrong index");
-                break;
-        }// end switch phaseIdx
+                DUNE_THROW(Dune::NotImplemented, "wrong index");
+        }
     }
 
     /*!
