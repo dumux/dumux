@@ -150,10 +150,13 @@ public:
 
         NumEqVector flux;
 
+        const auto K = problem.diffusionCoefficient();
+        const auto D = 1.0/(1.0 + gradConcentration.two_norm2()/(K*K));
+
         // Compute the flux with `vtmv` (vector transposed times matrix times vector) or -n^T D ∇c A.
         // The diffusion coefficient comes from the `problem` (see Part 2 of the example).
         flux[Indices::massBalanceEqIdx] = -1.0*vtmv(
-            scvf.unitOuterNormal(), problem.diffusionCoefficient(), gradConcentration
+            scvf.unitOuterNormal(), D, gradConcentration
         )*scvf.area();
 
         return flux;

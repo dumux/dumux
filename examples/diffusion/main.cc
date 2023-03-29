@@ -52,6 +52,8 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblem.hh>
 
+#include <dumux/io/rasterimagereader.hh>
+
 // VTK output functionality
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -63,7 +65,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
-#include <dumux/linear/pdesolver.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 // [[/codeblock]]
 //
@@ -190,36 +192,12 @@ struct DiffusionTest
 //
 // [[content]]
 // [[codeblock]]
-template<class SolutionVector, class GridGeometry>
-SolutionVector createInitialSolution(const GridGeometry& gg)
+template<class SolutionVector, class GridGeometry, class ImageData>
+SolutionVector createInitialSolution(const GridGeometry& gg, const ImageData& data)
 {
     SolutionVector sol(gg.numDofs());
-
-    // Generate random number and add processor offset
-    // For sequential run, `rank` always returns `0`.
-    std::mt19937 gen(0); // seed is 0 for deterministic results
-    Dumux::SimpleUniformDistribution<> dis(0.0, 1.0);
-
-    const auto rank = gg.gridView().comm().rank();
     for (int n = 0; n < sol.size(); ++n)
-        sol[n] = dis(gen) + rank;
-
-    // We take the value of the processor with the minimum rank
-    // and subtract the rank offset
-    if (gg.gridView().comm().size() > 1)
-    {
-        Dumux::VectorCommDataHandleMin<
-            typename GridGeometry::VertexMapper,
-            SolutionVector,
-            GridGeometry::GridView::dimension
-        > minHandle(gg.vertexMapper(), sol);
-        gg.gridView().communicate(minHandle, Dune::All_All_Interface, Dune::ForwardCommunication);
-
-        // remove processor offset
-        for (int n = 0; n < sol.size(); ++n)
-            sol[n][0] -= std::floor(sol[n][0]);
-    }
-
+        sol[n][0] = double(data[n])/data.header().maxValue;
     return sol;
 }
 // [[/codeblock]]
@@ -260,17 +238,20 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    // First, we initialize the grid. Grid parameters are taken from the input file
-    // from the group `[Grid]` if it exists. You can also pass any other parameter
-    // group (e.g. `"MyGroup"`) to `init` and then it will look in `[MyGroup.Grid]`.
+    // Read the MRI image
+    const auto imageFileName = getParam<std::string>("ImageFile");
+    const auto imageData = NetPBMReader::readPGM(imageFileName);
+    std::array<int, 2> cells{{ static_cast<int>(imageData.header().nCols)-1, static_cast<int>(imageData.header().nRows)-1 }};
+    Dune::FieldVector<double, 2> upperRight({ double(cells[0]), double(cells[1]) });
+
     GridManager<Grid> gridManager;
-    gridManager.init();
+    gridManager.init(upperRight, cells);
 
     // We, create the finite volume grid geometry from the (leaf) grid view,
     // the problem for the boundary conditions, a solution vector and a grid variables instance.
     auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
     auto problem = std::make_shared<Problem>(gridGeometry);
-    auto sol = createInitialSolution<SolutionVector>(*gridGeometry);
+    auto sol = createInitialSolution<SolutionVector>(*gridGeometry, imageData);
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(sol);
 
@@ -291,19 +272,12 @@ int main(int argc, char** argv)
     // and construct instances of these classes.
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     using LinearSolver = SSORCGIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    using Solver = Dumux::LinearPDESolver<Assembler, LinearSolver>;
+    using Solver = Dumux::NewtonSolver<Assembler, LinearSolver>;
 
     auto oldSol = sol; // copy the vector to store state of previous time step
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, oldSol);
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     Solver solver(assembler, linearSolver);
-
-    // We tell the assembler to create the system matrix and vector objects. Then we
-    // assemble the system matrix once and then tell the solver to reuse in every time step.
-    // Since we have a linear problem, the matrix is not going to change.
-    assembler->setLinearSystem();
-    assembler->assembleJacobian(sol);
-    solver.reuseMatrix();
 
     // The time loop is where most of the actual computations happen.
     // We assemble and solve the linear system of equations, update the solution,
