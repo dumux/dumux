@@ -51,6 +51,7 @@ inline constexpr bool operator!=(Tag<T1>, Tag<T2>)
 { return !std::is_same_v<T1, T2>; }
 
 namespace Detail {
+// cppcheck-suppress internalAstError
 constexpr auto hasName = isValid([](auto&& t) -> decltype(t.name(), void()) {});
 } // end namespace Detail
 
