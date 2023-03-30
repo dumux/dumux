@@ -53,7 +53,7 @@ def showMessage(message):
 
 def checkCppVersion():
     """Check compiler version"""
-    requiredversion = "7"
+    requiredversion = "9.3"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
     if _Version(result) < _Version(requiredversion):
         print("-- An error occurred while checking for prerequistes.")
