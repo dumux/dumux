@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Components are building blocks of fluid and solid systems"""
 
 from dune.generator.generator import SimpleGenerator
