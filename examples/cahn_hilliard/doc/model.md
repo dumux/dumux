@@ -30,9 +30,11 @@ We start in `model.hh` with the necessary header includes:
 
 ```cpp
 
+#include <dune/common/fvector.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/discretization/method.hh>
 ```
 
 </details>
