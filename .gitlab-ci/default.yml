@@ -115,6 +115,15 @@ cppcheck:
     - if: $DUMUX_ENABLE_CPPCHECK == "true"
 
 
+reuse:
+  stage: linting
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+    - reuse lint
+
+
 select tests:
   stage: select
   script:
