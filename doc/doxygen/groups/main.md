@@ -8,7 +8,7 @@
 
 @defgroup Properties Properties and the property systems
 
-@defgroup Parameters Parameters and runtime configuration
+@defgroup Parameter Parameters and runtime configuration
 
 @defgroup Material Constitutive modeling
 @brief Constitutive model framework, material models, fluids, solids.

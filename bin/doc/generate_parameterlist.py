@@ -452,7 +452,7 @@ HEADER = """/*!
  *\\endinternal
  *
  *\\file
- *\\ingroup Parameter
+ *\\ingroup Parameters
  *
  *\\brief List of currently usable run-time parameters
  *

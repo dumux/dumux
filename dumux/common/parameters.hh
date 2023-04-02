@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Parameter
  * \brief The infrastructure to retrieve run-time parameters from Dune::ParameterTrees.
  */
 #ifndef DUMUX_PARAMETERS_HH
@@ -39,7 +39,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief Parameter class managing runtime input parameters
  * \todo Doc me!
  */
@@ -142,7 +142,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief A free function to get a parameter from the parameter tree singleton
  * \note \code auto endTime = getParam<double>("TimeManager.TEnd"); \endcode
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
@@ -152,7 +152,7 @@ T getParam(Args&&... args)
 { return Parameters::getTree().template get<T>(std::forward<Args>(args)... ); }
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief A free function to get a parameter from the parameter tree singleton with a model group
  * \note \code  auto endTime = getParamFromGroup<double>("FreeFlow", "TimeManager.TEnd"); \endcode
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
@@ -162,7 +162,7 @@ T getParamFromGroup(Args&&... args)
 { return Parameters::getTree().template getFromGroup<T>(std::forward<Args>(args)... ); }
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief Check whether a key exists in the parameter tree
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
@@ -170,7 +170,7 @@ inline bool hasParam(const std::string& param)
 { return Parameters::getTree().hasKey(param); }
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief Check whether a key exists in the parameter tree with a model group prefix
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
@@ -178,7 +178,7 @@ inline bool hasParamInGroup(const std::string& paramGroup, const std::string& pa
 { return Parameters::getTree().hasKeyInGroup(param, paramGroup); }
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief Get a list of sub groups from the parameter tree sorted by relevance
  * \return A vector of fully qualified subGroup names sorted by descending relevance.
  */
