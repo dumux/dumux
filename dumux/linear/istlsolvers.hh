@@ -33,6 +33,7 @@
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/istl/solvers.hh>
+#include <dune/istl/solverfactory.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/paamg/amg.hh>
