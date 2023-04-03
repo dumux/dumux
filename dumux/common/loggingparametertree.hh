@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Parameter
  * \brief A parameter tree that logs which parameters have been used
  */
 #ifndef DUMUX_LOGGING_PARAMETER_TREE_HH
@@ -36,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Parameter
  * \brief A parameter tree that logs which parameters have been used
  */
 class LoggingParameterTree
