@@ -458,8 +458,15 @@
         ]
     },
     "Component.LiquidDensity": {
+        "defaultValue": [
+            "-"
+        ],       
         "explanation": [
             "The density of the liquid"
+        ],
+        "mode": "manual",
+        "type": [
+            "Scalar"
         ]
     },
     "Component.LiquidDiffusionCoefficient": {
@@ -468,8 +475,15 @@
         ]
     },
     "Component.LiquidDynamicViscosity": {
+        "defaultValue": [
+            "-"
+        ],    
         "explanation": [
             "The dynamic viscosity of the liquid"
+        ],
+       	"mode": "manual",
+        "type": [
+            "Scalar"
         ]
     },
     "Component.LiquidHeatCapacity": {
