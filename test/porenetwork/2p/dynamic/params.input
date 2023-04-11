@@ -42,5 +42,5 @@ HighSwRegularizationMethod = Spline
 RegPercentage = 1e-2
 
 [Component]
-LiquidKinematicViscosity = 1e-6
-LiquidDensity = 1000
+LiquidKinematicViscosity = 3.53e-4
+LiquidDensity = 963

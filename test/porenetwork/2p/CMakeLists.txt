@@ -1,4 +1,5 @@
 add_subdirectory(static)
+add_subdirectory(dynamic)
 
 add_input_file_links()
 dune_symlink_to_source_files(FILES 4_homo_pores.dgf 8-pores-network.dgf)

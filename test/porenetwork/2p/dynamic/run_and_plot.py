@@ -10,9 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
-test        = 'test_pnm_2p_1d'
-pvdFileName = 'test_pnm_2p_1d.pvd'
-times       = {}
+tests        = ['test_pnm_2p_1d_airwater',      'test_pnm_2p_1d_oilwater']
+pvdFileNames = ['test_pnm_2p_1d_airwater.pvd',  'test_pnm_2p_1d_oilwater.pvd']
+times        = {}
 
 intervals   = np.linspace(0.00001, 0.1, 50)
 
@@ -35,41 +35,37 @@ extractScript = 'extractresults.py'
 
 swAnalytical = np.array([swEntry, swEntry, swEntry, swEntry, swAtPore5, 1, 1, 1, 1, 1])
 
+for test, pvdFileName in zip (tests, pvdFileNames):
+    for idx, interval in enumerate(intervals):
+        subprocess.run(['./' + test]
+                       + ['-TimeLoop.DtInitial', str(0.01)]
+                       + ['-TimeLoop.TEnd', str(tEnd)]
+                       + ['-Regularization.RegPercentage', str(interval)]
+                       + ['-Problem.NonWettingMassFlux', str(massFlux)])
+        iterations = np.genfromtxt('NewtonLog.txt').T
+        totalNewtonIterations.append(np.sum(iterations))
+        averageNewtonIterations.append(np.average(iterations))
+        subprocess.run(['rm', 'NewtonLog.txt'])
+        subprocess.run([pvpythonPath, extractScript, '-f', extractedVtpFile, '-p1', '0.0', '0.0', '0.0', '-p2', '4.5e-3', '0', '0', "-r", '9'])
+        swNumerical = np.genfromtxt(extractedResults, skip_header=1, usecols=0, delimiter=",").T
+        l2Error.append((np.square(swNumerical - swAnalytical)).mean(axis=0))
 
-for idx, interval in enumerate(intervals):
-    subprocess.run(['./' + test]
-                   + ['-TimeLoop.DtInitial', str(0.01)]
-                   + ['-TimeLoop.TEnd', str(tEnd)]
-                   + ['-Regularization.RegPercentage', str(interval)]
-                   + ['-Problem.NonWettingMassFlux', str(massFlux)])
-    iterations = np.genfromtxt('NewtonLog.txt').T
-    totalNewtonIterations.append(np.sum(iterations))
-    averageNewtonIterations.append(np.average(iterations))
-    subprocess.run(['rm', 'NewtonLog.txt'])
-    subprocess.run([pvpythonPath, extractScript, '-f', extractedVtpFile, '-p1', '0.0', '0.0', '0.0', '-p2', '4.5e-3', '0', '0', "-r", '9'])
-    swNumerical = np.genfromtxt(extractedResults, skip_header=1, usecols=0, delimiter=",").T
-    l2Error.append((np.square(swNumerical - swAnalytical)).mean(axis=0))
+    fig, ax1 = plt.subplots()
 
+    color = 'tab:red'
+    ax1.plot(intervals, totalNewtonIterations, label = "total newton steps", color = color)
+    ax1.tick_params(axis ='y', labelcolor = color)
+    ax1.set_xlabel("regularization interval width $\epsilon$")
+    ax1.set_ylabel("total newton steps [-]")
 
-fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    color = 'tab:green'
+    ax2.set_ylabel("$\Delta_{S_\mathrm{n}, L_2}$ [-]", color = color)
+    ax2.plot(intervals, l2Error, color = color)
+    ax2.tick_params(axis ='y', labelcolor = color)
 
-color = 'tab:red'
-ax1.plot(intervals, totalNewtonIterations, label = "total newton steps", color = color)
-ax1.tick_params(axis ='y', labelcolor = color)
-ax1.set_xlabel("regularization interval width $\epsilon$")
-ax1.set_ylabel("total newton steps [-]")
+    np.savetxt("output_" + str(test) + '.txt', (intervals, totalNewtonIterations, l2Error))
+    plt.tight_layout(rect=[0.03, 0.07, 1, 0.93], pad=0.4, w_pad=2.0, h_pad=1.0)
 
-
-ax2 = ax1.twinx()
-color = 'tab:green'
-ax2.set_ylabel("$\Delta_{S_\mathrm{n}, L_2}$ [-]", color = color)
-ax2.plot(intervals, l2Error, color = color)
-ax2.tick_params(axis ='y', labelcolor = color)
-
-np.savetxt("output.txt", (intervals, totalNewtonIterations, l2Error))
-
-
-plt.tight_layout(rect=[0.03, 0.07, 1, 0.93], pad=0.4, w_pad=2.0, h_pad=1.0)
-
-plt.show()
-plt.savefig("Test2_Regularization.pdf", dpi = 300)
+    plt.show()
+    plt.savefig("Test2_Regularization" + str(test) + '.pdf', dpi = 900)
