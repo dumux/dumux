@@ -239,9 +239,9 @@ private:
             return Result{}; //nothing happened
         }
 
-        if (*pcMax > pcEntry)
+        if (!invadedAfterSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMax <= pcSnapoff)
+        else if (invadedAfterSwitch && *pcMax <= pcSnapoff)
            invadedAfterSwitch = false;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;

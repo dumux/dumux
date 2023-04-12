@@ -231,6 +231,14 @@ public:
         }
     }
 
+    void postTimeStep(const Scalar time)
+    {
+        std::ofstream logfile_;
+        logfile_.open("logfile_" + this->name() + ".txt", std::ios::app);
+        logfile_ << std::fixed << std::scientific << std::left << std::setw(20) << std::setfill(' ') << time
+                 << std::endl;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
