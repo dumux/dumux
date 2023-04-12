@@ -73,7 +73,9 @@ public:
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
+        distributeByVolume_ = getParam<bool>("Problem.DistributeByVolume", true);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
     }
 
     /*!
@@ -112,6 +114,8 @@ public:
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
+        // if (isInletPore_(scv) || isOutletPore_(scv))
+        //     bcTypes.setAllDirichlet();
 
 #if !ISOTHERMAL
         bcTypes.setDirichlet(temperatureIdx);
@@ -125,20 +129,29 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
-        // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        // if (isInletPore_(scv))
+        // {
+        //     values[pwIdx] = 0.0;
+        //     values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(1.0e5);
+        // }
 
-#if !ISOTHERMAL
-        if (isInletPore_(scv))
-            values[temperatureIdx] = 273.15 + 15;
-        else
-            values[temperatureIdx] = 273.15 + 10;
-#endif
+        if (isOutletPore_(scv))
+        {
+            values[pwIdx] = 0.0;
+            values[snIdx] = 0.0;
+        }
+//         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
+//         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
+//         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+//             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+
+// #if !ISOTHERMAL
+//         if (isInletPore_(scv))
+//             values[temperatureIdx] = 273.15 + 15;
+//         else
+//             values[temperatureIdx] = 273.15 + 10;
+// #endif
         return values;
     }
 
@@ -158,13 +171,17 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        // If we do not want to use global phase pressure difference with fixed saturations and pressures,
-        // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
-        // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
+        // We fix the mass flux of non-wetting injection at inlet of pore-network
+        // The total inlet mass flux is distributed according to the ratio
+        // of pore volume at inlet to the total volumess
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
-
-        return values;
+        {
+            if (distributeByVolume_)
+                values[snIdx] = nonWettingMassFlux_ * ( scv.volume()/sumInletPoresVolume_ );
+            else
+                values[snIdx] = nonWettingMassFlux_ * std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
+        }
+        return values / scv.volume();
     }
     // \}
 
@@ -172,14 +189,15 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
+        values[pwIdx] = 0.0;
+        values[snIdx] = 0.0;
 
-        // get global index of pore
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
-        else
-            values[snIdx] = 0.0;
+        // // get global index of pore
+        // const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
+        // if (isInletPore_(dofIdxGlobal))
+        //     values[snIdx] = 0.5;
+        // else
+        //     values[snIdx] = 1.0;
 
 #if !ISOTHERMAL
         values[temperatureIdx] = 273.15 + 10;
@@ -190,8 +208,28 @@ public:
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
     { return false; }
-
     // \}
+
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumInletVolume()
+    {
+        sumInletPoresVolume_ = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (isInletPore_(scv))
+                {
+                    if (distributeByVolume_)
+                        sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+                    else
+                        sumInletPoresVolume_ += std::pow(this->gridGeometry().poreInscribedRadius(scv.dofIndex()), 4.0);
+                }
+            }
+        }
+    }
 
 private:
 
@@ -202,17 +240,20 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == 2;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == 1;
     }
 
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
+    bool distributeByVolume_;
     Scalar pc_;
+    Scalar nonWettingMassFlux_;
+    Scalar sumInletPoresVolume_;
 };
 } //end namespace Dumux
 

@@ -37,9 +37,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include <dumux/linear/istlsolvers.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
@@ -95,6 +93,7 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);
+    problem->calculateSumInletVolume();
     auto xOld = x;
 
     // the grid variables
@@ -113,11 +112,14 @@ int main(int argc, char** argv)
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
-    // initialize the vtk output module
+    // intialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
@@ -139,6 +141,9 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(xOld);
+
         // try solving the non-linear system
         nonLinearSolver.solve(x, *timeLoop);
 
