@@ -680,7 +680,10 @@ public:
      *        (not known yet if we failed or succeeded)
      *        (for pore-network model the invasion status will be updated here)
      */
-    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {}
+    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {
+        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
+        logfile << numSteps_ << "\n";
+    }
 
     /*!
      * \brief Returns true if the error of the solution is below the

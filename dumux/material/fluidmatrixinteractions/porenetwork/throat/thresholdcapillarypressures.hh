@@ -43,6 +43,7 @@ struct ThresholdCapillaryPressures
         const Scalar theta = contactAngle;
         const Scalar cosTheta = std::cos(theta);
         const Scalar sinTheta = std::sin(theta);
+        return -2e20;
         return surfaceTension / inscribedRadius * (cosTheta - sinTheta);
     }
 

@@ -29,6 +29,7 @@ MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
+NewtonOutputFilename = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true
@@ -42,5 +43,5 @@ HighSwRegularizationMethod = Spline
 RegPercentage = 1e-2
 
 [Component]
-LiquidKinematicViscosity = 3.53e-4
-LiquidDensity = 963
+LiquidKinematicViscosity = 1e-5
+LiquidDensity = 1000
