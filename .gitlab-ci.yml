@@ -96,42 +96,19 @@ full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
+    DUMUX_ENABLE_CPPCHECK: "true"
+    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
+    DUMUX_CHECK_EXAMPLE_DOCS: "true"
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
 
-minimal-dune-master-release-clang:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-master-clang-ubuntu-20.04
-
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-20.04
-
-full-dune-master-gcc-cpp-20:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04
-    CXX_MAX_STANDARD: "20"
-    DUMUX_ENABLE_CPPCHECK: "true"
-    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
-    DUMUX_CHECK_EXAMPLE_DOCS: "true"
-
-##################################
-# additional scheduled pipelines #
-full-dune-master-clang:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-20.04
-
-full-dune-master-gcc:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-20.04
 
 ################################################
 # trigger test pipelines of downstream modules #
