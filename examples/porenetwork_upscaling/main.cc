@@ -223,6 +223,9 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
+    // Initialize MPI+X environment
+    Dumux::initialize(argc, argv);
+
     // We parse the command line arguments.
     Parameters::init(argc, argv);
 
