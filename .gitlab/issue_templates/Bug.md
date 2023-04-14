@@ -1,4 +1,9 @@
 <!--
+SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC0-1.0
+-->
+
+<!--
 This form is for bug reports ONLY!  
 If you're looking for help check out the [readme](/README.md).
 -->
