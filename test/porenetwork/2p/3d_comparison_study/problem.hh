@@ -56,12 +56,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
         pwIdx = Indices::pressureIdx,
         snIdx = Indices::saturationIdx,
         nPhaseIdx = FluidSystem::phase1Idx,
-
-#if !ISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-#endif
-    };
+        };
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
@@ -114,10 +109,6 @@ public:
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-
-#if !ISOTHERMAL
-        bcTypes.setDirichlet(temperatureIdx);
-#endif
         return bcTypes;
     }
 
@@ -134,13 +125,6 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
-
-#if !ISOTHERMAL
-        if (isInletPore_(scv))
-            values[temperatureIdx] = 273.15 + 15;
-        else
-            values[temperatureIdx] = 273.15 + 10;
-#endif
         return values;
     }
 
@@ -186,10 +170,6 @@ public:
             values[snIdx] = 0.5;
         else
             values[snIdx] = 1.0;
-
-#if !ISOTHERMAL
-        values[temperatureIdx] = 273.15 + 10;
-#endif
         return values;
     }
 
