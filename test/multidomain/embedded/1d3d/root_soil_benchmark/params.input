@@ -1,0 +1,100 @@
+[MixedDimension]
+KernelWidthFactor = 3.0
+KernelIntegrationCRL = 0.1
+WriteIntegrationPointsToFile = false
+
+[MixedDimension.Reconstruction]
+Samples = 100000
+
+[TimeLoop]
+DtInitial = 360 # [s]
+TEnd = 259200 # 3 days # 3*86400 # [s]
+MaxTimeStepSize = 1200
+EpisodeLength = 1200 # [s]
+
+[Output]
+GnuplotOutputFilenamePrefix = "c12a_"
+EnableVtkOutput = false
+GnuplotShow = false
+
+[Root.Grid]
+File = dap8_rootsys.dgf
+Refinement = 1
+DGFParam = Radius
+DGFRadiusIndex = 4
+DGFRadiusScaling = 0.01
+
+[Soil.Grid]
+LowerLeft = -0.04 -0.04 -0.15
+UpperRight = 0.04 0.04 0
+Cells = 16 16 30
+
+[Problem]
+EnableGravity = true
+PlotTranspiration = true
+
+[Soil.Problem]
+Name = soil
+
+[Soil.SpatialParams]
+VanGenuchtenPcLowSweThreshold = 0.01
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrnLowSweThreshold = 0.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+Permeability = 5.89912e-13 # [m^2] Ks (50 cm/d)/86400/100*1e-3/1000/9.81
+Porosity = 0.43 # [-] = theta_s
+Swr = 0.186 # [-] theta_r/theta_s = 0.08/0.43
+VanGenuchtenN = 1.6 # [-]
+VanGenuchtenAlpha = 4.077e-4 # [1/Pa] alpha (0.04 1/cm)*100/1000/9.81
+
+[Root.Problem]
+Name = root
+
+[Root.SpatialParams]
+Scenario = C12a # or C12b, see below
+
+[Root.SpatialParams.C12a]
+# Primary: Constant case (C1.2a)
+AxialConductivites.Order0.Age = 1 8
+AxialConductivites.Order0.Kx = 5.07e-17 5.07e-17
+RadialConductivites.Order0.Age = 1 8
+RadialConductivites.Order0.Kr = 2.04e-13 2.04e-13
+# Lateral: Constant case (C1.2a)
+AxialConductivites.Order1.Age = 5 8
+AxialConductivites.Order1.Kx = 5.07e-17 5.07e-17
+RadialConductivites.Order1.Age = 5 8
+RadialConductivites.Order1.Kr = 2.04e-13 2.04e-13
+
+[Root.SpatialParams.C12b]
+# Primary: Variable case (C1.2b)
+AxialConductivites.Order0.Age = 0.  2.  4.  6.  8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+AxialConductivites.Order0.Kx = 7.95201420e-17 8.82508400e-17 9.79253974e-17 1.08661796e-16 1.20342055e-16 1.33320119e-16 1.48657832e-16 1.65175369e-16 1.82872730e-16 2.02929739e-16 2.25346396e-16 2.50122702e-16 2.77258655e-16 3.07934081e-16 3.42148979e-16 3.78723525e-16 4.21197191e-16
+RadialConductivites.Order0.Age = 0.  2.  4.  6.  8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+RadialConductivites.Order0.Kr = 1.34499943e-12 1.28600823e-12 1.21521879e-12 1.15976706e-12 1.10313550e-12 1.05004342e-12 9.99310983e-13 9.50938196e-13 9.04925058e-13 8.61271567e-13 8.19977725e-13 7.81043531e-13 7.43289161e-13 7.06714615e-13 6.72499717e-13 6.40644467e-13 6.09969041e-13
+# Lateral: Variable case (C1.2b)
+AxialConductivites.Order1.Age = 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14. 15. 16. 17.
+AxialConductivites.Order1.Kx = 4.80188394e-19 5.89912032e-19 7.25591800e-19 8.91946993e-19 1.09723638e-18 1.34499943e-18 1.66355193e-18 2.04109563e-18 2.50122702e-18 3.07934081e-18 3.78723525e-18 4.66030506e-18 5.73394495e-18 7.04354967e-18 8.65990863e-18 1.06538113e-17 1.30960471e-17 1.60456073e-17
+RadialConductivites.Order1.Age = 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14. 15. 16. 17.
+RadialConductivites.Order1.Kr = 4.84907691e-12 4.58951561e-12 4.32995432e-12 4.09398950e-12 3.86982293e-12 3.65745460e-12 3.45688451e-12 3.26811266e-12 3.09113905e-12 2.92596368e-12 2.76078831e-12 2.60741118e-12 2.46583230e-12 2.33605165e-12 2.20627100e-12 2.08828859e-12 1.97030619e-12 1.86412202e-12
+
+[BoundaryConditions]
+InitialSoilSaturationTop = 0.3 # [-]
+#InitialSoilPressureTop = 80380 # [Pa] # -200cm*0.01*1000*9.81 + 1e5Pa
+InitialGravityProfile = false
+DailyTranspirationRate = 1.0 # [mm / day] # 1cm/day -> 6.4cm^3/day
+# BoundaryType: ConstCollarPressure, ConstTranspiration, or CyclicTranspiration (default)
+BoundaryType = CyclicTranspiration
+SmoothingK = 0.2
+
+[LinearSolver]
+MaxIterations = 2000
+
+[Newton]
+UseLineSearch = true
+SatisfyResidualAndShiftCriterion = true
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+MaxRelativeShift = 1e-1
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-9
