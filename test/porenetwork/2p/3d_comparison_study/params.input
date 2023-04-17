@@ -1,6 +1,6 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
-TEnd = 500000 # [s]
+DtInitial = 0.5 # [s]
+TEnd = 5000 # [s]
 
 [Grid]
 PoreGeometry = Cube
@@ -39,6 +39,7 @@ MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
+NewtonOutputFilename = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true

@@ -119,7 +119,7 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1.0e5;
-        values[snIdx] = 1.0;
+        values[snIdx] = 0.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
@@ -166,10 +166,7 @@ public:
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
-        else
-            values[snIdx] = 1.0;
+        values[snIdx] = 0.0;
         return values;
     }
 
@@ -197,6 +194,16 @@ public:
                 }
             }
         }
+    }
+
+    /*!
+     * \brief Called at the end of each time step
+     */
+    void postTimeStep(const Scalar time)
+    {
+        std::ofstream logfile("time_steps.txt", std::ios::app);
+        logfile << std::fixed << std::left << std::setw(20)
+                << std::setfill(' ') << time << std::endl;
     }
 
 private:
