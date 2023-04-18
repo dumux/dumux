@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dune_symlink_to_source_files(FILES blackwhite_j.pbm blackwhite_binary_j.pbm blackwhite_j.txt
                                    grayscale_j.pgm grayscale_binary_j.pgm grayscale_j.txt
                                    blackwhite_dim_firstline.pbm blackwhite_dim_firstline_binary.pbm

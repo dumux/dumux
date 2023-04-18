@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dumux_add_test(NAME test_ff_stokes2c_maxwellstefan
               LABELS freeflow navierstokes
               SOURCES main.cc

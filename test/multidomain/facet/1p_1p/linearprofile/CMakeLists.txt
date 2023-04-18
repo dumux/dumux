@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
 add_executable(test_md_facet_1p1p_linearprofile_tpfa EXCLUDE_FROM_ALL main.cc)

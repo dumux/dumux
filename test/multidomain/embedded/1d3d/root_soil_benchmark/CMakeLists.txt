@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # link the mesh and the parameter file
 dune_symlink_to_source_files(FILES params.input dap8_rootsys.dgf)
 

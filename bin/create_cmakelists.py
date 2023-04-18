@@ -13,6 +13,12 @@ if no folder was specified.
 import os
 import argparse
 
+SPDX_HEADER = """\
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""
+
 
 def createCMakeLists():
     """Create the CMakeLists.txt files"""
@@ -43,6 +49,7 @@ def createCMakeLists():
         folderName = fullFolderName.replace(rootDir + "/", "").replace(rootDir, "")
         if folderName not in ignoreFolders:
             with open(fullFolderName + "/CMakeLists.txt", "w") as cmakeLists:
+                cmakeLists.write(SPDX_HEADER)
                 # add subfolders
                 for subFolder in subFolders:
                     cmakeLists.write(f"add_subdirectory({subFolder})\n")

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dune_symlink_to_source_files(FILES "params.input")
 
 add_executable(test_shallowwater_dambreak EXCLUDE_FROM_ALL main.cc)
