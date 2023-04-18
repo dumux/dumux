@@ -128,10 +128,9 @@ public:
         Dune::Timer solveTimer(false);
         Dune::Timer updateTimer(false);
 
-        if (verbose_) {
+        if (verbose_ && enableDynamicOutput_)
             std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
                       << std::flush;
-        }
 
         ///////////////
         // assemble
@@ -154,11 +153,9 @@ public:
         // http://en.wikipedia.org/wiki/ANSI_escape_code
         const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-        if (verbose_) {
-            std::cout << "\rSolve: M deltax^k = r";
-            std::cout << clearRemainingLine
-                      << std::flush;
-        }
+        if (verbose_ && enableDynamicOutput_)
+            std::cout << "\rSolve: M deltax^k = r"
+                      << clearRemainingLine << std::flush;
 
         // solve the resulting linear equation system
         solveTimer.start();
@@ -177,11 +174,9 @@ public:
         ///////////////
         // update
         ///////////////
-        if (verbose_) {
-            std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-            std::cout << clearRemainingLine;
-            std::cout.flush();
-        }
+        if (verbose_ && enableDynamicOutput_)
+            std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
+                      << clearRemainingLine << std::flush;
 
         // update the current solution and secondary variables
         updateTimer.start();
@@ -192,8 +187,11 @@ public:
             this->assembler().updateGridVariables(Backend::dofs(vars));
         updateTimer.stop();
 
-        if (verbose_) {
+        if (verbose_)
+        {
             const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+            if (enableDynamicOutput_)
+                std::cout << '\r';
             std::cout << "Assemble/solve/update time: "
                       <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
                       <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
@@ -366,10 +364,14 @@ private:
     void initParams_(const std::string& group = "")
     {
         verbose_ = (Dune::MPIHelper::getCommunication().rank() == 0);
+        enableDynamicOutput_ = getParamFromGroup<bool>(group, "LinearPDESolver.EnableDynamicOutput", true);
     }
 
     //! switches on/off verbosity
     bool verbose_;
+
+    //! further parameters
+    bool enableDynamicOutput_;
 
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
