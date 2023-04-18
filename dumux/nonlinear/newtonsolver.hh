@@ -680,11 +680,17 @@ public:
      *        (not known yet if we failed or succeeded)
      *        (for pore-network model the invasion status will be updated here)
      */
+#if USEOTHERIMPLICIT
+    virtual void newtonEnd()  {
+        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
+        logfile << numSteps_ << "\n";
+    }
+#else
     virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {
         std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
         logfile << numSteps_ << "\n";
     }
-
+#endif
     /*!
      * \brief Returns true if the error of the solution is below the
      *        tolerance.
@@ -1022,7 +1028,6 @@ private:
 
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
-
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
@@ -1033,10 +1038,12 @@ private:
                 // detect if the method has converged
                 converged = newtonConverged();
             }
-
+#if USEOTHERIMPLICIT
+            newtonEnd();
+#else
             // tell solver we are done
             newtonEnd(vars, uLastIter);
-
+#endif
             // reset state if Newton failed
             if (!newtonConverged())
             {
