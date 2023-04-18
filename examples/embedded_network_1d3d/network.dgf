@@ -1,4 +1,10 @@
 DGF
+% SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
+% SPDX-FileCopyrightInfo: Copyright © 2017 Franca Schmid
+% SPDX-License-Identifier: CC-BY-4.0
+% Based on data from: Franca Schmid. (2017). Averaged results of blood flow simulations with discrete RBC tracking for microvascular networks [Data set]. Zenodo. https://doi.org/10.5281/zenodo.269650. CC-BY-4.0.
+% Processed data. All changes are licensed under DuMux Project contributors CC-BY-4.0
 Vertex
 parameters 1 # pressures
 0.00014394987374544144 3.390014171600342e-06 0.00019995938055217266 4400.37255859375
