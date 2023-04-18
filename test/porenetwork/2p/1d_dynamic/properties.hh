@@ -57,6 +57,12 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 #endif
 } // end namespace TTag
 
+#if !DRAINAGE
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DrainageProblem>
+{ static constexpr auto value = TwoPFormulation::p1s0; };
+#endif
+
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
@@ -66,15 +72,9 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-#if WATERAIRSYSTEM
-    using H2OType = Dumux::Components::SimpleH2O<Scalar>;
-    using Policy = FluidSystems::H2OAirDefaultPolicy<true/*fastButSimplifiedRelations*/>;
-    using type = FluidSystems::H2OAir<Scalar, H2OType, Policy, true/*useKelvinVaporPressure*/>;
-#else
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-#endif
 };
 
 

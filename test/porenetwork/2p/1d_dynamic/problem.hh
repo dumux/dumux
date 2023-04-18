@@ -108,8 +108,12 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
+#if DRAINAGE
         if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
+#else
+        bcTypes.setAllDirichlet();
+#endif
         return bcTypes;
     }
 
@@ -119,8 +123,21 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
+#if DRAINAGE
         values[pwIdx] = 1.0e5;
         values[snIdx] = 0.0;
+#else
+        if (isOutletPore_(scv))
+        {
+            values[pwIdx] = 1.0e5;
+            values[snIdx] = 0.0;
+        }
+        else if (isInletPore_(scv))
+        {
+            values[pwIdx] = 1.0e5;
+            values[snIdx] = 1.0;
+        }
+#endif
         return values;
     }
 
@@ -142,8 +159,10 @@ public:
 
         // We fix the mass flux of non-wetting injection at inlet of pore-network
         // The total inlet mass flux is distributed according to the ratio of pore volume
+#if DRAINAGE
         if (isInletPore_(scv))
             values[snIdx] = nonWettingMassFlux_ * ( scv.volume()/sumInletPoresVolume_ );
+#endif
         return values / scv.volume();
     }
     // \}
@@ -153,13 +172,26 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1e5;
-        // values[snIdx] = 0.0;
+        values[snIdx] = 0.0;
+#if !DRAINAGE
+        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
+        if (isInletPore_(dofIdxGlobal))
+        {
+            values[pwIdx] = 1e5;
+            values[snIdx] = 1.0;
+        }
+#endif
         return values;
     }
 
     //!  Evaluate the initial invasion state of a pore throat
+#if DRAINAGE
     bool initialInvasionState(const Element& element) const
     { return false; }
+#else
+    bool initialInvasionState(const Element& element) const
+    { return true; }
+#endif
     // \}
 
     //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores

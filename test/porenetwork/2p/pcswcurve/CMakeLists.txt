@@ -6,4 +6,5 @@ dune_add_test(NAME pc_sw_static
 
 dune_add_test(NAME pc_sw_dynamic
               SOURCES main_dynamic.cc
-              COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0)
+              COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
+              COMPILE_DEFINITIONS CIRCLETHROAT=0)

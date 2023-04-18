@@ -230,8 +230,6 @@ private:
             return Result{}; //nothing happened
         }
 
-        // if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
-        //     invadedAfterSwitch = false;
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
         else if (invadedBeforeSwitch && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))

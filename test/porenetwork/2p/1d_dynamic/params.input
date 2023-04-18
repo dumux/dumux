@@ -1,11 +1,11 @@
 [TimeLoop]
-DtInitial = 0.01 # [s]
-TEnd = 5 # [s]
-NumCheckPoints = 1
+DtInitial = 0.05 # [s]
+TEnd = 0.2 # [s]
+NumCheckPoints = 100
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Circle
+ThroatCrossSectionShape = Square
 LowerLeft = 0
 UpperRight = 4.5e-3
 NumPores = 10
@@ -37,10 +37,11 @@ Verbosity = true
 
 [SpatialParams]
 RegularizationLowSw = 0.01
+RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 1e-2
+RegPercentage = 1e-1
 
 [Component]
 LiquidKinematicViscosity = 1e-5
