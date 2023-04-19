@@ -215,6 +215,16 @@ public:
         }
     }
 
+    /*!
+     * \brief Called at the end of each time step
+     */
+    void postTimeStep(const Scalar time)
+    {
+        std::ofstream logfile("time_steps.txt", std::ios::app);
+        logfile << std::fixed << std::left << std::setw(20)
+                << std::setfill(' ') << time << std::endl;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const

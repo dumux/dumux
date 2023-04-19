@@ -151,6 +151,7 @@ int main(int argc, char** argv)
 
         // make the new solution the old solution
         xOld = x;
+        problem->postTimeStep(timeLoop->time());
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
