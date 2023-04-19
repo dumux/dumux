@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # build the tests for the bounding box tree
 dumux_add_test(NAME test_bboxtree_dim1
               SOURCES test_bboxtree.cc

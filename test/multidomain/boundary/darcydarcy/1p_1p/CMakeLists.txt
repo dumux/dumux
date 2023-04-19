@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dumux_add_test(NAME test_md_boundary_darcy1p_darcy1p_half
               LABELS multidomain multidomain_boundary darcydarcy 1p
               SOURCES main.cc

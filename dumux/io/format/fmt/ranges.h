@@ -1,3 +1,8 @@
+//
+// SPDX-FileCopyrightInfo: Copyright (c) 2012 - present, Victor Zverovich
+// SPDX-FileCopyrightInfo: Copyright (c) 2018 - present, Remotion (Igor Schulz)
+// SPDX-License-Identifier: LicenseRef-fmt
+//
 // Formatting library for C++ - experimental range support
 //
 // Copyright (c) 2012 - present, Victor Zverovich

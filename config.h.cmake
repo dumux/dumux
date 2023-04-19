@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
 /* begin dumux
    put the definitions for config.h specific to
    your project here. Everything above will be

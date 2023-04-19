@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """ A module for fuzzy comparing VTK files.
 
 This module provides methods to compare two VTK files. Applicable

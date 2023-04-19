@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 
 """
 A simple documentation generator
@@ -34,7 +37,8 @@ def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
-    suppressHeader = Suppress(Combine("// -*-" + SkipTo("*******/" + LineEnd(), include=True)))
+    suppressHeader = Suppress(Combine("// -*-" + SkipTo("SPDX-License-Identifier:" + Optional(restOfLine)
+                    + LineEnd() + "//" + LineEnd(), include=True)))
     suppressHeaderGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
     suppressEndHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 

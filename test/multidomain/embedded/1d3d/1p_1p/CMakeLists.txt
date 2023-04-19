@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc

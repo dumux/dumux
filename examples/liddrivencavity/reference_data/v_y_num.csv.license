@@ -1,0 +1,5 @@
+SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC-BY-4.0
+Based on data from Jurjević (1999). Modelling of two-dimensional laminar flow using finite element method
+International Journal for Numerical Methods in Fluids. https://doi.org/10.1002/(SICI)1097-0363(19991015)31:3<601::AID-FLD892>3.0.CO;2-Z.
+Processed data. All changes are licensed under DuMux Project contributors CC-BY-4.0
