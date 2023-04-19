@@ -31,6 +31,8 @@ that the resulting Jacobian was only an approximation.
 - __Box/Diamond/Bubble/CVFE Assembly__: All CVFE schemes now use the same element solution and
 the same assembler. The old assemblers have been deleted (see below).
 
+- __Examples__: There are now three more examples. The first example shows how to simulate diffusion using a custom model equation, with finite volume/element methods. The second one models the separation of two phases using Cahn-Hilliard model with two governing nonlinear equations. The third example models tracer spread in blood and tissue using a multi-domain model coupling 1D advection-diffusion equation and 3D diffusion equation in the porous medium.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
