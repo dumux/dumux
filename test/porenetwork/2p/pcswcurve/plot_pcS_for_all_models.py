@@ -1,0 +1,30 @@
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+
+
+sw_static, pc_static = np.genfromtxt("static_pc_sw_pc-s-curve.txt", skip_header=1, usecols=(0,1)).T
+
+sw2, pc_global2, pc_dynamic2 = np.genfromtxt("logfile_pcScurve_reg-1e-2.txt", skip_header=2, usecols=(2, 1, 5)).T
+sw2_eq, pc_dynamic2_eq = np.genfromtxt("eqPoints_pcScurve_reg-1e-2.txt", skip_header=1, usecols= (2,1)).T
+
+sw3, pc_global3, pc_dynamic3 = np.genfromtxt("logfile_pcScurve_reg-1e-3.txt", skip_header=2, usecols=(2, 1, 5)).T
+
+sw4, pc_global4, pc_dynamic4 = np.genfromtxt("logfile_pcScurve_reg-1e-4.txt", skip_header=2, usecols=(2, 1, 5)).T
+
+
+plt.plot(sw4, pc_global4, ls = "-.", label="$p_{n,inlet} - p_{w, outlet}$")
+
+plt.plot(sw_static, pc_static, marker = "x", ls = "", label = "Quasi-static solution", linewidth = 1, markersize = 4)
+plt.plot(sw2_eq, pc_dynamic2_eq, marker = "+", ls = "", label = "Equlibirum state, $\epsilon = 1e-2$", linewidth = 1, markersize = 4)
+plt.plot(sw4, pc_dynamic4, lw = 1, alpha = 0.5, label="Dynamic $p_c$, FI, $\epsilon = 1e-4$")
+plt.plot(sw3, pc_dynamic3, lw = 1, alpha = 0.5, label="Dynamic $p_c$, FI, $\epsilon = 1e-3$")
+plt.plot(sw2, pc_dynamic2, lw = 1, alpha = 0.5, label="Dynamic $p_c$, FI, $\epsilon = 1e-2$")
+
+plt.xticks(fontsize = 14)
+plt.yticks(fontsize = 14)
+plt.xlabel("Saturation $S_w$ [-]", fontsize = 14)
+plt.ylabel("Capillary pressure $p_c$ [Pa]", fontsize = 14)
+plt.legend(frameon=False, fontsize = 14)
+plt.tight_layout(rect=[0.0, 0.0, 1.0, 0.95], pad=0.4, w_pad=2.0, h_pad=2.0)
+plt.savefig("PcS.pdf", dpi = 900)
