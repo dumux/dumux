@@ -12,12 +12,39 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
 
+dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage_other_impliit
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
+               COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS CIRCLETHROAT=1
+               COMPILE_DEFINITIONS USEOTHERIMPLICIT=1
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               TIMEOUT "1000"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
+
+
+
 dumux_add_test(NAME test_pnm_2p_1d_oilwater_imbibition
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=0
                COMPILE_DEFINITIONS CIRCLETHROAT=0
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               TIMEOUT "1000"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
+
+
+dumux_add_test(NAME test_pnm_2p_1d_oilwater_imbibition_other_implicit
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
+               COMPILE_DEFINITIONS DRAINAGE=0
+               COMPILE_DEFINITIONS CIRCLETHROAT=0
+               COMPILE_DEFINITIONS USEOTHERIMPLICIT=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
