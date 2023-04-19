@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Dumux wrapper for the module that provides tools for testing the Dune way.
 # We have a wrapper to have to possibly of supporting multiple Dune versions.
 #

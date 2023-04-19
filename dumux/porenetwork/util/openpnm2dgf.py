@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """
 Creates a DUNE Grid Format file (*.dgf)
 from an OpenPNM porenetwork file (*.pnm)

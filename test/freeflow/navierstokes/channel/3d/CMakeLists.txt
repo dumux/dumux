@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 add_executable(test_ff_stokes_channel_3d EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokes_channel_3d PUBLIC "GRID_DIM=3")
 

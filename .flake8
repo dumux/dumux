@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [flake8]
 ignore = 
     # Ignore whitespace before colon which gives false positive for list slice (black does it correct)

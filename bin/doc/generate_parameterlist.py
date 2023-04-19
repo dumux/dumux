@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 
 """
 Automatically updates parameterlist.txt by searching all *.hh files
@@ -443,7 +446,11 @@ for data in tableEntryData:
 # combine entries
 tableEntries = tableEntriesWithGroup + tableEntriesWithoutGroup
 
-HEADER = """/*!
+HEADER = """\
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: CC-BY-4.0
+
+/*!
  *\\internal
  * ****** W A R N I N G **************************************
  * This file is auto-generated. Do not manually edit.

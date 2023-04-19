@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dune_symlink_to_source_files(FILES "params_advection.input" "params_diffusion.input" "params_advectionni.input" "params_diffusionni.input")
 
 add_executable(test_ff_stokes2c_mass EXCLUDE_FROM_ALL main.cc)
