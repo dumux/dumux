@@ -48,6 +48,8 @@ Automated testing of installation: [![installation testing pipeline](https://git
 
 # License
 
+[![REUSE status](https://api.reuse.software/badge/git.iws.uni-stuttgart.de/dumux-repositories/dumux)](https://api.reuse.software/info/git.iws.uni-stuttgart.de/dumux-repositories/dumux)
+
 DuMu<sup>x</sup> is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later
 version. The GPL can be [read online][5] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
