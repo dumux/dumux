@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES run_and_plot.py extractresults.py)
+dune_symlink_to_source_files(FILES run_and_plot.py extractresults.py accuracy_iteration_calculator.py)
 
 dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage
                SOURCES main.cc
