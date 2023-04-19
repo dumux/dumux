@@ -47,21 +47,37 @@ configure:
     expire_in: 3 hours
 
 
-black (python):
+linters:
   stage: linting
   script:
-  # only check the python folder for now (Python code related to bindings)
+    # black
+    - echo "Running black"
     - black --version
     - black --check --verbose -- python
     - black --check --verbose -- test/python
     - black --check --verbose -- bin
     - black --check --verbose -- dumux/porenetwork/util
-
-
-pylint-flake8 (python):
-  stage: linting
-  script:
-    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+    # codespell
+    - echo "Running codespell"
+    - codespell --version
+    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf" --ignore-words-list="ges"
+    # check examples
+    - |
+      if [ "${DUMUX_CHECK_EXAMPLE_DOCS}" == "true" ]; then
+        echo "Checking example documentation"
+        cd examples
+        python3 generate_example_docs.py
+        git diff -G. > example_diff.txt # -G. shows textual diff, ignoring file mode changes
+        if [ -s example_diff.txt ]; then
+          cat example_diff.txt
+          echo "Example documentation is not up-to-date. Please rerun 'generate_example_docs.py'"
+          exit 1
+        fi
+        cd ..
+      fi
+    # pylint and flake8
+    # restore Python virtual env from cache (job:configure artifacts)
+    - echo "Running pylint and flake8"
     - |
       if [ -d "build-cmake/dune-env" ]; then
         rm -r /dune/modules/dune-common/build-cmake/dune-env
@@ -81,14 +97,6 @@ pylint-flake8 (python):
     - job: configure
       artifacts: true
 
-codespell:
-  stage: linting
-  script:
-    - codespell --version
-    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf" --ignore-words-list="ges"
-  needs:
-    - job: configure
-      artifacts: true
 
 cppcheck:
   stage: linting
@@ -102,23 +110,6 @@ cppcheck:
       artifacts: true
   rules:
     - if: $DUMUX_ENABLE_CPPCHECK == "true"
-
-
-check-example-docs:
-  stage: linting
-  rules:
-  - if: $DUMUX_CHECK_EXAMPLE_DOCS == "true"
-    when: always
-  script:
-    - cd examples
-    - python3 generate_example_docs.py
-    - git diff -G. > example_diff.txt # -G. shows textual diff, ignoring file mode changes
-    - |
-      if [ -s example_diff.txt ]; then
-          cat example_diff.txt
-          echo "Example documentation is not up-to-date. Please rerun 'generate_example_docs.py'"
-          exit 1
-      fi
 
 
 select tests:
