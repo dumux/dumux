@@ -1,0 +1,5 @@
+SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC-BY-4.0
+Based on data from Ghia et al. (1982). High-Re solutions for incompressible flow using the Navier-Stokes equations and a multigrid method.
+Journal of Computational Physics. https://doi.org/10.1016/0021-9991(82)90058-4.
+Processed data. All changes are licensed under DuMux Project contributors CC-BY-4.0

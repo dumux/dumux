@@ -1,3 +1,7 @@
+::
+  SPDX-FileCopyrightInfo: Copyright (c) 2012 - present, Victor Zverovich
+  SPDX-License-Identifier: LicenseRef-fmt
+
 .. image:: https://user-images.githubusercontent.com/
            576385/156254208-f5b743a9-88cf-439d-b0c0-923d53e8d551.png
    :width: 25%

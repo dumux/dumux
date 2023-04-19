@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 add_subdirectory(boundingboxtree)
 
 dumux_add_test(SOURCES test_0d1d_intersection.cc LABELS unit)

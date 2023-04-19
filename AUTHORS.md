@@ -1,3 +1,5 @@
+The DuMux Project contributors are
+
 | Year       | Name                       |
 |------------|----------------------------|
 | 2016-2023  | Sina Ackermann             |

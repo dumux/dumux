@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 add_executable(test_md_embedded_2d3d_fracture1p_tpfa EXCLUDE_FROM_ALL main.cc)
 
 dumux_add_test(NAME test_md_embedded_2d3d_fracture1p_tpfa_linearsolver

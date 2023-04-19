@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 add_subdirectory(reference_data)
 dune_symlink_to_source_files(FILES "params_re1.input" "params_re1000.input" "run_and_plot.py")
 

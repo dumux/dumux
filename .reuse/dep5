@@ -1,0 +1,51 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: dumux
+Source: https://git.iws.uni-stuttgart.de/dumux-repositories/dumux
+
+Files: */*.input
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: GPL-3.0-or-later
+
+Files: test/references/*
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC0-1.0
+
+Files: test/*.msh
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: test/*.geo
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: test/*.pgm
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: test/*.pbm
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.png
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.svg
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.eps
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.gif
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.pdf
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0
+
+Files: *.md
+Copyright: DuMux Project contributors, see AUTHORS.md in root folder
+License: CC-BY-4.0

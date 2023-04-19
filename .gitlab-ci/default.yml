@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 default:
   image: $IMAGE
   retry:
@@ -110,6 +113,15 @@ cppcheck:
       artifacts: true
   rules:
     - if: $DUMUX_ENABLE_CPPCHECK == "true"
+
+
+reuse:
+  stage: linting
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+    - reuse lint
 
 
 select tests:

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 add_subdirectory(omethod)
 
 file(GLOB DUMUX_DISCRETIZATION_CELLCENTERED_MPFA_HEADERS *.hh *.inc)

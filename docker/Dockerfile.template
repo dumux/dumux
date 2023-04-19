@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # ${modName} docker container
 # see https://github.com/phusion/baseimage-docker for information on the base image
 # It is Ubuntu LTS customized for better Docker compatibility

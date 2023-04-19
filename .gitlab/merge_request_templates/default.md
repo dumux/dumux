@@ -1,4 +1,9 @@
 <!--
+SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC0-1.0
+-->
+
+<!--
 Thanks for considering to open a merge request!  
 Before asking for a review of your MR, please read the [contributing guidelines](/CONTRIBUTING.md)
 -->

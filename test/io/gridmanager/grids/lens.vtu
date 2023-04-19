@@ -1,4 +1,9 @@
 <?xml version="1.0"?>
+<!--
+SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="5055" NumberOfPoints="5069">
