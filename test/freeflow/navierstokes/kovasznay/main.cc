@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
     // the linear solver
     using LinearSolver = Dumux::UzawaBiCGSTABIstlSolver<
-        LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>
+        SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>
     >; // if rho \neq 1, use UMFPack rather than BIGCStab
     auto linearSolver = std::make_shared<LinearSolver>();
 
