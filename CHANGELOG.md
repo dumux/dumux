@@ -15,6 +15,8 @@ files are in sync with the sources from which they are produced.
 
 - __Doxygen__: There is now a documentation chapter on parallelism. The installation guide, the property system and the chapter on DuMu<sup>x</sup> examples have been moved from the handbook to the Doxygen documentation.
 
+- __License__: DuMux is now REUSE compliant. Many files are individually licensed, others covered by rules in `.reuse/dep5`.
+
 ### Improvements and Enhancements
 
 - __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
