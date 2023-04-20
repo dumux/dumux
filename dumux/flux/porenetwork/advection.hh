@@ -29,7 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/spline.hh>
 
-#if !USEOTHERIMPLICIT
+#if !NOREGULARIZTAION
 namespace Dumux::PoreNetwork::Detail {
 
 template<class... TransmissibilityLawTypes>

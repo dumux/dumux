@@ -30,7 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/common/labels.hh>
 
-#if !USEOTHERIMPLICIT
+#if !NOREGULARIZTAION
 namespace Dumux::PoreNetwork {
 
 /*!

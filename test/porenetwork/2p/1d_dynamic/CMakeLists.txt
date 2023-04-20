@@ -18,7 +18,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage_other_impliit
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=1
-               COMPILE_DEFINITIONS USEOTHERIMPLICIT=1
+               COMPILE_DEFINITIONS NOREGULARIZTAION=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -44,7 +44,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_imbibition_other_implicit
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=0
                COMPILE_DEFINITIONS CIRCLETHROAT=0
-               COMPILE_DEFINITIONS USEOTHERIMPLICIT=1
+               COMPILE_DEFINITIONS NOREGULARIZTAION=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

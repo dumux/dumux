@@ -1,7 +1,8 @@
 [TimeLoop]
-DtInitial = 0.05 # [s]
-TEnd = 0.2 # [s]
-NumCheckPoints = 100
+DtInitial = 0.02 # [s]
+TEnd = 0.02 # [s]
+MaxTimeStepSize = 0.02
+NumCheckPoints = 1
 
 [Grid]
 PoreGeometry = Cube
@@ -41,8 +42,8 @@ RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 1e-1
+RegPercentage = 0.2
 
 [Component]
-LiquidKinematicViscosity = 1e-5
+LiquidKinematicViscosity = 1e-7
 LiquidDensity = 1000

@@ -680,7 +680,7 @@ public:
      *        (not known yet if we failed or succeeded)
      *        (for pore-network model the invasion status will be updated here)
      */
-#if USEOTHERIMPLICIT
+#if NOREGULARIZTAION
     virtual void newtonEnd()  {
         std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
         logfile << numSteps_ << "\n";
@@ -1038,7 +1038,7 @@ private:
                 // detect if the method has converged
                 converged = newtonConverged();
             }
-#if USEOTHERIMPLICIT
+#if NOREGULARIZTAION
             newtonEnd();
 #else
             // tell solver we are done

@@ -26,7 +26,7 @@
 
 #include <dumux/nonlinear/newtonsolver.hh>
 #include "newtonconsistencychecks.hh"
-#if !USEOTHERIMPLICIT
+#if !NOREGULARIZTAION
 namespace Dumux::PoreNetwork {
 /*!
  * \ingroup PNMTwoPModel

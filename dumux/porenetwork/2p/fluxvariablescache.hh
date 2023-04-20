@@ -29,7 +29,7 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
-#if !USEOTHERIMPLICIT
+#if !NOREGULARIZTAION
 namespace Dumux::PoreNetwork {
 
 /*!
