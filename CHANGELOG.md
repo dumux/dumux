@@ -13,6 +13,8 @@ files are in sync with the sources from which they are produced.
 
 - __CMake__: Dumux now requires at least CMake version 3.14
 
+- __Doxygen__: There is now a documentation chapter on parallelism. The installation guide, the property system and the chapter on DuMu<sup>x</sup> examples have been moved from the handbook to the Doxygen documentation.
+
 ### Improvements and Enhancements
 
 - __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
