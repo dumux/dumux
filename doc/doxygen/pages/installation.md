@@ -37,9 +37,9 @@ This installation method requires
 We provide you with a Python script that facilitates setting up a Dune/DuMux directory
 tree and configures all modules using CMake. Download [installdumux.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py) and place it in a directory where you want to install Dune/DuMux, for example by running
 
-    wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py
+    wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/bin/installdumux.py
 
-Executing the script creates a folder "DUMUX" in which all dependencies will be downloaded and built.
+Executing the script creates a folder "dumux" in which all dependencies will be downloaded and built.
 Run the script by typing:
 
     python3 installdumux.py
@@ -48,7 +48,7 @@ Follow the instructions printed after the script has completed successfully to v
 
 In brief, the script performs the following steps:
 
-* create a folder "DUMUX"
+* create a folder "dumux"
 * clone the DUNE core modules in the current release version
 * clone the DuMux module
 * configure DUNE and DuMux with CMake by using the script `dune-common/bin/dunecontrol` and the options in `dumux/cmake.opts`
@@ -86,7 +86,7 @@ The master branch (developer version) can be cloned with
     git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 Alternatively, it is also possible to download release tarballs
-from [Zenodo](https://doi.org/10.5281/zenodo.2479594) or
+from [DaRUS](https://doi.org/10.18419/darus-3405) or
 from [GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases).
 
 ### 2.3 Configure and build
