@@ -35,7 +35,7 @@ dumux_add_test(NAME test_ff_navierstokes_kovasznay_higherorder_staircase
               TARGET test_ff_navierstokes_kovasznay_higherorder
               LABELS freeflow navierstokes
               TIMEOUT 3600
-              CMAKE_GUARD HAVE_UMFPACK dune-subgrid_FOUND
+              CMAKE_GUARD "( HAVE_UMFPACK AND dune-subgrid_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_kovasznay_higherorder_staircase-reference.vtu
