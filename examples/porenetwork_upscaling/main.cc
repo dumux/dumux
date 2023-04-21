@@ -197,7 +197,8 @@ void runExample()
 
     // plot the results just for non-creeping flow
     // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
-    if (!isCreepingFlow)
+    bool plotConductivity = getParam<bool>("Output.PlotConductivity", true);
+    if (!isCreepingFlow && plotConductivity)
         upscalingHelper.plot();
 };
 
