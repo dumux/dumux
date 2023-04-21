@@ -13,7 +13,7 @@ files are in sync with the sources from which they are produced.
 
 - __CMake__: Dumux now requires at least CMake version 3.14
 
-- __Doxygen__: There is now a documentation chapter on parallelism. The installation guide, the property system and the chapter on DuMu<sup>x</sup> examples have been moved from the handbook to the Doxygen documentation.
+- __Doxygen__: The theme of the Doxygen documentation page has been updated to a more modern look and the content has also been restructured. There is now a documentation chapter on parallelism. The installation guide, the property system description and the chapter on DuMu<sup>x</sup> examples and tutorials have been moved from the handbook to the Doxygen documentation.
 
 - __License__: DuMux is now REUSE compliant. Many files are individually licensed, others covered by rules in `.reuse/dep5`.
 
