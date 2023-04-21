@@ -188,7 +188,7 @@ packages.add_choice(
                     dune-subgrid, dune-spgrid, dune-mmesh and dune-functions.",
 )
 packages.add_choice("optimization", help="Download and install glpk and nlopt.")
-packages.add_choice("others", help="Download and install opm , metis and gstat.")
+packages.add_choice("others", help="Download and install opm and gstat.")
 packages.add_choice("lecture", help="Download dumux-lecture.")
 packages.add_choice("course", help="Download dumux-course.")
 packages.add_choice("ug", help="Download dune-uggrid.")
@@ -201,7 +201,6 @@ packages.add_choice("functions", help="Download dune-functions.")
 packages.add_choice("glpk", help="Download and install glpk.")
 packages.add_choice("nlopt", help="Download and install nlopt.")
 packages.add_choice("opm", help="Download opm modules required for cornerpoint grids.")
-packages.add_choice("metis", help="Download and install the METIS graph partitioner.")
 packages.add_choice("gstat", help="Download and install gstat.")
 
 
@@ -326,7 +325,7 @@ def installFromTarball(package, parameters, externalDir, finalMessage):
                 file.write(content.replace("doc/tex/makefile", ""))
 
         # Run Configuration command
-        configCmd = "./configure" if package != "metis" else ["make", "config"]
+        configCmd = "./configure"
         runCommand(configCmd, currentDir=externalDir)
         try:
             runCommand("make", currentDir=externalDir)
@@ -452,7 +451,6 @@ EXTERNAL_URLS = {
     "nlopt": "http://ab-initio.mit.edu/nlopt/nlopt-2.4.2.tar.gz",
     "opm-common": "https://github.com/OPM/opm-common",
     "opm-grid": "https://github.com/OPM/opm-grid",
-    "metis": "http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-5.1.0.tar.gz",
     "gstat": "http://gstat.org/gstat.tar.gz",
 }
 
@@ -477,7 +475,7 @@ PACKAGE_NAMES = {
     ],
     "functions": ["dune-functions", "dune-typetree"],
     "optimization": ["glpk", "nlopt"],
-    "others": ["opm-common", "opm-grid", "metis", "gstat"],
+    "others": ["opm-common", "opm-grid", "gstat"],
 }
 
 MESSAGES = {
