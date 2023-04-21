@@ -9,7 +9,8 @@ subprocess.call(["./" + static_test_name])
 for regInterval in regIntervals:
     subprocess.call(["./" + dynamic_test_name]
                 + ["-Problem.Name", "pcScurve_reg-" + str(regInterval)]
-                + ["-Problem.RelShiftThreshold", str(1e-5)])
+                + ["-Problem.RelShiftThreshold", str(1e-5)]
+                + ["-Newton.NewtonOutputFilename", "NewtonLog_reg-"+str(regInterval)+".txt"])
 
 import numpy as np
 import matplotlib
