@@ -13,7 +13,7 @@ dumux_add_test(NAME example_pnm1p_upscaling
                                       ${CMAKE_CURRENT_BINARY_DIR}/X-dir-PermeabilityratioVsForchheimerNumber.dat
                                       ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_InversePrmeabilityVsInertiaToViscousRatio.dat
                                       ${CMAKE_CURRENT_BINARY_DIR}/X-dir-InversePrmeabilityVsInertiaToViscousRatio.dat
-                              --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_upscaling params.input -Problem.AssumeCreepingFlow false -Problem.Directions 0")
+                              --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_upscaling params.input -Problem.AssumeCreepingFlow false -Problem.Directions 0 -Output.PlotConductivity false")
 
 dumux_add_test(NAME example_pnm1p_creeping_flow_upscaling
                TARGET example_pnm1p_upscaling
