@@ -1,7 +1,7 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES 4_homo_pores.dgf 8-pores-network.dgf)
+dune_symlink_to_source_files(FILES 4_homo_pores.dgf 8-pores-network.dgf run_and_plot.py iterations_and_timesteps.py)
 
-dumux_add_test(NAME test_pnm_2p
+dumux_add_test(NAME pnm_3d_comparison
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS REGULARIZATIONWITHPRESSURE=0
@@ -13,7 +13,7 @@ dumux_add_test(NAME test_pnm_2p
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
 
-dumux_add_test(NAME test_pnm_2p_other_implicit
+dumux_add_test(NAME pnm_3d_comparison_no_regularization
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS REGULARIZATIONWITHPRESSURE=0

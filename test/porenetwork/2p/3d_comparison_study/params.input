@@ -23,7 +23,7 @@ DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
 
 [Problem]
-Name = drainage
+Name = pnm_3d_comparison
 VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
@@ -55,3 +55,6 @@ RegPercentage = 1e-3
 [Component]
 LiquidKinematicViscosity = 4e-4
 LiquidDensity = 963
+
+[InvasionState]
+BlockNonwettingPhaseAtThroatLabel = 3
