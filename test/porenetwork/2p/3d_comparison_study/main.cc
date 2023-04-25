@@ -167,6 +167,8 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    nonLinearSolver.report();
+
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

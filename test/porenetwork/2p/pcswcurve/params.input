@@ -51,6 +51,7 @@ AddVelocity = 1
 
 [Newton]
 NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-4

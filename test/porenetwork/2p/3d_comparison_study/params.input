@@ -40,6 +40,7 @@ TargetSteps = 4
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
 NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
 
 [InvasionState]
 Verbosity = true

@@ -758,15 +758,15 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        sout << '\n'
-             << "Newton statistics\n"
-             << "----------------------------------------------\n"
-             << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
-             << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
-             << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
-             << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
-             << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
-             << std::endl;
+        std::ofstream lognewton(getParam<std::string>("Newton.NewtonOverview"));
+        lognewton << "Newton statistics\n"
+                  << "----------------------------------------------\n"
+                  << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
+                  << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
+                  << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
+                  << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+                  << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
+                  << std::endl;
     }
 
     /*!
