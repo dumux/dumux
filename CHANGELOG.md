@@ -57,7 +57,7 @@ the same assembler. The old assemblers have been deleted (see below).
 
 - __GridGeometry__: The grid geometry inherits from a basic discretization-agnostic implementation that can be swapped out via traits. The basic implementation contains the bounding box tree and mappers and the instance can be shared among multiple grid geometry instances reducing the number of trees/mappers that have to be instantiated for multidomain problems where both domains use the same grid, e.g. Stokes.
 
-- __Fmt__: shipped fmt has been updated to 9.1.0. If the standard libary support <format> we now use the standard libary instead of fmt. Note that the standard library implementation does not support all features of fmt. In case you have been using such special features you might need to face errors for this reason.
+- __Fmt__: shipped fmt has been updated to 9.1.0. If the standard library support <format> we now use the standard library instead of fmt. Note that the standard library implementation does not support all features of fmt. In case you have been using such special features you might need to face errors for this reason.
 
 -__Assembler__: `FVAssembler::assembleJacobian` was fixed (didn't actually copmile before) and is also tested now. It assembles the Jacobian matrix. Most commonly the method `FVAssembler::assembleJacobianAndResidual` is used which also assembles the residual which is need when computing finite difference approximations of the Jacobian anyway.
 
