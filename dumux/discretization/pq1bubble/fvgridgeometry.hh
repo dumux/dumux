@@ -349,7 +349,8 @@ private:
                             intersection.centerUnitOuterNormal(),
                             std::move(scvPair),
                             scvfLocalIdx,
-                            typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection }
+                            typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection },
+                            geometryHelper.isOverlappingBoundaryScvf(localFacetIndex)
                         );
 
                         // store look-up map to construct boundary scvf geometries
