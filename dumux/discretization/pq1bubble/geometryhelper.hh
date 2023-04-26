@@ -406,6 +406,11 @@ public:
             return true;
     }
 
+    bool isOverlappingBoundaryScvf(unsigned int localFacetIndex) const
+    {
+        return false;
+    }
+
     bool isOverlappingScv(unsigned int localScvIndex) const
     {
         if (localScvIndex < boxHelper_.numScv())
