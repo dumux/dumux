@@ -98,7 +98,7 @@ public:
      * \param gridVariables The grid variables
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
-    : problem_(gridVariables.curGridVolVars().problem())
+    : problem_(gridVariables.gridVolVars().problem())
     , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
@@ -119,10 +119,12 @@ public:
     void calculateVelocity(VelocityVector& velocity,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const ElementFluxVarsCache& elemFluxVarsCache,
+                           const typename GridVariables::LocalView& elemVars,
                            int phaseIdx) const
     {
+        const auto& elemVolVars = elemVars.elemVolVars();
+        const auto& elemFluxVarsCache = elemVars.elemFluxVarsCache();
+
         using Velocity = typename VelocityVector::value_type;
 
         const auto geometry = element.geometry();
@@ -319,7 +321,7 @@ public:
                         else
                         {
                             // check if we have Neumann no flow, we can just use 0
-                            const auto neumannFlux = problem_.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                            const auto neumannFlux = problem_.neumann(fvGeometry, elemVars, scvf);
                             using NumEqVector = std::decay_t<decltype(neumannFlux)>;
                             if (Dune::FloatCmp::eq<NumEqVector, Dune::FloatCmp::CmpStyle::absolute>(neumannFlux, NumEqVector(0.0), 1e-30))
                                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;

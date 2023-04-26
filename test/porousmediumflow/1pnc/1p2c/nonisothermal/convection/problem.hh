@@ -55,10 +55,6 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -223,33 +219,31 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elemFluxVarsCache The cache related to flux computation
+     * \param fvGeometry The locale finite-volume geometry
+     * \param elemVars The variables on the local finite-volume geometry
      * \param scvf The sub-control volume face
      *
      * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
+    template<class ElementVariables>
+    NumEqVector neumann(const FVElementGeometry& fvGeometry,
+                        const ElementVariables& elemVars,
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);
         const auto& globalPos = scvf.ipGlobal();
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& volVars = elemVars.volumeVariables(scv);
 
         if(globalPos[0] < eps_)
         {
-             flux[contiH2OEqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity();
-             flux[contiN2EqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity()*elemVolVars[scv].moleFraction(0, N2Idx);
+             flux[contiH2OEqIdx] = -darcyVelocity_*volVars.molarDensity();
+             flux[contiN2EqIdx] = -darcyVelocity_*volVars.molarDensity()*volVars.moleFraction(0, N2Idx);
              flux[energyEqIdx] = -darcyVelocity_
-                                 *elemVolVars[scv].density()
-                                 *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scv].pressure());
+                                 *volVars.density()
+                                 *IapwsH2O::liquidEnthalpy(temperatureHigh_, volVars.pressure());
         }
 
         return flux;
@@ -299,15 +293,16 @@ private:
         priVars[temperatureIdx] = temperatureLow_;
         return priVars;
     }
-        static constexpr Scalar eps_ = 1e-6;
-        Scalar temperatureHigh_;
-        Scalar temperatureLow_;
-        Scalar pressureHigh_;
-        Scalar pressureLow_;
-        Scalar darcyVelocity_;
 
-        std::vector<Scalar> temperatureExact_;
-    };
+    static constexpr Scalar eps_ = 1e-6;
+    Scalar temperatureHigh_;
+    Scalar temperatureLow_;
+    Scalar pressureHigh_;
+    Scalar pressureLow_;
+    Scalar darcyVelocity_;
+
+    std::vector<Scalar> temperatureExact_;
+};
 
 } // end namespace Dumux
 

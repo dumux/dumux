@@ -29,8 +29,7 @@ class VelocityOutput
 {
     using Scalar = typename GridVariables::Scalar;
     static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using ElementVariables = typename GridVariables::LocalView;
     using FVElementGeometry = typename GridVariables::GridGeometry::LocalView;
     using Element = typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity;
 
@@ -70,8 +69,7 @@ public:
     virtual void calculateVelocity(VelocityVector& velocity,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementFluxVarsCache& elemFluxVarsCache,
+                                   const ElementVariables& elemVars,
                                    int phaseIdx) const
     {}
 };

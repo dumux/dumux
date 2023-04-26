@@ -380,7 +380,7 @@ public:
 
 protected:
     // some return functions for differing implementations to use
-    const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
+    const auto& problem() const { return gridVariables_.gridVolVars().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
     const SolutionVector& sol() const { return sol_; }
@@ -450,7 +450,7 @@ private:
             if (addProcessRank_) rank.resize(numCells);
 
             auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+            auto elemVars = localView(gridVariables_);
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
@@ -459,14 +459,15 @@ private:
                 if (velocityOutput_->enableOutput())
                 {
                     fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
+                    elemVars.bind(element, fvGeometry);
                 }
                 else
                 {
                     fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
+                    elemVars.bindElemVolVars(element, fvGeometry);
                 }
 
+                const auto& elemVolVars = elemVars.elemVolVars();
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
                     for (const auto& scv : scvs(fvGeometry))
@@ -490,7 +491,7 @@ private:
                     const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVars, phaseIdx);
                 }
 
                 //! the rank
@@ -646,7 +647,7 @@ private:
 
             // now we go element-local to extract values at local dof locations
             auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+            auto elemVars = localView(gridVariables_);
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
@@ -655,13 +656,15 @@ private:
                 if (velocityOutput_->enableOutput())
                 {
                     fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
+                    elemVars.bind(element, fvGeometry);
                 }
                 else
                 {
                     fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
+                    elemVars.bindElemVolVars(element, fvGeometry);
                 }
+
+                const auto& elemVolVars = elemVars.elemVolVars();
 
                 const auto numLocalDofs = fvGeometry.numScv();
                 // resize element-local data containers
@@ -689,9 +692,8 @@ private:
                 // velocity output
                 if (velocityOutput_->enableOutput())
                 {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVars, phaseIdx);
                 }
 
                 //! the rank

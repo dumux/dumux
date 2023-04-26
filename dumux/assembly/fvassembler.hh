@@ -102,14 +102,15 @@ class FVAssembler
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using Variables = GridVariables; // required to tell solvers what variables we operate on
 
     using GridGeometry = GridGeo;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -120,11 +121,9 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     FVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const GridGeometry> gridGeometry,
-                std::shared_ptr<GridVariables> gridVariables)
+                std::shared_ptr<const GridGeometry> gridGeometry)
     : problem_(problem)
     , gridGeometry_(gridGeometry)
-    , gridVariables_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
     {
@@ -144,14 +143,12 @@ public:
      */
     FVAssembler(std::shared_ptr<const Problem> problem,
                 std::shared_ptr<const GridGeometry> gridGeometry,
-                std::shared_ptr<GridVariables> gridVariables,
                 std::shared_ptr<const TimeLoop> timeLoop,
-                const SolutionVector& prevSol)
+                const GridVariables& prevGridVariables)
     : problem_(problem)
     , gridGeometry_(gridGeometry)
-    , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
-    , prevSol_(&prevSol)
+    , prevGridVariables_(&prevGridVariables)
     , isStationaryProblem_(!timeLoop)
     {
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
@@ -167,7 +164,7 @@ public:
      *        and the residual for the current solution.
      */
     template<class PartialReassembler = DefaultPartialReassembler>
-    void assembleJacobianAndResidual(const SolutionVector& curSol, const PartialReassembler* partialReassembler = nullptr)
+    void assembleJacobianAndResidual(GridVariables& curVars, const PartialReassembler* partialReassembler = nullptr)
     {
         checkAssemblerState_();
         resetJacobian_(partialReassembler);
@@ -175,43 +172,43 @@ public:
 
         assemble_([&](const Element& element)
         {
-            LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
+            LocalAssembler localAssembler(*this, element, curVars);
+            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, *residual_, curVars.dofs(), *gridGeometry_);
     }
 
     /*!
      * \brief Assembles only the global Jacobian of the residual.
      */
-    void assembleJacobian(const SolutionVector& curSol)
+    void assembleJacobian(GridVariables& gridVars)
     {
         checkAssemblerState_();
         resetJacobian_();
 
         assemble_([&](const Element& element)
         {
-            LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
+            LocalAssembler localAssembler(*this, element, gridVars);
+            localAssembler.assembleJacobian(*jacobian_);
         });
     }
 
     //! compute the residuals using the internal residual
-    void assembleResidual(const SolutionVector& curSol)
+    void assembleResidual(GridVariables& gridVars)
     {
         resetResidual_();
-        assembleResidual(*residual_, curSol);
+        assembleResidual(*residual_, gridVars);
     }
 
     //! assemble a residual r
-    void assembleResidual(ResidualType& r, const SolutionVector& curSol) const
+    void assembleResidual(ResidualType& r, GridVariables& gridVars) const
     {
         checkAssemblerState_();
 
         assemble_([&](const Element& element)
         {
-            LocalAssembler localAssembler(*this, element, curSol);
+            LocalAssembler localAssembler(*this, element, gridVars);
             localAssembler.assembleResidual(r);
         });
     }
@@ -256,10 +253,10 @@ public:
 
     //! compute the residual and return it's vector norm
     [[deprecated("Use assembleResidual and the linear solver's norm. Will be deleted after 3.7")]]
-    Scalar residualNorm(const SolutionVector& curSol) const
+    Scalar residualNorm(const GridVariables& gridVars) const
     {
         ResidualType residual(numDofs());
-        assembleResidual(residual, curSol);
+        assembleResidual(residual, gridVars);
         return normOfResidual(residual);
     }
 
@@ -324,14 +321,6 @@ public:
     const GridView& gridView() const
     { return gridGeometry().gridView(); }
 
-    //! The global grid variables
-    GridVariables& gridVariables()
-    { return *gridVariables_; }
-
-    //! The global grid variables
-    const GridVariables& gridVariables() const
-    { return *gridVariables_; }
-
     //! The jacobian matrix
     JacobianMatrix& jacobian()
     { return *jacobian_; }
@@ -341,8 +330,8 @@ public:
     { return *residual_; }
 
     //! The solution of the previous time step
-    const SolutionVector& prevSol() const
-    { return *prevSol_; }
+    const GridVariables& prevGridVariables() const
+    { return *prevGridVariables_; }
 
     /*!
      * \brief Set time loop for instationary problems
@@ -352,11 +341,11 @@ public:
     { timeLoop_ = timeLoop; isStationaryProblem_ = !static_cast<bool>(timeLoop); }
 
     /*!
-     * \brief Sets the solution from which to start the time integration. Has to be
+     * \brief Sets the variables from which to start the time integration. Has to be
      *        called prior to assembly for time-dependent problems.
      */
-    void setPreviousSolution(const SolutionVector& u)
-    { prevSol_ = &u;  }
+    void setPreviousVariables(const GridVariables& v)
+    { prevGridVariables_ = &v;  }
 
     /*!
      * \brief Whether we are assembling a stationary or instationary problem
@@ -369,22 +358,6 @@ public:
      */
     LocalResidual localResidual() const
     { return LocalResidual(problem_.get(), timeLoop_.get()); }
-
-    /*!
-     * \brief Update the grid variables
-     */
-    void updateGridVariables(const SolutionVector &cursol)
-    {
-        gridVariables().update(cursol);
-    }
-
-    /*!
-     * \brief Reset the gridVariables
-     */
-    void resetTimeStep(const SolutionVector &cursol)
-    {
-        gridVariables().resetTimeStep(cursol);
-    }
 
 private:
     /*!
@@ -446,8 +419,8 @@ private:
     // check if the assembler is in a correct state for assembly
     void checkAssemblerState_() const
     {
-        if (!isStationaryProblem_ && !prevSol_)
-            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
+        if (!isStationaryProblem_ && !prevGridVariables_)
+            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous variables were not set!");
     }
 
     /*!
@@ -536,14 +509,11 @@ private:
     //! the finite volume geometry of the grid
     std::shared_ptr<const GridGeometry> gridGeometry_;
 
-    //! the variables container for the grid
-    std::shared_ptr<GridVariables> gridVariables_;
-
     //! the time loop for instationary problem assembly
     std::shared_ptr<const TimeLoop> timeLoop_;
 
-    //! an observing pointer to the previous solution for instationary problems
-    const SolutionVector* prevSol_ = nullptr;
+    //! an observing pointer to the previous variables for instationary problems
+    const GridVariables* prevGridVariables_ = nullptr;
 
     //! if this assembler is assembling an instationary problem
     bool isStationaryProblem_;

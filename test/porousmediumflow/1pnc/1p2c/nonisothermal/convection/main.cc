@@ -80,16 +80,10 @@ int main(int argc, char** argv)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // the solution vector
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    SolutionVector x(gridGeometry->numDofs());
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    auto prevGridVariables = *gridVariables;
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -98,7 +92,7 @@ int main(int argc, char** argv)
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // initialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputModule vtkWriter(*gridVariables, gridVariables->dofs(), problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -114,7 +108,7 @@ int main(int argc, char** argv)
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, timeLoop, prevGridVariables);
 
     // the linear solver
     //  using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -129,14 +123,14 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         // linearize & solve
-        nonLinearSolver.solve(x, *timeLoop);
+        nonLinearSolver.solve(*gridVariables, *timeLoop);
 
         // update the exact time temperature
-        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+        problem->updateExactTemperature(gridVariables->dofs(), timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+        gridVariables->updateTime(Experimental::TimeLevel{timeLoop->time()+timeLoop->timeStepSize()});
+        prevGridVariables = *gridVariables;
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

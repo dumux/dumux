@@ -38,16 +38,15 @@ class FVLocalAssemblerBase
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = typename Assembler::SolutionVector;
+    using ElementVariables = typename GridVariables::LocalView;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
+
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -60,37 +59,35 @@ public:
      */
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
-                                  const SolutionVector& curSol)
+                                  GridVariables& gridVars)
     : FVLocalAssemblerBase(assembler,
                            element,
-                           curSol,
-                           localView(assembler.gridGeometry()),
-                           localView(assembler.gridVariables().curGridVolVars()),
-                           localView(assembler.gridVariables().prevGridVolVars()),
-                           localView(assembler.gridVariables().gridFluxVarsCache()),
+                           gridVars,
+                           localView(gridVars.gridGeometry()),
+                           localView(gridVars),
+                           localView(assembler.prevGridVariables()),
                            assembler.localResidual(),
                            element.partitionType() == Dune::GhostEntity)
     {}
 
     /*!
      * \brief The constructor. General version explicitly expecting each argument.
+     * \todo do we really need this beast in the public interface???
      */
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
-                                  const SolutionVector& curSol,
+                                  GridVariables& gridVars,
                                   const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& curElemVolVars,
-                                  const ElementVolumeVariables& prevElemVolVars,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const ElementVariables& curElemVars,
+                                  const ElementVariables& prevElemVars,
                                   const LocalResidual& localResidual,
                                   const bool elementIsGhost)
     : assembler_(assembler)
     , element_(element)
-    , curSol_(curSol)
+    , gridVars_(gridVars)
     , fvGeometry_(fvGeometry)
-    , curElemVolVars_(curElemVolVars)
-    , prevElemVolVars_(prevElemVolVars)
-    , elemFluxVarsCache_(elemFluxVarsCache)
+    , curElemVars_(curElemVars)
+    , prevElemVars_(prevElemVars)
     , localResidual_(localResidual)
     , elementIsGhost_(elementIsGhost)
     {}
@@ -114,24 +111,24 @@ public:
         if (elementIsGhost())
             return ElementResidualVector(0.0);
 
-        return isImplicit() ? evalLocalResidual(curElemVolVars())
-                            : evalLocalResidual(prevElemVolVars());
+        return isImplicit() ? evalLocalResidual(curElemVars_)
+                            : evalLocalResidual(prevElemVars_);
     }
 
     /*!
      * \brief Evaluates the complete local residual for the current element.
      * \param elemVolVars The element volume variables
      */
-    ElementResidualVector evalLocalResidual(const ElementVolumeVariables& elemVolVars) const
+    ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
         if (!assembler().isStationaryProblem())
         {
-            ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVolVars);
+            ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVars);
             residual += evalLocalStorageResidual();
             return residual;
         }
         else
-            return evalLocalFluxAndSourceResidual(elemVolVars);
+            return evalLocalFluxAndSourceResidual(elemVars);
     }
 
     /*!
@@ -141,19 +138,19 @@ public:
      */
     ElementResidualVector evalLocalFluxAndSourceResidual() const
     {
-        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
-                            : evalLocalFluxAndSourceResidual(prevElemVolVars());
+        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVars_)
+                            : evalLocalFluxAndSourceResidual(prevElemVars_);
      }
 
     /*!
      * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative)
      *        of the local residual for the current element.
      *
-     * \param elemVolVars The element volume variables
+     * \param elemVars The element variables
      */
-    ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVariables& elemVars) const
     {
-        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
+        return localResidual_.evalFluxAndSource(fvGeometry_.element(), fvGeometry_, elemVars, elemBcTypes_);
     }
 
     /*!
@@ -163,7 +160,7 @@ public:
      */
     ElementResidualVector evalLocalStorageResidual() const
     {
-        return localResidual_.evalStorage(element_, fvGeometry_, prevElemVolVars_, curElemVolVars_);
+        return localResidual_.evalStorage(fvGeometry_, prevElemVars_.elemVolVars(), curElemVars_.elemVolVars());
     }
 
     /*!
@@ -175,7 +172,7 @@ public:
         // get some references for convenience
         const auto& element = this->element();
         const auto& curSol = this->curSol();
-        const auto& prevSol = this->assembler().prevSol();
+        const auto& prevSol = this->assembler().prevGridVariables().dofs();
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& prevElemVolVars = this->prevElemVolVars();
@@ -189,7 +186,7 @@ public:
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
             if (!this->assembler().isStationaryProblem())
-                prevElemVolVars.bindElement(element, fvGeometry, this->assembler().prevSol());
+                prevElemVolVars.bindElement(element, fvGeometry, prevSol);
         }
         else
         {
@@ -242,24 +239,32 @@ public:
     { return elementIsGhost_; }
 
     //! The current solution
-    const SolutionVector& curSol() const
-    { return curSol_; }
+    const auto& curSol() const
+    { return gridVars_.dofs(); }
 
     //! The global finite volume geometry
+    const auto& gridGeometry()
+    { return fvGeometry_.gridGeometry(); }
+
+    //! The local finite volume geometry
     FVElementGeometry& fvGeometry()
     { return fvGeometry_; }
 
+    //! The current element variables
+    auto& curElemVars()
+    { return curElemVars_; }
+
     //! The current element volume variables
-    ElementVolumeVariables& curElemVolVars()
-    { return curElemVolVars_; }
+    auto& curElemVolVars()
+    { return curElemVars_.elemVolVars(); }
 
     //! The element volume variables of the provious time step
-    ElementVolumeVariables& prevElemVolVars()
-    { return prevElemVolVars_; }
+    auto& prevElemVolVars()
+    { return prevElemVars_.elemVolVars(); }
 
     //! The element flux variables cache
-    ElementFluxVariablesCache& elemFluxVarsCache()
-    { return elemFluxVarsCache_; }
+    auto& elemFluxVarsCache()
+    { return curElemVars_.elemFluxVarsCache(); }
 
     //! The local residual for the current element
     LocalResidual& localResidual()
@@ -274,16 +279,16 @@ public:
     { return fvGeometry_; }
 
     //! The current element volume variables
-    const ElementVolumeVariables& curElemVolVars() const
-    { return curElemVolVars_; }
+    const auto& curElemVolVars() const
+    { return curElemVars_.elemVolVars(); }
 
     //! The element volume variables of the provious time step
-    const ElementVolumeVariables& prevElemVolVars() const
-    { return prevElemVolVars_; }
+    const auto& prevElemVolVars() const
+    { return prevElemVars_.elemVolVars(); }
 
     //! The element flux variables cache
-    const ElementFluxVariablesCache& elemFluxVarsCache() const
-    { return elemFluxVarsCache_; }
+    const auto& elemFluxVarsCache() const
+    { return curElemVars_.elemFluxVarsCache(); }
 
     //! The element's boundary types
     const ElementBoundaryTypes& elemBcTypes() const
@@ -294,6 +299,9 @@ public:
     { return localResidual_; }
 
 protected:
+    const GridVariables& gridVariables() const { return gridVars_; }
+    GridVariables& gridVariables() { return gridVars_; }
+
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
@@ -301,23 +309,22 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
     template<class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return elemVolVars[scv]; }
+    VolumeVariables& getVolVarAccess(GridVariables& gridVars, ElementVariables& elemVars, const SubControlVolume& scv)
+    { return elemVars.volumeVariables(scv); }
 
     template<class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
+    VolumeVariables& getVolVarAccess(GridVariables& gridVars, ElementVariables& elemVars, const SubControlVolume& scv)
+    { return gridVars.gridVolVars.volVars(scv); }
 
 private:
 
     const Assembler& assembler_; //!< access pointer to assembler instance
     const Element& element_; //!< the element whose residual is assembled
-    const SolutionVector& curSol_; //!< the current solution
+    GridVariables& gridVars_; //!< the current state of the variables
 
     FVElementGeometry fvGeometry_;
-    ElementVolumeVariables curElemVolVars_;
-    ElementVolumeVariables prevElemVolVars_;
-    ElementFluxVariablesCache elemFluxVarsCache_;
+    ElementVariables curElemVars_;
+    ElementVariables prevElemVars_;
     ElementBoundaryTypes elemBcTypes_;
 
     LocalResidual localResidual_; //!< the local residual evaluating the equations per element

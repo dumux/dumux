@@ -253,20 +253,17 @@ public:
      * This is the method for the case where the Neumann condition is
      * potentially solution dependent
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
+     * \param fvGeometry The element-local finite-volume geometry
+     * \param elemVars The variables defined on the local finite-volume geometry
      * \param scvf The sub control volume face
      *
      * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    template<class ElementVariables>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const ElementVariables& elemVars,
                         const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
@@ -297,9 +294,8 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
+     * \param fvGeometry The element-local finite-volume geometry
+     * \param elemVars The variables defined on the local finite-volume geometry
      * \param scv The sub control volume
      *
      * For this method, the return parameter stores the conserved quantity rate
@@ -307,11 +303,10 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    template<class ElementVolumeVariables>
-    NumEqVector source(const Element &element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolume &scv) const
+    template<class ElementVariables>
+    NumEqVector source(const FVElementGeometry& fvGeometry,
+                       const ElementVariables& elemVars,
+                       const SubControlVolume& scv) const
     {
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(scv.center());
@@ -360,9 +355,8 @@ public:
      * solution dependent
      *
      * \param source A single point source
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
+     * \param fvGeometry The element-local finite-volume geometry
+     * \param elemVars The variables defined on the local finite-volume geometry
      * \param scv The sub control volume
      *
      * For this method, the values() method of the point sources returns

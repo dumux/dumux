@@ -34,8 +34,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using ElementVariables = typename GetPropType<TypeTag, Properties::GridVariables>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -50,22 +49,20 @@ public:
                   const Problem& problem,
                   const Element& element,
                   const FVElementGeometry& fvGeometry,
-                  const ElementVolumeVariables& elemVolVars,
+                  const ElementVariables& elemVars,
                   const ElementBoundaryTypes& elemBcTypes,
-                  const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto localScvIdx = scv.localDofIndex();
-        residual[localScvIdx] += this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+        residual[localScvIdx] += this->asImp().evalFlux(problem, element, fvGeometry, elemVars, scvf);
     }
 
     //! evaluate the flux residual for a sub control volume face
     NumEqVector evalFlux(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const ElementVariables& elemVars,
                          const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);
@@ -73,7 +70,7 @@ public:
         // inner faces
         if (!scvf.boundary())
         {
-            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVars, scvf);
         }
 
         // boundary faces
@@ -83,16 +80,16 @@ public:
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVars, scvf);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                auto neumannFluxes = problem.neumann(fvGeometry, elemVars, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
+                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVars.volumeVariables(scv).extrusionFactor();
 
                 flux += neumannFluxes;
             }

@@ -55,7 +55,7 @@ public:
     PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
+        enableOutput_ = getParamFromGroup<bool>(gridVariables.gridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
         if (enableOutput_)
             velocityBackend = std::make_unique<VelocityBackend>(gridVariables);
     }
@@ -74,12 +74,11 @@ public:
     void calculateVelocity(VelocityVector& velocity,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const ElementFluxVarsCache& elemFluxVarsCache,
+                           const typename GridVariables::LocalView& elemVars,
                            int phaseIdx) const override
     {
         if (enableOutput_)
-            velocityBackend->calculateVelocity(velocity, element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+            velocityBackend->calculateVelocity(velocity, element, fvGeometry, elemVars, phaseIdx);
     }
 
 private:

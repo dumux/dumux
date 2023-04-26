@@ -40,10 +40,9 @@ class CompositionalLocalResidual: public GetPropType<TypeTag, Properties::BaseLo
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using ElementVariables = typename GetPropType<TypeTag, Properties::GridVariables>::LocalView;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -129,10 +128,12 @@ public:
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolumeFace& scvf,
-                            const ElementFluxVariablesCache& elemFluxVarsCache) const
+                            const ElementVariables& elemVars,
+                            const SubControlVolumeFace& scvf) const
     {
+        const auto& elemVolVars = elemVars.elemVolVars();
+        const auto& elemFluxVarsCache = elemVars.elemFluxVarsCache();
+
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();

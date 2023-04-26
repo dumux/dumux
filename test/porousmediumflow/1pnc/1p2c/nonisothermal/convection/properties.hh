@@ -27,11 +27,10 @@
 
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
-
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-
+#include <dumux/experimental/discretization/fvgridvariables.hh>
 
 #include "problem.hh"
 #include "../../spatialparams.hh"
@@ -79,6 +78,18 @@ struct SpatialParams<TypeTag, TTag::OnePTwoCNIConvection>
 // Define whether mole(true) or mass (false) fractions are used
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::OnePTwoCNIConvection> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::OnePTwoCNIConvection>
+{
+private:
+    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GFC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using X = GetPropType<TypeTag, Properties::SolutionVector>;
+
+public:
+    using type = Dumux::Experimental::FVGridVariables<GVV, GFC, X>;
+};
 } // end namespace Dumux::Properties
 
 #endif

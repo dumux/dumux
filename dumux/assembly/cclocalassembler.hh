@@ -48,8 +48,6 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
-    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
 
 public:
 
@@ -60,11 +58,11 @@ public:
      *        to the global matrix. The element residual is written into the right hand side.
      */
     template <class ResidualVector, class PartialReassembler = DefaultPartialReassembler>
-    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
+    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res,
                                      const PartialReassembler* partialReassembler)
     {
         this->asImp_().bindLocalViews();
-        const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->gridGeometry().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(globalI) == EntityColor::green)
         {
@@ -72,7 +70,7 @@ public:
         }
         else
         {
-            res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+            res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac); // forward to the internal implementation
         }
     }
 
@@ -80,10 +78,10 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
      */
-    void assembleJacobian(JacobianMatrix& jac, GridVariables& gridVariables)
+    void assembleJacobian(JacobianMatrix& jac)
     {
         this->asImp_().bindLocalViews();
-        this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        this->asImp_().assembleJacobianAndResidualImpl(jac); // forward to the internal implementation
     }
 
     /*!
@@ -93,7 +91,7 @@ public:
     void assembleResidual(ResidualVector& res)
     {
         this->asImp_().bindLocalViews();
-        const auto globalI = this->assembler().gridGeometry().elementMapper().index(this->element());
+        const auto globalI = this->gridGeometry().elementMapper().index(this->element());
         res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
 
         using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -161,7 +159,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -172,7 +170,7 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& gridGeometry = this->assembler().gridGeometry();
+        const auto& gridGeometry = this->gridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
@@ -201,8 +199,8 @@ public:
                 return this->localResidual().evalFlux(this->problem(),
                                                       neighbor,
                                                       this->fvGeometry(),
-                                                      this->curElemVolVars(),
-                                                      this->elemFluxVarsCache(), scvf);
+                                                      this->curElemVars(),
+                                                      scvf);
         };
 
         // get the elements in which we need to evaluate the fluxes
@@ -219,11 +217,11 @@ public:
 
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);
-        auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+        auto& curVolVars = ParentType::getVolVarAccess(this->gridVariables(), this->curElemVars(), scv);
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection
-        const auto& curSol = this->curSol();
+        const auto& curSol = this->gridVariables().dofs();
         const auto origPriVars = curSol[globalI];
         const auto origVolVars = curVolVars;
 
@@ -247,7 +245,7 @@ public:
                 curVolVars.update(elemSol, this->problem(), element, scv);
                 elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
                 if (enableGridFluxVarsCache)
-                    gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+                    this->gridVariables().gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
                 partialDerivsTmp[0] = this->evalLocalResidual()[0];
@@ -341,7 +339,7 @@ public:
         // We only have to do this for the last primary variable, for all others the flux var cache
         // is updated with the correct element volume variables before residual evaluations
         if (enableGridFluxVarsCache)
-            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+            this->gridVariables().gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
         // return the original residual
         return origResiduals[0];
