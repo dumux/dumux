@@ -199,8 +199,7 @@ int main(int argc, char** argv)
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
     // the coupling manager
-    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problem (boundary conditions)
@@ -210,6 +209,7 @@ int main(int argc, char** argv)
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
     // get some time loop parameters
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using Scalar = typename Traits::Scalar;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");

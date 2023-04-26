@@ -14,8 +14,11 @@
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
+#include <dumux/freeflow/navierstokes/mass/problem.hh>
+
+#include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
 
 #include <dumux/flux/maxwellstefanslaw.hh>
 #include <dumux/material/fluidsystems/base.hh>
@@ -23,7 +26,8 @@
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 
-#include <dumux/multidomain/staggeredfreeflow/couplingmanager.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/freeflow/couplingmanager.hh>
 
 #include "problem.hh"
 
@@ -41,11 +45,17 @@ struct ReplaceCompEqIdx<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr i
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::MaxwellStefanNCTest>
+{ using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::MaxwellStefanNCTest> { using type = Dumux::MaxwellStefanNCTestProblem<TypeTag> ; };
+struct Problem<TypeTag, TTag::MaxwellStefanTestMomentum>
+{ using type = MaxwellStefanNCTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::MaxwellStefanTestMass>
+{ using type = MaxwellStefanNCTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool value = true; };
@@ -60,13 +70,6 @@ struct UseMoles<TypeTag, TTag::MaxwellStefanNCTest> { static constexpr bool valu
 //! Here we set FicksLaw or MaxwellStefansLaw
 template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefansLaw<TypeTag>; };
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::MaxwellStefanNCTest>
-{
-    using Traits = MultiDomainTraits<TTag::MaxwellStefanTestMomentum, TTag::MaxwellStefanTestMass>;
-    using type = StaggeredFreeFlowCouplingManager<Traits>;
-};
 
 /*!
  * \ingroup NavierStokesNCTests
@@ -193,6 +196,14 @@ public:
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::MaxwellStefanNCTest>
+{
+    using Traits = MultiDomainTraits<TTag::MaxwellStefanTestMomentum, TTag::MaxwellStefanTestMass>;
+    using type = FreeFlowCouplingManager<Traits>;
+};
+
 
 } // end namespace Dumux::Properties
 

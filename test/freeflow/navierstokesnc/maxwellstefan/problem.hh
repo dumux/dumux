@@ -16,10 +16,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
-#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
 namespace Dumux {
 
@@ -27,10 +27,10 @@ namespace Dumux {
  * \ingroup NavierStokesNCTests
  * \brief Test problem for the Maxwell-Stefan model
  */
-template <class TypeTag>
-class MaxwellStefanNCTestProblem : public NavierStokesStaggeredProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class MaxwellStefanNCTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
