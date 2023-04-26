@@ -450,7 +450,7 @@ public:
     }
 
     /*!
-     * \brief Returns the velocity at the element center.
+     * \brief Returns the velocity at a given Position.
      */
     template<class GlobalPosition>
     VelocityVector velocityAtPos(const FVElementGeometry<freeFlowMassIndex>& fvGeometry, const GlobalPosition& pos) const
@@ -471,6 +471,31 @@ public:
             velocity.axpy(shapeValues[scv.indexInElement()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
 
         return velocity;
+    }
+
+    /*!
+     * \brief Returns the gradient of velocity at a given Position.
+     */
+    template<class GlobalPosition>
+    auto gradVelocityAtPos(const FVElementGeometry<freeFlowMassIndex>& fvGeometry, const GlobalPosition& pos) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), fvGeometry.element());
+
+        const auto& momentumFvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
+        const auto& element = momentumFvGeometry.element();
+        const auto geometry = element.geometry();
+        const auto& localBasis = momentumFvGeometry.feLocalBasis();
+
+        std::vector<ShapeValue> shapeValues;
+        const auto ipLocal = geometry.local(pos);
+        using ShapeJacobian = typename std::decay_t<decltype(localBasis)>::Traits::JacobianType;
+        std::vector<ShapeJacobian> shapeJacobian;
+        localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+
+        const auto elemSol = elementSolution(element, this->curSol(freeFlowMomentumIndex), momentumFvGeometry.gridGeometry());
+        const auto gradSol = evalGradients(element, geometry, momentumFvGeometry.gridGeometry(), elemSol, pos);
+
+        return gradSol;
     }
 
     /*!

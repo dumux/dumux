@@ -116,6 +116,16 @@ public:
             DUNE_THROW(Dune::NotImplemented, "interpolation not implemented");
     }
 
+    /*!
+     * \brief Returns the gradient of velocity at a given position.
+     */
+    auto interpolateGradVelocity(const FVElementGeometry& fvGeometry, const GlobalPosition& pos) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->gradVelocityAtPos(fvGeometry, pos);
+        else
+            DUNE_THROW(Dune::NotImplemented, "interpolation not implemented");
+    }
 
     /*!
      * \brief Returns the velocity at a given position.
