@@ -13,7 +13,7 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 - __Testing/CI__: The example documentation is now re-generated in the CI in order to verify that the generated README files are in sync with the sources from which they are produced.
 
-- __Testing/CI__: The test suite now uses the [`fieldcompare`](https://pypi.org/project/fieldcompare/) library to compare VTK and data files in regression tests. The legacy copmarison backend is kept as fallback.
+- __Testing/CI__: The test suite now uses the [`fieldcompare`](https://pypi.org/project/fieldcompare/) library to compare VTK and data files in regression tests. The legacy comparison backend is kept as fallback.
 
 - __Metadata__: Added a codemeta.json file describing DuMux
 
@@ -47,11 +47,11 @@ the same assembler. The old assemblers have been deleted (see below).
 
 - __Fmt__: shipped fmt has been updated to 9.1.0. If the standard library support <format> we now use the standard library instead of fmt. Note that the standard library implementation does not support all features of fmt. In case you have been using such special features you might need to face errors for this reason.
 
-- __Assembler__: `FVAssembler::assembleJacobian` was fixed (didn't actually copmile before) and is also tested now. It assembles the Jacobian matrix. Most commonly the method `FVAssembler::assembleJacobianAndResidual` is used which also assembles the residual which is need when computing finite difference approximations of the Jacobian anyway.
+- __Assembler__: `FVAssembler::assembleJacobian` was fixed (didn't actually compile before) and is also tested now. It assembles the Jacobian matrix. Most commonly the method `FVAssembler::assembleJacobianAndResidual` is used which also assembles the residual which is need when computing finite difference approximations of the Jacobian anyway.
 
 - __Poromechanics__: Fixed a bug in `PoroElasticLocalResidual`, where the average density between fluid and solid was computed incorrectly, potentially leading to unphysical body forces.
 
-- __Box/CVFE/Porenetwork Assembly bugfix__: The flux variables caches are now updated when comuting the Jacobian. Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such that the resulting Jacobian was only an approximation.
+- __Box/CVFE/Porenetwork Assembly bugfix__: The flux variables caches are now updated when computing the Jacobian. Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such that the resulting Jacobian was only an approximation.
 
 - __Time loop__: Only insert duplicate check points once.
 
