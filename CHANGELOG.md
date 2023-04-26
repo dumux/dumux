@@ -5,53 +5,41 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 ### General changes / structure
 
-- __Testing/CI__: One of the CI pipelines now includes a build of the `doxygen` documentation. The result of this
-build can be downloaded from the job artifacts.
-
-- __Testing/CI__: One of the CI pipelines now runs the static code analyzer `cppcheck` on every merge request.
-
-- __Testing/CI__: The example documentation is now re-generated in the CI in order to verify that the generated README
-files are in sync with the sources from which they are produced.
-
-- __Testing/CI__: The test suite now uses the [`fieldcompare`](https://pypi.org/project/fieldcompare/) library to compare VTK and data files in regression tests. The legacy copmarison backend is kept as fallback.
-
-- __CMake__: DuMux now requires at least CMake version 3.14
-
-- __Doxygen__: The theme of the Doxygen documentation page has been updated to a more modern look and the content has also been restructured. There is now a documentation chapter on parallelism. The installation guide, the property system description and the chapter on DuMu<sup>x</sup> examples and tutorials have been moved from the handbook to the Doxygen documentation.
+- __Doxygen__: The theme of the Doxygen documentation page has been updated to a more modern look and the content has been restructured. The installation guide, the property system description and the chapter on examples and tutorials have been moved from the handbook to the Doxygen documentation. A chapter on parallelism has been added. One of the CI pipelines now includes a build of the Doxygen documentation. The result of this build can be downloaded from the job artifacts. 
 
 - __License__: DuMux is now REUSE compliant. Many files are individually licensed, others covered by rules in `.reuse/dep5`.
 
+- __Testing/CI__: One of the CI pipelines now runs the static code analyzer `cppcheck` on every merge request.
+
+- __Testing/CI__: The example documentation is now re-generated in the CI in order to verify that the generated README files are in sync with the sources from which they are produced.
+
+- __Testing/CI__: The test suite now uses the [`fieldcompare`](https://pypi.org/project/fieldcompare/) library to compare VTK and data files in regression tests. The legacy copmarison backend is kept as fallback.
+
 - __Metadata__: Added a codemeta.json file describing DuMux
+
+- __CMake__: DuMux now requires at least CMake version 3.14
+
 
 ### Improvements and Enhancements
 
-- __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
+- __Linear solvers__: New linear solvers have been added in `istlsolvers.hh`. They offer additional runtime options and most of them can be utilized in MPI parallel computation, eliminating the need to use `istlsolverfactory.hh` which takes longer to compile.
 
-- __Shallow water equations__: Added new friction law `FrictionLawViscousNoSlip` for viscous thin film flow
+- __Linear solvers__: Added three multi-threaded smoothers that can be used to speedup AMG (ParMTJac, ParMTSOR, ParMTSSOR).
 
-- __Shallow water equations__: Make regularization of the water height / roughness height optional in the friction laws
+- __Linear solvers__: Added an iterative solver for the Stokes problem with a block-diagonal or block-triagonal preconditioner.
 
-- __Projection__: In addition to the L2-projector projecting between different grids added a helper that
-computes the L2-projection of analytic functions in to discrete FEM spaces (requires `dune-functions`).
-
-- __Poromechanics__: Fixed a bug in `PoroElasticLocalResidual`, where the average density between fluid and solid was computed incorrectly, potentially leading to unphysical body forces.
-
-- __Box/CVFE/Porenetwork Assembly bugfix__: The flux variables caches are now updated when comuting the Jacobian.
-Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such
-that the resulting Jacobian was only an approximation.
+- __Examples__: There are now three more examples. The first example shows how to simulate diffusion using a custom model equation, with finite volume/element methods. The second one models the separation of two phases using Cahn-Hilliard model with two governing nonlinear equations. The third example models tracer spread in blood and tissue using a multi-domain model coupling 1D advection-diffusion equation and 3D diffusion equation in the porous medium.
 
 - __Box/Diamond/Bubble/CVFE Assembly__: All CVFE schemes now use the same element solution and
 the same assembler. The old assemblers have been deleted (see below).
 
-- __Linear solvers__: Istl linear solvers will have additional runtime options thanks to the parameter tree-based params. And most of the standard dune-istl solvers (from istlsolvers.hh) can be utilized in MPI parallel computation, eliminating the need to use istlsolverfactory which took longer to compile.
+- __IO/RasterImageWriter__: A tool now exists for writing `.pbm` and `.pgm` image files.
 
-- __Linear solvers__: Add three multi-threaded smoothers that can be used to speedup AMG (ParMTJac, ParMTSOR, ParMTSSOR)
+- __Shallow water equations__: Added new friction law `FrictionLawViscousNoSlip` for viscous thin film flow.
 
-- __Linear solvers__: Added an iterative solver for the Stokes problem with a block-diagonal or block-triagonal preconditioner
+- __Shallow water equations__: Make regularization of the water height / roughness height optional in the friction laws.
 
-- __Examples__: There are now three more examples. The first example shows how to simulate diffusion using a custom model equation, with finite volume/element methods. The second one models the separation of two phases using Cahn-Hilliard model with two governing nonlinear equations. The third example models tracer spread in blood and tissue using a multi-domain model coupling 1D advection-diffusion equation and 3D diffusion equation in the porous medium.
-
-- __Time loop__: Only insert duplicate check points once
+- __Projection__: In addition to the L2-projector projecting between different grids added a helper that computes the L2-projection of analytic functions in to discrete FEM spaces (requires `dune-functions`).
 
 - __Box__: No longer store the corners/geometry for scv/scvfs. This improves the memory footprint a lot. Geometries can be obtained via the local view of the grid geometry. (Implementation for other discretization schemes is planned for the coming release and scv/scvfs interfaces are deprecated.)
 
@@ -59,7 +47,13 @@ the same assembler. The old assemblers have been deleted (see below).
 
 - __Fmt__: shipped fmt has been updated to 9.1.0. If the standard library support <format> we now use the standard library instead of fmt. Note that the standard library implementation does not support all features of fmt. In case you have been using such special features you might need to face errors for this reason.
 
--__Assembler__: `FVAssembler::assembleJacobian` was fixed (didn't actually copmile before) and is also tested now. It assembles the Jacobian matrix. Most commonly the method `FVAssembler::assembleJacobianAndResidual` is used which also assembles the residual which is need when computing finite difference approximations of the Jacobian anyway.
+- __Assembler__: `FVAssembler::assembleJacobian` was fixed (didn't actually copmile before) and is also tested now. It assembles the Jacobian matrix. Most commonly the method `FVAssembler::assembleJacobianAndResidual` is used which also assembles the residual which is need when computing finite difference approximations of the Jacobian anyway.
+
+- __Poromechanics__: Fixed a bug in `PoroElasticLocalResidual`, where the average density between fluid and solid was computed incorrectly, potentially leading to unphysical body forces.
+
+- __Box/CVFE/Porenetwork Assembly bugfix__: The flux variables caches are now updated when comuting the Jacobian. Before this fix, fluxvariable caches depending on the solution were not updates for CVFE schemes such that the resulting Jacobian was only an approximation.
+
+- __Time loop__: Only insert duplicate check points once.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
@@ -103,8 +97,6 @@ headers have been replaced by `CVFELocalAssembler` and `CVFESubdomainLocalAssemb
 template parameter has been deprecated. Pass a component instead, use `Components::CO2<CO2Table>` to
 keep using a tabulated component.
 - __GridGeometry__: scv/f.corner/geometry() interfaces
-
-### New experimental features (possibly subject to backwards-incompatible changes in the future)
 
 
 Differences Between DuMu<sup>x</sup> 3.6 and DuMu<sup>x</sup> 3.5
