@@ -290,9 +290,9 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             saturationEpsilon_[phaseIdx] = false;
-            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && insideVolVars.saturation(phaseIdx) < 1e-3) //insideScv is upstream
+            if ( insideVolVars.pressure(phaseIdx) >  outsideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) > 0.999) //insideScv is upstream
                 saturationEpsilon_[phaseIdx] = true;
-            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) && outsideVolVars.saturation(phaseIdx) < 1e-3) //outsideScv is upstream
+            else if ( outsideVolVars.pressure(phaseIdx) >  insideVolVars.pressure(phaseIdx) &&  insideVolVars.saturation(phaseIdx) > 0.999) //outsideScv is upstream
                 saturationEpsilon_[phaseIdx] = true;
         }
 

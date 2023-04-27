@@ -1,13 +1,13 @@
 [TimeLoop]
-DtInitial = 0.5 # [s]
-TEnd = 5000 # [s]
+DtInitial = 1e-5 # [s]
+TEnd = 10 # [s]
 
 [Grid]
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
-UpperRight = 2e-3 2e-3 2e-3
-NumPores = 20 20 20
+UpperRight = 3e-3 3e-3 3e-3
+NumPores = 30 30 30
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
@@ -26,7 +26,7 @@ ParameterRandomNumberSeed = 22
 Name = pnm_3d_comparison
 VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 EnableGravity = false
-CapillaryPressure = 5000
+CapillaryPressure = 7000
 UseFixedPressureAndSaturationBoundary = false
 DistributeByVolume = false
 NonWettingMassFlux = 5e-10
@@ -35,27 +35,23 @@ NonWettingMassFlux = 5e-10
 AddVelocity = 1
 
 [Newton]
-MaxSteps = 10
-TargetSteps = 4
-MaxRelativeShift = 1e-5
-MaxTimeStepDivisions = 20
+UseLineSearch = true
+MaxSteps = 30
+TargetSteps = 10
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
 NewtonOutputFilename = NewtonLog.txt
 NewtonOverview = NewtonOverview.txt
 
 [InvasionState]
 Verbosity = true
 #AccuracyCriterion = 0.99
+BlockNonwettingPhaseAtThroatLabel = 3
 
 [SpatialParams]
-RegularizationLowSw = 0.01
+RegularizationLowSw = 0.001
+RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 1e-3
-
-[Component]
-LiquidKinematicViscosity = 4e-4
-LiquidDensity = 963
-
-[InvasionState]
-BlockNonwettingPhaseAtThroatLabel = 3
+RegPercentage = 1e-2

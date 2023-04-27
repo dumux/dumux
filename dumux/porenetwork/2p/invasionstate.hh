@@ -212,7 +212,6 @@ private:
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
-
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
@@ -231,10 +230,19 @@ private:
             return Result{}; //nothing happened
         }
 
+// #if !DRAINAGE
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
         else if (invadedBeforeSwitch && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
            invadedAfterSwitch = false;
+// #else
+//         const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };
+//         const auto snMin = std::min_element(sn.begin(), sn.end());
+//         if (!invadedBeforeSwitch && *pcMax > pcEntry)
+//            invadedAfterSwitch = true;
+//         else if (invadedBeforeSwitch && *snMin > 0.52 && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
+//            invadedAfterSwitch = false;
+// #endif
         invadedCurrentTimeStep_[eIdx] = invadedAfterSwitch;
 
         if (invadedBeforeSwitch == invadedAfterSwitch)

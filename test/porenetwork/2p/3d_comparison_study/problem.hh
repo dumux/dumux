@@ -164,9 +164,6 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1e5;
-
-        // get global index of pore
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         values[snIdx] = 0.0;
         return values;
     }
@@ -215,12 +212,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == 2;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == 1;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
     int vtpOutputFrequency_;

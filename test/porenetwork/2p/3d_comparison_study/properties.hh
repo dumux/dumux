@@ -34,8 +34,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
@@ -59,12 +58,10 @@ struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<Ty
 // Set the fluid system
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
-{
+ {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
-};
+    using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
+ };
 
 
 template<class TypeTag>
