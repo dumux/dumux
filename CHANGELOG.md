@@ -12,7 +12,7 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 
-### Deprecated properties/classes/functions/files, to be removed after 3.7:
+### Deprecated properties/classes/functions/files, to be removed after 3.8:
 
 
 
