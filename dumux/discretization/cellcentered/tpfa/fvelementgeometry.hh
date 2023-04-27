@@ -153,13 +153,14 @@ public:
      */
     CCTpfaFVElementGeometry bind(const Element& element) &&
     {
-        this->bindElement(element);
+        this->bind(element);
         return std::move(*this);
     }
 
     void bind(const Element& element) &
     {
         this->bindElement(element);
+        entireStencil_ = true;
     }
 
     /*!
@@ -176,6 +177,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element) &
     {
+        entireStencil_ = false;
         element_ = element;
         scvIndices_[0] = gridGeometry().elementMapper().index(*element_);
     }
@@ -183,6 +185,10 @@ public:
     //! Returns true if bind/bindElement has already been called
     bool isBound() const
     { return static_cast<bool>(element_); }
+
+    //! Return true if this local view was bound to the entire stencil
+    bool hasStencil() const
+    { return entireStencil_; }
 
     //! The bound element
     const Element& element() const
@@ -220,7 +226,7 @@ public:
     }
 
 private:
-
+    bool entireStencil_;
     std::optional<Element> element_;
     std::array<GridIndexType, 1> scvIndices_;
     const GridGeometry* gridGeometryPtr_;
@@ -341,13 +347,14 @@ public:
      */
     CCTpfaFVElementGeometry bind(const Element& element) &&
     {
-        this->bind_(element);
+        this->bind(element);
         return std::move(*this);
     }
 
     void bind(const Element& element) &
     {
         this->bind_(element);
+        entireStencil_ = true;
     }
 
     /*!
@@ -363,12 +370,17 @@ public:
 
     void bindElement(const Element& element) &
     {
+        entireStencil_ = false;
         this->bindElement_(element);
     }
 
     //! Returns true if bind/bindElement has already been called
     bool isBound() const
     { return static_cast<bool>(element_); }
+
+    //! Return true if this local view was bound to the entire stencil
+    bool hasStencil() const
+    { return entireStencil_; }
 
     //! The bound element
     const Element& element() const
@@ -669,6 +681,7 @@ private:
         hasBoundaryScvf_ = false;
     }
 
+    bool entireStencil_;
     std::optional<Element> element_; //!< the element to which this fvgeometry is bound
     const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
