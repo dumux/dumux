@@ -216,53 +216,6 @@ public:
         });
     }
 
-    //! compute a residual's vector norm (this is a temporary interface introduced during the deprecation period)
-    [[deprecated("Use the linear solver's norm. Will be deleted after 3.7")]]
-    Scalar normOfResidual(ResidualType& residual) const
-    {
-        // issue a warning if the calculation is used in parallel with overlap
-        static bool warningIssued = false;
-
-        if (gridView().comm().size() > 1 && gridView().overlapSize(0) == 0)
-        {
-            if constexpr (isBox)
-            {
-                using DM = typename GridGeometry::VertexMapper;
-                using PVHelper = ParallelVectorHelper<GridView, DM, GridView::dimension>;
-
-                PVHelper vectorHelper(gridView(), gridGeometry_->vertexMapper());
-
-                vectorHelper.makeNonOverlappingConsistent(residual);
-            }
-        }
-        else if (!warningIssued)
-        {
-            if (gridView().comm().size() > 1 && gridView().comm().rank() == 0)
-                std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
-                << "overlapping entities multiple times. Please use the norm\n"
-                << "function provided by a linear solver instead." << std::endl;
-
-            warningIssued = true;
-        }
-
-        // calculate the square norm of the residual
-        Scalar result2 = residual.two_norm2();
-        if (gridView().comm().size() > 1)
-            result2 = gridView().comm().sum(result2);
-
-        using std::sqrt;
-        return sqrt(result2);
-    }
-
-    //! compute the residual and return it's vector norm
-    [[deprecated("Use assembleResidual and the linear solver's norm. Will be deleted after 3.7")]]
-    Scalar residualNorm(const SolutionVector& curSol) const
-    {
-        ResidualType residual(numDofs());
-        assembleResidual(residual, curSol);
-        return normOfResidual(residual);
-    }
-
     /*!
      * \brief Tells the assembler which jacobian and residual to use.
      *        This also resizes the containers to the required sizes and sets the
