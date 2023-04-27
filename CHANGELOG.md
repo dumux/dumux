@@ -1,3 +1,21 @@
+Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
+=============================================
+
+- __Requirements__:
+
+### General changes / structure
+
+
+### Improvements and Enhancements
+
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+
+### Deprecated properties/classes/functions/files, to be removed after 3.8:
+
+
+
 Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 =============================================
 
