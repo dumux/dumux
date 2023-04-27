@@ -306,20 +306,13 @@ def mostRecentCommonCommitWithRemote(modFolderPath, branchFilter=isPersistentBra
 
 
 # function to extract persistent, remotely available git versions for all
-def getPersistentVersions(modFolderPaths, ignoreUntracked=False):
+def getPersistentVersions(modFolderPaths):
     """Get versions of last commit on a persistent branch"""
     result = {}
     for modFolderPath in modFolderPaths:
 
         if not isGitRepository(modFolderPath):
             raise Exception("Folder is not a git repository")
-
-        if hasUntrackedFiles(modFolderPath) and not ignoreUntracked:
-            raise Exception(
-                f"Found untracked files in '{modFolderPath}'. "
-                "Please commit, stash, or remove them. Alternatively, if you "
-                "are sure they are not needed set ignoreUntracked=True"
-            )
 
         result[modFolderPath] = {}
         result[modFolderPath]["remote"] = getRemote(modFolderPath)

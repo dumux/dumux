@@ -45,11 +45,11 @@ def runMakeInstallScript():
         help="File in which to write the install script",
     )
     parser.add_argument(
-        "-i",
-        "--ignoreuntracked",
+        "-a",
+        "--allow-untracked",
         required=False,
         action="store_true",
-        help="Use this to ignore untracked files present",
+        help="Use this to include untracked files into patches",
     )
     parser.add_argument(
         "-t",
@@ -101,11 +101,11 @@ def runMakeInstallScript():
         sys.exit("No dependencies found. Exiting.")
 
     printProgressInfo(["Determining the module versions"])
-    deps = addDependencyVersions(deps, cmdArgs.get("ignoreuntracked", False))
+    deps = addDependencyVersions(deps)
     printFoundVersionInfo(deps)
 
     printProgressInfo(["Making patches for unpublished & uncommitted changes"])
-    deps = addDependencyPatches(deps)
+    deps = addDependencyPatches(deps, cmdArgs.get("allow_untracked", False))
 
     # actual script generation
     modPath = os.path.abspath(modPath)
