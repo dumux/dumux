@@ -180,21 +180,6 @@ public:
         return scvfIndex_;
     }
 
-    //! return the i-th corner of this sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
-    const GlobalPosition& corner(int i) const
-    {
-        assert(i < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[i];
-    }
-
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    Geometry geometry() const
-    {
-        return Geometry(geomType_, corners_);
-    }
-
     //! Return the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     {

@@ -223,6 +223,7 @@ public:
     { return scvf.geometry(); }
 
     #pragma GCC diagnostic pop
+
 private:
 
     const auto& scvfIndices_() const
