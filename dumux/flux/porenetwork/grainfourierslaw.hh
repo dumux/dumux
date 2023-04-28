@@ -51,12 +51,12 @@ struct TruncatedPyramidGrainFouriersLaw
         const auto& outsideVolVars = elemVolVars[outsideScv];
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
-        const Scalar topSideLength = 2.0*fluxVarsCache.throatRadius(); // maybe contact radius?
+        const Scalar topSideLength = 2.0*fluxVarsCache.throatInscribedRadius();
 
         // We assume that the distance between pore centroid and throat
         // centroid (i.e., the height of the pyramid) equals the inscribed pore radius.
-        const Scalar insideHeight = insideVolVars.poreRadius();
-        const Scalar outsideHeight = outsideVolVars.poreRadius();
+        const Scalar insideHeight = insideVolVars.poreInscribedRadius();
+        const Scalar outsideHeight = outsideVolVars.poreInscribedRadius();
 
         auto getPyramidBaseLengthFromVolume = [&](const Scalar v, const Scalar h)
         {
@@ -73,7 +73,7 @@ struct TruncatedPyramidGrainFouriersLaw
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*insideVolVars.poreVolume(), insideHeight);
             else
-                return 2.0 * insideVolVars.poreRadius();
+                return 2.0 * insideVolVars.poreInscribedRadius();
         }();
 
         // the pyramid base length of the outside pore
@@ -84,7 +84,7 @@ struct TruncatedPyramidGrainFouriersLaw
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*outsideVolVars.poreVolume(), outsideHeight);
             else
-                return 2.0 * outsideVolVars.poreRadius();
+                return 2.0 * outsideVolVars.poreInscribedRadius();
         }();
 
         auto insideThermalConducitivity = insideVolVars.solidThermalConductivity();
