@@ -88,22 +88,16 @@ def addDependencyVersions(dependencies):
     return mergedResult
 
 
-def addDependencyPatches(dependenciesWithVersions, allowUntrackedFiles=False):
+def modulesWithUntrackedFiles(dependencies):
+    """Find modules with untracked files"""
+    return [dep for dep in dependencies if hasUntrackedFiles(dep["path"])]
+
+
+def addDependencyPatches(dependenciesWithVersions):
     """Add patch info to all dependencies"""
 
     def getKey(dependency):
         return dependency["path"]
-
-    if not allowUntrackedFiles and any(hasUntrackedFiles(getKey(p)) for p in dependenciesWithVersions):
-        untrackedPaths = "\n".join(
-            f" - {getKey(p)}" for p in filter(lambda p: hasUntrackedFiles(getKey(p)), dependenciesWithVersions)
-        )
-        raise Exception(
-            "Found untracked files in the following modules:\n"
-            f"{untrackedPaths}\n"
-            "Please commit, stash, or remove them. Alternatively, you can "
-            "set allowUntracked=True and include them to the patches."
-        )
 
     patches = getPatches({getKey(d): d for d in dependenciesWithVersions})
 
