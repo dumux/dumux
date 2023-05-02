@@ -169,6 +169,7 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    problem->postTimeStep(timeLoop->time());
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

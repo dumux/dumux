@@ -76,6 +76,7 @@ public:
         distributeByVolume_ = getParam<bool>("Problem.DistributeByVolume", true);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
+        logfile_.open("time_steps_" + this->name() + ".txt");
     }
 
     /*!
@@ -220,9 +221,8 @@ public:
      */
     void postTimeStep(const Scalar time)
     {
-        std::ofstream logfile("time_steps.txt", std::ios::app);
-        logfile << std::fixed << std::left << std::setw(20)
-                << std::setfill(' ') << time << std::endl;
+        logfile_ << std::fixed << std::left << std::setw(20)
+                 << std::setfill(' ') << time << std::endl;
     }
 
 private:
@@ -248,6 +248,7 @@ private:
     Scalar pc_;
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
+    std::ofstream logfile_;
 };
 } //end namespace Dumux
 

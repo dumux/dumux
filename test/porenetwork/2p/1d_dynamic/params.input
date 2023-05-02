@@ -1,7 +1,7 @@
 [TimeLoop]
-DtInitial = 0.02 # [s]
-TEnd = 0.02 # [s]
-MaxTimeStepSize = 0.02
+DtInitial = 2 # [s]
+TEnd = 5 # [s]
+MaxTimeStepSize = 2
 NumCheckPoints = 1
 
 [Grid]
@@ -16,7 +16,7 @@ StandardDeviationPoreInscribedRadius = 0
 BoundaryFaceMarker = 2 1
 
 [Problem]
-Name = test_pnm_2p_1d
+Name = test_pnm_2p_1d_oilwater_drainage
 VtpOutputFrequency = -1
 EnableGravity = false
 CapillaryPressure = 5000
@@ -26,8 +26,9 @@ NonWettingMassFlux = 5e-8
 AddVelocity = 1
 
 [Newton]
-MaxSteps = 10
-TargetSteps = 4
+MaxSteps = 500
+TargetSteps = 500
+UseLineSearch = true
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
 NewtonOutputFilename = NewtonLog.txt
@@ -35,6 +36,7 @@ NewtonOutputFilename = NewtonLog.txt
 [InvasionState]
 Verbosity = true
 #AccuracyCriterion = 0.99
+#BlockNonwettingPhaseAtThroatLabel = 1
 
 [SpatialParams]
 RegularizationLowSw = 0.01
@@ -42,8 +44,8 @@ RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 0.2
+RegPercentage = 1e-100
 
 [Component]
-LiquidKinematicViscosity = 1e-7
+LiquidKinematicViscosity = 1e-6
 LiquidDensity = 1000
