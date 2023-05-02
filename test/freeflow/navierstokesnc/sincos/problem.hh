@@ -97,8 +97,8 @@ public:
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = 2.*mu_*dxxU_(x,y) - mu_*dyyU_(x,y) - mu_*dxyV_(x,y) + dxP_(x,y);
-        source[Indices::momentumYBalanceIdx] = 2.*mu_*dyyV_(x,y) - mu_*dxyU_(x,y) - mu_*dxxV_(x,y) + dyP_(x,y);
+        source[Indices::momentumXBalanceIdx] = -2.*mu_*dxxU_(x,y) - mu_*dyyU_(x,y) - mu_*dxyV_(x,y) + dxP_(x,y);
+        source[Indices::momentumYBalanceIdx] = -2.*mu_*dyyV_(x,y) - mu_*dxyU_(x,y) - mu_*dxxV_(x,y) + dyP_(x,y);
 
         if (enableInertiaTerms_)
         {
