@@ -63,6 +63,7 @@ class SincosTestProblem : public NavierStokesProblem<TypeTag>
 public:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    static constexpr auto numEq = ModelTraits::numEq();
 
     SincosTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
@@ -110,12 +111,6 @@ public:
         return source;
     }
 
-    // \}
-   /*!
-     * \name Boundary conditions
-     */
-    // \{
-
    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
@@ -128,10 +123,45 @@ public:
 
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
+        values.setDirichlet(Indices::conti0EqIdx + compIdx);
+        return values;
+    }
+    // \}
+   /*!
+     * \name Boundary conditions
+     */
+    // \{
+
+    std::bitset<numEq> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        // set fixed pressure in one cell
+        std::bitset<numEq> values;
+
+        if (constrainCell_)
+        {
+            if (scv.dofIndex() == 0)
+            {
+                values.set(Indices::pressureIdx);
+                values.set(Indices::conti0EqIdx + compIdx);
+            }
+        }
+        else
+        {
+            GlobalPosition globalPos = scv.center();
+            static const std::array<int,2> cells = getParam<std::array<int,2>>("Grid.Cells");
+            GlobalPosition cellsize = {((this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0]) / cells[0]),
+                                    ((this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]) / cells[1])};
+            if ((globalPos[1] < this->gridGeometry().bBoxMin()[1] + cellsize[1]) ||
+                (globalPos[1] > this->gridGeometry().bBoxMax()[1] - cellsize[1]) ||
+                (globalPos[0] > this->gridGeometry().bBoxMax()[0] - cellsize[0]))
+            {
+                values.set(Indices::pressureIdx);
+                values.set(Indices::conti0EqIdx + compIdx);
+            }
+        }
 
         return values;
     }
-
     /*!
      * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
      *
