@@ -70,8 +70,7 @@ please [contact us][6] or open a merge request adding the name.
 # How to cite
 
 DuMu<sup>x</sup> is research software and developed at research institutions.
-You can cite **specific releases** via **Zenodo**:
-[![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594).
+You can cite **specific releases** via **DaRUS**: (https://doi.org/10.18419/darus-3405).
 If you are using DuMu<sup>x</sup> in scientific publications and in
 the academic context, please cite (at least one of)
 our publications:
@@ -107,7 +106,7 @@ our publications:
 
 # Automated Testing / Test suite
 
-* Latest release (3.6): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.6/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.6)
+* Latest release (3.7): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.7/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.7)
 * Master branch (development / unstable): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 
 
