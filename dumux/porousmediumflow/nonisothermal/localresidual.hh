@@ -172,7 +172,7 @@ public:
                                    int phaseIdx)
     {
         auto upwindTerm = [phaseIdx](const auto& volVars)
-        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
+        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); }; //TODO: change to internal energy for 1p
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }
