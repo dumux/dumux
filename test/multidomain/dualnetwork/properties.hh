@@ -27,11 +27,11 @@
 #include <dumux/io/grid/gridmanager_sub.hh>
 
 #include <dumux/porenetwork/solidenergy/model.hh>
+#include <dumux/material/components/constant.hh>
 
 #include "problem_solid.hh"
 #include "spatialparams.hh"
 #include "fourierslaw.hh"
-#include "constant.hh"
 
 namespace Dumux::Properties {
 
@@ -66,7 +66,7 @@ template<class TypeTag>
 struct SolidSystem<TypeTag, TTag::PNMSolidModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using InertComponent = Components::NewConstant<1, Scalar>;
+    using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
@@ -74,12 +74,12 @@ template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::PNMSolidModel>
 { using type = PoreNetwork::FlexibleFouriersLaw<false>; };
 
-
 } // end namespace Dumux::Properties
 
 #include <dumux/porenetwork/1p/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
+#include <dumux/porousmediumflow/nonisothermal/localresidual_incompressible.hh> //local residual for incompressible nonisothermal flow
 
 #include "problem_void.hh"
 
@@ -100,7 +100,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PNMVoidModel>
 {
     using Scalar = GetPropType<TypeTag, Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::NewConstant<2, Scalar>> ;
+    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<2, Scalar>> ;
 };
 
 // Set the grid type
@@ -127,6 +127,12 @@ struct HeatConductionType<TypeTag, TTag::PNMVoidModel>
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::PNMVoidModel>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
+
+template<class TypeTag>
+struct EnergyLocalResidual<TypeTag, TTag::PNMVoidModel>
+{
+    using type = Dumux::EnergyLocalResidualIncompressible<TypeTag> ; //use local residual for incompressible nonisothermal flow as in Dumux term of pressure work gets neglected
+};
 
 //! The spatial parameters to be employed.
 //! Use PNMOnePSpatialParams by default.
