@@ -114,19 +114,6 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
-     */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
-    {
-        return NumEqVector(0.0); //no Neumann BC for PNM -> set flux in source term
-    }
-
-    /*!
      * \brief Evaluates the initial value for a control volume.
      */
     PrimaryVariables initialAtPos(const GlobalPosition& pos) const
