@@ -8,7 +8,7 @@ dumux_add_test(NAME test_porenetwork_solid_energy_stationary
               CMAKE_GUARD "( dune-subgrid_FOUND AND dune-foamgrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy_stationary-reference.vtp
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_solid_energy_stationary-00001.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_porenetwork_solid_energy params.input
                                     -Problem.Name test_pnm_solid_energy_stationary -Problem.IsStationary true")
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_porenetwork_solid_energy_transient
               CMAKE_GUARD "( dune-subgrid_FOUND AND dune-foamgrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy_transient-reference.vtp
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_solid_energy_transient-00033.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_porenetwork_solid_energy params.input
                                     -Problem.Name test_pnm_solid_energy_transient -Problem.IsStationary false")
