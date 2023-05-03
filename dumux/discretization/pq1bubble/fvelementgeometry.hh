@@ -211,7 +211,7 @@ public:
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {
-                Dune::GeometryTypes::cube(dim-1),
+                helper.getBoundaryScvfGeometryType(isScvfLocalIdx),
                 helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
             };
         }
