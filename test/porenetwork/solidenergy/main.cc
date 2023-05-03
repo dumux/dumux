@@ -133,40 +133,41 @@ int main(int argc, char** argv)
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-#if STATIONARY //check if stationary or transient problem
-    // solve the non-linear system without time step control
-    nonLinearSolver.solve(sol);
-
-    // write vtk output
-    solidVtkWriter.write(1);
-
-#else //solve transient problem
-    // time loop
-    timeLoop->start(); do
+    if(isStationary) //check if stationary or transient problem
     {
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(sol, *timeLoop);
-
-        // make the new solution the old solution
-        solOld = sol;
-        solidGridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
+        // solve the non-linear system without time step control
+        nonLinearSolver.solve(sol);
 
         // write vtk output
-        solidVtkWriter.write(timeLoop->time());
+        solidVtkWriter.write(1);
 
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
+    }else{ //solve transient problem
+        // time loop
+        timeLoop->start(); do
+        {
+            // solve the non-linear system with time step control
+            nonLinearSolver.solve(sol, *timeLoop);
 
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            // make the new solution the old solution
+            solOld = sol;
+            solidGridVariables->advanceTimeStep();
 
-    } while (!timeLoop->finished());
+            // advance to the time loop to the next step
+            timeLoop->advanceTimeStep();
 
-    timeLoop->finalize(solidLeafGridView.comm());
-#endif
+            // write vtk output
+            solidVtkWriter.write(timeLoop->time());
+
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
+
+            // set new dt as suggested by newton solver
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        } while (!timeLoop->finished());
+
+        timeLoop->finalize(solidLeafGridView.comm());
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
