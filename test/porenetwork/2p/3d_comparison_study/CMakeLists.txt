@@ -7,6 +7,7 @@ dumux_add_test(NAME pnm_3d_comparison
                COMPILE_DEFINITIONS REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS CIRCLETHROAT=0
                COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=1
                COMPILE_DEFINITIONS NOREGULARIZTAION=0
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
@@ -16,10 +17,10 @@ dumux_add_test(NAME pnm_3d_comparison
 dumux_add_test(NAME pnm_3d_comparison_no_regularization
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS CIRCLETHROAT=0
                COMPILE_DEFINITIONS DRAINAGE=1
                COMPILE_DEFINITIONS NOREGULARIZTAION=1
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

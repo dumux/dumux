@@ -210,15 +210,19 @@ public:
                                                                 slopes[0], slopes[1]); // m0, m1
                         return optionalKnSpline_.eval(pc);
                     }
+#if !ALLOWBREAKTHROUGH
                     else if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
                         return 0;
+#endif
                     else
                         return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
                 else
                 {
+#if !ALLOWBREAKTHROUGH
                     if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
                         return 0;
+#endif
                     // the regularzazion interval is [pcs - reg, pcs]
                     if (pc < snapoffLeft)
                         return 0.0;

@@ -120,7 +120,7 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1.0e5;
-        values[snIdx] = 0.0;
+        values[snIdx] = 0.5;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
@@ -197,10 +197,19 @@ public:
     /*!
      * \brief Called at the end of each time step
      */
-    void postTimeStep(const Scalar time)
+    template<class AveragedValues>
+    void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
     {
-        logfile_ << std::fixed << std::left << std::setw(20)
-                 << std::setfill(' ') << time << std::endl;
+        const Scalar avgSw = avgValues["avgSat"];
+
+
+        logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                 << std::endl;
     }
 
 private:

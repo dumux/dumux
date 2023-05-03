@@ -212,8 +212,10 @@ private:
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+        const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
+        const auto snMin = std::min_element(sn.begin(), sn.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
@@ -230,10 +232,10 @@ private:
             return Result{}; //nothing happened
         }
 
-// #if !DRAINAGE
+
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
+        else if (invadedBeforeSwitch && *snMin > 0.1 && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
            invadedAfterSwitch = false;
 // #else
 //         const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };
@@ -489,7 +491,11 @@ private:
         };
 
         // Block non-wetting phase flux out of the outlet
+#if ALLOWBREAKTHROUGH
+        static const auto blockNonwettingPhase = std::vector<int>{};
+#else
         static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(problem_.paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{Labels::outlet});
+#endif
         if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
         {
             invadedCurrentIteration_[eIdx] = false;

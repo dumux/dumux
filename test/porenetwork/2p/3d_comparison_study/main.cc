@@ -122,6 +122,22 @@ int main(int argc, char** argv)
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
     vtkWriter.write(0.0);
 
+
+    Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
+    using FS = typename GridVariables::VolumeVariables::FluidSystem;
+    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+    std::vector<std::size_t> dofsToNeglect;
+
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        using Labels = GetPropType<TypeTag, Properties::Labels>;
+        const auto vIdx = gridGeometry->vertexMapper().index(vertex);
+        if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
+            dofsToNeglect.push_back(vIdx);
+    }
+
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
@@ -149,7 +165,11 @@ int main(int argc, char** argv)
 
         // make the new solution the old solution
         xOld = x;
-        problem->postTimeStep(timeLoop->time());
+
+        // calculate the averaged values
+        avgValues.eval();
+        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
@@ -166,6 +186,8 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
+
+    problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
 
     nonLinearSolver.report();
 
