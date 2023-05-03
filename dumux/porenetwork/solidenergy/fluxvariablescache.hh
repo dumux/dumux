@@ -30,6 +30,8 @@ template<class Scalar>
 class SolidEnergyFluxVariablesCache
 {
 public:
+    //! whether the cache needs an update when the solution changes
+    static bool constexpr isSolDependent = false;
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class SubControlVolumeFace>
