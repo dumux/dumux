@@ -32,7 +32,7 @@
 
 #include <dumux/material/components/constant.hh>
 
-#include "problem_solid.hh"
+#include "problem.hh"
 
 namespace Dumux::Properties {
 
