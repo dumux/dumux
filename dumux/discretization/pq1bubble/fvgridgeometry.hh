@@ -340,7 +340,7 @@ private:
                         const auto scvPair = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
                         const auto corners = geometryHelper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx);
                         const auto area = Dumux::convexPolytopeVolume<dim-1>(
-                            Dune::GeometryTypes::cube(dim-1),
+                            geometryHelper.getBoundaryScvfGeometryType(isScvfLocalIdx),
                             [&](unsigned int i){ return corners[i]; }
                         );
                         cache_.scvfs_[eIdx].emplace_back(
