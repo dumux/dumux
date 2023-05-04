@@ -7,7 +7,7 @@
 /*!
  * \file
  *
- * \brief test for the pore network model
+ * \brief heat conduction test for the pore network model (with solid properties)
  */
 #include <config.h>
 
@@ -20,7 +20,9 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/initialize.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -114,7 +116,7 @@ int main(int argc, char** argv)
     auto assembler = isStationary ? std::make_shared<Assembler>(solidProblem, solidGridGeometry, solidGridVariables) //stationary case
                                   : std::make_shared<Assembler>(solidProblem, solidGridGeometry, solidGridVariables, timeLoop, solOld); // transient case -> timeloop needed
 
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver =  UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
