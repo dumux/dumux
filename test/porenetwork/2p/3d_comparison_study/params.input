@@ -1,13 +1,13 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
-TEnd = 10 # [s]
+DtInitial = 1e-3 # [s]
+TEnd = 2 # [s]
 
 [Grid]
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
-UpperRight = 3e-3 3e-3 3e-3
-NumPores = 30 30 30
+UpperRight = 2e-3 2e-3 2e-3
+NumPores = 20 20 20
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
@@ -36,7 +36,7 @@ AddVelocity = 1
 
 [Newton]
 UseLineSearch = true
-MaxSteps = 30
+MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
 MaxTimeStepDivisions = 10
