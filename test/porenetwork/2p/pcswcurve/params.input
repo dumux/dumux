@@ -50,6 +50,7 @@ OutletPoreLabel = 3
 AddVelocity = 1
 
 [Newton]
+UseLineSearch = true
 NewtonOutputFilename = NewtonLog.txt
 NewtonOverview = NewtonOverview.txt
 MaxSteps = 10
