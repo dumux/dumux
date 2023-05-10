@@ -1,0 +1,32 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 200 200
+Periodic = 1 1
+PBMFileName = voronoi.pbm
+NumRepeats = 3 3
+
+[Problem]
+Name = default
+MomentumForce = 0.025
+EnableGravity = false
+EnableInertiaTerms = true
+
+[SpatialParams]
+Temperature = 298.15
+
+[Newton]
+MaxSteps = 18
+MaxRelativeShift = 1e-6
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Vtk]
+AddProcessRank = false
+AddVelocity = true
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
