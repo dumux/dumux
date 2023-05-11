@@ -197,7 +197,6 @@ int main(int argc, char** argv)
     VtkOutputModule flowVtkWriter(*massGridVariables, flowSolutionVector[massIdx], massProblem->name());
     IOFields::initOutputModule(flowVtkWriter); // Add model specific output fields
     flowVtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    flowVtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using FlowAssembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -219,7 +218,7 @@ int main(int argc, char** argv)
     flowNonLinearSolver.solve(flowSolutionVector);
 
     // write vtk output
-    flowVtkWriter.write(1.0);
+    flowVtkWriter.write(0.0);
     flowtimer.stop();
 
     const auto& flowComm = Dune::MPIHelper::getCommunication();
@@ -275,7 +274,7 @@ int main(int argc, char** argv)
     std::cout << "periodicity tiledPoreGridGeometry: " << std::boolalpha << tiledPoreGridGeometry->isPeriodic() << "\n";
 
     //! intialize the vtk output module for the Scales
-    VtkOutputModuleBase<TiledPoreGridGeometry> tiledVtkWriter(*tiledPoreGridGeometry, "TiledSolution", "Double");
+    VtkOutputModuleBase<TiledPoreGridGeometry> tiledVtkWriter(*tiledPoreGridGeometry, "test_ff_periodic_subgrid_tiled", "Double");
 
     // Extend the face velocity solution to the tiled grid
     using VelocityVector = GlobalPosition;
