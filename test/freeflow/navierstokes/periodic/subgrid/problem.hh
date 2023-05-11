@@ -57,7 +57,7 @@ public:
     {
         momentumForce_ = getParam<Scalar>("Problem.MomentumForce");
         referencePressure_ = 0.0;
-        problemName_  =  "Flow";
+        problemName_  =  "test_ff_periodic_subgrid";
     }
 
     /*!
