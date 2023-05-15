@@ -254,6 +254,28 @@ public:
     { return 0.0; }
 
     /*!
+     * \brief Returns the temperature at a given sub control volume.
+     * \note  Overload this if a fixed temperature shall be prescribed.
+     */
+    Scalar temperature(const Element& element,
+                   const SubControlVolume& scv,
+                   const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->temperature(element, scv, isPreviousTimeStep);
+        else
+            return asImp_().temperatureAtPos(scv.dofPosition());
+    }
+
+    /*!
+     * \brief Returns the temperature at a given position.
+     */
+    Scalar temperatureAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "temperatureAtPos not implemented");
+    }
+
+    /*!
      * \brief Returns the density at a given sub control volume face.
      * \note  Overload this if a fixed density shall be prescribed.
      */

@@ -1,0 +1,33 @@
+[TimeLoop]
+DtInitial = 1e4 # [s]
+MaxTimeStepSize = 1e4
+TEnd = 1e6 # [s]
+
+[Grid]
+UpperRight = 0.1 0.1
+Cells = 100 100
+
+[Problem]
+Name = test_channel_stokesni
+EnableGravity = false
+EnableInertiaTerms = false
+TemperatureTop = 283.15
+TemperatureBottom = 303.15
+ThermalExpansion = 2e-4
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false
+
+[Assembly]
+NumericDifference.BaseEpsilon =  1e-3
+
+[SpatialParams]
+Temperature = 283.15

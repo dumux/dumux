@@ -227,6 +227,21 @@ public:
     }
 
     /*!
+     * \brief Returns the temperature at a given sub control volume.
+     */
+    Scalar temperature(const Element<freeFlowMomentumIndex>& element,
+                   const SubControlVolume<freeFlowMomentumIndex>& scv,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_));
+        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, scv.elementIndex());
+        const auto& massScv = (*scvs(momentumCouplingContext_()[0].fvGeometry).begin());
+
+        return considerPreviousTimeStep ? momentumCouplingContext_()[0].prevElemVolVars[massScv].temperature()
+                                        : momentumCouplingContext_()[0].curElemVolVars[massScv].temperature();
+    }
+
+    /*!
      * \brief Returns the density at a given sub control volume face.
      */
     Scalar density(const Element<freeFlowMomentumIndex>& element,
