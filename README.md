@@ -72,6 +72,8 @@ please [contact us][6] or open a merge request adding the name.
 DuMu<sup>x</sup> is research software and developed at research institutions.
 You can cite **specific releases** via [**DaRUS**](https://darus.uni-stuttgart.de/dataverse/iws_lh2_dumux) (from 3.6) or **Zenodo**:
 [![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594). You can also cite individual code files or even lines via **Software Heritage**: [![sw](https://archive.softwareheritage.org/badge/origin/https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git/)](https://archive.softwareheritage.org/swh:1:dir:e947c9ac369afd90195080e4a06bbde2e1e150ca;origin=https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git;visit=swh:1:snp:3cf49b55de0218903103d428c378e356d7d4d082;anchor=swh:1:rev:11871e4abf619d4cb3f938aedd7a2dea47ce1e87)
+
+
 If you are using DuMu<sup>x</sup> in scientific publications and in
 the academic context, please cite (at least one of)
 our publications:
