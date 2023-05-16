@@ -45,6 +45,18 @@ endif()
 # enforce C++-17
 target_compile_features(dumux PUBLIC cxx_std_17)
 
+if (EXISTS ${CMAKE_SOURCE_DIR}/gridformat/CMakeLists.txt)
+    message(STATUS "Including gridformat in the source tree")
+    add_subdirectory(gridformat)
+
+    include(gridformat/cmake/modules/GridFormatHaveFeature.cmake)
+    set(HAVE_GRIDFORMAT 1)
+    set(HAVE_VTK_HDF "")
+    gridformat_have_feature(VTK_HDF HAVE_VTK_HDF)
+
+    dune_register_package_flags(LIBRARIES gridformat::gridformat)
+endif ()
+
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)

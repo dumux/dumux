@@ -92,6 +92,12 @@
 /* Set HAVE_CPP_PARALLEL_ALGORITHMS if available */
 #cmakedefine HAVE_CPP_PARALLEL_ALGORITHMS 1
 
+/* Set HAVE_GRIDFORMAT if available */
+#cmakedefine HAVE_GRIDFORMAT 1
+
+/* Set HAVE_VTK_HDF if available */
+#cmakedefine HAVE_VTK_HDF 1
+
 /* end dumux
    Everything below here will be overwritten
 */
