@@ -10,6 +10,7 @@ for regInterval in regIntervals:
     subprocess.call(["./" + dynamic_test_name]
                 + ["-Problem.Name", "pcScurve_reg-" + str(regInterval)]
                 + ["-Problem.RelShiftThreshold", str(1e-5)]
+                + ["-Regularization.RegPercentage", str(regInterval)]
                 + ["-Newton.NewtonOutputFilename", "NewtonLog_reg-"+str(regInterval)+".txt"]
                 + ["-Newton.NewtonOverview", "NewtonOverview_reg-"+str(regInterval)+".txt"])
 
