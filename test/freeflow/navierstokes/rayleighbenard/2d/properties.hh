@@ -12,7 +12,7 @@
 #ifndef DUMUX_CHANNEL_TEST_PROPERTIES_HH
 #define DUMUX_CHANNEL_TEST_PROPERTIES_HH
 
-#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/spgrid.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -68,7 +68,10 @@ struct FluidSystem<TypeTag, TTag::ChannelTest>
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::ChannelTest>
-{ using type = Dune::YaspGrid<2>; };
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dune::SPGrid<Scalar, 2>;
+};
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::ChannelTest>

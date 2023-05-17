@@ -81,7 +81,7 @@ public:
         Sources source(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
-            source[Indices::velocityYIdx] = this->gravity()[scv.dofAxis()] * thermalExpansion_ * (this->temperature(element, scv) - 283.15);
+            source = -this->gravity() * thermalExpansion_ * this->temperature(element, scv);
         }
         return source;
     }
@@ -225,8 +225,11 @@ public:
         {
             values[Indices::pressureIdx] = 1.0e5;
 #if NONISOTHERMAL
-            //values[Indices::temperatureIdx] = temperatureBot_ + (temperatureTop_ - temperatureBot_)*globalPos[1]/this->gridGeometry().bBoxMax()[1];
-            values[Indices::temperatureIdx] = (temperatureBot_ + temperatureTop_)/2.0;
+            values[Indices::temperatureIdx] = temperatureBot_ + (temperatureTop_ - temperatureBot_)*globalPos[1]/this->gridGeometry().bBoxMax()[1];
+            const static auto diag = this->gridGeometry().bBoxMax() - this->gridGeometry().bBoxMin();
+            if ((diag/2.0 + this->gridGeometry().bBoxMin() - globalPos).two_norm() < std::abs(diag[1])*0.1)
+                values[Indices::temperatureIdx] = temperatureBot_;
+            //values[Indices::temperatureIdx] = (temperatureBot_ + temperatureTop_)/2.0;
 #endif
         }
 

@@ -1,19 +1,20 @@
 [TimeLoop]
-DtInitial = 1e4 # [s]
-MaxTimeStepSize = 1e4
-TEnd = 1e6 # [s]
+DtInitial = 1e-2 # [s]
+MaxTimeStepSize = 1e-0
+TEnd = 1e+2 # [s]
 
 [Grid]
-UpperRight = 0.1 0.1
+UpperRight = 0.06 0.03
 Cells = 100 100
+Periodic = 1 0
 
 [Problem]
-Name = test_channel_stokesni
-EnableGravity = false
+Name = test_ff_stokesni_rayleighbenard
+EnableGravity = true
 EnableInertiaTerms = false
 TemperatureTop = 283.15
-TemperatureBottom = 303.15
-ThermalExpansion = 2e-4
+TemperatureBottom = 308.15
+ThermalExpansion = 2e-2
 
 [Component]
 LiquidDensity = 1.0
