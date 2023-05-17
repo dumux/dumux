@@ -24,7 +24,7 @@
 #ifndef DUMUX_CHANNEL_TEST_PROPERTIES_HH
 #define DUMUX_CHANNEL_TEST_PROPERTIES_HH
 
-#include <dune/grid/spgrid.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
@@ -62,7 +62,7 @@ struct FluidSystem<TypeTag, TTag::RayleighBenardTest>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::RayleighBenardTest> {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = Dune::SPGrid<Scalar, 2>;
+    using type = Dune::YaspGrid<2>;
 };
 
 // Set the problem property

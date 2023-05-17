@@ -85,11 +85,12 @@ public:
                        const ElementFaceVariables& elemFaceVars,
                        const SubControlVolumeFace& scvf) const
     {
-        NumEqVector source = {0.0, 0.0};
+        NumEqVector source(0.0);
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
 #if NONISOTHERMAL
         source[Indices::velocityYIdx] = -this->gravity()[1] * thermalExpansion_ * volVars.priVar(Indices::temperatureIdx);
 #endif
+        return source;
     }
 
    /*!
