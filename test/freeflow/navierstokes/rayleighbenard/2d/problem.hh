@@ -143,9 +143,9 @@ public:
             values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
 
 #if NONISOTHERMAL
-            if (scvf.ipGlobal()[1] < this->gridGeometry().bBoxMin()[1] + eps_)
+            if (globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_)
                 values[Indices::temperatureIdx] = temperatureBot_;
-            if (scvf.ipGlobal()[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+            if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
                 values[Indices::temperatureIdx] = temperatureTop_;
 #endif
         }
@@ -266,7 +266,7 @@ public:
 private:
     bool isPlate_(const GlobalPosition& globalPos) const
     {
-        return(globalPos[1] < eps_ || globalPos[1] > this->gridGeometry().bBoxMax()[0] - eps_);
+        return (globalPos[1] < eps_ || globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_);
     }
 
     static constexpr Scalar eps_=1e-6;
