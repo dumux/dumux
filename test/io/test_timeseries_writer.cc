@@ -212,7 +212,9 @@ int main(int argc, char** argv) {
 
 
 #if HAVE_VTK_HDF
-    // let's write into the VTK-HDF format
+    // let's write into the VTK-HDF format. Caveat: paraview currently only reads the time
+    // meta-data from xml files, not yet from vtk-hdf files :/. You can see the time information
+    // as field data, but it does not propagate it to the control section.
     write(
         "time_series_writer_hdf",
         Dumux::IO::Format::time_series(Dumux::IO::Format::vtk_hdf)
