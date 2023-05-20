@@ -12,7 +12,6 @@
 #define DUMUX_TEST_PORENETWORK_SOLID_ENERGY_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/io/grid/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/porenetwork/solidenergy/model.hh>
@@ -67,7 +66,8 @@ struct HeatConductionType<TypeTag, TTag::PNMSolidModel>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = PoreNetwork::TruncatedPyramidGrainFouriersLaw<Scalar>; //from grainfourierslaw.hh (specified in solidenergy/model.hh)
+    // from grainfourierslaw.hh (specified in solidenergy/model.hh)
+    using type = PoreNetwork::TruncatedPyramidGrainFouriersLaw<Scalar>;
 };
 
 } // end namespace Dumux::Properties

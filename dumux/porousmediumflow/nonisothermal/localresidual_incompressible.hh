@@ -61,14 +61,19 @@ public:
     /*!
      * \brief The advective phase energy fluxes for incompressible flow.
      *
-     * Using specific internal energy $u$ instead of specific enthalpy $h$ for incompressible flow in convective flux
-     * to account for otherwise neglected pressure work term ($\nabla p \cdot v$).
+     * Using specific internal energy $u$ instead of specific enthalpy \f$h\f$ for incompressible flow in convective flux
+     * to account for otherwise neglected pressure work term (\f$\nabla p \cdot v\f$).
      *
-     * Compressible formulation in EnergyLocalResidual (neglecting pressure work term ($\nabla p \cdot v$))
-     * is $\frac{\partial}{\partial t} (\rho u) = -\nabla \cdot (\rho v h) + \nabla \cdot (\lambda \nabla T)$.
+     * Compressible formulation in EnergyLocalResidual (neglecting pressure work term (\f$\nabla p \cdot v\f$))
+     * is
+     \f{align*}{
+     \frac{\partial}{\partial t} (\rho u) &= -\nabla \cdot (\rho v h) + \nabla \cdot (\lambda \nabla T)
+     \f}
      *
      * Incompressible energy formulation is
-     * $\frac{\partial}{\partial t} (\rho u) = -\nabla \cdot (\rho v u) + \nabla \cdot (\lambda \nabla T)$
+     \f{align*}{
+     \frac{\partial}{\partial t} (\rho u) = -\nabla \cdot (\rho v u) + \nabla \cdot (\lambda \nabla T)
+     \f}
      *
      * \param flux The flux
      * \param fluxVars The flux variables.
@@ -78,8 +83,9 @@ public:
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
+        // internal energy used instead of enthalpy for incompressible flow
         auto upwindTerm = [phaseIdx](const auto& volVars)
-        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.internalEnergy(phaseIdx); }; //internal energy used instead of enthalpy for incompressible flow
+        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.internalEnergy(phaseIdx); };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }

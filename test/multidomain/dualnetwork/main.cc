@@ -525,7 +525,7 @@ int main(int argc, char** argv)
 
         std::cout << "Total sum void " << voidInletFlux[1] + voidOutletFlux[1] + voidHeaterFlux[1] - sumCouplingVoid << std::endl;
 
-        std::cout << "\n\n ***Exhange *** " << std::endl;
+        std::cout << "\n\n ***Exchange *** " << std::endl;
         std::cout << "sumCouplingVoid: " << sumCouplingVoid << std::endl;
         std::cout << "solidInletFlux: " << solidInletFlux << std::endl;
         std::cout << "voidHeaterFlux: " << voidHeaterFlux[1] << std::endl;
@@ -551,10 +551,6 @@ int main(int argc, char** argv)
 
         std::cout << "\n\n ***Sum of sums  *** " << std::endl;
         std::cout << sumConvection + sumInletCond + sumHeaterFlux << std::endl;
-
-
-
-
 
         Dune::VTKWriter fluxVtkWriter(voidGridGeometry->gridView());
         std::vector<Scalar> voidMassFlux(voidGridGeometry->numDofs());

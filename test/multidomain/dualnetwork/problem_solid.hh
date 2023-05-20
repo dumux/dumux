@@ -68,18 +68,9 @@ public:
             sourceMode_ = SourceMode::max;
     }
 
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        return problemName_;
-    }
+    { return problemName_; }
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     */
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {
         BoundaryTypes values;
@@ -158,9 +149,6 @@ public:
         return flux;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     */
     PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
     {
         auto values = initialAtPos(scv.dofPosition());
@@ -178,9 +166,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
-     */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
@@ -191,9 +176,6 @@ public:
         return NumEqVector(0.0);
     }
 
-    /*!
-     * \brief Evaluates the initial value for a control volume.
-     */
     PrimaryVariables initialAtPos(const GlobalPosition& pos) const
     {
         PrimaryVariables values(initialTemperature_);
@@ -221,13 +203,13 @@ private:
     bool onHeaterBoundary_(const SubControlVolume& scv) const
     { return this->gridGeometry().poreLabel(scv.dofIndex()) == heaterIndex_; }
 
+    std::shared_ptr<const CouplingManager> couplingManager_;
+
     std::string problemName_;
     Scalar initialTemperature_;
     Scalar temperatureIn_;
     Scalar temperatureBottom_;
     bool heatingOn_;
-
-    std::shared_ptr<const CouplingManager> couplingManager_;
     bool enableCoupling_;
     int inletIndex_;
     int heaterIndex_;

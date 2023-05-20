@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 dune_symlink_to_source_files(FILES grids "params.input")
 
 add_executable(test_porenetwork_solid_energy EXCLUDE_FROM_ALL main.cc)
@@ -5,7 +8,7 @@ add_executable(test_porenetwork_solid_energy EXCLUDE_FROM_ALL main.cc)
 dumux_add_test(NAME test_porenetwork_solid_energy_stationary
               LABELS porenetwork solid energy
               TARGET test_porenetwork_solid_energy
-              CMAKE_GUARD "( dune-subgrid_FOUND AND dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp
@@ -16,7 +19,7 @@ dumux_add_test(NAME test_porenetwork_solid_energy_stationary
 dumux_add_test(NAME test_porenetwork_solid_energy_transient
               LABELS porenetwork solid energy
               TARGET test_porenetwork_solid_energy
-              CMAKE_GUARD "( dune-subgrid_FOUND AND dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp

@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup PoreNetwork
- * \copydoc Dumux::DualNetworkCouplingMapper
+ * \copydoc Dumux::PoreNetwork::DualNetworkCouplingMapper
  */
 
 #ifndef DUMUX_DUAL_NETWORK_COUPLINGMAPPER_HH
@@ -410,6 +410,6 @@ private:
     std::unordered_map<std::size_t, std::size_t> hostGridElementIndexToGlobalId_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::PoreNetwork
 
 #endif

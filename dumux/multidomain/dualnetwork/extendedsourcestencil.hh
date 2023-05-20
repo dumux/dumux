@@ -6,12 +6,12 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedCoupling
+ * \ingroup PoreNetwork
  * \brief Extended source stencil helper class for coupling managers
  */
 
-#ifndef DUMUX_PNM_HEAT_EXTENDEDSOURCESTENCIL_HH
-#define DUMUX_PNM_HEAT_EXTENDEDSOURCESTENCIL_HH
+#ifndef DUMUX_DUAL_NETWORK_EXTENDEDSOURCESTENCIL_HH
+#define DUMUX_DUAL_NETWORK_EXTENDEDSOURCESTENCIL_HH
 
 #include <vector>
 
@@ -22,10 +22,10 @@
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux::EmbeddedCoupling {
+namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup EmbeddedCoupling
+ * \ingroup PoreNetwork
  * \brief A class managing an extended source stencil
  * \tparam CouplingManager the coupling manager type
  */
@@ -175,6 +175,6 @@ private:
     std::unordered_map<std::size_t, std::vector<std::size_t>> sourceStencils_;
 };
 
-} // end namespace Dumux::EmbeddedCoupling
+} // end namespace Dumux::PoreNetwork
 
 #endif

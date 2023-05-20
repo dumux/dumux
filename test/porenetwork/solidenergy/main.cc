@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- *
  * \brief heat conduction test for the pore network model (with solid properties)
  */
 #include <config.h>

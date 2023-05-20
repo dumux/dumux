@@ -11,8 +11,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
-
-// base problem
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -53,18 +51,9 @@ public:
         rightIndex_ = getParam<int>("Problem.RightIndex");
     }
 
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        return problemName_;
-    }
+    { return problemName_; }
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     */
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume& scv) const
     {
         BoundaryTypes values;
@@ -86,9 +75,6 @@ public:
         return value;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet control volume.
-     */
     PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
     {
         auto values = initialAtPos(scv.dofPosition()); //onRightBoundary_(scv)
@@ -101,9 +87,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluates the initial value for a control volume.
-     */
     PrimaryVariables initialAtPos(const GlobalPosition& pos) const
     {
         PrimaryVariables values(initialTemperature_); //uniform initial temperature
@@ -126,6 +109,7 @@ private:
     int leftIndex_;
     int rightIndex_;
 };
+
 } // end namespace Dumux
 
 #endif

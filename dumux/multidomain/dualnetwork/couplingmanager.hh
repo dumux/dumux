@@ -254,7 +254,7 @@ public:
     // \{
 
     /*!
-     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     * \brief returns an iterable container of all indices of degrees of freedom of domain j
      *        that couple with / influence the element residual of the given element of domain i
      *
      * \param domainI the domain index of domain i
@@ -437,7 +437,7 @@ public:
                         }
                     }
                 }
-                DUNE_THROW(Dune::InvalidStateException, "No neigbor area found");
+                DUNE_THROW(Dune::InvalidStateException, "No neighbor area found");
             };
 
             static const bool useAvgA = getParam<bool>("Problem.UseAverageConvectionArea", false);
@@ -811,14 +811,14 @@ public:
 
     /*!
      * \brief set the pointers to the grid variables
-     * \param problems A tuple of shared pointers to the grid variables
+     * \param gridVariables A tuple of shared pointers to the grid variables
      */
     void setGridVariables(GridVariablesTuple&& gridVariables)
     { gridVariables_ = gridVariables; }
 
     /*!
      * \brief set a pointer to one of the grid variables
-     * \param problem a pointer to the grid variables
+     * \param gridVariables a pointer to the grid variables
      * \param domainIdx the domain index of the grid variables
      */
     template<class  GridVariables, std::size_t i>
@@ -963,11 +963,9 @@ protected:
     GridVariablesTuple gridVariables_;
 
     //! the extended source stencil object
-    EmbeddedCoupling::PNMHeatExtendedSourceStencil<ThisType> extendedSourceStencil_;
-
-
+    PoreNetwork::PNMHeatExtendedSourceStencil<ThisType> extendedSourceStencil_;
 };
 
-}; // end namespace Dumux
+}; // end namespace Dumux::PoreNetwork
 
 #endif

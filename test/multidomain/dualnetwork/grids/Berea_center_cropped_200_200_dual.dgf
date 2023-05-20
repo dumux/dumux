@@ -1,4 +1,6 @@
 DGF
+% SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
 % Vertex parameters: PoreInscribedRadius PoreExtendedRadius PoreVolume PoreLabel PoreDomainType
 % Element parameters: ThroatInscribedRadius ThroatLength ThroatCrossSectionalArea ThroatShapeFactor ThroatCenterX ThroatCenterY ThroatCenterZ ThroatLabel ThroatDomainType
 Vertex

@@ -6,26 +6,18 @@
 //
 /*!
  * \file
- *
  * \brief A test problem for the one-phase pore network model.
  */
-
 #ifndef DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_PROBLEM_VOID_HH
-#define DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_PROBLEM__VOID_HH
+#define DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_PROBLEM_VOID_HH
 
-
-// base problem
 #include <dumux/porousmediumflow/problem.hh>
-// Pore network model
 #include <dumux/porenetwork/1p/model.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
 
-namespace Dumux
-{
-template <class TypeTag>
-class VoidSubProblem;
+namespace Dumux {
 
 template <class TypeTag>
 class VoidSubProblem : public PorousMediumFlowProblem<TypeTag>
@@ -57,6 +49,7 @@ public:
                    std::shared_ptr<const CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "Void"), couplingManager_(couplingManager)
     {
+        problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         pressureIn_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure");
         pressureOut_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure");
         temperatureInitial_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature");
@@ -84,31 +77,14 @@ public:
             sourceMode_ = SourceMode::max;
     }
 
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        static const auto problemName = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        return problemName;
-    }
+    { return problemName_; }
 
     void setGridVariables(std::shared_ptr<GridVariables> gridVars)
     {
         gridVars_ = gridVars;
     }
 
-     /*!
-     * \name Boundary conditions
-     */
-    // \{
-    //! Specifies which kind of boundary condition should be used for
-    //! which equation for a finite volume on the boundary.
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
@@ -145,15 +121,6 @@ public:
         return bcTypes;
     }
 
-        /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex (pore body) for which the condition is evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
@@ -180,56 +147,37 @@ public:
         return values;
     }
 
-    // \}
 
-    /*!
-     * \name Volume terms
-     */
-    // \{
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scv The sub control volume
-     *
-     * For this method, the return parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
-     */
-     template<class ElementVolumeVariables>
-     NumEqVector source(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolume& scv) const
-     {
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume& scv) const
+    {
         NumEqVector value(0.0);
 
         if (enableCoupling_ && couplingManager_->isCoupledPore(CouplingManager::voidDomainIdx, scv.dofIndex()))
         {
             if (sourceMode_ == SourceMode::conduction)
             {
-                value[Indices::energyEqIdx] = couplingManager_->conductionSource(CouplingManager::voidDomainIdx,
-                                                                                 element, fvGeometry, elemVolVars, scv);
+                value[Indices::energyEqIdx] = couplingManager_->conductionSource(
+                    CouplingManager::voidDomainIdx, element, fvGeometry, elemVolVars, scv
+                );
             }
             else if (sourceMode_ == SourceMode::convection)
             {
-                value[Indices::energyEqIdx] = couplingManager_->convectionSource(CouplingManager::voidDomainIdx,
-                                                                                 element, fvGeometry, elemVolVars, scv);
+                value[Indices::energyEqIdx] = couplingManager_->convectionSource(
+                    CouplingManager::voidDomainIdx, element, fvGeometry, elemVolVars, scv
+                );
             }
             else
             {
-                const Scalar condSource = couplingManager_->conductionSource(CouplingManager::voidDomainIdx,
-                                                                             element, fvGeometry, elemVolVars, scv);
-                const Scalar convSource = couplingManager_->convectionSource(CouplingManager::voidDomainIdx,
-                                                                             element, fvGeometry, elemVolVars, scv);
+                const Scalar condSource = couplingManager_->conductionSource(
+                    CouplingManager::voidDomainIdx, element, fvGeometry, elemVolVars, scv
+                );
+                const Scalar convSource = couplingManager_->convectionSource(
+                    CouplingManager::voidDomainIdx, element, fvGeometry, elemVolVars, scv
+                );
                 using std::abs;
                 if (abs(condSource) > abs(convSource))
                     value[Indices::energyEqIdx] = condSource;
@@ -245,108 +193,114 @@ public:
             value[Indices::energyEqIdx] += heatOutFlowCondition(element, fvGeometry, elemVolVars, scv);
 
         return value;
-     }
+    }
 
 
-     template<class ElementVolumeVariables>
-     Scalar heatOutFlowCondition(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolume& scv) const
-     {
-         Scalar value = 0.0;
-         using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-         auto elemFluxVarsCache = localView(gridVars_->gridFluxVarsCache());
-         elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
+    template<class ElementVolumeVariables>
+    Scalar heatOutFlowCondition(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolume& scv) const
+    {
+        Scalar value = 0.0;
+        using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+        auto elemFluxVarsCache = localView(gridVars_->gridFluxVarsCache());
+        elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
 
-         for (auto&& scvf : scvfs(fvGeometry))
-         {
-             FluxVariables fluxVars;
-             fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-             const Scalar flux = fluxVars.advectiveFlux(0, [&](const auto& volVars){ return elemVolVars[scv].mobility(0)*elemVolVars[scv].density(0)*elemVolVars[scv].enthalpy(0);});
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            FluxVariables fluxVars;
+            fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            const Scalar flux = fluxVars.advectiveFlux(0,
+                [&](const auto& volVars)
+                {
+                    return elemVolVars[scv].mobility(0)
+                            * elemVolVars[scv].density(0)
+                            * elemVolVars[scv].enthalpy(0);
+                }
+            );
 
-             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
 
-             if (insideScv.dofIndex() == scv.dofIndex())
-                 value += flux / scv.volume();
-             else
-                 value -= flux / scv.volume();
-         }
-         return value;
-     }
+            if (insideScv.dofIndex() == scv.dofIndex())
+                value += flux / scv.volume();
+            else
+                value -= flux / scv.volume();
+        }
+        return value;
+    }
 
-     template<class ElementVolumeVariables>
-     Scalar robinInletHeatFlux(const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolume& scv) const
-     {
-         Scalar flux = 0.0;
+    template<class ElementVolumeVariables>
+    Scalar robinInletHeatFlux(const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume& scv) const
+    {
+        Scalar flux = 0.0;
 
-         if (useRobinInlet_ && onInletBoundary_(scv))
-         {
-             flux += robinInletAdvectiveHeatFlux(element, fvGeometry, elemVolVars, scv);
-             flux += robinInletConductiveHeatFlux(element, fvGeometry, elemVolVars, scv);
-         }
+        if (useRobinInlet_ && onInletBoundary_(scv))
+        {
+            flux += robinInletAdvectiveHeatFlux(element, fvGeometry, elemVolVars, scv);
+            flux += robinInletConductiveHeatFlux(element, fvGeometry, elemVolVars, scv);
+        }
 
-         return flux;
-     }
+        return flux;
+    }
 
-     template<class ElementVolumeVariables>
-     Scalar robinInletAdvectiveHeatFlux(const Element& element,
+    template<class ElementVolumeVariables>
+    Scalar robinInletAdvectiveHeatFlux(const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolume& scv) const
+    {
+        using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+        auto elemFluxVarsCache = localView(gridVars_->gridFluxVarsCache());
+        elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
+        const auto& volVars = elemVolVars[scv];
+
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            FluxVariables fluxVars;
+            fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            const Scalar enthalypy = ElementVolumeVariables::VolumeVariables::FluidSystem::enthalpy(
+                temperatureIn_, volVars.pressure(0)
+            );
+
+            const Scalar result = fluxVars.advectiveFlux(0,
+                [&](const auto& v)
+                {
+                    return volVars.mobility(0)
+                            * volVars.density(0)*enthalypy;
+                }
+            );
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+
+            if (insideScv.dofIndex() == scv.dofIndex())
+                return result / scv.volume();
+            else
+                return  -result / scv.volume();
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Flux failed");
+    }
+
+    template<class ElementVolumeVariables>
+    Scalar robinInletConductiveHeatFlux(const Element& element,
                                         const FVElementGeometry& fvGeometry,
                                         const ElementVolumeVariables& elemVolVars,
                                         const SubControlVolume& scv) const
-     {
-         using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
-         auto elemFluxVarsCache = localView(gridVars_->gridFluxVarsCache());
-         elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
-         const auto& volVars = elemVolVars[scv];
+    {
+        const auto& volVars = elemVolVars[scv];
+        const Scalar r = volVars.poreInscribedRadius();
+        static const Scalar lambdaFluid = getParam<Scalar>("2.Component.LiquidThermalConductivity");
+        static const Scalar dPadding = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PaddingThickness");
+        static const Scalar robinShapeFactor = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RobinShapeFactor", 1.0);
+        const Scalar A = M_PI * r*r * robinShapeFactor;
 
-         for (auto&& scvf : scvfs(fvGeometry))
-         {
-             FluxVariables fluxVars;
-             fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-             const Scalar enthalypy = ElementVolumeVariables::VolumeVariables::FluidSystem::enthalpy(temperatureIn_, volVars.pressure(0));
+        return (temperatureIn_ - volVars.temperature())
+            * A * lambdaFluid / (r + dPadding) / (scv.volume() * fvGeometry.gridGeometry().coordinationNumber()[scv.dofIndex()]);
+    }
 
-             const Scalar result = fluxVars.advectiveFlux(0, [&](const auto& v){ return volVars.mobility(0)*volVars.density(0)*enthalypy;});
-             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-
-             if (insideScv.dofIndex() == scv.dofIndex())
-                 return result / scv.volume();
-             else
-                 return  -result / scv.volume();
-         }
-         DUNE_THROW(Dune::InvalidStateException, "Flux failed");
-     }
-
-     template<class ElementVolumeVariables>
-     Scalar robinInletConductiveHeatFlux(const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const ElementVolumeVariables& elemVolVars,
-                                         const SubControlVolume& scv) const
-     {
-         const auto& volVars = elemVolVars[scv];
-         const Scalar r = volVars.poreInscribedRadius();
-         static const Scalar lambdaFluid = getParam<Scalar>("2.Component.LiquidThermalConductivity");
-         static const Scalar dPadding = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PaddingThickness");
-         static const Scalar robinShapeFactor = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RobinShapeFactor", 1.0);
-         const Scalar A = M_PI * r*r * robinShapeFactor;
-
-         return (temperatureIn_ - volVars.temperature())
-                * A * lambdaFluid / (r + dPadding) / (scv.volume() * fvGeometry.gridGeometry().coordinationNumber()[scv.dofIndex()]);
-     }
-
-
-
-    // \}
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * For this method, the \a priVars parameter stores primary
-     * variables.
-     */
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
@@ -356,14 +310,10 @@ public:
     }
 
     int outletPoreLabel() const
-    {
-        return outletIndex_;
-    }
+    { return outletIndex_; }
 
     int inletPoreLabel() const
-    {
-        return inletIndex_;
-    }
+    { return inletIndex_; }
 
     int heaterPoreLabel() const
     { return heaterIndex_; }
@@ -388,8 +338,6 @@ public:
     auto sourceMode() const
     { return sourceMode_; }
 
-    // \}
-
 private:
 
     bool onInletBoundary_(const SubControlVolume& scv) const
@@ -401,6 +349,7 @@ private:
     std::shared_ptr<const CouplingManager> couplingManager_;
     std::shared_ptr<GridVariables> gridVars_;
 
+    std::string problemName_;
     Scalar pressureIn_;
     Scalar pressureOut_;
     Scalar temperatureInitial_;
@@ -418,6 +367,7 @@ private:
     std::vector<Scalar> dirichletValuesForOutput_;
     bool useRobinInlet_;
 };
-} //end namespace
+
+} // end namespace Dumux
 
 #endif
