@@ -8,6 +8,9 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 
 ### Improvements and Enhancements
 
+- __Pore network__: Added the dual network model proposed in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
+- __Pore network__: Added a model for heat conduction in a solid grain network
+- __Nonisothermal__: Added a specialized local residual for incompressible flows where the pressure work term cancels with the pressure-dependent part of the enthalpy so that only the internal energy remains in the advective heat flux.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
@@ -23,7 +26,7 @@ Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
 
 ### General changes / structure
 
-- __Doxygen__: The theme of the Doxygen documentation page has been updated to a more modern look and the content has been restructured. The installation guide, the property system description and the chapter on examples and tutorials have been moved from the handbook to the Doxygen documentation. A chapter on parallelism has been added. One of the CI pipelines now includes a build of the Doxygen documentation. The result of this build can be downloaded from the job artifacts. 
+- __Doxygen__: The theme of the Doxygen documentation page has been updated to a more modern look and the content has been restructured. The installation guide, the property system description and the chapter on examples and tutorials have been moved from the handbook to the Doxygen documentation. A chapter on parallelism has been added. One of the CI pipelines now includes a build of the Doxygen documentation. The result of this build can be downloaded from the job artifacts.
 
 - __License__: DuMux is now REUSE compliant. Many files are individually licensed, others covered by rules in `.reuse/dep5`.
 

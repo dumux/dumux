@@ -227,3 +227,8 @@
 @brief Two-phase (immiscible) flow
 @copydoc dumux/porenetwork/2p/model.hh
 @ingroup PoreNetworkModels
+
+@defgroup PNMSolidEnergyModel solidenergy
+@brief Energy equation for the solid (heat equation)
+@copydoc dumux/porenetwork/solidenergy/model.hh
+@ingroup PoreNetworkModels

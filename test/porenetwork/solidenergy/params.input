@@ -1,0 +1,31 @@
+[TimeLoop]
+TEnd      = 10 # [s]
+DtInitial = 1e-5 # [s]
+
+[Grid]
+PoreGeometry            = Sphere
+ThroatCrossSectionShape = Circle
+UpperRight = 1e-3 1e-3 1e-3
+NumPores   = 4 4 4
+PoreInscribedRadius   = 2e-5
+ThroatInscribedRadius = 2e-6
+BoundaryPoreLabels = xMin:5 xMax:6 yMin:0 yMax:0 zMin:0 zMax:0 #Labels to specify different BCs
+PriorityList       = 0 1 2 3 4 5 #order of how BCs are set (0 1 2 3 4 5 = xMin, xMax, yMin, yMax, zMin,zMax)
+
+[Problem]
+Name = test_pnm_solid_energy
+IsStationary  = false #solving stationary or transient problem
+EnableGravity = false
+InitialTemperature = 300 # [K]
+LeftTemperature    = 400 # [K]
+LeftIndex  = 5  #specifies which pores are on left/heated boundary
+RightIndex = 6  #specifies, which pores are on right boundary
+
+[Vtk]
+OutputName  = test
+AddVelocity = 0
+
+[1.Component] #solid phase (values for granite)
+SolidHeatCapacity        = 790
+SolidDensity             = 2700
+SolidThermalConductivity = 2.600038292
