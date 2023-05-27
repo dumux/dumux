@@ -82,7 +82,6 @@ class CCTpfaSubControlVolumeFace
     using Scalar = typename T::Scalar;
     using CornerStorage = typename T::CornerStorage;
     using GridIndexStorage = typename T::GridIndexStorage;
-    using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
@@ -110,7 +109,6 @@ public:
                                const GridIndexStorage& scvIndices,
                                bool isBoundary)
     : ParentType()
-    , geomType_(isGeometry.type())
     , area_(isGeometry.volume())
     , center_(isGeometry.center())
     , unitOuterNormal_(is.centerUnitOuterNormal())
@@ -118,11 +116,7 @@ public:
     , scvIndices_(scvIndices)
     , boundary_(isBoundary)
     , boundaryFlag_{is}
-    {
-        corners_.resize(isGeometry.corners());
-        for (int i = 0; i < isGeometry.corners(); ++i)
-            corners_[i] = isGeometry.corner(i);
-    }
+    {}
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -187,8 +181,6 @@ public:
     }
 
 private:
-    Dune::GeometryType geomType_;
-    CornerStorage corners_;
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
