@@ -14,6 +14,7 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 
