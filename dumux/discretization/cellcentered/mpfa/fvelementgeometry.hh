@@ -180,14 +180,14 @@ public:
     bool hasBoundaryScvf() const
     { return gridGeometry().hasBoundaryScvf(scvIndices_[0]); }
 
+    //! Create the geometry of a given sub control volume
+    typename Element::Geometry geometry(const SubControlVolume& scv) const
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
+
     // suppress warnings due to current implementation
     // these interfaces should be used!
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-    //! Create the geometry of a given sub control volume
-    typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
