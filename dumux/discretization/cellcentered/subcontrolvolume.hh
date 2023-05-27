@@ -12,10 +12,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
-#include <memory>
-
-#include <dune/common/fvector.hh>
-
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 
@@ -51,23 +47,9 @@ class CCSubControlVolume
 {
     using ThisType = CCSubControlVolume<GV, T>;
     using ParentType = SubControlVolumeBase<ThisType, T>;
-    using Geometry = typename T::Geometry;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-
-    // In the following, the correct parameter type for the geometry passed to
-    // the constructor below is determined. It depends upon whether the
-    // `geometry()` method of the `Element` returns a copy or a reference.
-    // In the first case, the correct type is `Geometry&&`, while it is
-    // `Geometry` for the second case. Although returning by copy is prescribed
-    // by the Dune interface, the grid implementation CpGrid uses a const
-    // reference as of Opm 2018.04. Once this is fixed, the parameter type can
-    // be hardcoded to `Geometry&&` again.
-    using Element = typename GV::template Codim<0>::Entity;
-    using GeometryRT = decltype(std::declval<Element>().geometry());
-    static constexpr bool grtIsReference = std::is_lvalue_reference<GeometryRT>::value;
-    using GeometryParamType = std::conditional_t<grtIsReference, Geometry, Geometry&&>;
 public:
     //! export the type used for global coordinates
     using GlobalPosition = typename T::GlobalPosition;
@@ -76,31 +58,14 @@ public:
 
     CCSubControlVolume() = default;
 
-    // See the explanation above for deriving `GeometryParamType`.
-    CCSubControlVolume(GeometryParamType geometry,
+    template<class Geometry>
+    CCSubControlVolume(Geometry&& geometry,
                        GridIndexType elementIndex)
     : ParentType()
-    , geometry_(std::make_unique<Geometry>(std::move(geometry)))
-    , center_(geometry_->center())
+    , volume_(geometry.volume())
+    , center_(geometry.center())
     , elementIndex_(elementIndex)
     {}
-
-    //! The copy constructor
-    CCSubControlVolume(const CCSubControlVolume& other)
-    { deepCopy_(other); }
-
-    //! The move constructor
-    CCSubControlVolume(CCSubControlVolume&& other) = default;
-
-    //! The copy assignment operator
-    CCSubControlVolume& operator=(const CCSubControlVolume& other)
-    {
-        deepCopy_(other);
-        return *this;
-    }
-
-    //! The move assignment operator
-    CCSubControlVolume& operator=(CCSubControlVolume&& other) = default;
 
     //! The center of the sub control volume
     const GlobalPosition& center() const
@@ -111,7 +76,7 @@ public:
     //! The volume of the sub control volume
     Scalar volume() const
     {
-        return geometry_->volume();
+        return volume_;
     }
 
     //! The index of the dof this scv is embedded in (the global index of this scv)
@@ -146,18 +111,7 @@ public:
     }
 
 private:
-    void deepCopy_(const CCSubControlVolume& other)
-    {
-        if (other.geometry_)
-            geometry_ = std::make_unique<Geometry>(*other.geometry_);
-        else
-            geometry_.reset();
-        center_ = other.center_;
-        elementIndex_ = other.elementIndex_;
-    }
-
-    // Work around the fact that geometry is not default-constructible and not copy-assignable
-    std::unique_ptr<Geometry> geometry_;
+    Scalar volume_;
     GlobalPosition center_;
     GridIndexType elementIndex_;
 };
