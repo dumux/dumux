@@ -93,6 +93,7 @@ line2 = plt.plot(swImb, pcImb, color = "black", ls = "--", label="$p^{\mathrm{im
 plt.xlabel(r"$S_\mathrm{w,i}$")
 plt.ylabel(r"$p_\mathrm{c,i}$ in Pa")
 plt.xticks((0.0, 0.5, 1.0), labels= ["0", "0.5", "1"])
+plt.ylim(0)
 add_arrow(line1, direction='left')
 add_arrow(line2, direction='right')
 plt.legend(loc='upper right', frameon=False)
