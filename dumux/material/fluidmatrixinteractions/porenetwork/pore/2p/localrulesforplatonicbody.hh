@@ -344,7 +344,11 @@ private:
                 DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
         }
         else // regularized part above sw = 1.0
+#if ONEDDRAINGE
+            return pcDerivativeHighSwEnd_()*(sw - 1.0);
+#else
             return 0.0;
+#endif
     }
 
     /*!

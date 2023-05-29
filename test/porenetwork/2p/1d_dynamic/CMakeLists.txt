@@ -7,6 +7,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
@@ -18,6 +19,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_drainage_other_implicit
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=1
                COMPILE_DEFINITIONS NOREGULARIZTAION=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
@@ -32,6 +34,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_imbibition
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=0
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=0
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
@@ -44,6 +47,7 @@ dumux_add_test(NAME test_pnm_2p_1d_oilwater_imbibition_other_implicit
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS DRAINAGE=0
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=0
                COMPILE_DEFINITIONS NOREGULARIZTAION=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
@@ -55,6 +59,7 @@ dumux_add_test(NAME plot_constitutive_relations
                SOURCES main_plot_constitutive_laws.cc
                COMPILE_DEFINITIONS ISOTHERMAL=1
                COMPILE_DEFINITIONS DRAINAGE=0
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS ENABLECACHE=0
                COMPILE_DEFINISIONS REGULARIZATIONWITHPRESSURE=0
                COMPILE_DEFINITIONS PLOTCONSTITUTIVERELATIONS=1)

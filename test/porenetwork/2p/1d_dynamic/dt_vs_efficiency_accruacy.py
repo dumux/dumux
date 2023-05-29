@@ -100,7 +100,7 @@ for mu in kinematicViscosity:
 
     ax[0].plot(averageTimeStep, l2Error, marker="^", label = 'FI', linewidth = 2, markersize = 6)
     for idx, interval in enumerate(intervals):
-        ax[0].plot(averageTimeStepReg[idx], l2ErrorReg[idx], marker="o", label = 'MFI, $\epsilon = $' + str(interval), linewidth = 2, markersize = 6)
+        ax[0].plot(averageTimeStepReg[idx], l2ErrorReg[idx], marker="o", label = 'EFI-R, $\epsilon = $' + str(interval), linewidth = 2, markersize = 6)
     ax[0].set_xlabel("Average time step size")
     ax[0].set_ylabel("$E_{S_{w}}$ [-]")
     ax[0].set_yscale('log')
@@ -109,7 +109,7 @@ for mu in kinematicViscosity:
 
     ax[1].plot(averageTimeStep, totalNewtonIterations, marker="^", label = 'FI', linewidth = 2, markersize = 6)
     for idx, interval in enumerate(intervals):
-        ax[1].plot(averageTimeStepReg[idx], totalNewtonIterationsReg[idx], marker="o", label = 'MFI, $\epsilon = $' + str(interval), linewidth = 2, markersize = 6)
+        ax[1].plot(averageTimeStepReg[idx], totalNewtonIterationsReg[idx], marker="o", label = 'EFI-R, $\epsilon = $' + str(interval), linewidth = 2, markersize = 6)
     ax[1].set_xlabel("Average time step size")
     ax[1].set_ylabel("total newton iterations [-]")
     ax[1].set_xticks([0.02, 1, 2, 2.5], label = ["0.02", "1", "2", "2.5"])
@@ -120,4 +120,4 @@ for mu in kinematicViscosity:
 
     np.savetxt("1D_comparison_time_accuracy_efficency_FI.txt", (averageTimeStep, totalNewtonIterations, l2Error))
     for idx in range(2):
-        np.savetxt("1D_comparison_time_accuracy_efficency_MFI.txt" + str(idx), (averageTimeStepReg[idx], totalNewtonIterationsReg[idx], l2ErrorReg[idx]))
+        np.savetxt("1D_comparison_time_accuracy_efficency_EFIR.txt" + str(idx), (averageTimeStepReg[idx], totalNewtonIterationsReg[idx], l2ErrorReg[idx]))

@@ -89,12 +89,14 @@ public:
     using type = PoreNetwork::TwoPDrainageSpatialParams<GridGeometry, Scalar, LocalRules>;
 };
 
+#if PLOTCONSTITUTIVERELATIONS
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DrainageProblem> { static constexpr bool value = !PLOTCONSTITUTIVERELATIONS; };
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DrainageProblem> { static constexpr bool value = !PLOTCONSTITUTIVERELATIONS; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DrainageProblem> { static constexpr bool value = !PLOTCONSTITUTIVERELATIONS; };
+#endif
 
 // Set the grid type
 template<class TypeTag>
