@@ -17,9 +17,9 @@ plt.plot(sw4, pc_global4, ls = "-.", label="$p_{n,inlet} - p_{w, outlet}$")
 
 plt.plot(sw_static, pc_static, marker = "x", ls = "", label = "Quasi-static solution", linewidth = 1, markersize = 4)
 plt.plot(sw2_eq, pc_dynamic2_eq, marker = "+", ls = "", label = "Equlibirum state, $\epsilon = 0.01$", linewidth = 1, markersize = 4)
-plt.plot(sw4, pc_dynamic4, lw = 1, alpha = 0.5, label="Dynamic $p_c$, FI, $\epsilon = 0.0001$")
-plt.plot(sw3, pc_dynamic3, lw = 1, alpha = 1, label="Dynamic $p_c$, FI, $\epsilon = 0.001$")
-plt.plot(sw2, pc_dynamic2, lw = 1, alpha = 0.5, label="Dynamic $p_c$, FI, $\epsilon = 0.01$")
+plt.plot(sw4, pc_dynamic4, lw = 1, alpha = 0.5, label="Dynamic $p_c$, EFI-R, $\epsilon = 0.0001$")
+plt.plot(sw3, pc_dynamic3, lw = 1, alpha = 1, label="Dynamic $p_c$, EFI-R, $\epsilon = 0.001$")
+plt.plot(sw2, pc_dynamic2, lw = 1, alpha = 0.5, label="Dynamic $p_c$, EFI-R, $\epsilon = 0.01$")
 
 plt.xticks(fontsize = 14)
 plt.yticks(fontsize = 14)
