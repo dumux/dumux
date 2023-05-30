@@ -83,6 +83,7 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
+    using Intersection = typename GV::Intersection;
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
@@ -127,6 +128,19 @@ public:
     CCTpfaFVGridGeometry(const GridView& gridView)
     : CCTpfaFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
     {}
+
+    template<class F>
+    CCTpfaFVGridGeometry(const GridView& gridView, F&& f)
+    : ParentType(std::make_shared<BasicGridGeometry>(gridView))
+    , boundaryMarker_(std::forward<F>(f))
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
+            DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+
+        update_();
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -244,7 +258,7 @@ private:
             // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
             std::vector<ScvfGridIndexStorage> outsideIndices;
-            if (dim < dimWorld)
+            if constexpr (dim < dimWorld)
             {
                 //! first, push inside index in all neighbor sets
                 outsideIndices.resize(element.subEntities(1));
@@ -264,13 +278,14 @@ private:
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 // inner sub control volume faces (includes periodic boundaries)
-                if (intersection.neighbor())
+                const bool isUserMarkedBoundary = boundaryMarker_ ? boundaryMarker_(element, intersection) : false;
+                if (intersection.neighbor() && !isUserMarkedBoundary)
                 {
                     // update the grid geometry if we have periodic boundaries
                     if (intersection.boundary())
                         this->setPeriodic();
 
-                    if (dim == dimWorld)
+                    if constexpr (dim == dimWorld)
                     {
                         const auto nIdx = this->elementMapper().index(intersection.outside());
                         scvfs_.emplace_back(intersection,
@@ -301,14 +316,36 @@ private:
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary())
+                else if (intersection.boundary() || isUserMarkedBoundary)
                 {
-                    scvfs_.emplace_back(intersection,
-                                        intersection.geometry(),
-                                        scvfIdx,
-                                        ScvfGridIndexStorage({eIdx, static_cast<GridIndexType>(this->gridView().size(0) + numBoundaryScvf_++)}),
-                                        true);
-                    scvfsIndexSet.push_back(scvfIdx++);
+                    if constexpr (dim == dimWorld)
+                    {
+                        scvfs_.emplace_back(intersection,
+                                            intersection.geometry(),
+                                            scvfIdx,
+                                            ScvfGridIndexStorage({eIdx, static_cast<GridIndexType>(this->gridView().size(0) + numBoundaryScvf_++)}),
+                                            true);
+                        scvfsIndexSet.push_back(scvfIdx++);
+                    }
+                    // this is for network grids, only happens if intersection.boundary() == false
+                    // (will be optimized away of dim == dimWorld)
+                    else
+                    {
+                        auto indexInInside = intersection.indexInInside();
+                        // check if we already handled this facet
+                        if (outsideIndices[indexInInside].empty())
+                            continue;
+                        else
+                        {
+                            scvfs_.emplace_back(intersection,
+                                            intersection.geometry(),
+                                            scvfIdx,
+                                            ScvfGridIndexStorage({eIdx, static_cast<GridIndexType>(this->gridView().size(0) + numBoundaryScvf_++)}),
+                                            true);
+                            scvfsIndexSet.push_back(scvfIdx++);
+                            outsideIndices[indexInInside].clear();
+                        }
+                    }
 
                     hasBoundaryScvf_[eIdx] = true;
                 }
@@ -351,8 +388,14 @@ private:
                     return outsideScvf.index();
         }
 
+        std::cout << "Nout found" << std::endl;
+
         DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
     }
+
+    template<class Func>
+    void setBoundaryMarker(Func&& func)
+    { boundaryMarker_ = std::forward<Func>(func); }
 
     //! connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
@@ -366,6 +409,8 @@ private:
 
     //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<GridIndexType>> flipScvfIndices_;
+
+    std::function<bool(const Element&, const Intersection&)> boundaryMarker_;
 };
 
 /*!
@@ -520,7 +565,7 @@ private:
             // for network grids there might be multiple intersection with the same geometryInInside
             // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
             std::vector<NeighborVolVarIndices> outsideIndices;
-            if (dim < dimWorld)
+            if constexpr (dim < dimWorld)
             {
                 outsideIndices.resize(numLocalFaces);
                 for (const auto& intersection : intersections(this->gridView(), element))
@@ -542,7 +587,7 @@ private:
                     if (intersection.boundary())
                         this->setPeriodic();
 
-                    if (dim == dimWorld)
+                    if constexpr (dim == dimWorld)
                     {
                         scvfsIndexSet.push_back(numScvf_++);
                         const auto nIdx = this->elementMapper().index(intersection.outside());
