@@ -84,14 +84,6 @@ struct supportsPartialReassembly
     {}
 };
 
-// helper struct and function detecting if the linear solver features a norm() function
-template <class LinearSolver, class Residual>
-using NormDetector = decltype(std::declval<LinearSolver>().norm(std::declval<Residual>()));
-
-template<class LinearSolver, class Residual>
-static constexpr bool hasNorm()
-{ return Dune::Std::is_detected<NormDetector, LinearSolver, Residual>::value; }
-
 // helpers to implement max relative shift
 template<class C> using dynamicIndexAccess = decltype(std::declval<C>()[0]);
 template<class C> using staticIndexAccess = decltype(std::declval<C>()[Dune::Indices::_0]);
@@ -171,15 +163,6 @@ void assign(To& to, const From& from)
 
     else
         DUNE_THROW(Dune::Exception, "Values are not assignable to each other!");
-}
-
-template<class Residual, class LinearSolver, class Assembler>
-typename Assembler::Scalar residualNorm(Residual& residual, const LinearSolver& linearSolver, const Assembler& assembler)
-{
-    if constexpr (Detail::Newton::hasNorm<LinearSolver, Residual>())
-        return linearSolver.norm(residual);
-    else // fallback to deprecated interface
-        return assembler.normOfResidual(residual);
 }
 
 } // end namespace Dumux::Detail::Newton
@@ -497,9 +480,7 @@ public:
         try
         {
             if (numSteps_ == 0)
-                initialResidual_ = Detail::Newton::residualNorm(
-                    this->assembler().residual(), this->linearSolver(), this->assembler()
-                );
+                initialResidual_ = this->linearSolver().norm(this->assembler().residual());
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
@@ -866,9 +847,7 @@ protected:
         else
             this->assembler().assembleResidual(vars);
 
-        residualNorm_ = Detail::Newton::residualNorm(
-            this->assembler().residual(), this->linearSolver(), this->assembler()
-        );
+        residualNorm_ = this->linearSolver().norm(this->assembler().residual());
 
         reduction_ = residualNorm_/initialResidual_;
     }

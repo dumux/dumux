@@ -36,7 +36,6 @@ struct PNMDefaultScvGeometryTraits
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CornerStorage = std::array<GlobalPosition, 2>;
     using Geometry = Dune::AffineGeometry<Scalar, 1, dimWorld>;
 };
 
@@ -56,7 +55,6 @@ class PNMSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
 
 public:
@@ -75,12 +73,12 @@ public:
                         GridIndexType elementIndex,
                         Corners&& corners,
                         const Scalar volume)
-    : center_((corners[0]+corners[1])/2.0),
-      corners_(std::forward<CornerStorage>(corners)),
-      volume_(volume),
-      elementIndex_(elementIndex),
-      localDofIdx_(scvIdx),
-      dofIndex_(dofIndex)
+    : center_(0.5*(corners[0]+corners[1]))
+    , dofPosition_(corners[0])
+    , volume_(volume)
+    , elementIndex_(elementIndex)
+    , localDofIdx_(scvIdx)
+    , dofIndex_(dofIndex)
     {}
 
     //! The center of the sub control volume (return pore center).
@@ -106,30 +104,15 @@ public:
 
     // The position of the dof this scv is embedded in
     const GlobalPosition& dofPosition() const
-    { return corners_[0]; }
+    { return dofPosition_; }
 
     //! The global index of the element this scv is embedded in
     GridIndexType elementIndex() const
     { return elementIndex_; }
 
-    //! Return the corner for the given local index
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).corner(i).")]]
-    const GlobalPosition& corner(LocalIndexType localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
-
-    //! The geometry of the sub control volume e.g. for integration
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).")]]
-    Geometry geometry() const
-    {
-        return Geometry(Dune::GeometryTypes::simplex(1), corners_);
-    }
-
 private:
     GlobalPosition center_;
-    CornerStorage corners_;
+    GlobalPosition dofPosition_;
     Scalar volume_;
     GridIndexType elementIndex_;
     LocalIndexType localDofIdx_;

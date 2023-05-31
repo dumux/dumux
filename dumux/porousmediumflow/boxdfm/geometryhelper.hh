@@ -135,15 +135,6 @@ public:
                                                             << " type=" << type);
     }
 
-    //! Create the sub control volume face geometries on an intersection marked as fracture
-    [[deprecated("Will be removed after release 3.6. Use other signature.")]]
-    ScvfCornerStorage getFractureScvfCorners(const Intersection& is,
-                                             const typename Intersection::Geometry& isGeom,
-                                             unsigned int edgeIndexInIntersection) const
-    {
-        return getFractureScvfCorners(is.indexInInside(), edgeIndexInIntersection);
-    }
-
     //! get fracture scvf normal vector
     typename ScvfType::Traits::GlobalPosition
     fractureNormal(const ScvfCornerStorage& scvfCorners,

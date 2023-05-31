@@ -202,14 +202,6 @@ public:
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
     }
 
-    //! Return the corner for the given local index
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).corner(i).")]]
-    const GlobalPosition& corner(LocalIndexType localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
-
 private:
     bool isFractureScv_;
     CornerStorage corners_;

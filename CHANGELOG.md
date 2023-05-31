@@ -11,9 +11,11 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 - __Pore network__: Added the dual network model proposed in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
 - __Pore network__: Added a model for heat conduction in a solid grain network
 - __Nonisothermal__: Added a specialized local residual for incompressible flows where the pressure work term cancels with the pressure-dependent part of the enthalpy so that only the internal energy remains in the advective heat flux.
+- __Tpfa__: The scv/scvf interfaces no longer store the geometry (can be obtained via local view of grid geometry). This means the memory footprint and also construction performance of the scv/scvfs is greatly improved, especially in higher dimensions. (Similar changes for the CVFE methods are already implemented since the previous release.)
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 

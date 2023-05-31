@@ -268,67 +268,6 @@ public:
         });
     }
 
-    //! compute a residual's vector norm (this is a temporary interface introduced during the deprecation period)
-    [[deprecated("Use the linear solver's norm. Will be deleted after 3.7")]]
-    Scalar normOfResidual(ResidualType& residual) const
-    {
-        // calculate the squared norm of the residual
-        Scalar resultSquared = 0.0;
-
-        // for box communicate the residual with the neighboring processes
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(residual)), [&](const auto domainId)
-        {
-            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            const auto& gridView = gridGeometry->gridView();
-
-            if (gridView.comm().size() > 1 && gridView.overlapSize(0) == 0)
-            {
-                if constexpr (GridGeometry<domainId>::discMethod == DiscretizationMethods::box)
-                {
-                    using GV = typename GridGeometry<domainId>::GridView;
-                    using DM = typename GridGeometry<domainId>::VertexMapper;
-                    using PVHelper = ParallelVectorHelper<GV, DM, GV::dimension>;
-
-                    PVHelper vectorHelper(gridView, gridGeometry->vertexMapper());
-
-                    vectorHelper.makeNonOverlappingConsistent(residual[domainId]);
-                }
-            }
-            else if (!warningIssued_)
-            {
-                if (gridView.comm().size() > 1 && gridView.comm().rank() == 0)
-                    std::cout << "\nWarning: norm calculation adds entries corresponding to\n"
-                              << "overlapping entities multiple times. Please use the norm\n"
-                              << "function provided by a linear solver instead." << std::endl;
-
-                warningIssued_ = true;
-            }
-
-            Scalar localNormSquared = residual[domainId].two_norm2();
-
-            if (gridView.comm().size() > 1)
-            {
-                localNormSquared = gridView.comm().sum(localNormSquared);
-            }
-
-            resultSquared += localNormSquared;
-        });
-
-        using std::sqrt;
-        return sqrt(resultSquared);
-    }
-
-    //! compute the residual and return it's vector norm
-    [[deprecated("Use norm(curSol) provided by the linear solver class instead. Will be deleted after 3.7")]]
-    Scalar residualNorm(const SolutionVector& curSol)
-    {
-        ResidualType residual;
-        setResidualSize_(residual);
-        assembleResidual(residual, curSol);
-        return normOfResidual(residual);
-    }
-
     /*!
      * \brief Tells the assembler which jacobian and residual to use.
      *        This also resizes the containers to the required sizes and sets the

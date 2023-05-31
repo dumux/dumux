@@ -31,10 +31,6 @@ public:
 
     void assembleResidual(const GridVariables& gridVars)
     { Assembler::assembleResidual(gridVars.dofs()); }
-
-    //! Remove residualNorm once this is fixed in the solvers !2113
-    auto residualNorm(const GridVariables& gridVars)
-    { return Assembler::residualNorm(gridVars.dofs()); }
 };
 
 } // end namespace Dumux::OnePCompressibleTest

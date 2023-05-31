@@ -222,14 +222,6 @@ public:
         return scvfIndex_;
     }
 
-    //! The positions of the corners
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
-    const GlobalPosition& corner(unsigned int localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
-
     //! The geometry of the sub control volume face
     [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
     const Geometry geometry() const

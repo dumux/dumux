@@ -185,14 +185,6 @@ public:
     std::size_t corners() const
     { return corners_.size(); }
 
-    //! Returns the corner for a given local index
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).corner(i).")]]
-    const GlobalPosition& corner(unsigned int localIdx) const
-    {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
-    }
-
     //! Returns the global position of the vertex the scvf is connected to
     const GlobalPosition& vertexCorner() const
     { return corners_.back(); }
