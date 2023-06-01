@@ -123,13 +123,17 @@ with $t_{K,\sigma},t_{L,\sigma}$ as defined in equation \eqref{eq:conormalDecTpf
 
 In the following, a multi-point flux approximation method (Mpfa-O method), which was introduced in \citet{A3:aavatsmark:2002}, is presented. The main difference to the Tpfa scheme is the fact that a consistent discrete gradient is constructed, i.e. the term $\nabla u \cdot \mathbf{d}^{\bot}_{K,\sigma}$ is not neglected.
 
-For this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$). This divides each cell into sub-control volumes $K_v$. Analogously, each face is sub-divided into sub-control volume faces $\sigma^v$, see Figure \ref{pc:interactionRegion_mpfa}. Note that for the Tpfa method sub-control volumes and control volumes coincide. Also, we allow for piecewise constant $\mathbf{\Lambda}$ (denoted as $\mathbf{\Lambda}_K$ for each cell $K$) and construct discrete gradients $\nabla_\mathcal{D}^{K_v} u$ (per sub-control volume $K_v$).
+For this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$).
+This divides each primary grid face into $n$ sub-faces $\sigma^v$, where $n$ is the number of corners of the primary grid face and the superscript $v$ refers to the vertex the
+sub-face can be associated with (see Figure \ref{pc:interactionRegion_mpfa}). Also, it sub-divides the control volume $K$ into regions $K_v$ that can be associated with the vertex $v$.
+We allow for piecewise constant $\mathbf{\Lambda}$ (denoted as $\mathbf{\Lambda}_K$ for each cell $K$)
+and construct discrete gradients $\nabla_\mathcal{D}^{K_v} u$.
 In the following, we restrict our discussion to the two-dimensional setup that is shown in Figure \ref{pc:interactionRegion_mpfa}.
 Here, the discrete gradients are constructed to be consistent such that the following conditions hold:
 \begin{equation}
 \nabla_\mathcal{D}^{K_v} u \cdot (\mathbf{x}_{\sigma^v_1}- \mathbf{x}_{K}) = u_{\sigma^v_1} - u_K, \quad \nabla_\mathcal{D}^{K_v} u \cdot (\mathbf{x}_{\sigma^v_3}- \mathbf{x}_{K}) = u_{\sigma^v_3} - u_K.
 \end{equation}
-Thus, a discrete gradient (for sub-control volume $K_v$) that fulfills  these conditions is given as
+Thus, a discrete gradient in $K_v$ that fulfills these conditions is given as
 \begin{equation}
 \nabla_\mathcal{D}^{K_v} u  = \mathbb{D}^{-T}_{K_v}
  \begin{bmatrix}
@@ -147,7 +151,7 @@ This enables us to write the discrete flux across $\sigma^v_1$ from cell $K$ as 
     F_{K, \sigma^v_1} := - |\sigma^v_1| \mathbf{n}_{\sigma^v_1}^T \mathbf{\Lambda}_K \nabla_\mathcal{D}^{K_v} u.
     \label{eq:discreteFlux}
 \end{equation}
-Inserting the discrete gradient, yields
+Inserting the discrete gradient yields
 \begin{equation}
     F_{K, \sigma^v_1} = \omega_{K,\sigma^v_1\sigma^v_1}(u_K - u_{\sigma^v_1}) + \omega_{K,\sigma^v_1 \sigma^v_3}(u_K - u_{\sigma^v_3}),
     \label{eq:discreteFluxRef}
