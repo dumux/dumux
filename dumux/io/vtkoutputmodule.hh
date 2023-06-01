@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
@@ -29,6 +30,7 @@
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dune/grid/common/partitionset.hh>
 
+#include <dumux/experimental/helpers.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
@@ -317,6 +319,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
     static constexpr bool isPQ1Bubble = GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
+    static constexpr bool useNewGridVarInterface = Experimental::hasNewGridVarInterface<GridVariables>();
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
@@ -329,6 +332,7 @@ public:
     //! export type of the volume variables for the outputfields
     using VolumeVariables = VV;
 
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     VtkOutputModule(const GridVariables& gridVariables,
                     const SolutionVector& sol,
                     const std::string& name,
@@ -337,7 +341,22 @@ public:
                     bool verbose = true)
     : ParentType(gridVariables.gridGeometry(), name, paramGroup, dm, verbose)
     , gridVariables_(gridVariables)
-    , sol_(sol)
+    , sol_(&sol)
+    , velocityOutput_(std::make_shared<VelocityOutputType>())
+    {
+        enableVelocityOutput_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddVelocity", false);
+        addProcessRank_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank", true);
+    }
+
+    template<bool useMe = useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
+    VtkOutputModule(const GridVariables& gridVariables,
+                    const std::string& name,
+                    const std::string& paramGroup = "",
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming,
+                    bool verbose = true)
+    : ParentType(gridVariables.gridGeometry(), name, paramGroup, dm, verbose)
+    , gridVariables_(gridVariables)
+    , sol_(nullptr)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
     {
         enableVelocityOutput_ = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddVelocity", false);
@@ -380,10 +399,24 @@ public:
 
 protected:
     // some return functions for differing implementations to use
-    const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
-    const SolutionVector& sol() const { return sol_; }
+    const auto& problem() const { return gridVolVars().problem(); }
+    const SolutionVector& sol() const
+    {
+        if constexpr(useNewGridVarInterface)
+            return gridVariables_.dofs();
+        else
+            return *sol_;
+    }
+    const auto& gridVolVars() const
+    {
+        if constexpr (useNewGridVarInterface)
+            return gridVariables_.gridVolVars();
+        else
+            return gridVariables_.curGridVolVars();
+    }
+
 
     const std::vector<VolVarScalarDataInfo>& volVarScalarDataInfo() const { return volVarScalarDataInfo_; }
     const std::vector<VolVarVectorDataInfo>& volVarVectorDataInfo() const { return volVarVectorDataInfo_; }
@@ -449,23 +482,10 @@ private:
             // maybe allocate space for the process rank
             if (addProcessRank_) rank.resize(numCells);
 
-            auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
-                // If velocity output is enabled we need to bind to the whole stencil
-                // otherwise element-local data is sufficient
-                if (velocityOutput_->enableOutput())
-                {
-                    fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
-                }
-                else
-                {
-                    fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
-                }
+                const auto [fvGeometry, elemVolVars] = makeLocalViews_(element, velocityOutput_->enableOutput());
 
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
@@ -645,23 +665,10 @@ private:
             if (addProcessRank_) rank.resize(numCells);
 
             // now we go element-local to extract values at local dof locations
-            auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
             for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
             {
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
-                // If velocity output is enabled we need to bind to the whole stencil
-                // otherwise element-local data is sufficient
-                if (velocityOutput_->enableOutput())
-                {
-                    fvGeometry.bind(element);
-                    elemVolVars.bind(element, fvGeometry, sol_);
-                }
-                else
-                {
-                    fvGeometry.bindElement(element);
-                    elemVolVars.bindElement(element, fvGeometry, sol_);
-                }
+                const auto [fvGeometry, elemVolVars] = makeLocalViews_(element, velocityOutput_->enableOutput());
 
                 const auto numLocalDofs = fvGeometry.numScv();
                 // resize element-local data containers
@@ -771,6 +778,32 @@ private:
         this->writer().clear();
     }
 
+    auto makeLocalViews_(const Element& element, bool fullStencil) const
+    {
+        auto fvGeometry = localView(gridGeometry());
+        if (fullStencil)
+            fvGeometry.bind(element);
+        else
+            fvGeometry.bindElement(element);
+
+        if constexpr (useNewGridVarInterface)
+        {
+            auto elemVars = localView(gridVariables_);
+            elemVars.bindElemVolVars(element, fvGeometry);
+            auto elemVolVars = elemVars.elemVolVars();
+            return std::make_tuple(std::move(fvGeometry), std::move(elemVolVars));
+        }
+        else
+        {
+            auto elemVolVars = localView(gridVolVars());
+            if (fullStencil)
+                elemVolVars.bind(element, fvGeometry, sol());
+            else
+                elemVolVars.bindElement(element, fvGeometry, sol());
+            return std::make_tuple(std::move(fvGeometry), std::move(elemVolVars));
+        }
+    }
+
     //! return the number of dofs, we only support vertex and cell data
     std::size_t numDofs_() const
     {
@@ -783,7 +816,7 @@ private:
     }
 
     const GridVariables& gridVariables_;
-    const SolutionVector& sol_;
+    const SolutionVector* sol_;
 
     std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //!< Registered volume variables (scalar)
     std::vector<VolVarVectorDataInfo> volVarVectorDataInfo_; //!< Registered volume variables (vector)

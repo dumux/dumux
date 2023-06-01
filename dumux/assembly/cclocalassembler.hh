@@ -76,6 +76,18 @@ public:
         }
     }
 
+    //! \note This is an experimental interface without any stability guarantees
+    template<class ResidualVector, class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, const PartialReassembler* partialReassembler)
+    {
+        this->asImp_().bindLocalViews();
+        const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
+        if (partialReassembler && partialReassembler->elementColor(globalI) == EntityColor::green)
+            res[globalI] = this->asImp_().evalLocalResidual()[0];
+        else
+            res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac);
+    }
+
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
@@ -84,6 +96,13 @@ public:
     {
         this->asImp_().bindLocalViews();
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+    }
+
+    //! \note This is an experimental interface without any stability guarantees
+    void assembleJacobian(JacobianMatrix& jac)
+    {
+        this->asImp_().bindLocalViews();
+        this->asImp_().assembleJacobianAndResidualImpl(jac); // forward to the internal implementation
     }
 
     /*!
@@ -155,6 +174,11 @@ public:
 
     using ParentType::ParentType;
 
+    //! \note This is an experimental interface without any stability guarantees
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A)
+    {
+        return assembleJacobianAndResidualImpl(A, this->gridVariables());
+    }
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
@@ -219,7 +243,7 @@ public:
 
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);
-        auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+        auto& curVolVars = ParentType::getVolVarAccess(gridVariables, curElemVolVars, scv);
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection

@@ -16,6 +16,7 @@
 #include <memory>
 #include <dune/common/float_cmp.hh>
 
+#include <dumux/experimental/helpers.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/discretization/method.hh>
@@ -43,6 +44,7 @@ class PorousMediumFlowVelocityOutput : public VelocityOutput<GridVariables>
     using FluidSystem = typename VolumeVariables::FluidSystem;
 
     using VelocityBackend = PorousMediumFlowVelocity<GridVariables, FluxVariables>;
+    static constexpr bool hasNewGridVarInterface = Experimental::hasNewGridVarInterface<GridVariables>();
 
 public:
     using VelocityVector = typename ParentType::VelocityVector;
@@ -55,7 +57,7 @@ public:
     PorousMediumFlowVelocityOutput(const GridVariables& gridVariables)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
+        enableOutput_ = getParamFromGroup<bool>(paramGroup_(gridVariables), "Vtk.AddVelocity");
         if (enableOutput_)
             velocityBackend = std::make_unique<VelocityBackend>(gridVariables);
     }
@@ -83,6 +85,14 @@ public:
     }
 
 private:
+    auto paramGroup_(const GridVariables& gridVars) const
+    {
+        if constexpr (hasNewGridVarInterface)
+            return gridVars.gridVolVars().problem().paramGroup();
+        else
+            return gridVars.curGridVolVars().problem().paramGroup();
+    }
+
     bool enableOutput_;
     std::unique_ptr<VelocityBackend> velocityBackend;
 };

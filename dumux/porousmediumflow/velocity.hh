@@ -21,6 +21,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/experimental/helpers.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
@@ -83,6 +84,7 @@ class PorousMediumFlowVelocity
 
     using Problem = typename GridVolumeVariables::Problem;
 
+    static constexpr bool hasNewGridVarInterface = Experimental::hasNewGridVarInterface<GridVariables>();
     static constexpr bool modelIsCompositional = Detail::hasMoleFraction<typename GridVolumeVariables::VolumeVariables, int, int>() ||
                                                  Detail::hasMassFraction<typename GridVolumeVariables::VolumeVariables, int, int>();
 
@@ -98,7 +100,7 @@ public:
      * \param gridVariables The grid variables
      */
     PorousMediumFlowVelocity(const GridVariables& gridVariables)
-    : problem_(gridVariables.curGridVolVars().problem())
+    : problem_(problemFrom_(gridVariables))
     , gridGeometry_(gridVariables.gridGeometry())
     , gridVariables_(gridVariables)
     {
@@ -453,6 +455,14 @@ private:
     }
 
 private:
+    const auto& problemFrom_(const GridVariables& gridVars) const
+    {
+        if constexpr (hasNewGridVarInterface)
+            return gridVars.gridVolVars().problem();
+        else
+            return gridVars.curGridVolVars().problem();
+    }
+
     const Problem& problem_;
     const GridGeometry& gridGeometry_;
     const GridVariables& gridVariables_;

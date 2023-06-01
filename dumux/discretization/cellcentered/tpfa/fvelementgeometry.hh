@@ -187,7 +187,7 @@ public:
     { return static_cast<bool>(element_); }
 
     //! Return true if this local view was bound to the entire stencil
-    bool hasStencil() const
+    bool hasFullStencil() const
     { return entireStencil_; }
 
     //! The bound element
@@ -379,7 +379,7 @@ public:
     { return static_cast<bool>(element_); }
 
     //! Return true if this local view was bound to the entire stencil
-    bool hasStencil() const
+    bool hasFullStencil() const
     { return entireStencil_; }
 
     //! The bound element

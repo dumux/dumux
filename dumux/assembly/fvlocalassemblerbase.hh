@@ -20,6 +20,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/experimental/helpers.hh>
 
 namespace Dumux {
 
@@ -39,7 +40,7 @@ class FVLocalAssemblerBase
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = typename Assembler::SolutionVector;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -50,6 +51,9 @@ class FVLocalAssemblerBase
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    static constexpr bool useNewGridVarsInterface = Experimental::hasNewGridVarInterface<GridVariables>();
+
+    using VariableStorage = std::conditional_t<useNewGridVarsInterface, GridVariables, const SolutionVector>;
 
 public:
     using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
@@ -58,6 +62,7 @@ public:
     /*!
      * \brief The constructor. Delegates to the general constructor.
      */
+    template<bool useMe = !useNewGridVarsInterface, std::enable_if_t<useMe, bool> = true>
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
                                   const SolutionVector& curSol)
@@ -75,6 +80,7 @@ public:
     /*!
      * \brief The constructor. General version explicitly expecting each argument.
      */
+    template<bool useMe = !useNewGridVarsInterface, std::enable_if_t<useMe, bool> = true>
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
                                   const SolutionVector& curSol,
@@ -93,6 +99,21 @@ public:
     , elemFluxVarsCache_(elemFluxVarsCache)
     , localResidual_(localResidual)
     , elementIsGhost_(elementIsGhost)
+    {}
+
+    template<bool useMe = useNewGridVarsInterface, std::enable_if_t<useMe, bool> = true>
+    explicit FVLocalAssemblerBase(const Assembler& assembler,
+                                  const Element& element,
+                                  GridVariables& gridVars)
+    : assembler_(assembler)
+    , element_(element)
+    , curSol_(gridVars)
+    , fvGeometry_(localView(gridVars.gridGeometry()))
+    , curElemVolVars_(localView(gridVars.gridVolVars()))
+    , prevElemVolVars_(localView(assembler.prevGridVariables().gridVolVars()))
+    , elemFluxVarsCache_(localView(gridVars.gridFluxVarsCache()))
+    , localResidual_(assembler.localResidual())
+    , elementIsGhost_(element.partitionType() == Dune::GhostEntity)
     {}
 
     /*!
@@ -175,7 +196,7 @@ public:
         // get some references for convenience
         const auto& element = this->element();
         const auto& curSol = this->curSol();
-        const auto& prevSol = this->assembler().prevSol();
+        const auto& prevSol = this->prevSol();
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& prevElemVolVars = this->prevElemVolVars();
@@ -189,7 +210,7 @@ public:
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
             if (!this->assembler().isStationaryProblem())
-                prevElemVolVars.bindElement(element, fvGeometry, this->assembler().prevSol());
+                prevElemVolVars.bindElement(element, fvGeometry, prevSol);
         }
         else
         {
@@ -243,6 +264,25 @@ public:
 
     //! The current solution
     const SolutionVector& curSol() const
+    {
+        if constexpr (useNewGridVarsInterface)
+            return curSol_.dofs();
+        else
+            return curSol_;
+    }
+
+    //! The previous solution
+    const SolutionVector& prevSol() const
+    {
+        if constexpr (useNewGridVarsInterface)
+            return assembler_.prevGridVariables().dofs();
+        else
+            return assembler_.prevSol();
+    }
+
+    //! The underlying grid variables
+    template<bool useMe = useNewGridVarsInterface, std::enable_if_t<useMe, bool> = true>
+    const GridVariables& gridVariables() const
     { return curSol_; }
 
     //! The global finite volume geometry
@@ -293,6 +333,10 @@ public:
     const LocalResidual& localResidual() const
     { return localResidual_; }
 
+    template<bool useMe = useNewGridVarsInterface, std::enable_if_t<useMe, bool> = true>
+    GridVariables& gridVariables()
+    { return curSol_; }
+
 protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
@@ -301,18 +345,18 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
     template<class T = TypeTag, typename std::enable_if_t<!GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    VolumeVariables& getVolVarAccess(GridVariables&, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }
 
     template<class T = TypeTag, typename std::enable_if_t<GetPropType<T, Properties::GridVariables>::GridVolumeVariables::cachingEnabled, int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
+    VolumeVariables& getVolVarAccess(GridVariables& gridVars, ElementVolumeVariables&, const SubControlVolume& scv)
+    { return gridVars.gridVolVars().volVars(scv); }
 
 private:
 
     const Assembler& assembler_; //!< access pointer to assembler instance
     const Element& element_; //!< the element whose residual is assembled
-    const SolutionVector& curSol_; //!< the current solution
+    VariableStorage& curSol_; //!< the current solution (or grid variables)
 
     FVElementGeometry fvGeometry_;
     ElementVolumeVariables curElemVolVars_;
@@ -323,7 +367,6 @@ private:
     LocalResidual localResidual_; //!< the local residual evaluating the equations per element
     bool elementIsGhost_; //!< whether the element's partitionType is ghost
 };
-
 
 } // end namespace Dumux
 

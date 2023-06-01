@@ -34,6 +34,8 @@ class FVGridVariablesLocalView
 {
     using GridGeometry = typename GV::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -70,10 +72,12 @@ public:
      * \param element The grid element
      * \param fvGeometry Local view on the grid geometry
      */
-    void bindElemVolVars(const Element& element,
-                         const FVElementGeometry& fvGeometry)
+    void bindElemVolVars(const Element& element, const FVElementGeometry& fvGeometry)
     {
-        elemVolVars_.bind(element, fvGeometry, gridVariables().dofs());
+        if (fvGeometry.hasFullStencil())
+            elemVolVars_.bind(element, fvGeometry, gridVariables().dofs());
+        else
+            elemVolVars_.bindElement(element, fvGeometry, gridVariables().dofs());
 
         // unbind flux variables cache
         elemFluxVarsCache_ = localView(gridVariables().gridFluxVarsCache());
@@ -86,6 +90,14 @@ public:
     //! return reference to the flux variables cache
     const ElementFluxVariablesCache& elemFluxVarsCache() const { return elemFluxVarsCache_; }
     ElementFluxVariablesCache& elemFluxVarsCache() { return elemFluxVarsCache_; }
+
+    //! return a reference to the volume variables for the given scv
+    const auto& volumeVariables(const SubControlVolume& scv) const { return elemVolVars_[scv]; }
+    auto& volumeVariables(const SubControlVolume& scv) { return elemVolVars_[scv]; }
+
+    //! return a reference to the flux variables cache for the given scvf
+    const auto& fluxVarsCache(const SubControlVolumeFace& scvf) const { return elemFluxVarsCache_[scvf]; }
+    auto& fluxVarsCache(const SubControlVolumeFace& scvf) { return elemFluxVarsCache_[scvf]; }
 
     //! Return reference to the grid variables
     const GridVariables& gridVariables() const
