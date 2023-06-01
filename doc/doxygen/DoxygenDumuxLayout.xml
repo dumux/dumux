@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- We manually create the navigation hierarchy of the pages -->
     <tab type="user" url="@ref installation" visible="yes" title="Installation" intro=""/>
     <tab type="user" url="@ref getting-started" visible="yes" title="Getting started" intro=""/>
+    <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime Parameters" intro=""/>
     <!-- This is how to create a hierarchy (can be removed once we have an example) -->
     <!-- <tab type="usergroup" title="My Group">
       <tab type="user" url="@ref mysubpage" title="My Page"/>
