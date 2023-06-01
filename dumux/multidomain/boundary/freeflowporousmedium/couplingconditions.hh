@@ -13,6 +13,8 @@
 #ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_HH
 #define DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_HH
 
+#include <dumux/discretization/method.hh>
+
 #include "couplingconditions_staggered_cctpfa.hh"
 
 namespace Dumux {
