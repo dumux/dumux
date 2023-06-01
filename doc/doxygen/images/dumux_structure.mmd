@@ -1,0 +1,47 @@
+flowchart LR
+    dumux[dumux]
+    dumux --- adaptive(adaptive) ---- adaptivedescr{{"Data transfer on new grid adapation indicators."}}
+    dumux --- assemply(assembly) ---- assemblydescr{{"Matrix assembler and residual for all discretization methods."}}
+    dumux --- common(common) ---- commondescr{{"Common files of all models:
+                                        definition of boundary conditions,
+                                        time stepping, splines,
+                                        dimensionless numbers..."}}
+        common --- properties([properties]) --- propertiesdescr{{"Base properties for all models."}}
+        common --- typetraits([typetraits]) --- typetraitsdescr{{"Helper classes to query type information on compile time."}}
+    dumux --- discretization(discretization) ---- discretizationdescr{{"Common methods of all discretizations (box, cell-centered TPFA/MPFA, staggered grid):
+                                                                 varible caching, advective and diffusive fluxes..."}}
+    dumux --- experimental(experimental) ---- experimentaldesc{{"Collection of experimental features."}}
+    dumux --- flux(flux) ---- fluxdescr{{"Collection of classes used to calculate advective and diffusive fluxes."}}
+    dumux --- freeflow(freeflow) --- freeflowmodels([models]) --- freeflowdescr{{"Single-phase free flow models using Navier-Stokes
+                                                                         and eddy viscosity bases Reynolds-averaged
+                                                                         Navier-Stokes turbulence models and shallow water equation model."}}
+    dumux --- geomechanics(geomechanics) --- geomechanicsmodels([models]) --- geomechanicsdescr{{"Elastic and poro-elastic models."}}
+    dumux --- geometry(geometry) ---- geometrydescr{{"Geometrical algorithms."}}
+    dumux --- io(io) ---- iodescr{{"Additional in-/output possibilites like reastart files,
+                                gnuplot-interface, VTK-writer extensions and files for grid generations."}}
+    dumux --- linear(linear) ---- lineardescr{{"Linear solver backend."}}
+    dumux --- material(material) --- binarycoefficients([binarycoefficents]) --- binarycoefficentsdescr{{"Binary coefficients (like binary diffusion coefficients) and 
+                                                                                                            those needed for the constitutive relationships (e.g. Henry coefficient)."}}
+        material --- chemistry([chemistry]) --- chemistrydescr{{"Files needed to account for, e.g. electro-chemical processes as in a fuel cell."}}
+        material --- components([components]) --- componentsdescr{{"Properties of a pure chemical substance (e.g. water) or pseudo substance (e.g. air.)"}}
+        material --- constraintsolvers([constraintsolvers]) --- constrainsolversdescr{{"Constraint solvers to make sure
+                                                                                        that the resulting fluid state is consistent with a given set of thermodynamic equations."}}
+        material --- eos([eos]) --- eosdescr{{"Equations of state (eos) are auxiliary classes which provide relations between a
+                                        fluid phase’s temperature, pressure, composition and density."}}
+        material --- fluidmatrixinteractions([fluidmatrixinteractions]) --- fluidmatrixinteractionsdescr{{"Constitutive relationships (e.g. capillary pressures, relative permeabilities)."}}
+        material --- fluidstates([fluidstates]) --- fluidstatesdescr{{"Fluid states are responsible for caching the thermodynamic configuration of a
+                                                                fluid system at a given spatial and temporal position."}}
+        material --- fluidsystems([fluidsystems]) --- fluidsystemsdescr{{"Fluid systems express the thermodynamic relations between quantities."}}
+        material --- solidstates([solidstates]) --- solidstatesdescr{{"Solid states are responsible for caching the thermodynamic configuration of a
+                                                                    solid system at a given spatial and temporal position."}}
+        material --- solidsytems([solidsystems]) --- solidsystemsdescr{{"Solid systems express the thermodynamic properties of a solid."}}
+    dumux --- multidomain(multidomain) ---- multidomaindescr{{"Common infrastructure to couple multiple domains, models or physics."}}
+        multidomain --- embedded([embedded]) --- embeddeddescr{{"Embedding a lower-dimensional model into a higher-dimensional one."}}
+        multidomain --- facet([facet]) --- facetdescr{{"Mixed-dimensional coupling at facets."}}
+        multidomain --- boundary([boundary]) --- boundarydescr{{"Coupling at the domain boundaries."}}
+    dumux --- nonlinear(nonlinear) ---- nonlineardescr{{"Newton’s method."}}
+    dumux --- parallel(parllel) ---- paralleldescr{{"Helper files for parallel simulations."}}
+    dumux --- porenetwork(porenetwork) --- porenetworkmodels([models]) --- porenetworkdescr{{"Specific definition for porenetwork models."}}
+    dumux --- porousmediumflow(porousmediumflow) --- porousmediumflowmodels([models]) --- porousmediumflowdescr{{"Specific definition for porous medium flow simulations for all models: imple-
+                                                                                                                    mentation of equations, model specific properties and indices."}}
+    dumux --- pyton(python) ---- pythondescr{{"The DuMux Python interface package."}}

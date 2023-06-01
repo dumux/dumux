@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime Parameters" intro=""/>
       <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
       <tab type="user" url="@ref input-and-output-formats" visible="yes" title="Input and output formats" intro=""/>
+      <tab type="user" url="@ref directory-structure" visible="yes" title="Where to find things" intro=""/>
     </tab>
     <tab type="modules" visible="yes" title="Module documentation" intro=""/>
     <tab type="user" url="@ref flow-and-transport-in-porous-media" visible="yes" title="Flow and transport in porous media" intro=""/>
