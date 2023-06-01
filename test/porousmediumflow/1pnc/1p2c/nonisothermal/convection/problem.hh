@@ -55,10 +55,6 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -233,6 +229,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     NumEqVector neumann(const Element& element,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -299,15 +296,16 @@ private:
         priVars[temperatureIdx] = temperatureLow_;
         return priVars;
     }
-        static constexpr Scalar eps_ = 1e-6;
-        Scalar temperatureHigh_;
-        Scalar temperatureLow_;
-        Scalar pressureHigh_;
-        Scalar pressureLow_;
-        Scalar darcyVelocity_;
 
-        std::vector<Scalar> temperatureExact_;
-    };
+    static constexpr Scalar eps_ = 1e-6;
+    Scalar temperatureHigh_;
+    Scalar temperatureLow_;
+    Scalar pressureHigh_;
+    Scalar pressureLow_;
+    Scalar darcyVelocity_;
+
+    std::vector<Scalar> temperatureExact_;
+};
 
 } // end namespace Dumux
 
