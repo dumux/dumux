@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: CC0-1.0
+
+porespy~=2.1.0
+openpnm~=2.8.2
+loguru~=0.6.0
