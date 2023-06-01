@@ -14,7 +14,7 @@
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_STAGGERED_CCTPFA_HH
 
 #include "couplingmanager_base.hh"
-#include "couplingconditions.hh"
+#include "couplingconditions_staggered_cctpfa.hh"
 
 namespace Dumux {
 
@@ -47,7 +47,7 @@ class FreeFlowPorousMediumCouplingManagerStaggeredCCTpfa
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     using SolutionVector = typename MDTraits::SolutionVector;
 
-    using CouplingConditions = FreeFlowPorousMediumCouplingConditions<MDTraits, FreeFlowPorousMediumCouplingManagerStaggeredCCTpfa<MDTraits>>;
+    using CouplingConditions = FFPMCouplingConditionsStaggeredCCTpfa<MDTraits, FreeFlowPorousMediumCouplingManagerStaggeredCCTpfa<MDTraits>>;
 
 public:
     static constexpr auto freeFlowMomentumIndex = ParentType::freeFlowMomentumIndex;
