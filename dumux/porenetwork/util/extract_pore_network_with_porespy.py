@@ -70,7 +70,11 @@ def openPngFile(fileName):
 
 
 def openFile(fileName, numVoxels):
-    """Opens the image with fileName detecting the file type from extension"""
+    """Opens the image with fileName and number of voxels in each direction
+    detecting the file type from extension.
+
+    Returns the image as a numpy array.
+    """
 
     if fileName.endswith(".raw"):
         return openRawFile(fileName, numVoxels)
@@ -93,7 +97,9 @@ def extrude2D(image, layers, topAndBottomValues):
         raise IOError("Extrusion only works for 2D images")
     if not len(topAndBottomValues) == 2:
         raise IOError("topAndBottomValues can only have two entries")
-    image = np.tile(np.atleast_3d(image), reps=[1, 1, layers])
+    image = np.tile(
+        np.atleast_3d(image), reps=[1, 1, layers]
+    )  # reshape in 3D array and repeat layers times
     image[..., 0:1] = topAndBottomValues[0]
     image[..., -1:] = topAndBottomValues[1]
     print("Extruding image to 3D.")
@@ -194,22 +200,23 @@ def extractNetwork(
     writeSegmentationInfoFile(snowOutput, outputName + "_segmentation", resolution)
 
     # use PoreSpy to sanitize some parameters (might become obsolete as some point)
-    porenetwork, _ = op.io.PoreSpy.import_data(snowOutput.network)
+    porenetwork = op.io.network_from_porespy(snowOutput.network)  # porenetwork in OpenPNM format
 
-    # trimming pore network to avoid singularity
+    # trimming pore network to avoid singularity (remove isolated and disconnected pores)
     print("Number of pores before trimming: ", porenetwork.Np)
-    health = porenetwork.check_network_health()
-    op.topotools.trim(network=porenetwork, pores=health["trim_pores"])
+    health = op.utils.check_network_health(porenetwork)
+    op.topotools.trim(network=porenetwork, pores=health["disconnected_pores"])
+    op.topotools.trim(network=porenetwork, pores=health["isolated_pores"])
     print("Number of pores after trimming: ", porenetwork.Np)
 
     filename = outputName + ("_dual" if dualSnow else "")
 
     # export to vtk
-    op.io.VTK.save(network=porenetwork, filename=filename)
+    op.io.project_to_vtk(project=porenetwork.project, filename=filename)
     print("Writing", filename + ".vtp")
 
     # export network for OpenPNM
-    porenetwork.project.save_project(filename)
+    op.utils.Workspace().save_project(project=porenetwork.project, filename=filename)
     print("Writing", filename + ".pnm")
 
 

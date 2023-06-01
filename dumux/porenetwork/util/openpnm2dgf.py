@@ -21,7 +21,7 @@ def load(filename):
     workspace.clear()
     project = workspace.load_project(filename=filename)
     print(project)
-    return project["net_01"], project["geo_01"]
+    return project["net"]
 
 
 def removeBoundaryThroats(net):
@@ -69,11 +69,11 @@ def getDualGridCoordinationNumber(net):
     coordNumVoid = np.zeros(numPoresTotal, dtype=np.int64)
     coordNumSolid = np.zeros(numPoresTotal, dtype=np.int64)
 
-    for voidThroat in net["throat.conns"][net["throat.void"]]:
+    for voidThroat in net["throat.conns"][net["throat.void_void"]]:
         coordNumVoid[voidThroat[0]] += 1
         coordNumVoid[voidThroat[1]] += 1
 
-    for solidThroat in net["throat.conns"][net["throat.solid"]]:
+    for solidThroat in net["throat.conns"][net["throat.solid_solid"]]:
         coordNumSolid[solidThroat[0]] += 1
         coordNumSolid[solidThroat[1]] += 1
 
@@ -84,27 +84,25 @@ def sanitizeDualNetwork(net, splitSinglePores):
     """DOC ME!"""
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
 
-    geo = net.project["geo_01"]
-
-    print("Num. void throats before dual grid sanitation", np.sum(net["throat.void"]))
+    print("Num. void throats before dual grid sanitation", np.sum(net["throat.void_void"]))
     print(net)
 
     # calculate coordination number for void-void and solid-solid connections
     coordNumVoid, coordNumSolid = getDualGridCoordinationNumber(net)
 
-    poreKeys = [key for key in geo if key.startswith("pore.")]
-    throatKeys = [key for key in geo if key.startswith("throat.")]
+    poreKeys = [key for key in net if key.startswith("pore.")]
+    throatKeys = [key for key in net if key.startswith("throat.")]
 
-    # HACK We want to add geometry information for the new fake pores
-    # and throats but it is not clear how to change the entries in geo.
-    # We therefore replace the geo object
+    # HACK We want to add information for the new fake pores
+    # and throats but it is not clear how to change the entries in net.
+    # We therefore replace the net object
     # by a dictionary which behaves similarly.
     # This should be improved!
     if splitSinglePores:
-        newGeo = {}
-        for key in geo:
-            newGeo[key] = geo[key]
-        geo = newGeo
+        newNet = {}
+        for key in net:
+            newNet[key] = net[key]
+        net = newNet
 
     singlePores = []
 
@@ -149,80 +147,80 @@ def sanitizeDualNetwork(net, splitSinglePores):
             net["pore." + domain][net["pore.fake_" + domain]] = True
             net["throat." + domain][net["throat.fake_" + domain]] = True
 
-            # add some articial geometry data
+            # add some articial data
             for throat in net.throats("fake_" + domain):
                 vIdx = net["throat.conns"][throat][0]
                 for key in poreKeys:
                     if "diameter" in key:
-                        geo[key] = np.append(
-                            geo[key], geo[key][vIdx]
+                        net[key] = np.append(
+                            net[key], net[key][vIdx]
                         )  # use same diameter for both pores
                         # TODO is this the right approach? # pylint: disable=fixme
                     if "volume" in key:
-                        geo[key] = np.append(
-                            geo[key], 0.5 * geo[key][vIdx]
+                        net[key] = np.append(
+                            net[key], 0.5 * net[key][vIdx]
                         )  # divide volume on both pores
-                        geo[key][vIdx] *= 0.5
+                        net[key][vIdx] *= 0.5
 
-                poreVolume = geo["pore.region_volume"][vIdx]
+                poreVolume = net["pore.region_volume"][vIdx]
                 eqRadius = (poreVolume * 3.0 / 4.0 * 1.0 / np.pi) ** (1.0 / 3.0)  # assume sphere
                 eqArea = np.pi * eqRadius**2
 
-                poreCenter0 = geo["pore.centroid"][vIdx]
+                poreCenter0 = net["pore.centroid"][vIdx]
                 poreCenter1 = poreCenter0 + np.array([1e-10, 1e-10, 1e-10])
                 throatCenter = 0.5 * (poreCenter0 + poreCenter1)
 
                 for key in throatKeys:
                     if "diameter" in key:
-                        geo[key] = np.append(geo[key], 2 * eqRadius)  # use equivalent diameter
+                        net[key] = np.append(net[key], 2 * eqRadius)  # use equivalent diameter
                     if "area" in key:
-                        geo[key] = np.append(geo[key], eqArea)  # use equivalent area
+                        net[key] = np.append(net[key], eqArea)  # use equivalent area
                     if "length" in key:
-                        geo[key] = np.append(geo[key], eqRadius)  # use equivalent radius
+                        net[key] = np.append(net[key], eqRadius)  # use equivalent radius
                     if "perimeter" in key:
-                        geo[key] = np.append(geo[key], eqRadius)  # use equivalent radius
+                        net[key] = np.append(net[key], eqRadius)  # use equivalent radius
                     if "centroid" in key:
-                        geo[key] = np.append(geo[key], throatCenter.reshape(-1, 3), axis=0)
+                        net[key] = np.append(net[key], throatCenter.reshape(-1, 3), axis=0)
 
             print(
                 "Num. void throats after dual grid sanitation",
-                np.sum(net["throat.void"]),
+                np.sum(net["throat.void_void"]),
             )
 
     if not splitSinglePores:
-        op.io.VTK.save(network=net, filename="before_delete")
+        op.io.project_to_vtk(project=net.project, filename="before_delete")
         singlePores = np.array(singlePores)
         throatsToDelete = []
 
         # for eIdx, throat in enumerate(net.throats('interconnect')):
         for eIdx, throat in enumerate(net["throat.conns"]):
-            if net["throat.interconnect"][eIdx] == 1:
+            if net["throat.solid_void"][eIdx] == 1 or net["throat.void_solid"][eIdx] == 1:
                 vIdx0 = throat[0]
                 vIdx1 = throat[1]
                 if vIdx0 in singlePores or vIdx1 in singlePores:
                     throatsToDelete.append(eIdx)
 
         trim(network=net, throats=throatsToDelete, pores=singlePores)
-        op.io.VTK.save(network=net, filename="after_delete")
+        op.io.project_to_vtk(project=net.project, filename="after_delete")
 
-    return net, geo
+    return net
 
 
-def _computeVertexElementData(net, geo, policy):
+def _computeVertexElementData(net, policy):
     """Compute element and vertex data for DGF output"""
     # pylint: disable=too-many-locals
 
     vertices = net["pore.coords"]
     elements = net["throat.conns"]
 
-    poreRadius = policy["pore.radius"](net, geo)
-    poreVolume = policy["pore.volume"](net, geo)
-    poreLabel = policy["pore.label"](net, geo)
-    throatRadius = policy["throat.radius"](net, geo)
-    throatLength = policy["throat.length"](net, geo)
-    throatArea = policy["throat.area"](net, geo)
-    throatShapeFactor = policy["throat.throatShapeFactor"](net, geo)
-    throatLabel = policy["throat.label"](net, geo)
+    poreRadius = policy["pore.radius"](net)
+    poreVolume = policy["pore.volume"](net)
+    poreLabel = policy["pore.label"](net)
+    throatRadius = policy["throat.radius"](net)
+    throatLength = policy["throat.length"](net)
+    throatArea = policy["throat.area"](net)
+    throatShapeFactor = policy["throat.throatShapeFactor"](net)
+    throatLabel = policy["throat.label"](net)
     throatCenter = net["throat.global_peak"]
 
     # create dgf data
@@ -231,8 +229,9 @@ def _computeVertexElementData(net, geo, policy):
         # 1D array (one entry for each throat)
         # containing 0 for void, 1 for solid and 2 for interconnect
         throatDomainType = np.zeros(len(elements), dtype=np.int64)
-        throatDomainType[net["throat.solid"]] = 1
-        throatDomainType[net["throat.interconnect"]] = 2
+        throatDomainType[net["throat.solid_solid"]] = 1
+        throatDomainType[net["throat.void_solid"]] = 2
+        throatDomainType[net["throat.solid_void"]] = 2
 
         # 1D array (one entry for each pore)
         # containing 0 for void, 1 for solid and 2
@@ -297,10 +296,10 @@ def _computeVertexElementData(net, geo, policy):
     return vertexData, elementData
 
 
-def writeDGF(filename, net, geo, policy):
+def writeDGF(filename, net, policy):
     """DOC ME!"""
 
-    vertexData, elementData = _computeVertexElementData(net, geo, policy)
+    vertexData, elementData = _computeVertexElementData(net, policy)
     isDualNetwork = "pore.solid" in net.keys()
 
     # write DGF file
@@ -349,8 +348,8 @@ if __name__ == "__main__":
     )
     args = vars(parser.parse_args())
 
-    # net contains topology and some labels, geometry contains pore sizes etc
-    network, geometry = load(args["file"])
+    # net contains topology and some labels, pore sizes etc
+    network = load(args["file"])
 
     # maybe remove boundary throats
     if args["deleteBoundaryThroats"]:
@@ -359,15 +358,15 @@ if __name__ == "__main__":
 
     # check if we have a dual network
     if "pore.solid" in network.keys():
-        network, geometry = sanitizeDualNetwork(network, args["splitSinglePores"])
+        network = sanitizeDualNetwork(network, args["splitSinglePores"])
 
     # begin policy //////////////////////////////////////////
     # TODO: How can we conveniently load / exchange this? # pylint: disable=fixme
-    def throatLengthFunc(net, geo):
+    def throatLengthFunc(net):
         """DOC ME!"""
         elements = net["throat.conns"]
-        length = copy.deepcopy(geo["throat.direct_length"])
-        poreRadius = geo["pore.extended_diameter"] / 2.0
+        length = copy.deepcopy(net["throat.direct_length"])
+        poreRadius = net["pore.extended_diameter"] / 2.0
 
         for eIdx, element in enumerate(elements):
             vIdx0, vIdx1 = element[0], element[1]
@@ -375,13 +374,13 @@ if __name__ == "__main__":
 
         return np.clip(length, 1e-9, np.max(length))
 
-    def throatShapeFactorFunc(net, geo):  # pylint: disable=unused-argument
+    def throatShapeFactorFunc(net):  # pylint: disable=unused-argument
         """DOC ME!"""
-        transmissibilityG = geo["throat.cross_sectional_area"] / geo["throat.perimeter"] ** 2
+        transmissibilityG = net["throat.cross_sectional_area"] / net["throat.perimeter"] ** 2
         maxG = 1.0 / 16.0  # for circle
         return np.clip(transmissibilityG, 0.0, maxG)
 
-    def poreLabelFunc(net, geo):  # pylint: disable=unused-argument
+    def poreLabelFunc(net):  # pylint: disable=unused-argument
         """DOC ME!"""
         label = np.full(len(net["pore.coords"]), -1, dtype=int)
         label[net["pore.xmin"]] = 1
@@ -400,11 +399,11 @@ if __name__ == "__main__":
 
         return label
 
-    def throatLabelFunc(net, geo, policy=None):
+    def throatLabelFunc(net, policy=None):
         """DOC ME!"""
         # TODO add policy # pylint: disable=fixme
         _ = policy
-        pLabels = poreLabelFunc(net, geo)
+        pLabels = poreLabelFunc(net)
         label = np.full(len(net["throat.conns"]), -1, dtype=int)
 
         for eIdx, element in enumerate(net["throat.conns"]):
@@ -419,12 +418,12 @@ if __name__ == "__main__":
         return label
 
     POLICY = {
-        "pore.radius": lambda n, g: g["pore.extended_diameter"] / 2.0,
-        "pore.volume": lambda n, g: g["pore.region_volume"],
+        "pore.radius": lambda n: n["pore.extended_diameter"] / 2.0,
+        "pore.volume": lambda n: n["pore.region_volume"],
         "pore.label": poreLabelFunc,
-        "throat.radius": lambda n, g: g["throat.inscribed_diameter"] / 2.0,
+        "throat.radius": lambda n: n["throat.inscribed_diameter"] / 2.0,
         "throat.length": throatLengthFunc,
-        "throat.area": lambda n, g: g["throat.cross_sectional_area"],
+        "throat.area": lambda n: n["throat.cross_sectional_area"],
         "throat.throatShapeFactor": throatShapeFactorFunc,
         "throat.label": throatLabelFunc,
     }
@@ -436,7 +435,7 @@ if __name__ == "__main__":
         outputFilename = os.path.splitext(args["outputname"])[0] + ".dgf"
 
     print("Writing", outputFilename)
-    writeDGF(outputFilename, network, geometry, POLICY)
+    writeDGF(outputFilename, network, POLICY)
     # export to vtk
-    op.io.VTK.save(network=network, filename=outputFilename)
+    op.io.project_to_vtk(project=network.project, filename=outputFilename)
     print("Writing", outputFilename + ".vtp")
