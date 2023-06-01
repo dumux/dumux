@@ -10,8 +10,8 @@
  * \copydoc Dumux::FreeFlowPorousMediumCouplingConditions
  */
 
-#ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_HH
-#define DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_HH
+#ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_STAGGERED_TPFA_HH
+#define DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_STAGGERED_TPFA_HH
 
 #include <numeric>
 
@@ -69,7 +69,7 @@ struct FreeFlowPorousMediumCouplingOptions
 };
 
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
-class FreeFlowPorousMediumCouplingConditionsImplementation;
+class FFPMCouplingConditionsStaggeredCCTpfaImpl;
 
 /*!
 * \ingroup FreeFlowPorousMediumCoupling
@@ -77,8 +77,8 @@ class FreeFlowPorousMediumCouplingConditionsImplementation;
 *        with a (Navier-)Stokes model (staggerd grid).
 */
 template<class MDTraits, class CouplingManager>
-using FreeFlowPorousMediumCouplingConditions
-    = FreeFlowPorousMediumCouplingConditionsImplementation<
+using FFPMCouplingConditionsStaggeredCCTpfa
+    = FFPMCouplingConditionsStaggeredCCTpfaImpl<
         MDTraits, CouplingManager,
         GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
         (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)
@@ -89,7 +89,7 @@ using FreeFlowPorousMediumCouplingConditions
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
  */
 template<class MDTraits, class CouplingManager>
-class FreeFlowPorousMediumCouplingConditionsImplementationBase
+class FFPMCouplingConditionsStaggeredCCTpfaImplBase
 {
     using Scalar = typename MDTraits::Scalar;
 
@@ -341,10 +341,10 @@ protected:
  * \brief Coupling data specialization for non-compositional models.
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
-class FreeFlowPorousMediumCouplingConditionsImplementation<MDTraits, CouplingManager, enableEnergyBalance, false>
-: public FreeFlowPorousMediumCouplingConditionsImplementationBase<MDTraits, CouplingManager>
+class FFPMCouplingConditionsStaggeredCCTpfaImpl<MDTraits, CouplingManager, enableEnergyBalance, false>
+: public FFPMCouplingConditionsStaggeredCCTpfaImplBase<MDTraits, CouplingManager>
 {
-    using ParentType = FreeFlowPorousMediumCouplingConditionsImplementationBase<MDTraits, CouplingManager>;
+    using ParentType = FFPMCouplingConditionsStaggeredCCTpfaImplBase<MDTraits, CouplingManager>;
     using Scalar = typename MDTraits::Scalar;
 
     // the sub domain type tags
