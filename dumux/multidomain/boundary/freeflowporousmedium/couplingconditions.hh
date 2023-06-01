@@ -21,9 +21,9 @@ namespace FreeFlowPorousMediumDetail {
 
 // declaration (specialize for different discretization types)
 template<class MDTraits, class CouplingManager,
-         class DiscFFMomentum = typename MDTraits::template SubDomain<FreeFlowPorousMediumDetail::freeFlowMomentumIndex>::GridGeometry::DiscretizationMethod,
-         class DiscFFMass = typename MDTraits::template SubDomain<FreeFlowPorousMediumDetail::freeFlowMassIndex>::GridGeometry::DiscretizationMethod,
-         class DiscPM = typename MDTraits::template SubDomain<FreeFlowPorousMediumDetail::porousMediumIndex>::GridGeometry::DiscretizationMethod
+         class DiscFFMomentum = typename MDTraits::template SubDomain<CouplingManager::freeFlowMomentumIndex>::GridGeometry::DiscretizationMethod,
+         class DiscFFMass = typename MDTraits::template SubDomain<CouplingManager::freeFlowMassIndex>::GridGeometry::DiscretizationMethod,
+         class DiscPM = typename MDTraits::template SubDomain<CouplingManager::porousMediumIndex>::GridGeometry::DiscretizationMethod
          >
 struct FreeFlowPorousMediumCouplingConditionsSelector;
 
