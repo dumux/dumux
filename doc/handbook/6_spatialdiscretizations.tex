@@ -124,7 +124,7 @@ with $t_{K,\sigma},t_{L,\sigma}$ as defined in equation \eqref{eq:conormalDecTpf
 In the following, a multi-point flux approximation method (Mpfa-O method), which was introduced in \citet{A3:aavatsmark:2002}, is presented. The main difference to the Tpfa scheme is the fact that a consistent discrete gradient is constructed, i.e. the term $\nabla u \cdot \mathbf{d}^{\bot}_{K,\sigma}$ is not neglected.
 
 For this scheme, a dual grid is created by connecting the barycenters of the cells with the barycenters of the faces ($d=2$) or the barycenters of the faces and edges ($d=3$).
-This divides each primary grid face into $n$ sub-faces $\sigma^v$, where $n$ is the number of corners of the primary grid face and the superscript $v$ refers to the vertex the
+This divides each primary grid face into $n$ sub-control volume faces $\sigma^v$, where $n$ is the number of corners of the primary grid face and the superscript $v$ refers to the vertex the
 sub-face can be associated with (see Figure \ref{pc:interactionRegion_mpfa}). Also, it sub-divides the control volume $K$ into regions $K_v$ that can be associated with the vertex $v$.
 We allow for piecewise constant $\mathbf{\Lambda}$ (denoted as $\mathbf{\Lambda}_K$ for each cell $K$)
 and construct discrete gradients $\nabla_\mathcal{D}^{K_v} u$.
