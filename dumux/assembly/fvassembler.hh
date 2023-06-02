@@ -34,6 +34,7 @@
 
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
+#include <dumux/experimental/helpers.hh>
 
 #include "cvfelocalassembler.hh"
 #include "cclocalassembler.hh"
@@ -99,17 +100,25 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
     static constexpr bool isBox = GridGeo::discMethod == DiscretizationMethods::box;
-
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
+
+    using GV = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolVec = GetPropType<TypeTag, Properties::SolutionVector>;
+
+    static constexpr bool useNewGridVarInterface = Experimental::hasNewGridVarInterface<GV>();
+    using GVStorage = std::conditional_t<useNewGridVarInterface, int, std::shared_ptr<GV>>;
+    using PrevSolStorage = std::conditional_t<useNewGridVarInterface, const GV*, const SolVec*>;
+    using EvalPoint = std::conditional_t<useNewGridVarInterface, GV, const SolVec>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using SolutionVector = SolVec;
     using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
 
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVariables = GV;
+    using Variables = std::conditional_t<useNewGridVarInterface, GridVariables, SolutionVector>;
 
     using GridGeometry = GridGeo;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -119,6 +128,7 @@ public:
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     FVAssembler(std::shared_ptr<const Problem> problem,
                 std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables)
@@ -137,11 +147,31 @@ public:
         maybeComputeColors_();
     }
 
+    //! \note This is an experimental interface without any stability guarantees
+    template<bool useMe = useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
+    FVAssembler(std::shared_ptr<const Problem> problem,
+                std::shared_ptr<const GridGeometry> gridGeometry)
+    : problem_(problem)
+    , gridGeometry_(gridGeometry)
+    , gridVariables_()
+    , timeLoop_()
+    , isStationaryProblem_(true)
+    {
+        static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
+            && !Multithreading::isSerial()
+            && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
+    }
+
     /*!
      * \brief The constructor for instationary problems
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     FVAssembler(std::shared_ptr<const Problem> problem,
                 std::shared_ptr<const GridGeometry> gridGeometry,
                 std::shared_ptr<GridVariables> gridVariables,
@@ -162,12 +192,33 @@ public:
         maybeComputeColors_();
     }
 
+    //! \note This is an experimental interface without any stability guarantees
+    template<bool useMe = useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
+    FVAssembler(std::shared_ptr<const Problem> problem,
+                std::shared_ptr<const GridGeometry> gridGeometry,
+                std::shared_ptr<const TimeLoop> timeLoop,
+                const GridVariables& prevGridVars)
+    : problem_(problem)
+    , gridGeometry_(gridGeometry)
+    , gridVariables_()
+    , timeLoop_(timeLoop)
+    , prevSol_(&prevGridVars)
+    , isStationaryProblem_(!timeLoop)
+    {
+        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
+            && !Multithreading::isSerial()
+            && getParam<bool>("Assembly.Multithreading", true);
+
+        maybeComputeColors_();
+    }
+
     /*!
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
      */
     template<class PartialReassembler = DefaultPartialReassembler>
-    void assembleJacobianAndResidual(const SolutionVector& curSol, const PartialReassembler* partialReassembler = nullptr)
+    void assembleJacobianAndResidual(EvalPoint& curSol, const PartialReassembler* partialReassembler = nullptr)
     {
         checkAssemblerState_();
         resetJacobian_(partialReassembler);
@@ -176,7 +227,10 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
+            if constexpr (useNewGridVarInterface)
+                localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, partialReassembler);
+            else
+                localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
         enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
@@ -185,7 +239,7 @@ public:
     /*!
      * \brief Assembles only the global Jacobian of the residual.
      */
-    void assembleJacobian(const SolutionVector& curSol)
+    void assembleJacobian(EvalPoint& curSol)
     {
         checkAssemblerState_();
         resetJacobian_();
@@ -193,19 +247,22 @@ public:
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
+            if constexpr (useNewGridVarInterface)
+                localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
+            else
+                localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
     }
 
     //! compute the residuals using the internal residual
-    void assembleResidual(const SolutionVector& curSol)
+    void assembleResidual(EvalPoint& curSol)
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
     }
 
     //! assemble a residual r
-    void assembleResidual(ResidualType& r, const SolutionVector& curSol) const
+    void assembleResidual(ResidualType& r, EvalPoint& curSol) const
     {
         checkAssemblerState_();
 
@@ -278,10 +335,12 @@ public:
     { return gridGeometry().gridView(); }
 
     //! The global grid variables
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     GridVariables& gridVariables()
     { return *gridVariables_; }
 
     //! The global grid variables
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     const GridVariables& gridVariables() const
     { return *gridVariables_; }
 
@@ -294,7 +353,13 @@ public:
     { return *residual_; }
 
     //! The solution of the previous time step
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     const SolutionVector& prevSol() const
+    { return *prevSol_; }
+
+    //! The grid variables of the previous time step
+    template<bool useMe = useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
+    const GridVariables& prevGridVariables() const
     { return *prevSol_; }
 
     /*!
@@ -308,6 +373,7 @@ public:
      * \brief Sets the solution from which to start the time integration. Has to be
      *        called prior to assembly for time-dependent problems.
      */
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     void setPreviousSolution(const SolutionVector& u)
     { prevSol_ = &u;  }
 
@@ -326,6 +392,7 @@ public:
     /*!
      * \brief Update the grid variables
      */
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     void updateGridVariables(const SolutionVector &cursol)
     {
         gridVariables().update(cursol);
@@ -334,6 +401,7 @@ public:
     /*!
      * \brief Reset the gridVariables
      */
+    template<bool useMe = !useNewGridVarInterface, std::enable_if_t<useMe, bool> = true>
     void resetTimeStep(const SolutionVector &cursol)
     {
         gridVariables().resetTimeStep(cursol);
@@ -460,8 +528,9 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, EvalPoint& evalPoint, const GG& gridGeometry)
     {
+        const auto& curSol = dofsFrom_(evalPoint);
         for (const auto& m : gridGeometry.periodicVertexMap())
         {
             if (m.first < m.second)
@@ -481,7 +550,15 @@ private:
     }
 
     template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) {}
+    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, EvalPoint& curSol, const GG& gridGeometry) {}
+
+    const auto& dofsFrom_(EvalPoint& evalPoint) const
+    {
+        if constexpr (useNewGridVarInterface)
+            return evalPoint.dofs();
+        else
+            return evalPoint;
+    }
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
@@ -489,14 +566,14 @@ private:
     //! the finite volume geometry of the grid
     std::shared_ptr<const GridGeometry> gridGeometry_;
 
-    //! the variables container for the grid
-    std::shared_ptr<GridVariables> gridVariables_;
+    //! the variables container for the grid (not available for grid-vars-based assembly)
+    GVStorage gridVariables_;
 
     //! the time loop for instationary problem assembly
     std::shared_ptr<const TimeLoop> timeLoop_;
 
     //! an observing pointer to the previous solution for instationary problems
-    const SolutionVector* prevSol_ = nullptr;
+    PrevSolStorage prevSol_ = nullptr;
 
     //! if this assembler is assembling an instationary problem
     bool isStationaryProblem_;
