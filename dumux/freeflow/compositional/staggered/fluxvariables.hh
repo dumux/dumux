@@ -43,6 +43,7 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
     using CellCenterPrimaryVariables = GetPropType<TypeTag, Properties::CellCenterPrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
 public:
     static constexpr auto numComponents = ModelTraits::numFluidComponents();
@@ -78,7 +79,7 @@ public:
 
             flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, fvGeometry, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
-            //check for the reference system and adapt units of the diffusive flux accordingly.
+            // check for the reference system and adapt units of the diffusive flux accordingly.
             if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
             {
                 flux[compIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
@@ -89,10 +90,16 @@ public:
                 DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
         }
 
+
         // in case one balance is substituted by the total mass balance
         if (ModelTraits::replaceCompEqIdx() < numComponents)
         {
-            flux[ModelTraits::replaceCompEqIdx()] = std::accumulate(flux.begin(), flux.end(), 0.0);
+            // accumulate fluxes to a total mass based flux
+            Scalar totalMassFlux = 0.0;
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                totalMassFlux += useMoles ? flux[compIdx]*FluidSystem::molarMass(compIdx) : flux[compIdx];
+
+            flux[ModelTraits::replaceCompEqIdx()] = totalMassFlux;
         }
 
         return flux;

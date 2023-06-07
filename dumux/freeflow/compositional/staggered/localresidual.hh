@@ -73,9 +73,9 @@ public:
                 storage[eqIdx] += s;
         }
 
-        // in case one balance is substituted by the total mass balance
+        // in case one balance is substituted by the total mass balance (use the mass density)
         if(ModelTraits::replaceCompEqIdx() < numComponents)
-            storage[ModelTraits::replaceCompEqIdx()] = density;
+            storage[ModelTraits::replaceCompEqIdx()] = volVars.density();
 
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 
