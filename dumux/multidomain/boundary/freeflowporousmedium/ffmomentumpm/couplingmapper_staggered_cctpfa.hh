@@ -10,8 +10,8 @@
  * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingMapper
  */
 
-#ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_HH
-#define DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_HH
+#ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_STAGGERED_TPFA_HH
+#define DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_STAGGERED_TPFA_HH
 
 #include <iostream>
 #include <unordered_map>
@@ -33,7 +33,7 @@ namespace Dumux {
  * \todo how to extend to arbitrary number of domains?
  */
 template<class MDTraits, class CouplingManager>
-class FreeFlowMomentumPorousMediumCouplingMapper
+class FFMomentumPMCouplingMapperStaggeredCCTpfa
 {
     using Scalar = typename MDTraits::Scalar;
 
