@@ -64,7 +64,7 @@ class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properti
     static constexpr auto numComponents = ModelTraits::numFluidComponents();
 
     static constexpr int replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
-    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
+    static constexpr bool useTotalMassBalance = replaceCompEqIdx < numComponents;
 
 public:
     //! Use the parent type's constructor
@@ -94,8 +94,8 @@ public:
         }
 
         // in case one balance is substituted by the total mass balance
-        if constexpr (useTotalMoleOrMassBalance)
-            storage[ModelTraits::replaceCompEqIdx()] = density;
+        if constexpr (useTotalMassBalance)
+            storage[ModelTraits::replaceCompEqIdx()] = volVars.density();
 
         // consider energy storage for non-isothermal models
         if constexpr (ModelTraits::enableEnergyBalance())

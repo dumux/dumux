@@ -59,7 +59,7 @@ class NavierStokesMassOnePNCFluxVariables
 
     static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
     static constexpr auto replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
-    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < ModelTraits::numFluidComponents();
+    static constexpr bool useTotalMassBalance = replaceCompEqIdx < ModelTraits::numFluidComponents();
 
     using FluidSystem = typename VolumeVariables::FluidSystem;
 
@@ -112,17 +112,16 @@ public:
                     DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
             }
 
-            // in case one balance is substituted by the total mole balance
-            if constexpr(useTotalMoleOrMassBalance)
+            // in case one balance is substituted by the total mass balance
+            if constexpr(useTotalMassBalance)
             {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     //check for the reference system and adapt units of the diffusive flux accordingly.
                     if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
+                        result[replaceCompEqIdx] += diffusiveFluxes[compIdx];
                     else if constexpr (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                        result[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                        result[replaceCompEqIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
                     else
                         DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                 }
