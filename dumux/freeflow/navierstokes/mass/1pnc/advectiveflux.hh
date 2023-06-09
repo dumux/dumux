@@ -56,7 +56,7 @@ struct AdvectiveFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx
         static constexpr bool useMoles = ModelTraits::useMoles();
         static constexpr auto numComponents = ModelTraits::numFluidComponents();
         static constexpr auto replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
-        static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
+        static constexpr bool useTotalMassBalance = replaceCompEqIdx < numComponents;
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -78,14 +78,11 @@ struct AdvectiveFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx
         }
 
         // in case one balance is substituted by the total mole balance
-        if constexpr(useTotalMoleOrMassBalance)
+        if constexpr(useTotalMassBalance)
         {
             auto upwindTerm = [&]()
             {
-                if constexpr (useMoles)
-                    return [](const auto& volVars) { return volVars.molarDensity(); };
-                else
-                    return [](const auto& volVars) { return volVars.density(); };
+                return [](const auto& volVars) { return volVars.density(); };
             }();
 
             flux[replaceCompEqIdx] += upwind(upwindTerm);
