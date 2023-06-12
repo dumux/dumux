@@ -61,11 +61,10 @@ class FFMomentumPMCouplingMapperCvfe
     {
         std::size_t eIdxOutside;
         std::size_t flipScvfIdx;
-        std::size_t dofIdxOutside;
     };
 
-    using FlipScvfMapTypePM = std::unordered_map<std::size_t, ScvfInfoPM>;
-    using FlipScvfMapTypeFF = std::unordered_map<std::size_t, ScvfInfoFF>;
+    using FlipScvfMapTypePM = std::unordered_map<std::pair<std::size_t,std::size_t>, ScvfInfoPM>;
+    using FlipScvfMapTypeFF = std::unordered_map<std::pair<std::size_t,std::size_t>, ScvfInfoFF>;
     using MapType = std::unordered_map<std::size_t, std::vector<std::size_t>>;
 
     static constexpr std::size_t numSD = MDTraits::numSubDomains;
@@ -76,7 +75,6 @@ public:
      */
     void update(const CouplingManager& couplingManager)
     {
-        // TODO: Box and multiple domains
         static_assert(numSD == 2, "More than two subdomains not implemented!");
         static_assert(isCvfe()<0>() && isCvfe()<1>(), "Only coupling between cvfe and cvfe schemes implemented!");
 
@@ -94,10 +92,8 @@ public:
         const auto& freeFlowMomentumGG = freeFlowMomentumProblem.gridGeometry();
         const auto& porousMediumGG = porousMediumProblem.gridGeometry();
 
-        isCoupledFFDof_.resize(freeFlowMomentumGG.numScvf(), false);
-        isCoupledFFElement_.resize(freeFlowMomentumGG.gridView().size(0), false);
-        isCoupledScvf_[CouplingManager::freeFlowMomentumIndex].resize(freeFlowMomentumGG.numScvf(), false);
-        isCoupledScvf_[CouplingManager::porousMediumIndex].resize(porousMediumGG.numScvf(), false);
+        isCoupledDof[CouplingManager::freeFlowMomentumIndex]_.resize(freeFlowMomentumGG.numDofs(), false);
+        isCoupledDof_[CouplingManager::porousMediumIndex].resize(porousMediumGG.numDofs(), false);
 
         auto pmFvGeometry = localView(porousMediumGG);
         auto ffFvGeometry = localView(freeFlowMomentumGG);
@@ -105,6 +101,8 @@ public:
         for (const auto& pmElement : elements(porousMediumGG.gridView()))
         {
             pmFvGeometry.bindElement(pmElement);
+
+            bool elementDofsAdded = false;
 
             for (const auto& pmScvf : scvfs(pmFvGeometry))
             {
@@ -132,52 +130,34 @@ public:
                 const auto& ffElement = freeFlowMomentumGG.element(ffElemIdx);
                 ffFvGeometry.bindElement(ffElement);
 
-                for (const auto& ffScvf : scvfs(ffFvGeometry)) // TODO: maybe better iterate over all scvs
+                if(!elementDofsAdded)
                 {
-                    // TODO this only takes the scv directly at the interface, maybe extend
-                    if (!ffScvf.boundary() || !ffScvf.isFrontal())
+                    for(auto&& scv : scvs(pmFvGeometry))
+                        stencils_[CouplingManager::freeFlowMomentumIndex][ffElemIdx].push_back(scv.dofIndex());
+
+                    for(auto&& scv : scvs(ffFvGeometry))
+                        stencils_[CouplingManager::porousMediumIndex][pmElemIdx].push_back(scv.dofIndex());
+
+                    elementDofsAdded = true;
+                }
+
+                for (const auto& ffScvf : scvfs(ffFvGeometry))
+                {
+                    if (!ffScvf.boundary())
                         continue;
 
+                    // TODO: generalize to non-matching grids
                     const auto dist = (pmScvf.ipGlobal() - ffScvf.ipGlobal()).two_norm();
                     if (dist > eps)
                         continue;
 
-                    const auto& ffScv = ffFvGeometry.scv(ffScvf.insideScvIdx());
-                    stencils_[CouplingManager::porousMediumIndex][pmElemIdx].push_back(ffScv.dofIndex());
-                    stencils_[CouplingManager::freeFlowMomentumIndex][ffScv.dofIndex()].push_back(pmElemIdx);
+                    isCoupledDof_[CouplingManager::freeFlowMomentumIndex][ffFvGeometry.scv(ffScvf.insideScvIdx()).dofIndex()] = true;
+                    isCoupledDof_[CouplingManager::porousMediumIndex][pmFvGeometry.scv(pmScvf.insideScvIdx()).dofIndex()] = true;
 
-                    // mark the scvf and find and mark the flip scvf
-                    isCoupledScvf_[CouplingManager::porousMediumIndex][pmScvf.index()] = true;
-                    isCoupledScvf_[CouplingManager::freeFlowMomentumIndex][ffScvf.index()] = true;
-
-                    // add all lateral free-flow scvfs touching the coupling interface ("standing" or "lying")
-                    for (const auto& otherFfScvf : scvfs(ffFvGeometry, ffScv))
-                    {
-                        if (otherFfScvf.isLateral())
-                        {
-                            // the orthogonal scvf has to lie on the coupling interface
-                            const auto& lateralOrthogonalScvf = ffFvGeometry.lateralOrthogonalScvf(otherFfScvf);
-                            isCoupledLateralScvf_[lateralOrthogonalScvf.index()] = true;
-
-                            // the "standing" scvf is marked as coupled if it does not lie on a boundary or if that boundary itself is a coupling interface
-                            if (!otherFfScvf.boundary())
-                                isCoupledLateralScvf_[otherFfScvf.index()] = true;
-                            else
-                            {
-                                // for robustness add epsilon in unit outer normal direction
-                                const auto otherScvfEps = (otherFfScvf.ipGlobal() - ffFvGeometry.geometry(otherFfScvf).corner(0)).two_norm()*1e-8;
-                                auto otherScvfGlobalPos = otherFfScvf.center(); otherScvfGlobalPos.axpy(otherScvfEps, otherFfScvf.unitOuterNormal());
-
-                                if (!intersectingEntities(otherScvfGlobalPos, porousMediumGG.boundingBoxTree()).empty())
-                                    isCoupledLateralScvf_[otherFfScvf.index()] = true;
-                            }
-                        }
-                    }
-                    isCoupledFFDof_[ffScv.dofIndex()] = true;
-                    isCoupledFFElement_[ffElemIdx] = true;
-
-                    std::get<CouplingManager::porousMediumIndex>(scvfInfo_)[pmScvf.index()] = ScvfInfoPM{ffElemIdx, ffScvf.index()};
-                    std::get<CouplingManager::freeFlowMomentumIndex>(scvfInfo_)[ffScvf.index()] = ScvfInfoFF{pmElemIdx, pmScvf.index(), ffScv.dofIndex()};
+                    std::get<CouplingManager::porousMediumIndex>(scvfInfo_)[std::make_pair<std::size_t, std::size_t>(pmElemIdx, pmScvf.index())]
+                        = ScvfInfoPM{ffElemIdx, ffScvf.index()};
+                    std::get<CouplingManager::freeFlowMomentumIndex>(scvfInfo_)[std::make_pair<std::size_t, std::size_t>(ffElemIdx, ffScvf.index())]
+                        = ScvfInfoFF{pmElemIdx, pmScvf.index()};
                 }
             }
         }
@@ -210,42 +190,23 @@ public:
     }
 
     /*!
-     * \brief returns an iterable container of all indices of degrees of freedom of domain j
-     *        that couple with / influence the element residual of the given element of domain i
-     *
-     * \param domainI the domain index of domain i
-     * \param elementI the coupled element of domain i
-     * \param scvI the coupled sub control volume of domain i
-     * \param domainJ the domain index of domain j
-     *
-     * \note  The element residual definition depends on the discretization scheme of domain i
-     *        box: a container of the residuals of all sub control volumes
-     *        cc : the residual of the (sub) control volume
-     *        fem: the residual of the element
-     * \note  This function has to be implemented by all coupling managers for all combinations of i and j
-     */
-    const std::vector<std::size_t>& couplingStencil(Dune::index_constant<CouplingManager::freeFlowMomentumIndex> domainI,
-                                                    const Element<CouplingManager::freeFlowMomentumIndex>& elementI,
-                                                    const SubControlVolume<CouplingManager::freeFlowMomentumIndex>& scvI,
-                                                    Dune::index_constant<CouplingManager::porousMediumIndex> domainJ) const
-    {
-        if (isCoupled(domainI, scvI))
-            return stencils_[CouplingManager::freeFlowMomentumIndex].at(scvI.dofIndex());
-        else
-            return emptyStencil_;
-    }
-
-    /*!
      * \brief Return if an element residual with index eIdx of domain i is coupled to domain j
      */
     template<std::size_t i>
     bool isCoupledElement(Dune::index_constant<i>, std::size_t eIdx) const
     {
-        if constexpr (i == CouplingManager::porousMediumIndex)
-            return static_cast<bool>(stencils_[i].count(eIdx));
-        else
-            return isCoupledFFElement_[eIdx];
+        return static_cast<bool>(stencils_[i].count(eIdx));
     }
+
+    /*!
+     * \brief Return if an dof with index dofIdx of domain i is coupled to domain j
+     */
+    template<std::size_t i>
+    bool isCoupledDof(Dune::index_constant<i>, std::size_t dofIdx) const
+    {
+        return isCoupledDof_[i][dofIdx];
+    }
+
 
     /*!
      * \brief If the boundary entity is on a coupling boundary
@@ -254,19 +215,11 @@ public:
      */
     template<std::size_t i>
     bool isCoupled(Dune::index_constant<i> domainI,
-                   const SubControlVolumeFace<i>& scvf) const
+                   std::size_t eIdxI,
+                   std::size_t localScvfIdxI) const
     {
-        return isCoupledScvf_[i].at(scvf.index());
+        return static_cast<bool>(std::get<i>(scvfInfo_).count(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)));
     }
-
-    /*!
-     * \brief If the boundary entity is on a coupling boundary
-     * \param domainI the domain index for which to compute the flux
-     * \param scv the sub control volume
-     */
-    bool isCoupled(Dune::index_constant<CouplingManager::freeFlowMomentumIndex> domainI,
-                   const SubControlVolume<CouplingManager::freeFlowMomentumIndex>& scv) const
-    { return isCoupledFFDof_[scv.dofIndex()]; }
 
     /*!
      * \brief Return the scvf index of the flipped scvf in the other domain
@@ -275,9 +228,10 @@ public:
      */
     template<std::size_t i>
     std::size_t flipScvfIndex(Dune::index_constant<i> domainI,
-                              const SubControlVolumeFace<i>& scvf) const
+                              std::size_t eIdxI,
+                              std::size_t localScvfIdxI) const
     {
-        return std::get<i>(scvfInfo_).at(scvf.index()).flipScvfIdx;
+        return std::get<i>(scvfInfo_).at(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)).flipScvfIdx;
     }
 
     /*!
@@ -287,32 +241,16 @@ public:
      */
     template<std::size_t i>
     std::size_t outsideElementIndex(Dune::index_constant<i> domainI,
-                                    const SubControlVolumeFace<i>& scvf) const
+                                    std::size_t eIdxI,
+                                    std::size_t localScvfIdxI) const
     {
-        return std::get<i>(scvfInfo_).at(scvf.index()).eIdxOutside;
-    }
-
-    /*!
-     * \brief Return the outside element index (the element index of the other domain)
-     * \param domainI the domain index for which to compute the flux
-     * \param scvf the sub control volume face
-     */
-    template<std::size_t i>
-    std::size_t outsideDofIndex(Dune::index_constant<i> domainI,
-                                const SubControlVolumeFace<i>& scvf) const
-    {
-        if constexpr (i == CouplingManager::porousMediumIndex)
-            return outsideElementIndex(domainI, scvf);
-        else
-            return std::get<i>(scvfInfo_).at(scvf.index()).dofIdxOutside;
+        return std::get<i>(scvfInfo_).at(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)).eIdxOutside;
     }
 
 private:
     std::array<MapType, numSD> stencils_;
     std::vector<std::size_t> emptyStencil_;
-    std::array<std::vector<bool>, numSD> isCoupledScvf_;
-    std::vector<bool> isCoupledFFDof_;
-    std::vector<bool> isCoupledFFElement_;
+    std::array<std::vector<bool>, numSD> isCoupledDof_;
     std::tuple<FlipScvfMapTypeFF, FlipScvfMapTypePM> scvfInfo_;
 
 };
