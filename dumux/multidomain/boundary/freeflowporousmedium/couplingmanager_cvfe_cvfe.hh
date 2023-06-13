@@ -14,7 +14,7 @@
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_CVFE_CVFE_HH
 
 #include "couplingmanager_base.hh"
-#include "couplingconditions_staggered_cctpfa.hh"
+#include "couplingconditions_cvfe_cvfe.hh"
 
 namespace Dumux {
 
@@ -47,7 +47,7 @@ class FreeFlowPorousMediumCouplingManagerCvfe
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     using SolutionVector = typename MDTraits::SolutionVector;
 
-    using CouplingConditions = FFPMCouplingConditionsStaggeredCCTpfa<MDTraits, FreeFlowPorousMediumCouplingManagerCvfe<MDTraits>>;
+    using CouplingConditions = FFPMCouplingConditionsCvfe<MDTraits, FreeFlowPorousMediumCouplingManagerCvfe<MDTraits>>;
 
 public:
     static constexpr auto freeFlowMomentumIndex = ParentType::freeFlowMomentumIndex;
@@ -87,10 +87,8 @@ public:
 
         }();
 
-        // todo revise velocity (see ff mom pm mgr)
-
-        couplingContext.velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(freeFlowElement, freeFlowScvf);
-        return CouplingConditions::massCouplingCondition(domainI, domainJ, fvGeometry, scvf, elemVolVars, couplingContext);
+        auto velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(freeFlowElement, freeFlowScvf);
+        return CouplingConditions::massCouplingCondition(domainI, domainJ, fvGeometry, scvf, elemVolVars, couplingContext, velocity);
     }
 
 
@@ -103,9 +101,6 @@ public:
                                                                  const typename FVElementGeometry<freeFlowMomentumIndex>::SubControlVolumeFace& scvf,
                                                                  const ElementVolumeVariables<freeFlowMomentumIndex>& elemVolVars) const
     {
-        if (scvf.isLateral())
-            return NumEqVector<freeFlowMomentumIndex>(0.0);
-
         const auto& context = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).couplingContext(
             domainI, fvGeometry, scvf
         );
@@ -119,25 +114,11 @@ public:
     auto darcyPermeability(const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                            const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
     {
-        if (scvf.isFrontal())
-        {
-            const auto& context = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).couplingContext(
-                Dune::index_constant<freeFlowMomentumIndex>(), fvGeometry, scvf
-            );
+        const auto& context = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).couplingContext(
+            Dune::index_constant<freeFlowMomentumIndex>(), fvGeometry, scvf
+        );
 
-            return CouplingConditions::darcyPermeability(fvGeometry, scvf, context);
-        }
-        else
-        {
-            const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-            const auto& orthogonalScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
-            const auto& frontalScvfOnBoundary = fvGeometry.frontalScvfOnBoundary(orthogonalScv);
-            const auto& context = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).couplingContext(
-                Dune::index_constant<freeFlowMomentumIndex>(), fvGeometry, frontalScvfOnBoundary
-            );
-
-            return CouplingConditions::darcyPermeability(fvGeometry, frontalScvfOnBoundary, context);
-        }
+        return CouplingConditions::darcyPermeability(fvGeometry, scvf, context);
     }
 
     //////////////////////// Conditions for FreeFlowMomentum - FreeFlowMass coupling //////////
@@ -152,20 +133,6 @@ public:
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).pressure(
             element, fvGeometry, scvf
-        );
-    }
-
-    /*!
-     * \brief Returns the pressure at the center of a sub control volume corresponding to a given sub control volume face.
-     *        This is used for setting a Dirichlet pressure for the mass model when a fixed pressure for the momentum balance is set at another
-     *        boundary. Since the the pressure at the given scvf is solution-dependent and thus unknown a priori, we just use the value
-     *        of the interior cell here.
-     */
-    Scalar cellPressure(const Element<freeFlowMomentumIndex>& element,
-                        const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
-    {
-        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).cellPressure(
-            element, scvf
         );
     }
 
@@ -196,11 +163,12 @@ public:
      * \brief Returns the density at a given sub control volume.
      */
     Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const SubControlVolume<freeFlowMomentumIndex>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).density(
-            element, scv, considerPreviousTimeStep
+            element, fvGeometry, scv, considerPreviousTimeStep
         );
     }
 
@@ -228,15 +196,13 @@ public:
     }
 
     /*!
-     * \brief Returns whether a given scvf is coupled to the other domain
+     * \brief Returns the velocity at the element center.
      */
-    bool isCoupledLateralScvf(Dune::index_constant<freeFlowMomentumIndex> domainI,
-                              Dune::index_constant<porousMediumIndex> domainJ,
-                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+    auto elementVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry) const
     {
-        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
-            return cm.isCoupledLateralScvf(ii, scvf);
-        });
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).elementVelocity(
+            fvGeometry
+        );
     }
 };
 
