@@ -126,7 +126,7 @@ public:
      * \brief Returns the momentum flux across the coupling boundary.
      *
      * For the normal momentum coupling, the porous medium side of the coupling condition
-     * is evaluated, i.e. -[p n]^pm.
+     * is evaluated, i.e. -[p n]^pm = p^pm n^ff.
      *
      */
     template<class Context>
@@ -135,7 +135,6 @@ public:
                                                                         const ElementVolumeVariables<freeFlowMomentumIndex>& elemVolVars,
                                                                         const Context& context)
     {
-        static constexpr auto numPhasesDarcy = GetPropType<SubDomainTypeTag<porousMediumIndex>, Properties::ModelTraits>::numFluidPhases();
         NumEqVector<freeFlowMomentumIndex> momentumFlux(scvf.unitOuterNormal());
 
         const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
@@ -154,7 +153,7 @@ public:
 
         // normalize pressure
         pressure -= elemVolVars.gridVolVars().problem().referencePressure();
-        momentumFlux *= -pressure;
+        momentumFlux *= pressure;
 
         return momentumFlux;
     }
