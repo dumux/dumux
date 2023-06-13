@@ -16,6 +16,7 @@
 #include <dumux/discretization/method.hh>
 
 #include "couplingmanager_staggered_cctpfa.hh"
+#include "couplingmanager_cvfe_cvfe.hh"
 
 namespace Dumux {
 
@@ -31,6 +32,10 @@ struct FreeFlowMomentumPorousMediumCouplingManagerSelector;
 template<class MDTraits>
 struct FreeFlowMomentumPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::FCStaggered, DiscretizationMethods::CCTpfa>
 { using type = FFMomentumPMCouplingManagerStaggeredCCTpfa<MDTraits>; };
+
+template<class MDTraits>
+struct FreeFlowMomentumPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::PQ1Bubble, DiscretizationMethods::Box>
+{ using type = FFMomentumPMCouplingManageCvfe<MDTraits>; };
 
 } // end namespace Detail
 
