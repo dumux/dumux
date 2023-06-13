@@ -16,6 +16,7 @@
 #include <numeric>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
@@ -29,6 +30,7 @@
 #include <dumux/multidomain/boundary/freeflowporousmedium/traits.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/indexhelper.hh>
 
+// ToDo: Needed for coupling options. Maybe export options to seperate file
 #include "couplingconditions_staggered_cctpfa.hh"
 
 namespace Dumux {
@@ -118,7 +120,7 @@ public:
     static auto darcyPermeability(const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                                   const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                                   const Context& context)
-    { return context.volVars.permeability(); }
+    { return context.permeability(); }
 
     /*!
      * \brief Returns the momentum flux across the coupling boundary.
@@ -138,17 +140,21 @@ public:
 
         const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
 
-        if(numPhasesDarcy > 1)
-            momentumFlux[scvf.normalAxis()] = context.volVars.pressure(pmPhaseIdx);
-        else // use pressure reconstruction for single phase models
-            momentumFlux[scvf.normalAxis()] = pressureAtInterface_(fvGeometry, scvf, elemVolVars, context);
+        const auto& pmFvGeometry = context.fvGeometry;
+        const auto& pmLocalBasis = pmFvGeometry.feLocalBasis();
 
-        // TODO: generalize for permeability tensors
+        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+        const auto ipLocal = context.element.geometry().local(scvf.ipGlobal());
+        pmLocalBasis.evaluateFunction(ipLocal, shapeValues);
+
+        // interpolate pressure at scvf
+        Scalar pressure(0.0);
+        for (const auto& pmScv : scvs(pmFvGeometry))
+            pressure += context.elemVolVars[pmScv.localDofIndex()].pressure(pmPhaseIdx)*shapeValues[pmScv.indexInElement()][0];
 
         // normalize pressure
-        momentumFlux[scvf.normalAxis()] -= elemVolVars.gridVolVars().problem().referencePressure(fvGeometry.element(), fvGeometry, scvf);
-
-        momentumFlux[scvf.normalAxis()] *= scvf.directionSign();
+        pressure -= elemVolVars.gridVolVars().problem().referencePressure();
+        momentumFlux *= -pressure;
 
         return momentumFlux;
     }
@@ -169,132 +175,12 @@ public:
 protected:
 
     /*!
-     * \brief Returns the transmissibility used for either molecular diffusion or thermal conductivity.
-     */
-    template<std::size_t i, std::size_t j>
-    Scalar transmissibility_(Dune::index_constant<i> domainI,
-                             Dune::index_constant<j> domainJ,
-                             const Scalar insideDistance,
-                             const Scalar outsideDistance,
-                             const Scalar avgQuantityI,
-                             const Scalar avgQuantityJ,
-                             const DiffusionCoefficientAveragingType diffCoeffAvgType) const
-    {
-        const Scalar totalDistance = insideDistance + outsideDistance;
-        if(diffCoeffAvgType == DiffusionCoefficientAveragingType::harmonic)
-        {
-            return harmonicMean(avgQuantityI, avgQuantityJ, insideDistance, outsideDistance)
-                   / totalDistance;
-        }
-        else if(diffCoeffAvgType == DiffusionCoefficientAveragingType::arithmetic)
-        {
-            return arithmeticMean(avgQuantityI, avgQuantityJ, insideDistance, outsideDistance)
-                   / totalDistance;
-        }
-        else if(diffCoeffAvgType == DiffusionCoefficientAveragingType::ffOnly)
-            return domainI == freeFlowMassIndex
-                            ? avgQuantityI / totalDistance
-                            : avgQuantityJ / totalDistance;
-
-        else // diffCoeffAvgType == DiffusionCoefficientAveragingType::pmOnly)
-            return domainI == porousMediumIndex
-                            ? avgQuantityI / totalDistance
-                            : avgQuantityJ / totalDistance;
-    }
-
-    /*!
      * \brief Returns the distance between an scvf and the corresponding scv center.
      */
     template<class Scv, class Scvf>
     Scalar getDistance_(const Scv& scv, const Scvf& scvf) const
     {
         return (scv.dofPosition() - scvf.ipGlobal()).two_norm();
-    }
-
-    /*!
-     * \brief Returns the conductive energy flux across the interface.
-     */
-    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar conductiveEnergyFlux_(Dune::index_constant<i> domainI,
-                                 Dune::index_constant<j> domainJ,
-                                 const FVElementGeometry<i>& fvGeometryI,
-                                 const FVElementGeometry<j>& fvGeometryJ,
-                                 const SubControlVolumeFace<i>& scvfI,
-                                 const SubControlVolume<i>& scvI,
-                                 const SubControlVolume<j>& scvJ,
-                                 const VolumeVariables<i>& volVarsI,
-                                 const VolumeVariables<j>& volVarsJ,
-                                 const DiffusionCoefficientAveragingType diffCoeffAvgType) const
-    {
-        const Scalar insideDistance = getDistance_(scvI, scvfI);
-        const Scalar outsideDistance = getDistance_(scvJ, scvfI);
-
-        const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
-        const Scalar tij = transmissibility_(
-            domainI, domainJ,
-            insideDistance, outsideDistance,
-            volVarsI.effectiveThermalConductivity(), volVarsJ.effectiveThermalConductivity(),
-            diffCoeffAvgType
-        );
-
-        return -tij * deltaT;
-    }
-
-    /*!
-     * \brief Returns the pressure at the interface
-     */
-    template<class CouplingContext>
-    static Scalar pressureAtInterface_(const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                                       const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
-                                       const ElementVolumeVariables<freeFlowMomentumIndex>& elemVolVars,
-                                       const CouplingContext& context)
-    {
-        GlobalPosition<freeFlowMomentumIndex> velocity(0.0);
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        velocity[scv.dofAxis()] = elemVolVars[scv].velocity();
-        const auto& pmScvf = context.fvGeometry.scvf(context.porousMediumScvfIdx);
-        return computeCouplingPhasePressureAtInterface_(context.fvGeometry, pmScvf, context.volVars, context.gravity, velocity, AdvectionType());
-    }
-
-    /*!
-     * \brief Returns the pressure at the interface using Forchheimers's law for reconstruction
-     */
-    static Scalar computeCouplingPhasePressureAtInterface_(const FVElementGeometry<porousMediumIndex>& fvGeometry,
-                                                           const SubControlVolumeFace<porousMediumIndex>& scvf,
-                                                           const VolumeVariables<porousMediumIndex>& volVars,
-                                                           const typename Element<freeFlowMomentumIndex>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
-                                                           ForchheimersLaw)
-    {
-        DUNE_THROW(Dune::NotImplemented, "Forchheimer's law pressure reconstruction");
-    }
-
-    /*!
-     * \brief Returns the pressure at the interface using Darcy's law for reconstruction
-     */
-    static Scalar computeCouplingPhasePressureAtInterface_(const FVElementGeometry<porousMediumIndex>& fvGeometry,
-                                                           const SubControlVolumeFace<porousMediumIndex>& scvf,
-                                                           const VolumeVariables<porousMediumIndex>& volVars,
-                                                           const typename Element<freeFlowMomentumIndex>::Geometry::GlobalCoordinate& gravity,
-                                                           const typename Element<freeFlowMomentumIndex>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
-                                                           DarcysLaw)
-    {
-        const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
-        const Scalar couplingPhaseCellCenterPressure = volVars.pressure(pmPhaseIdx);
-        const Scalar couplingPhaseMobility = volVars.mobility(pmPhaseIdx);
-        const Scalar couplingPhaseDensity = volVars.density(pmPhaseIdx);
-        const auto K = volVars.permeability();
-
-        // A tpfa approximation yields (works if mobility != 0)
-        // v*n = -kr/mu*K * (gradP - rho*g)*n = mobility*(ti*(p_center - p_interface) + rho*n^TKg)
-        // -> p_interface = (1/mobility * (-v*n) + rho*n^TKg)/ti + p_center
-        // where v is the free-flow velocity (couplingPhaseVelocity)
-        const auto alpha = vtmv(scvf.unitOuterNormal(), K, gravity);
-
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, K, 1.0);
-
-        return (-1/couplingPhaseMobility * (scvf.unitOuterNormal() * couplingPhaseVelocity) + couplingPhaseDensity * alpha)/ti
-               + couplingPhaseCellCenterPressure;
     }
 };
 
@@ -334,19 +220,32 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
      */
-    template<std::size_t i, std::size_t j, class CouplingContext>
+    template<std::size_t i, std::size_t j, class CouplingContext, class NumEqVector>
     static Scalar massCouplingCondition(Dune::index_constant<i> domainI,
                                         Dune::index_constant<j> domainJ,
                                         const FVElementGeometry<i>& fvGeometry,
                                         const SubControlVolumeFace<i>& scvf,
                                         const ElementVolumeVariables<i>& insideVolVars,
-                                        const CouplingContext& context)
+                                        const CouplingContext& context,
+                                        const NumEqVector& velocity)
     {
-        const Scalar normalVelocity = context.velocity * scvf.unitOuterNormal();
-        const Scalar darcyDensity = insideVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(ParentType::porousMediumIndex));
-        const Scalar stokesDensity = context.volVars.density();
+        const Scalar normalVelocity = velocity * scvf.unitOuterNormal();
+        Scalar insideDensity, outsideDensity;
+
+        if constexpr (domainI == ParentType::freeFlowMassIndex)
+        {
+            insideDensity = insideVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(ParentType::porousMediumIndex));
+            const auto& outsideScvf = context.fvGeometry.scvf(context.porousMediumScvfIdx);
+            outsideDensity = context.elemVolVars[outsideScvf.insideScvIdx()].density();
+        }
+        else
+        {
+            insideDensity = insideVolVars[scvf.insideScvIdx()].density();
+            const auto& outsideScvf = context.fvGeometry.scvf(context.freeFlowMassScvfIdx);
+            outsideDensity = context.elemVolVars[outsideScvf.insideScvIdx()].density(couplingPhaseIdx(ParentType::porousMediumIndex));
+        }
         const bool insideIsUpstream = normalVelocity > 0.0;
-        return ParentType::advectiveFlux(darcyDensity, stokesDensity, normalVelocity, insideIsUpstream);
+        return ParentType::advectiveFlux(insideDensity, outsideDensity, normalVelocity, insideIsUpstream);
     }
 
     /*!
@@ -373,41 +272,6 @@ public:
                                    const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
         DUNE_THROW(Dune::NotImplemented, "Energy coupling condition");
-    }
-
-private:
-
-
-
-    /*!
-     * \brief Evaluate the energy flux across the interface.
-     */
-    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
-    Scalar energyFlux_(Dune::index_constant<i> domainI,
-                       Dune::index_constant<j> domainJ,
-                       const FVElementGeometry<i>& insideFvGeometry,
-                       const FVElementGeometry<j>& outsideFvGeometry,
-                       const SubControlVolumeFace<i>& scvf,
-                       const VolumeVariables<i>& insideVolVars,
-                       const VolumeVariables<j>& outsideVolVars,
-                       const Scalar velocity,
-                       const bool insideIsUpstream,
-                       const DiffusionCoefficientAveragingType diffCoeffAvgType) const
-    {
-        Scalar flux(0.0);
-
-        const auto& insideScv = (*scvs(insideFvGeometry).begin());
-        const auto& outsideScv = (*scvs(outsideFvGeometry).begin());
-
-        // convective fluxes
-        const Scalar insideTerm = insideVolVars.density(couplingPhaseIdx(domainI)) * insideVolVars.enthalpy(couplingPhaseIdx(domainI));
-        const Scalar outsideTerm = outsideVolVars.density(couplingPhaseIdx(domainJ)) * outsideVolVars.enthalpy(couplingPhaseIdx(domainJ));
-
-        flux += this->advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
-
-        flux += this->conductiveEnergyFlux_(domainI, domainJ, insideFvGeometry, outsideFvGeometry, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars, diffCoeffAvgType);
-
-        return flux;
     }
 
 };
