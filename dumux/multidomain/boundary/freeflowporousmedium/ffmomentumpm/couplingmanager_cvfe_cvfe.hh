@@ -26,7 +26,7 @@
 
 namespace Dumux {
 
-namespace Detail {
+namespace DetailFFMomentumPM {
     template<class VolVarType>
     struct VolVarsContainer : public std::vector<VolVarType>
     {
@@ -61,8 +61,8 @@ namespace Detail {
 
         auto permeability() const
         {
-            const auto& darcyScvf = fvGeometry.scvf(darcyScvfIdx);
-            const auto& insideScv = fvGeometry.scv(darcyScvf.insideScvIdx());
+            const auto& pmScvf = fvGeometry.scvf(porousMediumScvfIdx);
+            const auto& insideScv = fvGeometry.scv(pmScvf.insideScvIdx());
             return elemVolVars[insideScv.localDofIndex()].permeability();
         }
     };
@@ -137,10 +137,10 @@ private:
     using VelocityVector = typename Element<freeFlowMomentumIndex>::Geometry::GlobalCoordinate;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
 
-    using CouplingMapper = FFMomentumPMCouplingMapperCvfe<MDTraits, FFMomentumPMCouplingManageCvfe<MDTraits>>;
+    using CouplingMapper = MapperCoupledCvfeSchemes<MDTraits, FFMomentumPMCouplingManageCvfe<MDTraits>>;
 
-    using FreeFlowMomentumCouplingContext = Detail::FreeFlowMomentumCouplingContext<MDTraits>;
-    using PorousMediumCouplingContext = Detail::PorousMediumCouplingContext<MDTraits>;
+    using FreeFlowMomentumCouplingContext = DetailFFMomentumPM::FreeFlowMomentumCouplingContext<MDTraits>;
+    using PorousMediumCouplingContext = DetailFFMomentumPM::PorousMediumCouplingContext<MDTraits>;
 
 public:
 
@@ -190,24 +190,51 @@ public:
     {
         this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
-        // we need to update all solution-dependent components of the coupling context
+        // we need to update all solution-depenent components of the coupling context
         // the dof of domain J has been deflected
 
-        auto& context = std::get<i>(couplingContext_);
-        for (auto& c : context)
+        // update the volVars in the PorousMediumCouplingContext
+        if constexpr (domainJ == freeFlowMomentumIndex)
         {
-            assert(c.fvGeometry.numScvs() == c.elemVolVars.size());
-            for (const auto& scv : scvs(c.fvGeometry))
+            // we only need to update if we are assembling the porous medium domain
+            // since the freeflow domain will not use the context
+            if constexpr (domainI == porousMediumIndex)
             {
-                if(scv.dofIndex() == dofIdxGlobalJ)
+                auto& context = std::get<porousMediumIndex>(couplingContext_);
+                for (auto& c : context)
                 {
-                    const auto& ggJ = c.fvGeometry.gridGeometry();
-                    const auto elemSol = elementSolution(c.element, this->curSol(domainJ), ggJ);
-                    c.elemVolVars[scv.localDofIndex()].update(elemSol, this->problem(domainJ), c.element, scv);
+                    assert(c.fvGeometry.numScv() == c.elemVolVars.size());
+                    for (const auto& scv : scvs(c.fvGeometry))
+                    {
+                        if(scv.dofIndex() == dofIdxGlobalJ)
+                        {
+                            const auto& ggJ = c.fvGeometry.gridGeometry();
+                            const auto elemSol = elementSolution(c.element, this->curSol(domainJ), ggJ);
+                            c.elemVolVars[scv.localDofIndex()].update(elemSol, this->problem(domainJ), c.element, scv);
+                        }
+                    }
                 }
             }
         }
 
+        // update volVars in the FreeFlowMomentumCouplingContext
+        else if (domainJ == porousMediumIndex)
+        {
+            auto& context = std::get<freeFlowMomentumIndex>(couplingContext_);
+            for (auto& c : context)
+            {
+                assert(c.fvGeometry.numScv() == c.elemVolVars.size());
+                for (const auto& scv : scvs(c.fvGeometry))
+                {
+                    if(scv.dofIndex() == dofIdxGlobalJ)
+                    {
+                        const auto& ggJ = c.fvGeometry.gridGeometry();
+                        const auto elemSol = elementSolution(c.element, this->curSol(domainJ), ggJ);
+                        c.elemVolVars[scv.localDofIndex()].update(elemSol, this->problem(domainJ), c.element, scv);
+                    }
+                }
+            }
+        }
     }
 
     // \}
@@ -241,31 +268,15 @@ public:
     // \{
 
     /*!
-     * \brief The Stokes cell center coupling stencil w.r.t. Darcy DOFs
+     * \brief Stencil of porous domain with respect to free flow momentum domain and vice versa
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<porousMediumIndex> domainI,
-                                           const Element<porousMediumIndex>& element,
-                                           Dune::index_constant<freeFlowMomentumIndex> domainJ) const
+    template<std::size_t i, std::size_t j>
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           Dune::index_constant<j> domainJ) const
     {
         const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
         return couplingMapper_.couplingStencil(domainI, eIdx, domainJ);
-    }
-
-    /*!
-     * \brief returns an iterable container of all indices of degrees of freedom of domain j
-     *        that couple with / influence the residual of the given sub-control volume of domain i
-     *
-     * \param domainI the domain index of domain i
-     * \param elementI the coupled element of domain í
-     * \param scvI the sub-control volume of domain i
-     * \param domainJ the domain index of domain j
-     */
-    const CouplingStencil& couplingStencil(Dune::index_constant<freeFlowMomentumIndex> domainI,
-                                           const Element<freeFlowMomentumIndex>& elementI,
-                                           const SubControlVolume<freeFlowMomentumIndex>& scvI,
-                                           Dune::index_constant<porousMediumIndex> domainJ) const
-    {
-        return couplingMapper_.couplingStencil(domainI, elementI, scvI, domainJ);
     }
 
     using ParentType::evalCouplingResidual;
@@ -286,16 +297,31 @@ public:
 
     // \}
 
+    // /*!
+    //  * \brief Returns whether a given scvf is coupled to the other domain
+    //  */
+    // template<std::size_t i>
+    // bool isCoupled(Dune::index_constant<i> domainI, const SubControlVolumeFace<i>& scvf) const
+    // {
+    //     if constexpr (i == freeFlowMomentumIndex)
+    //         return couplingMapper_.isCoupled(domainI, scvf) || couplingMapper_.isCoupledLateralScvf(domainI, scvf);
+    //     else
+    //         return couplingMapper_.isCoupled(domainI, scvf);
+    // }
+
     /*!
-     * \brief Returns whether a given scvf is coupled to the other domain
+     * \brief If the boundary entity is on a coupling boundary
+     * \param domainI the domain index for which to compute the flux
+     * \param element the element
+     * \param scvf the sub control volume face
      */
     template<std::size_t i>
-    bool isCoupled(Dune::index_constant<i> domainI, const SubControlVolumeFace<i>& scvf) const
+    bool isCoupled(Dune::index_constant<i> domainI,
+                   const Element<i>& element,
+                   const SubControlVolumeFace<i>& scvf) const
     {
-        if constexpr (i == freeFlowMomentumIndex)
-            return couplingMapper_.isCoupled(domainI, scvf) || couplingMapper_.isCoupledLateralScvf(domainI, scvf);
-        else
-            return couplingMapper_.isCoupled(domainI, scvf);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        return couplingMapper_.isCoupled(domainI, eIdx, scvf.index());
     }
 
     /*!
@@ -303,9 +329,10 @@ public:
      * \param domainI the domain index for which to compute the flux
      * \param scv the sub control volume
      */
-    bool isCoupled(Dune::index_constant<freeFlowMomentumIndex> domainI,
-                   const SubControlVolume<freeFlowMomentumIndex>& scv) const
-    { return couplingMapper_.isCoupled(domainI, scv); }
+    template<std::size_t i>
+    bool isCoupled(Dune::index_constant<i> domainI,
+                   const SubControlVolume<i>& scv) const
+    { return couplingMapper_.isCoupledDof(domainI, scv.dofIndex()); }
 
     /*!
      * \brief Returns the velocity at a given sub control volume face.
@@ -317,24 +344,41 @@ public:
         bindCouplingContext_(Dune::index_constant<porousMediumIndex>(), fvGeometry);
         const auto& context = couplingContext(element, fvGeometry, scvf);
 
-        // TODO: Check case when we have multiple coupled contexts.
-        if(context.size() > 1)
-            DUNE_THROW(Dune::InvalidStateException, "Can only handle size 1 contexts");
-
-        const auto& fvGeometry = context[0].fvGeometry;
-        const auto& localBasis = fvGeometry.feLocalBasis();
+        const auto& ffFvGeometry = context.fvGeometry;
+        const auto& localBasis = ffFvGeometry.feLocalBasis();
 
         std::vector<ShapeValue> shapeValues;
-        const auto ipLocal = element.geometry().local(scvf.ipGlobal());
+        const auto ipLocal = context.element.geometry().local(scvf.ipGlobal());
         localBasis.evaluateFunction(ipLocal, shapeValues);
 
         // interpolate velocity at scvf
         VelocityVector velocity(0.0);
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& scv : scvs(ffFvGeometry))
             velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(Dune::index_constant<freeFlowMomentumIndex>())[scv.dofIndex()]);
 
         return velocity;
     }
+
+    // /*!
+    //  * \brief Returns the velocity at a given sub control volume face.
+    //  */
+    // auto faceVelocity(const Element<freeFlowMomentumIndex>& element,
+    //                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+    //                   const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+    // {
+    //     const auto& localBasis = fvGeometry.feLocalBasis();
+
+    //     std::vector<ShapeValue> shapeValues;
+    //     const auto ipLocal = element.geometry().local(scvf.ipGlobal());
+    //     localBasis.evaluateFunction(ipLocal, shapeValues);
+
+    //     // interpolate velocity at scvf
+    //     VelocityVector velocity(0.0);
+    //     for (const auto& scv : scvs(fvGeometry))
+    //         velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(Dune::index_constant<freeFlowMomentumIndex>())[scv.dofIndex()]);
+
+    //     return velocity;
+    // }
 
 private:
     //! Return the volume variables of domain i for a given element and scv
@@ -387,15 +431,15 @@ private:
 
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            if (couplingMapper_.isCoupled(domainI, scvf))
+            if (couplingMapper_.isCoupled(domainI, eIdx, scvf.index()))
             {
-                const auto otherElementIdx = couplingMapper_.outsideElementIndex(domainI, scvf);
+                const auto otherElementIdx = couplingMapper_.outsideElementIndex(domainI, eIdx,  scvf.index());
                 constexpr auto domainJ = Dune::index_constant<1-i>();
                 const auto& otherGridGeometry = this->problem(domainJ).gridGeometry();
                 const auto& otherElement = otherGridGeometry.element(otherElementIdx);
                 auto otherFvGeometry = localView(otherGridGeometry).bind(otherElement);
 
-                Detail::VolVarsContainer<VolumeVariables<i>> volVars;
+                DetailFFMomentumPM::VolVarsContainer<VolumeVariables<1-i>> volVars;
                 for (auto&& scv : scvs(otherFvGeometry))
                     volVars.push_back(std::move(volVars_(domainJ, otherElement, scv)));
 
@@ -403,7 +447,7 @@ private:
                     otherElement,
                     std::move(otherFvGeometry),
                     scvf.index(),
-                    couplingMapper_.flipScvfIndex(domainI, scvf),
+                    couplingMapper_.flipScvfIndex(domainI, eIdx, scvf.index()),
                     std::move(volVars)
                 });
             }
