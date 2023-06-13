@@ -238,6 +238,24 @@ public:
      * \brief If the boundary entity is on a coupling boundary
      * \param domainI the domain index of domain i for which to compute the flux
      * \param domainJ the domain index of domain j for which to compute the flux
+     * \param element the element
+     * \param scvf the sub control volume face
+     */
+    template<std::size_t i, std::size_t j>
+    bool isCoupled(Dune::index_constant<i> domainI,
+                   Dune::index_constant<j> domainJ,
+                   const Element<i>& element,
+                   const SubControlVolumeFace<i>& scvf) const
+    {
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupled(ii, element, scvf);
+        });
+    }
+
+    /*!
+     * \brief If the boundary entity is on a coupling boundary
+     * \param domainI the domain index of domain i for which to compute the flux
+     * \param domainJ the domain index of domain j for which to compute the flux
      * \param scv the sub control volume
      */
     template<std::size_t i, std::size_t j>
