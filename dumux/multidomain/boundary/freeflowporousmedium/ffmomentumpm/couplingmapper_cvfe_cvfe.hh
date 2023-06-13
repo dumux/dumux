@@ -10,8 +10,8 @@
  * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingMapper
  */
 
-#ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_CVFE_CVFE_HH
-#define DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_CVFE_CVFE_HH
+#ifndef DUMUX_MULTIDOMAIN_COUPLINGMAPPER_CVFE_CVFE_HH
+#define DUMUX_MULTIDOMAIN_COUPLINGMAPPER_CVFE_CVFE_HH
 
 #include <iostream>
 #include <unordered_map>
@@ -33,7 +33,7 @@ namespace Dumux {
  * \todo how to extend to arbitrary number of domains?
  */
 template<class MDTraits, class CouplingManager>
-class FFMomentumPMCouplingMapperCvfe
+class MapperCoupledCvfeSchemes
 {
     using Scalar = typename MDTraits::Scalar;
 
@@ -47,25 +47,14 @@ class FFMomentumPMCouplingMapperCvfe
     static constexpr auto domainIdx()
     { return typename MDTraits::template SubDomain<i>::Index{}; }
 
-    template<std::size_t i>
-    static constexpr bool isCvfe()
-    { return GridGeometry<i>::discMethod == DiscretizationMethods::isCVFE<GridGeometry<i>::discMethod>; }
-
-    struct ScvfInfoPM
+    struct ScvfInfo
     {
         std::size_t eIdxOutside;
         std::size_t flipScvfIdx;
     };
 
-    struct ScvfInfoFF
-    {
-        std::size_t eIdxOutside;
-        std::size_t flipScvfIdx;
-    };
-
-    using FlipScvfMapTypePM = std::unordered_map<std::pair<std::size_t,std::size_t>, ScvfInfoPM>;
-    using FlipScvfMapTypeFF = std::unordered_map<std::pair<std::size_t,std::size_t>, ScvfInfoFF>;
-    using MapType = std::unordered_map<std::size_t, std::vector<std::size_t>>;
+    using FlipScvfMapType = std::map<std::pair<std::size_t,std::size_t>, ScvfInfo>;
+    using MapType = std::map<std::size_t, std::vector<std::size_t>>;
 
     static constexpr std::size_t numSD = MDTraits::numSubDomains;
 
@@ -76,7 +65,6 @@ public:
     void update(const CouplingManager& couplingManager)
     {
         static_assert(numSD == 2, "More than two subdomains not implemented!");
-        static_assert(isCvfe()<0>() && isCvfe()<1>(), "Only coupling between cvfe and cvfe schemes implemented!");
 
         Dune::Timer watch;
         std::cout << "Initializing the coupling map..." << std::endl;
@@ -84,37 +72,37 @@ public:
         for (std::size_t domIdx = 0; domIdx < numSD; ++domIdx)
             stencils_[domIdx].clear();
 
-        std::get<CouplingManager::freeFlowMomentumIndex>(scvfInfo_).clear();
-        std::get<CouplingManager::porousMediumIndex>(scvfInfo_).clear();
+        std::get<0>(scvfInfo_).clear();
+        std::get<1>(scvfInfo_).clear();
 
-        const auto& freeFlowMomentumProblem = couplingManager.problem(CouplingManager::freeFlowMomentumIndex);
-        const auto& porousMediumProblem = couplingManager.problem(CouplingManager::porousMediumIndex);
-        const auto& freeFlowMomentumGG = freeFlowMomentumProblem.gridGeometry();
-        const auto& porousMediumGG = porousMediumProblem.gridGeometry();
+        const auto& problem0 = couplingManager.problem(domainIdx<0>());
+        const auto& problem1 = couplingManager.problem(domainIdx<1>());
+        const auto& gg0 = problem0.gridGeometry();
+        const auto& gg1 = problem1.gridGeometry();
 
-        isCoupledDof[CouplingManager::freeFlowMomentumIndex]_.resize(freeFlowMomentumGG.numDofs(), false);
-        isCoupledDof_[CouplingManager::porousMediumIndex].resize(porousMediumGG.numDofs(), false);
+        isCoupledDof_[0].resize(gg0.numDofs(), false);
+        isCoupledDof_[1].resize(gg1.numDofs(), false);
 
-        auto pmFvGeometry = localView(porousMediumGG);
-        auto ffFvGeometry = localView(freeFlowMomentumGG);
+        auto fvGeometry0 = localView(gg0);
+        auto fvGeometry1 = localView(gg1);
 
-        for (const auto& pmElement : elements(porousMediumGG.gridView()))
+        for (const auto& element1 : elements(gg1.gridView()))
         {
-            pmFvGeometry.bindElement(pmElement);
+            fvGeometry1.bindElement(element1);
 
             bool elementDofsAdded = false;
 
-            for (const auto& pmScvf : scvfs(pmFvGeometry))
+            for (const auto& scvf1 : scvfs(fvGeometry1))
             {
                 // skip all non-boundaries
-                if (!pmScvf.boundary())
+                if (!scvf1.boundary())
                     continue;
 
                 // get elements intersecting with the scvf center
                 // for robustness add epsilon in unit outer normal direction
-                const auto eps = (pmScvf.ipGlobal() - pmFvGeometry.geometry(pmScvf).corner(0)).two_norm()*1e-8;
-                auto globalPos = pmScvf.ipGlobal(); globalPos.axpy(eps, pmScvf.unitOuterNormal());
-                const auto indices = intersectingEntities(globalPos, freeFlowMomentumGG.boundingBoxTree());
+                const auto eps = (scvf1.ipGlobal() - fvGeometry1.geometry(scvf1).corner(0)).two_norm()*1e-8;
+                auto globalPos = scvf1.ipGlobal(); globalPos.axpy(eps, scvf1.unitOuterNormal());
+                const auto indices = intersectingEntities(globalPos, gg0.boundingBoxTree());
 
                 // skip if no intersection was found
                 if (indices.empty())
@@ -125,39 +113,39 @@ public:
                     DUNE_THROW(Dune::InvalidStateException, "Are you sure your sub-domain grids are conformingly discretized on the common interface?");
 
                 // add the pair to the multimap
-                const auto pmElemIdx = porousMediumGG.elementMapper().index(pmElement);
-                const auto ffElemIdx = indices[0];
-                const auto& ffElement = freeFlowMomentumGG.element(ffElemIdx);
-                ffFvGeometry.bindElement(ffElement);
+                const auto eIdx1 = gg1.elementMapper().index(element1);
+                const auto eIdx0 = indices[0];
+                const auto& element0 = gg0.element(eIdx0);
+                fvGeometry0.bindElement(element0);
 
                 if(!elementDofsAdded)
                 {
-                    for(auto&& scv : scvs(pmFvGeometry))
-                        stencils_[CouplingManager::freeFlowMomentumIndex][ffElemIdx].push_back(scv.dofIndex());
+                    for(auto&& scv : scvs(fvGeometry1))
+                        stencils_[0][eIdx0].push_back(scv.dofIndex());
 
-                    for(auto&& scv : scvs(ffFvGeometry))
-                        stencils_[CouplingManager::porousMediumIndex][pmElemIdx].push_back(scv.dofIndex());
+                    for(auto&& scv : scvs(fvGeometry0))
+                        stencils_[1][eIdx1].push_back(scv.dofIndex());
 
                     elementDofsAdded = true;
                 }
 
-                for (const auto& ffScvf : scvfs(ffFvGeometry))
+                for (const auto& ffScvf : scvfs(fvGeometry0))
                 {
                     if (!ffScvf.boundary())
                         continue;
 
                     // TODO: generalize to non-matching grids
-                    const auto dist = (pmScvf.ipGlobal() - ffScvf.ipGlobal()).two_norm();
+                    const auto dist = (scvf1.ipGlobal() - ffScvf.ipGlobal()).two_norm();
                     if (dist > eps)
                         continue;
 
-                    isCoupledDof_[CouplingManager::freeFlowMomentumIndex][ffFvGeometry.scv(ffScvf.insideScvIdx()).dofIndex()] = true;
-                    isCoupledDof_[CouplingManager::porousMediumIndex][pmFvGeometry.scv(pmScvf.insideScvIdx()).dofIndex()] = true;
+                    isCoupledDof_[0][fvGeometry0.scv(ffScvf.insideScvIdx()).dofIndex()] = true;
+                    isCoupledDof_[1][fvGeometry1.scv(scvf1.insideScvIdx()).dofIndex()] = true;
 
-                    std::get<CouplingManager::porousMediumIndex>(scvfInfo_)[std::make_pair<std::size_t, std::size_t>(pmElemIdx, pmScvf.index())]
-                        = ScvfInfoPM{ffElemIdx, ffScvf.index()};
-                    std::get<CouplingManager::freeFlowMomentumIndex>(scvfInfo_)[std::make_pair<std::size_t, std::size_t>(ffElemIdx, ffScvf.index())]
-                        = ScvfInfoFF{pmElemIdx, pmScvf.index()};
+                    std::get<0>(scvfInfo_)[std::make_pair(eIdx0, ffScvf.index())]
+                        = ScvfInfo{eIdx1, scvf1.index()};
+                    std::get<1>(scvfInfo_)[std::make_pair(eIdx1, scvf1.index())]
+                        = ScvfInfo{eIdx0, ffScvf.index()};
                 }
             }
         }
@@ -179,12 +167,13 @@ public:
      *        fem: the residual of the element
      * \note  This function has to be implemented by all coupling managers for all combinations of i and j
      */
-    const std::vector<std::size_t>& couplingStencil(Dune::index_constant<CouplingManager::porousMediumIndex> domainI,
+    template<std::size_t i, std::size_t j>
+    const std::vector<std::size_t>& couplingStencil(Dune::index_constant<i> domainI,
                                                     const std::size_t eIdxI,
-                                                    Dune::index_constant<CouplingManager::freeFlowMomentumIndex> domainJ) const
+                                                    Dune::index_constant<j> domainJ) const
     {
         if (isCoupledElement(domainI, eIdxI))
-            return stencils_[CouplingManager::porousMediumIndex].at(eIdxI);
+            return stencils_[i].at(eIdxI);
         else
             return emptyStencil_;
     }
@@ -218,7 +207,7 @@ public:
                    std::size_t eIdxI,
                    std::size_t localScvfIdxI) const
     {
-        return static_cast<bool>(std::get<i>(scvfInfo_).count(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)));
+        return static_cast<bool>(std::get<i>(scvfInfo_).count(std::make_pair(eIdxI, localScvfIdxI)));
     }
 
     /*!
@@ -231,7 +220,7 @@ public:
                               std::size_t eIdxI,
                               std::size_t localScvfIdxI) const
     {
-        return std::get<i>(scvfInfo_).at(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)).flipScvfIdx;
+        return std::get<i>(scvfInfo_).at(std::make_pair(eIdxI, localScvfIdxI)).flipScvfIdx;
     }
 
     /*!
@@ -244,14 +233,14 @@ public:
                                     std::size_t eIdxI,
                                     std::size_t localScvfIdxI) const
     {
-        return std::get<i>(scvfInfo_).at(std::make_pair<std::size_t, std::size_t>(eIdxI, localScvfIdxI)).eIdxOutside;
+        return std::get<i>(scvfInfo_).at(std::make_pair(eIdxI, localScvfIdxI)).eIdxOutside;
     }
 
 private:
     std::array<MapType, numSD> stencils_;
     std::vector<std::size_t> emptyStencil_;
     std::array<std::vector<bool>, numSD> isCoupledDof_;
-    std::tuple<FlipScvfMapTypeFF, FlipScvfMapTypePM> scvfInfo_;
+    std::tuple<FlipScvfMapType, FlipScvfMapType> scvfInfo_;
 
 };
 
