@@ -121,6 +121,38 @@ public:
     }
 
     /*!
+      * \brief Specifies which kind of boundary condition should be
+      *        used for which equation on a given boundary control volume.
+      *
+      * \param element The element
+      * \param scv The boundary sub control volume
+      */
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
+    {
+        BoundaryTypes values;
+
+        if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, scv))
+            values.setAllCouplingNeumann();
+        else
+        {
+            if (boundaryConditions_ == BC::dirichlet)
+                values.setAllDirichlet();
+            else if (boundaryConditions_ == BC::neumann)
+                values.setAllNeumann();
+            else
+            {
+                if (onLeftBoundary_(scv.dofPosition()))
+                    values.setAllNeumann();
+                else
+                    values.setAllDirichlet();
+            }
+        }
+
+        return values;
+    }
+
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
      * \param element The element for which the Dirichlet boundary condition is set
@@ -130,6 +162,12 @@ public:
     {
         const auto p = fullAnalyticalSolution(scvf.center())[2];
         return PrimaryVariables(p);
+    }
+
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolume& scv) const
+    {
+        const auto p = fullAnalyticalSolution(scv.dofPosition())[2];
+        return PrimaryVariables(p);;
     }
 
     /*!
@@ -150,18 +188,37 @@ public:
     {
         NumEqVector values(0.0);
 
-        if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, scvf))
-            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
-                CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
-                fvGeometry, scvf, elemVolVars
-            );
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+        {
+            if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, scvf))
+                values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
+                    CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                    fvGeometry, scvf, elemVolVars
+                );
 
+            else
+            {
+                const auto sol = fullAnalyticalSolution(scvf.center());
+                const auto n = scvf.unitOuterNormal();
+                auto v = n; v[0] = sol[0]; v[1] = sol[1];
+                values[Indices::conti0EqIdx] = v*n;
+            }
+        }
         else
         {
-            const auto sol = fullAnalyticalSolution(scvf.center());
-            const auto n = scvf.unitOuterNormal();
-            auto v = n; v[0] = sol[0]; v[1] = sol[1];
-            values[Indices::conti0EqIdx] = v*n;
+            if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, element, scvf))
+                values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
+                    CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                    fvGeometry, scvf, elemVolVars
+                );
+
+            else
+            {
+                const auto sol = fullAnalyticalSolution(scvf.ipGlobal());
+                const auto n = scvf.unitOuterNormal();
+                auto v = n; v[0] = sol[0]; v[1] = sol[1];
+                values[Indices::conti0EqIdx] = v*n;
+            }
         }
 
         return values;
@@ -199,10 +256,9 @@ public:
     // \}
 
     /*!
-     * \brief Evaluates the initial value for a control volume.
-     * \param element The element
+     * \brief Evaluates the initial value for a position.
      */
-    PrimaryVariables initial(const Element &element) const
+    PrimaryVariables initialAtPos(const GlobalPosition& pos) const
     {  return PrimaryVariables(0.0); }
 
     /*!
