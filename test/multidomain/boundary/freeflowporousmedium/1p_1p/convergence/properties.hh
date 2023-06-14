@@ -12,6 +12,21 @@
 #ifndef DUMUX_DARCYSTOKES_PROPERTIES_HH
 #define DUMUX_DARCYSTOKES_PROPERTIES_HH
 
+#ifndef NAVIER_STOKES_MODEL
+#define NAVIER_STOKES_MODEL NavierStokesMomentum
+#endif
+
+#ifndef MOMENTUM_DISCRETIZATION_MODEL
+#define MOMENTUM_DISCRETIZATION_MODEL FaceCenteredStaggeredModel
+#endif
+
+#ifndef MASS_DISCRETIZATION_MODEL
+#define MASS_DISCRETIZATION_MODEL CCTpfaModel
+#endif
+
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -20,10 +35,13 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/multidomain/boundary/freeflowporousmedium/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
@@ -36,7 +54,7 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct DarcyOneP { using InheritsFrom = std::tuple<OneP, MASS_DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -55,7 +73,13 @@ struct FluidSystem<TypeTag, TTag::DarcyOneP>
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DarcyOneP>
-{ using type = Dune::YaspGrid<2>; };
+{
+#ifndef GRIDTYPE
+    using type = Dune::YaspGrid<2>;
+#else
+    using type = GRIDTYPE;
+#endif
+};
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DarcyOneP>
@@ -68,8 +92,8 @@ struct SpatialParams<TypeTag, TTag::DarcyOneP>
 // Create new type tags
 namespace TTag {
 struct FreeFlowOneP {};
-struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, CCTpfaModel>; };
-struct FreeFlowOnePMomentum { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
+struct FreeFlowOnePMomentum { using InheritsFrom = std::tuple<FreeFlowOneP, NAVIER_STOKES_MODEL, MOMENTUM_DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
 // the fluid system
@@ -84,8 +108,12 @@ struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::FreeFlowOneP>
 {
+#ifndef GRIDTYPE
     using Coords = Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>;
     using type = Dune::YaspGrid<2, Coords>;
+#else
+    using type = GRIDTYPE;
+#endif
 };
 
 // Set the problem property

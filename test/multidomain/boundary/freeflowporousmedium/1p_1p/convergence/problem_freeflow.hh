@@ -36,6 +36,7 @@ class FreeFlowSubProblem : public BaseProblem
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -141,6 +142,52 @@ public:
     }
 
     /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param element The finite element
+     * \param scv The sub control volume
+     */
+    BoundaryTypes boundaryTypes(const Element& element,
+                                const SubControlVolume& scv) const
+    {
+        BoundaryTypes values;
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scv))
+            {
+                values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+                // ToDo don't set it so exact sol but implement BJ
+                values.setDirichlet(Indices::velocityXIdx);
+            }
+            else
+            {
+                if (boundaryConditions_ == BC::dirichlet)
+                    values.setAllDirichlet();
+                else if (boundaryConditions_ == BC::stress)
+                    values.setAllNeumann();
+                else
+                {
+                    if (onLeftBoundary_(scv.dofPosition()))
+                        values.setAllNeumann();
+                    else
+                        values.setAllDirichlet();
+                }
+            }
+        }
+        else
+        {
+            if (couplingManager().isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, scv))
+                values.setAllCouplingNeumann();
+            else
+                values.setAllNeumann();
+        }
+
+        return values;
+    }
+
+    /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
@@ -180,7 +227,7 @@ public:
             //                       |
             // integration point --> o##### <-- scvf lying on coupling interface with integration point touching left Neumann boundary
             //
-            if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf)
+            if (isCoupled_(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, element, scvf)
                 && scvf.ipGlobal()[0] > this->gridGeometry().bBoxMin()[0] + eps_
                 && scvf.ipGlobal()[0] < this->gridGeometry().bBoxMax()[0] - eps_)
             {
@@ -189,9 +236,12 @@ public:
                     fvGeometry, scvf, elemVolVars
                 );
 
-                values += FluxHelper::slipVelocityMomentumFlux(
-                    *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
-                );
+                if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                {
+                    values += FluxHelper::slipVelocityMomentumFlux(
+                        *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
+                    );
+                }
             }
             else
             {
@@ -204,7 +254,7 @@ public:
         // mass boundary conditions
         else
         {
-            if (couplingManager().isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, scvf))
+            if (isCoupled_(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, element, scvf))
             {
                 values = couplingManager().massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
@@ -213,10 +263,19 @@ public:
             }
             else
             {
-                using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-                values = FluxHelper::scalarOutflowFlux(
-                    *this, element, fvGeometry, scvf, elemVolVars
-                );
+
+                if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+                {
+                    using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+                    values = FluxHelper::scalarOutflowFlux(
+                        *this, element, fvGeometry, scvf, elemVolVars
+                    );
+                }
+                else
+                {
+                    values =  this->faceVelocity(element, fvGeometry, scvf)
+                        * elemVolVars[scvf.insideScvIdx()].density() * scvf.unitOuterNormal();
+                }
             }
         }
 
@@ -336,6 +395,19 @@ public:
     // \}
 
 private:
+    template<std::size_t i, std::size_t j>
+    bool isCoupled_(Dune::index_constant<i> domainI,
+                    Dune::index_constant<j> domainJ,
+                    const Element& element,
+                    const SubControlVolumeFace& scvf) const
+    {
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered
+                     || GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+            return couplingManager_->isCoupled(domainI, domainJ, scvf);
+        else
+             return couplingManager_->isCoupled(domainI, domainJ, element, scvf);
+    }
+
     /*!
      * \brief Returns the stress tensor within the domain.
      * \param globalPos The global position

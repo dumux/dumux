@@ -30,6 +30,7 @@
 #include <dumux/io/format.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/multidomain/staggeredtraits.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -126,7 +127,7 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.center())[2/*pressureIdx*/];
+            const Scalar delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
             l2error += scv.volume()*(delta*delta);
         }
     }
