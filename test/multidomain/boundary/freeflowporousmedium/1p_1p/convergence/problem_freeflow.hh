@@ -19,6 +19,10 @@
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/elementsolution.hh>
+
 #include "testcase.hh"
 #include "analyticalsolutions.hh"
 
@@ -158,8 +162,7 @@ public:
             if (couplingManager().isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scv))
             {
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
-                // ToDo don't set it so exact sol but implement BJ
-                values.setDirichlet(Indices::velocityXIdx);
+                values.setCouplingNeumann(Indices::momentumXBalanceIdx);
             }
             else
             {
@@ -241,6 +244,16 @@ public:
                     values += FluxHelper::slipVelocityMomentumFlux(
                         *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                     );
+                }
+                else
+                {
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
+                    // Slip is in x orientation
+                    GlobalPosition t(0.0);
+                    t[0] = 1.0;
+                    auto vt = v*t;
+                    values.axpy((this->effectiveViscosity(element, fvGeometry, scvf)*this->betaBJ(fvGeometry, scvf, t))*vt, t);
                 }
             }
             else
