@@ -15,6 +15,14 @@ executableName = str(sys.argv[1])
 testargs = [str(i) for i in sys.argv][2:]
 testname = testargs[testargs.index('-Problem.TestCase')+1]
 
+if '-Rates' in testargs:
+    idx = testargs.index('-Rates')
+    rates = testargs[idx+1]
+    rates = [float(s) for s in rates.split(',')]
+    testargs[idx:idx+2:1] = ""
+else:
+    rates = [1.7,2.05,1.95,2.05,1.95,2.05,1.95,2.05]
+
 # remove the old log files
 subprocess.call(['rm', testname + '_freeFlow.log'])
 print("Removed old log file ({})!".format(testname + '_freeFlow.log'))
@@ -107,19 +115,19 @@ def checkRatesFreeFlowAndDarcy():
         return float(sum(numbers)) / len(numbers)
 
     # check the rates, we expect rates around 2
-    if mean(resultsFreeFlow["p"]) < 2.05 and mean(resultsFreeFlow["p"]) < 1.7:
+    if mean(resultsFreeFlow["p"]) < rates[1] and mean(resultsFreeFlow["p"]) < rates[0]:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
-    if mean(resultsFreeFlow["v_x"]) < 2.05 and mean(resultsFreeFlow["v_x"]) < 1.95:
+    if mean(resultsFreeFlow["v_x"]) < rates[3] and mean(resultsFreeFlow["v_x"]) < rates[2]:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for x-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
-    if mean(resultsFreeFlow["v_y"]) < 2.05 and mean(resultsFreeFlow["v_y"]) < 1.95:
+    if mean(resultsFreeFlow["v_y"]) < rates[5] and mean(resultsFreeFlow["v_y"]) < rates[4]:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for y-velocity were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
-    if mean(resultsDarcy["p"]) < 2.05 and mean(resultsDarcy["p"]) < 1.95:
+    if mean(resultsDarcy["p"]) < rates[7] and mean(resultsDarcy["p"]) < rates[6]:
         sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
         sys.exit(1)
 
