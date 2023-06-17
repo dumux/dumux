@@ -93,3 +93,17 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
                         -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_navierstokes
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box params.input
+                        -Problem.TestCase Schneider
+                        -FreeFlow.Problem.EnableInertiaTerms true
+                        -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Stress
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
