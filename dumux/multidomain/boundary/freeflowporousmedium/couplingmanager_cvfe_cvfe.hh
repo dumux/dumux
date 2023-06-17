@@ -129,10 +129,39 @@ public:
      */
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                    const bool considerPreviousTimeStep = false) const
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).pressure(
             element, fvGeometry, scvf
+        );
+    }
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume.
+     */
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const SubControlVolume<freeFlowMomentumIndex>& scv,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).pressure(
+            element, fvGeometry, scv, considerPreviousTimeStep
+        );
+    }
+
+
+    /*!
+     * \brief Returns the pressure at a given sub control volume.
+     */
+    template<class GlobalPosition>
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const GlobalPosition& pos,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).pressure(
+            element, fvGeometry, pos, considerPreviousTimeStep
         );
     }
 
@@ -185,6 +214,20 @@ public:
     }
 
     /*!
+     * \brief Returns the pressure at a given sub control volume.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolume<freeFlowMomentumIndex>& scv,
+                              const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).effectiveViscosity(
+            element, fvGeometry, scv, considerPreviousTimeStep
+        );
+    }
+
+
+    /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
     auto faceVelocity(const Element<freeFlowMassIndex>& element,
@@ -204,6 +247,18 @@ public:
             fvGeometry
         );
     }
+
+    /*!
+     * \brief Returns the velocity at a given Position.
+     */
+    template<class GlobalPosition>
+    auto velocityAtPos(const FVElementGeometry<freeFlowMassIndex>& fvGeometry, const GlobalPosition& pos) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).velocityAtPos(
+            fvGeometry, pos
+        );
+    }
+
 };
 
 } // end namespace Dumux
