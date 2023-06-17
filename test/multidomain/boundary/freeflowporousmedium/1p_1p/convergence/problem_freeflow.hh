@@ -14,6 +14,7 @@
 #define DUMUX_FREEFLOW_SUBPROBLEM_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/math.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
@@ -163,6 +164,7 @@ public:
             {
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
+                //values.setDirichlet(Indices::momentumXBalanceIdx);
             }
             else
             {
@@ -254,6 +256,28 @@ public:
                     t[0] = 1.0;
                     auto vt = v*t;
                     values.axpy((this->effectiveViscosity(element, fvGeometry, scvf)*this->betaBJ(fvGeometry, scvf, t))*vt, t);
+                    if (this->enableInertiaTerms())
+                    {
+                        static const bool unsymmetrizedGradientForBJ
+                            = getParamFromGroup<bool>(this->paramGroup(),
+                                                      "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false);
+
+                        auto vn = v*scvf.unitOuterNormal();
+                        values.axpy(this->density(element, fvGeometry, scvf)*vt*vn, t);
+
+                        if(unsymmetrizedGradientForBJ)
+                        {
+                            Dune::FieldMatrix<Scalar, 2, 2> gradV(0.0);
+                            for (const auto& scv : scvs(fvGeometry))
+                            {
+                                const auto& volVars = elemVolVars[scv];
+                                for (int dir = 0; dir < 2; ++dir)
+                                    gradV[dir].axpy(volVars.velocity(dir), elemFluxVarsCache[scvf].gradN(scv.indexInElement()));
+                            }
+                            auto val = t*mv(getTransposed(gradV),scvf.unitOuterNormal());
+                            values.axpy(-this->effectiveViscosity(element, fvGeometry, scvf)*val, t);
+                        }
+                    }
                 }
             }
             else
