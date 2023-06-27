@@ -60,6 +60,7 @@ HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \
 HTML_FILE_EXTENSION    = .html
 
 USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
 
 EXCLUDE_PATTERNS       = *_.hh
 

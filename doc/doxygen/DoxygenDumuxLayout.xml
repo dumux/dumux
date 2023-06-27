@@ -22,9 +22,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- Note that extra documentation can be added to groups in separate markdown files -->
     <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
-    <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
-    <tab type="modules" visible="yes" title="Module description" intro=""/>
     <tab type="user" url="@ref examples-and-tutorials" visible="yes" title="Examples and tutorials" intro=""/>
+    <tab type="modules" visible="yes" title="Module description" intro=""/>
+    <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
     <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
     <tab type="namespaces" visible="yes" title="">
