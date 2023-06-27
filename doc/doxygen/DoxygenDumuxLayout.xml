@@ -13,19 +13,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- We manually create the navigation hierarchy of the pages -->
     <tab type="user" url="@ref installation" visible="yes" title="Installation" intro=""/>
     <tab type="user" url="@ref getting-started" visible="yes" title="Getting started" intro=""/>
-    <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime Parameters" intro=""/>
-    <!-- This is how to create a hierarchy (can be removed once we have an example) -->
-    <!-- <tab type="usergroup" title="My Group">
-      <tab type="user" url="@ref mysubpage" title="My Page"/>
-      <tab type="user" url="@ref mysubpage2" title="My Page 2"/>
-    </tab> -->
     <!-- The modules contains pages for each group and subpages for each subgroup -->
     <!-- Note that extra documentation can be added to groups in separate markdown files -->
     <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
     <tab type="user" url="@ref examples-and-tutorials" visible="yes" title="Examples and tutorials" intro=""/>
-    <tab type="modules" visible="yes" title="Module description" intro=""/>
-    <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
+    <tab type="usergroup" title="Usage documentation">
+      <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime Parameters" intro=""/>
+      <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
+    </tab>
+    <tab type="modules" visible="yes" title="Module documentation" intro=""/>
     <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
     <tab type="namespaces" visible="yes" title="">
