@@ -36,7 +36,6 @@ The following resources are useful to get started with DuMu<sup>x</sup>:
 * [Installation guide][3]
 * [Getting started guide](https://dumux.org/docs/doxygen/master/getting-started.html)
 * [Documentation](https://dumux.org/docs/doxygen/master/),
-* [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf), a detailed DuMu<sup>x</sup> manual,
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
 * [Examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples), with detailed description of code and results,
 * [Mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux),
@@ -52,20 +51,20 @@ Automated testing of installation: [![installation testing pipeline](https://git
 
 DuMu<sup>x</sup> is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later
-version. The GPL can be [read online][5] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
+version. The GPL can be [read online][4] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
 provided in the topmost directory of the DuMu<sup>x</sup> source code tree.
 
 Please note that DuMu<sup>x</sup>' license, unlike DUNE's, does *not* feature a
 template exception to the GNU General Public License. This means that
 you must publish any source code which uses any of the DuMu<sup>x</sup> header
 files if you want to redistribute your program to third parties. If
-this is unacceptable to you, please [contact us][6] for a commercial
+this is unacceptable to you, please [contact us][5] for a commercial
 license.
 
 See the file [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) for copying permissions.
 For a curated list of contributors see [AUTHORS.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/AUTHORS.md).
 If you notice that a contributor is missing on the list,
-please [contact us][6] or open a merge request adding the name.
+please [contact us][5] or open a merge request adding the name.
 
 # How to cite
 
@@ -80,7 +79,7 @@ our publications:
 
 **DuMux 3 – an open-source simulator for solving flow and transport problems in porous media with a focus on model coupling.**
 *Computers & Mathematics with Applications*, 81, 423-443, (2021).
-[![dumuxCAMWAbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.camwa.2020.02.012-blue)](https://doi.org/10.1016/j.camwa.2020.02.012) [PDF][7]
+[![dumuxCAMWAbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.camwa.2020.02.012-blue)](https://doi.org/10.1016/j.camwa.2020.02.012) [PDF][6]
 
 ```bib
 @article{Koch2021,
@@ -139,7 +138,7 @@ within the test folder in the build directory, for `ninja` it has to be executed
 Some tests may depend on additional optional dependencies. You can find this by inspecting the argument `CMAKE_GUARD`,
 e.g. `HAVE_UMFPACK` means UMFPack is required (via installing Suitesparse), or `( "dune-foamgrid_FOUND" AND "dune-alugrid_FOUND" )`
 means that the test requires the additional Dune modules `dune-foamgrid` and `dune-alugrid`. For installing
-external dependencies, have a look at the [Handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf)
+external dependencies, have a look at the [documentation](https://dumux.org/docs/doxygen/master/external-libraries.html)
 and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/bin/installexternal.py).
 
 ## Test coverage
@@ -183,7 +182,6 @@ the degree of backwards compatibility be decided by a vote in one of the monthly
 [1]: https://dune-project.org/
 [2]: https://dumux.org/documents/dumux_awrpaper.pdf
 [3]: https://dumux.org/docs/doxygen/master/installation.html
-[4]: https://dumux.org/docs/handbook/master/dumux-handbook.pdf
-[5]: https://www.gnu.org/licenses/gpl-3.0.en.html
-[6]: https://www.iws.uni-stuttgart.de/en/lh2/
-[7]: https://doi.org/10.1016/j.camwa.2020.02.012
+[4]: https://www.gnu.org/licenses/gpl-3.0.en.html
+[5]: https://www.iws.uni-stuttgart.de/en/lh2/
+[6]: https://doi.org/10.1016/j.camwa.2020.02.012
