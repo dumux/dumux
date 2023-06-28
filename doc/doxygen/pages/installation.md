@@ -137,7 +137,7 @@ to your local setup. You can use `dumux/cmake.opts` as a starting point.
 ## 3. Install external dependencies via script
 
 There are various external libraries and modules that provide additional functionality but are
-not generally required to run DuMux. A list of external libraries and modules can be found in the [DuMux handbook](/docs/#handbook).
+not generally required to run DuMux.
 DuMux contains the script `installexternal.py` which allows you to install extension from your DuMux installation directory.
 
 If you run the script with the option \-\-help
