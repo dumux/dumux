@@ -198,14 +198,50 @@ The example above is taken from `test/porousmediumflow/1pnc/implicit/1p2c/noniso
 There is support for reading data and grids from VTK files, see Dumux::VTKReader.
 
 ## Gnuplot interface
-DuMux provides a small interface to GNUPlot, which can be used to plot results and generate
-image files (e.g., png). To use the gnuplot, gnuplot has to be installed.
-For more information see Dumux::GnuplotInterface.
+DuMux provides a small interface to [Gnuplot](http://www.gnuplot.info/),
+which can be used to plot results and generate
+image files (e.g. `.png`). To use the gnuplot, gnuplot has to be installed.
+The following is a brief introduction. For the class documentation, see Dumux::GnuplotInterface.
+
+A Gnuplot interface is available to plot or visualize results during a simulation run.
+To use the gnuplot interface you have to make some modifications in your file, e.g., your main file.
+
+First, you have to include the corresponding header file for the gnuplot interface.
+
+```cpp
+#include <dumux/io/gnuplotinterface.hh
+```
+
+Second, you have to create an instance of the class
+Dumux::GnuplotInterface (e.g. called `gnuplot`).
+
+```cpp
+Dumux::GnuplotInterface<double> gnuplot;
+```
+
+As an example, to plot the mole fraction of nitrogen (`y`) over time (`x`),
+extract the variables after each time step in the time loop.
+The actual plotting is done using the method of the Gnuplot interface:
+
+```cpp
+gnuplot.resetPlot();                         // reset the plot
+gnuplot.setXRange(0.0, 72000.0);             // specify xmin and xmax
+gnuplot.setYRange(0.0, 1.0);                 // specify ymin and ymax
+gnuplot.setXlabel("time [s]");               // set xlabel
+gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
+// set x-values, y-values, the name of the data file and the Gnuplot options
+gnuplot.addDataSetToPlot(x, y, "N2.dat", options);
+gnuplot.plot("mole_fraction_N2");            // set the name of the output file
+```
+
+It is also possible to add several data sets to one plot by calling Dumux::GnuplotInterface::addDataSetToPlot more than once.
+For more information have a look into a test including the gnuplot interface header file, the class documentation
+of Dumux::GnuplotInterface, or the header file itself `dumux/io/gnuplotinterface.hh`.
 
 ## Container I/O
 DuMux supports writing to file from and reading
 into some STL containers like `std::vector<double>` or `std::vector<Dune::FieldVector>`.
-If you want to read and write simple vectors, have a look at the header dumux/io/container.hh.
+If you want to read and write simple vectors, have a look at the header `dumux/io/container.hh`.
 
 ## Matrix and Vector I/O
 
