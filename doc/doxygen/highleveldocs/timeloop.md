@@ -1,6 +1,6 @@
 # TimeLoop
 
-In case of stationary PDEs, a time loop is not necessary. But in the case of non-stationary PDEs, an object of the class `TimeLoop` is instanciated which stores all parameters connected to the time management of the PDE such as time step width, current simulation time, total simulation time and so on. The base class of the time loop is implemented in [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/common/timeloop.hh).
+In case of stationary PDEs, a time loop is not necessary. But in the case of transient PDEs, an object of the class `TimeLoop` is instantiated which stores all parameters connected to the time management of the PDE such as time step size, current simulation time and total simulation time. The base class of the time loop is implemented in [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/common/timeloop.hh).
 
 ### Key functionalities
 
@@ -27,7 +27,7 @@ In case of stationary PDEs, a time loop is not necessary. But in the case of non
 * reportTimeStep():
     - State info on cpu time.
 * finalize():
-    - Print final status and stops tracking the time.
+    - Print final status and stops tracking the cpu time.
 * verbose():
     - Return if the time loop has verbose output or not.
 * setVerbose():
