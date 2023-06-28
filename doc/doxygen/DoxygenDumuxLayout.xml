@@ -23,8 +23,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref running-in-parallel" visible="yes" title="Running in parallel" intro=""/>
     </tab>
     <tab type="modules" visible="yes" title="Module documentation" intro=""/>
+    <tab type="user" url="@ref flow-and-transport-in-porous-media" visible="yes" title="Flow and transport in porous media" intro=""/>
     <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
-    <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
+    <tab type="usergroup" title="Developer documentation">
+      <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
+    </tab>
+    <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
       <tab type="namespacemembers" visible="yes" title="" intro=""/>
