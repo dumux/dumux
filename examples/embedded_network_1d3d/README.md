@@ -65,7 +65,7 @@ as spatial discretization method with tracer mole fraction as primary variables.
 `Tracer` model, an advection-diffusion-reaction model for porous media. In time, we use an implicit Euler scheme.
 The arising linear system is solved with a stabilized bi-conjugate gradient solver (`BiCGSTAB`) with a block-diagonal
 zero-fill incomplete LU factorization (`ILU0`) preconditioner. For details on the spatial discretization scheme,
-we recommend the [DuMu<sup>x</sup> handbook](https://dumux.org/handbook)
+we recommend the [DuMu<sup>x</sup> documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 or the [DuMu<sup>x</sup> paper](https://doi.org/10.1016/j.camwa.2020.02.012).
 
 # Implementation

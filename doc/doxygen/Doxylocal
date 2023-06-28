@@ -71,7 +71,7 @@ SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = NO
 
 # the bibliography file used for the doxygen documentation
-CITE_BIB_FILES         = @top_srcdir@/doc/handbook/dumux-handbook.bib
+CITE_BIB_FILES         = @top_srcdir@/doc/doxygen/dumux.bib
 
 # enable macro expansion only for specified macros
 MACRO_EXPANSION        = YES

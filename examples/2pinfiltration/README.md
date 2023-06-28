@@ -56,7 +56,6 @@ In addition, the DNAPL is injected at a point source at x = 0.502m and y = 3.02m
 
 We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations.
 The grid is adapitvely refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.
-For more information about the discretization please have a look at the [handbook](https://dumux.org/handbook).
 
 # Implementation
 

@@ -14,7 +14,6 @@ This a release issue template with a checklist based on [Release Manager Tasks](
     - Manager:
     - Lecture:
     - Doxygen:
-    - Handbook:
     - Course:
     - Examples:
     - Website:
@@ -37,7 +36,6 @@ __Hard Feature Freeze!__
 - [ ]  Generate example documentation with the script generate_example_docs.py
 - [ ]  Update CHANGELOG
 - [ ]  Announce hard feature freeze on the mailing list
-- [ ]  Update all install scripts and the install text in the handbook
 - [ ]  Header check (run `make headercheck`)
 - [ ]  Re-generate parameter list (`bin/doc/generate_parameterlist.py`) and check log file (maybe manual updates to `bin/doc/docextra/parameters.json` are needed)
 - [ ]  Make sure the CMakeLists.txt in `dumux` subfolder are up-to-date (generated with `bin/create_cmakelists.py`, dumux `make install` should result in a usable installed dumux version)

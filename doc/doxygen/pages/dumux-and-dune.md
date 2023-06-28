@@ -53,9 +53,7 @@ For a more thorough description of Dune's
 grid definition, see @cite BASTIAN2008.
 
 In addition to the grid interface, Dune also provides quite a few
-additional modules, of which the `dune-localfunctions` and
-`dune-istl` modules are the most relevant in the context of
-this handbook. `dune-localfunctions` provides a set of generic
+additional modules. `dune-localfunctions` provides a set of generic
 finite element shape functions, while `dune-istl` is the
 Iterative Solver Template Library
 and provides generic, highly optimized linear algebra routines for
