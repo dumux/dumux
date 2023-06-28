@@ -5,6 +5,7 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 
 ### General changes / structure
 
+- __Handbook__: The PDF handbook is discontinued. The content has been merged into the online documentation
 
 ### Improvements and Enhancements
 
