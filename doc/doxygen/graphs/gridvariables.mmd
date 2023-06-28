@@ -1,0 +1,7 @@
+graph TB
+    1[gridVariables] ---> 2[gridVolumeVariables]
+    1 ---> gridFaceVariables
+    1 ---> gridFluxVariablesCache
+    2 -.->|if cache enabled| 3[volumeVariables]
+    2 --->|localView| 4[elementVolumeVariables]
+    4 ---> 3

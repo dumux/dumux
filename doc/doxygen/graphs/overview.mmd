@@ -1,0 +1,35 @@
+    flowchart LR
+        subgraph Geometry
+        A(Grid) --> B(GridManager)
+        B --> C(GridView)
+        C --> D(GridGeometry)
+        end
+
+        subgraph Variables
+        D --> F(GridVariables)
+        end
+
+        subgraph External
+        D --> E(Problem)
+        ETwo(TimeLoop) --> E
+        D --> G(SolutionVector)
+        G --> F
+        end
+
+        subgraph Assembly
+        D --> H(Assembler)
+        E --> H
+        F --> H
+        G --> H
+        I(LocalResidual) --> ITwo(LocalAssembler)
+        ITwo --> H
+        end
+
+        subgraph Solver
+        J(LinearSolver) --> K(Solver)
+        H --> K
+        end
+        subgraph Output
+        L(IOField) --> M(VTKOutputModule)
+        F --> M
+        end

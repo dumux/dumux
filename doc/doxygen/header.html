@@ -54,6 +54,7 @@ $mathjax
 $extrastylesheet
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
 <!-- https://bryce.io/gitlab-corners/ -->
 <div class="gitlab-corner-wrapper">
@@ -90,5 +91,15 @@ $extrastylesheet
  </tbody>
 </table>
 </div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e19417ff',
+      secondaryColor: '#0c73cfff',
+      tertiaryColor: '#F9FAFC',
+    },
+  });
 <!--END TITLEAREA-->
 <!-- end header part -->
