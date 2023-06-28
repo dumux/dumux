@@ -1,0 +1,3 @@
+# SolutionVector
+
+The solution vector is a container containing the primary variables for each element. It is an array sol\[i\]\[j\] where the index i iterates over the elements and j iterates over the primary variables. Thus, sol[4][1] would return the second primary variable for the element with the index 4. For example, for a porous medium test, the first primary variable could be the wetting-phase pressure and the second one could be the non-wetting phase saturation. Primary variables describe the quantities we solve for in our system of equations. Depending on the model, there can be arbitrarily many primary variables.

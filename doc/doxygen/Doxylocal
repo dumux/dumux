@@ -15,13 +15,11 @@ INPUT                 += @top_srcdir@/README.md \
                          @srcdir@/README.md \
                          @top_srcdir@/python/README.md \
                          @top_srcdir@/dumux \
-                         @srcdir@/extradoc/parameterlist.txt
+                         @srcdir@/extradoc/parameterlist.txt \
+                         @srcdir@/highleveldocs \
 
 USE_MDFILE_AS_MAINPAGE = @top_srcdir@/README.md
 TOC_INCLUDE_HEADINGS   = 4
-
-# custom doxygen commands
-ALIASES                += mermaid{1}="@htmlonly <div class=\"mermaid\"> @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly </div> @endhtmlonly"
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
@@ -35,7 +33,8 @@ EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
 
 EXAMPLE_PATH          += @srcdir@/extradoc \
                          @top_srcdir@/test/python \
-                         @srcdir@/groups/details
+                         @srcdir@/groups/details \
+                         @srcdir@/graphs/ \
 
 IMAGE_PATH             = @srcdir@/images
 
@@ -64,7 +63,13 @@ MATHJAX_VERSION        = MathJax_3
 
 EXCLUDE_PATTERNS       = *_.hh
 
+ALIASES               += mermaid{1}="@htmlonly <div class=\"mermaid\"> ^^ @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly ^^ </div> @endhtmlonly" \
+#                          "warning=\xrefitem warning \"Warning List\" \"Warning List\""
+
 GENERATE_TODOLIST      = NO
+GENERATE_TESTLIST      = NO
+GENERATE_BUGLIST       = NO
+GENERATE_DEPRECATEDLIST= NO
 
 # enable client side searching
 SEARCHENGINE           = YES
@@ -77,11 +82,18 @@ CITE_BIB_FILES         = @top_srcdir@/doc/doxygen/dumux.bib
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 
+# When the TOC_INCLUDE_HEADINGS tag is set to a non-zero value, all headings up
+# to that level are automatically included in the table of contents, even if
+# they do not have an id attribute.
+TOC_INCLUDE_HEADINGS   = 0
+
 DOT_GRAPH_MAX_NODES    = 100
 
 DOT_IMAGE_FORMAT       = svg
 
 SHORT_NAMES           = NO
+
+DISABLE_INDEX          = YES
 
 # Settings required for doxygen-awesome theme
 GENERATE_TREEVIEW      = YES

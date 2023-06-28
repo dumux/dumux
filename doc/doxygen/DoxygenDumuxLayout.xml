@@ -33,6 +33,31 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
     </tab>
     <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
+    <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
+     <tab type="usergroup" url="@ref overview" title="High-level Documentation">
+      <tab type="user" url="@ref grid" title="Grid"/>
+      <tab type="user" url="@ref gridmanager" title="Grid Manager"/>
+      <tab type="user" url="@ref gridview" title="Grid View"/>
+      <tab type="user" url="@ref gridgeometry" title="Grid Geometry"/>
+      <tab type="user" url="@ref gridvariables" title="Grid Variables"/>
+      <tab type="user" url="@ref assembler" title="Assembler"/>
+      <tab type="user" url="@ref solver" title="Solver"/>
+      <tab type="user" url="@ref timeloop" title="Time Loop"/>
+      <tab type="user" url="@ref problem" title="Problem"/>
+      <tab type="user" url="@ref solutionvector" title="Solution Vector"/>
+      <tab type="user" url="@ref iofields" title="IO Fields"/>
+      <tab type="user" url="@ref vtkoutputmodule" title="VTK Output Module"/>
+    </tab>
+    <!-- This is how to create a hierarchy (can be removed once we have an example) -->
+    <!-- <tab type="usergroup" title="My Group">
+      <tab type="user" url="@ref mysubpage" title="My Page"/>
+      <tab type="user" url="@ref mysubpage2" title="My Page 2"/>
+    </tab> -->
+    <!-- The modules contains pages for each group and subpages for each subgroup -->
+    <!-- Note that extra documentation can be added to groups in separate markdown files -->
+    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
+    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
+    <tab type="modules" visible="yes" title="Module description" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
       <tab type="namespacemembers" visible="yes" title="" intro=""/>

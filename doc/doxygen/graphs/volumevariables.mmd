@@ -1,0 +1,4 @@
+flowchart LR
+    A[volumeVariables] --> B("completeFluidState()")
+    B -->|"sets variables"| C[fluidState]
+    B <-->|"calclulates variables"| D[fluidSystem]

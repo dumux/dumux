@@ -1,0 +1,9 @@
+flowchart LR
+    A(gridVariables) --> D(vtkWriter)
+    B(solutionVector) --> |"only required for instance of `VtkOutputModule`"| D
+    C(problem) -->|"problem.name()"| D
+    click A "./gridvariables.html"
+    click B "./solutionvector.html"
+    click C "./problem.html"
+    click D "./vtkoutputmodule.html"
+

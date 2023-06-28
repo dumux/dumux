@@ -1,0 +1,10 @@
+flowchart LR
+    A(Grid) -->|"template parameter for declaration"| B(gridManager)
+    B -->|"init()"| C(grid)
+    C -->|"gridView()"| D(gridView)
+    D --> |"argument for constructor"| E(gridgeometry)
+    click A "./grid.html"
+    click B "./gridmanager.html"
+    click C "./grid.html"
+    click D "./gridview.html"
+    click E "./gridgeometry.html"
