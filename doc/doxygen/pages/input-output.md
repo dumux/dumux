@@ -159,7 +159,7 @@ and Dumux::GridManager<Dune::YaspGrid<dim,Dune::TensorProductCoordinates<ctype,d
 
 ## Other input and output formats
 
-The following formats are supported for checkpointing, visualization, and general
+The following formats are supported for visualization, and general
 data input and output.
 
 ### VTK file format (output)
@@ -248,3 +248,23 @@ If you want to read and write simple vectors, have a look at the header `dumux/i
 `dune-istl` (the Dune Iterative Solver Template Library) supports writing and reading vectors
 and matrices to/from different format. For example you can write a matrix in a sparse matrix format that
 can be read by Matlab (see the header `dune/istl/io.hh`).
+
+## Restarting simulations (check-pointing)
+
+DuMux has some experimental support for check-pointing (restarting paused/stopped/crashed simulations).
+You can restart a DuMux simulation from any time point where a VTK file was written out.
+This is currently only supported for sequential, non-adaptive simulations. For adaptive simulation
+the full hierarchical grid has to be stored. This is usually done with the grid's `Dune::BackupRestoreFacility`.
+There is currently no special support by DuMux for that, but it is possible to implement
+a restart using `Dune::BackupRestoreFacility` with plain Dune.
+
+For VTK files the output can be read with the free function `Dumux::loadSolution`. Grids can be read with
+the `Dumux::VTKReader` or you can simply recreate the grid as you did in the first simulation run.
+
+Writing double-precision floating point numbers to VTK files is available since Dune release 2.7.
+If you are using that version, it is now possible to specify output precision in the input file using
+`Dumux::Vtk::Precision` followed by either `Float32`, `Float64`, `UInt32`, `UInt8` or `Int32`
+`Float32` is set as the default. We especially advice the use of `Float64` when working with restart files.
+
+The restart capabilities will hopefully be improved in future versions of DuMux $3$.
+We are looking forward to any contributions (especially HDF5 / XDMF support, improvement of VTK support).
