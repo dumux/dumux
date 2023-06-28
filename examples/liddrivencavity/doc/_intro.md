@@ -58,6 +58,6 @@ Mass and momentum balance are given by
 
 where $`\bold{v}`$ and p are the velocity and pressure of the fluid (primary variables). $`\rho`$ and $`\mu=\rho\nu`$ are the mass density and dynamic viscosity (fluid properties).
 
-All equations are discretized with the staggered-grid finite-volume scheme as spatial discretization with pressures and velocity components as primary variables. For details on the discretization scheme, we refer to the DuMu<sup>x</sup> [handbook](https://dumux.org/docs/handbook/master/dumux-handbook.pdf).
+All equations are discretized with the staggered-grid finite-volume scheme as spatial discretization with pressures and velocity components as primary variables. For details on the discretization scheme, we refer to the DuMu<sup>x</sup> [documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 
 # Implementation & Postprocessing

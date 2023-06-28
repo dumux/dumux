@@ -36,7 +36,7 @@ Furthermore, isothermal conditions with a homogeneous temperature distribution o
 
 All equations are discretized with the staggered-grid finite-volume scheme as spatial discretization
 with pressures and velocity components as primary variables. For details on the discretization scheme,
-have a look at the Dumux [handbook](https://dumux.org/handbook).
+have a look at the DuMu<sup>x</sup> [documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 
 ## Problem set-up
 This example considers stationary flow of a fluid between two parallel solid plates in two dimensions.
