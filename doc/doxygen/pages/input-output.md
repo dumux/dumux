@@ -159,7 +159,7 @@ and Dumux::GridManager<Dune::YaspGrid<dim,Dune::TensorProductCoordinates<ctype,d
 
 ## Other input and output formats
 
-The following formats are supported for checkpointing, visualization, and general
+The following formats are supported for visualization, and general
 data input and output.
 
 ### VTK file format (output)
@@ -198,17 +198,73 @@ The example above is taken from `test/porousmediumflow/1pnc/implicit/1p2c/noniso
 There is support for reading data and grids from VTK files, see Dumux::VTKReader.
 
 ## Gnuplot interface
-DuMux provides a small interface to GNUPlot, which can be used to plot results and generate
-image files (e.g., png). To use the gnuplot, gnuplot has to be installed.
-For more information see Dumux::GnuplotInterface.
+DuMux provides a small interface to [Gnuplot](http://www.gnuplot.info/),
+which can be used to plot results and generate
+image files (e.g. `.png`). To use the gnuplot, gnuplot has to be installed.
+The following is a brief introduction. For the class documentation, see Dumux::GnuplotInterface.
+
+A Gnuplot interface is available to plot or visualize results during a simulation run.
+To use the gnuplot interface you have to make some modifications in your file, e.g., your main file.
+
+First, you have to include the corresponding header file for the gnuplot interface.
+
+```cpp
+#include <dumux/io/gnuplotinterface.hh
+```
+
+Second, you have to create an instance of the class
+Dumux::GnuplotInterface (e.g. called `gnuplot`).
+
+```cpp
+Dumux::GnuplotInterface<double> gnuplot;
+```
+
+As an example, to plot the mole fraction of nitrogen (`y`) over time (`x`),
+extract the variables after each time step in the time loop.
+The actual plotting is done using the method of the Gnuplot interface:
+
+```cpp
+gnuplot.resetPlot();                         // reset the plot
+gnuplot.setXRange(0.0, 72000.0);             // specify xmin and xmax
+gnuplot.setYRange(0.0, 1.0);                 // specify ymin and ymax
+gnuplot.setXlabel("time [s]");               // set xlabel
+gnuplot.setYlabel("mole fraction mol/mol");  // set ylabel
+// set x-values, y-values, the name of the data file and the Gnuplot options
+gnuplot.addDataSetToPlot(x, y, "N2.dat", options);
+gnuplot.plot("mole_fraction_N2");            // set the name of the output file
+```
+
+It is also possible to add several data sets to one plot by calling Dumux::GnuplotInterface::addDataSetToPlot more than once.
+For more information have a look into a test including the gnuplot interface header file, the class documentation
+of Dumux::GnuplotInterface, or the header file itself `dumux/io/gnuplotinterface.hh`.
 
 ## Container I/O
 DuMux supports writing to file from and reading
 into some STL containers like `std::vector<double>` or `std::vector<Dune::FieldVector>`.
-If you want to read and write simple vectors, have a look at the header dumux/io/container.hh.
+If you want to read and write simple vectors, have a look at the header `dumux/io/container.hh`.
 
 ## Matrix and Vector I/O
 
 `dune-istl` (the Dune Iterative Solver Template Library) supports writing and reading vectors
 and matrices to/from different format. For example you can write a matrix in a sparse matrix format that
 can be read by Matlab (see the header `dune/istl/io.hh`).
+
+## Restarting simulations (check-pointing)
+
+DuMux has some experimental support for check-pointing (restarting paused/stopped/crashed simulations).
+You can restart a DuMux simulation from any time point where a VTK file was written out.
+This is currently only supported for sequential, non-adaptive simulations. For adaptive simulation
+the full hierarchical grid has to be stored. This is usually done with the grid's `Dune::BackupRestoreFacility`.
+There is currently no special support by DuMux for that, but it is possible to implement
+a restart using `Dune::BackupRestoreFacility` with plain Dune.
+
+For VTK files the output can be read with the free function `Dumux::loadSolution`. Grids can be read with
+the `Dumux::VTKReader` or you can simply recreate the grid as you did in the first simulation run.
+
+Writing double-precision floating point numbers to VTK files is available since Dune release 2.7.
+If you are using that version, it is now possible to specify output precision in the input file using
+`Dumux::Vtk::Precision` followed by either `Float32`, `Float64`, `UInt32`, `UInt8` or `Int32`
+`Float32` is set as the default. We especially advice the use of `Float64` when working with restart files.
+
+The restart capabilities will hopefully be improved in future versions of DuMux $3$.
+We are looking forward to any contributions (especially HDF5 / XDMF support, improvement of VTK support).
