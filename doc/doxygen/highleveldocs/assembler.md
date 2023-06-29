@@ -1,7 +1,7 @@
 # Assembler
 
 
-The `Assembler` is responsible for calculating the global Jacobian-matrix and the global residual vector. To accomplish this, it relies on a discretization-specific local `Assembler`. The `Assembler` generates a shared_ptr for the Jacobian-matrix and a shared_ptr for the residual vector. The type of the residual vector is the same as that of the `SolutionVector`. Since the Jacobian is the partial derivative of the residual with respect to each entry of the `SolutionVector`, the matrix's type is a combination of the two. Dumux uses element-wise assembly, meaning that for each element, a local `Assembler` is instantiated. Typically, the assembleJacobianAndResidual() method is called.
+The `Assembler` is responsible for calculating the global residual vector and the global Jacobian matrix. It relies on a discretization-specific local assembler engine. The Jacobian matrix is the partial derivative of the residual with respect to each entry of the solution vector. Dumux uses an element-wise assembly algorithm. For each element, a local assembler is instantiated. Typically, the `assembleJacobianAndResidual` method is called which assembles both residual and Jacobian in one go.
 
 ### Key functionalites
 
