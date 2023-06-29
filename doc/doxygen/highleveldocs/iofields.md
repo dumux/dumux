@@ -1,6 +1,6 @@
 # IOFields
 
-This class can used to add model specific output data to a custom @ref vtkoutputmodule "vtkWriter".
+This class can used to add model specific output data to a custom @ref vtkoutputmodule "vtkWriter". An `IOFields` class can be taylored to a specific `Model` class, see also @ref model.
 
 
 ### Key functionalities
