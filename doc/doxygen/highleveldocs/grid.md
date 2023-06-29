@@ -1,7 +1,9 @@
 # Grid
 
 Grids are provided by DUNE or external implementations, but all have to share the DUNE grid interface.
-The grid is an abstract concept consisting of several entities: vertices, edges, faces, cells, elements,... Furthermore, additional properties characterize the capabilities and specializations of a grid:
+The grid is an abstract concept consisting of several entities: vertices, edges, faces, cells, elements..., all of which can be accessed via the *grid view*, see @ref gridview.
+
+Furthermore, additional properties characterize the capabilities and specializations of a grid:
 * dimension and co-dimension
 * element types
 * conforming or nonconforming
@@ -31,9 +33,9 @@ Within Dumux, the grid type is set within the `properties.hh` file. Standard gri
 * size(...):
     - Return number of grid or leaf entities of a given `codim` on a given `level`. Via `codim`, which is the complement to the dimension `dim`, geometrical entities can be desribed. If we take a 3D element as an example, then the element itself is characterized by a dimension `dim` of 3 but its `codim` is 0. A face of such element would have `dim` 2 and but its `codim` is 1. An edge of this element would have `dim=1` and `codim=2`. Basically, the `codim` of a point entity is always 0 while a grid element has full dimesion `dim`.
 * levelGridView(level):
-    - View for a grid `level`. Contains information on all the elements belonging to one certain hierarchy `level` of a grid.
+    - View for a grid `level`. Contains information on all the elements belonging to one certain hierarchy `level` of a grid. This is primarily relevant for simulations using multigrid methods.
 * leafGridView():
-    - View for the leaf grid. Contains information on all leaf elements, this is the highest refinement level of a grid.
+    - View for the leaf grid. Contains information on all leaf elements. This implies, that elements are treated as if on the same level. The refinement history aswell as the refinement levels are not visible in this grid view. For the majority of the use cases, simulations will be performed on the leaf grid.
 * globalRefine(refCount):
     - Refine the grid `refCount` times using the default refinement rule.
 * mark(refCount, entity):
