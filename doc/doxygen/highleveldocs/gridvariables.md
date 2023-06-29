@@ -12,7 +12,7 @@ one for the current and another one for the volume variables of the previous tim
 ### Key functionalities
 
 - init(x): initalizes the grid variables for a given solution vector (primary variables) `x`
-- update(x): updates the variables for a new solution `x`. Some variables, for instance the permeability in porous-medium flow problems, can be marked as solution-independent. In contrast to `init`, `update` only computes those variables that are solution-dependent, which can be significantly faster.
+- update(x): updates the variables depending on the given solution vector `x`. Some variables, for instance the permeability in porous-medium flow problems, can be marked as solution-independent. In contrast to `init`, `update` only computes those variables that are solution-dependent, which can be significantly faster.
 
 
 ### Overview
@@ -28,14 +28,14 @@ In general, there are two options in Dumux:
 1. Caching enabled
 2. Caching disabled
 
-If caching is enabled, a `GridVolumeVariables` instance (e.g., curGridVolVars) has a vector of `VolumeVariables`.
+If caching is enabled, a `GridVolumeVariables` instance (e.g., `curGridVolVars`) has a vector of `VolumeVariables`.
 Since the smallest entity of a volume is a `Sub-control-volume` in Dumux, the length of the vector is the number of sub-control-volumes.
 One can access entities of that vector with the respective sub-control-volume-index.
 
 If caching is disabled, one can acces the `VolumeVariables` only via the `ElementVolumeVariables`.
 
 Exemplary for the two implementations (e.g., caching enabled and disabled) in DuMuX, the implementation of `GridVolumeVariables` is sketched:
-If caching is enabled, this is exactly how gridVolumeVariables are implemented. If caching is disabled, the global vector on the left does not exist.
+If caching is enabled, this is exactly how `gridVolumeVariables` are implemented. If caching is disabled, the global vector on the left does not exist.
 
 
 <div align="center">
@@ -57,7 +57,7 @@ In short, `ElementVolumeVariables` are the view of a element towards all `Volume
 
 In the case of enabled caching, the `ElementVolumeVariables` forward the entries belonging to that element from the globally stored vector described in `GridVolumeVariables`.
 
-If caching is disabled, the `ElementVolumeVariables` do create a vector of `VolumeVariables` for each element on the fly.
+If caching is disabled, the `ElementVolumeVariables` would create a vector of `VolumeVariables` for each element on the fly.
 
 In both cases the `ElementVolumeVariables` will be forwarded to the `LocalAssembler`. Since the `LocalAssembler` only needs information of the sub-control-volumes in the respective stencil.
 
@@ -70,10 +70,10 @@ In both cases the `ElementVolumeVariables` will be forwarded to the `LocalAssemb
 ## VolumeVariables
 
 `VolumeVariables` is a class that gives access and lets you store variables are actually needed for the computation. Here, one could implement a function that calculates the density of your fluid of interest from `PrimaryVariables`.
-However, in DuMuX there exists another layer. For instance, access to variables that are connected to your fluid of interest can be accessed and stored via the fluidstate.
-If you keep using the example of variables that are connected to your fluid of interest, equations to calculate the variables are per default defined in the  fluidsystem.
+However, in DuMuX there exists another layer. For instance, access to variables that are connected to your fluid of interest can be accessed and stored via the @ref fluidstate.
+If you keep using the example of variables that are connected to your fluid of interest, equations to calculate the variables are per default defined in the @ref fluidsystem.
 The same logic applies to other scenarios, for instance variables that are connected to the solid (i.e., porosity).
-Per default, the VolumeVariables class acts gives you access to the next layer. However, it is not mandatory to implement a `FluidState` or `Fluidsystem`.
+Per default, the `VolumeVariables` class gives you access to the next layer. However, it is not mandatory to implement a `FluidState` or `Fluidsystem`.
 
 For implementation details it is reffered to the modules-documentation:
 
@@ -85,5 +85,5 @@ For implementation details it is reffered to the modules-documentation:
 ### Key functionalites
 
 - completeFluidState()
-  - sets the properties of the @ref fluidstate, that are primaryVariables
+  - sets the properties of the @ref fluidstate, that are `primaryVariables`
   - calculates the rest of the variables concerning the fluid using the functions defined in the @ref fluidsystem
