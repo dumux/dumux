@@ -1,3 +1,3 @@
 @page fluidsystem FluidSystem
 
-Implementing the FluidSystem in not mandatory. However, per default in the fluidSystem, the actual equations to calculate fluid propoerties are defined. These equation as the name suggests, depend on the system (i.e., components) of your interest.
+Implementing the `FluidSystem` in not mandatory. However, per default in the fluidSystem, the actual equations to calculate fluid propoerties are defined. These equation as the name suggests, depend on the system (i.e., components) of your interest. The `FluidSystem` encapsulates the thermodynamics of the physical fluid system and provides member functions to calculate them. The `FluidSystem` encapsulates the specific thermodynamic model, as it defines, how the mixture of different components behave etc. Note that `FluidSystems` do not consider chemical reactions, but rather thermopyhsical properties. To store the properties of a fluid state, there exist also the class @ref fluidstate.
