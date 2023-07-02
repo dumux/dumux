@@ -122,6 +122,11 @@ public:
         // make sure there are no traces of previous stages
         pdeSolver_->assembler().clearStages();
 
+        // compute contributions of previous solution
+        auto stageParams = std::make_shared<StageParams>(*msMethod_, 0, t, dt);
+        pdeSolver_->assembler().prepareStage(vars, stageParams);
+
+        // for the next stages we need to solve a (nonlinear) equation system in each stage
         for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
         {
             // extract parameters for this stage from the time stepping method

@@ -50,23 +50,23 @@ public:
 
     void assembleResidual(const Variables& vars)
     {
+        if (stageParams_->size() != spatialResiduals_.size())
+            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
+
+        // assemble current components
+        assembleResiduals_(vars,
+            temporalResiduals_.back(),
+            spatialResiduals_.back()
+        );
+
+        // assemble residual for current stage solver
         res_ = 0.0;
-
-        const auto storage = [] (const auto& stageVars)
-        { return stageVars.dofs(); };
-
-        const auto source = [] (const auto& stageVars)
-        { using std::exp; return exp(stageVars.timeLevel().current()); };
-
         for (std::size_t k = 0; k < stageParams_->size(); ++k)
         {
-            const bool isCurrent = k == stageParams_->size() - 1;
-            const auto& curVars = isCurrent ? vars : prevStageVariables_[k];
-
             if (!stageParams_->skipTemporal(k))
-                res_ += stageParams_->temporalWeight(k)*storage(curVars);
+                res_ += stageParams_->temporalWeight(k)*temporalResiduals_[k];
             if (!stageParams_->skipSpatial(k))
-                res_ -= stageParams_->spatialWeight(k)*source(curVars);
+                res_ -= stageParams_->spatialWeight(k)*spatialResiduals_[k];
         }
     }
 
@@ -82,26 +82,43 @@ public:
         stageParams_ = params;
         const auto curStage = params->size() - 1;
 
-        // we keep track of previous stages, they are needed for residual assembly
-        prevStageVariables_.push_back(variables);
-
-        // Now we update the time level of the given grid variables
+        // we update the time level of the given grid variables
         const auto t = params->timeAtStage(curStage);
         const auto prevT = params->timeAtStage(0);
         const auto dtFraction = params->timeStepFraction(curStage);
         variables.updateTime(Experimental::TimeLevel{t, prevT, dtFraction});
+
+        // create residuals (and initialize initial residual)
+        spatialResiduals_.emplace_back(0.0);
+        temporalResiduals_.emplace_back(0.0);
+        if (curStage == 0)
+            assembleResiduals_(variables,
+                temporalResiduals_.back(),
+                spatialResiduals_.back()
+            );
     }
 
     void clearStages()
     {
-        prevStageVariables_.clear();
+        spatialResiduals_.clear();
+        temporalResiduals_.clear();
         stageParams_.reset();
     }
 
 private:
+    void assembleResiduals_(const Variables& variables,
+                            ResidualType& temporal,
+                            ResidualType& spatial) const
+    {
+        using std::exp;
+        temporal = variables.dofs();
+        spatial = exp(variables.timeLevel().current());
+    }
+
     ResidualType res_;
     JacobianMatrix jac_;
-    std::vector<Variables> prevStageVariables_;
+    std::vector<ResidualType> spatialResiduals_;
+    std::vector<ResidualType> temporalResiduals_;
     std::shared_ptr<const StageParams> stageParams_;
 };
 
