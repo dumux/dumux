@@ -188,6 +188,7 @@ int main(int argc, char* argv[])
     testIntegration(std::make_shared<ExplicitEuler<Scalar>>(), 4.9917e-03);
     testIntegration(std::make_shared<ImplicitEuler<Scalar>>(), 5.0083e-03);
     testIntegration(std::make_shared<Theta<Scalar>>(0.5), 8.3333e-06);
+    testIntegration(std::make_shared<DIRKThirdOrderAlexander<Scalar>>(), 7.9214e-09);
     testIntegration(std::make_shared<RungeKuttaExplicitFourthOrder<Scalar>>(), 3.4829e-12);
 
     return 0;

@@ -3,6 +3,13 @@
 //
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightInfo: Copyright © dune-pdelab developers, see LICENSE.md (permalink below)
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The code is based on the implementation of time stepping method parameters
+// in dune-pdelab (https://archive.softwareheritage.org/swh:1:cnt:9c3d72412f8e4d48d84a0090b2bb4362b5a0d843)
+// licensed under GPL-3.0-or-later, see their LICENSE.md for a full list of copyright holders at
+// https://archive.softwareheritage.org/swh:1:cnt:b11b484e74eefe20c74f7043309b1b02853df2eb.
+// Modifications (different interface naming, comments, types) are licensed under GPL-3.0-or-later.
 //
 /*!
  * \file
@@ -186,6 +193,65 @@ private:
     std::array<std::array<Scalar, 5>, 4> paramAlpha_;
     std::array<std::array<Scalar, 5>, 4> paramBeta_;
     std::array<Scalar, 5> paramD_;
+};
+
+/*!
+ * \brief Third order DIRK scheme
+ * \note see Alexander (2003) https://doi.org/10.1016/S0168-9274(03)00012-6
+ */
+template<class Scalar>
+class DIRKThirdOrderAlexander final : public MultiStageMethod<Scalar>
+{
+public:
+    DIRKThirdOrderAlexander()
+    {
+        constexpr Scalar alpha = []{
+            // Newton iteration for alpha
+            Scalar alpha = 0.4358665215; // initial guess
+            for (int i = 0; i < 10; ++i)
+                alpha = alpha - (alpha*(alpha*alpha-3.0*(alpha-0.5))-1.0/6.0)/(3.0*alpha*(alpha-2.0)+1.5);
+            return alpha;
+        }();
+
+        constexpr Scalar tau2 = (1.0+alpha)*0.5;
+        constexpr Scalar b1 = -(6.0*alpha*alpha -16.0*alpha + 1.0)*0.25;
+        constexpr Scalar b2 = (6*alpha*alpha - 20.0*alpha + 5.0)*0.25;
+
+        paramD_ = {{0.0, alpha, tau2, 1.0}};
+        paramAlpha_ = {{
+            {-1.0, 1.0, 0.0, 0.0},
+            {-1.0, 0.0, 1.0, 0.0},
+            {-1.0, 0.0, 0.0, 1.0}
+        }};
+        paramBeta_ = {{
+            {0.0, alpha, 0.0, 0.0},
+            {0.0, tau2-alpha, alpha, 0.0},
+            {0.0, b1, b2, alpha}
+        }};
+    }
+
+    bool implicit () const final
+    { return true; }
+
+    std::size_t numStages () const final
+    { return 3; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "diagonally implicit Runge-Kutta 3rd order (Alexander)"; }
+
+private:
+    std::array<std::array<Scalar, 4>, 3> paramAlpha_;
+    std::array<std::array<Scalar, 4>, 3> paramBeta_;
+    std::array<Scalar, 4> paramD_;
 };
 
 } // end namespace MultiStage
