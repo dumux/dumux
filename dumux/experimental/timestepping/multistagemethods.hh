@@ -39,12 +39,12 @@ namespace Dumux::Experimental {
  *
  * \f[
  * \begin{equation}
- *   \frac{\partial M(x)}{\partial t} - R(x, t) = 0,
+ *   \frac{\partial M(x, t)}{\partial t} - R(x, t) = 0,
  * \end{equation}
  * \f]
  *
- * where \f$ M(x)\f$ is the temporal operator/residual in terms of the solution \f$ x \f$,
- * and \f$ R(x)\f$ is the discrete spatial operator/residual.
+ * where \f$ M(x, t)\f$ is the temporal operator/residual in terms of the solution \f$ x \f$,
+ * and \f$ R(x, t)\f$ is the discrete spatial operator/residual.
  * \f$ M(x)\f$ usually corresponds to the conserved quantity (e.g. mass), and \f$ R(x)\f$
  * contains the rest of the residual. We can then construct \f$ m \f$-stage time discretization methods.
  * Integrating from time \f$ t^n\f$ to \f$ t^{n+1}\f$ with time step size \f$ \Delta t^n\f$, we solve:
@@ -53,13 +53,22 @@ namespace Dumux::Experimental {
  * \begin{aligned}
  *   x^{(0)} &= u^n\\
  *   \sum_{k=0}^i \left[ \alpha_{ik} M\left(x^{(k)}, t^n + d_k\Delta t^n\right)
- *     + \beta_{ik}\Delta t^n R \left(x^{(k)}, t^n+d_k\Delta t^n \right)\right] &= 0 & \forall i \in \{1,\ldots,m\} \\
+ *     + \beta_{ik}\Delta t^n R \left(x^{(k)}, t^n+d_k\Delta t^n \right)\right]
+ *      &= 0 & \forall i \in \{1,\ldots,m\} \\
  *   x^{n+1} &= x^{(m)}
  * \end{aligned}
  * \f]
  * where \f$ x^{(k)} \f$ denotes the intermediate solution at stage \f$ k \f$.
  * Dependent on the number of stages \f$ m \f$, and the coefficients \f$ \alpha, \beta, d\f$,
  * schemes with different properties and order of accuracy can be constructed.
+ *
+ * That the summation only goes up to \f$ i \f$ in stage \f$ i \f$ means that we
+ * restrict ourselves to diagonally-implicit Runge-Kutta schemes (DIRK)
+ * and explicit schemes.
+ *
+ * Note that when computing the Jacobian of the residual with respect
+ * to \f$ x^{(k)} \f$ at stage \f$ k \f$, only the terms containing the solution of
+ * the current stage \f$ k \f$ contribute to the derivatives.
  */
 template<class Scalar>
 class MultiStageMethod
