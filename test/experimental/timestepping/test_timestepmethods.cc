@@ -26,7 +26,7 @@
 
 /*
    This tests the time integration methods by solving the
-   linear ODE du/dt = exp(t), where u is the unknown
+   linear ODE: du/dt - exp(t) = 0, where u is the unknown
    and t is the time. We use the initial condition u_0 = 1,
    and thus, the exact solution is u_e = exp(t) - 1.
  */
@@ -66,7 +66,7 @@ public:
             if (!stageParams_->skipTemporal(k))
                 res_ += stageParams_->temporalWeight(k)*temporalResiduals_[k];
             if (!stageParams_->skipSpatial(k))
-                res_ -= stageParams_->spatialWeight(k)*spatialResiduals_[k];
+                res_ += stageParams_->spatialWeight(k)*spatialResiduals_[k];
         }
     }
 
@@ -135,7 +135,7 @@ private:
     {
         using std::exp;
         temporal = variables.dofs();
-        spatial = exp(variables.timeLevel().current());
+        spatial = -exp(variables.timeLevel().current());
     }
 
     ResidualType res_;
