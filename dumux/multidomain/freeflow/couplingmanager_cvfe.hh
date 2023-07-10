@@ -773,17 +773,13 @@ namespace Detail {
 template<class Traits, class DiscretizationMethod = typename Detail::MomentumDiscretizationMethod<Traits>::type>
 struct CouplingManagerSupportsMultithreadedAssemblySelector;
 
-template<class Traits, class D>
-struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::CVFE<D>>
-{ using type = std::true_type; };
-
 // disabled for now
 // the infrastructure for multithreaded assembly is implemented (see code in the class above)
 // but the current implementation seems to have a bug and may cause race conditions.
 // The result is different when running in parallel. After this has been fixed activate multithreaded assembly
 // by removing this specialization
-template<class Traits>
-struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::PQ1Bubble>
+template<class Traits, class D>
+struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::CVFE<D>>
 { using type = std::false_type; };
 
 } // end namespace Detail
