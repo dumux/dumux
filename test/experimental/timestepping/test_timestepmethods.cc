@@ -35,14 +35,62 @@ namespace Dumux {
 
 class ScalarAssembler
 {
-
 public:
     using Scalar = double;
     using SolutionVector = Scalar;
     using ResidualType = Scalar;
     using JacobianMatrix = Scalar;
     using Variables = Experimental::Variables<SolutionVector>;
-    using StageParams = Experimental::MultiStageParams<Scalar>;
+
+    class StageHelper
+    {
+    public:
+        using StageParams = Experimental::MultiStageParams<Scalar>;
+
+        void init(Variables& variables, std::shared_ptr<const StageParams> params)
+        {
+            if (params->size() - 1 != 0)
+                DUNE_THROW(Dune::InvalidStateException, "Initialization has to occur with stage-0 parameters");
+            prepareStage(variables, params);
+            assembler_.assembleResiduals_(
+                variables,
+                assembler_.temporalResiduals_.back(),
+                assembler_.spatialResiduals_.back()
+            );
+        }
+
+        void prepareStage(Variables& variables, std::shared_ptr<const StageParams> params)
+        {
+            assembler_.stageParams_ = params;
+            const auto curStage = params->size() - 1;
+
+            // we update the time level of the given grid variables
+            const auto t = params->timeAtStage(curStage);
+            const auto prevT = params->timeAtStage(0);
+            const auto dtFraction = params->timeStepFraction(curStage);
+            variables.updateTime(Experimental::TimeLevel{t, prevT, dtFraction});
+
+            // create residuals (and initialize initial residual)
+            assembler_.spatialResiduals_.emplace_back(0.0);
+            assembler_.temporalResiduals_.emplace_back(0.0);
+        }
+
+        ~StageHelper()
+        {
+            assembler_.spatialResiduals_.clear();
+            assembler_.temporalResiduals_.clear();
+            assembler_.stageParams_.reset();
+        }
+
+    private:
+        friend ScalarAssembler;
+
+        StageHelper(ScalarAssembler& a)
+        : assembler_{a}
+        {}
+
+        ScalarAssembler& assembler_;
+    };
 
     void setLinearSystem() {}
     JacobianMatrix& jacobian() { return jac_; }
@@ -76,34 +124,8 @@ public:
         jac_ = 1.0;
     }
 
-    void prepareStage(Variables& variables,
-                      std::shared_ptr<const StageParams> params)
-    {
-        stageParams_ = params;
-        const auto curStage = params->size() - 1;
-
-        // we update the time level of the given grid variables
-        const auto t = params->timeAtStage(curStage);
-        const auto prevT = params->timeAtStage(0);
-        const auto dtFraction = params->timeStepFraction(curStage);
-        variables.updateTime(Experimental::TimeLevel{t, prevT, dtFraction});
-
-        // create residuals (and initialize initial residual)
-        spatialResiduals_.emplace_back(0.0);
-        temporalResiduals_.emplace_back(0.0);
-        if (curStage == 0)
-            assembleResiduals_(variables,
-                temporalResiduals_.back(),
-                spatialResiduals_.back()
-            );
-    }
-
-    void clearStages()
-    {
-        spatialResiduals_.clear();
-        temporalResiduals_.clear();
-        stageParams_.reset();
-    }
+    StageHelper stageHelper()
+    { return {*this}; }
 
 private:
     void assembleResiduals_(const Variables& variables,
@@ -115,11 +137,13 @@ private:
         spatial = -exp(variables.timeLevel().current());
     }
 
+    friend StageHelper;
+
     ResidualType res_;
     JacobianMatrix jac_;
     std::vector<ResidualType> spatialResiduals_;
     std::vector<ResidualType> temporalResiduals_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::shared_ptr<const typename StageHelper::StageParams> stageParams_;
 };
 
 class ScalarLinearSolver

@@ -119,28 +119,14 @@ public:
      */
     void step(Variables& vars, const Scalar t, const Scalar dt)
     {
-        // make sure there are no traces of previous stages
-        pdeSolver_->assembler().clearStages();
+        auto stageHelper = pdeSolver_->assembler().stageHelper();
 
-        // compute contributions of previous solution
-        auto stageParams = std::make_shared<StageParams>(*msMethod_, 0, t, dt);
-        pdeSolver_->assembler().prepareStage(vars, stageParams);
-
-        // for the next stages we need to solve a (nonlinear) equation system in each stage
+        stageHelper.init(vars, std::make_shared<StageParams>(*msMethod_, 0, t, dt));
         for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
         {
-            // extract parameters for this stage from the time stepping method
-            auto stageParams = std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt);
-
-            // prepare the assembler for this stage
-            pdeSolver_->assembler().prepareStage(vars, stageParams);
-
-            // assemble & solve
+            stageHelper.prepareStage(vars, std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt));
             pdeSolver_->solve(vars);
         }
-
-        // clear traces of previously registered stages
-        pdeSolver_->assembler().clearStages();
     }
 
     /*!
