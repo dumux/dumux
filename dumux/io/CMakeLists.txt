@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+add_subdirectory(expression)
 add_subdirectory(format)
 add_subdirectory(grid)
 add_subdirectory(json)
