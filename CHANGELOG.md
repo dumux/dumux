@@ -13,6 +13,10 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 - __Pore network__: Added a model for heat conduction in a solid grain network
 - __Nonisothermal__: Added a specialized local residual for incompressible flows where the pressure work term cancels with the pressure-dependent part of the enthalpy so that only the internal energy remains in the advective heat flux.
 - __Tpfa__: The scv/scvf interfaces no longer store the geometry (can be obtained via local view of grid geometry). This means the memory footprint and also construction performance of the scv/scvfs is greatly improved, especially in higher dimensions. (Similar changes for the CVFE methods are already implemented since the previous release.)
+- __Input file__: A string expression parser was added (implementation based on the ExprTK library which is shipped with DuMux). Using the new class `FunctionFromStringExpression<numArgs, ArgType>` functions based on string expression can parsed and evaluated. The most prominent use case is parsing functions
+from the parameter input file. The constructor takes the expression and an array of variable names to be replaced by function arguments. The function can then
+be evaluated with the function values provided in the same order as the names where specified. An arbitrary number of arguments is supported. ExprTK support very complex expressions, see https://www.partow.net/programming/exprtk/.
+
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 

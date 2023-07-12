@@ -63,7 +63,7 @@ linters:
     # codespell
     - echo "Running codespell"
     - codespell --version
-    - codespell --skip="*format/fmt/,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf" --ignore-words-list="ges"
+    - codespell --skip="*format/fmt/*,*io/expression/*,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf" --ignore-words-list="ges"
     # check examples
     - |
       if [ "${DUMUX_CHECK_EXAMPLE_DOCS}" == "true" ]; then
