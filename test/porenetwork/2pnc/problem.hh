@@ -107,8 +107,13 @@ public:
         // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             bcTypes.setAllDirichlet();
+#if ISOTHERMAL
         else if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             bcTypes.setAllNeumann();
+#else
+        else if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+            bcTypes.setDirichlet(Indices::temperatureIdx);
+#endif
         else if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
 
@@ -126,8 +131,9 @@ public:
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-        {   values.setState(Indices::bothPhases);
+        if (isInletPore_(scv))
+        {
+            values.setState(Indices::bothPhases);
             values[Indices::pressureIdx] = inletPressure_;
             values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
 #if !ISOTHERMAL
@@ -136,7 +142,7 @@ public:
         }
         else if (isOutletPore_(scv))
         {
-            values.setState(Indices::bothPhases);
+            values.setState(Indices::firstPhaseOnly);
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::switchIdx] = 0.0;
 #if !ISOTHERMAL
@@ -169,11 +175,11 @@ public:
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
         {
             values[Indices::conti0EqIdx + 1] = source_/scv.volume();
-#if !ISOTHERMAL
-            const auto pressure = elemVolVars[scv].pressure(1);
-            const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, pressure);
-            values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
-#endif
+// #if !ISOTHERMAL
+//             const auto pressure = elemVolVars[scv].pressure(1);
+//             const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, pressure);
+//             values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
+// #endif
         }
 
         return values;
@@ -221,12 +227,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == 2;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == 1;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
     int vtpOutputFrequency_;

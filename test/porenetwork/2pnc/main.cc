@@ -162,6 +162,7 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
+    nonLinearSolver.report();
     timeLoop->finalize(leafGridView.comm());
 
     // print dumux end message

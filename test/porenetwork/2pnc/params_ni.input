@@ -24,6 +24,8 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
 
 [Component]
 SolidHeatCapacity = 1.0 # for compatibility

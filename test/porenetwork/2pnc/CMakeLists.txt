@@ -4,7 +4,12 @@ dune_symlink_to_source_files(FILES grids)
 dumux_add_test(NAME test_pnm_2pnc
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS ISOTHERMAL=1
+               COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
+               COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
+               COMPILE_DEFINITIONS CIRCLETHROAT=0
+               COMPILE_DEFINITIONS NOREGULARIZTAION=1
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
@@ -15,7 +20,12 @@ dumux_add_test(NAME test_pnm_2pnc
 dumux_add_test(NAME test_pnm_2pnc_ni
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS ISOTHERMAL=0
+               COMPILE_DEFINITIONS ISOTHERMAL=0 REGULARIZATIONWITHPRESSURE=0
+               COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
+               COMPILE_DEFINITIONS CIRCLETHROAT=0
+               COMPILE_DEFINITIONS NOREGULARIZTAION=1
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
