@@ -8,9 +8,9 @@ Depending on the utilized model, a `SpatialParams` class might be necessary. Her
 * extrusionFactorAtPos(pos):
     - Return how much the domain is extruded at a given position `pos`.
 * temperature(element, scv, ...):
-    - Return the temperature in the given `element` or sub-control volume `scv`.
+    - Return the temperature in the given `element` or sub-control volume `scv`. Only used for isothermal models.
 * temperatureAtPos(pos):
-    - Return the temperature at a given position `pos`.
+    - Return the temperature at a given position `pos`. Only used for isothermal models.
 * gravity(pos):
     - Return the acceleration vector due to gravity. Can be customized at given positions `pos` if necessary.
 * gridGeometry():
