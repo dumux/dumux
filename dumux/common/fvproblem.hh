@@ -233,9 +233,9 @@ public:
      * to return true, the assembler calls problem.hasInternalDirichletConstraint(element, scv).
      * This means you have to implement the following member function
      *
-     *    bool hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const;
+     *    std::bitset<N> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const;
      *
-     * which returns an indexable container of booleans defining for each equation if the corresponding dof associated
+     * where N is the number of equations and where the return value defines for each equation if the corresponding dof associated
      * with the element/scv pair is constraint. If true is returned for a dof, the assembler calls
      * problem.internalDirichlet(element, scv). This means you have to additionally implement the following member function
      *
