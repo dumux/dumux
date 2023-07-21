@@ -69,6 +69,7 @@ def checkCppVersion():
 def runCommand(command, workdir="."):
     """Run command with error checking"""
     with open("../installdumux.log", "a") as log:
+        print("> ", " ".join(command), file=log)
         with subprocess.Popen(
             command,
             stdout=log,
@@ -88,6 +89,7 @@ def runCommand(command, workdir="."):
                     """
                 )
                 showMessage(message)
+                print(message, file=log)
                 sys.exit(1)
 
 
