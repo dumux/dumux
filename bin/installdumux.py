@@ -111,6 +111,8 @@ def gitSetBranch(folder, branch):
 with open("installdumux.log", "w") as _:
     pass
 
+log = open("installdumux.log", "a")
+
 #################################################################
 #################################################################
 # (1/3) Check some prerequistes
@@ -118,6 +120,7 @@ with open("installdumux.log", "w") as _:
 #################################################################
 programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
 showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
+print("(1/3) Checking all prerequistes: " + " ".join(programs) + "...", file=log)
 
 # check some prerequistes
 for program in programs:
@@ -133,6 +136,7 @@ if which("paraview") is None:
 checkCppVersion()
 
 showMessage("(1/3) Step completed. All prerequistes found.")
+print("(1/3) Step completed. All prerequistes found.", file=log)
 
 #################################################################
 #################################################################
@@ -147,6 +151,7 @@ showMessage(
     "(2/3) Cloning repositories. This may take a while. "
     "Make sure to be connected to the internet..."
 )
+print("(2/3) Cloning repositories. This may take a while.", file=log)
 
 # the core modules
 for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
@@ -154,6 +159,7 @@ for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
         gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
     else:
         print(f"-- Skip cloning dune-{module} because the folder already exists.")
+        print(f"-- Skip cloning dune-{module} because the folder already exists.", file=log)
         gitSetBranch(f"dune-{module}", duneBranch)
 
 # dumux
@@ -161,10 +167,12 @@ if not os.path.exists("dumux"):
     gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
 else:
     print("-- Skip cloning dumux because the folder already exists.")
+    print("-- Skip cloning dumux because the folder already exists.", file=log)
     gitSetBranch("dumux", dumuxBranch)
 
 
 showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
+print("(2/3) Step completed. All repositories have been cloned into a containing folder.", file=log)
 
 #################################################################
 #################################################################
@@ -175,11 +183,13 @@ showMessage(
     "(3/3) Configure and build dune modules and dumux using dunecontrol. "
     "This may take several minutes..."
 )
+print("(3/3) Configure and build dune modules and dumux using dunecontrol.", file=log)
 
 # run dunecontrol
 runCommand(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
 showMessage("(3/3) Step completed. Successfully configured and built dune and dumux.")
+print("(3/3) Step completed. Successfully configured and built dune and dumux.", file=log)
 
 #################################################################
 #################################################################
@@ -200,3 +210,4 @@ showMessage(
     "  ./test_1p_tpfa\n"
     "  paraview *pvd\n"
 )
+print("(Installation complete)", file=log)
