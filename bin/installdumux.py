@@ -111,103 +111,103 @@ def gitSetBranch(folder, branch):
 with open("installdumux.log", "w") as _:
     pass
 
-log = open("installdumux.log", "a")
+with open("installdumux.log", "a") as logfile:
 
-#################################################################
-#################################################################
-# (1/3) Check some prerequistes
-#################################################################
-#################################################################
-programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
-showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
-print("(1/3) Checking all prerequistes: " + " ".join(programs) + "...", file=log)
+    #################################################################
+    #################################################################
+    # (1/3) Check some prerequistes
+    #################################################################
+    #################################################################
+    programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
+    showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
+    print("(1/3) Checking all prerequistes: " + " ".join(programs) + "...", file=logfile)
 
-# check some prerequistes
-for program in programs:
-    if which(program) is None:
-        print("-- An error occurred while checking for prerequistes.")
-        raise Exception(f"Program {program} has not been found.")
+    # check some prerequistes
+    for program in programs:
+        if which(program) is None:
+            print("-- An error occurred while checking for prerequistes.")
+            raise Exception(f"Program {program} has not been found.")
 
-if which("paraview") is None:
-    print(
-        "-- Warning: paraview seems to be missing. You may not be able to view simulation results!"
+    if which("paraview") is None:
+        print(
+            "-- Warning: paraview seems to be missing. You may not be able to view simulation results!"
+        )
+
+    checkCppVersion()
+
+    showMessage("(1/3) Step completed. All prerequistes found.")
+    print("(1/3) Step completed. All prerequistes found.", file=logfile)
+
+    #################################################################
+    #################################################################
+    # (2/3) Clone modules
+    #################################################################
+    #################################################################
+    # make a new folder containing everything
+    os.makedirs("./dumux", exist_ok=True)
+    os.chdir("dumux")
+
+    showMessage(
+        "(2/3) Cloning repositories. This may take a while. "
+        "Make sure to be connected to the internet..."
     )
+    print("(2/3) Cloning repositories. This may take a while.", file=logfile)
 
-checkCppVersion()
+    # the core modules
+    for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
+        if not os.path.exists(f"dune-{module}"):
+            gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
+        else:
+            print(f"-- Skip cloning dune-{module} because the folder already exists.")
+            print(f"-- Skip cloning dune-{module} because the folder already exists.", file=logfile)
+            gitSetBranch(f"dune-{module}", duneBranch)
 
-showMessage("(1/3) Step completed. All prerequistes found.")
-print("(1/3) Step completed. All prerequistes found.", file=log)
-
-#################################################################
-#################################################################
-# (2/3) Clone modules
-#################################################################
-#################################################################
-# make a new folder containing everything
-os.makedirs("./dumux", exist_ok=True)
-os.chdir("dumux")
-
-showMessage(
-    "(2/3) Cloning repositories. This may take a while. "
-    "Make sure to be connected to the internet..."
-)
-print("(2/3) Cloning repositories. This may take a while.", file=log)
-
-# the core modules
-for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
-    if not os.path.exists(f"dune-{module}"):
-        gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
+    # dumux
+    if not os.path.exists("dumux"):
+        gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
     else:
-        print(f"-- Skip cloning dune-{module} because the folder already exists.")
-        print(f"-- Skip cloning dune-{module} because the folder already exists.", file=log)
-        gitSetBranch(f"dune-{module}", duneBranch)
-
-# dumux
-if not os.path.exists("dumux"):
-    gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
-else:
-    print("-- Skip cloning dumux because the folder already exists.")
-    print("-- Skip cloning dumux because the folder already exists.", file=log)
-    gitSetBranch("dumux", dumuxBranch)
+        print("-- Skip cloning dumux because the folder already exists.")
+        print("-- Skip cloning dumux because the folder already exists.", file=logfile)
+        gitSetBranch("dumux", dumuxBranch)
 
 
-showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
-print("(2/3) Step completed. All repositories have been cloned into a containing folder.", file=log)
+    showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
+    print("(2/3) Step completed. All repositories have been cloned into a containing folder.", file=logfile)
 
-#################################################################
-#################################################################
-# (3/3) Configure and build
-#################################################################
-#################################################################
-showMessage(
-    "(3/3) Configure and build dune modules and dumux using dunecontrol. "
-    "This may take several minutes..."
-)
-print("(3/3) Configure and build dune modules and dumux using dunecontrol.", file=log)
+    #################################################################
+    #################################################################
+    # (3/3) Configure and build
+    #################################################################
+    #################################################################
+    showMessage(
+        "(3/3) Configure and build dune modules and dumux using dunecontrol. "
+        "This may take several minutes..."
+    )
+    print("(3/3) Configure and build dune modules and dumux using dunecontrol.", file=logfile)
 
-# run dunecontrol
-runCommand(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
+    # run dunecontrol
+    runCommand(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
-showMessage("(3/3) Step completed. Successfully configured and built dune and dumux.")
-print("(3/3) Step completed. Successfully configured and built dune and dumux.", file=log)
+    showMessage("(3/3) Step completed. Successfully configured and built dune and dumux.")
+    print("(3/3) Step completed. Successfully configured and built dune and dumux.", file=logfile)
 
-#################################################################
-#################################################################
-# Show message how to check that everything works
-#################################################################
-#################################################################
-TEST_PATH = "dumux/dumux/build-cmake/test/porousmediumflow/1p"
-if dumuxBranch == "master" or _Version(args["dumux_version"]) > _Version("3.3"):
-    TEST_PATH += "/isothermal"
-else:
-    TEST_PATH += "/implicit/isothermal"
+    #################################################################
+    #################################################################
+    # Show message how to check that everything works
+    #################################################################
+    #################################################################
+    TEST_PATH = "dumux/dumux/build-cmake/test/porousmediumflow/1p"
+    if dumuxBranch == "master" or _Version(args["dumux_version"]) > _Version("3.3"):
+        TEST_PATH += "/isothermal"
+    else:
+        TEST_PATH += "/implicit/isothermal"
 
-showMessage(
-    "(Installation complete) To test if everything works, "
-    "please run the following commands (can be copied to command line):\n\n"
-    f"  cd {TEST_PATH}\n"
-    "  make test_1p_tpfa\n"
-    "  ./test_1p_tpfa\n"
-    "  paraview *pvd\n"
-)
-print("(Installation complete)", file=log)
+    showMessage(
+        "(Installation complete) To test if everything works, "
+        "please run the following commands (can be copied to command line):\n\n"
+        f"  cd {TEST_PATH}\n"
+        "  make test_1p_tpfa\n"
+        "  ./test_1p_tpfa\n"
+        "  paraview *pvd\n"
+    )
+    print("(Installation complete)", file=logfile)
