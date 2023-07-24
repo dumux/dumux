@@ -106,7 +106,7 @@ public:
                                              * volVars.saturation(phaseIdx);
 
             //! The energy storage in the fluid phase with index phaseIdx
-            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+            EnergyLocalResidual::fluidPhaseStorage(storage, problem, scv, volVars, phaseIdx);
         }
 
         //! The energy storage in the solid matrix

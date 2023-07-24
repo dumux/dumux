@@ -19,13 +19,13 @@
  * results in one energy conservation equation for the porous solid
  * matrix and the fluids,
  \f{align*}{
- \frac{\partial (\sum_\alpha \phi \varrho_\alpha u_\alpha S_\alpha )}{\partial t}
+ \phi \frac{\partial \sum_\alpha \varrho_\alpha S_\alpha (u_\alpha - \mathbf{g}\cdot\mathbf{x})}{\partial t}
  & +
  \frac{\partial \left((\left( 1 - \phi \right) \varrho_s c_s T\right)}{\partial t}
  -
  \sum_\alpha \nabla \cdot
  \left\{
- \varrho_\alpha h_\alpha
+ \varrho_\alpha (h_\alpha - \mathbf{g}\cdot\mathbf{x})
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
  \left( \nabla p_\alpha - \varrho_\alpha \mathbf{g} \right)
  \right\} \\
@@ -49,6 +49,11 @@
  * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
  * * \f$ q^h \f$ is a source or sink term.
  *
+ * The gravitational potential is approximated by \f$\psi \approx \mathbf{g}\cdot\mathbf{x}\f$
+ * with \f$ \mathbf{g} = -\nabla\psi\f$ and where \f$\mathbf{x}\f$ is the position in space.
+ * The approximation is exact in case the gravitation vector is constant in space.
+ * The implementation via the gravitational potential in the formulation above also assumes
+ * that the gravitional potential is independent of time. This formulation is incorrect otherwise.
  */
 
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH

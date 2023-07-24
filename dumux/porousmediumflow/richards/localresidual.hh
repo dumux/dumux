@@ -108,8 +108,8 @@ public:
                                * volVars.saturation(liquidPhaseIdx);
 
         //! The energy storage in the water, air and solid phase
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, liquidPhaseIdx);
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, gasPhaseIdx);
+        EnergyLocalResidual::fluidPhaseStorage(storage, problem, scv, volVars, liquidPhaseIdx);
+        EnergyLocalResidual::fluidPhaseStorage(storage, problem, scv, volVars, gasPhaseIdx);
         EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
