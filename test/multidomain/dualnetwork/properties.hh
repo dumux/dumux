@@ -17,8 +17,17 @@
 #include <dumux/io/grid/gridmanager_sub.hh>
 
 #include <dumux/porenetwork/solidenergy/model.hh>
-#include <dumux/material/components/constant.hh>
+#include <dumux/porenetwork/1p/model.hh>
 
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
+
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/dualnetwork/couplingmanager.hh>
+
+#include "problem_void.hh"
 #include "problem_solid.hh"
 #include "spatialparams.hh"
 #include "fourierslaw.hh"
@@ -66,13 +75,6 @@ struct HeatConductionType<TypeTag, TTag::PNMSolidModel>
 
 } // end namespace Dumux::Properties
 
-#include <dumux/porenetwork/1p/model.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
-#include <dumux/porousmediumflow/nonisothermal/localresidual_incompressible.hh> //local residual for incompressible nonisothermal flow
-
-#include "problem_void.hh"
-
 namespace Dumux::Properties {
 
 // Create new type tags
@@ -118,12 +120,6 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::PNMVoidModel>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
-template<class TypeTag>
-struct EnergyLocalResidual<TypeTag, TTag::PNMVoidModel>
-{
-    using type = Dumux::EnergyLocalResidualIncompressible<TypeTag> ; //use local residual for incompressible nonisothermal flow as in Dumux term of pressure work gets neglected
-};
-
 //! The spatial parameters to be employed.
 //! Use PNMOnePSpatialParams by default.
 template<class TypeTag>
@@ -137,9 +133,6 @@ public:
 };
 
 } // end namespace Dumux::Properties
-
-#include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/dualnetwork/couplingmanager.hh>
 
 namespace Dumux::Properties {
 
