@@ -145,6 +145,7 @@ public:
             verbose &&
             Dune::MPIHelper::getCommunication().rank() == 0;
 
+        startTime_ = startTime;
         time_ = startTime;
         endTime_ = tEnd;
 
@@ -244,7 +245,7 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
-        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*endTime_))
+        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*(endTime_ - startTime_)))
             std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
                       << " This might lead to numerical problems!\n";
     }
@@ -300,7 +301,7 @@ public:
      */
     bool finished() const override
     {
-        return finished_ || endTime_-time_ < 1e-10*time_;
+        return finished_ || (endTime_ - time_) < 1e-10*(time_ - startTime_);
     }
 
     /*!
@@ -309,7 +310,7 @@ public:
      */
     bool willBeFinished() const
     {
-        return finished() || endTime_-time_-timeStepSize_ < 1e-10*timeStepSize_;
+        return finished() || (endTime_ - time_ - timeStepSize_) < 1e-10*timeStepSize_;
     }
 
     /*!
@@ -336,7 +337,7 @@ public:
         {
             const auto cpuTime = wallClockTime();
             using std::round;
-            const auto percent = round( time_ / endTime_ * 100 );
+            const auto percent = round( (time_ - startTime_) / (endTime_ - startTime_) * 100 );
             std::cout << Fmt::format("[{:3.0f}%] ", percent)
                       << Fmt::format("Time step {} done in {:.2g} seconds. ", timeStepIdx_, timeStepWallClockTime_)
                       << Fmt::format("Wall clock time: {:.5g}, time: {:.5g}, time step size: {:.5g}\n", cpuTime, time_, previousTimeStepSize_);
@@ -377,6 +378,7 @@ protected:
     Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
+    Scalar startTime_;
 
     Scalar timeStepSize_;
     Scalar previousTimeStepSize_;
