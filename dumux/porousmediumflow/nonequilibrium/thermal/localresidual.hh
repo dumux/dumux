@@ -79,8 +79,8 @@ public:
         // add up parts on the one energy equation
         storage[energyEq0Idx] += volVars.porosity()
                                  * volVars.density(phaseIdx)
-                                 * volVars.saturation(phaseIdx)
-                                 * (volVars.internalEnergy(phaseIdx) - gravityPotential);
+                                 * volVars.internalEnergy(phaseIdx)
+                                 * volVars.saturation(phaseIdx);
 
     }
 
