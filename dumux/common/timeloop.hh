@@ -99,6 +99,8 @@ public:
 template <class Scalar>
 class TimeLoop : public TimeLoopBase<Scalar>
 {
+    static constexpr Scalar baseEps_ = 1e-10;
+
 public:
     TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
     : timer_(false)
@@ -245,7 +247,7 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
-        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*(endTime_ - startTime_)))
+        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, baseEps_*(endTime_ - startTime_)))
             std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
                       << " This might lead to numerical problems!\n";
     }
@@ -301,7 +303,7 @@ public:
      */
     bool finished() const override
     {
-        return finished_ || (endTime_ - time_) < 1e-10*(time_ - startTime_);
+        return finished_ || (endTime_ - time_) < baseEps_*(time_ - startTime_);
     }
 
     /*!
@@ -310,7 +312,7 @@ public:
      */
     bool willBeFinished() const
     {
-        return finished() || (endTime_ - time_ - timeStepSize_) < 1e-10*timeStepSize_;
+        return finished() || (endTime_ - time_ - timeStepSize_) < baseEps_*timeStepSize_;
     }
 
     /*!
