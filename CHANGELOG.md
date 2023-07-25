@@ -16,6 +16,7 @@ Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 - __Input file__: A string expression parser was added (implementation based on the ExprTK library which is shipped with DuMux). Using the new class `FunctionFromStringExpression<numArgs, ArgType>` functions based on string expression can parsed and evaluated. The most prominent use case is parsing functions
 from the parameter input file. The constructor takes the expression and an array of variable names to be replaced by function arguments. The function can then
 be evaluated with the function values provided in the same order as the names where specified. An arbitrary number of arguments is supported. ExprTK support very complex expressions, see https://www.partow.net/programming/exprtk/.
+- __Time loop__: Fixed a bug when the time is chosen to be negative and/or the end time is set to zero. (Before we assume time is always positive and endtime never zero.)
 
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
