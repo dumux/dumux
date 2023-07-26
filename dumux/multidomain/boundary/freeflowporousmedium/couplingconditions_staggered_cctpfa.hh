@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowPorousMediumCouplingConditions
+ * \copydoc Dumux::FFPMCouplingConditionsStaggeredCCTpfa
  */
 
 #ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_STAGGERED_TPFA_HH

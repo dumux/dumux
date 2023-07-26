@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowMassPorousMediumCouplingManager
+ * \copydoc Dumux::FFMassPMCouplingManagerStaggeredCCTpfa
  */
 
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FFPM_FFMASSPM_COUPLINGMANAGER_STAGGERED_TPFA_HH
@@ -27,7 +27,8 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
- * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
+ * \brief Coupling manager for Stokes and Darcy domains with equal dimension
+ *        specialization for staggered-cctpfa coupling.
  */
 template<class MDTraits>
 class FFMassPMCouplingManagerStaggeredCCTpfa

@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingManager
+ * \brief Coupling managers specialized for different discretization schemes for momentum coupling
  */
 
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FFPM_FFMMOMENTUMPM_COUPLINGMANAGER_HH

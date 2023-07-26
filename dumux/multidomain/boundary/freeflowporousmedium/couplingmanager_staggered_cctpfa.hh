@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowPorousMediumCouplingManager
+ * \copydoc Dumux::FreeFlowPorousMediumCouplingManagerStaggeredCCTpfa
  */
 
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_STAGGERED_CCTPFA_HH
@@ -21,7 +21,8 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
- * \brief Coupling manager for coupling freeflow and porous medium flow models when
+ * \brief Coupling manager for coupling freeflow and porous medium flow models
+ *        specialization for staggered-cctpfa coupling.
  */
 template<class MDTraits>
 class FreeFlowPorousMediumCouplingManagerStaggeredCCTpfa

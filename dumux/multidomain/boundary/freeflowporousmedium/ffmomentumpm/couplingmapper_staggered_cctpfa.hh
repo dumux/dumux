@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingMapper
+ * \copydoc Dumux::FFMomentumPMCouplingMapperStaggeredCCTpfa
  */
 
 #ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_STAGGERED_TPFA_HH

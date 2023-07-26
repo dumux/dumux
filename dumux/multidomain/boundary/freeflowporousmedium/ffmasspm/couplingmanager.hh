@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowMassPorousMediumCouplingManager
+ * \brief Coupling managers specialized for different discretization schemes for mass coupling
  */
 
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FFPM_FFMASSPM_COUPLINGMANAGER_HH
