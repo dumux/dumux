@@ -1,0 +1,35 @@
+[Problem]
+EnableGravity = 0 # disable gravity
+Name = upscaling_pnm
+MaximumPressureGradient = 1e10 #Pa/m
+NumberOfPressureGradients = 10 # the number of sample points for regression process
+Directions = 0 # the directions to be plotted 0 1 2
+Epsilon = 1e-13
+AssumeCreepingFlow = false
+ReferencePermeability = 3.326e-12 1.394e-12 7.449e-13
+
+[Grid]
+UpperRight = 4e-4 4e-4 4e-4
+NumPores = 20 20 20
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 4e-6
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Square
+ParameterRandomNumberSeed = 1
+
+BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
+MinThroatLength = 1e-10
+DeletionProbability = 0.0 0.6 0.98 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
