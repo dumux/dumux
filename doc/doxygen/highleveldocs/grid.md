@@ -1,9 +1,9 @@
 # Grid
 
-Grids are provided by DUNE or external implementations, but all have to share the DUNE grid interface.
-The grid is an abstract concept consisting of several entities: vertices, edges, faces, cells, elements..., all of which can be accessed via the *grid view*, see @ref gridview.
+Grids represent the spatial discretization of a physical domain in an abstract way by approximating the domain via several entities: vertices, edges, faces, cells, elements... These entities can be accesses via the *grid view* object in Dumux, see @ref gridview.
+While grids can be provided by DUNE or external implementations, all grid types have to share a common DUNE grid interface.
 
-Furthermore, additional properties characterize the capabilities and specializations of a grid:
+Additional properties characterize the capabilities and specializations of a grid:
 * dimension and co-dimension
 * element types
 * conforming or nonconforming
