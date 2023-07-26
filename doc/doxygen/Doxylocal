@@ -22,6 +22,7 @@ TOC_INCLUDE_HEADINGS   = 4
 
 # custom doxygen commands
 ALIASES                += mermaid{1}="@htmlonly <div class=\"mermaid\"> @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly </div> @endhtmlonly"
+ALIASES                += refdir{1}="@ref @top_srcdir@/\1"
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in

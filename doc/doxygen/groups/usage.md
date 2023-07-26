@@ -9,3 +9,4 @@ DuMux programs in parallel.
 * @ref runtime-parameters
 * @ref running-in-parallel
 * @ref input-and-output-formats
+* @ref directory-structure
