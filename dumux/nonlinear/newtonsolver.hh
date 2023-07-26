@@ -681,16 +681,11 @@ public:
      *        (for pore-network model the invasion status will be updated here)
      */
 #if NOREGULARIZTAION
-    virtual void newtonEnd()  {
-        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
-        logfile << numSteps_ << "\n";
-    }
+    virtual void newtonEnd(){}
 #else
-    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {
-        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
-        logfile << numSteps_ << "\n";
-    }
+    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter){}
 #endif
+
     /*!
      * \brief Returns true if the error of the solution is below the
      *        tolerance.
@@ -758,7 +753,7 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        std::ofstream lognewton(getParam<std::string>("Newton.NewtonOverview"));
+        std::ofstream lognewton(getParam<std::string>("Newton.LogFileName"));
         lognewton << "Newton statistics\n"
                   << "----------------------------------------------\n"
                   << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
@@ -1024,10 +1019,14 @@ private:
                 // update the current solution (i.e. uOld) with the delta
                 // (i.e. u). The result is stored in u
                 newtonUpdate(vars, uLastIter, deltaU);
+                std::cout << "Now the update is done!" << std::endl;
                 updateTimer.stop();
 
+                std::cout << "For Debug use!" << std::endl;
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
+                std::cout << "Now this iteration is done!" << std::endl;
+
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
