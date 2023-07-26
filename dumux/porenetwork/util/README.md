@@ -8,4 +8,7 @@ To try the script, there is a sample `raw` binary image in the folder. For testi
 
 which generates `sample.dgf`.
 
+Python versions tested for the above mentioned python scripts:
+- Python 3.10.6
+
 TODO: These steps should be tested automatically in the future in a CI setup with `porespy` and `OpenPNM` installed.
