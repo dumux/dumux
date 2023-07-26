@@ -16,7 +16,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
@@ -103,11 +102,7 @@ class BrineCO2
 {
     using ThisType = BrineCO2<Scalar, CO2Impl, H2OType, Policy>;
 
-    static constexpr bool rawCO2Table = Deprecated::BrineCO2Helper<CO2Impl>::isRawTable();
-
-    using CO2Component = typename std::conditional_t< rawCO2Table,
-                                                      Components::CO2<Scalar, CO2Impl>,
-                                                      CO2Impl >;
+    using CO2Component = Components::CO2<Scalar, CO2Impl>;
 
     // binary coefficients
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Component>;

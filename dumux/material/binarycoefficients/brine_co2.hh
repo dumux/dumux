@@ -16,7 +16,6 @@
 
 #include <type_traits>
 #include <dune/common/debugstream.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
@@ -32,12 +31,7 @@ namespace Dumux::BinaryCoeff {
 template<class Scalar, class CO2Impl, bool verbose = true>
 class Brine_CO2 {
     using H2O = Components::H2O<Scalar>;
-
-    static constexpr bool rawCO2Table = Deprecated::BrineCO2Helper<CO2Impl>::isRawTable();
-    using CO2Component = typename std::conditional_t< rawCO2Table,
-                                                      Components::CO2<Scalar, CO2Impl>,
-                                                      CO2Impl >;
-    using CO2 = CO2Component;
+    using CO2 = Components::CO2<Scalar, CO2Impl>;
     using IdealGas = Dumux::IdealGas<Scalar>;
     static constexpr int lPhaseIdx = 0; // index of the liquid phase
     static constexpr int gPhaseIdx = 1; // index of the gas phase
