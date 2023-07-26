@@ -38,17 +38,7 @@ Note that the following members are inside the namespace `Properties`. The follo
 * PrimaryVariables:
     - defines the type of `PrimaryVariables` used, most importantly the length of the local solution, which is defined by its submember `PrimaryVariablesVector`. The `PrimaryVariables` class also defines whether primary variable switches are used or not.
 * VolumeVariables:
-    - trait class specifying requirements for the `VolumeVariables`. Normally, the `VolumeVariables` collect the following properties:
-        - `PrimaryVariables` (PV)
-        - `FluidSystem` (FSY)
-        - `FluidState` (FS)
-        - `SolidSystem` (SSY)
-        - `SolidState` (SST)
-        - `ModelTraits` (MT)
-        - `DiscretizationMethod` (DM)
-    optionally, there also may be used:
-        - `EffectiveDiffusivityModel` (EDM)
-        - `MolecularDiffusionType` (DT)
+    - trait class specifying requirements for the `VolumeVariables`.
 * AdvectionType:
     - Specifies what kind of advection model is implemented, also ensures that an advection model is implemented.
 * Formulation:
