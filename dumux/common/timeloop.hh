@@ -247,7 +247,7 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
-        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, baseEps_*(endTime_ - startTime_)))
+        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-4*baseEps_*(endTime_ - startTime_)))
             std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
                       << " This might lead to numerical problems!\n";
     }
