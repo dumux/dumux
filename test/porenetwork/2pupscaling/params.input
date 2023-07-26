@@ -1,0 +1,30 @@
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 0.01 # [s]
+
+[Grid]
+File = ../1p/grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm_2p
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 5000
+UseFixedPressureAndSaturationBoundary = false
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline

@@ -1,0 +1,29 @@
+[Grid]
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 3e-6
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1 zMin:1 zMax:1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Problem]
+Name = test_pnm_2p_static
+InitialPc = 3000 # [Pa]
+FinalPc = 7000 # [Pa]
+NumSteps = 50 # the number of episodes to run
+PlotPcS = false
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 2
+OutletPoreLabel = 3
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline
