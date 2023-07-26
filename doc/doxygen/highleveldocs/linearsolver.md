@@ -1,15 +1,11 @@
 @page linearsolver LinearSolver
 
-The linear solvers solves a linear-system of equations in  the form Ax=b.
-In the case of Dumux it is Jx=r, with the Jacobian J and the residual r.
-The used linear solvers are implemented in DUNE.
+## LinearSolver
 
+The `LinearSolver` solves a linear-system of equations of the form $\mathbf{J}\mathbf{x}=\mathbf{r}$,
+where $\mathbf{J}$ denotes the Jacobian while $\mathbf{r}$ represents the residual.
 
-### Key functionalities
+The remaining $\mathbf{x}$ is then used as the correction to the previous solution. $mathbf{x_{new}} = mathbf{x_{old}} - mathbf{x}$
 
-- solve()
-  - solves a system of equation of the Form Jx=r
-
-### Overview
-
-@mermaid{linearsolver}
+The used linear solvers are implemented in DUNE. Access to these linear solvers are developed in Dune-ISTL (Iterative Solver Template Library)
+<a href="https://www.dune-project.org/modules/dune-istl/">Dune-ISTL (Iterative Solver Template Library)</a>

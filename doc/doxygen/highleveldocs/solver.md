@@ -1,47 +1,25 @@
 # Solver
 
-Depending on the PDE of interest you have either one of the two kinds of PDE's:
+When it comes to solving the system, the PDE of interest must first classified as one of the following:
 
-1. linear PDE: To solve a linear PDE a `LinearPDESolver` is implemented.
-2. non-linear PDE: To solve a non-linear PDE, Dumux uses Newton's method to solve the PDE. The procedure is described below. To solve a non-linear PDE in Dumux you need to create a `NewtonSolver` instance (see also @ref nonlinearsolver ).
-3. Both methods additionaly rely on a `LinearSolver`, since both methods produce a system of equations in the form **Jx=b**. To solve that system you have to specify a `LinearSolver` (see also @ref linearsolver ).
+1. Non-linear PDEs: To solve a non-linear PDE, Dumux uses Newton's method to iteratively solve the PDE. The procedure is described below and in \ref newtonLoop.
 
-## NewtonSolver
-The Newton algorithm is an iterative method used to solve non-linear equations, including non-linear partial differential equations (PDEs). It works by starting with an initial guess for the solution to the PDE, and then iteratively improving that guess until a solution is found that satisfies the given convergence criteria.
+2. Linear PDEs: To solve a linear PDE, a simplified version of Newton's method is developed as only one iteration is required. This is implemented as the `LinearPDESolver`, as discussed below.
 
-Here's how it works in more detail:
+Both cases additionally rely on a `LinearSolver` method. Both systems, linear or non-linear, produce a system of equations in the form of $\mathbf{J}\mathbf{x}=\mathbf{r}$, which need to be solved for each newton iteration (or at least once). Various `LinearSolver` methods are available for this step and must be specified (see also @ref linearsolver).
 
-1. Start with an initial guess for the solution to the PDE.
-2. Use the PDE and the initial guess to form a linearized equation, called the Newton equation
-3. Solve the Newton equation to obtain a correction to the initial guess.
-4. Add the correction to the initial guess to obtain a new guess for the solution to the PDE.
-5. Repeat steps 2-4 until the solution converges to a desired level of accuracy.
+### Non-Linear PDE Solver (Newton Solver)
 
-The `NewtonSolver` class is responsible for executing the Newton algorithm as described earlier. It instantiates the assembly of the linear system and employs a `LinearSolver` to solve the system of equations. Furthermore, evaluating and updating you solution is done inside the `NewtonSolver`.
+In order to iteratively solve non-linear PDEs, a newton's method algorithm is implemented and used in Dumux. This algorithm works by starting with an initial guess for the solution to the PDE, and then iteratively improving that guess until a solution is found that satisfies the given convergence criteria. For details on how this works, see \ref newtonLoop.
 
-### Key functionalities
+The `NewtonSolver` class is responsible for executing the Newton algorithm as described here.
+It instantiates the assembly of the linear system and employs a `LinearSolver` to solve the system of equations (@ref linearsolver).
+Depending on the complexity of the PDE and the convergence criteria, a number of newton iterations will be required before a solution is found.
+For each iteration, the solution will be evaluated and updated, until convergence.
 
-- solve()
-   - Call of the assembleJacobianAndResidual() function of the @ref assembler
-   - Call of the solve function of the @ref linearsolver
-   - Update the solution using the newtonUpdate() function
-   - Evaluate if convergence is reached using the newtonConverged() function
+### Linear PDE Solver (Simplified Newton Solver)
 
-## LinearPDESolver
+`LinearPDESolver` implements a method used to solve linear PDEs.
+This solver will do the same thing as the non-linear `Newton Solver` case, but when dealing with linear PDEs, only one iteration of the newton loop is necessary. As described in \ref newtonloop, an initial guess and a linear solver are required.
 
-A `LinearPDESolver` implementes methods for solving linear PDE's. In case of a linear PDE only one iteration is necessary to solve it.
-
-### Key functionalities
-
-1. solve()
-   1. Call of the assembleJacobianAndResidual() function of the @ref assembler
-   2. Call of the solve function of the @ref linearsolver
-## LinearSolver
-
-The `LinearSolver` solves a linear-system of equations of the form $\mathbf{J}\mathbf{\Delta x}=\mathbf{r}$, where $\mathbf{J}$ denotes the Jacobian while $\mathbf{r}$ represents the residual. The used linear solvers are implemented in DUNE.
-
-
-### Key functionalities
-
-- solve()
-  - solves a system of equation of the Form $\mathbf{J}\mathbf{\Delta x}=\mathbf{r}$
+In addition, the jacobian matrix can be reused for further time steps as it will not change. This can be set using the function `reuseMatrix()`.
