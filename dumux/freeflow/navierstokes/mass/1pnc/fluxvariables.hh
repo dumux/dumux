@@ -134,8 +134,15 @@ public:
     /*!
      * \brief Returns the flux of enthalpy in J/s carried by diffusing molecules.
      */
-    Scalar diffusiveEnthalpyFlux(const NumEqVector& diffusiveFlux, int phaseIdx = 0) const
+    Scalar diffusiveEnthalpyFlux(int phaseIdx = 0) const
     {
+        const auto diffusiveFlux = MolecularDiffusionType::flux(this->problem(),
+                                                                this->element(),
+                                                                this->fvGeometry(),
+                                                                this->elemVolVars(),
+                                                                this->scvFace(),
+                                                                phaseIdx,
+                                                                this->elemFluxVarsCache());
         static constexpr auto referenceSystemFormulation = MolecularDiffusionType::referenceSystemFormulation();
         Scalar flux = 0.0;
         const auto& scvf = this->scvFace();
@@ -190,7 +197,7 @@ public:
         if constexpr (ModelTraits::enableEnergyBalance())
         {
             ParentType::addHeatFlux(flux);
-            flux[ModelTraits::Indices::energyEqIdx] += diffusiveEnthalpyFlux(diffusiveFlux);
+            flux[ModelTraits::Indices::energyEqIdx] += diffusiveEnthalpyFlux();
         }
 
         return flux;
