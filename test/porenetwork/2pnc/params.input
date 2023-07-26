@@ -3,7 +3,7 @@ DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
 
 [Grid]
-File = ./grids/1dGrid.dgf
+File = ./grids/1dGrid_hetero.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
@@ -22,8 +22,7 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
-NewtonOutputFilename = NewtonLog.txt
-NewtonOverview = NewtonOverview.txt
+LogFileName = NewtonOverview.txt
 
 [InvasionState]
 Verbosity = true
