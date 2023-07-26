@@ -28,10 +28,9 @@ namespace Dumux::BinaryCoeff {
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
  */
-template<class Scalar, class CO2Impl, bool verbose = true>
+template<class Scalar, class CO2, bool verbose = true>
 class Brine_CO2 {
     using H2O = Components::H2O<Scalar>;
-    using CO2 = Components::CO2<Scalar, CO2Impl>;
     using IdealGas = Dumux::IdealGas<Scalar>;
     static constexpr int lPhaseIdx = 0; // index of the liquid phase
     static constexpr int gPhaseIdx = 1; // index of the gas phase

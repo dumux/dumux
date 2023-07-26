@@ -93,17 +93,14 @@ struct BrineCO2DefaultPolicy
  * \note This implementation always assumes NaCl stays in the liquid phase.
  */
 template< class Scalar,
-          class CO2Impl,
+          class CO2Component,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>,
           class Policy = BrineCO2DefaultPolicy</*constantSalinity?*/true> >
 class BrineCO2
-: public Base<Scalar, BrineCO2<Scalar, CO2Impl, H2OType, Policy>>
+: public Base<Scalar, BrineCO2<Scalar, CO2Component, H2OType, Policy>>
 , public Detail::BrineCO2Indices<Policy::useConstantSalinity()>
 {
-    using ThisType = BrineCO2<Scalar, CO2Impl, H2OType, Policy>;
-
-    using CO2Component = Components::CO2<Scalar, CO2Impl>;
-
+    using ThisType = BrineCO2<Scalar, CO2Component, H2OType, Policy>;
     // binary coefficients
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Component>;
 
