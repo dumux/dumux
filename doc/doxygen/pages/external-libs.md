@@ -21,13 +21,15 @@ In the following grouped lists, you can find some external modules and external 
 ## Grid managers
 
 * `dune-alugrid`: Grid library, comes as a DUNE module. The parallel version needs also a graph partitioner, such as ParMETIS.
-Download: https://gitlab.dune-project.org/extensions/dune-alugrid.git
-* `dune-foamgrid`: External grid module. One- and two-dimensional grids in a physical space of arbitrary dimension; non-manifold grids, growth, element paramterizations, and movable vertices. This makes FoamGrid the grid data structure of choice for simulating structures such as foams, discrete fracture networks, or network flow problems. Download: https://gitlab.dune-project.org/extensions/dune-foamgrid.git
-* `opm-grid`: opm-grid is a DUNE module supporting grids in a corner-point format. Download: https://github.com/OPM/opm-grid.git and https://github.com/OPM/opm-common.git
-* `dune-subgrid`: The dune-subgrid module is a meta-grid implementation that allows to mark elements of another hierarchical dune grid and use this sub-grid just like a regular grid. The set of marked elements can then be accessed as a hierarchical dune grid in its own right. Dune-Subgrid provides the full grid interface including adaptive mesh refinement. Download: https://git.imp.fu-berlin.de/agnumpde/dune-subgrid.git
+[Download](https://gitlab.dune-project.org/extensions/dune-alugrid.git)
+* `dune-foamgrid`: External grid module. One- and two-dimensional grids in a physical space of arbitrary dimension; non-manifold grids, growth, element paramterizations, and movable vertices. This makes FoamGrid the grid data structure of choice for simulating structures such as foams, discrete fracture networks, or network flow problems. [Download](https://gitlab.dune-project.org/extensions/dune-foamgrid.git)
+* `opm-grid`: opm-grid is a DUNE module supporting grids in a corner-point format. Download: [opm-grid](https://github.com/OPM/opm-grid.git) and [opm-common](https://github.com/OPM/opm-common.git)
+* `dune-mmesh`: This grid module can handle moving, physical interfaces. [Download](https://gitlab.dune-project.org/samuel.burbulla/dune-mmesh)
+* `dune-subgrid`: The dune-subgrid module is a meta-grid implementation that allows to mark elements of another hierarchical dune grid and use this sub-grid just like a regular grid. The set of marked elements can then be accessed as a hierarchical dune grid in its own right. Dune-Subgrid provides the full grid interface including adaptive mesh refinement. [Download](https://git.imp.fu-berlin.de/agnumpde/dune-subgrid.git)
 * `dune-spgrid`: The DUNE module dune-spgrid provides a structured, parallel grid and supports periodic boundary conditions.
-Download: https://gitlab.dune-project.org/extensions/dune-spgrid.git
-* `dune-uggrid`: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL. To build UG the tools lex/yacc or the GNU variants of flex/bison must be provided. Download: https://gitlab.dune-project.org/staging/dune-uggrid.git
+[Download](https://gitlab.dune-project.org/extensions/dune-spgrid.git)
+* `dune-uggrid`: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL. To build UG the tools lex/yacc or the GNU variants of flex/bison must be provided. [Download](https://gitlab.dune-project.org/staging/dune-uggrid.git)
+* For additional modules, visit the [Grid Modules](https://www.dune-project.org/groups/grid/) page provided by DUNE.
 
 ## Solver libraries
 

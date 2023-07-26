@@ -11,21 +11,23 @@ Furthermore, additional properties characterize the capabilities and specializat
 * local refinement, refinement rules
 * parallel data distribution and communication, dynamic load balancing.
 
-Depending on the needs, one has to choose the proper grid. Some grids and what characterizes them are:
-* [YASPGrid](https://gitlab.dune-project.org/core/dune-grid) (Yet Another Structured Parallel Grid): structured, parallel, arbitrary overlap
-* [AlbertaGrid](https://gitlab.dune-project.org/core/dune-grid): provides access to ALBERTA finite element toolbox via DUNE interface
-* [OneDGrid](https://gitlab.dune-project.org/core/dune-grid) (One Dimensional Grid): 1D, adaptive
-* [ALUGrid](https://gitlab.dune-project.org/extensions/dune-alugrid) (adaptive, loadbalancing, unstructured Grid): adaptive, loadbalancing, unstructured
-* [UGGrid](https://gitlab.dune-project.org/staging/dune-uggrid) (Unstructured Grid): 2D/3D, unstructured grid, can be refined
-* [FoamGrid](https://gitlab.dune-project.org/extensions/dune-foamgrid): 1D/2D grids in physical space of arbitrary dimension, no manifold structures expected. May be used for simulating foams, discrete fracture networks, network flow problems
-* [SPGrid](https://gitlab.dune-project.org/extensions/dune-spgrid) (Sparse Paged Grid): structured, parallel
-* [MMESHGrid](https://gitlab.dune-project.org/samuel.burbulla/dune-mmesh): can handle moving, physical interfaces
-* [SubGrid](https://gitlab.dune-project.org/extensions/dune-subgrid): allows to mark subset of a grid's elements. The marked elements can then be treated in a separate hierarchy.
-* OPMGrid (Open Porous Media Grid): supports corner-point format
-* [Many more](https://www.dune-project.org/groups/grid/)
+Depending on the needs, one has to choose the proper grid. The core module `dune-grid` already offers a few options, some of these are:
+* [YASPGrid](https://gitlab.dune-project.org/core/dune-grid) (Yet Another Structured Parallel Grid): structured, parallel, arbitrary overlap.
+* [AlbertaGrid](https://gitlab.dune-project.org/core/dune-grid): provides access to ALBERTA finite element toolbox via DUNE interface.
+* [OneDGrid](https://gitlab.dune-project.org/core/dune-grid) (One Dimensional Grid): 1D, adaptive.
+* There are other external grid modules which specialize in certain aspects of grid capabilites. For an overview, see @ref external-libraries.
+
 
 Within Dumux, the grid type is set within the `properties.hh` file. Standard grids like YASPGrid, AlbertaGrid and OneDGrid are included in the dune-grid core module. Using other grid types requires downloading the respective DUNE module. The [base implementation](https://gitlab.dune-project.org/core/dune-grid/-/blob/master/dune/grid/common/grid.hh) of the grid data member is part of the dune-grid module.
 
+### Example
+```cpp
+...
+using Grid = GetPropType<TypeTag, Properties::Grid>; //defined in properties as e.g. 'using Grid = Dune::YaspGrid<2>;'
+GridManager<Grid> gridManager;
+gridManager.init();
+...
+```
 
 ### Key functionalites
 * maxLevel():
