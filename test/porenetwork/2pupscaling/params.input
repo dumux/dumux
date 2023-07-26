@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+TEnd = 1e10 # [s]
 
 [Grid]
 File = ../1p/grids/pnm_converted.dgf

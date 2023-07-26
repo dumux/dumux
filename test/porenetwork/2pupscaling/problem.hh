@@ -60,8 +60,94 @@ public:
     : ParentType(gridGeometry, spatialParams)
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
-        useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
-        pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        initialPc_ = getParam<Scalar>("Problem.InitialPc", 3000);
+        finalPc_ = getParam<Scalar>("Problem.FinalPc", 7000);
+        numSteps_ = getParam<int>("Problem.NumSteps", 10);
+        swShiftThreshold_ = getParam<Scalar>("Problem.RelShiftThreshold", 1e-6);
+        writeOnlyEqPoints_ = getParam<bool>("Problem.WriteOnlyEquilibriumPoints", false);
+
+        pcEpisopde_.resize(numSteps_ + 1);
+        for (int i = 0 ; i < pcEpisopde_.size(); i++)
+              pcEpisopde_[i] = initialPc_ + i*(finalPc_ - initialPc_)/numSteps_;
+
+        std::cout << "The following global PCs are applied: " << std::endl;
+        for (auto x: pcEpisopde_)
+        {
+            std::cout << x << std::endl;
+        }
+
+        if (!writeOnlyEqPoints_)
+        {
+            logfile_.open("logfile_" + this->name() + ".txt"); //for the logfile
+            logfile_ <<"Logfile for: " + this->name()  << std::endl;
+            logfile_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
+                     << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
+                     << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
+                     << std::endl;
+        }
+
+        logfileEqPoints_.open("eqPoints_" + this->name() + ".txt");
+        logfileEqPoints_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
+                         << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
+                         << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
+                         << std::endl;
+        step_ = 0;
+    }
+
+
+    /*!
+     * \brief Called at the end of each time step
+     */
+    template<class AveragedValues>
+    void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
+    {
+        const Scalar avgSw = avgValues["avgSat"];
+
+        if (!writeOnlyEqPoints_)
+        {
+            logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                                   << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                                   << std::endl;
+        }
+
+        // store the three most recent averaged saturations
+        std::rotate(swAvg_.rbegin(), swAvg_.rbegin()+1, swAvg_.rend());
+        swAvg_[0]= avgSw;
+
+        // Check for steady state and end episode
+        dSwDt_ = std::abs(swAvg_[0]-swAvg_[1])/dt;
+        const Scalar pc = pcEpisopde_[step_];
+        std::cout << "global pC applied: " << pc << " / " << finalPc_ << " (step " << step_ << " of " << numSteps_ << ")" << std::endl;
+        std::cout << "swAverage: " << swAvg_[0] << " (relative shift: " << dSwDt_ << "). " << std::endl;
+        std::cout << numThroatsInvaded << " of " << this->gridGeometry().gridView().size(0) << " throats invaded." << std::endl;
+        if(dSwDt_ < swShiftThreshold_)
+        {
+            std::cout << "Equlibrium point reached!" << std::endl;
+
+            logfileEqPoints_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                                           << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                                           << std::endl;
+            inEquilibrium_ = true;
+            ++step_;
+        }
     }
 
     /*!
@@ -85,48 +171,40 @@ public:
             return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
     }
 
+    bool equilibriumPointReached() const
+    { return dSwDt_ < swShiftThreshold_; }
+
      /*!
      * \name Boundary conditions
      */
     // \{
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.
-    BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
     {
         BoundaryTypes bcTypes;
+        if (isInletPore_(scv) || isOutletPore_(scv))
+           bcTypes.setAllDirichlet();
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            bcTypes.setAllDirichlet();
-        else if (isOutletPore_(scv))
-            bcTypes.setAllDirichlet();
+        else // neuman for the remaining boundaries
+           bcTypes.setAllNeumann();
 
-#if !ISOTHERMAL
-        bcTypes.setDirichlet(temperatureIdx);
-#endif
         return bcTypes;
     }
 
 
     //! Evaluate the boundary conditions for a Dirichlet control volume.
-    PrimaryVariables dirichlet(const Element& element,
-                               const SubControlVolume& scv) const
+    PrimaryVariables dirichlet(const Element &element,
+                               const SubControlVolume &scv) const
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1e5;
         values[snIdx] = 0.0;
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
-        // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
-
-#if !ISOTHERMAL
+        const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteraction(element, scv, 0);
         if (isInletPore_(scv))
-            values[temperatureIdx] = 273.15 + 15;
-        else
-            values[temperatureIdx] = 273.15 + 10;
-#endif
+            values[snIdx] = 1.0 - fluidMatrixInteraction.sw(pcEpisopde_[step_]);
+
         return values;
     }
 
@@ -139,20 +217,12 @@ public:
     // \{
 
     //! Evaluate the source term for all phases within a given sub-control-volume.
-    PrimaryVariables source(const Element& element,
+    PrimaryVariables source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume& scv) const
+                            const SubControlVolume &scv) const
     {
-        PrimaryVariables values(0.0);
-
-        // If we do not want to use global phase pressure difference with fixed saturations and pressures,
-        // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
-        // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
-
-        return values;
+        return PrimaryVariables(0.0);
     }
     // \}
 
@@ -161,17 +231,6 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1e5;
-
-        // get global index of pore
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
-        else
-            values[snIdx] = 0.0;
-
-#if !ISOTHERMAL
-        values[temperatureIdx] = 273.15 + 10;
-#endif
         return values;
     }
 
@@ -199,8 +258,19 @@ private:
     }
 
     int vtpOutputFrequency_;
-    bool useFixedPressureAndSaturationBoundary_;
-    Scalar pc_;
+    Scalar initialPc_;
+    Scalar finalPc_;
+    int numSteps_;
+    std::vector<Scalar> pcEpisopde_;
+    std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
+    std::ofstream logfile_;
+    std::ofstream logfileEqPoints_;
+    Scalar dSwDt_ = 0.0;
+    mutable bool inEquilibrium_ = false;
+    Scalar swShiftThreshold_;
+    bool writeOnlyEqPoints_;
+
+    int step_;
 };
 } //end namespace Dumux
 
