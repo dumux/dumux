@@ -1,34 +1,37 @@
 # Model
 
-`Model` classes are trait classes which are used as basis classes for concrete `Problem` classes. One could say, the `Model` is the *abstraction* of a conceptual model, while the `Problem` is the *concretion* of this conceptual model. The `Model` class defines, what a derived `Problem` class has to incorporate in order to be correct. These constraints should be chosen such, that they ensure derived `Problem` classes do not incorporate contradicting subelements. See also @ref problem.
+# BaseModelTraits
 
+The `BaseModelTraits` define the most basic requirements a model has to fulfil, normally this would be the number of model equations, the number of fluid phases, the number of chemical components etc.
 
-
-### Key Members
-
-## Basic Indices
-
+### `BasicModelTraits` Key Members
 * numEq():
-    - the number of equations used in the model.
+    - returns the number of equations used in the model.
 * numFluidPhases():
-    - the number of fluid phases considered in the model.
+    - returns the number of fluid phases used in the model.
+* numFluidComponents():
+    - returns the number of fluid components used in the model.
+* numSolidComponents():
+    - returns the number of solid components used in the model.
 * enableAdvection():
-    define, whether the model considers advection
-
-* enableEnergyBalance():
-    define, if the model has an energy balance.
-
-## Specific Indices
+    - returns true if the model considers advection.
 * enableMolecularDiffusion():
-    for a compositional model: decide if molecular diffusion is modeled.
+    - returns true if the model considers molecular diffusion.
+* enableEnergyBalance():
+    - returns true, if the model incorporates an energy balance. 
+* enalbeThermalDispersion():
+    - returns ture, if the model considers thermal dispersion.
 
+# ModelTraits
 
-## Basic Propetries
+`ModelTraits` classes are trait classes which encapsulate the main constraints for the model relevant classes. Most important classes affected are @problem,  @assembler and @iofields. The `ModelTraits` define the restrictions to the dervied classes in order to guarantee to some degree that they implemented the required member functions. In general, it is advisable to derive a `ModelTraits` class from a `BasicModelTraits` class.
+
+## Key Members
 
 Note that the following members are inside the namespace `Properties`. The following properties are incorporated in most of the models. To obtain the Property defined in the trait class, you may use `using ExampleProperty = GetPropType<TypeTag, Properties::ExampleProperty>;`. 
 
 * LocalResidual:
-    - Ensures that a local residual is implemented and specifies its type.
+    -  local residual is implemented and specifies its type.
 * ModelTraits:
     - Specifies the main requirements of the model. If an implementation using this model does not fulfil them, a compiler error should hinder the compilation of the program, to prevent the usage of incorrect models.
     - Note: It is also possible, to use isothermal model traits by extending them with nonisothermal model traits.
@@ -46,9 +49,6 @@ Note that the following members are inside the namespace `Properties`. The follo
     optionally, there also may be used:
         - `EffectiveDiffusivityModel` (EDM)
         - `MolecularDiffusionType` (DT)
-        
-## More Specific Properties
-
 * AdvectionType:
     - Specifies what kind of advection model is implemented, also ensures that an advection model is implemented.
 * Formulation:
