@@ -19,7 +19,7 @@ The `BaseModelTraits` define the most basic requirements a model has to fulfil, 
     - returns true if the model considers molecular diffusion.
 * enableEnergyBalance():
     - returns true, if the model incorporates an energy balance. 
-* enalbeThermalDispersion():
+* enableThermalDispersion():
     - returns ture, if the model considers thermal dispersion.
 
 # ModelTraits
