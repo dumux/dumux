@@ -27,8 +27,8 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
- * \brief Coupling manager for Stokes and Darcy domains with equal dimension
- *        specialization for staggered-cctpfa coupling.
+ * \brief Coupling manager for Stokes and Darcy domains with equal dimension.
+ *        Specialization for staggered-cctpfa coupling.
  */
 template<class MDTraits>
 class FFMassPMCouplingManagerStaggeredCCTpfa

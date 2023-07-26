@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \brief Coupling managers specialized for different discretization schemes
+ * \brief Coupling managers for free and porous medium flow, specialized for different discretization schemes.
  */
 
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_HH
