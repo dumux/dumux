@@ -19,6 +19,7 @@
 
 namespace Dumux {
 
+#ifndef DOXYGEN
 namespace FreeFlowPorousMediumDetail {
 
 // declaration (specialize for different discretization types)
@@ -33,7 +34,8 @@ template<class MDTraits, class CouplingManager>
 struct FreeFlowPorousMediumCouplingConditionsSelector<MDTraits, CouplingManager, DiscretizationMethods::FCStaggered, DiscretizationMethods::CCTpfa, DiscretizationMethods::CCTpfa>
 { using type = FFPMCouplingConditionsStaggeredCCTpfa<MDTraits, CouplingManager>; };
 
-} // end namespace Detail
+} // end namespace FreeFlowPorousMediumDetail
+#endif // DOXYGEN
 
 template<class MDTraits, class CouplingManager>
 using FreeFlowPorousMediumCouplingConditions = typename FreeFlowPorousMediumDetail::FreeFlowPorousMediumCouplingConditionsSelector<MDTraits,CouplingManager>::type;

@@ -25,6 +25,7 @@
 
 namespace Dumux {
 
+#ifndef DOXYGEN
 namespace FreeFlowPorousMediumDetail {
 
 // global subdomain indices
@@ -126,7 +127,8 @@ struct CouplingManagers
         = Dumux::FreeFlowMassPorousMediumCouplingManager<FreeFlowMassPorousMediumTraits>;
 };
 
-} // end namespace Detail
+} // end namespace FreeFlowPorousMediumDetail
+#endif // DOXYGEN
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling

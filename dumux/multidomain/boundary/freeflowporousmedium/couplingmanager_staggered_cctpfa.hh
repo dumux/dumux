@@ -18,7 +18,6 @@
 
 namespace Dumux {
 
-
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
  * \brief Coupling manager for coupling freeflow and porous medium flow models
