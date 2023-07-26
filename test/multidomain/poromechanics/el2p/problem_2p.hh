@@ -117,9 +117,13 @@ public:
         return values;
     }
 
+    void setTime(Scalar t) const
+    { time_ = t; }
+
 private:
     static constexpr Scalar eps_ = 1.0e-6;
     std::string problemName_;
+    mutable Scalar time_ = 0;
 };
 
 } // end namespace Dumux

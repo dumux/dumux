@@ -1,6 +1,7 @@
 [TimeLoop]
 Dt = 10 # [s]
 TEnd = 100 # [s]
+Scheme = ImplicitEuler
 
 [Grid]
 LowerLeft = 0 0 0

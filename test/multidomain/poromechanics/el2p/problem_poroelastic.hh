@@ -102,9 +102,13 @@ public:
                             const SubControlVolume& scv) const
     { return PrimaryVariables(0.0); }
 
+    void setTime(Scalar t) const
+    { time_ = t; }
+
 private:
     static constexpr Scalar eps_ = 3e-6;
     std::string problemName_;
+    mutable Scalar time_ = 0;
 };
 
 } // end namespace Dumux
