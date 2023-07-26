@@ -4,12 +4,13 @@
 
 DuMux has the following folder structure, which is similar to other DUNE modules.
 
-* `bin`: binaries, e.g. used for the automatic testing, post-processing, installation
-* `cmake`: the configuration options for building DuMux
+* `bin`: executable scripts (Python/Bash) and helper tools, e.g. used for the automatic testing, post-processing, installation
+* `cmake`: the configuration options and build system files
 * @refdir{doc} "doc": files necessary for the Doxygen documentation and various logos
 * @refdir{dumux} "dumux": the main folder, containing the source files. See below for more details.
-* `examples`: well-documented examples of applying DuMux to typical physical problems. In the `README.md` files, the setup is explained, the used code is presented as well as documented and images resulting from the simulation are included. The `README.md` files are located directly in the subfolders of `examples` and can be displayed by web browsers.
-* `test`: tests for each numerical model and some functionality.The structure is equivalent to the `dumux` folder, the `references` folder contains solutions for the automatic testing. Each test program consists of a main file `main.cc`, the problem definition `*problem.hh` (specifying initial and boundary conditions), and an input file `params.input`. If necessary, spatially dependent parameters are defined in `*spatialparameters.hh`. For more detailed descriptions of the tests, please have a look at the [examples](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/examples#open_file_folder-example-1-diffusion-equation).
+* [`examples`](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/examples#open_file_folder-example-1-diffusion-equation): well-documented examples of applying DuMux to typical simulation scenarios of different complexity. The example documentation is best viewed with [a browser via GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/examples#open_file_folder-example-1-diffusion-equation). In the `README.md` file of
+each example, the setup is explained and the code is presented and described in detail.
+* `test`: unit tests, integration tests and systems tests for each numerical model. The folder structure mimics the structure of the `dumux` folder (see below), the `references` folder contains solutions for the automatic testing. Each system (end user) test describes a full simulation. The setup usually consists of a main file (`main.cc`), the problem definition (`problem.hh`) specifying initial and boundary conditions, and a runtime parameter input file `params.input`. Often spatially-dependent parameters are defined in a separate header (`spatialparams.hh`).
 
 ## The Folder dumux
 
