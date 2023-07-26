@@ -7,11 +7,11 @@
 /*!
  * \file
  * \ingroup FreeFlowPorousMediumCoupling
- * \copydoc Dumux::FreeFlowMomentumPorousMediumCouplingMapper
+ * \copydoc Dumux::FFMomentumPMCouplingMapperStaggeredCCTpfa
  */
 
-#ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_HH
-#define DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_HH
+#ifndef DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_STAGGERED_TPFA_HH
+#define DUMUX_MULTIDOMAIN_FREEFLOWMOMENTUM_POROUSMEDIUM_COUPLINGMAPPER_STAGGERED_TPFA_HH
 
 #include <iostream>
 #include <unordered_map>
@@ -33,7 +33,7 @@ namespace Dumux {
  * \todo how to extend to arbitrary number of domains?
  */
 template<class MDTraits, class CouplingManager>
-class FreeFlowMomentumPorousMediumCouplingMapper
+class FFMomentumPMCouplingMapperStaggeredCCTpfa
 {
     using Scalar = typename MDTraits::Scalar;
 
@@ -80,7 +80,6 @@ public:
      */
     void update(const CouplingManager& couplingManager)
     {
-        // TODO: Box and multiple domains
         static_assert(numSD == 2, "More than two subdomains not implemented!");
         static_assert(isFcStaggered<0>() && isCCTpfa<1>(), "Only coupling between fcstaggered and cctpfa implemented!");
 
