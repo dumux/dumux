@@ -26,6 +26,7 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
