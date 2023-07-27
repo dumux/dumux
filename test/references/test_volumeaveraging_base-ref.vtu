@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
+  <UnstructuredGrid>
+    <Piece NumberOfCells="9" NumberOfPoints="16">
+      <CellData Scalars="process rank" Vectors="vectorField">
+        <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
+          0 0 0 0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="scalarField" NumberOfComponents="1" format="ascii">
+          0.707106781186548 1.58113883008419 2.54950975679639 1.58113883008419 2.12132034355964 2.91547594742265 2.54950975679639 2.91547594742265 3.53553390593274
+        </DataArray>
+        <DataArray type="Float64" Name="vectorField" NumberOfComponents="3" format="ascii">
+          0.5 0.5 0 1.5 0.5 0 2.5 0.5 0 0.5 1.5 0
+          1.5 1.5 0 2.5 1.5 0 0.5 2.5 0 1.5 2.5 0
+          2.5 2.5 0
+        </DataArray>
+        <DataArray type="Float64" Name="avg_ext_scalarField" NumberOfComponents="1" format="ascii">
+          0.707106781186547 1.58113883008419 2.5495097567964 1.58113883008419 2.12132034355964 2.91547594742265 2.5495097567964 2.91547594742265 3.53553390593275
+        </DataArray>
+        <DataArray type="Float64" Name="avg_ext_vectorField" NumberOfComponents="1" format="ascii">
+          0.707106781186547 1.58113883008419 2.5495097567964 1.58113883008419 2.12132034355964 2.91547594742265 2.5495097567964 2.91547594742265 3.53553390593275
+        </DataArray>
+        <DataArray type="Float64" Name="avg_conv_scalarField" NumberOfComponents="1" format="ascii">
+          0.854488067267939 1.63669912232795 2.49915501444261 1.63669912232795 2.16368679349082 2.86918389691222 2.49915501444261 2.86918389691222 3.42795917116107
+        </DataArray>
+        <DataArray type="Float64" Name="avg_conv_vectorField" NumberOfComponents="3" format="ascii">
+          0.585714285714286 0.585714285714286 0 1.5 0.585714285714286 0 2.41428571428572 0.585714285714286 0 0.585714285714286 1.5 0
+          1.5 1.5 0 2.41428571428572 1.5 0 0.585714285714286 2.41428571428572 0 1.5 2.41428571428572 0
+          2.41428571428572 2.41428571428571 0
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
+          0 0 0 1 0 0 0 1 0 1 1 0
+          2 0 0 2 1 0 3 0 0 3 1 0
+          0 2 0 1 2 0 2 2 0 3 2 0
+          0 3 0 1 3 0 2 3 0 3 3 0
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
+          0 1 3 2 1 4 5 3 4 6 7 5
+          2 3 9 8 3 5 10 9 5 7 11 10
+          8 9 13 12 9 10 14 13 10 11 15 14
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
+          4 8 12 16 20 24 28 32 36
+        </DataArray>
+        <DataArray type="UInt8" Name="types" NumberOfComponents="1" format="ascii">
+          9 9 9 9 9 9 9 9 9
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

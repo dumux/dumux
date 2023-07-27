@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(boundingboxtree)
+add_subdirectory(volumeaveraging)
 
 dumux_add_test(SOURCES test_0d1d_intersection.cc LABELS unit)
 dumux_add_test(SOURCES test_0d2d_intersection.cc LABELS unit)

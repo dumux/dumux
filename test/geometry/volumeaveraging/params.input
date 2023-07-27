@@ -1,0 +1,18 @@
+[Base.Grid]
+LowerLeft = 0 0
+UpperRight = 3 3
+Cells = 3 3
+
+[Extended.Grid]
+LowerLeft = 0 0
+UpperRight = 3 3
+Cells = 30 30
+
+[Averaging]
+UseCircleFilter = false # false: square, true: circle
+FilterSize = 0.75
+
+[IO]
+ReadIndexData = false
+WriteIndexData = true
+FilePath = test.bin
