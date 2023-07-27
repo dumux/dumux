@@ -9,6 +9,7 @@ One click install script for dumux
 import os
 import sys
 import argparse
+import itertools
 import logging
 import subprocess
 import time
@@ -25,6 +26,9 @@ logger.addHandler(streamHandler)
 fileHandler = logging.FileHandler("installdumux.log", encoding="utf-8")
 fileHandler.setLevel(logging.DEBUG)
 logger.addHandler(fileHandler)
+
+_SPINNER = itertools.cycle(range(4))
+
 
 class _Version:
     def __init__(self, version: str) -> None:
@@ -66,6 +70,13 @@ def showMessage(message):
     logger.info("*" * 120)
 
 
+def spin(condition, *arguments, **keyWordArguments):
+    """Display a progress symbol while condition is true"""
+    while condition(*arguments, **keyWordArguments):
+        sys.stdout.write("༄ " * next(_SPINNER))
+        sys.stdout.flush()
+        time.sleep(0.2)
+        sys.stdout.write("\r\033[K")
 
 
 def checkCppVersion():
@@ -89,6 +100,7 @@ def runCommand(command, workdir="."):
             universal_newlines=True,
             cwd=workdir,
         ) as popen:
+            spin(lambda p: p.poll() is None, popen)
             returnCode = popen.wait()
             if returnCode:
                 logger.error(f"The command {' '.join(command)} returned with non-zero exit code.")
