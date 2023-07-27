@@ -20,9 +20,9 @@ dumux_add_test(NAME test_volumeaveraging_subgrid
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS  --script fuzzy
-                         --files ${CMAKE_SOURCE_DIR}/test/references/Averaging_SourceGrid-ref.vtu
+                         --files ${CMAKE_SOURCE_DIR}/test/references/test_volumeaveraging_subgrid_source-ref.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/SourceGrid-00000.vtu
-                                 ${CMAKE_SOURCE_DIR}/test/references/Averaging_TargetGrid-ref.vtu
+                                 ${CMAKE_SOURCE_DIR}/test/references/test_volumeaveraging_subgrid_target-ref.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/TargetGrid-00000.vtu
                          --command "${CMAKE_CURRENT_BINARY_DIR}/test_volumeaveraging_subgrid params_subgrid.input
                          -Source.Grid.Cells '150 150'

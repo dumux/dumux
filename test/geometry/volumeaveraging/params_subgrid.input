@@ -1,0 +1,19 @@
+[Grid]
+ImagePath = "./test.pbm"
+Repeat = 3 3
+
+[Source.Grid]
+LowerLeft = 0 0
+UpperRight = 3 3
+Cells = 150 150
+CutMin = 0.5 0.5
+CutMax = 2.5 2.5
+
+[Target.Grid]
+LowerLeft = 1 1
+UpperRight = 2 2
+Cells = 50 50
+
+[IO]
+ReadIndexData = false
+WriteIndexData = true
