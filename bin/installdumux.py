@@ -9,9 +9,25 @@ One click install script for dumux
 import os
 import sys
 import argparse
+import itertools
+import logging
 import subprocess
-import textwrap
+import time
 from shutil import which
+
+logger = logging.getLogger("installdumux")
+logger.setLevel(logging.DEBUG)
+
+streamHandler = logging.StreamHandler(stream=sys.stdout)
+streamHandler.setLevel(logging.INFO)
+streamHandler.setFormatter(logging.Formatter("-- %(levelname)s: %(message)s"))
+logger.addHandler(streamHandler)
+
+fileHandler = logging.FileHandler("installdumux.log", encoding="utf-8")
+fileHandler.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+
+_SPINNER = itertools.cycle(range(4))
 
 
 class _Version:
@@ -49,9 +65,18 @@ dumuxBranch = (
 
 def showMessage(message):
     """Pretty print message"""
-    print("*" * 120)
-    print(message)
-    print("*" * 120)
+    logger.info("*" * 120)
+    logger.info(message)
+    logger.info("*" * 120)
+
+
+def spin(condition, *arguments, **keyWordArguments):
+    """Display a progress symbol while condition is true"""
+    while condition(*arguments, **keyWordArguments):
+        sys.stdout.write("༄ " * next(_SPINNER))
+        sys.stdout.flush()
+        time.sleep(0.2)
+        sys.stdout.write("\r\033[K")
 
 
 def checkCppVersion():
@@ -59,15 +84,14 @@ def checkCppVersion():
     requiredversion = "9.3"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
     if _Version(result) < _Version(requiredversion):
-        print("-- An error occurred while checking for prerequistes.")
-        raise Exception(
-            f"g++ greater than or equal to {requiredversion} "
-            "is required for dumux releases >=3.2!"
-        )
+        logger.error("An error occurred while checking for prerequistes.")
+        logger.error(f"g++ greater than or equal to {requiredversion} is required.")
+        sys.exit(1)
 
 
 def runCommand(command, workdir="."):
     """Run command with error checking"""
+    logger.debug(f"Running {' '.join(command)}")
     with open("../installdumux.log", "a") as log:
         with subprocess.Popen(
             command,
@@ -76,18 +100,14 @@ def runCommand(command, workdir="."):
             universal_newlines=True,
             cwd=workdir,
         ) as popen:
+            spin(lambda p: p.poll() is None, popen)
             returnCode = popen.wait()
             if returnCode:
-                message = textwrap.dedent(
-                    f"""\
-
-                    (Error) The command {command} returned with non-zero exit code
-                    If you can't fix the problem yourself consider reporting your issue
-                    on the mailing list (dumux@listserv.uni-stuttgart.de) and
-                    attach the file 'installdumux.log'
-                    """
-                )
-                showMessage(message)
+                logger.error(f"The command {' '.join(command)} returned with non-zero exit code.")
+                logger.error("You find the error message in the file 'installdumux.log'.")
+                logger.error("If you can't fix the problem yourself consider reporting your issue")
+                logger.error("on the mailing list (dumux@listserv.uni-stuttgart.de) and")
+                logger.error("attach the file 'installdumux.log'.")
                 sys.exit(1)
 
 
@@ -115,18 +135,18 @@ with open("installdumux.log", "w") as _:
 #################################################################
 #################################################################
 programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
-showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
+showMessage(f"(1/3) Checking all prerequistes: {' '.join(programs)}...")
 
 # check some prerequistes
 for program in programs:
     if which(program) is None:
-        print("-- An error occurred while checking for prerequistes.")
-        raise Exception(f"Program {program} has not been found.")
+        logger.error("An error occurred while checking for prerequistes.")
+        logger.error(f"The required program '{program}' has not been found.")
+        sys.exit(1)
 
 if which("paraview") is None:
-    print(
-        "-- Warning: paraview seems to be missing. You may not be able to view simulation results!"
-    )
+    logger.warning("ParaView could not be found. (You might have it but we can't find it.)")
+    logger.warning("We recommend installing ParaView to view simulation results.")
 
 checkCppVersion()
 
@@ -151,14 +171,14 @@ for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
     if not os.path.exists(f"dune-{module}"):
         gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
     else:
-        print(f"-- Skip cloning dune-{module} because the folder already exists.")
+        logger.info(f"Skip cloning dune-{module} because the folder already exists.")
         gitSetBranch(f"dune-{module}", duneBranch)
 
 # dumux
 if not os.path.exists("dumux"):
     gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
 else:
-    print("-- Skip cloning dumux because the folder already exists.")
+    logger.info("Skip cloning dumux because the folder already exists.")
     gitSetBranch("dumux", dumuxBranch)
 
 
@@ -190,8 +210,9 @@ if dumuxBranch == "master" or _Version(args["dumux_version"]) > _Version("3.3"):
 else:
     TEST_PATH += "/implicit/isothermal"
 
-showMessage(
-    "(Installation complete) To test if everything works, "
+showMessage("༄  DuMuˣ installation complete 🎉")
+print(
+    "To test if everything works, "
     "please run the following commands (can be copied to command line):\n\n"
     f"  cd {TEST_PATH}\n"
     "  make test_1p_tpfa\n"
