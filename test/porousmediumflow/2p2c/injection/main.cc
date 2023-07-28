@@ -13,13 +13,11 @@
 
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -32,6 +30,10 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
+#include <dumux/experimental/assembly/multistagefvassembler.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -43,11 +45,6 @@ int main(int argc, char** argv)
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    // print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
     Parameters::init(argc, argv);
@@ -55,10 +52,6 @@ int main(int argc, char** argv)
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
-
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
@@ -113,10 +106,11 @@ int main(int argc, char** argv)
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    auto timeSteppingMethod = std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>();
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    using Assembler = Experimental::MultiStageFVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeSteppingMethod, xOld);
 
     // the linear solver
     using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
@@ -125,13 +119,16 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+
+    using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
+    TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
 
     // time loop
     timeLoop->start(); do
     {
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+        // time integration
+        timeStepper.step(x, timeLoop->time(), timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -144,7 +141,7 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -153,16 +150,8 @@ int main(int argc, char** argv)
 
     timeLoop->finalize(leafGridView.comm());
 
-    ////////////////////////////////////////////////////////////
-    // finalize, print dumux message to say goodbye
-    ////////////////////////////////////////////////////////////
-
-    // print dumux end message
-    if (mpiHelper.rank() == 0)
-    {
+    if (leafGridView.comm().rank() == 0)
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
 
     return 0;
 } // end main
