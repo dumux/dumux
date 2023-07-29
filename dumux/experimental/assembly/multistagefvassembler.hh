@@ -275,30 +275,55 @@ public:
         stageParams_ = std::move(params);
         const auto curStage = stageParams_->size() - 1;
 
-        // in the first stage, also assemble the old residual
+        // in the first stage, also assemble the residual
+        // at the previous time level (stage 0 residual)
         if (curStage == 1)
         {
             // update time in variables?
-            setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
+            setProblemTime_(*problem_, stageParams_->timeAtStage(0));
 
             resetResidual_(); // residual resized and zero
-            spatialOperatorEvaluations_.push_back(*residual_);
-            temporalOperatorEvaluations_.push_back(*residual_);
 
-            // assemble stage 0 residuals
-            assemble_([&](const auto& element)
+            assert(spatialOperatorEvaluations_.size() >= 0);
+            if (spatialOperatorEvaluations_.size() == 0)
             {
-                LocalAssembler localAssembler(*this, element, *prevSol_);
-                localAssembler.localResidual().spatialWeight(1.0);
-                localAssembler.localResidual().temporalWeight(1.0);
-                localAssembler.assembleCurrentResidual(spatialOperatorEvaluations_.back(), temporalOperatorEvaluations_.back());
-            });
+                spatialOperatorEvaluations_.push_back(*residual_);
+                temporalOperatorEvaluations_.push_back(*residual_);
+
+                // assemble stage 0 residuals
+                assemble_([&](const auto& element)
+                {
+                    LocalAssembler localAssembler(*this, element, *prevSol_);
+                    localAssembler.localResidual().spatialWeight(1.0);
+                    localAssembler.localResidual().temporalWeight(1.0);
+                    localAssembler.assembleCurrentResidual(spatialOperatorEvaluations_.back(), temporalOperatorEvaluations_.back());
+                });
+            }
+
+            // we don't delete the first stage so it can be reused in a restarted
+            // time integration step. The evaluations are only deleted
+            // when explicitly requested by calling clearStages().
+            // So if here the vector is non-empty, we don't need to evaluate again
+            // (this should only occur if we are restarting time integration, e.g.
+            // with a different time step size)
+            else if (spatialOperatorEvaluations_.size() > 0)
+            {
+                updateGridVariables(x);
+                spatialOperatorEvaluations_.resize(1);
+                temporalOperatorEvaluations_.resize(1);
+            }
         }
 
         // update time in variables?
         setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
 
         resetResidual_(); // residual resized and zero
+
+        if (spatialOperatorEvaluations_.size() != curStage)
+            DUNE_THROW(Dune::InvalidStateException,
+                "Invalid state. Maybe you forgot to call clearStages()");
+
+        // allocate memory for this stage
         spatialOperatorEvaluations_.push_back(*residual_);
         temporalOperatorEvaluations_.push_back(*residual_);
     }
