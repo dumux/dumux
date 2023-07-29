@@ -19,11 +19,13 @@ be evaluated with the function values provided in the same order as the names wh
 - __Time loop__: Fixed a bug when the time is chosen to be negative and/or the end time is set to zero. (Before we assume time is always positive and endtime never zero.)
 - __Hyperelastic__: Added a hyperelastic model (large deformations) and a test (in geomechanics)
 - __Property system__: Added a function `inheritsFrom` that allows to query whether a type tag is present in the inheritance hierarchy of another type tag
+- __PDESolver__: The LinearPDESolver/NewtonSolver now has an `apply` method that returns a bool (true if converged) instead of throwing an exception
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
 - __MultiDomain__: The MDTraits are now required to state the LocalResidual type in the Subdomain policy (see multidomain/traits.hh). This only affects users that created their own MDTraits and don't use the default MDTraits.
+- __PDESolver__: The PDESolver interface now requires an `apply` method that returns a `bool` instead of throwing when not converged
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 
