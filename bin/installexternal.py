@@ -40,7 +40,7 @@ class ChoicesAction(argparse._StoreAction):
         return self._choices_actions
 
 
-class TarSafe(_unsafe_tarfile.TarFile):
+class TarSafe:
     """
     A safe subclass of the TarFile class for interacting with tar files.
     Runs all necessary checks for the safety of a tarfile (tar).
@@ -72,7 +72,8 @@ class TarSafe(_unsafe_tarfile.TarFile):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        # pylint: disable=consider-using-with
+        self._tarfile = _unsafe_tarfile.TarFile(*args, **kwargs)
         self.directory = os.getcwd()
 
     @classmethod
@@ -80,28 +81,27 @@ class TarSafe(_unsafe_tarfile.TarFile):
         """
         Open a tar archive
         """
-        # pylint: disable=consider-using-with
-        return super().open(name, mode, fileobj, bufsize, **kwargs)
+        return _unsafe_tarfile.TarFile.open(name, mode, fileobj, bufsize, **kwargs)
 
     def extract(self, member, path="", set_attrs=True, *, numeric_owner=False):
         """
         Override the parent extract method and add safety checks.
         """
         self._safetar_check()
-        super().extract(member, path, set_attrs=set_attrs, numeric_owner=numeric_owner)
+        self._tarfile.extract(member, path, set_attrs=set_attrs, numeric_owner=numeric_owner)
 
     def extractall(self, path=".", members=None, *, numeric_owner=False):
         """
         Override the parent extractall method and add safety checks.
         """
         self._safetar_check()
-        super().extractall(path, members, numeric_owner=numeric_owner)
+        self._tarfile.extractall(path, members, numeric_owner=numeric_owner)
 
     def _safetar_check(self):
         """
         Runs all necessary checks for the safety of a tarfile.
         """
-        for tarinfo in iter(self):
+        for tarinfo in iter(self._tarfile):
             if self._is_traversal_attempt(tarinfo=tarinfo):
                 raise IOError(f"TarSafe: Attempted directory traversal for member: {tarinfo.name}")
             if self._is_unsafe_symlink(tarinfo=tarinfo):
