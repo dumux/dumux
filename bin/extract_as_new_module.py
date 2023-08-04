@@ -413,7 +413,7 @@ def dependenciesAndPatches(modulePath, skip=None):
         )
         deps = getDependencies(modulePath)
         deps = filterDependencies(deps, skip or [])
-        deps = addDependencyVersions(deps, ignoreUntracked=True)
+        deps = addDependencyVersions(deps)
         deps = addDependencyPatches(deps)
     except Exception as exc:
         raise Exception("Error getting the dependencies.") from exc

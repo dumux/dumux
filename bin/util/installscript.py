@@ -10,7 +10,7 @@ import os
 import sys
 import textwrap
 
-from util.common import getPersistentVersions, versionTable, getPatches
+from util.common import getPersistentVersions, hasUntrackedFiles, versionTable, getPatches
 from util.moduleinfo import getModuleInfo
 from util.installscript_writer import InstallScriptWriterBash
 from util.installscript_writer import InstallScriptWriterPython
@@ -71,13 +71,13 @@ def filterDependencies(dependencies, skipFolders=None):
     return [dep for dep in dependencies if not skipFolder(dep["folder"])]
 
 
-def addDependencyVersions(dependencies, ignoreUntracked=False):
+def addDependencyVersions(dependencies):
     """Add version info to all dependencies"""
 
     def getKey(dependency):
         return dependency["path"]
 
-    versions = getPersistentVersions([getKey(d) for d in dependencies], ignoreUntracked)
+    versions = getPersistentVersions([getKey(d) for d in dependencies])
     if len(versions) != len(dependencies):
         raise Exception("Not all versions of all modules could be found.")
 
@@ -86,6 +86,11 @@ def addDependencyVersions(dependencies, ignoreUntracked=False):
         versionInfo = versions[getKey(depInfo)]
         mergedResult.append({**depInfo, **versionInfo})
     return mergedResult
+
+
+def modulesWithUntrackedFiles(dependencies):
+    """Find modules with untracked files"""
+    return [dep for dep in dependencies if hasUntrackedFiles(dep["path"])]
 
 
 def addDependencyPatches(dependenciesWithVersions):

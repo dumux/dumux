@@ -15,6 +15,7 @@ import subprocess
 
 from util.moduleinfo import getDependencies, getModuleInfo
 from util.installscript import (
+    modulesWithUntrackedFiles,
     addDependencyPatches,
     addDependencyVersions,
     getDefaultScriptName,
@@ -45,11 +46,11 @@ def runMakeInstallScript():
         help="File in which to write the install script",
     )
     parser.add_argument(
-        "-i",
-        "--ignoreuntracked",
+        "-a",
+        "--allow-untracked",
         required=False,
         action="store_true",
-        help="Use this to ignore untracked files present",
+        help="Use this to include untracked files into patches",
     )
     parser.add_argument(
         "-t",
@@ -101,10 +102,20 @@ def runMakeInstallScript():
         sys.exit("No dependencies found. Exiting.")
 
     printProgressInfo(["Determining the module versions"])
-    deps = addDependencyVersions(deps, cmdArgs.get("ignoreuntracked", False))
+    deps = addDependencyVersions(deps)
     printFoundVersionInfo(deps)
 
-    printProgressInfo(["Making patches for unpublished & uncommitted changes"])
+    untracked = modulesWithUntrackedFiles(deps)
+    if not cmdArgs.get("allow_untracked", False) and untracked:
+        untrackedPaths = "\n".join(f" - {dep['path']}" for dep in untracked)
+        raise Exception(
+            "Found untracked files in the following modules:\n"
+            f"{untrackedPaths}\n"
+            "Please commit, stash, or remove them. Alternatively, you can "
+            "use --allow-untracked to include them in the patches."
+        )
+
+    printProgressInfo(["Making patches for unpublished, uncommitted & untracked changes"])
     deps = addDependencyPatches(deps)
 
     # actual script generation
