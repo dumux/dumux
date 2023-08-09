@@ -15,7 +15,7 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_twolayer
                             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_kepsilon_twolayer-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_twolayer-00032.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_twolayer-00031.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon params.input
                              -Problem.Name test_ff_rans2c_kepsilon_twolayer")
 
@@ -38,7 +38,7 @@ dumux_add_test(NAME test_ff_rans2c_sst
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_sst-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst-00035.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst-00034.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst params.input
                         -Problem.Name test_ff_rans2c_sst
                         -RANS.WriteFlatWallBoundedFields False
@@ -52,7 +52,7 @@ dumux_add_test(NAME test_ff_rans2c_komega
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_komega-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega-00036.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega-00035.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega params.input
                              -Problem.Name test_ff_rans2c_komega")
 
@@ -89,7 +89,7 @@ dumux_add_test(NAME test_ff_rans2c_zeroeq
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_zeroeq-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00030.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00029.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq params.input
                              -Problem.Name test_ff_rans2c_zeroeq")
 
@@ -133,7 +133,7 @@ dumux_add_test(NAME test_ff_rans2cni_sst
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_sst-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst-00031.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst-00030.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst params_nonisothermal.input
                         -Problem.Name test_ff_rans2cni_sst
                         -RANS.WriteFlatWallBoundedFields False
