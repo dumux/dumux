@@ -213,7 +213,6 @@ public:
             values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
         }
 
-            std::cout<< scv.dofIndex()<<"   "<<scv.localDofIndex()<<std::endl;
         return values;
     }
 

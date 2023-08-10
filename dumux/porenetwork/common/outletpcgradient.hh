@@ -34,8 +34,7 @@ public:
                                  const SolutionVector& sol)
         : gridVariables_(gridVariables)
         , sol_(sol)
-    {
-    }
+    {}
 
     template <class Element, class SubcontrolVol>
     Scalar zeroPcGradientSw(const Element& element, const SubcontrolVol& scv)

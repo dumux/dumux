@@ -32,6 +32,7 @@
 #include <dumux/porenetwork/common/outletpcgradient.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
+#include "upscalinghelper.hh"
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -126,6 +127,9 @@ int main(int argc, char** argv)
     const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
     problem->outletCapPressureGradient(outletCapPressureGradient);
 
+    Dumux::PoreNetwork::UpscalingHelperTwoP<GridVariables, SolutionVector> ipscalingHelper(*gridVariables, x);
+    ipscalingHelper.setDataPoints(*problem, leafGridView, 5.0);
+
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
@@ -154,7 +158,7 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
+ipscalingHelper.setDataPoints(*problem, leafGridView, 5.0);
         // calculate the averaged values
         avgValues.eval(dofsToNeglect);
         problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());

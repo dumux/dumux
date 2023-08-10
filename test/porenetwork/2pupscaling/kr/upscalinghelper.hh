@@ -24,13 +24,69 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/format.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/porenetwork/common/utilities.hh>
+#include <dumux/porenetwork/common/labels.hh>
 
-namespace Dumux {
 
-template<class Scalar>
-class UpscalingHelper
+namespace Dumux::PoreNetwork {
+
+template<class GridVariables, class SolutionVector>
+class UpscalingHelperTwoP
 {
+    using Scalar = typename GridVariables::VolumeVariables::PrimaryVariables::value_type;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
+    using FS = typename GridVariables::VolumeVariables::FluidSystem;
 public:
+
+    UpscalingHelperTwoP(const GridVariables& gridVariables, const SolutionVector& sol)
+    :gridVariables_(gridVariables)
+    , sol_(sol)
+    , avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
+    {}
+
+    template <class Problem, class LeafGridView>
+    void setDataPoints(const Problem &problem, const LeafGridView& leafGridView, const Scalar totalMassFlux)
+    {
+       auto [pwGradient, pnGradient] = pressureGradient(problem, leafGridView);
+       std::cout<<pwGradient<<"    gradient    "<<pnGradient<<std::endl;
+    }
+
+    template <class Problem, class LeafGridView>
+    std::tuple<Scalar, Scalar>  pressureGradient(const Problem &problem, const LeafGridView& leafGridView)
+    {
+
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+
+        std::vector<std::size_t> dofsToNeglect;
+        for (const auto& vertex : vertices(leafGridView))
+        {
+            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
+            if (problem.gridGeometry().poreLabel(vIdx) != Labels::inlet)
+                dofsToNeglect.push_back(vIdx);
+        }
+        avgValues_.eval(dofsToNeglect);
+        Scalar avgPwInlet = avgValues_["avgPw"];
+        Scalar avgPnInlet = avgValues_["avgPn"];
+
+        dofsToNeglect.clear();
+        for (const auto& vertex : vertices(leafGridView))
+        {
+            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
+            if (problem.gridGeometry().poreLabel(vIdx) != Labels::outlet)
+                dofsToNeglect.push_back(vIdx);
+        }
+
+        avgValues_.eval(dofsToNeglect);
+        Scalar avgPwOutlet = avgValues_["avgPw"];
+        Scalar avgPnOutlet = avgValues_["avgPn"];
+
+        Scalar pwGradient = avgPwOutlet - avgPwInlet;
+        Scalar pnGradient = avgPnOutlet - avgPnInlet;
+
+        return {pwGradient, pnGradient};
+    }
+
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
     // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
     // Afterwards, the mass flux is converted into an volume flux which is used to calculate the apparent velocity.
@@ -39,6 +95,7 @@ public:
     template <class Problem>
     void setDataPoints(const Problem &problem, const Scalar totalMassFlux)
     {
+
         // get the domain side lengths from the problem
         auto sideLengths = problem.sideLengths();
 
@@ -336,6 +393,9 @@ private:
     std::array<Scalar, 3> forchheimerCoefficient_;
     const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
     std::vector<std::size_t> directions_;
+    AveragedValues<GridVariables, SolutionVector> avgValues_;
+    const GridVariables& gridVariables_;
+    const SolutionVector& sol_;
 };
 
 } // end namespace Dumux
