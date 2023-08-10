@@ -29,6 +29,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
 #include "properties.hh"
@@ -122,6 +123,8 @@ int main(int argc, char** argv)
         if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
             dofsToNeglect.push_back(vIdx);
     }
+    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
+    problem->outletCapPressureGradient(outletCapPressureGradient);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);

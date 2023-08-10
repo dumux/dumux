@@ -56,11 +56,12 @@ private:
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, sol_);
         const auto scvIdx = scv.localDofIndex();
-        const auto &volVars = elemVolVars[scvIdx - 1];
 
-        return volVars.capillaryPressure();
+        if (scvIdx == 1)
+            return elemVolVars[scvIdx - 1].capillaryPressure();
+        else
+            return elemVolVars[scvIdx + 1].capillaryPressure();
     }
-
 
     const auto &problem_()
     {
