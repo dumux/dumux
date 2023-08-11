@@ -36,6 +36,17 @@ class UpscalingHelperTwoP
     using Scalar = typename GridVariables::VolumeVariables::PrimaryVariables::value_type;
     using VolumeVariables = typename GridVariables::VolumeVariables;
     using FS = typename GridVariables::VolumeVariables::FluidSystem;
+    using NumEqVector = typename SolutionVector::block_type;
+
+    struct BoundaryAvgValues
+    {
+        Scalar pw;
+        Scalar pn;
+        Scalar densityw;
+        Scalar densityn;
+        Scalar viscosityw;
+        Scalar viscosityn;
+    };
 public:
 
     UpscalingHelperTwoP(const GridVariables& gridVariables, const SolutionVector& sol)
@@ -44,47 +55,18 @@ public:
     , avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
     {}
 
-    template <class Problem, class LeafGridView>
-    void setDataPoints(const Problem &problem, const LeafGridView& leafGridView, const Scalar totalMassFlux)
+    template <class Problem, class LeafGridView, class BoundaryFlux>
+    void setDataPoints(const Problem &problem, const LeafGridView& leafGridView, const BoundaryFlux boundaryFlux)
     {
-       auto [pwGradient, pnGradient] = pressureGradient(problem, leafGridView);
-       std::cout<<pwGradient<<"    gradient    "<<pnGradient<<std::endl;
-    }
+       computeBoundaryAvgValues_(problem, leafGridView);
+       const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::inlet});
+       const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::outlet});
 
-    template <class Problem, class LeafGridView>
-    std::tuple<Scalar, Scalar>  pressureGradient(const Problem &problem, const LeafGridView& leafGridView)
-    {
+       const Scalar inletVolumeFluxw = inletTotalMassFlux[0]/inletAvgValues_.densityw;
+       const Scalar inletVolumeFluxn = inletTotalMassFlux[1]/inletAvgValues_.densityn;
+       const Scalar outletVolumeFluxw = outletTotalMassFlux[0]/outletAvgValues_.densityw;
+       const Scalar outletVolumeFluxn = outletTotalMassFlux[1]/outletAvgValues_.densityn;
 
-        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
-        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
-
-        std::vector<std::size_t> dofsToNeglect;
-        for (const auto& vertex : vertices(leafGridView))
-        {
-            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
-            if (problem.gridGeometry().poreLabel(vIdx) != Labels::inlet)
-                dofsToNeglect.push_back(vIdx);
-        }
-        avgValues_.eval(dofsToNeglect);
-        Scalar avgPwInlet = avgValues_["avgPw"];
-        Scalar avgPnInlet = avgValues_["avgPn"];
-
-        dofsToNeglect.clear();
-        for (const auto& vertex : vertices(leafGridView))
-        {
-            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
-            if (problem.gridGeometry().poreLabel(vIdx) != Labels::outlet)
-                dofsToNeglect.push_back(vIdx);
-        }
-
-        avgValues_.eval(dofsToNeglect);
-        Scalar avgPwOutlet = avgValues_["avgPw"];
-        Scalar avgPnOutlet = avgValues_["avgPn"];
-
-        Scalar pwGradient = avgPwOutlet - avgPwInlet;
-        Scalar pnGradient = avgPnOutlet - avgPnInlet;
-
-        return {pwGradient, pnGradient};
     }
 
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
@@ -267,6 +249,55 @@ public:
     // [[codeblock]]
 
 private:
+
+    template <class Problem, class LeafGridView>
+    void  computeBoundaryAvgValues_(const Problem &problem, const LeafGridView& leafGridView)
+    {
+
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.density(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgDensityw");
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.density(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgDensityn");
+
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.viscosity(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgViscosityw");
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.viscosity(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgViscosityn");
+
+        auto dofsToNeglect = dofsToNeglect_(problem, leafGridView, Labels::inlet);
+
+        avgValues_.eval(dofsToNeglect);
+        assignAvgValues_(inletAvgValues_, avgValues_);
+
+        dofsToNeglect.clear();
+        dofsToNeglect = dofsToNeglect_(problem, leafGridView, Labels::outlet);
+
+        avgValues_.eval(dofsToNeglect);
+        assignAvgValues_(outletAvgValues_, avgValues_);
+    }
+
+    void assignAvgValues_(BoundaryAvgValues boundaryAvgValues, AveragedValues<GridVariables, SolutionVector> avgValues)
+    {
+        boundaryAvgValues.pw = avgValues["avgPw"];
+        boundaryAvgValues.pn = avgValues["avgPn"];
+        boundaryAvgValues.densityw = avgValues["avgDensityw"];
+        boundaryAvgValues.densityn = avgValues["avgDensityn"];
+        boundaryAvgValues.viscosityw = avgValues["avgViscosityw"];
+        boundaryAvgValues.viscosityn = avgValues["avgViscosityn"];
+    }
+
+    template <class Problem, class LeafGridView>
+    std::vector<std::size_t> dofsToNeglect_(const Problem &problem, const LeafGridView& leafGridView, int label)
+    {
+        std::vector<std::size_t> dofsToNeglect;
+        for (const auto& vertex : vertices(leafGridView))
+        {
+            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
+            if (problem.gridGeometry().poreLabel(vIdx) != label)
+                dofsToNeglect.push_back(vIdx);
+        }
+        return dofsToNeglect;
+    }
+
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
     // [[codeblock]]
     void writePermeabilityratioVsForchheimerNumber_(std::size_t dirIdx)
@@ -396,6 +427,8 @@ private:
     AveragedValues<GridVariables, SolutionVector> avgValues_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
+    BoundaryAvgValues inletAvgValues_;
+    BoundaryAvgValues outletAvgValues_;
 };
 
 } // end namespace Dumux

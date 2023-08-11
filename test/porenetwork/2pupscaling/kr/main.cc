@@ -30,6 +30,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/common/outletpcgradient.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
 #include "upscalinghelper.hh"
@@ -117,9 +118,9 @@ int main(int argc, char** argv)
     avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
     std::vector<std::size_t> dofsToNeglect;
 
+    using Labels = GetPropType<TypeTag, Properties::Labels>;
     for (const auto& vertex : vertices(leafGridView))
     {
-        using Labels = GetPropType<TypeTag, Properties::Labels>;
         const auto vIdx = gridGeometry->vertexMapper().index(vertex);
         if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
             dofsToNeglect.push_back(vIdx);
@@ -128,7 +129,7 @@ int main(int argc, char** argv)
     problem->outletCapPressureGradient(outletCapPressureGradient);
 
     Dumux::PoreNetwork::UpscalingHelperTwoP<GridVariables, SolutionVector> ipscalingHelper(*gridVariables, x);
-    ipscalingHelper.setDataPoints(*problem, leafGridView, 5.0);
+
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -137,6 +138,10 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+
+    // ### Prepare the upscaling procedure.
+    // Set up a helper class to determine the total mass flux leaving the network
+    const auto boundaryFlux = PoreNetwork::BoundaryFlux(*gridVariables, assembler->localResidual(), x);
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -158,11 +163,11 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-ipscalingHelper.setDataPoints(*problem, leafGridView, 5.0);
         // calculate the averaged values
         avgValues.eval(dofsToNeglect);
         problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
 
+        ipscalingHelper.setDataPoints(*problem, leafGridView, boundaryFlux);
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
             vtkWriter.write(timeLoop->time());
