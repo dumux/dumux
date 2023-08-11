@@ -69,6 +69,8 @@ public:
         numSteps_ = getParam<int>("Problem.NumSteps", 10);
         swShiftThreshold_ = getParam<Scalar>("Problem.RelShiftThreshold", 1e-6);
         writeOnlyEqPoints_ = getParam<bool>("Problem.WriteOnlyEquilibriumPoints", false);
+        sourcew_ = getParam<Scalar>("Problem.SourceWetting", 0.0);
+        sourcen_ = getParam<Scalar>("Problem.SourceNonwetting", 0.0);
 
         pcEpisopde_.resize(numSteps_ + 1);
         for (int i = 0 ; i < pcEpisopde_.size(); i++)
@@ -187,11 +189,12 @@ public:
     BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
     {
         BoundaryTypes bcTypes;
-        if (isInletPore_(scv) || isOutletPore_(scv))
-           bcTypes.setAllDirichlet();
-
+        if (isInletPore_(scv))
+            bcTypes.setAllNeumann();
+        else if (isOutletPore_(scv))
+            bcTypes.setAllDirichlet();
         else // neuman for the remaining boundaries
-           bcTypes.setAllNeumann();
+            bcTypes.setAllNeumann();
 
         return bcTypes;
     }
@@ -206,9 +209,7 @@ public:
         values[snIdx] = 0.0;
 
         const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteraction(element, scv, 0);
-        if (isInletPore_(scv))
-            values[snIdx] = 1.0 - fluidMatrixInteraction.sw(pcEpisopde_[step_]);
-        else if (isOutletPore_(scv))
+        if (isOutletPore_(scv))
         {
             values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
         }
@@ -230,7 +231,15 @@ public:
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-        return PrimaryVariables(0.0);
+        PrimaryVariables values(0.0);
+        if (isInletPore_(scv))
+        {
+            values[Indices::conti0EqIdx] = sourcew_;
+            values[Indices::conti0EqIdx + 1] = sourcen_;
+        }
+        values /= scv.volume();
+
+        return values;
     }
     // \}
 
@@ -281,6 +290,8 @@ private:
     Scalar swShiftThreshold_;
     bool writeOnlyEqPoints_;
     std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
+    Scalar sourcew_;
+    Scalar sourcen_;
 
     int step_;
 };
