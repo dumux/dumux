@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <numeric>
 #include <functional>
+#include <string>
 
 #include <dune/common/float_cmp.hh>
 
@@ -40,33 +41,29 @@ class UpscalingHelperTwoP
 
     struct BoundaryAvgValues
     {
-        Scalar pw;
-        Scalar pn;
-        Scalar densityw;
-        Scalar densityn;
-        Scalar viscosityw;
-        Scalar viscosityn;
+        std::array<Scalar, 2> p;
+        std::array<Scalar, 2> density;
+        std::array<Scalar, 2> viscosity;
     };
 public:
 
     UpscalingHelperTwoP(const GridVariables& gridVariables, const SolutionVector& sol)
-    :gridVariables_(gridVariables)
+    : avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
+    , gridVariables_(gridVariables)
     , sol_(sol)
-    , avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
     {}
 
     template <class Problem, class LeafGridView, class BoundaryFlux>
-    void setDataPoints(const Problem &problem, const LeafGridView& leafGridView, const BoundaryFlux boundaryFlux)
+    void setDataPoints(const Problem& problem, const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
     {
-       computeBoundaryAvgValues_(problem, leafGridView);
-       const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::inlet});
-       const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::outlet});
+        computeBoundaryAvgValues_(problem, leafGridView);
+        const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::inlet}).totalFlux;
+        const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::outlet}).totalFlux;
+        computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
+        if(!checkIfInEquilibrium_())
+            return;
 
-       const Scalar inletVolumeFluxw = inletTotalMassFlux[0]/inletAvgValues_.densityw;
-       const Scalar inletVolumeFluxn = inletTotalMassFlux[1]/inletAvgValues_.densityn;
-       const Scalar outletVolumeFluxw = outletTotalMassFlux[0]/outletAvgValues_.densityw;
-       const Scalar outletVolumeFluxn = outletTotalMassFlux[1]/outletAvgValues_.densityn;
-
+        computeEffPerm_(outletVolumeFlux_, 1);
     }
 
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
@@ -248,6 +245,19 @@ public:
     }
     // [[codeblock]]
 
+
+    std::array<Scalar, 2> volumeFluxes(const std::string& boundaryName) const
+    {
+        if (boundaryName == "inlet")
+            return inletVolumeFlux_;
+
+        return outletVolumeFlux_;
+    }
+
+    const Scalar effectivePermeability(int phaseIdx) const
+    {      std::cout<<"  effPerm_  "<<effPerm_[phaseIdx]<<std::endl;
+        return effPerm_[phaseIdx];  }
+
 private:
 
     template <class Problem, class LeafGridView>
@@ -277,12 +287,12 @@ private:
 
     void assignAvgValues_(BoundaryAvgValues boundaryAvgValues, AveragedValues<GridVariables, SolutionVector> avgValues)
     {
-        boundaryAvgValues.pw = avgValues["avgPw"];
-        boundaryAvgValues.pn = avgValues["avgPn"];
-        boundaryAvgValues.densityw = avgValues["avgDensityw"];
-        boundaryAvgValues.densityn = avgValues["avgDensityn"];
-        boundaryAvgValues.viscosityw = avgValues["avgViscosityw"];
-        boundaryAvgValues.viscosityn = avgValues["avgViscosityn"];
+        boundaryAvgValues.p[FS::phase0Idx] = avgValues["avgPw"];
+        boundaryAvgValues.p[FS::phase1Idx] = avgValues["avgPn"];
+        boundaryAvgValues.density[FS::phase0Idx] = avgValues["avgDensityw"];
+        boundaryAvgValues.density[FS::phase1Idx] = avgValues["avgDensityn"];
+        boundaryAvgValues.viscosity[FS::phase0Idx] = avgValues["avgViscosityw"];
+        boundaryAvgValues.viscosity[FS::phase1Idx] = avgValues["avgViscosityn"];
     }
 
     template <class Problem, class LeafGridView>
@@ -297,6 +307,39 @@ private:
         }
         return dofsToNeglect;
     }
+
+    void computeVolumeFlux_(const NumEqVector& inletTotalMassFlux, const NumEqVector& outletTotalMassFlux)
+    {
+        inletVolumeFlux_[FS::phase0Idx] = inletTotalMassFlux[FS::phase0Idx]/inletAvgValues_.density[FS::phase0Idx];
+        inletVolumeFlux_[FS::phase1Idx] = inletTotalMassFlux[FS::phase1Idx]/inletAvgValues_.density[FS::phase1Idx];
+        outletVolumeFlux_[FS::phase0Idx] = outletTotalMassFlux[FS::phase0Idx]/outletAvgValues_.density[FS::phase0Idx];
+        outletVolumeFlux_[FS::phase1Idx] = outletTotalMassFlux[FS::phase1Idx]/outletAvgValues_.density[FS::phase1Idx];
+    }
+
+    void computeEffPerm_(const std::array<Scalar, 2> outletVolumeFlux, int phaseIdx)
+    {
+        if (outletVolumeFlux[phaseIdx])
+        {
+            const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
+            const Scalar dL = 1.0;
+            const Scalar A = 1.0;
+            effPerm_[phaseIdx] = outletVolumeFlux[phaseIdx] * mu * dL /(A * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
+        }
+    }
+
+    bool checkIfInEquilibrium_()
+    {
+        Scalar diff = 0.0;
+        for (int i = 0; i<2 ; i++)
+        {
+            diff = 100 * (inletVolumeFlux_[i] - outletVolumeFlux_[i])/(inletVolumeFlux_[i] + outletVolumeFlux_[i]);
+            if (diff > 1e-3)
+                return 0;
+        }
+
+        return 1;
+    }
+
 
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
     // [[codeblock]]
@@ -429,6 +472,10 @@ private:
     const SolutionVector& sol_;
     BoundaryAvgValues inletAvgValues_;
     BoundaryAvgValues outletAvgValues_;
+    std::array<Scalar, 2> inletVolumeFlux_;
+    std::array<Scalar, 2> outletVolumeFlux_;
+    std::array<Scalar, 2> effPerm_;
+
 };
 
 } // end namespace Dumux

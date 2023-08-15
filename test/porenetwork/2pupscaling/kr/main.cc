@@ -178,6 +178,8 @@ int main(int argc, char** argv)
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
+        ipscalingHelper.effectivePermeability(0);
+
     } while (!timeLoop->finished());
 
     ////////////////////////////////////////////////////////////
