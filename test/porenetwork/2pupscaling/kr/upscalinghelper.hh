@@ -51,19 +51,21 @@ public:
     : avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
     , gridVariables_(gridVariables)
     , sol_(sol)
-    {}
+    {
+        setAvgVariables_();
+    }
 
     template <class Problem, class LeafGridView, class BoundaryFlux>
     void setDataPoints(const Problem& problem, const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
     {
-        computeBoundaryAvgValues_(problem, leafGridView);
         const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::inlet}).totalFlux;
         const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::outlet}).totalFlux;
+        std::cout<<" inletTotalMassFlux  "<<inletTotalMassFlux<<"  "<<outletTotalMassFlux<<std::endl;
+        computeBoundaryAvgValues_(problem, leafGridView);
         computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
         if(!checkIfInEquilibrium_())
             return;
-
-        computeEffPerm_(outletVolumeFlux_, 1);
+        computeEffPerm_(FS::phase0Idx);
     }
 
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
@@ -255,14 +257,16 @@ public:
     }
 
     const Scalar effectivePermeability(int phaseIdx) const
-    {      std::cout<<"  effPerm_  "<<effPerm_[phaseIdx]<<std::endl;
-        return effPerm_[phaseIdx];  }
+    {   return effPerm_[phaseIdx];  }
+
+    bool checkIfInEquilibrium()
+    {   return checkIfInEquilibrium_(); }
 
 private:
 
-    template <class Problem, class LeafGridView>
-    void  computeBoundaryAvgValues_(const Problem &problem, const LeafGridView& leafGridView)
+    void setAvgVariables_()
     {
+        avgValues_.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
 
         avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
         avgValues_.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
@@ -272,20 +276,24 @@ private:
 
         avgValues_.addAveragedQuantity([](const auto& v){ return v.viscosity(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgViscosityw");
         avgValues_.addAveragedQuantity([](const auto& v){ return v.viscosity(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgViscosityn");
-
-        auto dofsToNeglect = dofsToNeglect_(problem, leafGridView, Labels::inlet);
-
-        avgValues_.eval(dofsToNeglect);
-        assignAvgValues_(inletAvgValues_, avgValues_);
-
-        dofsToNeglect.clear();
-        dofsToNeglect = dofsToNeglect_(problem, leafGridView, Labels::outlet);
-
-        avgValues_.eval(dofsToNeglect);
-        assignAvgValues_(outletAvgValues_, avgValues_);
     }
 
-    void assignAvgValues_(BoundaryAvgValues boundaryAvgValues, AveragedValues<GridVariables, SolutionVector> avgValues)
+    template <class Problem, class LeafGridView>
+    void  computeBoundaryAvgValues_(const Problem &problem, const LeafGridView& leafGridView)
+    {
+        auto dofsToNeglect = dofsToNeglect_(problem, leafGridView, std::vector<int>{Labels::outlet, Labels::interior});
+
+        avgValues_.eval(dofsToNeglect);
+        assignBoundaryAvgValues_(inletAvgValues_, avgValues_);
+
+        dofsToNeglect.clear();
+        dofsToNeglect = dofsToNeglect_(problem, leafGridView, std::vector<int>{Labels::inlet, Labels::interior});
+
+        avgValues_.eval(dofsToNeglect);
+        assignBoundaryAvgValues_(outletAvgValues_, avgValues_);
+    }
+
+    void assignBoundaryAvgValues_(BoundaryAvgValues& boundaryAvgValues, const AveragedValues<GridVariables, SolutionVector>& avgValues)
     {
         boundaryAvgValues.p[FS::phase0Idx] = avgValues["avgPw"];
         boundaryAvgValues.p[FS::phase1Idx] = avgValues["avgPn"];
@@ -293,16 +301,18 @@ private:
         boundaryAvgValues.density[FS::phase1Idx] = avgValues["avgDensityn"];
         boundaryAvgValues.viscosity[FS::phase0Idx] = avgValues["avgViscosityw"];
         boundaryAvgValues.viscosity[FS::phase1Idx] = avgValues["avgViscosityn"];
-    }
+
+        std::cout<<"  boundaryAvgValues.density[FS::phase0Idx]"<<boundaryAvgValues.density[FS::phase0Idx]<<std::endl;    }
 
     template <class Problem, class LeafGridView>
-    std::vector<std::size_t> dofsToNeglect_(const Problem &problem, const LeafGridView& leafGridView, int label)
+    std::vector<std::size_t> dofsToNeglect_(const Problem &problem, const LeafGridView& leafGridView, std::vector<int> labels)
     {
         std::vector<std::size_t> dofsToNeglect;
         for (const auto& vertex : vertices(leafGridView))
         {
             const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
-            if (problem.gridGeometry().poreLabel(vIdx) != label)
+            const auto poreLabel = problem.gridGeometry().poreLabel(vIdx);
+            if (std::any_of(labels.begin(), labels.end(), [&](const int l){ return l == poreLabel; }))
                 dofsToNeglect.push_back(vIdx);
         }
         return dofsToNeglect;
@@ -314,25 +324,30 @@ private:
         inletVolumeFlux_[FS::phase1Idx] = inletTotalMassFlux[FS::phase1Idx]/inletAvgValues_.density[FS::phase1Idx];
         outletVolumeFlux_[FS::phase0Idx] = outletTotalMassFlux[FS::phase0Idx]/outletAvgValues_.density[FS::phase0Idx];
         outletVolumeFlux_[FS::phase1Idx] = outletTotalMassFlux[FS::phase1Idx]/outletAvgValues_.density[FS::phase1Idx];
+        std::cout<<inletTotalMassFlux[0]<<"   hura  "<<outletTotalMassFlux[0]<<std::endl;
     }
 
-    void computeEffPerm_(const std::array<Scalar, 2> outletVolumeFlux, int phaseIdx)
+    void computeEffPerm_(int phaseIdx)
     {
-        if (outletVolumeFlux[phaseIdx])
+        if (outletVolumeFlux_[phaseIdx])
         {
             const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
             const Scalar dL = 1.0;
             const Scalar A = 1.0;
-            effPerm_[phaseIdx] = outletVolumeFlux[phaseIdx] * mu * dL /(A * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
+            std::cout<<"   avg   "<<inletAvgValues_.p[phaseIdx]<<std::endl;
+            effPerm_[phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * dL /(A * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
+            std::cout<<"   effPerm_[phaseIdx]   "<<effPerm_[phaseIdx]<<std::endl;
         }
     }
 
     bool checkIfInEquilibrium_()
     {
+        using std::abs;
         Scalar diff = 0.0;
         for (int i = 0; i<2 ; i++)
         {
-            diff = 100 * (inletVolumeFlux_[i] - outletVolumeFlux_[i])/(inletVolumeFlux_[i] + outletVolumeFlux_[i]);
+            std::cout<<"  diff  "<<diff<<"  "<<inletVolumeFlux_[i]<<"  "<<outletVolumeFlux_[i]<<std::endl;
+            diff = 100 * (abs(inletVolumeFlux_[i]) - abs(outletVolumeFlux_[i]))/(abs(inletVolumeFlux_[i]) + abs(outletVolumeFlux_[i]));
             if (diff > 1e-3)
                 return 0;
         }

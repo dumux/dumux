@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 8e0 # [s]
+TEnd = 1e2 # [s]
 
 [Grid]
 File = ./grids/pnm_converted.dgf
@@ -16,8 +16,10 @@ InitialPc = 3000
 FinalPc = 5000
 NumSteps = 1
 UseFixedPressureAndSaturationBoundary = false
-SourceWetting = 0.0
-SourceNonwetting = 5e-11
+SourceWetting = 5e-9
+SourceNonwetting = 0.0
+Pressure = 1e5
+SaturationWetting = 0.0
 
 [Vtk]
 AddVelocity = 1

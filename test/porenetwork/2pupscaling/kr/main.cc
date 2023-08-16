@@ -159,26 +159,27 @@ int main(int argc, char** argv)
 
         // make the new solution the old solution
         xOld = x;
+        avgValues.eval(dofsToNeglect);
+        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+        if (ipscalingHelper.checkIfInEquilibrium())
+        {
+            ipscalingHelper.setDataPoints(*problem, leafGridView, boundaryFlux);
+            ipscalingHelper.effectivePermeability(0);
+        }
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
         // calculate the averaged values
-        avgValues.eval(dofsToNeglect);
-        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
-
-        ipscalingHelper.setDataPoints(*problem, leafGridView, boundaryFlux);
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
-
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-        ipscalingHelper.effectivePermeability(0);
 
     } while (!timeLoop->finished());
 

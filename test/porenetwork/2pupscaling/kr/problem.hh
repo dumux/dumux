@@ -71,6 +71,8 @@ public:
         writeOnlyEqPoints_ = getParam<bool>("Problem.WriteOnlyEquilibriumPoints", false);
         sourcew_ = getParam<Scalar>("Problem.SourceWetting", 0.0);
         sourcen_ = getParam<Scalar>("Problem.SourceNonwetting", 0.0);
+        pressure_ = getParam<Scalar>("Problem.Pressure", 0.0);
+        saturationw_ = getParam<Scalar>("Problem.SatuartionWetting", 0.0);
 
         pcEpisopde_.resize(numSteps_ + 1);
         for (int i = 0 ; i < pcEpisopde_.size(); i++)
@@ -247,7 +249,8 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
+        values[pwIdx] = pressure_;
+        values[snIdx] = 1 - saturationw_;
         return values;
     }
 
@@ -292,6 +295,8 @@ private:
     std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
     Scalar sourcew_;
     Scalar sourcen_;
+    Scalar pressure_;
+    Scalar saturationw_;
 
     int step_;
 };
