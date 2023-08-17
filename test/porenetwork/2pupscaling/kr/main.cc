@@ -111,24 +111,40 @@ int main(int argc, char** argv)
 
     vtkWriter.write(0.0);
 
-    Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
-    using FS = typename GridVariables::VolumeVariables::FluidSystem;
-    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
-    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
-    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
-    std::vector<std::size_t> dofsToNeglect;
+    // Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
+    // using FS = typename GridVariables::VolumeVariables::FluidSystem;
+    // avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
+    // avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+    // avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+    // std::vector<std::size_t> dofsToNeglect;
 
-    using Labels = GetPropType<TypeTag, Properties::Labels>;
-    for (const auto& vertex : vertices(leafGridView))
-    {
-        const auto vIdx = gridGeometry->vertexMapper().index(vertex);
-        if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
-            dofsToNeglect.push_back(vIdx);
-    }
+    // using Labels = GetPropType<TypeTag, Properties::Labels>;
+    // for (const auto& vertex : vertices(leafGridView))
+    // {
+    //     const auto vIdx = gridGeometry->vertexMapper().index(vertex);
+    //     if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
+    //         dofsToNeglect.push_back(vIdx);
+    // }
     const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
     problem->outletCapPressureGradient(outletCapPressureGradient);
 
-    Dumux::PoreNetwork::UpscalingHelperTwoP<GridVariables, SolutionVector> ipscalingHelper(*gridVariables, x);
+    Dumux::PoreNetwork::UpscalingHelperTwoP<Problem, GridVariables, SolutionVector> upscalingHelper(*problem, *gridVariables, x);
+
+    // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
+    // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
+    // determine it automatically based on the network's bounding box.
+    // [[codeblock]]
+    const auto sideLengths = [&]()
+    {
+        using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+        if (hasParam("Problem.SideLength"))
+            return getParam<GlobalPosition>("Problem.SideLength");
+        else
+            return upscalingHelper.getSideLengths(*gridGeometry);
+    }();
+    // pass the side lengths to the problem
+    problem->setSideLengths(sideLengths);
+    // [[/codeblock]]
 
 
     // instantiate time loop
@@ -151,37 +167,50 @@ int main(int argc, char** argv)
     using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // time loop
-    timeLoop->start(); do
+    const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0});
+    upscalingHelper.setDirections(directions);
+    for (int dimIdx : directions)
     {
-        // try solving the non-linear system
-        nonLinearSolver.solve(x, *timeLoop);
+        // set the direction in which the pressure gradient will be applied
+        problem->setDirection(dimIdx);
 
-        // make the new solution the old solution
-        xOld = x;
-        avgValues.eval(dofsToNeglect);
-        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
-        if (ipscalingHelper.checkIfInEquilibrium())
+        // time loop
+        timeLoop->start(); do
         {
-            ipscalingHelper.setDataPoints(*problem, leafGridView, boundaryFlux);
-            ipscalingHelper.effectivePermeability(0);
-        }
-        gridVariables->advanceTimeStep();
+            // try solving the non-linear system
+            nonLinearSolver.solve(x, *timeLoop);
 
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-        // calculate the averaged values
-        // write vtk output
-        if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
-            vtkWriter.write(timeLoop->time());
+            // make the new solution the old solution
+            xOld = x;
 
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-        // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            if (upscalingHelper.reachedEquilibrium(leafGridView, boundaryFlux))
+            {
+                upscalingHelper.setDataPoints();
+                timeLoop->setFinished();
+            }
+
+            gridVariables->advanceTimeStep();
+
+            // advance to the time loop to the next step
+            timeLoop->advanceTimeStep();
+
+            // write vtk output
+            if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
+                vtkWriter.write(timeLoop->time());
+
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
+
+            // set new dt as suggested by newton solver
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
 
-    } while (!timeLoop->finished());
+        } while (!timeLoop->finished());
+        std::cout<<"----------------------------------"<<std::endl;
+        timeLoop->reset(restartTime, dt, tEnd);
+        problem->applyInitialSolution(x);
+        gridVariables->init(x);
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

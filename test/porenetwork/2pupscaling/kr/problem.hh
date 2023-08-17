@@ -39,6 +39,8 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -54,7 +56,6 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 #endif
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
     using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
@@ -74,88 +75,9 @@ public:
         pressure_ = getParam<Scalar>("Problem.Pressure", 0.0);
         saturationw_ = getParam<Scalar>("Problem.SatuartionWetting", 0.0);
 
-        pcEpisopde_.resize(numSteps_ + 1);
-        for (int i = 0 ; i < pcEpisopde_.size(); i++)
-              pcEpisopde_[i] = initialPc_ + i*(finalPc_ - initialPc_)/numSteps_;
+        useLabels_ = getParam<bool>("Problem.UseLabels", true);
+        eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
 
-        std::cout << "The following global PCs are applied: " << std::endl;
-        for (auto x: pcEpisopde_)
-        {
-            std::cout << x << std::endl;
-        }
-
-        if (!writeOnlyEqPoints_)
-        {
-            logfile_.open("logfile_" + this->name() + ".txt"); //for the logfile
-            logfile_ <<"Logfile for: " + this->name()  << std::endl;
-            logfile_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
-                     << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
-                     << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
-                     << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
-                     << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
-                     << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
-                     << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
-                     << std::endl;
-        }
-
-        logfileEqPoints_.open("eqPoints_" + this->name() + ".txt");
-        logfileEqPoints_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
-                         << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
-                         << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
-                         << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
-                         << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
-                         << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
-                         << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
-                         << std::endl;
-        step_ = 0;
-    }
-
-
-    /*!
-     * \brief Called at the end of each time step
-     */
-    template<class AveragedValues>
-    void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
-    {
-        const Scalar avgSw = avgValues["avgSat"];
-
-        if (!writeOnlyEqPoints_)
-        {
-            logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
-                                   << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
-                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
-                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
-                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
-                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
-                                   << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
-                                   << std::endl;
-        }
-
-        // store the three most recent averaged saturations
-        std::rotate(swAvg_.rbegin(), swAvg_.rbegin()+1, swAvg_.rend());
-        swAvg_[0]= avgSw;
-
-        // Check for steady state and end episode
-        dSwDt_ = std::abs(swAvg_[0]-swAvg_[1])/dt;
-        const Scalar pc = pcEpisopde_[step_];
-        std::cout << "global pC applied: " << pc << " / " << finalPc_ << " (step " << step_ << " of " << numSteps_ << ")" << std::endl;
-        std::cout << "swAverage: " << swAvg_[0] << " (relative shift: " << dSwDt_ << "). " << std::endl;
-        std::cout << numThroatsInvaded << " of " << this->gridGeometry().gridView().size(0) << " throats invaded." << std::endl;
-        if(dSwDt_ < swShiftThreshold_)
-        {
-            std::cout << "Equlibrium point reached!" << std::endl;
-
-            logfileEqPoints_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
-                                           << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
-                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
-                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
-                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
-                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
-                                           << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
-                                           << std::endl;
-            inEquilibrium_ = true;
-            ++step_;
-        }
     }
 
     /*!
@@ -178,10 +100,6 @@ public:
         else
             return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
     }
-
-    bool equilibriumPointReached() const
-    { return dSwDt_ < swShiftThreshold_; }
-
      /*!
      * \name Boundary conditions
      */
@@ -263,21 +181,58 @@ public:
     void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
     {  outletPcGradient_ = outletPcGradient;}
 
-private:
-
-    bool isInletPore_(const SubControlVolume& scv) const
+    // Return the label of inlet pores assuming a previously set direction.
+    int inletPoreLabel() const
     {
-        return isInletPore_(scv.dofIndex());
+        static constexpr std::array<int, 3> label = {2, 2, 2};//{1, 3, 5};
+        return label[direction_];
     }
+
+    // Return the label of outlet pores assuming a previously set direction.
+    int outletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {3, 3, 3};//{2, 4, 6};
+        return label[direction_];
+    }
+
+    // Set the current direction (0:x, 1:y, 2:z) in which the pressure gradient is applied
+    void setDirection(int directionIdx)
+    { direction_ = directionIdx; }
+
+    // Get the current direction in which the pressure gradient is applied.
+    int direction() const
+    { return direction_; }
+
+    // Set the side lengths to consider for the upscaling process.
+    void setSideLengths(const GlobalPosition& sideLengths)
+    { length_ = sideLengths; }
+
+    // Return the side lengths to consider for the upscaling process.
+    const GlobalPosition& sideLengths() const
+    { return length_; }
+
+private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
         return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
     }
 
+
+    bool isInletPore_(const SubControlVolume& scv) const
+    {
+        if (useLabels_)
+            return inletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
+        else
+            return scv.dofPosition()[direction_] < this->gridGeometry().bBoxMin()[direction_] + eps_;
+    }
+
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        if (useLabels_)
+            return outletPoreLabel() == this->gridGeometry().poreLabel(scv.dofIndex());
+        else
+            return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
 
     int vtpOutputFrequency_;
@@ -299,6 +254,10 @@ private:
     Scalar saturationw_;
 
     int step_;
+    int direction_;
+    bool useLabels_;
+    Scalar eps_;
+    GlobalPosition length_;
 };
 } //end namespace Dumux
 

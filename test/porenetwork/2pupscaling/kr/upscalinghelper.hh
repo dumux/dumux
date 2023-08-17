@@ -31,7 +31,7 @@
 
 namespace Dumux::PoreNetwork {
 
-template<class GridVariables, class SolutionVector>
+template<class Problem, class GridVariables, class SolutionVector>
 class UpscalingHelperTwoP
 {
     using Scalar = typename GridVariables::VolumeVariables::PrimaryVariables::value_type;
@@ -47,25 +47,32 @@ class UpscalingHelperTwoP
     };
 public:
 
-    UpscalingHelperTwoP(const GridVariables& gridVariables, const SolutionVector& sol)
+    UpscalingHelperTwoP(const Problem& problem, const GridVariables& gridVariables, const SolutionVector& sol)
     : avgValues_(AveragedValues<GridVariables, SolutionVector>(gridVariables, sol))
     , gridVariables_(gridVariables)
     , sol_(sol)
+    , problem_(problem)
     {
         setAvgVariables_();
     }
 
-    template <class Problem, class LeafGridView, class BoundaryFlux>
-    void setDataPoints(const Problem& problem, const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
+    void setDataPoints()
     {
-        const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::inlet}).totalFlux;
-        const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{Labels::outlet}).totalFlux;
-        std::cout<<" inletTotalMassFlux  "<<inletTotalMassFlux<<"  "<<outletTotalMassFlux<<std::endl;
-        computeBoundaryAvgValues_(problem, leafGridView);
+        computeEffPerm_();
+    }
+
+    template <class LeafGridView, class BoundaryFlux>
+    bool reachedEquilibrium(const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
+    {
+        auto inletPoreLabel = problem_.inletPoreLabel();
+        auto outletPoreLabel = problem_.outletPoreLabel();
+
+        const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{inletPoreLabel}).totalFlux;
+        const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel}).totalFlux;
+
+        computeBoundaryAvgValues_(leafGridView);
         computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
-        if(!checkIfInEquilibrium_())
-            return;
-        computeEffPerm_(FS::phase0Idx);
+        return checkIfInEquilibrium_();
     }
 
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
@@ -73,7 +80,6 @@ public:
     // Afterwards, the mass flux is converted into an volume flux which is used to calculate the apparent velocity.
     // Then apparent permeability of the network is computed and stored for furthure calculations.
     // [[codeblock]]
-    template <class Problem>
     void setDataPoints(const Problem &problem, const Scalar totalMassFlux)
     {
 
@@ -116,7 +122,6 @@ public:
     // and reports them. It also plot the apparent permeability of the porous medium versus Forchheimer number/pressure gradient in each
     // simulation.
     // [[codeblock]]
-    template <class Problem>
     void calculateUpscaledProperties(const Problem &problem, bool isCreepingFlow)
     {
         const auto sideLengths = problem.sideLengths();
@@ -278,16 +283,16 @@ private:
         avgValues_.addAveragedQuantity([](const auto& v){ return v.viscosity(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgViscosityn");
     }
 
-    template <class Problem, class LeafGridView>
-    void  computeBoundaryAvgValues_(const Problem &problem, const LeafGridView& leafGridView)
+    template <class LeafGridView>
+    void  computeBoundaryAvgValues_(const LeafGridView& leafGridView)
     {
-        auto dofsToNeglect = dofsToNeglect_(problem, leafGridView, std::vector<int>{Labels::outlet, Labels::interior});
+        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::outlet, Labels::interior});
 
         avgValues_.eval(dofsToNeglect);
         assignBoundaryAvgValues_(inletAvgValues_, avgValues_);
 
         dofsToNeglect.clear();
-        dofsToNeglect = dofsToNeglect_(problem, leafGridView, std::vector<int>{Labels::inlet, Labels::interior});
+        dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::inlet, Labels::interior});
 
         avgValues_.eval(dofsToNeglect);
         assignBoundaryAvgValues_(outletAvgValues_, avgValues_);
@@ -301,17 +306,16 @@ private:
         boundaryAvgValues.density[FS::phase1Idx] = avgValues["avgDensityn"];
         boundaryAvgValues.viscosity[FS::phase0Idx] = avgValues["avgViscosityw"];
         boundaryAvgValues.viscosity[FS::phase1Idx] = avgValues["avgViscosityn"];
+    }
 
-        std::cout<<"  boundaryAvgValues.density[FS::phase0Idx]"<<boundaryAvgValues.density[FS::phase0Idx]<<std::endl;    }
-
-    template <class Problem, class LeafGridView>
-    std::vector<std::size_t> dofsToNeglect_(const Problem &problem, const LeafGridView& leafGridView, std::vector<int> labels)
+    template <class LeafGridView>
+    std::vector<std::size_t> dofsToNeglect_(const LeafGridView& leafGridView, std::vector<int> labels)
     {
         std::vector<std::size_t> dofsToNeglect;
         for (const auto& vertex : vertices(leafGridView))
         {
-            const auto vIdx = problem.gridGeometry().vertexMapper().index(vertex);
-            const auto poreLabel = problem.gridGeometry().poreLabel(vIdx);
+            const auto vIdx = problem_.gridGeometry().vertexMapper().index(vertex);
+            const auto poreLabel = problem_.gridGeometry().poreLabel(vIdx);
             if (std::any_of(labels.begin(), labels.end(), [&](const int l){ return l == poreLabel; }))
                 dofsToNeglect.push_back(vIdx);
         }
@@ -324,20 +328,23 @@ private:
         inletVolumeFlux_[FS::phase1Idx] = inletTotalMassFlux[FS::phase1Idx]/inletAvgValues_.density[FS::phase1Idx];
         outletVolumeFlux_[FS::phase0Idx] = outletTotalMassFlux[FS::phase0Idx]/outletAvgValues_.density[FS::phase0Idx];
         outletVolumeFlux_[FS::phase1Idx] = outletTotalMassFlux[FS::phase1Idx]/outletAvgValues_.density[FS::phase1Idx];
-        std::cout<<inletTotalMassFlux[0]<<"   hura  "<<outletTotalMassFlux[0]<<std::endl;
     }
 
-    void computeEffPerm_(int phaseIdx)
+    void computeEffPerm_()
     {
-        if (outletVolumeFlux_[phaseIdx])
+
+        // get the domain side lengths from the problem
+        auto sideLengths = problem_.sideLengths();
+        Scalar L = 1.0;//sideLengths[problem_.direction()];
+        // calculate apparent velocity
+        sideLengths[problem_.direction()] = 1.0;
+        const auto outflowArea = 1.0;//std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
+        for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++)
         {
             const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
-            const Scalar dL = 1.0;
-            const Scalar A = 1.0;
-            std::cout<<"   avg   "<<inletAvgValues_.p[phaseIdx]<<std::endl;
-            effPerm_[phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * dL /(A * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
-            std::cout<<"   effPerm_[phaseIdx]   "<<effPerm_[phaseIdx]<<std::endl;
+            effPerm_[problem_.direction()][phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
         }
+        std::cout<<"   effPerm_[problem_.direction()]   "<<effPerm_[problem_.direction()][0]<<std::endl;
     }
 
     bool checkIfInEquilibrium_()
@@ -346,9 +353,8 @@ private:
         Scalar diff = 0.0;
         for (int i = 0; i<2 ; i++)
         {
-            std::cout<<"  diff  "<<diff<<"  "<<inletVolumeFlux_[i]<<"  "<<outletVolumeFlux_[i]<<std::endl;
-            diff = 100 * (abs(inletVolumeFlux_[i]) - abs(outletVolumeFlux_[i]))/(abs(inletVolumeFlux_[i]) + abs(outletVolumeFlux_[i]));
-            if (diff > 1e-3)
+            diff = (abs(inletVolumeFlux_[i]) - abs(outletVolumeFlux_[i]));
+            if (abs(diff) > abs(inletVolumeFlux_[i]) * 1e-3)
                 return 0;
         }
 
@@ -485,11 +491,12 @@ private:
     AveragedValues<GridVariables, SolutionVector> avgValues_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
+    const Problem& problem_;
     BoundaryAvgValues inletAvgValues_;
     BoundaryAvgValues outletAvgValues_;
     std::array<Scalar, 2> inletVolumeFlux_;
     std::array<Scalar, 2> outletVolumeFlux_;
-    std::array<Scalar, 2> effPerm_;
+    std::array<std::array<Scalar, 2>, 3>  effPerm_;
 
 };
 
