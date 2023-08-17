@@ -258,13 +258,6 @@ public:
                     return getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
             }();
 
-            // make sure there is no grid refinement specified
-            if (getParamFromGroup<int>(paramGroup, "Grid.Refinement", 0) > 0)
-                DUNE_THROW(Dune::IOError,
-                    "Binary mask doesn't work together with Grid.Refinement."
-                    << " Use grid.globalRefine() after grid construction."
-                );
-
             // construct the host grid
             this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
 
@@ -273,7 +266,10 @@ public:
             const char marker = getParamFromGroup<char>(paramGroup, "Grid.Marker", 0);
             const auto elementSelector = [&](const auto& element)
             {
-                const auto eIdx = this->hostGrid_().leafGridView().indexSet().index(element);
+                auto level0 = element;
+                while(level0.hasFather())
+                    level0 = level0.father();
+                const auto eIdx = this->hostGrid_().levelGridView(0).indexSet().index(level0);
                 return buffer[eIdx] != marker;
             };
 
