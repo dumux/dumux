@@ -65,7 +65,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
     template<std::size_t id> using GridIndexType = typename IndexTraits< GridView<id> >::GridIndex;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
-    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    template<std::size_t id> using LocalResidual = typename MDTraits::template SubDomain<id>::LocalResidual;
 
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;

@@ -313,7 +313,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
 
 public:
 
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -521,7 +521,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -633,7 +633,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*imp
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -756,7 +756,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*imp
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
 
 public:
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 

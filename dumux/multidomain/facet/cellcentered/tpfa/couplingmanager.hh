@@ -55,7 +55,7 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using NumEqVector = Dumux::NumEqVector<PrimaryVariables<id>>;
-    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    template<std::size_t id> using LocalResidual = typename MDTraits::template SubDomain<id>::LocalResidual;
 
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;

@@ -29,11 +29,11 @@ namespace Dumux {
  * \brief The element-wise residual for finite volume schemes
  * \note This class defines the interface used by the assembler using
  *       static polymorphism. Implementations are specialized for a certain discretization scheme
+ * \note This template class uses CRTP to inject the actual implementation of the local operators
  */
-template<class TypeTag>
+template<class TypeTag, class Implementation>
 class FVLocalResidual
 {
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;

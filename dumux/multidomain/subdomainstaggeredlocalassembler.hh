@@ -47,7 +47,6 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using SolutionVector = typename Assembler::SolutionVector;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -56,8 +55,8 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using Scalar = typename GridVariables::Scalar;
 
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;
-    using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
-    using FaceResidualValue = typename LocalResidual::FaceResidualValue;
+    using CellCenterResidualValue = typename ParentType::LocalResidual::CellCenterResidualValue;
+    using FaceResidualValue = typename ParentType::LocalResidual::FaceResidualValue;
 
     using GridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -471,9 +470,8 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using ThisType = SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainStaggeredLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
-    using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
-    using FaceResidualValue = typename LocalResidual::FaceResidualValue;
+    using CellCenterResidualValue = typename ParentType::LocalResidual::CellCenterResidualValue;
+    using FaceResidualValue = typename ParentType::LocalResidual::FaceResidualValue;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridFaceVariables = GetPropType<TypeTag, Properties::GridFaceVariables>;
     using ElementFaceVariables = typename GetPropType<TypeTag, Properties::GridFaceVariables>::LocalView;

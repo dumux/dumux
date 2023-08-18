@@ -36,12 +36,12 @@ static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = t
  */
 
 // forward declaration
-template<class TypeTag, class DiscretizationMethod>
+template<class TypeTag, class DiscretizationMethod, class Implementation>
 class NavierStokesResidualImpl;
 
-template<class TypeTag>
-class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
-: public StaggeredLocalResidual<TypeTag>
+template<class TypeTag, class Implementation>
+class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>
+: public StaggeredLocalResidual<TypeTag, Implementation>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
@@ -59,7 +59,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -362,14 +361,6 @@ private:
             }
         }
     }
-
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 };
 
 } // end namespace Dumux

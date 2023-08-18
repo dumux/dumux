@@ -88,12 +88,11 @@ namespace Dumux {
  * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
+template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true, class LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>>
 class FVAssembler
 {
     using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeo::GridView;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;

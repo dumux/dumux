@@ -55,11 +55,10 @@ namespace Dumux {
  * \brief The element-wise residual for control-volume finite element schemes
  * \tparam TypeTag the TypeTag
  */
-template<class TypeTag>
-class CVFELocalResidual : public FVLocalResidual<TypeTag>
+template<class TypeTag, class Implementation>
+class CVFELocalResidual : public FVLocalResidual<TypeTag, Implementation>
 {
-    using ParentType = FVLocalResidual<TypeTag>;
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ParentType = FVLocalResidual<TypeTag, Implementation>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

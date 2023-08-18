@@ -52,7 +52,7 @@ class FVLocalAssemblerBase
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
 public:
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = std::decay_t<decltype(std::declval<Assembler>().localResidual())>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     /*!
