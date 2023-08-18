@@ -2,10 +2,29 @@
 DtInitial = 1e-5 # [s]
 TEnd = 1e2 # [s]
 
+#[Grid]
+#File = ./grids/pnm_converted.dgf
+#PoreGeometry = Cube
+#ThroatCrossSectionShape = Square
+
 [Grid]
-File = ./grids/pnm_converted.dgf
+UpperRight = 4e-4 4e-4 4e-4
+NumPores = 20 20 20
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 4e-6
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
+ParameterRandomNumberSeed = 1
+
+BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
+MinThroatLength = 1e-10
+DeletionProbability = 0.0 0.6 0.98 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
 
 [Problem]
 Name = test_pnm_2p

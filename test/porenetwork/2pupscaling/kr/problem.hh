@@ -174,7 +174,7 @@ public:
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return false; }
+    { return true; }
 
     // \}
 
