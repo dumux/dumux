@@ -114,7 +114,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::KOmegaNC>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = KOmegaResidual<TypeTag, BaseLocalResidual>;
 };
@@ -188,7 +189,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::KOmegaNCNI>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = KOmegaResidual<TypeTag, BaseLocalResidual>;
 };

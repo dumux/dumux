@@ -145,7 +145,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OneEq>
 {
 private:
-    using BaseLocalResidual = NavierStokesResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = NavierStokesResidual<TypeTag, Impl>;
 public:
     using type = OneEqResidual<TypeTag, BaseLocalResidual>;
 };

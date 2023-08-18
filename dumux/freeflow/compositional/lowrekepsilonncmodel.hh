@@ -115,7 +115,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::LowReKEpsilonNC>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
 };
@@ -188,7 +189,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::LowReKEpsilonNCNI>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
 };

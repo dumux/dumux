@@ -16,6 +16,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -43,16 +44,16 @@ private:
 
 template<class TypeTag>
 class HelmholtzModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public Dumux::DiscretizationDefaultLocalOperator<TypeTag, HelmholtzModelLocalResidual<TypeTag>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ParentType = Dumux::DiscretizationDefaultLocalOperator<TypeTag, HelmholtzModelLocalResidual<TypeTag>, GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using VolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::VolumeVariables;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

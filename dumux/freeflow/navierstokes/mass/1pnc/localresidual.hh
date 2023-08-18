@@ -15,6 +15,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 namespace Dumux {
 
@@ -23,9 +24,11 @@ namespace Dumux {
  * \brief Element-wise calculation of the Navier-Stokes residual for multicomponent single-phase flow.
  */
 template<class TypeTag>
-class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class NavierStokesMassOnePNCLocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag, NavierStokesMassOnePNCLocalResidual<TypeTag>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag, NavierStokesMassOnePNCLocalResidual<TypeTag>, GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
@@ -37,7 +40,6 @@ class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properti
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

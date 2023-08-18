@@ -20,7 +20,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
+template<class TypeTag, template <class Impl> class BaseLocalResidual, class DiscretizationMethod>
 class SSTResidualImpl;
 
 /*!
@@ -30,7 +30,7 @@ class SSTResidualImpl;
           discretization-specific local residual.
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag, class BaseLocalResidual>
+template<class TypeTag, template <class Impl> class BaseLocalResidual>
 using SSTResidual = SSTResidualImpl<TypeTag, BaseLocalResidual, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
 
 }

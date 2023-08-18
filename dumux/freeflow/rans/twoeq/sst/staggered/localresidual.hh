@@ -27,14 +27,15 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
+template<class TypeTag, template <class Impl> class BaseLocalResidual, class DiscretizationMethod>
 class SSTResidualImpl;
 
-template<class TypeTag, class BaseLocalResidual>
+template<class TypeTag, template <class Impl> class BaseLocalResidual>
 class SSTResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>
-: public BaseLocalResidual
+: public BaseLocalResidual<SSTResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>>
 {
-    using ParentType = BaseLocalResidual;
+    using ThisType = SSTResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>;
+    using ParentType = BaseLocalResidual<ThisType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 

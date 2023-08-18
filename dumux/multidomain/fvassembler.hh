@@ -92,9 +92,8 @@ public:
 
     using Scalar = typename MDTraits::Scalar;
 
-    //! TODO get rid of this GetPropType
     template<std::size_t id>
-    using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
+    using LocalResidual = typename MDTraits::template SubDomain<id>::LocalResidual;
 
     template<std::size_t id>
     using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;

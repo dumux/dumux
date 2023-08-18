@@ -20,6 +20,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
@@ -111,10 +112,6 @@ public:
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = CCElementBoundaryTypes; };
 
-//! Set the BaseLocalResidual to StaggeredLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::StaggeredModel> { using type = StaggeredLocalResidual<TypeTag>; };
-
 //! The cell center primary variables
 template<class TypeTag>
 struct CellCenterPrimaryVariables<TypeTag, TTag::StaggeredModel>
@@ -203,6 +200,12 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scvf)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+};
+
+template<class TypeTag, class Impl>
+struct DiscretizationDefaultLocalOperator<TypeTag, Impl, DiscretizationMethods::Staggered>
+{
+    using type = StaggeredLocalResidual<TypeTag, Impl>;
 };
 
 } // end namespace Detail

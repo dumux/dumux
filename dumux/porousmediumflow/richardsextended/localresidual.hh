@@ -32,8 +32,6 @@ namespace Dumux {
 template<class TypeTag>
 class ExtendedRichardsLocalResidual : public RichardsLocalResidual<TypeTag>
 {
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
-
     using ParentType = RichardsLocalResidual<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

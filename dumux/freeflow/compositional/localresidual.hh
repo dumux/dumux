@@ -20,7 +20,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class DiscretizationMethod>
+template<class TypeTag, class DiscretizationMethod, class Implementation>
 class FreeflowNCResidualImpl;
 
 /*!
@@ -29,10 +29,16 @@ class FreeflowNCResidualImpl;
           This is a convenience alias for the actual,
           discretization-specific local residual.
  * \note  Not all specializations are currently implemented
+ * \tparam TypeTag The model type tag
+ * \tparam Implementation optional implementation using CRTP (use void if FreeflowNCResidual is itself the implementation)
  */
-template<class TypeTag>
-using FreeflowNCResidual = FreeflowNCResidualImpl<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
+template<class TypeTag, class Implementation = void>
+using FreeflowNCResidual = FreeflowNCResidualImpl<
+    TypeTag,
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    Implementation
+>;
 
-}
+} // end namespace Dumux
 
 #endif

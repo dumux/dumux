@@ -19,6 +19,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
 #include <dumux/multidomain/facet/box/fickslaw.hh>
@@ -39,10 +40,6 @@ namespace Properties {
 namespace TTag {
 struct BoxFacetCouplingModel { using InheritsFrom = std::tuple<BoxModel>; };
 } // end namespace TTag
-
-//! Use the box local residual for models with facet coupling
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::BoxFacetCouplingModel> { using type = BoxFacetCouplingLocalResidual<TypeTag>; };
 
 //! Use the box facet coupling-specific Darcy's law
 template<class TypeTag>
@@ -87,6 +84,17 @@ public:
 };
 
 } // namespace Properties
+
+namespace Detail {
+
+template<class TypeTag, class Impl>
+    requires ( Dumux::Properties::inheritsFrom<Properties::TTag::BoxFacetCouplingModel, TypeTag>() )
+struct DiscretizationDefaultLocalOperator<TypeTag, Impl, DiscretizationMethods::Box> {
+    using type = BoxFacetCouplingLocalResidual<TypeTag, Impl>;
+};
+
+} // namespace Detail
+
 } // namespace Dumux
 
 #endif

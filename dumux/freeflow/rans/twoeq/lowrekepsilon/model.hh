@@ -144,7 +144,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::LowReKEpsilon>
 {
 private:
-    using BaseLocalResidual = NavierStokesResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = NavierStokesResidual<TypeTag, Impl>;
 public:
     using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
 };

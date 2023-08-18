@@ -26,10 +26,10 @@ namespace Dumux {
  * \ingroup CCDiscretization
  * \brief Calculates the element-wise residual for the cell-centered discretization schemes
  */
-template<class TypeTag>
-class CCLocalResidual : public FVLocalResidual<TypeTag>
+template<class TypeTag, class Implementation>
+class CCLocalResidual : public FVLocalResidual<TypeTag, Implementation>
 {
-    using ParentType = FVLocalResidual<TypeTag>;
+    using ParentType = FVLocalResidual<TypeTag, Implementation>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;

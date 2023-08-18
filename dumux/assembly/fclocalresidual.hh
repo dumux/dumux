@@ -29,10 +29,10 @@ namespace Dumux {
  * \brief The element-wise residual for the box scheme
  * \tparam TypeTag the TypeTag
  */
-template<class TypeTag>
-class FaceCenteredLocalResidual : public FVLocalResidual<TypeTag>
+template<class TypeTag, class Implementation>
+class FaceCenteredLocalResidual : public FVLocalResidual<TypeTag, Implementation>
 {
-    using ParentType = FVLocalResidual<TypeTag>;
+    using ParentType = FVLocalResidual<TypeTag, Implementation>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

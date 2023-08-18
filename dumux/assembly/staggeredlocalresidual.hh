@@ -23,14 +23,14 @@ namespace Dumux {
  * \ingroup Assembly
  * \ingroup StaggeredDiscretization
  * \brief Calculates the element-wise residual for the staggered FV scheme
+ * \note This template class uses CRTP to inject the actual implementation
  */
-template<class TypeTag>
+template<class TypeTag, class Implementation>
 class StaggeredLocalResidual
 {
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;

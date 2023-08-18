@@ -21,6 +21,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/localdoftraits.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
@@ -90,11 +91,6 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to CVFELocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
-{ using type = CVFELocalResidual<TypeTag>; };
-
 //! The flux variables cache type
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
@@ -140,6 +136,12 @@ struct LocalDofTraits<GridView, DiscretizationMethods::FCDiamond>
     static constexpr int dim = GridView::dimension;
     // Dofs are located at the facets
     static constexpr int numCubeElementDofs = 2*dim;
+};
+
+template<class TypeTag, class Impl>
+struct DiscretizationDefaultLocalOperator<TypeTag, Impl, DiscretizationMethods::FCDiamond>
+{
+    using type = CVFELocalResidual<TypeTag, Impl>;
 };
 
 } // end namespace Dumux::Detail

@@ -25,15 +25,16 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, class DiscretizationMethod>
+template<class TypeTag, template<class Impl> class BaseLocalResidual, class DiscretizationMethod>
 class KEpsilonResidualImpl;
 
-template<class TypeTag, class BaseLocalResidual>
+template<class TypeTag, template<class Impl> class BaseLocalResidual>
 class KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>
-: public BaseLocalResidual
+: public BaseLocalResidual<KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>>
 {
-    using ParentType = BaseLocalResidual;
-    friend class StaggeredLocalResidual<TypeTag>;
+    using ThisType = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethods::Staggered>;
+    using ParentType = BaseLocalResidual<ThisType>;
+    friend class StaggeredLocalResidual<TypeTag, ThisType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 

@@ -109,7 +109,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::SSTNC>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = SSTResidual<TypeTag, BaseLocalResidual>;
 };
@@ -183,7 +184,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::SSTNCNI>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = SSTResidual<TypeTag, BaseLocalResidual>;
 };

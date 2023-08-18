@@ -115,7 +115,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OneEqNC>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = OneEqResidual<TypeTag, BaseLocalResidual>;
 };
@@ -188,7 +189,8 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::OneEqNCNI>
 {
 private:
-    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
+    template<class Impl>
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag, Impl>;
 public:
     using type = OneEqResidual<TypeTag, BaseLocalResidual>;
 };

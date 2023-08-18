@@ -24,14 +24,20 @@ namespace Dumux {
  */
 
 // forward declaration
-template<class TypeTag, class DiscretizationMethod>
+template<class TypeTag, class DiscretizationMethod, class Implementation>
 class FreeflowNCResidualImpl;
 
-template<class TypeTag>
-class FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>
-: public NavierStokesResidual<TypeTag>
+template<class TypeTag, class Implementation>
+class FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>
+: public NavierStokesResidual<
+    TypeTag, Detail::NavierStokesResidualImpl::Impl<
+        Implementation,
+        FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>
+    >
+>
 {
-    using ParentType = NavierStokesResidual<TypeTag>;
+    using ThisType = FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>;
+    using ParentType = NavierStokesResidual<TypeTag, Detail::NavierStokesResidualImpl::Impl<Implementation, ThisType>>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

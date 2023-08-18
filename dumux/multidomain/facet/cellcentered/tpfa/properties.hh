@@ -60,10 +60,6 @@ struct HeatConductionType<TypeTag, TTag::CCTpfaFacetCouplingModel>
     using type = CCTpfaFacetCouplingFouriersLaw< TypeTag >;
 };
 
-//! Use the cc local residual for models with facet coupling
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::CCTpfaFacetCouplingModel> { using type = CCFacetCouplingLocalResidual<TypeTag>; };
-
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::CCTpfaFacetCouplingModel>
