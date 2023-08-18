@@ -21,6 +21,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
@@ -31,12 +32,13 @@ namespace Dumux {
  *        using fully implicit tracer model.
  */
 template<class TypeTag>
-class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class TracerLocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag, TracerLocalResidual<TypeTag>, GetPropType<TypeTag, Properties::GridGeometry>>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag, TracerLocalResidual<TypeTag>, GridGeometry>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
@@ -44,7 +46,7 @@ class TracerLocalResidual: public GetPropType<TypeTag, Properties::BaseLocalResi
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;

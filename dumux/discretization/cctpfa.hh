@@ -22,6 +22,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
@@ -87,9 +88,6 @@ public:
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::CCTpfaModel> { using type = CCElementBoundaryTypes; };
 
-//! Set the BaseLocalResidual to CCLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::CCTpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 
 namespace Detail {
@@ -105,6 +103,12 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scvf)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+};
+
+template<class TypeTag, class Impl>
+struct DiscretizationDefaultLocalOperator<TypeTag, Impl, DiscretizationMethods::CCTpfa>
+{
+    using type = CCLocalResidual<TypeTag, Impl>;
 };
 
 } // end namespace Detail
