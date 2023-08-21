@@ -18,11 +18,17 @@ from the parameter input file. The constructor takes the expression and an array
 be evaluated with the function values provided in the same order as the names where specified. An arbitrary number of arguments is supported. ExprTK support very complex expressions, see https://www.partow.net/programming/exprtk/.
 - __Time loop__: Fixed a bug when the time is chosen to be negative and/or the end time is set to zero. (Before we assume time is always positive and endtime never zero.)
 - __Hyperelastic__: Added a hyperelastic model (large deformations) and a test (in geomechanics)
-
+- __Assembler__: The local residual type can now be specified via a template argument to `FVAssembler`.
+In can therefore be changed in the main file. The change is enable by two backwards-incompatible changes mentioned below.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
+- __Assembler/LocalResidual__: The property `BaseLocalResidual` has been removed. It it replaced by a more explicit way of specifying the local residual implementation matching the discretization. The type `DiscretizationDefaultLocalOperator<TypeTag, Impl, GridGeometry>` is specialized
+for each discretization method (represented by the grid geometry); include `dumux/discretization/defaultlocaloperator.hh`.
+This should only affect implementers of discretization methods.
+- __LocalResidual__: Several implementation had been implicitly parameterized by the actual implementation type (CRTP). This has now been made explicit
+by requiring the implementation type as template argument next to the model type tag. This should only affect implementers of discretization methods.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 
