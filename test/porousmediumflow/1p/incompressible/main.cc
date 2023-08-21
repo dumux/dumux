@@ -133,7 +133,8 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // create assembler & linear solver
-    using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
+    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>; // discrete equation
+    using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD, /*implicit=*/true, LocalResidual>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = LINEARSOLVER;
