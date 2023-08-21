@@ -9,8 +9,16 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 - __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. `GridFormat` is added as a submodule and can be pulled in with `git submodule update --init`.
 - __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
 - __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
+- __Assembler__: The local residual type can now be specified via a template argument to `FVAssembler`.
+In can therefore be changed in the main file. The change is enable by two backwards-incompatible changes mentioned below.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+
+- __Assembler/LocalResidual__: The property `BaseLocalResidual` has been removed. It it replaced by a more explicit way of specifying the local residual implementation matching the discretization. The type `DiscretizationDefaultLocalOperator<TypeTag, Impl, GridGeometry>` is specialized
+for each discretization method (represented by the grid geometry); include `dumux/discretization/defaultlocaloperator.hh`.
+This should only affect implementers of discretization methods.
+- __LocalResidual__: Several implementation had been implicitly parameterized by the actual implementation type (CRTP). This has now been made explicit
+by requiring the implementation type as template argument next to the model type tag. This should only affect implementers of discretization methods.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:
 
