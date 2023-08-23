@@ -151,6 +151,12 @@ protected:
         return matrixHasCorrectSize;
     }
 
+    /*!
+     * \brief Default implementation for any matrix type
+     */
+    template <class M>
+    bool checkSizesOfSubMatrices(const M&) const { return true; }
+
 private:
     std::shared_ptr<Assembler> assembler_;
     std::shared_ptr<LinearSolver> linearSolver_;

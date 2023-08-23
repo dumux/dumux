@@ -25,9 +25,7 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/geometry/diameter.hh>
 
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>

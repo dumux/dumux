@@ -32,11 +32,6 @@
 #include <dumux/common/pdesolver.hh>
 #include <dumux/common/variablesbackend.hh>
 
-// remove after deprecated code is removed (after 3.7)
-#define DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
-#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
-#undef DUMUX_SUPPRESS_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_WARNING
-
 #include <dumux/linear/matrixconverter.hh>
 
 namespace Dumux::Detail::LinearPDESolver {
@@ -254,98 +249,13 @@ private:
                 );
         }
 
-        return solveLinearSystemImpl_(this->linearSolver(),
-                                      this->assembler().jacobian(),
-                                      deltaU,
-                                      this->assembler().residual());
-    }
+        assert(this->checkSizesOfSubMatrices(this->assembler().jacobian()) && "Matrix blocks have wrong sizes!");
 
-    /*!
-     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
-     *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
-     * converge.
-     *
-     * Specialization for linear solvers that can handle MultiType matrices.
-     *
-     */
-    template<class V = ResidualVector>
-    typename std::enable_if_t<!isMultiTypeBlockVector<V>(), bool>
-    solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           ResidualVector& x,
-                           ResidualVector& b)
-    {
-        return ls.solve(A, x, b);
-    }
-
-
-    /*!
-     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
-     *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
-     * converge.
-     *
-     * Specialization for linear solvers that can handle MultiType matrices.
-     *
-     */
-    template<class LS = LinearSolver, class V = ResidualVector>
-    typename std::enable_if_t<linearSolverAcceptsMultiTypeMatrix<LS>() &&
-                              isMultiTypeBlockVector<V>(), bool>
-    solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           ResidualVector& x,
-                           ResidualVector& b)
-    {
-        assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
-        return ls.solve(A, x, b);
-    }
-
-    /*!
-     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
-     *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
-     * converge.
-     *
-     * Specialization for linear solvers that cannot handle MultiType matrices.
-     * We copy the matrix into a 1x1 block BCRS matrix before solving.
-     *
-     */
-    template<class LS = LinearSolver, class V = ResidualVector>
-    [[deprecated("After 3.7 LinearPDESolver will no longer support conversion of multitype matrices for solvers that don't support this feature!")]]
-    typename std::enable_if_t<!linearSolverAcceptsMultiTypeMatrix<LS>() &&
-                              isMultiTypeBlockVector<V>(), bool>
-    solveLinearSystemImpl_(LinearSolver& ls,
-                           JacobianMatrix& A,
-                           ResidualVector& x,
-                           ResidualVector& b)
-    {
-        assert(this->checkSizesOfSubMatrices(A) && "Sub-blocks of MultiTypeBlockMatrix have wrong sizes!");
-
-        // create the bcrs matrix the IterativeSolver backend can handle
-        const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
-
-        // get the new matrix sizes
-        const std::size_t numRows = M.N();
-        assert(numRows == M.M());
-
-        // create the vector the IterativeSolver backend can handle
-        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
-        assert(bTmp.size() == numRows);
-
-        // create a blockvector to which the linear solver writes the solution
-        using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
-        using BlockVector = typename Dune::BlockVector<VectorBlock>;
-        BlockVector y(numRows);
-
-        // solve
-        const bool converged = ls.solve(M, y, bTmp);
-
-        // copy back the result y into x
-        if(converged)
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
-
-        return converged;
+        return this->linearSolver().solve(
+            this->assembler().jacobian(),
+            deltaU,
+            this->assembler().residual()
+        );
     }
 
     //! initialize the parameters by reading from the parameter tree
