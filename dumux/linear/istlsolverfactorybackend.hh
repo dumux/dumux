@@ -98,47 +98,6 @@ class OldIstlSolverFactoryBackend : public LinearSolver
 public:
 
     /*!
-     * \brief Construct the backend for the sequential case only
-     *
-     * \param paramGroup the parameter group for parameter lookup
-     */
-    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter. Will be removed after 3.7.")]]
-    OldIstlSolverFactoryBackend(const std::string& paramGroup = "")
-    : paramGroup_(paramGroup)
-    , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
-    {
-        if (isParallel_)
-            DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
-
-        firstCall_ = true;
-        initializeParameters_();
-    }
-
-    /*!
-     * \brief Construct the backend for parallel or sequential runs
-     *
-     * \param gridView the grid view for parallel communication via the grid
-     * \param dofMapper an index mapper for dof entities
-     * \param paramGroup the parameter group for parameter lookup
-     */
-    [[deprecated("Use new IstlSolverFactoryBackend<LinearSolverTraits, LinearAlgebraTraits> with 2nd template parameter. Will be removed after 3.7.")]]
-    OldIstlSolverFactoryBackend(const typename LinearSolverTraits::GridView& gridView,
-                                const typename LinearSolverTraits::DofMapper& dofMapper,
-                                const std::string& paramGroup = "")
-    : paramGroup_(paramGroup)
-#if HAVE_MPI
-    , isParallel_(Dune::MPIHelper::getCommunication().size() > 1)
-#endif
-    {
-        firstCall_ = true;
-        initializeParameters_();
-#if HAVE_MPI
-        if (isParallel_)
-            parallelHelper_ = std::make_unique<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-#endif
-    }
-
-    /*!
      * \brief Update the solver after grid adaption
      *
      * \param gridView the grid view on which we are performing the multi-grid
