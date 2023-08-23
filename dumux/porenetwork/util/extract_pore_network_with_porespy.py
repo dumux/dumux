@@ -202,8 +202,10 @@ def extractNetwork(
     # use PoreSpy to sanitize some parameters (might become obsolete as some point)
     porenetwork = op.io.network_from_porespy(snowOutput.network)  # porenetwork in OpenPNM format
 
-    # trimming pore network to avoid singularity (remove pores in disconnected clusters, this includes isolated pores)
-    # isolated pores could be removed separately by using op.topotools.trim(network=porenetwork, pores=health["isolated_pores"])
+    # trimming pore network to avoid singularity (remove pores in disconnected clusters,
+    # this includes isolated pores).
+    # isolated pores could be removed separately by using
+    # op.topotools.trim(network=porenetwork, pores=health["isolated_pores"])
     print("Number of pores before trimming: ", porenetwork.Np)
     health = op.utils.check_network_health(porenetwork)
     op.topotools.trim(network=porenetwork, pores=health["disconnected_pores"])
