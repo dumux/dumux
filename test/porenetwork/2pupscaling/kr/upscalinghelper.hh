@@ -298,6 +298,18 @@ private:
         assignBoundaryAvgValues_(outletAvgValues_, avgValues_);
     }
 
+    void computeDomainAvgValues_(const LeafGridView& leafGridView)
+    {
+        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::outlet, Labels::inlet});
+
+        avgValues_.eval(dofsToNeglect);
+        const Scalar avgSw = avgValues_["avgSat"];
+
+        // store the three most recent averaged saturations
+        std::rotate(swAvg_.rbegin(), swAvg_.rbegin()+1, swAvg_.rend());
+        swAvg_[0]= avgSw;
+    }
+
     void assignBoundaryAvgValues_(BoundaryAvgValues& boundaryAvgValues, const AveragedValues<GridVariables, SolutionVector>& avgValues)
     {
         boundaryAvgValues.p[FS::phase0Idx] = avgValues["avgPw"];
@@ -354,7 +366,7 @@ private:
         for (int i = 0; i<2 ; i++)
         {
             diff = (abs(inletVolumeFlux_[i]) - abs(outletVolumeFlux_[i]));
-            if (abs(diff) > abs(inletVolumeFlux_[i]) * 1e-3)
+            if (abs(diff) > abs(outletVolumeFlux_[i]) * 1e-2)
                 return 0;
         }
 
@@ -497,6 +509,7 @@ private:
     std::array<Scalar, 2> inletVolumeFlux_;
     std::array<Scalar, 2> outletVolumeFlux_;
     std::array<std::array<Scalar, 2>, 3>  effPerm_;
+    std::array<Scalar, 2> swAvg_ = {{0.0, 0.0}};
 
 };
 

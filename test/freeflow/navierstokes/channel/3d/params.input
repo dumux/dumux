@@ -1,26 +1,26 @@
 [Grid]
-UpperRight = 0.005 0.002 0.00025
-Cells = 3 20 10
+UpperRight = 0.2 0.001 0.005
+Cells = 1000 1 1
 
 [Problem]
 Name = test_stokes_channel_3d
-DeltaP = 10
+DeltaP = 1e3
 EnableGravity = false
-Height = 0.00025
+Height = 0.005
 
 [Component]
-LiquidDensity = 1e3
-LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1.184
+LiquidKinematicViscosity = 1.562e-5
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 10
-MaxRelativeShift = 1e-10
+MaxSteps = 30
+MaxRelativeShift = 1e-9
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true
 
 [FluxOverPlane]
 Verbose = true

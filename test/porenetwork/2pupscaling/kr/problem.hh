@@ -73,7 +73,7 @@ public:
         sourcew_ = getParam<Scalar>("Problem.SourceWetting", 0.0);
         sourcen_ = getParam<Scalar>("Problem.SourceNonwetting", 0.0);
         pressure_ = getParam<Scalar>("Problem.Pressure", 0.0);
-        saturationw_ = getParam<Scalar>("Problem.SatuartionWetting", 0.0);
+        saturationw_ = getParam<Scalar>("Problem.SaturationWetting", 1.0);
 
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
@@ -168,13 +168,16 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = pressure_;
-        values[snIdx] = 1 - saturationw_;
+        values[snIdx] = 1.0 - saturationw_;
         return values;
     }
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return true; }
+    {   if (saturationw_ == 0.0)
+            return true;
+        return false;
+    }
 
     // \}
 

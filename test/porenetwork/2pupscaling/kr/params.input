@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 1e2 # [s]
+TEnd = 2e2 # [s]
 
 #[Grid]
 #File = ./grids/pnm_converted.dgf
@@ -8,21 +8,21 @@ TEnd = 1e2 # [s]
 #ThroatCrossSectionShape = Square
 
 [Grid]
-UpperRight = 4e-4 4e-4 4e-4
-NumPores = 20 20 20
+UpperRight = 2e-4 2e-4 2e-4
+NumPores = 4 4 4
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 1e-5
-StandardDeviationPoreInscribedRadius = 4e-6
+StandardDeviationPoreInscribedRadius = 0.0
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 ParameterRandomNumberSeed = 1
 
-BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:-1 yMax:-1 zMin:-1 zMax:-1
 MinThroatLength = 1e-10
-DeletionProbability = 0.0 0.6 0.98 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
-RemoveThroatsOnBoundary = 0 1 2 3 4 5
-CapPoresOnBoundaries = 0 1 2 3 4 5
+DeletionProbability = 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+RemoveThroatsOnBoundary = 0 1
+#CapPoresOnBoundaries = 0 1 2 3 4 5
 Sanitize = true
 DeletionRandomNumberSeed = 33
 
@@ -35,7 +35,7 @@ InitialPc = 3000
 FinalPc = 5000
 NumSteps = 1
 UseFixedPressureAndSaturationBoundary = false
-SourceWetting = 5e-9
+SourceWetting = 1e-12
 SourceNonwetting = 0.0
 Pressure = 1e5
 SaturationWetting = 0.0
