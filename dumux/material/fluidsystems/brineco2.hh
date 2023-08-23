@@ -16,7 +16,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
@@ -94,21 +93,14 @@ struct BrineCO2DefaultPolicy
  * \note This implementation always assumes NaCl stays in the liquid phase.
  */
 template< class Scalar,
-          class CO2Impl,
+          class CO2Component,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>,
           class Policy = BrineCO2DefaultPolicy</*constantSalinity?*/true> >
 class BrineCO2
-: public Base<Scalar, BrineCO2<Scalar, CO2Impl, H2OType, Policy>>
+: public Base<Scalar, BrineCO2<Scalar, CO2Component, H2OType, Policy>>
 , public Detail::BrineCO2Indices<Policy::useConstantSalinity()>
 {
-    using ThisType = BrineCO2<Scalar, CO2Impl, H2OType, Policy>;
-
-    static constexpr bool rawCO2Table = Deprecated::BrineCO2Helper<CO2Impl>::isRawTable();
-
-    using CO2Component = typename std::conditional_t< rawCO2Table,
-                                                      Components::CO2<Scalar, CO2Impl>,
-                                                      CO2Impl >;
-
+    using ThisType = BrineCO2<Scalar, CO2Component, H2OType, Policy>;
     // binary coefficients
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Component>;
 
