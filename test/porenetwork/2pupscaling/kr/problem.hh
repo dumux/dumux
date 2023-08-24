@@ -74,9 +74,18 @@ public:
         sourcen_ = getParam<Scalar>("Problem.SourceNonwetting", 0.0);
         pressure_ = getParam<Scalar>("Problem.Pressure", 0.0);
         saturationw_ = getParam<Scalar>("Problem.SaturationWetting", 1.0);
+        minSource_ = getParam<Scalar>("Problem.MinSource", 0.0);
+        maxSource_ = getParam<Scalar>("Problem.MaxSource", 1e-12);
 
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
+
+        sourceEpisopdeN_.resize(numSteps_ + 1);
+        for (int i = 0 ; i < sourceEpisopdeN_.size(); i++)
+              sourceEpisopdeN_[i] = minSource_ + i*(maxSource_ - minSource_)/numSteps_;
+
+        sourceEpisopdeW_ = sourceEpisopdeN_;
+        std::reverse(sourceEpisopdeW_.begin(), sourceEpisopdeW_.end());
 
     }
 
@@ -154,8 +163,8 @@ public:
         PrimaryVariables values(0.0);
         if (isInletPore_(scv))
         {
-            values[Indices::conti0EqIdx] = sourcew_;
-            values[Indices::conti0EqIdx + 1] = sourcen_;
+            values[Indices::conti0EqIdx] = sourceEpisopdeW_[step_];
+            values[Indices::conti0EqIdx + 1] = sourceEpisopdeN_[step_];
         }
         values /= scv.volume();
 
@@ -206,13 +215,8 @@ public:
     int direction() const
     { return direction_; }
 
-    // Set the side lengths to consider for the upscaling process.
-    void setSideLengths(const GlobalPosition& sideLengths)
-    { length_ = sideLengths; }
-
-    // Return the side lengths to consider for the upscaling process.
-    const GlobalPosition& sideLengths() const
-    { return length_; }
+    void nextStep()
+    {   step_++; }
 
 private:
 
@@ -242,8 +246,6 @@ private:
     Scalar initialPc_;
     Scalar finalPc_;
     int numSteps_;
-    std::vector<Scalar> pcEpisopde_;
-    std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
     std::ofstream logfile_;
     std::ofstream logfileEqPoints_;
     Scalar dSwDt_ = 0.0;
@@ -255,12 +257,14 @@ private:
     Scalar sourcen_;
     Scalar pressure_;
     Scalar saturationw_;
-
-    int step_;
     int direction_;
     bool useLabels_;
     Scalar eps_;
-    GlobalPosition length_;
+    Scalar minSource_;
+    Scalar maxSource_;
+    std::vector<Scalar> sourceEpisopdeW_;
+    std::vector<Scalar> sourceEpisopdeN_;
+    int step_ = 0;
 };
 } //end namespace Dumux
 

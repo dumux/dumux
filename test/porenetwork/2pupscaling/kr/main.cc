@@ -134,17 +134,8 @@ int main(int argc, char** argv)
     // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
     // determine it automatically based on the network's bounding box.
     // [[codeblock]]
-    const auto sideLengths = [&]()
-    {
-        using GlobalPosition = typename GridGeometry::GlobalCoordinate;
-        if (hasParam("Problem.SideLength"))
-            return getParam<GlobalPosition>("Problem.SideLength");
-        else
-            return upscalingHelper.getSideLengths(*gridGeometry);
-    }();
-    // pass the side lengths to the problem
-    problem->setSideLengths(sideLengths);
-    // [[/codeblock]]
+    upscalingHelper.setSideLengths(*gridGeometry);
+
 
 
     // instantiate time loop
@@ -169,6 +160,7 @@ int main(int argc, char** argv)
 
     const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0});
     upscalingHelper.setDirections(directions);
+
     for (int dimIdx : directions)
     {
         // set the direction in which the pressure gradient will be applied
@@ -183,10 +175,11 @@ int main(int argc, char** argv)
             // make the new solution the old solution
             xOld = x;
 
-            if (upscalingHelper.reachedEquilibrium(leafGridView, boundaryFlux))
+            if (upscalingHelper.reachedEquilibrium(leafGridView, timeLoop->timeStepSize()))
             {
-                upscalingHelper.setDataPoints();
-                timeLoop->setFinished();
+                upscalingHelper.setDataPoints(leafGridView, boundaryFlux);
+                problem->nextStep();
+                std::cout<<"------------------------------------------------------------------"<<std::endl;
             }
 
             gridVariables->advanceTimeStep();
@@ -206,10 +199,6 @@ int main(int argc, char** argv)
 
 
         } while (!timeLoop->finished());
-        std::cout<<"----------------------------------"<<std::endl;
-        timeLoop->reset(restartTime, dt, tEnd);
-        problem->applyInitialSolution(x);
-        gridVariables->init(x);
     }
 
     ////////////////////////////////////////////////////////////

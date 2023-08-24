@@ -62,6 +62,20 @@ public:
     }
 
     template <class LeafGridView, class BoundaryFlux>
+    void setDataPoints(const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
+    {
+        auto inletPoreLabel = problem_.inletPoreLabel();
+        auto outletPoreLabel = problem_.outletPoreLabel();
+
+        const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{inletPoreLabel}).totalFlux;
+        const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel}).totalFlux;
+
+        computeBoundaryAvgValues_(leafGridView);
+        computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
+        computeEffPerm_();
+    }
+
+    template <class LeafGridView, class BoundaryFlux>
     bool reachedEquilibrium(const LeafGridView& leafGridView, const BoundaryFlux& boundaryFlux)
     {
         auto inletPoreLabel = problem_.inletPoreLabel();
@@ -73,6 +87,14 @@ public:
         computeBoundaryAvgValues_(leafGridView);
         computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
         return checkIfInEquilibrium_();
+    }
+
+    template <class LeafGridView>
+    bool reachedEquilibrium(const LeafGridView& leafGridView, Scalar dt)
+    {
+
+        computeDomainAvgValues_(leafGridView);
+        return checkIfInEquilibrium_(dt);
     }
 
     // ### Set data points to calculate intrinsic permeability and Forchheimer coefficient
@@ -157,25 +179,7 @@ public:
             }
         }
     }
-    // [[/codeblock]]
 
-    // ### Determine the domain's side lengths
-    //
-    // We determine the domain side length by using the bounding box of the network
-    // [[codeblock]]
-    template<class GridGeometry>
-    auto getSideLengths(const GridGeometry& gridGeometry)
-    {
-        using GlobalPosition = typename GridGeometry::GlobalCoordinate;
-        GlobalPosition result(0.0);
-
-        std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
-        for (int dimIdx = 0; dimIdx < GridGeometry::GridView::dimensionworld; ++dimIdx)
-            result[dimIdx] = gridGeometry.bBoxMax()[dimIdx] - gridGeometry.bBoxMin()[dimIdx];
-
-        return result;
-    }
-    // [[/codeblock]]
 
     // ### Plot the data using Gnuplot
     //
@@ -267,6 +271,22 @@ public:
     bool checkIfInEquilibrium()
     {   return checkIfInEquilibrium_(); }
 
+    // ### Determine the domain's side lengths
+    //
+    // We determine the domain side length by using the bounding box of the network
+    // [[codeblock]]
+    template<class GridGeometry>
+    auto setSideLengths(const GridGeometry& gridGeometry)
+    {
+        std::cout << "Automatically determining side lengths of REV based on bounding box of pore network" << std::endl;
+        for (int dimIdx = 0; dimIdx < GridGeometry::GridView::dimensionworld; ++dimIdx)
+            length_[dimIdx] = gridGeometry.bBoxMax()[dimIdx] - gridGeometry.bBoxMin()[dimIdx];
+
+        return length_;
+    }
+    // [[/codeblock]]
+
+
 private:
 
     void setAvgVariables_()
@@ -298,6 +318,7 @@ private:
         assignBoundaryAvgValues_(outletAvgValues_, avgValues_);
     }
 
+    template <class LeafGridView>
     void computeDomainAvgValues_(const LeafGridView& leafGridView)
     {
         auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::outlet, Labels::inlet});
@@ -346,17 +367,18 @@ private:
     {
 
         // get the domain side lengths from the problem
-        auto sideLengths = problem_.sideLengths();
-        Scalar L = 1.0;//sideLengths[problem_.direction()];
+        auto sideLengths = length_;
+        auto currentDirection = problem_.direction();
+        Scalar L = sideLengths[currentDirection];
         // calculate apparent velocity
-        sideLengths[problem_.direction()] = 1.0;
-        const auto outflowArea = 1.0;//std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
+        sideLengths[currentDirection] = 1.0;
+        const auto outflowArea = std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
         for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++)
         {
             const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
-            effPerm_[problem_.direction()][phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
+            effPerm_[currentDirection][phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
         }
-        std::cout<<"   effPerm_[problem_.direction()]   "<<effPerm_[problem_.direction()][0]<<std::endl;
+        std::cout<<"   effPerm_[direction_]   "<<effPerm_[currentDirection][0]<<std::endl;
     }
 
     bool checkIfInEquilibrium_()
@@ -372,6 +394,17 @@ private:
 
         return 1;
     }
+
+    bool checkIfInEquilibrium_(Scalar dt)
+    {
+        using std::abs;
+        Scalar dSwDt = abs(swAvg_[0]-swAvg_[1])/dt;
+        if (dSwDt < 1e-10)
+            return 1;
+
+        return 0;
+    }
+
 
 
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
@@ -509,7 +542,8 @@ private:
     std::array<Scalar, 2> inletVolumeFlux_;
     std::array<Scalar, 2> outletVolumeFlux_;
     std::array<std::array<Scalar, 2>, 3>  effPerm_;
-    std::array<Scalar, 2> swAvg_ = {{0.0, 0.0}};
+    std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
+    std::array<Scalar, 3> length_;
 
 };
 
