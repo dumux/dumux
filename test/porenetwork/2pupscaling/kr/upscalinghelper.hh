@@ -54,6 +54,12 @@ public:
     , problem_(problem)
     {
         setAvgVariables_();
+        logfile_.open("logfile_" + problem_.name() + ".txt"); //for the logfile
+        logfile_ <<"Logfile for: " + problem_.name()  << std::endl;
+        logfile_ << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
+                 << std::left << std::setw(20) << std::setfill(' ') << "krw"
+                 << std::left << std::setw(20) << std::setfill(' ') << "krn"
+                 << std::endl;
     }
 
     void setDataPoints()
@@ -378,6 +384,11 @@ private:
             const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
             effPerm_[currentDirection][phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
         }
+
+        logfile_ << std::scientific << std::setprecision(2)<< std::left << std::setw(20) << std::setfill(' ') << swAvg_[0]
+                         << std::left << std::setw(20) << std::setfill(' ') <<  effPerm_[currentDirection][0]
+                         << std::left << std::setw(20) << std::setfill(' ') << effPerm_[currentDirection][1]
+                         << std::endl;
         std::cout<<"   effPerm_[direction_]   "<<effPerm_[currentDirection][0]<<std::endl;
     }
 
@@ -544,6 +555,7 @@ private:
     std::array<std::array<Scalar, 2>, 3>  effPerm_;
     std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
     std::array<Scalar, 3> length_;
+    std::ofstream logfile_;
 
 };
 

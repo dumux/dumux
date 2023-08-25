@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 TEnd = 10e4 # [s]
-MaxTimeStepSize = 10
+MaxTimeStepSize = 1e-3
 
 #[Grid]
 #File = ./grids/pnm_converted.dgf
@@ -10,7 +10,7 @@ MaxTimeStepSize = 10
 
 [Grid]
 UpperRight = 2e-4 2e-4 2e-4
-NumPores = 4 4 4
+NumPores = 3 3 3
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 1e-5
@@ -29,7 +29,7 @@ DeletionRandomNumberSeed = 33
 
 [Problem]
 Name = test_pnm_2p
-VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
+VtpOutputFrequency = 300 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 InitialPc = 3000

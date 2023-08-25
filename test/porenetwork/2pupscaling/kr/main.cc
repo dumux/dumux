@@ -180,6 +180,8 @@ int main(int argc, char** argv)
                 upscalingHelper.setDataPoints(leafGridView, boundaryFlux);
                 problem->nextStep();
                 std::cout<<"------------------------------------------------------------------"<<std::endl;
+                if (problem->finished())
+                    timeLoop->setFinished();
             }
 
             gridVariables->advanceTimeStep();

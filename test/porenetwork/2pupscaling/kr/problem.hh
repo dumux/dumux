@@ -87,6 +87,9 @@ public:
         sourceEpisopdeW_ = sourceEpisopdeN_;
         std::reverse(sourceEpisopdeW_.begin(), sourceEpisopdeW_.end());
 
+        for (int i = 0 ; i < sourceEpisopdeN_.size(); i++)
+            std::cout<<" sourceEpisopdeN_[i] "<<sourceEpisopdeN_[i]<<" sourceEpisopdeW_[i] "<<sourceEpisopdeW_[i]<<std::endl;
+
     }
 
     /*!
@@ -217,6 +220,9 @@ public:
 
     void nextStep()
     {   step_++; }
+
+    bool finished()
+    {   return step_>numSteps_; }
 
 private:
 
