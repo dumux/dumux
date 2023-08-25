@@ -319,11 +319,12 @@ public:
 
      /*!
      * \brief Resizes jacobian and residual and recomputes colors
+     * \note should be called after updating the gridGeometryTuple
      */
     void updateAfterGridAdaption()
     {
-        setResidualSize_();
-        setJacobianPattern_();
+        setResidualSize_(*residual_);
+        setJacobianPattern_(*jacobian_);
         maybeComputeColors_();
     }
 
