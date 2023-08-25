@@ -73,7 +73,8 @@ public:
               const ES& selector,
               const std::string& paramGroup = "")
     {
-        this->gridPtr() = createGrid_(hostGrid, selector, paramGroup);
+        this->gridPtr() = std::make_unique<Grid>(hostGrid);
+        updateSubGrid_(selector);
         loadBalance();
     }
 
@@ -86,7 +87,8 @@ public:
               const std::string& paramGroup = "")
     {
         initHostGrid_(paramGroup);
-        this->gridPtr() = createGrid_(hostGridManager_->grid(), selector, paramGroup);
+        this->gridPtr() = std::make_unique<Grid>(hostGridManager_->grid());
+        updateSubGrid_(selector);
         loadBalance();
     }
 
@@ -99,19 +101,27 @@ public:
             this->grid().loadBalance();
     }
 
-protected:
-
     /*!
-     * \brief Make the subgrid.
+     * \brief Update the existing subgrid.
      */
     template<class ES,
              typename std::enable_if_t<Dune::models<Concept::ElementSelector<HostElement>, ES>(), int> = 0>
-    static std::unique_ptr<Grid> createGrid_(HostGrid& hostGrid,
-                                             const ES& selector,
-                                             const std::string& paramGroup = "")
+    void update(const ES& selector)
     {
-        // A unique pointer to the subgrid.
-        auto subgridPtr = std::make_unique<Grid>(hostGrid);
+        updateSubGrid_(selector);
+        loadBalance();
+    }
+
+protected:
+
+    /*!
+     * \brief Update the subgrid.
+     */
+    template<class ES,
+             typename std::enable_if_t<Dune::models<Concept::ElementSelector<HostElement>, ES>(), int> = 0>
+    void updateSubGrid_(const ES& selector)
+    {
+        auto& subgridPtr = this->gridPtr();
 
         // A container to store the host grid elements' ids.
         std::set<typename HostGrid::Traits::GlobalIdSet::IdType> elementsForSubgrid;
@@ -132,9 +142,6 @@ protected:
 
         subgridPtr->insertSetPartial(elementsForSubgrid);
         subgridPtr->createEnd();
-
-        // Return a unique pointer to the subgrid.
-        return subgridPtr;
     }
 
     void initHostGrid_(const std::string& paramGroup)
@@ -314,9 +321,15 @@ private:
 
         // create the grid
         if (repeated)
-            this->gridPtr() = this->createGrid_(this->hostGrid_(), repeatedElementSelector, paramGroup);
+        {
+            this->gridPtr() = std::make_unique<Grid>(this->hostGrid_());
+            this->updateSubGrid_(repeatedElementSelector);
+        }
         else
-            this->gridPtr() = this->createGrid_(this->hostGrid_(), elementSelector, paramGroup);
+        {
+            this->gridPtr() = std::make_unique<Grid>(this->hostGrid_());
+            this->updateSubGrid_(elementSelector);
+        }
 
         this->loadBalance();
     }
