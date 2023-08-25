@@ -322,8 +322,8 @@ public:
      */
     void updateAfterGridAdaption()
     {
-        setResidualSize_();
-        setJacobianPattern_();
+        setJacobianPattern_(*jacobian_);
+        setResidualSize_(*residual_);
         maybeComputeColors_();
     }
 
