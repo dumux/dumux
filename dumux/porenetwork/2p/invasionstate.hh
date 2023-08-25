@@ -229,8 +229,8 @@ private:
 
         if (*pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMax <= pcSnapoff)
-           invadedAfterSwitch = false;
+        // else if (*pcMax <= pcSnapoff)
+        //    invadedAfterSwitch = false;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
 
