@@ -171,8 +171,8 @@ private:
 
         for (const auto& element : elements(*hostGridView_))
         {
-            const auto& geometry = element.geometry();
-            const auto& refElement = ReferenceElements::general(geometry.type());
+            const auto geometry = element.geometry();
+            const auto refElement = ReferenceElements::general(geometry.type());
             treatEdges_(element, refElement, geometry);
             treatDiagonals_(element, refElement, geometry);
         }
