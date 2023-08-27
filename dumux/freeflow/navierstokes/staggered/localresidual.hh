@@ -12,6 +12,8 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
+#include <type_traits>
+
 #include <dune/common/hybridutilities.hh>
 
 #include <dumux/common/properties.hh>
@@ -22,13 +24,19 @@
 
 namespace Dumux {
 
-namespace Impl {
+#ifndef DOXYGEN
+namespace Detail::NavierStokesResidualImpl {
 template<class T>
 static constexpr bool isRotationalExtrusion = false;
 
 template<int radialAxis>
 static constexpr bool isRotationalExtrusion<RotationalExtrusion<radialAxis>> = true;
-} // end namespace Impl
+
+template<class X, class Y>
+using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
+
+} // end namespace  Detail::NavierStokesResidualImpl
+#endif // DOXYGEN
 
 /*!
  * \ingroup NavierStokesModel
@@ -41,10 +49,16 @@ class NavierStokesResidualImpl;
 
 template<class TypeTag, class Implementation>
 class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>
-: public StaggeredLocalResidual<TypeTag, Implementation>
+: public StaggeredLocalResidual<
+    TypeTag, Detail::NavierStokesResidualImpl::Impl<
+        Implementation,
+        NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>
+    >
+>
 {
-    using ParentType = StaggeredLocalResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
+    using ThisType = NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered, Implementation>;
+    using ParentType = StaggeredLocalResidual<TypeTag, Detail::NavierStokesResidualImpl::Impl<Implementation, ThisType>>;
+    friend class StaggeredLocalResidual<TypeTag, Detail::NavierStokesResidualImpl::Impl<Implementation, ThisType>>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -170,7 +184,7 @@ public:
         // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for fluid dynamics chapter 8.
         // https://doi.org/10.1007/978-3-540-68228-8 (page 301)
-        if constexpr (ModelTraits::dim() == 2 && Impl::isRotationalExtrusion<Extrusion>)
+        if constexpr (ModelTraits::dim() == 2 && Detail::NavierStokesResidualImpl::isRotationalExtrusion<Extrusion>)
         {
             if (scvf.directionIndex() == Extrusion::radialAxis)
             {

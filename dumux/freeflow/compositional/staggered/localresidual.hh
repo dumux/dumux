@@ -29,9 +29,10 @@ class FreeflowNCResidualImpl;
 
 template<class TypeTag>
 class FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>
-: public NavierStokesResidual<TypeTag>
+: public NavierStokesResidual<TypeTag, FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>>
 {
-    using ParentType = NavierStokesResidual<TypeTag>;
+    using ThisType = FreeflowNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>;
+    using ParentType = NavierStokesResidual<TypeTag, ThisType>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;

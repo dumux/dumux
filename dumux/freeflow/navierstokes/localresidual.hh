@@ -19,7 +19,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class DiscretizationMethod>
+template<class TypeTag, class DiscretizationMethod, class Implementation>
 class NavierStokesResidualImpl;
 
 /*!
@@ -27,10 +27,16 @@ class NavierStokesResidualImpl;
  * \brief The local residual class for the Navier-Stokes model (balance equations).
           This is a convenience alias for the actual,
           discretization-specific local residual.
- * \note  Not all specializations are currently implemented
+ * \note Not all specializations are currently implemented
+ * \tparam TypeTag The model type tag
+ * \tparam Implementation optional implementation using CRTP (use void if NavierStokesResidual is itself the implementation)
  */
-template<class TypeTag>
-using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod>;
+template<class TypeTag, class Implementation = void>
+using NavierStokesResidual = NavierStokesResidualImpl<
+    TypeTag,
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    Implementation
+>;
 
 } // end namespace Dumux
 
