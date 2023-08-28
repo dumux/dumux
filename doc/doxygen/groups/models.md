@@ -205,6 +205,11 @@
 @copydoc dumux/geomechanics/poroelastic/model.hh
 @ingroup GeomechanicsModels
 
+@defgroup Hyperelastic Hyperelastic solid mechanics w/o fluid pressure
+@brief Models nonlinear deformation of an elastic solid.
+@copydoc dumux/geomechanics/hyperelastic/model.hh
+@ingroup GeomechanicsModels
+
 <!-- PoreNetworkModels -->
 
 @defgroup PoreNetworkModels Pore network

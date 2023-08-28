@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Elastic
- * \brief A geomechanical model.
+ * \brief Deformation of a solid body using the theory of linear elasticity (small deformations)
  *
  * This model describes the deformation of a solid body using the theory of linear elasticity.
  * The momentum balance equation of the solid body can be expressed by

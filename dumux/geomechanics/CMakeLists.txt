@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(elastic)
+add_subdirectory(hyperelastic)
 add_subdirectory(poroelastic)
 
 file(GLOB DUMUX_GEOMECHANICS_HEADERS *.hh *.inc)
