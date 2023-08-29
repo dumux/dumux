@@ -49,6 +49,9 @@ public:
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                               { return fluxVarsCache.pcEntry(); }, "pcEntry");
 
+        // out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
+        //                       { return fluxVarsCache.pcSnapoff(); }, "pcSnapoff");
+
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
                               { return fluxVarsCache.transmissibility(FS::phase0Idx); }, "transmissibilityW");
 
