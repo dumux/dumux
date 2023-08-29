@@ -1,0 +1,68 @@
+# Simple pore network model
+
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 1e12 # [s]
+MaxTimeStepSize = 1e6
+MaxDtNonEquilibrium = 1e-3
+
+[Grid]
+#File = ./grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 3e-6
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Problem]
+Name = pcScurve # name passed to the output routines
+InvasionStateVerbosity = true
+VtpOutputFrequency = 0 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured
+NumSteps = 100 # the number of episodes to run
+
+EnableGravity = false
+
+InitialPc = 3000 # [Pa]
+FinalPc = 7000 # [Pa]
+PlotPcS = true
+
+[Static.Problem]
+Name = static_pc_sw
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 2
+OutletPoreLabel = 3
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-4
+MaxTimeStepDivisions = 40
+PlausibilityCheck = true
+
+[Regularization]
+RegPercentage = 1e-2
+
+[InvasionState]
+AccuracyCriterion = 0.999
+RestrictInvasionToGlobalCapillaryPressure = true
+BlockNonwettingPhaseAtThroatLabel = 3
