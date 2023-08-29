@@ -368,6 +368,7 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vector of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -417,6 +418,7 @@ public:
                     // update the volume variables and compute element residual
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     deflectionHelper.deflect(elemSol, scv, this->problem());
+                    elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
                     return this->evalLocalResidual();
                 };
 

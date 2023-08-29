@@ -527,6 +527,7 @@ public:
             // is capable of handling MultiType matrices or not
             bool converged = solveLinearSystem_(deltaU);
 
+
             // make sure all processes converged
             int convergedRemote = converged;
             if (comm_.size() > 1)
@@ -658,6 +659,7 @@ public:
 
             if (enableShiftCriterion_)
                 std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
+
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << Fmt::format(", residual = {:.4e}", residualNorm_);
             else if (enableResidualCriterion_)
@@ -670,14 +672,25 @@ public:
         // When the Newton iterations are done: ask the model to check whether it makes sense
         // TODO: how do we realize this? -> do this here in the Newton solver
         // model_().checkPlausibility();
+
     }
 
     /*!
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
+     *        (for pore-network model the invasion status will be updated here)
      */
-    virtual void newtonEnd()  {}
-
+#if NOREGULARIZTAION
+    virtual void newtonEnd()  {
+        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
+        logfile << numSteps_ << "\n";
+    }
+#else
+    virtual void newtonEnd(Variables &vars, const SolutionVector &uLastIter) {
+        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
+        logfile << numSteps_ << "\n";
+    }
+#endif
     /*!
      * \brief Returns true if the error of the solution is below the
      *        tolerance.
@@ -745,15 +758,15 @@ public:
      */
     void report(std::ostream& sout = std::cout) const
     {
-        sout << '\n'
-             << "Newton statistics\n"
-             << "----------------------------------------------\n"
-             << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
-             << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
-             << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
-             << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
-             << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
-             << std::endl;
+        std::ofstream lognewton(getParam<std::string>("Newton.NewtonOverview"));
+        lognewton << "Newton statistics\n"
+                  << "----------------------------------------------\n"
+                  << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
+                  << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
+                  << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
+                  << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+                  << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
+                  << std::endl;
     }
 
     /*!
@@ -1015,7 +1028,6 @@ private:
 
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
-
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
@@ -1026,10 +1038,12 @@ private:
                 // detect if the method has converged
                 converged = newtonConverged();
             }
-
-            // tell solver we are done
+#if NOREGULARIZTAION
             newtonEnd();
-
+#else
+            // tell solver we are done
+            newtonEnd(vars, uLastIter);
+#endif
             // reset state if Newton failed
             if (!newtonConverged())
             {
@@ -1043,6 +1057,7 @@ private:
 
             // tell solver we converged successfully
             newtonSucceed();
+
 
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();

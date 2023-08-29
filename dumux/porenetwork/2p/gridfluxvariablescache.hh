@@ -101,8 +101,11 @@ public:
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, sol);
 
+            #if !PLOTCONSTITUTIVERELATIONS
             for (auto&& scvf : scvfs(fvGeometry))
                 cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf, invasionState().invaded(element));
+            #else
+            #endif
         }
     }
 

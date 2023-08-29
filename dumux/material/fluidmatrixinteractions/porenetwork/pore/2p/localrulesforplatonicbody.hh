@@ -320,7 +320,10 @@ private:
         if (sw < pcLowSw_)
             return pcLowSwPcValue_() + pcDerivativeLowSw_() * (sw - pcLowSw_);
 
-        if (sw <= pcHighSw_)
+        if (!regularizeHighSw_)
+            return {};
+
+        else if (sw <= pcHighSw_)
             return {}; // standard
         else if (sw < 1.0) // regularized part below sw = 1.0
         {
@@ -341,7 +344,11 @@ private:
                 DUNE_THROW(Dune::NotImplemented, "Regularization not method not implemented");
         }
         else // regularized part above sw = 1.0
+#if ONEDDRAINGE
             return pcDerivativeHighSwEnd_()*(sw - 1.0);
+#else
+            return 0.0;
+#endif
     }
 
     /*!
@@ -510,7 +517,7 @@ private:
 
         static const auto pcHighSwInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSw", std::numeric_limits<Scalar>::quiet_NaN());
         pcHighSw_ = !isnan(pcHighSwInput) ? pcHighSwInput : params.pcHighSw();
-
+        regularizeHighSw_ = getParam<bool>("SpatialParams.RegularizeHighSw", true);
         baseLawParamsPtr_ = &m->basicParams();
 
         static const auto highSwFixedSlopeInput = getParamFromGroup<Scalar>(paramGroup, "RegularizationHighSwFixedSlope", std::numeric_limits<Scalar>::quiet_NaN());
@@ -572,6 +579,7 @@ private:
     }
 
     Scalar pcLowSw_, pcHighSw_;
+    bool regularizeHighSw_;
     mutable OptionalScalar<Scalar> optionalPcLowSwPcValue_, optionalPcDerivativeLowSw_;
     mutable OptionalScalar<Scalar> optionalPcHighSwPcValue_;
     HighSwRegularizationMethod highSwRegularizationMethod_;

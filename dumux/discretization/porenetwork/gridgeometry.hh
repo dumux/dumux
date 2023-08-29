@@ -144,7 +144,7 @@ public:
             static const auto throatInscribedRadiusIdx = gridData.parameterIndex("ThroatInscribedRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
             throatInscribedRadius_[eIdx] = params[throatInscribedRadiusIdx];
-            throatLength_[eIdx] = params[throatLengthIdx];
+            throatLength_[eIdx] = std::max(1e-6, params[throatLengthIdx]);
 
             // use a default value if no throat label is given by the grid
             static const bool gridHasThroatLabel = gridData.gridHasElementParameter("ThroatLabel");

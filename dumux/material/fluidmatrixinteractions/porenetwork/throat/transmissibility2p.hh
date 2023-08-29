@@ -119,6 +119,111 @@ struct RansohoffRadke
 
         return result;
     }
+
+    /*!
+    * \brief Returns the integral conductivity of all wetting layers at critical status entry pressure
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar entryWettingLayerTransmissibility(const Element& element,
+                                                    const FVElementGeometry& fvGeometry,
+                                                    const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                    const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar rC = fluxVarsCache.curvatureRadiusInvasion(0);
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        const auto numCorners = Throat::numCorners(shape);
+
+        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
+        Scalar result = 0.0;
+        for (int i = 0; i < numCorners; ++i)
+            result += fluxVarsCache.entryWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+
+        return result;
+    }
+
+    /*!
+    * \brief Returns the integral conductivity of all wetting layers at critical status snapoff
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar snapoffWettingLayerTransmissibility(const Element& element,
+                                                      const FVElementGeometry& fvGeometry,
+                                                      const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                      const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar rC = fluxVarsCache.curvatureRadiusSnapoff(0);
+
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        const auto numCorners = Throat::numCorners(shape);
+
+        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
+        Scalar result = 0.0;
+        for (int i = 0; i < numCorners; ++i)
+            result += fluxVarsCache.snapoffWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+
+        return result;
+    }
+
+    /*!
+     * \brief Returns derivative of wetting layer transmissibility at entry pressure
+     *        For convinience now we calculate the derivative numerically
+     *        TODO: Implement the analytical formular of this derivative
+     */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKwdPcEntry(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                              const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar Kw = entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar rCdelta = fluxVarsCache.curvatureRadiusInvasion(1);
+
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        const auto numCorners = Throat::numCorners(shape);
+
+        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
+        Scalar deltaKw = 0.0;
+        for (int i = 0; i < numCorners; ++i)
+            deltaKw += fluxVarsCache.epsilonEntryWettingLayerArea(i) * rCdelta * rCdelta / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (deltaKw - Kw)/epsilonPc;
+        return result;
+    }
+
+    /*!
+     * \brief Returns derivative of wetting layer transmissibility at entry pressure
+     *        For convinience now we calculate the derivative numerically
+     *        TODO: Implement the analytical formular of this derivative
+     */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKwdPcSnapoff(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar Kw = snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar rCdelta = fluxVarsCache.curvatureRadiusSnapoff(1);
+
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        const auto numCorners = Throat::numCorners(shape);
+
+        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
+        Scalar deltaKw = 0.0;
+        for (int i = 0; i < numCorners; ++i)
+            deltaKw += fluxVarsCache.epsilonSnapoffWettingLayerArea(i) * rCdelta * rCdelta / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (deltaKw - Kw)/epsilonPc;
+        return result;
+    }
 };
 } // end namespace WettingLayerTransmissibility
 
@@ -195,6 +300,92 @@ struct BakkeOren
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
         const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
+        return result;
+    }
+
+    /*!
+    * \brief Returns the conductivity of a throat at entry pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar entryNonWettingPhaseTransmissibility(const Element& element,
+                                                       const FVElementGeometry& fvGeometry,
+                                                       const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                       const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar aNwCrit = fluxVarsCache.regBoundaryNonwettingThroatAreaInvasion(0);
+        const Scalar rEff = 0.5 * (sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar result = rEff * rEff * aNwCrit / (8.0 * throatLength);
+        return result;
+    }
+
+    /*!
+    * \brief Returns the conductivity of a throat at snap-off pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar snapoffNonWettingPhaseTransmissibility(const Element& element,
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                          const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar aNwCrit = fluxVarsCache.regBoundaryNonWettingThroatAreaSnapoff(0);
+        const Scalar rEff = 0.5*(sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar result = rEff*rEff*aNwCrit / (8.0*throatLength);
+        return result;
+    }
+
+    /*!
+    * \brief Returns the conductivity of a throat at entry pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKndPcEntry(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                              const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        const Scalar Kn = entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar aNwCritDelta = fluxVarsCache.regBoundaryNonwettingThroatAreaInvasion(1);
+        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (KnDelta - Kn)/epsilonPc;
+        return result;
+    }
+
+    /*!
+    * \brief Returns the conductivity of a throat at snap-off pressure.
+    *
+    * See Bakke & Oren (1997), eq. 9
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar dKndPcSnapoff(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                const FluxVariablesCache& fluxVarsCache)
+    {
+        // Tora et al. (2012), quite close for single-phase value of square
+        const Scalar Kn = snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+        using std::sqrt;
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar aNwCritDelta = fluxVarsCache.regBoundaryNonWettingThroatAreaSnapoff(1);
+        const Scalar rEffDelta = 0.5*(sqrt(aNwCritDelta / M_PI) + fluxVarsCache.throatInscribedRadius());
+        const Scalar KnDelta = rEffDelta*rEffDelta*aNwCritDelta / (8.0*throatLength);
+        const auto epsilonPc = fluxVarsCache.epsilonPc();
+        auto result = (KnDelta - Kn)/epsilonPc;
         return result;
     }
 };
