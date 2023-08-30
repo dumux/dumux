@@ -81,6 +81,17 @@ public:
     }
 
     /*!
+     * \brief Returns a const reference to the grid.
+     */
+    const Grid& grid() const
+    {
+        if(enableDgfGridPointer_)
+            return *dgfGridPtr();
+        else
+            return *gridPtr();
+    }
+
+    /*!
      * \brief Call loadBalance() function of the grid.
      */
     void loadBalance()
