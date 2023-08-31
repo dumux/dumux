@@ -14,7 +14,7 @@ NumPores = 3 3 3
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 1e-5
-StandardDeviationPoreInscribedRadius = 0.0
+StandardDeviationPoreInscribedRadius = 1e-6
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 ParameterRandomNumberSeed = 1
@@ -36,12 +36,10 @@ InitialPc = 3000
 FinalPc = 5000
 NumSteps = 10
 UseFixedPressureAndSaturationBoundary = false
-SourceWetting = 1e-12
-SourceNonwetting = 0.0
 Pressure = 1e5
 SaturationWetting = 0.0
-MinSource = 0.0
-MaxSource = 1e-12
+MinSource = 0.0   # m3/s
+MaxSource = 1e-15 # m3/s
 
 [Vtk]
 AddVelocity = 1

@@ -70,8 +70,6 @@ public:
         numSteps_ = getParam<int>("Problem.NumSteps", 10);
         swShiftThreshold_ = getParam<Scalar>("Problem.RelShiftThreshold", 1e-6);
         writeOnlyEqPoints_ = getParam<bool>("Problem.WriteOnlyEquilibriumPoints", false);
-        sourcew_ = getParam<Scalar>("Problem.SourceWetting", 0.0);
-        sourcen_ = getParam<Scalar>("Problem.SourceNonwetting", 0.0);
         pressure_ = getParam<Scalar>("Problem.Pressure", 0.0);
         saturationw_ = getParam<Scalar>("Problem.SaturationWetting", 1.0);
         minSource_ = getParam<Scalar>("Problem.MinSource", 0.0);
@@ -166,8 +164,9 @@ public:
         PrimaryVariables values(0.0);
         if (isInletPore_(scv))
         {
-            values[Indices::conti0EqIdx] = sourceEpisopdeW_[step_];
-            values[Indices::conti0EqIdx + 1] = sourceEpisopdeN_[step_];
+            const auto& volVar =  elemVolVars[scv.indexInElement()];
+            values[Indices::conti0EqIdx] = sourceEpisopdeW_[step_] * volVar.density(FluidSystem::phase0Idx);
+            values[Indices::conti0EqIdx + 1] = sourceEpisopdeN_[step_] * volVar.density(FluidSystem::phase1Idx);
         }
         values /= scv.volume();
 
@@ -259,8 +258,6 @@ private:
     Scalar swShiftThreshold_;
     bool writeOnlyEqPoints_;
     std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
-    Scalar sourcew_;
-    Scalar sourcen_;
     Scalar pressure_;
     Scalar saturationw_;
     int direction_;

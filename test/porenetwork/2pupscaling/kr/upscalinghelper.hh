@@ -411,7 +411,10 @@ private:
         using std::abs;
         Scalar dSwDt = abs(swAvg_[0]-swAvg_[1])/dt;
         if (dSwDt < 1e-10)
+        {
+            swAvg_[0] = 1.0;
             return 1;
+        }
 
         return 0;
     }
