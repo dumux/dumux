@@ -79,8 +79,8 @@ public:
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     { return {0.0, -0.5, 0.0}; }
 
-    // Neo-Hookean material
-    // see Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
+    // Some Neo-Hookean material
+    // from Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
     // ψ = K(0.5(J*J - 1) - ln J) + 0.5µ (J^(-2/3) tr(C) - 3)
     // P = 2F∂ψ/∂C = µ J^(-2/3) (F - 1/3*tr(C)*F^-T) + K*(J*J - 1)F^-T
     Tensor firstPiolaKirchhoffStressTensor(Tensor F) const
