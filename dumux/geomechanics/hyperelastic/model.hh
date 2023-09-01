@@ -38,8 +38,11 @@
  * and the first Piola-Kirchhoff tensor can be computed as
  \f[
  \mathbf{P} = \frac{\partial \psi}{\partial \mathbf{F}}
-            = 2\mathbf{F}\frac{\partial \psi}{\partial \mathbf{C}}.
+            = \mathbf{F}2\frac{\partial \psi}{\partial \mathbf{C}},
  \f]
+ * where \f$ \mathbf{C} = \mathbf{F}^T\mathbf{F} \f$ is the right Cauchy-Green tensor
+ * and the term \f$ \mathbf{S} = 2 (\partial \psi / \partial \mathbf{C}) \f$ is the
+ * second Piola-Kirchhoff stress tensor.
  * This model expects the user problem implementation to provide a function
  * `firstPiolaKirchhoffStressTensor(F)` implementing the constitutive law.
  */
