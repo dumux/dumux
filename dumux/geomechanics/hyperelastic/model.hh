@@ -35,7 +35,7 @@
  * A suitable constitutive law for \f$ \mathbf{P} = \mathbf{P}(\mathbf{F}) \f$ completes
  * the model. All hyperelastic materials can be described in terms of a strain energy
  * density function \f$ \psi(\mathbf{F}) \f$ @cite ogden1997
- * and the first Piola-Kirchhoff tensor can be computed as
+ * and the first Piola-Kirchhoff stress tensor can be computed as
  \f[
  \mathbf{P} = \frac{\partial \psi}{\partial \mathbf{F}}
             = \mathbf{F}2\frac{\partial \psi}{\partial \mathbf{C}},
