@@ -25,6 +25,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/enumerate.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/dimensionlessnumbers.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -75,6 +76,7 @@ class PNMHeatTransferCouplingManager
     { return typename MDTraits::template SubDomain<i>::Index{}; }
 
     using CouplingStencil = std::vector<std::size_t>;
+    using DimLessNum = DimensionlessNumbers<Scalar>;
 
 
 public:
@@ -261,66 +263,73 @@ public:
      * \param element the coupled element of domain í
      * \param domainJ the domain index of domain j
      */
-    const CouplingStencil& couplingStencil(Dune::index_constant<solidDomainIdx> domainI,
-                                           const Element<solidDomainIdx>& element,
-                                           Dune::index_constant<voidDomainIdx> domainJ) const
+    template<std::size_t i, std::size_t j>
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           Dune::index_constant<j> domainJ) const
     {
         const auto eIdx = gridGeometry(domainI).elementMapper().index(element);
-        const auto& stencils = couplingMapper().solidToVoidStencils();
 
-        if (stencils.count(eIdx))
-            return stencils.at(eIdx);
-        else
-            return emptyStencil_;
-    }
+        auto getStencils = [this, domainI]() -> const auto&
+        {
+            return (domainI == solidDomainIdx) ? couplingMapper().solidToVoidStencils() : couplingMapper().voidToSolidStencils();
+        };
 
-    // VOID
-    const CouplingStencil& couplingStencil(Dune::index_constant<voidDomainIdx> domainI,
-                                           const Element<voidDomainIdx>& element,
-                                           Dune::index_constant<solidDomainIdx> domainJ) const
-    {
-        const auto eIdx = gridGeometry(domainI).elementMapper().index(element);
-        const auto& stencils = couplingMapper().voidToSolidStencils();
+        const auto& stencils = getStencils();
 
-        if (stencils.count(eIdx))
-            return stencils.at(eIdx);
-        else
-            return emptyStencil_;
+        return (stencils.count(eIdx)) ? stencils.at(eIdx) : emptyStencil_;
     }
 
     /*!
-     * \brief Returns whether a given solid pore is coupled to the other domain
+     * \brief Returns whether a given solid grain/void pore body is coupled to the other domain
      */
-    bool isCoupledPore(Dune::index_constant<solidDomainIdx> domainI, const std::size_t dofIdx) const
+    template<std::size_t i>
+    bool isCoupledPore(Dune::index_constant<i> domainI, const std::size_t dofIdx) const
     {
-        return couplingMapper().isCoupledSolidDof()[dofIdx];
+        const auto& isCoupledDof = [&]
+        {
+            if constexpr(domainI == solidDomainIdx)
+                return couplingMapper().isCoupledSolidDof();
+            else //voidDomainIdx
+                return couplingMapper().isCoupledVoidDof();
+        }();
+        return isCoupledDof[dofIdx];
     }
 
     /*!
-     * \brief Returns whether a given void pore is coupled to the other domain
-     */
-    bool isCoupledPore(Dune::index_constant<voidDomainIdx> domainI, const std::size_t dofIdx) const
-    {
-        return couplingMapper().isCoupledVoidDof()[dofIdx];
-    }
-
-    //SOLID
-    Scalar conductionSource(Dune::index_constant<solidDomainIdx> domainI,
-                            const Element<solidDomainIdx>& element,
-                            const FVElementGeometry<solidDomainIdx>& fvGeometry,
-                            const ElementVolumeVariables<solidDomainIdx>& elemVolVars,
-                            const SubControlVolume<solidDomainIdx>& scv) const
+    * \brief Returns summed conductive flux between void and solid for one void pore body or one solid grain
+    */
+    template<std::size_t i>
+    Scalar conductionSource(Dune::index_constant<i> domainI,
+                            const Element<i>& element,
+                            const FVElementGeometry<i>& fvGeometry,
+                            const ElementVolumeVariables<i>& elemVolVars,
+                            const SubControlVolume<i>& scv) const
     {
         const auto& solidSol = this->curSol(solidDomainIdx);
         const auto& voidSol = this->curSol(voidDomainIdx);
 
         Scalar source = 0.0;
+        const auto& connections = [&]
+        {
+            if constexpr(domainI == solidDomainIdx)
+                return couplingMapper().solidToVoidConnections(scv.dofIndex());
+            else //voidDomainIdx
+                return couplingMapper().voidToSolidConnections(scv.dofIndex());
+        }();
 
         // iterate over all connection throats
-        for (const auto& connection : couplingMapper().solidToVoidConnections(scv.dofIndex()))
+        for (const auto& connection : connections)
         {
-            const Scalar t = getConnectionTransmissiblity(solidDomainIdx, connection, elemVolVars, scv);
-            const Scalar deltaT = solidSol[scv.dofIndex()][Indices<solidDomainIdx>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<voidDomainIdx>::temperatureIdx];
+            const Scalar t = getConnectionTransmissiblity(domainI, connection, elemVolVars, scv);
+            const Scalar deltaT = [&]
+            {
+                if constexpr(domainI == solidDomainIdx)
+                    return solidSol[scv.dofIndex()][Indices<solidDomainIdx>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<voidDomainIdx>::temperatureIdx];
+                else //voidDomainIdx
+                    return voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
+            }();
+
             source -= t * deltaT;
         }
 
@@ -357,7 +366,7 @@ public:
 
             using VoidFluxVariables = GetPropType<SubDomainTypeTag<voidDomainIdx>, Properties::FluxVariables>;
             VoidFluxVariables fluxVars;
-            const auto& scvf = voidFVGeometry.scvf(0);
+            const auto& scvf = voidFVGeometry.scvf(0/*localScvfIdx*/); //only one scvf per element -> localScvfIdx = 0
             fluxVars.init(this->problem(voidDomainIdx), voidElement, voidFVGeometry, voidElemVolVars, scvf, voidElemFluxVarsCache);
 
             static constexpr auto phaseIdx = 0;
@@ -405,16 +414,17 @@ public:
                     return tFluidUpstream();
             }();
 
-            const Scalar nu = 0.5*(voidElemVolVars[0].viscosity(phaseIdx)/voidElemVolVars[0].density(phaseIdx)
-                                 + voidElemVolVars[1].viscosity(phaseIdx)/voidElemVolVars[1].density(phaseIdx));
+            const Scalar meanKinematicViscosity = 0.5*(voidElemVolVars[0].viscosity(phaseIdx)/voidElemVolVars[0].density(phaseIdx)
+                                                + voidElemVolVars[1].viscosity(phaseIdx)/voidElemVolVars[1].density(phaseIdx));
+            const Scalar characteristicLength = 2.0*voidElemFluxVarsCache[scvf].throatInscribedRadius();
             using std::abs;
-            const Scalar Re = abs(velocity) * 2.0*voidElemFluxVarsCache[scvf].throatInscribedRadius() / nu;
+            const Scalar Re = DimLessNum::reynoldsNumber(abs(velocity), characteristicLength, meanKinematicViscosity);
 
             static const Scalar fixedLambda = getParam<Scalar>("Problem.FixedConvectionLambda", -1.0);
             static const Scalar lambaFactor = getParam<Scalar>("Problem.ConvectionLambaFactor", 0.9);
             static const Scalar lambaExponent = getParam<Scalar>("Problem.ConvectionLambaExponent", 0.4);
             using std::pow;
-            const Scalar lambda = fixedLambda > 0.0 ? fixedLambda : 1.0 + lambaFactor*pow(Re, lambaExponent);
+            const Scalar lambda = fixedLambda > 0.0 ? fixedLambda : 1.0 + lambaFactor*pow(Re, lambaExponent); //approximation: see eq.30 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
             const Scalar selfA = connection.connectionArea / connection.convectionVoidElementIdx.size();
 
             const auto neighborA = [&]
@@ -432,7 +442,7 @@ public:
                                 if (otherConn.voidVertexIdx != voidScv.dofIndex())
                                     DUNE_THROW(Dune::InvalidStateException, "Void dofs don't match");
 
-                                return otherConn.connectionArea/otherConn.convectionVoidElementIdx.size(); //TODO: does this belong to last "if-statement" -> if yes, set brackets?
+                                return otherConn.connectionArea/otherConn.convectionVoidElementIdx.size();
                             }
                         }
                     }
@@ -462,6 +472,10 @@ public:
         return resultConvection;
     }
 
+    /*!
+    * \brief Returns summed conductive heat fluxes for one void pore body coupled to solid grains (or the other way around)
+    *        that occur due to convection in void throats
+    */
     template<std::size_t i>
     Scalar convectionSource(Dune::index_constant<i> domainI,
                             const Element<i>& element,
@@ -498,38 +512,14 @@ public:
         return source;
     }
 
-
-    //VOID
-    Scalar conductionSource(Dune::index_constant<voidDomainIdx> domainI,
-                            const Element<voidDomainIdx>& element,
-                            const FVElementGeometry<voidDomainIdx>& fvGeometry,
-                            const ElementVolumeVariables<voidDomainIdx>& elemVolVars,
-                            const SubControlVolume<voidDomainIdx>& scv) const
-    {
-        const auto& voidSol = this->curSol(voidDomainIdx);
-        const auto& solidSol = this->curSol(solidDomainIdx);
-
-        Scalar source = 0.0;
-
-        // iterate over all connection throats
-        for (const auto& connection : couplingMapper().voidToSolidConnections(scv.dofIndex()))
-        {
-            const Scalar t = getConnectionTransmissiblity(voidDomainIdx, connection, elemVolVars, scv);
-            const Scalar deltaT = voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
-            source -= t * deltaT;
-        }
-
-        source /= (scv.volume() * fvGeometry.gridGeometry().coordinationNumber()[scv.dofIndex()]);
-        return source;
-    }
-
-    // for void TODO this should not be in the general coupling manager
-    Scalar sourceWithFixedTransmissibility(Dune::index_constant<voidDomainIdx> domainI,
-                                           const Element<voidDomainIdx>& element,
-                                           const FVElementGeometry<voidDomainIdx>& fvGeometry,
-                                           const ElementVolumeVariables<voidDomainIdx>& elemVolVars,
-                                           const SubControlVolume<voidDomainIdx>& scv,
-                                           Dune::index_constant<solidDomainIdx> domainJ) const
+    //TODO: this should not be in the general coupling manager
+    template<std::size_t i, std::size_t j>
+    Scalar sourceWithFixedTransmissibility(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           const FVElementGeometry<i>& fvGeometry,
+                                           const ElementVolumeVariables<i>& elemVolVars,
+                                           const SubControlVolume<i>& scv,
+                                           Dune::index_constant<j> domainJ) const
     {
         const auto& voidSol = this->curSol(voidDomainIdx);
         const auto& solidSol = this->curSol(solidDomainIdx);
@@ -540,33 +530,14 @@ public:
         for (const auto& connection : couplingMapper().voidToSolidConnections(scv.dofIndex()))
         {
             const Scalar t = this->problem(voidDomainIdx).getInternalReferenceHeatTransmissibilityCoupling();
-            const Scalar deltaT = voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
-            source -= t * deltaT;
-        }
+            const Scalar deltaT = [&]
+            {
+                if constexpr(domainI == solidDomainIdx)
+                    return solidSol[scv.dofIndex()][Indices<solidDomainIdx>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<voidDomainIdx>::temperatureIdx];
+                else //voidDomainIdx
+                    return voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
+            }();
 
-        source /= (scv.volume() * fvGeometry.gridGeometry().coordinationNumber()[scv.dofIndex()]);
-        return source;
-    }
-
-
-    // for solid TODO this should not be in the general coupling manager
-    Scalar sourceWithFixedTransmissibility(Dune::index_constant<solidDomainIdx> domainI,
-                                           const Element<solidDomainIdx>& element,
-                                           const FVElementGeometry<solidDomainIdx>& fvGeometry,
-                                           const ElementVolumeVariables<solidDomainIdx>& elemVolVars,
-                                           const SubControlVolume<solidDomainIdx>& scv,
-                                           Dune::index_constant<voidDomainIdx> domainJ) const
-    {
-        const auto& voidSol = this->curSol(voidDomainIdx);
-        const auto& solidSol = this->curSol(solidDomainIdx);
-
-        Scalar source = 0.0;
-
-        // iterate over all connection throats
-        for (const auto& connection : couplingMapper().solidToVoidConnections(scv.dofIndex()))
-        {
-            const Scalar t = this->problem(voidDomainIdx).getInternalReferenceHeatTransmissibilityCoupling();
-            const Scalar deltaT = solidSol[scv.dofIndex()][Indices<domainI>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<domainJ>::temperatureIdx];
             source -= t * deltaT;
         }
 
@@ -580,7 +551,7 @@ public:
                                         const ElementVolumeVariables<i>& elemVolVars,
                                         const SubControlVolume<i>& scv) const
     {
-        static constexpr bool isVoid = domainI == voidDomainIdx;
+        static constexpr bool isVoid = (domainI == voidDomainIdx);
 
         const auto poreRadiusVoid = [&]
         {
@@ -632,7 +603,7 @@ public:
 
         const Scalar solidThermalConductivity = [&]
         {
-            if constexpr (!isVoid)
+            if constexpr (!isVoid) //solid
                 return elemVolVars[scv].effectiveThermalConductivity();
             else
             {
@@ -674,27 +645,22 @@ public:
             else
                 return connection.connectionArea*connectionAreaShapeFactor;
         }();
-        return area / length * (fluidThermalConductivity*Bi*(poreRadiusSolid + poreRadiusVoid))/(poreRadiusSolid*kappa + poreRadiusVoid*Bi/Nu);
+        //distance weighted harmonic mean of thermal conductivities
+        const Scalar meanThermalConductivity = (fluidThermalConductivity*Bi*(poreRadiusSolid + poreRadiusVoid))/(poreRadiusSolid*kappa + poreRadiusVoid*Bi/Nu);
+        return area / length * meanThermalConductivity;
     }
 
     // \}
 
-    //! Return the volume variables of domain i for a given element and scv
-    VolumeVariables<solidDomainIdx> volVars(Dune::index_constant<solidDomainIdx> domainI,
-                                            const Element<solidDomainIdx>& element,
-                                            const SubControlVolume<solidDomainIdx>& scv) const
+    /*!
+    * \brief Return the volume variables of domain i for a given element and scv
+    */
+    template<std::size_t i>
+    VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
+                                const Element<i>& element,
+                                const SubControlVolume<i>& scv) const
     {
-        VolumeVariables<solidDomainIdx> volVars;
-        const auto elemSol = elementSolution(element, this->curSol(domainI), gridGeometry(domainI));
-        volVars.update(elemSol, this->problem(domainI), element, scv);
-        return volVars;
-    }
-
-    VolumeVariables<voidDomainIdx> volVars(Dune::index_constant<voidDomainIdx> domainI,
-                                           const Element<voidDomainIdx>& element,
-                                           const SubControlVolume<voidDomainIdx>& scv) const
-    {
-        VolumeVariables<voidDomainIdx> volVars;
+        VolumeVariables<i> volVars;
         const auto elemSol = elementSolution(element, this->curSol(domainI), gridGeometry(domainI));
         volVars.update(elemSol, this->problem(domainI), element, scv);
         return volVars;
