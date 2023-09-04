@@ -324,7 +324,7 @@ public:
             const Scalar t = getConnectionTransmissiblity(domainI, connection, elemVolVars, scv);
             const Scalar deltaT = [&]
             {
-                if(domainI == solidDomainIdx)
+                if constexpr(domainI == solidDomainIdx)
                     return solidSol[scv.dofIndex()][Indices<solidDomainIdx>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<voidDomainIdx>::temperatureIdx];
                 else //voidDomainIdx
                     return voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
@@ -532,7 +532,7 @@ public:
             const Scalar t = this->problem(voidDomainIdx).getInternalReferenceHeatTransmissibilityCoupling();
             const Scalar deltaT = [&]
             {
-                if(domainI == solidDomainIdx)
+                if constexpr(domainI == solidDomainIdx)
                     return solidSol[scv.dofIndex()][Indices<solidDomainIdx>::temperatureIdx] - voidSol[connection.voidVertexIdx][Indices<voidDomainIdx>::temperatureIdx];
                 else //voidDomainIdx
                     return voidSol[scv.dofIndex()][Indices<voidDomainIdx>::temperatureIdx] - solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
