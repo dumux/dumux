@@ -24,10 +24,12 @@
 #ifndef DUMUX_PNM2P_PROBLEM_HH
 #define DUMUX_PNM2P_PROBLEM_HH
 
+#include <memory>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 namespace Dumux {
 
@@ -48,6 +50,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -60,6 +63,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+    using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
 public:
     template<class SpatialParams>
@@ -126,6 +130,10 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        else if (isOutletPore_(scv))
+        {
+            values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
+        }
         return values;
     }
 
@@ -212,6 +220,9 @@ public:
                  << std::endl;
     }
 
+    void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
+    {  outletPcGradient_ = outletPcGradient;}
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -236,7 +247,7 @@ private:
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
     std::ofstream logfile_;
-
+    std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
 };
 } //end namespace Dumux
 

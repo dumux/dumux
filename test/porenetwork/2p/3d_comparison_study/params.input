@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 2 # [s]
+TEnd = 10 # [s]
 
 [Grid]
 PoreGeometry = Cube
@@ -54,4 +54,4 @@ RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
 
 [Regularization]
-RegPercentage = 1e-2
+RegPercentage = 0.1

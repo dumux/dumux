@@ -19,13 +19,13 @@ intervals = [0.001, 0.01, 0.05, 0.1]
 
 for maxDt in maxTimeSteps:
     subprocess.call(["./" + MFIcase,
-                 "-Problem.Name", str(MFIcase) + "_maxDt_" + str(maxDt) + ".txt",
+                 "-Problem.Name", str(MFIcase) + "_maxDt_" + str(maxDt),
                  "-TimeLoop.MaxTimeStepSize", str(maxDt),
                  "-Newton.NewtonOutputFilename", "NewtonLog_MFI_maxDt_" + str(maxDt) + ".txt",
                  "-Newton.NewtonOverview", "NewtonOverview_MFI_maxDt_" + str(maxDt) + ".txt"])
 
     subprocess.call(["./" + FIcase,
-                 "-Problem.Name", str(FIcase) + "_maxDt_" + str(maxDt) + ".txt",
+                 "-Problem.Name", str(FIcase) + "_maxDt_" + str(maxDt),
                  "-TimeLoop.MaxTimeStepSize", str(maxDt),
                  "-Newton.NewtonOutputFilename", "NewtonLog_FI_maxDt_" + str(maxDt) + ".txt",
                  "-Newton.NewtonOverview", "NewtonOverview_FI_maxDt_" + str(maxDt) + ".txt"])
@@ -35,12 +35,12 @@ for maxDt in maxTimeSteps:
 
 for epsilon in intervals:
     subprocess.call(["./" + MFIcase,
-             "-Problem.Name", str(MFIcase) + "_epsilon_" + str(epsilon) + ".txt",
+             "-Problem.Name", str(MFIcase) + "_epsilon_" + str(epsilon),
              "-Regularization.RegPercentage", str(epsilon),
              "-Newton.NewtonOutputFilename", "NewtonLog_MFI_epsilon_" + str(epsilon) + ".txt",
              "-Newton.NewtonOverview", "NewtonOverview_MFI_epsilon_" + str(epsilon) + ".txt"])
 
 subprocess.call(["./" + FIcase,
-         "-Problem.Name", str(FIcase) + "_no_limit.txt",
+         "-Problem.Name", str(FIcase) + "_no_limit",
          "-Newton.NewtonOutputFilename", "NewtonLog_MFI_epsilon_no_limit.txt",
          "-Newton.NewtonOverview", "NewtonOverview_MFI_epsilon_no_limit.txt"])
