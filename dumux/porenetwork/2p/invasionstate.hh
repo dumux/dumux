@@ -252,7 +252,7 @@ private:
 
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (invadedBeforeSwitch && *snMin > 0.1 && *pcMin <= pcSnapoff && (blockNonwettingPhase.empty() || std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) == blockNonwettingPhase.end()))
+        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff)
            invadedAfterSwitch = false;
 // #else
 //         const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };

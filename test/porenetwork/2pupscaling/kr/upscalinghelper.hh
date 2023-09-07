@@ -327,7 +327,7 @@ private:
     template <class LeafGridView>
     void computeDomainAvgValues_(const LeafGridView& leafGridView)
     {
-        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::outlet, Labels::inlet});
+        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{/*Labels::outlet, Labels::inlet*/});
 
         avgValues_.eval(dofsToNeglect);
         const Scalar avgSw = avgValues_["avgSat"];
@@ -409,10 +409,11 @@ private:
     bool checkIfInEquilibrium_(Scalar dt)
     {
         using std::abs;
-        Scalar dSwDt = abs(swAvg_[0]-swAvg_[1])/dt;
+        Scalar dSwDt = abs(swAvg_[0]-swAvg_[1]) / dt;
         if (dSwDt < 1e-10)
         {
-            swAvg_[0] = 1.0;
+            std::cout<<"  equilibrium   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
+            swAvg_[1] = 2.0;
             return 1;
         }
 

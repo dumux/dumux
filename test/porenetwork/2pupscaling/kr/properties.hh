@@ -22,7 +22,10 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/heavyoil.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
 #include "problem.hh"
@@ -46,11 +49,20 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
 
+// template<class TypeTag>
+// struct FluidSystem<TypeTag, TTag::DrainageProblem>
+// {
+//     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+//     using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
+// };
+
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
+    using h2oLiquid = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>;
+    using oilLiquid = FluidSystems::OnePLiquid<Scalar, Components::HeavyOil<Scalar>>;
+    using type = FluidSystems::TwoPImmiscible<Scalar, h2oLiquid, oilLiquid>;
 };
 
 template<class TypeTag>

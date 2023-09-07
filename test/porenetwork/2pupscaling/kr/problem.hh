@@ -80,7 +80,7 @@ public:
 
         sourceEpisopdeN_.resize(numSteps_ + 1);
         for (int i = 0 ; i < sourceEpisopdeN_.size(); i++)
-              sourceEpisopdeN_[i] = minSource_ + i*(maxSource_ - minSource_)/numSteps_;
+              sourceEpisopdeN_[i] = minSource_ + i*(maxSource_ - minSource_) / numSteps_;
 
         sourceEpisopdeW_ = sourceEpisopdeN_;
         std::reverse(sourceEpisopdeW_.begin(), sourceEpisopdeW_.end());
@@ -165,8 +165,8 @@ public:
         if (isInletPore_(scv))
         {
             const auto& volVar =  elemVolVars[scv.indexInElement()];
-            values[Indices::conti0EqIdx] = sourceEpisopdeW_[step_] * volVar.density(FluidSystem::phase0Idx);
-            values[Indices::conti0EqIdx + 1] = sourceEpisopdeN_[step_] * volVar.density(FluidSystem::phase1Idx);
+            values[Indices::conti0EqIdx] = /*sourceEpisopdeW_[step_]*/0.0* volVar.density(FluidSystem::phase0Idx);
+            values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-9* volVar.density(FluidSystem::phase1Idx);
         }
         values /= scv.volume();
 
