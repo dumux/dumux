@@ -327,7 +327,7 @@ private:
     template <class LeafGridView>
     void computeDomainAvgValues_(const LeafGridView& leafGridView)
     {
-        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{/*Labels::outlet, Labels::inlet*/});
+        auto dofsToNeglect = dofsToNeglect_(leafGridView, std::vector<int>{Labels::outlet/*, Labels::inlet*/});
 
         avgValues_.eval(dofsToNeglect);
         const Scalar avgSw = avgValues_["avgSat"];
