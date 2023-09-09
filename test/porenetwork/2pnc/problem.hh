@@ -104,14 +104,11 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            bcTypes.setAllDirichlet();
 #if ISOTHERMAL
-        else if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        if (isInletPore_(scv))
             bcTypes.setAllNeumann();
 #else
-        else if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        if (isInletPore_(scv))
             bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
         else if (isOutletPore_(scv))
@@ -168,20 +165,8 @@ public:
                             const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-
-        // If we do not want to use global phase pressure difference with fixed saturations and pressures,
-        // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
-        // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-        {
+        if (isInletPore_(scv))
             values[Indices::conti0EqIdx + 1] = source_/scv.volume();
-// #if !ISOTHERMAL
-//             const auto pressure = elemVolVars[scv].pressure(1);
-//             const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, pressure);
-//             values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
-// #endif
-        }
-
         return values;
     }
     // \}

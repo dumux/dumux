@@ -3,7 +3,7 @@ DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
 
 [Grid]
-File = ./grids/1dGrid_hetero.dgf
+File = ./grids/40_low.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
@@ -23,6 +23,7 @@ MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
 LogFileName = NewtonOverview.txt
+#UseLineSearch = true
 
 [InvasionState]
 Verbosity = true
@@ -30,3 +31,4 @@ Verbosity = true
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
+Temperature = 283.15

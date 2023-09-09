@@ -1,7 +1,7 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
 
-dumux_add_test(NAME test_pnm_2pnc
+dumux_add_test(NAME utrecht_pnm_2pnc
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
@@ -17,7 +17,7 @@ dumux_add_test(NAME test_pnm_2pnc
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00107.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc")
 
-dumux_add_test(NAME test_pnm_2pnc_reg
+dumux_add_test(NAME utrecht_pnm_2pnc_reg
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_pnm_2pnc_reg
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00107.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc")
 
-dumux_add_test(NAME test_pnm_2pnc_ni
+dumux_add_test(NAME utrecht_pnm_2pnc_ni
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=0 REGULARIZATIONWITHPRESSURE=0
@@ -50,7 +50,7 @@ dumux_add_test(NAME test_pnm_2pnc_ni
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc_ni params_ni.input -Problem.Name test_pnm_2pnc_ni")
 
 
-dumux_add_test(NAME test_pnm_2pnc_ni_reg
+dumux_add_test(NAME utrecht_pnm_2pnc_ni_reg
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=0 REGULARIZATIONWITHPRESSURE=0
