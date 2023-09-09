@@ -1019,13 +1019,13 @@ private:
                 // update the current solution (i.e. uOld) with the delta
                 // (i.e. u). The result is stored in u
                 newtonUpdate(vars, uLastIter, deltaU);
-                std::cout << "Now the update is done!" << std::endl;
+                // std::cout << "Now the update is done!" << std::endl;
                 updateTimer.stop();
 
-                std::cout << "For Debug use!" << std::endl;
+                // std::cout << "For Debug use!" << std::endl;
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
-                std::cout << "Now this iteration is done!" << std::endl;
+                // std::cout << "Now this iteration is done!" << std::endl;
 
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
@@ -1071,7 +1071,10 @@ private:
         catch (const NumericalProblem &e)
         {
             if (verbosity_ >= 1)
+            {
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+                std::cout << vars << std::endl;
+            }
 
             totalWastedIter_ += numSteps_;
 
