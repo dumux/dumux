@@ -119,6 +119,23 @@ public:
             }
         }
         numThroatsInvaded_ = std::count(invadedCurrentTimeStep_.begin(), invadedCurrentTimeStep_.end(), true);
+        auto numThroatsOutletInvaded = 0;
+        for (auto&& element : elements(problem_.gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(problem_.gridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVolVars);
+            elemVolVars.bind(element, fvGeometry, sol);
+
+            auto elemFluxVarsCache = localView(gridFluxVarsCache);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
+            const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+            if (problem_.gridGeometry().throatLabel(eIdx) == 3 && invadedCurrentTimeStep_[eIdx])
+            numThroatsOutletInvaded++;
+        }
+        numThroatsInvaded_ -= numThroatsOutletInvaded;
     }
 
     //! Restore the old invasion state after a Newton iteration has failed.
@@ -216,7 +233,7 @@ private:
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
         const auto snMin = std::min_element(sn.begin(), sn.end());
-        const Scalar pcEntry = fluxVarsCache.pcEntry();
+        const Scalar pcEntry = fluxVarsCache.regInvasionInterval(1);
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
         // check if there is a user-specified global capillary pressure which needs to be obeyed
