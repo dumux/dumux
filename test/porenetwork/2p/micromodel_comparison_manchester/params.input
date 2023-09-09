@@ -1,0 +1,57 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+UpperRight = 2e-3 2e-3 2e-3
+NumPores = 20 20 20
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 3e-6
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Problem]
+Name = pnm_3d_comparison_manchester
+VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 7000
+UseFixedPressureAndSaturationBoundary = false
+DistributeByVolume = false
+NonWettingMassFlux = 5e-10
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+MaxSteps = 20
+TargetSteps = 10
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+BlockNonwettingPhaseAtThroatLabel = 3
+
+[SpatialParams]
+RegularizationLowSw = 0.001
+RegularizationHighSw = 0.9
+HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 1e-2
