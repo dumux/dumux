@@ -1,0 +1,16 @@
+[Grid]
+UpperRight = 1 1 1
+Cells = 24 16 16
+
+[Problem]
+Name = test_hyperelastic_box
+YoungsModulus = 10
+PoissonRatio = 0.3
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
