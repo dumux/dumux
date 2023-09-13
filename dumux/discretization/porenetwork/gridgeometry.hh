@@ -143,8 +143,9 @@ public:
             const auto& params = gridData.parameters(element);
             static const auto throatInscribedRadiusIdx = gridData.parameterIndex("ThroatInscribedRadius");
             static const auto throatLengthIdx = gridData.parameterIndex("ThroatLength");
+            static const auto voxelSize = getParamFromGroup<double>(gridData.paramGroup(), "Grid.VoxelResolution", 1e-5);
             throatInscribedRadius_[eIdx] = params[throatInscribedRadiusIdx];
-            throatLength_[eIdx] = std::max(1e-6, params[throatLengthIdx]);
+            throatLength_[eIdx] = std::max(voxelSize, params[throatLengthIdx]);
 
             // use a default value if no throat label is given by the grid
             static const bool gridHasThroatLabel = gridData.gridHasElementParameter("ThroatLabel");
@@ -198,6 +199,13 @@ public:
                     const auto vIdx = gridView.indexSet().subIndex(element, vIdxLocal, dim);
                     poreVolume_[vIdx] += 0.5 * throatCrossSectionalArea_[eIdx] * throatLength_[eIdx];
                 }
+            }
+
+            static const auto scaleFactor = getParamFromGroup<double>(gridData.paramGroup(), "Grid.MinPoreThroatRatio", 0.0);
+            for (int vIdxLocal= 0; vIdxLocal < 2; ++vIdxLocal)
+            {
+                const auto vIdx = gridView.indexSet().subIndex(element, vIdxLocal, dim);
+                poreInscribedRadius_[vIdx] = std::max(poreInscribedRadius_[vIdx], throatInscribedRadius_[eIdx]*scaleFactor);
             }
         }
 
