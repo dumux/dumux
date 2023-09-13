@@ -233,7 +233,7 @@ private:
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
         const auto snMin = std::min_element(sn.begin(), sn.end());
-        const Scalar pcEntry = fluxVarsCache.regInvasionInterval(1);
+        const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
         // check if there is a user-specified global capillary pressure which needs to be obeyed
