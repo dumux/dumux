@@ -25,7 +25,24 @@ dumux_add_test(NAME utrecht_pnm_2pnc_reg
                COMPILE_DEFINITIONS ONEDDRAINGE=1
                COMPILE_DEFINITIONS CIRCLETHROAT=0
                COMPILE_DEFINITIONS NOREGULARIZTAION=0
-               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=1
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=0
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00107.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc")
+
+dumux_add_test(NAME utrecht_pnm_2pnc_evaporation_reg
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 REGULARIZATIONWITHPRESSURE=0
+               COMPILE_DEFINITIONS DRAINAGE=1
+               COMPILE_DEFINITIONS ONEDDRAINGE=1
+               COMPILE_DEFINITIONS CIRCLETHROAT=0
+               COMPILE_DEFINITIONS NOREGULARIZTAION=0
+               COMPILE_DEFINITIONS ALLOWBREAKTHROUGH=0
+               COMPILE_DEFINITIONS EVAPORATION=1
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy

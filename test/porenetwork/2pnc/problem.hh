@@ -106,7 +106,11 @@ public:
 
 #if ISOTHERMAL
         if (isInletPore_(scv))
+#if EVAPORATION
+            bcTypes.setAllDirichlet();
+#else
             bcTypes.setAllNeumann();
+#endif
 #else
         if (isInletPore_(scv))
             bcTypes.setDirichlet(Indices::temperatureIdx);
@@ -130,9 +134,9 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
         {
-            values.setState(Indices::bothPhases);
+            values.setState(Indices::secondPhaseOnly);
             values[Indices::pressureIdx] = inletPressure_;
-            values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+            values[Indices::switchIdx] = 0.0;
 #if !ISOTHERMAL
             values[Indices::temperatureIdx] = inletTemperature_;
 #endif
@@ -166,7 +170,7 @@ public:
     {
         PrimaryVariables values(0.0);
         if (isInletPore_(scv))
-            values[Indices::conti0EqIdx + 1] = source_/scv.volume();
+            values[Indices::conti0EqIdx+1] = source_/sumInletPoresVolume_;
         return values;
     }
     // \}
@@ -181,7 +185,11 @@ public:
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
         {
+#if EVAPORATION
+            values.setState(Indices::secondPhaseOnly);
+#else
             values.setState(Indices::firstPhaseOnly);
+#endif
             values[Indices::switchIdx] = 0.0;
         }
         else
@@ -203,6 +211,22 @@ public:
 
     // \}
 
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumInletVolume()
+    {
+        sumInletPoresVolume_ = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (isInletPore_(scv))
+                        sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+            }
+        }
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -212,12 +236,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == 4;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == 3;
     }
 
     int vtpOutputFrequency_;
@@ -226,6 +250,7 @@ private:
     Scalar source_;
     Scalar inletPressure_;
     Scalar outletPressure_;
+    Scalar sumInletPoresVolume_;
 #if !ISOTHERMAL
     Scalar inletTemperature_;
     Scalar outletTemperature_;
