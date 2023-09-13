@@ -62,7 +62,9 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
-    : ParentType(gridGeometry, spatialParams)
+    : ParentType(gridGeometry, spatialParams),
+      sumInletPoresVolume_(0.0),
+      direction_(0)
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         initialPc_ = getParam<Scalar>("Problem.InitialPc", 3000);
@@ -74,6 +76,7 @@ public:
         saturationw_ = getParam<Scalar>("Problem.SaturationWetting", 1.0);
         minSource_ = getParam<Scalar>("Problem.MinSource", 0.0);
         maxSource_ = getParam<Scalar>("Problem.MaxSource", 1e-12);
+        distributeByVolume_ = getParam<bool>("Problem.DistributeByVolume", true);
 
         useLabels_ = getParam<bool>("Problem.UseLabels", true);
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
@@ -165,8 +168,18 @@ public:
         if (isInletPore_(scv))
         {
             const auto& volVar =  elemVolVars[scv.indexInElement()];
-            values[Indices::conti0EqIdx] = /*sourceEpisopdeW_[step_]*/0.0* volVar.density(FluidSystem::phase0Idx);
-            values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-9* volVar.density(FluidSystem::phase1Idx);
+            if (distributeByVolume_)
+            {
+                Scalar distributionRatio = scv.volume()/sumInletPoresVolume_ ;
+                values[Indices::conti0EqIdx] = /*sourceEpisopdeW_[step_]*/0.0 * volVar.density(FluidSystem::phase0Idx) * distributionRatio;
+                values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-11 * volVar.density(FluidSystem::phase1Idx) * distributionRatio;
+            }
+            else
+            {
+                Scalar distributionRatio = std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
+                values[Indices::conti0EqIdx] = /*sourceEpisopdeW_[step_]*/0.0 * volVar.density(FluidSystem::phase0Idx) * distributionRatio;
+                values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-11 * volVar.density(FluidSystem::phase1Idx) * distributionRatio;
+            }
         }
         values /= scv.volume();
 
@@ -178,8 +191,14 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = pressure_;
-        values[snIdx] = 1.0 - saturationw_;
+        values[Indices::pressureIdx] = pressure_;
+        values[Indices::saturationIdx] = 1.0 - saturationw_;
+
+        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
+        if (isInletPore_(dofIdxGlobal))
+        {
+            values[Indices::saturationIdx] = 1.0 - saturationw_;
+        }
         return values;
     }
 
@@ -223,6 +242,27 @@ public:
     bool finished()
     {   return step_>numSteps_; }
 
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumInletVolume()
+    {
+        sumInletPoresVolume_ = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (isInletPore_(scv))
+                {
+                    if (distributeByVolume_)
+                        sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+                    else
+                        sumInletPoresVolume_ += std::pow(this->gridGeometry().poreInscribedRadius(scv.dofIndex()), 4.0);
+                }
+            }
+        }
+    }
+
 private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
@@ -247,6 +287,7 @@ private:
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
 
+
     int vtpOutputFrequency_;
     Scalar initialPc_;
     Scalar finalPc_;
@@ -268,6 +309,8 @@ private:
     std::vector<Scalar> sourceEpisopdeW_;
     std::vector<Scalar> sourceEpisopdeN_;
     int step_ = 0;
+    Scalar sumInletPoresVolume_;
+    bool distributeByVolume_;
 };
 } //end namespace Dumux
 

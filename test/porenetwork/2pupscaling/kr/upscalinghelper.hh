@@ -410,9 +410,10 @@ private:
     {
         using std::abs;
         Scalar dSwDt = abs(swAvg_[0]-swAvg_[1]) / dt;
-        if (dSwDt < 1e-10)
+        std::cout<<"  equilibrium????   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
+        if (dSwDt < 1e-15)
         {
-            std::cout<<"  equilibrium   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
+            std::cout<<"  equilibrium????   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
             swAvg_[1] = 2.0;
             return 1;
         }

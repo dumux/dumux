@@ -49,21 +49,21 @@ struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoPNI>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
 
-// template<class TypeTag>
-// struct FluidSystem<TypeTag, TTag::DrainageProblem>
-// {
-//     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-//     using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
-// };
-
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using h2oLiquid = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>;
-    using oilLiquid = FluidSystems::OnePLiquid<Scalar, Components::HeavyOil<Scalar>>;
-    using type = FluidSystems::TwoPImmiscible<Scalar, h2oLiquid, oilLiquid>;
+    using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>>;
 };
+
+// template<class TypeTag>
+// struct FluidSystem<TypeTag, TTag::DrainageProblem>
+// {
+//     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+//     using h2oLiquid = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>;
+//     using oilLiquid = FluidSystems::OnePLiquid<Scalar, Components::HeavyOil<Scalar>>;
+//     using type = FluidSystems::TwoPImmiscible<Scalar, h2oLiquid, oilLiquid>;
+// };
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DrainageProblem>
@@ -79,6 +79,10 @@ public:
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
+
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DrainageProblem>
+{ static constexpr auto value = TwoPFormulation::p0s1; };
 
 } //end namespace Dumux::Properties
 

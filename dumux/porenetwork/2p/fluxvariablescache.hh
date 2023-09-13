@@ -212,11 +212,15 @@ public:
         if (  (!invaded &&  pcInsidePore > pcOutsidePore) || (invaded && pcInsidePore < pcOutsidePore) )
             fluidMatrixInteraction = spatialParams.fluidMatrixInteraction(element, insideScv, elemSol);
 
+        minSw_ = std::min(elemVolVars[0].saturation(0), elemVolVars[1].saturation(0));
+
 #if !DRAINAGE
         if (!invaded)
             pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-        else
-            pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        else if (invaded)
+            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        // else
+        //     pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
 #endif
 
         regInvasionInterval_[0] = pcEntry_;
@@ -510,6 +514,8 @@ public:
     Scalar regBoundaryNonWettingThroatAreaSnapoff(const int Idx) const
     { return regBoundaryNonwettingThroatAreaSnapoff_[Idx]; }
 
+    Scalar minSw() const
+    { return minSw_; }
 
 private:
     Throat::Shape throatCrossSectionShape_;
@@ -546,6 +552,8 @@ private:
     std::array<Scalar, 2> regBoundaryWettingThroatAreaSnapoff_;
     std::array<Scalar, 2> regBoundaryNonwettingThroatAreaInvasion_;
     std::array<Scalar, 2> regBoundaryNonwettingThroatAreaSnapoff_;
+
+    Scalar minSw_;
 };
 
 } // end Dumux::PoreNetwork

@@ -141,6 +141,8 @@ public:
             const Scalar snapoffLeft = fluxVarsCache.regSnapoffInterval(0);
             const Scalar snapoffRight = fluxVarsCache.regSnapoffInterval(1);
 
+            const Scalar minSw = fluxVarsCache.minSw();
+
             const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
 
             if (phaseIdx == wPhaseIdx)
@@ -170,22 +172,27 @@ public:
                 }
                 else // invaded in last time step
                 {
-                    // the regularization interval is [pcs - reg, pcs]
-                    if (pc < snapoffLeft)
-                        return Kw1p;    // snapoff occurs
-                    else if (pc < snapoffRight) // reg interval
-                    {
-                        auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                        auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                        const auto slopes =  std::array{0.0, slopeSnapoff};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
-                                                                Kw1p, snapoffKw, // y0, y1
-                                                                slopes[0], slopes[1]); // m0, m1
-                        return optionalKnSpline_.eval(pc);
+                    // if (minSw > 0.1)
+                    // {
+                        // the regularization interval is [pcs - reg, pcs]
+                        if (pc < snapoffLeft)
+                            return Kw1p;    // snapoff occurs
+                        else if (pc < snapoffRight) // reg interval
+                        {
+                            auto snapoffKw = Transmissibility::snapoffWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                            auto slopeSnapoff = Transmissibility::dKwdPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                            const auto slopes =  std::array{0.0, slopeSnapoff};
+                            auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight , // x0, x1
+                                                                    Kw1p, snapoffKw, // y0, y1
+                                                                    slopes[0], slopes[1]); // m0, m1
+                            return optionalKnSpline_.eval(pc);
 
-                    }
-                    else
-                        return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                        }
+                        else
+                            return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
+                    // }
+                    // else
+                    //     return Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache); //2p
                 }
             }
             else // non-wetting phase
@@ -210,10 +217,6 @@ public:
                                                                 slopes[0], slopes[1]); // m0, m1
                         return optionalKnSpline_.eval(pc);
                     }
-#if !ALLOWBREAKTHROUGH
-                    else if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
-                        return 0;
-#endif
                     else
                         return Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                 }
@@ -223,21 +226,30 @@ public:
                     if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
                         return 0;
 #endif
-                    // the regularzazion interval is [pcs - reg, pcs]
-                    if (pc < snapoffLeft)
-                        return 0.0;
-                    else if (pc < snapoffRight)
-                    {
-                        auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                        auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
-                        const auto slopes =  std::array{slopeSnapoff, 0.0};
-                        auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
-                                                                0.0, snapoffKn, // y0, y1
-                                                                slopes[1], slopes[0]); // m0, m1
-                        return optionalKnSpline_.eval(pc);
-                    }
-                    else
-                        return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    // if (minSw > 0.1)
+                    // {
+                        // the regularzazion interval is [pcs - reg, pcs]
+                        if (pc < snapoffLeft)
+                            return 0.0;
+                        else if (pc < snapoffRight)
+                        {
+                            auto snapoffKn = Transmissibility::snapoffNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                            auto slopeSnapoff = Transmissibility::dKndPcSnapoff(element, fvGeometry, scvf, fluxVarsCache);
+                            const auto slopes =  std::array{slopeSnapoff, 0.0};
+                            auto optionalKnSpline_ = Spline<Scalar>(snapoffLeft, snapoffRight, // x0, x1
+                                                                    0.0, snapoffKn, // y0, y1
+                                                                    slopes[1], slopes[0]); // m0, m1
+                            return optionalKnSpline_.eval(pc);
+                        }
+                        else
+                        {
+                            return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                        }
+                    // }
+                    // else
+                    // {
+                    //     return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    // }
                 }
             }
         }

@@ -233,6 +233,7 @@ private:
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const auto pcMin = std::min_element(pc.begin(), pc.end());
         const auto snMin = std::min_element(sn.begin(), sn.end());
+        const auto snMax = std::max_element(sn.begin(), sn.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
@@ -251,8 +252,11 @@ private:
 
 
         if (!invadedBeforeSwitch && *pcMax > pcEntry)
+        {
            invadedAfterSwitch = true;
-        else if (invadedBeforeSwitch && *pcMin <= pcSnapoff)
+           std::cout<<" pcEntry  "<<pcEntry<<std::endl;
+        }
+        else if (invadedBeforeSwitch && *snMin > 0.001 && *pcMin <= pcSnapoff && gridGeometry.throatLabel(eIdx) != 2)
            invadedAfterSwitch = false;
 // #else
 //         const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };
@@ -283,14 +287,14 @@ private:
                     std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
                     std::cout << " pc: " << *pcMax;
                     std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
-                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                    std::cout << ", sw: " << 1 - *snMax << std::endl;
                 }
                 else
                 {
                     std::cout << "Snap-off occured at throat " << eIdx << " from pore "  << vIdx << " :";
                     std::cout << " pc: " << *pcMin;
                     std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
-                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                    std::cout << ", sw: " << 1 - *snMin << std::endl;
                 }
             }
 

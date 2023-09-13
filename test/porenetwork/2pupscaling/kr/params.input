@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
 TEnd = 10e4 # [s]
-MaxTimeStepSize = 1e-3
+MaxTimeStepSize = 1e0
 
 #[Grid]
 #File = ./grids/pnm_converted.dgf
@@ -12,25 +12,24 @@ MaxTimeStepSize = 1e-3
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
-UpperRight = 1e-3 1e-3 1e-3
-NumPores = 5 5 5
+UpperRight = 2e-3 2e-3 2e-3
+NumPores = 10 10 10
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
-StandardDeviationPoreInscribedRadius = 0e-6
+StandardDeviationPoreInscribedRadius = 3e-6
 
 BoundaryFaceMarker = 2 3 1 1 1 1
 MinThroatLength = 1e-9
-DeletionProbability = 0 0 0 1 1 1 1 1 1 1 1 1 1
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
 PruningSeedIndices = 2 3
 Sanitize = true
 DeletionRandomNumberSeed = 33
-ParameterRandomNumberSeed = 22
 
 [Problem]
 Name = test_pnm_2p
-VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 InitialPc = 3000
@@ -53,7 +52,7 @@ MaxSteps = 10
 TargetSteps = 7
 MaxRelativeShift = 1e-4
 MaxTimeStepDivisions = 40
-PlausibilityCheck = true
+PlausibilityCheck = false
 
 [Regularization]
 RegPercentage = 1e-2
@@ -64,6 +63,6 @@ Verbosity = true
 
 [SpatialParams]
 RegularizationLowSw = 0.0001
-RegularizationHighSw = 0.999999
+RegularizationHighSw = 0.99999
 HighSwRegularizationMethod = Spline
 
