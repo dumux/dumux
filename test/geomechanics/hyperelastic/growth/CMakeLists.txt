@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-add_subdirectory(growth)
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "annulus.msh")
 dumux_add_test(
-    NAME test_hyperelastic_box
+    NAME test_hyperelastic_growth
     LABELS geomechanics elastic
     SOURCES main.cc
     COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
