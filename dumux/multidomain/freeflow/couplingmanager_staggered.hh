@@ -116,6 +116,9 @@ public:
               GridVariablesTuple&& gridVariables,
               const SolutionVector& curSol)
     {
+        this->momentumCouplingContext_().clear();
+        this->massAndEnergyCouplingContext_().clear();
+
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->updateSolution(curSol);
@@ -130,6 +133,9 @@ public:
               const SolutionVector& curSol,
               const SolutionVector& prevSol)
     {
+        this->momentumCouplingContext_().clear();
+        this->massAndEnergyCouplingContext_().clear();
+
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         prevSol_ = &prevSol;
         isTransient_ = true;
@@ -141,6 +147,9 @@ public:
               GridVariablesTuple&& gridVariables,
               typename ParentType::SolutionVectorStorage& curSol)
     {
+        this->momentumCouplingContext_().clear();
+        this->massAndEnergyCouplingContext_().clear();
+
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->attachSolution(curSol);
@@ -630,21 +639,14 @@ private:
     std::vector<CouplingStencilType> momentumToMassAndEnergyStencils_;
     std::vector<CouplingStencilType> massAndEnergyToMomentumStencils_;
 
-    // the coupling context exists for each thread
-    // TODO this is a bad pattern, just like mutable caches
-    // we should really construct and pass the context and not store it globally
     std::vector<MomentumCouplingContext>& momentumCouplingContext_() const
-    {
-        thread_local static std::vector<MomentumCouplingContext> c;
-        return c;
-    }
+    { return momentumCouplingContextImpl_; }
 
-    // the coupling context exists for each thread
     std::vector<MassAndEnergyCouplingContext>& massAndEnergyCouplingContext_() const
-    {
-        thread_local static std::vector<MassAndEnergyCouplingContext> c;
-        return c;
-    }
+    { return massAndEnergyCouplingContextImpl_; }
+
+    mutable std::vector<MassAndEnergyCouplingContext> massAndEnergyCouplingContextImpl_;
+    mutable std::vector<MomentumCouplingContext> momentumCouplingContextImpl_;
 
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
@@ -655,7 +657,7 @@ private:
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
 
-//! TODO The infrastructure for multithreaded assembly is implemented (see code in the class above) but the current implementation seems to have a bug and may cause race conditions. The result is different when running in parallel. After this has been fixed activate multithreaded assembly by inheriting from std::true_type here.
+// multi-threading is not supported because we have only one coupling context instance
 template<class T>
 struct CouplingManagerSupportsMultithreadedAssembly<FCStaggeredFreeFlowCouplingManager<T>>
 : public std::false_type {};
