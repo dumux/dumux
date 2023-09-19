@@ -1,0 +1,16 @@
+[Grid]
+File = annulus.msh
+
+[Problem]
+Name = test_hyperelastic_box
+YoungsModulus = 1000
+PoissonRatio = 0.48
+MuFactor = 100
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6

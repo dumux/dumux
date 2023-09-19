@@ -94,7 +94,7 @@ public:
         NumEqVector flux(0.0);
 
         // problem implements the constitutive law P=P(F)
-        const auto P = problem.firstPiolaKirchhoffStressTensor(F);
+        const auto P = problem.firstPiolaKirchhoffStressTensor(element, fvGeometry, F);
         P.mv(scvf.unitOuterNormal(), flux);
         flux *= -scvf.area();
         return flux;
