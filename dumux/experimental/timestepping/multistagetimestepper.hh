@@ -86,11 +86,10 @@ private:
  *       a stage can only depend on the values of the same stage and stages before
  *       but not future stages (which would require solving larger linear systems)
  */
-template<class PDESolver>
+template<class PDESolver, class Scalar = double>
 class MultiStageTimeStepper
 {
     using Variables = typename PDESolver::Variables;
-    using Scalar = double;//typename Variables::Scalar;
     using StageParams = MultiStageParams<Scalar>;
 
 public:
