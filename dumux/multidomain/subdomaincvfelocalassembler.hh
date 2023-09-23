@@ -185,7 +185,7 @@ public:
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // bind the caches
-        couplingManager_.bindCouplingContext(domainId, element, this->assembler());
+        couplingContext_.bind(domainId, element, this->assembler());
         fvGeometry.bind(element);
 
         if constexpr (implicit)
@@ -222,7 +222,12 @@ public:
     CouplingManager& couplingManager()
     { return couplingManager_; }
 
+    //! return reference to the coupling context instance
+    typename CouplingManager::LocalContext<domainId>& couplingContext()
+    { return couplingContext_; }
+
 private:
+    typename CouplingManager::LocalContext<domainId> couplingContext_;
     CouplingManager& couplingManager_; //!< the coupling manager
 };
 
@@ -282,7 +287,7 @@ public:
     template<class ElemSol>
     void maybeUpdateCouplingContext(const SubControlVolume& scv, ElemSol& elemSol, const int pvIdx)
     {
-        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.localDofIndex()], pvIdx);
+        this->couplingManager().updateCouplingContext(this->couplingContext(), domainI, *this, domainI, scv.dofIndex(), elemSol[scv.localDofIndex()], pvIdx);
     }
 
     /*!
@@ -320,16 +325,16 @@ public:
             if constexpr (enableGridFluxVarsCache)
             {
                 if constexpr (enableGridVolVarsCache)
-                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(this->couplingContext(), domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
                 else
-                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(this->couplingContext(), domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
             }
             else
             {
                 if constexpr (enableGridVolVarsCache)
-                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(this->couplingContext(), domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
                 else
-                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(this->couplingContext(), domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
         };
 
@@ -350,7 +355,7 @@ public:
                 auto evalCouplingResidual = [&](Scalar priVar)
                 {
                     priVarsJ[pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
+                    this->couplingManager().updateCouplingContext(this->couplingContext(), domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
                     updateCoupledVariables();
                     return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
@@ -402,7 +407,7 @@ public:
                 priVarsJ[pvIdx] = origPriVarsJ[pvIdx];
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
+                this->couplingManager().updateCouplingContext(this->couplingContext(), domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
             }
 
             // Restore original state of the flux vars cache and/or vol vars.

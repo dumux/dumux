@@ -56,6 +56,7 @@ public:
     // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
     // to manager the solution vector storage outside this class
     using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
+
 private:
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
@@ -107,6 +108,75 @@ private:
 
     using MomentumDiscretizationMethod = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
     using MassDiscretizationMethod = typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod;
+
+    class LocalContext {
+    public:
+        LocalContext() = default;
+
+        void bindCouplingContext(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                                 const Element<freeFlowMomentumIndex>& elementI) const
+        {
+            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI));
+        }
+
+        void bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex> domainI,
+                                const Element<freeFlowMomentumIndex>& elementI,
+                                const std::size_t eIdx) const
+        {
+            if (momentumCouplingContext_().empty())
+            {
+                auto fvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+                fvGeometry.bind(elementI);
+
+                auto curElemVolVars = localView(gridVars_(freeFlowMassIndex).curGridVolVars());
+                curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMassIndex));
+
+                auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
+                                                    : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
+
+                if (isTransient_)
+                    prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+
+                momentumCouplingContext_().emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
+            }
+            else if (eIdx != momentumCouplingContext_()[0].eIdx)
+            {
+                momentumCouplingContext_()[0].eIdx = eIdx;
+                momentumCouplingContext_()[0].fvGeometry.bind(elementI);
+                momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
+
+                if (isTransient_)
+                    momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            }
+        }
+
+        void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
+                                const Element<freeFlowMassIndex>& elementI) const
+        {
+            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI));
+        }
+
+        void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
+                                const Element<freeFlowMassIndex>& elementI,
+                                const std::size_t eIdx) const
+        {
+            if (massAndEnergyCouplingContext_().empty())
+            {
+                const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
+                auto fvGeometry = localView(gridGeometry);
+                fvGeometry.bindElement(elementI);
+                massAndEnergyCouplingContext_().emplace_back(std::move(fvGeometry), eIdx);
+            }
+            else if (eIdx != massAndEnergyCouplingContext_()[0].eIdx)
+            {
+                massAndEnergyCouplingContext_()[0].eIdx = eIdx;
+                massAndEnergyCouplingContext_()[0].fvGeometry.bindElement(elementI);
+            }
+        }
+    private:
+        std::vector<MomentumCouplingContext> momContext_;
+        std::vector<MassAndEnergyCouplingContext> massContext_;
+    };
 
 public:
 
@@ -613,74 +683,6 @@ public:
     }
 
 private:
-    void bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex> domainI,
-                              const Element<freeFlowMomentumIndex>& elementI) const
-    {
-        // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
-        if (momentumCouplingContext_().empty())
-            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI));
-        else
-            bindCouplingContext_(domainI, elementI, momentumCouplingContext_()[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
-    }
-
-    void bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex> domainI,
-                              const Element<freeFlowMomentumIndex>& elementI,
-                              const std::size_t eIdx) const
-    {
-        if (momentumCouplingContext_().empty())
-        {
-            auto fvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
-            fvGeometry.bind(elementI);
-
-            auto curElemVolVars = localView(gridVars_(freeFlowMassIndex).curGridVolVars());
-            curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMassIndex));
-
-            auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
-                                                : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
-
-            if (isTransient_)
-                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
-
-            momentumCouplingContext_().emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
-        }
-        else if (eIdx != momentumCouplingContext_()[0].eIdx)
-        {
-            momentumCouplingContext_()[0].eIdx = eIdx;
-            momentumCouplingContext_()[0].fvGeometry.bind(elementI);
-            momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
-
-            if (isTransient_)
-                momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
-        }
-    }
-
-    void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
-                              const Element<freeFlowMassIndex>& elementI) const
-    {
-        // The call to this->problem() is expensive because of std::weak_ptr (see base class). Here we try to avoid it if possible.
-        if (massAndEnergyCouplingContext_().empty())
-            bindCouplingContext_(domainI, elementI, this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI));
-        else
-            bindCouplingContext_(domainI, elementI, massAndEnergyCouplingContext_()[0].fvGeometry.gridGeometry().elementMapper().index(elementI));
-    }
-
-    void bindCouplingContext_(Dune::index_constant<freeFlowMassIndex> domainI,
-                              const Element<freeFlowMassIndex>& elementI,
-                              const std::size_t eIdx) const
-    {
-        if (massAndEnergyCouplingContext_().empty())
-        {
-            const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
-            auto fvGeometry = localView(gridGeometry);
-            fvGeometry.bindElement(elementI);
-            massAndEnergyCouplingContext_().emplace_back(std::move(fvGeometry), eIdx);
-        }
-        else if (eIdx != massAndEnergyCouplingContext_()[0].eIdx)
-        {
-            massAndEnergyCouplingContext_()[0].eIdx = eIdx;
-            massAndEnergyCouplingContext_()[0].fvGeometry.bindElement(elementI);
-        }
-    }
 
     /*!
      * \brief Return a reference to the grid variables of a sub problem
@@ -741,22 +743,6 @@ private:
     CouplingStencilType emptyStencil_;
     std::vector<CouplingStencilType> momentumToMassAndEnergyStencils_;
     std::vector<CouplingStencilType> massAndEnergyToMomentumStencils_;
-
-    // the coupling context exists for each thread
-    // TODO this is a bad pattern, just like mutable caches
-    // we should really construct and pass the context and not store it globally
-    std::vector<MomentumCouplingContext>& momentumCouplingContext_() const
-    {
-        thread_local static std::vector<MomentumCouplingContext> c;
-        return c;
-    }
-
-    // the coupling context exists for each thread
-    std::vector<MassAndEnergyCouplingContext>& massAndEnergyCouplingContext_() const
-    {
-        thread_local static std::vector<MassAndEnergyCouplingContext> c;
-        return c;
-    }
 
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
