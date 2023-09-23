@@ -206,7 +206,7 @@ private:
 
 /*!
  * \brief Third order DIRK scheme
- * \note see Alexander (2003) https://doi.org/10.1016/S0168-9274(03)00012-6
+ * \note see Alexander (1977) https://doi.org/10.1137/0714068 (Theorem 5)
  */
 template<class Scalar>
 class DIRKThirdOrderAlexander final : public MultiStageMethod<Scalar>
