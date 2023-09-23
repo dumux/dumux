@@ -350,7 +350,7 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the kinematic viscosity of a given phase within the
+     * \brief Returns the dynamic viscosity of a given phase within the
      *        control volume.
      *
      * \param phaseIdx The phase index
