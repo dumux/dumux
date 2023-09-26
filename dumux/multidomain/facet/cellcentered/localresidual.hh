@@ -31,9 +31,10 @@ namespace Dumux {
  *        as we need to additionally check if a boundary face couples to a facet element.
  */
 template<class TypeTag>
-class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
+class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag, CCFacetCouplingLocalResidual<TypeTag>>
 {
-    using ParentType = CCLocalResidual<TypeTag>;
+    using ThisType = CCFacetCouplingLocalResidual<TypeTag>;
+    using ParentType = CCLocalResidual<TypeTag, ThisType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
