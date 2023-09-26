@@ -19,6 +19,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/multidomain/facet/box/darcyslaw.hh>
 #include <dumux/multidomain/facet/box/fickslaw.hh>
@@ -83,6 +84,22 @@ public:
 };
 
 } // namespace Properties
+
+namespace Detail {
+
+template<class TypeTag, class Impl>
+struct DiscretizationDefaultLocalOperator<
+    TypeTag,
+    Impl,
+    std::enable_if_t<
+        Dumux::Properties::inheritsFrom<Properties::TTag::BoxFacetCouplingModel, TypeTag>(),
+        DiscretizationMethods::Box
+    >
+>
+{ using type = BoxFacetCouplingLocalResidual<TypeTag, Impl>; };
+
+} // namespace Detail
+
 } // namespace Dumux
 
 #endif
