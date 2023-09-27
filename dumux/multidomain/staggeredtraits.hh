@@ -190,6 +190,7 @@ public:
         using Index = Dune::index_constant<id>;
         using TypeTag = SubDomainTypeTag<id>;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
+        using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
         using GridGeometry = typename Detail::Staggered::SubDomainFVGridGeometryImpl<SubDomainTypeTag, id>::type;
         using GridVariables = typename Detail::Staggered::SubDomainGridVariablesImpl<SubDomainTypeTag, id>::type;
         using SolutionVector = typename Detail::Staggered::SubDomainSolutionVectorImpl<SubDomainTypeTag, id>::type;

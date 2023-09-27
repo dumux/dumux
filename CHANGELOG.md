@@ -23,6 +23,7 @@ be evaluated with the function values provided in the same order as the names wh
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
+- __MultiDomain__: The MDTraits are now required to state the LocalResidual type in the Subdomain policy (see multidomain/traits.hh). This only affects users that created their own MDTraits and don't use the default MDTraits.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 

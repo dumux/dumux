@@ -47,7 +47,6 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
     // further types specific to the sub-problems
     template<std::size_t id> using Scalar = GetPropType<SubDomainTypeTag<id>, Properties::Scalar>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
     template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using PrimaryVariables = typename GridVariables<id>::PrimaryVariables;
     template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
@@ -293,11 +292,10 @@ public:
      *        and the storage term here.
      */
     template< class PMFlowLocalAssembler >
-    typename LocalResidual<PMFlowId>::ElementResidualVector
-    evalCouplingResidual(Dune::index_constant<PMFlowId> pmFlowDomainId,
-                         const PMFlowLocalAssembler& pmFlowLocalAssembler,
-                         Dune::index_constant<PoroMechId> poroMechDomainId,
-                         GridIndexType<PoroMechId> dofIdxGlobalJ)
+    auto evalCouplingResidual(Dune::index_constant<PMFlowId> pmFlowDomainId,
+                              const PMFlowLocalAssembler& pmFlowLocalAssembler,
+                              Dune::index_constant<PoroMechId> poroMechDomainId,
+                              GridIndexType<PoroMechId> dofIdxGlobalJ)
     {
         auto res = pmFlowLocalAssembler.localResidual().evalFluxAndSource(pmFlowLocalAssembler.element(),
                                                                           pmFlowLocalAssembler.fvGeometry(),
@@ -322,11 +320,10 @@ public:
      *        the fluxes as well as the source term here.
      */
     template< class PoroMechLocalAssembler >
-    typename LocalResidual<PoroMechId>::ElementResidualVector
-    evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
-                         const PoroMechLocalAssembler& poroMechLocalAssembler,
-                         Dune::index_constant<PMFlowId> pmFlowDomainId,
-                         GridIndexType<PMFlowId> dofIdxGlobalJ)
+    auto evalCouplingResidual(Dune::index_constant<PoroMechId> poroMechDomainId,
+                              const PoroMechLocalAssembler& poroMechLocalAssembler,
+                              Dune::index_constant<PMFlowId> pmFlowDomainId,
+                              GridIndexType<PMFlowId> dofIdxGlobalJ)
     {
         return poroMechLocalAssembler.localResidual().evalFluxAndSource(poroMechLocalAssembler.element(),
                                                                         poroMechLocalAssembler.fvGeometry(),

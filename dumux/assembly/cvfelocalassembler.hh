@@ -326,7 +326,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/t
 
 public:
 
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -475,7 +475,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/f
 
 public:
 
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -584,7 +584,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/
 
 public:
 
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
@@ -704,7 +704,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/
 
 public:
 
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using ParentType::ParentType;
 
