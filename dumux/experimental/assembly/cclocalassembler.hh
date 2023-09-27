@@ -34,15 +34,6 @@
 
 namespace Dumux::Experimental {
 
-#ifndef DOXYGEN
-namespace Detail::CC {
-
-template<class X, class Y>
-using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
-
-} // end namespace Detail
-#endif // DOXYGEN
-
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
@@ -194,10 +185,10 @@ class CCLocalAssembler;
 template<class TypeTag, class Assembler, class Implementation>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>
 : public CCLocalAssemblerBase<TypeTag, Assembler,
-                              Detail::CC::Impl<Implementation, CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>>>
+                              NonVoidOr<CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>, Implementation>>
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, Detail::CC::Impl<Implementation, ThisType>>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, NonVoidOr<ThisType, Implementation>>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

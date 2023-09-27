@@ -37,15 +37,6 @@
 
 namespace Dumux::Experimental {
 
-#ifndef DOXYGEN
-namespace Detail::CVFE {
-
-template<class X, class Y>
-using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
-
-} // end namespace Detail
-#endif // DOXYGEN
-
 /*!
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
@@ -339,10 +330,10 @@ class CVFELocalAssembler;
 template<class TypeTag, class Assembler, class Implementation>
 class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>
 : public CVFELocalAssemblerBase<TypeTag, Assembler,
-                                Detail::CVFE::Impl<Implementation, CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>>>
+                                NonVoidOr<CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>, Implementation>>
 {
     using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>;
-    using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, Detail::CVFE::Impl<Implementation, ThisType>>;
+    using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, NonVoidOr<ThisType, Implementation>>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;

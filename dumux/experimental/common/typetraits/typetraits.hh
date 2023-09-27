@@ -22,6 +22,13 @@ namespace Dumux {
 inline constexpr auto noop = [] (auto...) {};
 using Noop = decltype(noop);
 
+/*!
+ * \brief Helper template to select type T if it is not void
+ *        or fall back to the given default type otherwise.
+ */
+template<typename Default, typename T>
+using NonVoidOr = std::conditional_t<!std::is_void_v<T>, T, Default>;
 
 } // end namespace Dumux
+
 #endif
