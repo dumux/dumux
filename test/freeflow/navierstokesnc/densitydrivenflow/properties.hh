@@ -55,7 +55,7 @@ struct FluidSystem<TypeTag, TTag::DensityDrivenFlowTest>
 };
 
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr int value = 0; };
+struct ReplaceCompEqIdx<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr int value = 1; };
 
 // Set the grid type
 template<class TypeTag>
@@ -78,7 +78,7 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::DensityDrivenFlowTest> { static constexpr bool value = false; };
 
 // Set the coupling mananger
 template<class TypeTag>
