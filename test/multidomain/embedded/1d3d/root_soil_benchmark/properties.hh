@@ -15,7 +15,6 @@
 #include <type_traits>
 
 #include <dune/grid/yaspgrid.hh>
-#include <dune/alugrid/grid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/properties.hh>
@@ -41,10 +40,6 @@
 #ifndef LOWDIMTYPETAG
 #define LOWDIMTYPETAG LowDimCC
 #endif
-#ifndef BULKGRIDTYPE
-#define BULKGRIDTYPE Dune::YaspGrid<3,Dune::EquidistantOffsetCoordinates<double,3>>
-#endif
-
 #ifndef COUPLINGMANAGER
 #define COUPLINGMANAGER CouplingManagerRootSoilKernel<Traits,CouplingReconstruction>
 #endif
@@ -65,7 +60,7 @@ struct BulkCC { using InheritsFrom = std::tuple<Bulk, CCTpfaModel>; };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::Bulk> { using type = BULKGRIDTYPE; };
+struct Grid<TypeTag, TTag::Bulk> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3>>; };
 
 // Set the problem property
 template<class TypeTag>
