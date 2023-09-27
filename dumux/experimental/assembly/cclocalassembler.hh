@@ -186,6 +186,7 @@ public:
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
+ * \tparam Implementation The actual implementation via CRTP
  */
 template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, class Implementation = void>
 class CCLocalAssembler;
