@@ -29,18 +29,13 @@
 #include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
+#include <dumux/experimental/common/typetraits/typetraits.hh>
 #include <dumux/experimental/assembly/fvlocalassemblerbase.hh>
 
 namespace Dumux::Experimental {
 
 #ifndef DOXYGEN
 namespace Detail::CC {
-
-struct NoOperator
-{
-    template<class... Args>
-    constexpr void operator()(Args&&...) const {}
-};
 
 template<class X, class Y>
 using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
@@ -75,12 +70,12 @@ public:
 
     using ParentType::ParentType;
 
-    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::CC::NoOperator>
+    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
     void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
                                      const StageParams& stageParams, ResidualVector& temporal, ResidualVector& spatial,
                                      ResidualVector& constrainedDofs,
                                      const PartialReassembler* partialReassembler = nullptr,
-                                     const CouplingFunction& maybeAssembleCouplingBlocks = {})
+                                     const CouplingFunction& maybeAssembleCouplingBlocks = noop)
     {
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());

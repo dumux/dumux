@@ -26,6 +26,7 @@
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/experimental/common/typetraits/typetraits.hh>
 #include <dumux/experimental/assembly/fvlocalassemblerbase.hh>
 #include <dumux/assembly/partialreassembler.hh>
 #include <dumux/assembly/entitycolor.hh>
@@ -38,12 +39,6 @@ namespace Dumux::Experimental {
 
 #ifndef DOXYGEN
 namespace Detail::CVFE {
-
-struct NoOperator
-{
-    template<class... Args>
-    constexpr void operator()(Args&&...) const {}
-};
 
 template<class X, class Y>
 using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
@@ -90,12 +85,12 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Detail::CVFE::NoOperator>
+    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
     void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
                                      const StageParams& stageParams, ResidualVector& temporal, ResidualVector& spatial,
                                      ResidualVector& constrainedDofs,
                                      const PartialReassembler* partialReassembler = nullptr,
-                                     const CouplingFunction& maybeAssembleCouplingBlocks = {})
+                                     const CouplingFunction& maybeAssembleCouplingBlocks = noop)
     {
         this->asImp_().bindLocalViews();
         const auto eIdxGlobal = this->asImp_().problem().gridGeometry().elementMapper().index(this->element());
