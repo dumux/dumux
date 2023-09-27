@@ -55,7 +55,10 @@ public:
     const auto& prevSol() const { return assembler_.prevSol(); }
     bool isStationaryProblem() const { return assembler_.isStationaryProblem(); }
 
+    template<class A = MDAssembler, typename std::enable_if_t<A::isImplicit(), int> = 0>
     static constexpr bool isImplicit() { return MDAssembler::isImplicit(); }
+
+    bool isImplicit() const { return assembler_.isImplicit(); }
 
 private:
     MDAssembler& assembler_;
