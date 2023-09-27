@@ -36,7 +36,13 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
+#if PRECONDITIONER_TEST==1
+#include <dumux/linear/linearsolvertraits.hh>
+#ifndef IMPLICIT_EULER
+#define IMPLICIT_EULER true
+#endif
 
+#endif
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -135,6 +141,19 @@ int main(int argc, char** argv)
     vtkWriter.addVolumeVariable([](const auto& volVars){ return volVars.density() - 999.694; }, "deltaRho");
     vtkWriter.write(0);
 
+#if PRECONDITIONER_TEST==1
+    // the assembler with time loop for instationary problem
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                                 couplingManager,
+                                                                 timeLoop, xOld);
+
+    // the linear solver
+    using LinearSolver = SimpleBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
@@ -144,6 +163,7 @@ int main(int argc, char** argv)
     // the linear solver
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
