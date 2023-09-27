@@ -37,6 +37,8 @@
 #include <dumux/linear/solvercategory.hh>
 #include <dumux/linear/solver.hh>
 
+#include <dune/istl/foreach.hh>
+
 namespace Dumux::Detail::IstlSolvers {
 
 /*!
@@ -726,14 +728,14 @@ namespace Dumux::Detail {
  * \ingroup Linear
  * \brief Direct dune-istl linear solvers
  */
-template<class LSTraits, class LATraits, template<class M> class Solver>
+template<class LSTraits, class LATraits, template<class M> class Solver,
+         bool convertMultiTypeVectorAndMatrix = isMultiTypeBlockVector<typename LATraits::Vector>::value>
 class DirectIstlSolver : public LinearSolver
 {
     using Matrix = typename LATraits::Matrix;
     using XVector = typename LATraits::Vector;
     using BVector = typename LATraits::Vector;
 
-    static constexpr bool convertMultiTypeVectorAndMatrix = isMultiTypeBlockVector<XVector>::value;
     using MatrixForSolver = typename Detail::IstlSolvers::MatrixForSolver<Matrix, convertMultiTypeVectorAndMatrix>::type;
     using BVectorForSolver = typename Detail::IstlSolvers::VectorForSolver<BVector, convertMultiTypeVectorAndMatrix>::type;
     using XVectorForSolver = typename Detail::IstlSolvers::VectorForSolver<XVector, convertMultiTypeVectorAndMatrix>::type;
@@ -792,7 +794,7 @@ private:
     IstlSolverResult solve_(const Matrix& A, XVector& x, const BVector& b)
     {
         // support dune-istl multi-type block vector/matrix by copying
-        if constexpr (isMultiTypeBlockVector<BVector>())
+        if constexpr (convertMultiTypeVectorAndMatrix)
         {
             const auto AA = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
             Solver<MatrixForSolver> solver(AA, this->verbosity() > 0);
@@ -807,11 +809,9 @@ private:
 
     IstlSolverResult solve_(XVector& x, const BVector& b, InverseOperator& solver) const
     {
-        static_assert(isBCRSMatrix<MatrixForSolver>::value, "Direct solver only works with BCRS matrices!");
-        static_assert(MatrixForSolver::block_type::rows == MatrixForSolver::block_type::cols, "Matrix block must be quadratic!");
-
         Dune::InverseOperatorResult result;
-        if constexpr (isMultiTypeBlockVector<BVector>())
+
+        if constexpr (convertMultiTypeVectorAndMatrix)
         {
             auto bb = VectorConverter<BVector>::multiTypeToBlockVector(b);
             XVectorForSolver xx(bb.size());
@@ -830,22 +830,14 @@ private:
         }
     }
 
-    void checkResult_(const XVectorForSolver& x, Dune::InverseOperatorResult& result) const
+
+    void checkResult_(XVectorForSolver& x, Dune::InverseOperatorResult& result) const
     {
-        int size = x.size();
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < x[i].size(); j++)
-            {
-                using std::isnan;
-                using std::isinf;
-                if (isnan(x[i][j]) || isinf(x[i][j]))
-                {
-                    result.converged = false;
-                    break;
-                }
-            }
-        }
+        flatVectorForEach(x, [&](auto&& entry, std::size_t){
+            using std::isnan, std::isinf;
+            if (isnan(entry) || isinf(entry))
+                result.converged = false;
+        });
     }
 
     //! matrix when using the setMatrix interface for matrix reuse
@@ -878,6 +870,7 @@ using SuperLUIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::Sup
 
 #if HAVE_UMFPACK
 #include <dune/istl/umfpack.hh>
+#include <dune/common/version.hh>
 
 namespace Dumux {
 
@@ -890,7 +883,12 @@ namespace Dumux {
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
 template<class LSTraits, class LATraits>
-using UMFPackIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::UMFPack>;
+using UMFPackIstlSolver = Detail::DirectIstlSolver<
+    LSTraits, LATraits, Dune::UMFPack
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,10)
+    , false // no need to convert multi-type matrix anymore
+#endif
+>;
 
 } // end namespace Dumux
 
