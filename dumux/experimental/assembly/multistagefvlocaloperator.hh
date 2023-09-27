@@ -57,12 +57,11 @@ public:
         const ElemBCTypes& bcTypes
     ) const {
         ElementOperatorResultVector result(fvGeometry.numScv());
-
         if (std::abs(spatialWeight_) > 1e-6)
         {
             result = op_.evalFluxAndSource(fvGeometry.element(), fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
-            for (const auto& scv : scvs(fvGeometry))
-                result[scv.localDofIndex()] *= spatialWeight_;
+            for (auto& r : result)
+                r *= spatialWeight_;
         }
 
         return result;
