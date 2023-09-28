@@ -481,7 +481,7 @@ private:
     void assembleResidual_(Dune::index_constant<i> domainId, SubRes& subRes,
                            const SolutionVector& curSol)
     {
-        DUNE_THROW(Dune::InvalidStateException, "Called redidual");
+        DUNE_THROW(Dune::NotImplemented, "assembleResidual_");
     }
 
     /*!
