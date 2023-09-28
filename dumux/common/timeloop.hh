@@ -99,8 +99,6 @@ public:
 template <class Scalar>
 class TimeLoop : public TimeLoopBase<Scalar>
 {
-    static constexpr Scalar baseEps_ = 1e-10;
-
 public:
     TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
     : timer_(false)
@@ -377,6 +375,8 @@ public:
      */
 
 protected:
+    static constexpr Scalar baseEps_ = 1e-10;
+
     Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
@@ -418,14 +418,14 @@ public:
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
         // if we reached a periodic check point
-        if (periodicCheckPoints_ && Dune::FloatCmp::eq(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_, 1e-7))
+        if (periodicCheckPoints_ && fuzzyEqual_(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
         {
             lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
             isCheckPoint_ = true;
         }
 
         // or a manually set check point
-        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(newTime - checkPoints_.front(), 0.0, 1e-7))
+        else if (!checkPoints_.empty() && fuzzyEqual_(newTime - checkPoints_.front(), 0.0))
         {
             checkPoints_.pop();
             isCheckPoint_ = true;
@@ -508,7 +508,7 @@ public:
                       << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
 
         // check if the current time point is a check point
-        if (Dune::FloatCmp::eq(this->time()-lastPeriodicCheckPoint_, 0.0, 1e-7))
+        if (fuzzyEqual_(this->time()-lastPeriodicCheckPoint_, 0.0))
             isCheckPoint_ = true;
 
         // make sure we respect this check point on the next time step
@@ -577,6 +577,9 @@ public:
     }
 
 private:
+    bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
+    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_); }
+
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
