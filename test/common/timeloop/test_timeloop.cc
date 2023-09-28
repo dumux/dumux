@@ -220,6 +220,7 @@ void testConstructionFromDurations()
             DUNE_THROW(Dune::InvalidStateException, "Unexpected initial time step size");
         if (!Dune::FloatCmp::eq(timeLoop.endTime(), 3600.0, 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "Unexpected end time");
+        std::cout << "Time loop constructed as expected" << std::endl;
     };
 
     using namespace std::chrono_literals;

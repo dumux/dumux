@@ -16,6 +16,7 @@
 #include <queue>
 #include <iomanip>
 #include <chrono>
+#include <type_traits>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -52,10 +53,12 @@ namespace Dumux {
  *
  * \note Time and time step sizes are in units of seconds
  */
-template<class Scalar>
+template<class S>
 class TimeLoopBase
 {
 public:
+    using Scalar = S;
+
     //! Abstract base class needs virtual constructor
     virtual ~TimeLoopBase() {};
 
@@ -425,6 +428,19 @@ protected:
     bool verbose_;
 };
 
+// always fall back to floating-point representation
+template<class Rep1, class Period1,
+         class Rep2, class Period2,
+         class Rep3, class Period3>
+TimeLoop(std::chrono::duration<Rep1, Period1>,
+         std::chrono::duration<Rep2, Period2>,
+         std::chrono::duration<Rep3, Period3>,
+         bool verbose = true) -> TimeLoop<std::conditional_t<
+    std::is_floating_point_v<std::common_type_t<Rep1, Rep2, Rep3>>,
+    std::common_type_t<Rep1, Rep2, Rep3>,
+    double
+>>;
+
 /*!
  * \ingroup Core
  * \brief A time loop with a check point mechanism
@@ -672,6 +688,11 @@ private:
     std::queue<Scalar> checkPoints_;
     bool isCheckPoint_;
 };
+
+template<class... Args>
+CheckPointTimeLoop(Args&&... args) -> CheckPointTimeLoop<
+    typename decltype(TimeLoop{std::forward<Args>(args)...})::Scalar
+>;
 
 } // end namespace Dumux
 
