@@ -118,7 +118,6 @@ class FacetCouplingThreeDomainManager
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
 
     // further types specific to the sub-problems
-    template<std::size_t id> using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
 
@@ -257,13 +256,13 @@ public:
              std::size_t j,
              class LocalAssembler,
              std::enable_if_t<((i==bulkId && j==edgeId) || ((i==edgeId && j==bulkId))), int> = 0>
-    typename LocalResidual<i>::ElementResidualVector
+    typename LocalAssembler::LocalResidual::ElementResidualVector
     evalCouplingResidual(Dune::index_constant<i> domainI,
                          const LocalAssembler& localAssembler,
                          Dune::index_constant<j> domainJ,
                          GridIndexType<j> dofIdxGlobalJ)
     {
-        typename LocalResidual<i>::ElementResidualVector res(1);
+        typename LocalAssembler::LocalResidual::ElementResidualVector res(1);
         res = 0.0;
         return res;
     }

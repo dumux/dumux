@@ -175,7 +175,8 @@ public:
         using Grid = GetPropType<SubDomainTypeTag<id>, Properties::Grid>;
         using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
         using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-        using GridVariables =GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
+        using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
+        using LocalResidual = GetPropType<SubDomainTypeTag<id>, Properties::LocalResidual>;
         using IOFields = GetPropType<SubDomainTypeTag<id>, Properties::IOFields>;
         using SolutionVector = GetPropType<SubDomainTypeTag<id>, Properties::SolutionVector>;
         using ResidualVector = typename Detail::NativeDuneVectorType<SolutionVector>::type;

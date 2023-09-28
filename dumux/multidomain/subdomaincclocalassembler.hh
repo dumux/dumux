@@ -76,7 +76,7 @@ public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
     //! the local residual type of this domain
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using LocalResidual = typename ParentType::LocalResidual;
     //! pull up constructor of parent class
     using ParentType::ParentType;
 

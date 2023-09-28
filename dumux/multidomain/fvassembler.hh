@@ -36,6 +36,7 @@
 #include "subdomaincvfelocalassembler.hh"
 #include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
+#include "assemblerview.hh"
 
 #include <dumux/discretization/method.hh>
 
@@ -124,37 +125,40 @@ private:
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit()>;
 
+    template<std::size_t id>
+    using SubDomainAssemblerView = MultiDomainAssemblerSubDomainView<ThisType, id>;
+
     template<class DiscretizationMethod, std::size_t id>
     struct SubDomainAssemblerType;
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id, class DM>
     struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
-        using type = SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
     {
-        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
     {
-        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit()>;
+        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
@@ -501,7 +505,8 @@ private:
     {
         assemble_(domainId, [&](const auto& element)
         {
-            SubDomainAssembler<i> subDomainAssembler(*this, element, curSol, *couplingManager_);
+            MultiDomainAssemblerSubDomainView view{*this, domainId};
+            SubDomainAssembler<i> subDomainAssembler(view, element, curSol, *couplingManager_);
             subDomainAssembler.assembleJacobianAndResidual(jacRow, subRes, gridVariablesTuple_);
         });
     }
@@ -512,7 +517,8 @@ private:
     {
         assemble_(domainId, [&](const auto& element)
         {
-            SubDomainAssembler<i> subDomainAssembler(*this, element, curSol, *couplingManager_);
+            MultiDomainAssemblerSubDomainView view{*this, domainId};
+            SubDomainAssembler<i> subDomainAssembler(view, element, curSol, *couplingManager_);
             subDomainAssembler.assembleResidual(subRes);
         });
     }
