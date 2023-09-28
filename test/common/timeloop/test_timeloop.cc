@@ -220,7 +220,17 @@ int main(int argc, char* argv[])
     Dumux::initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance();
 
+    // unit time
     testTimeLoops(mpiHelper, 0.0, 1.0, 0.1);
+
+    // microseconds
+    testTimeLoops(mpiHelper, 0.0, 1.0e-6, 1e-7);
+
+    // large time scales
+    testTimeLoops(mpiHelper, 0.0, 1.0e12, 1e9, {1e11});
+
+    // large time scales but small initial time step
+    testTimeLoops(mpiHelper, 0.0, 1.0e12, 0.1, {1e11});
 
     return 0;
 }
