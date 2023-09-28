@@ -15,6 +15,7 @@
 #include <type_traits>
 
 namespace Dumux {
+
     /*!
      * \brief Template which always yields a false value
      * \tparam T Some type.
@@ -22,5 +23,19 @@ namespace Dumux {
     template<typename T>
     struct AlwaysFalse : public std::false_type {};
 
+/*!
+ * \brief Function that performs no operation.
+ */
+inline constexpr auto noop = [] (auto...) {};
+using Noop = decltype(noop);
+
+/*!
+ * \brief Helper template to select type T if it is not void
+ *        or fall back to the given default type otherwise.
+ */
+template<typename Default, typename T>
+using NonVoidOr = std::conditional_t<!std::is_void_v<T>, T, Default>;
+
 } // end namespace Dumux
+
 #endif

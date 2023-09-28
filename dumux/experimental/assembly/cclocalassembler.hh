@@ -17,6 +17,7 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -29,7 +30,6 @@
 #include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
-#include <dumux/experimental/common/typetraits/typetraits.hh>
 #include <dumux/experimental/assembly/fvlocalassemblerbase.hh>
 
 namespace Dumux::Experimental {

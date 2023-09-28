@@ -20,13 +20,13 @@
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/experimental/common/typetraits/typetraits.hh>
 #include <dumux/experimental/assembly/fvlocalassemblerbase.hh>
 #include <dumux/assembly/partialreassembler.hh>
 #include <dumux/assembly/entitycolor.hh>
