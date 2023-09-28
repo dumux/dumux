@@ -467,7 +467,7 @@ public:
             auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
+                const auto& ldSol = assembler.isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 fvGeom.bindElement(elemJ);
 
@@ -526,7 +526,7 @@ public:
 
             for (unsigned int i = 0; i < numEmbedments; ++i)
             {
-                const auto& bulkSol = Assembler::isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
+                const auto& bulkSol = assembler.isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
                 const auto curBulkElem = bulkGridGeom.element(embedments[i].first);
 
                 bulkFvGeom.bind(curBulkElem);
@@ -563,7 +563,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!BulkLocalAssembler::isImplicit())
+        if (!bulkLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
@@ -650,7 +650,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!lowDimLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
@@ -709,7 +709,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!lowDimLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
