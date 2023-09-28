@@ -18,9 +18,7 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/timeloop.hh>
 
-template<class MPIHelper>
-void testTimeLoops(const MPIHelper& mpiHelper,
-                   double tStart,
+void testTimeLoops(double tStart,
                    double tEnd,
                    double dt,
                    std::optional<double> dtInLoop = {})
@@ -33,7 +31,7 @@ void testTimeLoops(const MPIHelper& mpiHelper,
 
     //! Standard time loop
     {
-        if (mpiHelper.rank() == 0) std::cout << "------- Test time loop ----------" << std::endl;
+        std::cout << "------- Test time loop ----------" << std::endl;
         Dumux::TimeLoop<double> timeLoop(tStart, dt, tEnd);
 
         if (std::abs(timeLoop.time()-tStart) > 1e-15)
@@ -77,7 +75,7 @@ void testTimeLoops(const MPIHelper& mpiHelper,
 
     // check point timeLoop
     {
-        if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
+        std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
         Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
         timeLoop.setPeriodicCheckPoint(0.03*dt, -0.03*dt);
         if (!timeLoop.isCheckPoint())
@@ -159,7 +157,7 @@ void testTimeLoops(const MPIHelper& mpiHelper,
 
     // check if time loops remembers time step before check point
     {
-        if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
+        std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
         Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
         timeLoop.setCheckPoint(1.01*dt);
         timeLoop.start();
@@ -218,19 +216,18 @@ int main(int argc, char* argv[])
 {
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // unit time
-    testTimeLoops(mpiHelper, 0.0, 1.0, 0.1);
+    testTimeLoops(0.0, 1.0, 0.1);
 
     // microseconds
-    testTimeLoops(mpiHelper, 0.0, 1.0e-6, 1e-7);
+    testTimeLoops(0.0, 1.0e-6, 1e-7);
 
     // large time scales
-    testTimeLoops(mpiHelper, 0.0, 1.0e12, 1e9, {1e11});
+    testTimeLoops(0.0, 1.0e12, 1e9, {1e11});
 
     // large time scales but small initial time step
-    testTimeLoops(mpiHelper, 0.0, 1.0e12, 0.1, {1e11});
+    testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
 
     return 0;
 }
