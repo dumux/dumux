@@ -218,6 +218,25 @@ struct GetPropOrImpl
     using type = std::conditional_t<std::is_same_v<PT, UndefinedProperty>, WrapperT, PT>;
 };
 
+template<class ParentTag, class TypeTag, bool hasParents = hasParentTypeTag<TypeTag>(int{})>
+struct InheritsFrom;
+
+template<class ParentTag, class TypeTag>
+struct InheritsFrom<ParentTag, TypeTag, false> {
+    static constexpr bool value = std::is_same_v<ParentTag, TypeTag>;
+};
+
+template<class ParentTag, class TypeTag>
+struct InheritsFrom<ParentTag, TypeTag, true> {
+    static constexpr bool value = std::is_same_v<ParentTag, TypeTag>
+        || InheritsFrom<ParentTag, typename TypeTag::InheritsFrom, false>::value;
+};
+
+template<class ParentTag, class... TypeTags>
+struct InheritsFrom<ParentTag, std::tuple<TypeTags...>, false> {
+    static constexpr bool value = (InheritsFrom<ParentTag, TypeTags>::value || ...);
+};
+
 } // end namespace Dumux::Properties::Detail
 
 #endif // DOXYGEN
@@ -233,6 +252,16 @@ inline constexpr bool hasDefinedType()
 {
     using type = typename Detail::GetDefined<TypeTag, Property, std::tuple<TypeTag>>::type;
     return !std::is_same_v<type, UndefinedProperty>;
+}
+
+/*!
+ * \ingroup Properties
+ * \brief Return true if the given type tag inherits from the given parent type tag
+ */
+template<class ParentTypeTag, class TypeTag>
+inline constexpr bool inheritsFrom()
+{
+    return Detail::InheritsFrom<ParentTypeTag, TypeTag>::value;
 }
 
 } // end namespace Dumux::Properties

@@ -115,6 +115,11 @@ int main(int argc, char* argv[])
             DUNE_THROW(Dune::InvalidStateException, "Property UseTpfaFlux in TTag::CCTpfaDisc should be true!");
     }
 
+    static_assert(inheritsFrom<TTag::Base, TTag::CCTpfaDisc>());
+    static_assert(!inheritsFrom<TTag::CCTpfaDisc, TTag::Base>());
+    static_assert(inheritsFrom<TTag::Base, TTag::OnePTest>());
+    static_assert(!inheritsFrom<TTag::OnePTest, TTag::Base>());
+
     std::cout << "All tests passed!" << std::endl;
     return 0;
 }
