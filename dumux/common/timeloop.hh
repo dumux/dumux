@@ -42,6 +42,10 @@ Scalar toSeconds(std::chrono::duration<R, P> duration)
     return std::chrono::duration_cast<Second>(duration).count();
 }
 
+template<typename Scalar, typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+Scalar toSeconds(T duration)
+{ return static_cast<Scalar>(duration); }
+
 } // namespace Detail
 #endif // DOXYGEN
 
@@ -174,6 +178,24 @@ public:
     void resetTimer()
     {
         timer_.reset();
+    }
+
+    /*!
+     * \brief Reset the time loop
+     */
+    template<class Rep1, class Period1,
+             class Rep2, class Period2,
+             class Rep3, class Period3>
+    void reset(std::chrono::duration<Rep1, Period1> startTime,
+               std::chrono::duration<Rep2, Period2> dt,
+               std::chrono::duration<Rep3, Period3> tEnd,
+               bool verbose = true)
+    {
+        reset(
+            Detail::toSeconds<Scalar>(startTime),
+            Detail::toSeconds<Scalar>(dt),
+            Detail::toSeconds<Scalar>(tEnd)
+        );
     }
 
     /*!

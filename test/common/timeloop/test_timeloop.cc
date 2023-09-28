@@ -226,6 +226,13 @@ void testWithDurations()
         if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0001, 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "Unexpected time step size");
         std::cout << "Setting dt from a duration successful" << std::endl;
+
+        timeLoop.reset(1ms, 0.5h, 2h);
+        if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 1800.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Resetting time step size failed");
+        if (!Dune::FloatCmp::eq(timeLoop.endTime(), 7200.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Resetting end time failed");
+        std::cout << "Resetting from durations successful" << std::endl;
     };
 
     _test(Dumux::TimeLoop<double>{0s, 1ms, 1h});
