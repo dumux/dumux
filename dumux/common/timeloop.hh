@@ -245,6 +245,12 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
+        // Warn if dt is so small w.r.t. current time that it renders float addition meaningless
+        // For instance, consider (may depend on architecture):
+        //     double cien = 100;
+        //     double mil = 1000;
+        //     if (cien + 1e-14 == cien) std::cout << "Will not be printed" << std::endl;
+        //     if (mil + 1e-14 == mil) std::cout << "Will be printed" << std::endl;
         if (!finished() && (time_ + timeStepSize_ == time_))
             std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
                       << " This might lead to numerical problems!\n";
