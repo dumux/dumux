@@ -21,7 +21,7 @@ struct HyperelasticityTest
 {
     using InheritsFrom = std::tuple<Hyperelastic, BoxModel>;
 
-    using Grid = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>;
+    using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
 
     using EnableGridVolumeVariablesCache = std::true_type;
     using EnableGridFluxVariablesCache = std::true_type;

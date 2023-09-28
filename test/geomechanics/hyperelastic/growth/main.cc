@@ -67,7 +67,8 @@ int main(int argc, char** argv)
     vtkWriter.addField(problem->detJ(), "detJ");
     vtkWriter.addField(problem->magnSigma(), "sigma");
     vtkWriter.addField(problem->mu(), "mu");
-    vtkWriter.write(0.0);
+    vtkWriter.addField(problem->theta(), "theta");
+    vtkWriter.addField(problem->radial(), "radial");
 
     // the assembler with time loop for a transient problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -82,6 +83,11 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
+    problem->setGrowth(0.0);
+    nonLinearSolver->solve(x);
+    problem->updateOutput(*gridVariables, x);
+    vtkWriter.write(0);
+
     auto oldSol = x;
     double growth = 0.0;
     double stepSize = 0.03;
@@ -91,7 +97,7 @@ int main(int argc, char** argv)
         int maxReduce = 10;
         while (!converged && maxReduce > 0)
         {
-            problem->setGrowth(1.0-(growth+stepSize));
+            problem->setGrowth(growth+stepSize);
             try {
                 nonLinearSolver->solve(x);
                 converged = true;
