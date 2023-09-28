@@ -16,12 +16,12 @@
 
 namespace Dumux {
 
-    /*!
-     * \brief Template which always yields a false value
-     * \tparam T Some type.
-     */
-    template<typename T>
-    struct AlwaysFalse : public std::false_type {};
+/*!
+ * \brief Template which always yields a false value
+ * \tparam T Some type.
+ */
+template<typename T>
+struct AlwaysFalse : public std::false_type {};
 
 /*!
  * \brief Function that performs no operation.
