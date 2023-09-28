@@ -331,7 +331,7 @@ public:
      * \brief Set the maximum time step size to a given value.
      *
      * \param maxDt The new value for the maximum time step size \f$\mathrm{[s]}\f$
-     * \note This also updates the time step size
+     * \note This may also reduce the currently set timestep size if needed to comply with the set maximum
      */
     template<class ScalarOrDuration>
     void setMaxTimeStepSize(ScalarOrDuration maxDt)
