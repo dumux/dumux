@@ -499,6 +499,9 @@ public:
      */
     void setPeriodicCheckPoint(Scalar interval, Scalar offset = 0.0)
     {
+        if (!checkPoints_.empty())
+            DUNE_THROW(Dune::NotImplemented, "Cannot use periodic check points while manually inserted ones are still pending.");
+
         using std::signbit;
         if (signbit(interval))
             DUNE_THROW(Dune::InvalidStateException, "Interval has to be positive!");
@@ -574,6 +577,9 @@ public:
     template<class ForwardIterator>
     void setCheckPoint(ForwardIterator first, ForwardIterator last)
     {
+        if (periodicCheckPoints_)
+            DUNE_THROW(Dune::NotImplemented, "Checkpoints cannot be manually inserted when using periodic ones.");
+
         // set the check points
         for (; first != last; ++first)
             setCheckPoint_(*first);
