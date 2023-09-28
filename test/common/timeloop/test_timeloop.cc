@@ -212,18 +212,22 @@ void testTimeLoops(double tStart,
     }
 }
 
-void testConstructionFromDurations()
+void testWithDurations()
 {
-    std::cout << "Testing construction from durations" << std::endl;
-    const auto _test = [&] (const auto& timeLoop) {
+    using namespace std::chrono_literals;
+    const auto _test = [&] (auto&& timeLoop) {
         if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.001, 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "Unexpected initial time step size");
         if (!Dune::FloatCmp::eq(timeLoop.endTime(), 3600.0, 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "Unexpected end time");
         std::cout << "Time loop constructed as expected" << std::endl;
+
+        timeLoop.setTimeStepSize(0.1ms);
+        if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0001, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected time step size");
+        std::cout << "Setting dt from a duration successful" << std::endl;
     };
 
-    using namespace std::chrono_literals;
     _test(Dumux::TimeLoop<double>{0s, 1ms, 1h});
     _test(Dumux::CheckPointTimeLoop<double>{0s, 1ms, 1h});
 
@@ -249,7 +253,7 @@ int main(int argc, char* argv[])
     // large time scales but small initial time step
     testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
 
-    testConstructionFromDurations();
+    testWithDurations();
 
     return 0;
 }

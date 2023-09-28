@@ -31,6 +31,20 @@
 
 namespace Dumux {
 
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<typename Scalar, typename R, typename P>
+Scalar toSeconds(std::chrono::duration<R, P> duration)
+{
+    using Second = std::chrono::duration<Scalar, std::ratio<1>>;
+    return std::chrono::duration_cast<Second>(duration).count();
+}
+
+} // namespace Detail
+#endif // DOXYGEN
+
 /*!
  * \ingroup Core
  * \brief Manages the handling of time dependent problems.
@@ -91,23 +105,18 @@ public:
     virtual void setTimeStepSize(Scalar dt) = 0;
 
     /*!
+     * \brief Set the current time step size to a given value.
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
+     */
+    template<class Rep, class Period>
+    void setTimeStepSize(std::chrono::duration<Rep, Period> dt)
+    { setTimeStepSize(Detail::toSeconds<Scalar>(dt)); }
+
+    /*!
      * \brief Returns true if the simulation is finished.
      */
     virtual bool finished() const = 0;
 };
-
-#ifndef DOXYGEN
-namespace TimeLoopDetail {
-
-template<typename Scalar, typename R, typename P>
-Scalar toSeconds(std::chrono::duration<R, P> duration)
-{
-    using Second = std::chrono::duration<Scalar, std::ratio<1>>;
-    return std::chrono::duration_cast<Second>(duration).count();
-}
-
-} // namespace TimeLoopDetail
-#endif // DOXYGEN
 
 /*!
  * \ingroup Core
@@ -131,9 +140,9 @@ public:
              std::chrono::duration<Rep3, Period3> tEnd,
              bool verbose = true)
     : TimeLoop(
-        TimeLoopDetail::toSeconds<Scalar>(startTime),
-        TimeLoopDetail::toSeconds<Scalar>(dt),
-        TimeLoopDetail::toSeconds<Scalar>(tEnd),
+        Detail::toSeconds<Scalar>(startTime),
+        Detail::toSeconds<Scalar>(dt),
+        Detail::toSeconds<Scalar>(tEnd),
         verbose
     ){}
 
@@ -262,6 +271,7 @@ public:
     double wallClockTime() const
     { return timer_.elapsed(); }
 
+    using TimeLoopBase<Scalar>::setTimeStepSize;
     /*!
      * \brief Set the current time step size to a given value.
      *
