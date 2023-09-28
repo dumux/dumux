@@ -13,6 +13,8 @@
 #ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_VIEW_HH
 #define DUMUX_MULTIDOMAIN_ASSEMBLER_VIEW_HH
 
+#include <dune/common/std/type_traits.hh>
+
 namespace Dumux {
 
 /*!
@@ -27,6 +29,12 @@ template<typename MDAssembler, std::size_t domainId>
 class MultiDomainAssemblerSubDomainView
 {
     static constexpr Dune::index_constant<domainId> myId{};
+
+    template<class A>
+    using HasStaticIsImplicitCheck = decltype(A::isImplicit());
+
+    template<class A>
+    static constexpr bool hasStaticIsImplicit = Dune::Std::is_detected<HasStaticIsImplicitCheck, A>::value;
 
 public:
     using CouplingManager = typename MDAssembler::CouplingManager;
@@ -55,9 +63,10 @@ public:
     const auto& prevSol() const { return assembler_.prevSol(); }
     bool isStationaryProblem() const { return assembler_.isStationaryProblem(); }
 
-    template<class A = MDAssembler, typename std::enable_if_t<A::isImplicit(), int> = 0>
+    template<class A = MDAssembler, typename std::enable_if_t<hasStaticIsImplicit<A>, int> = 0>
     static constexpr bool isImplicit() { return MDAssembler::isImplicit(); }
 
+    template<class A = MDAssembler, typename std::enable_if_t<!hasStaticIsImplicit<A>, int> = 0>
     bool isImplicit() const { return assembler_.isImplicit(); }
 
 private:
