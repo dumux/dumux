@@ -89,6 +89,8 @@ public:
      *             solution, defining primary and possibly secondary variables
      *             and information on the time level.
      * \return bool true if the solver converged
+     * \post If converged, the given `Variables` will represent the solution. If the solver
+     *       does not converge, it may be the case that they are in some intermediate (implementation-dependent) state.
      */
     virtual bool apply(Variables& vars) = 0;
 
