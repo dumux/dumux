@@ -1,11 +1,10 @@
 [Grid]
-File = annulus.msh
+File = annulus3d.msh
 
 [Problem]
 Name = test_hyperelastic_box
 YoungsModulus = 1000
 PoissonRatio = 0.48
-MuFactor = 100
 
 [Vtk]
 Precision = Float64
@@ -14,3 +13,7 @@ CoordPrecision = Float64
 [Newton]
 EnableDynamicOutput = false
 MaxRelativeShift = 1e-6
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-8
+PriVarMagnitude = 1e-3 1e-3 1e-3
