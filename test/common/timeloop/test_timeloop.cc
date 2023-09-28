@@ -233,6 +233,13 @@ void testWithDurations()
         if (!Dune::FloatCmp::eq(timeLoop.endTime(), 7200.0, 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "Resetting end time failed");
         std::cout << "Resetting from durations successful" << std::endl;
+
+        timeLoop.setTime(0.5h);
+        timeLoop.setMaxTimeStepSize(1h);
+        if (!Dune::FloatCmp::eq(timeLoop.time(), 1800.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Setting time failed");
+        if (!Dune::FloatCmp::eq(timeLoop.maxTimeStepSize(), 3600.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Setting max time step size failed");
     };
 
     _test(Dumux::TimeLoop<double>{0s, 1ms, 1h});
@@ -241,6 +248,13 @@ void testWithDurations()
     // with CTAD
     _test(Dumux::TimeLoop{0s, 1ms, 1h});
     _test(Dumux::CheckPointTimeLoop{0s, 1ms, 1h});
+
+    // try setting check points from durations
+    Dumux::CheckPointTimeLoop timeLoop{0s, 1ms, 1h};
+    timeLoop.setMaxTimeStepSize(1h);
+    timeLoop.setPeriodicCheckPoint(0.5ms);
+    if (!Dune::FloatCmp::eq(timeLoop.maxTimeStepSize(), 0.0005, 1e-10))
+        DUNE_THROW(Dune::InvalidStateException, "Setting periodic checkpoint failed");
 }
 
 int main(int argc, char* argv[])
