@@ -18,7 +18,7 @@ from the parameter input file. The constructor takes the expression and an array
 be evaluated with the function values provided in the same order as the names where specified. An arbitrary number of arguments is supported. ExprTK support very complex expressions, see https://www.partow.net/programming/exprtk/.
 - __Time loop__: Fixed a bug when the time is chosen to be negative and/or the end time is set to zero. (Before we assume time is always positive and endtime never zero.)
 - __Hyperelastic__: Added a hyperelastic model (large deformations) and a test (in geomechanics)
-
+- __Property system__: Added a function `inheritsFrom` that allows to query whether a type tag is present in the inheritance hierarchy of another type tag
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
