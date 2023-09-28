@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <queue>
 #include <iomanip>
+#include <chrono>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -92,6 +93,19 @@ public:
     virtual bool finished() const = 0;
 };
 
+#ifndef DOXYGEN
+namespace TimeLoopDetail {
+
+template<typename Scalar, typename R, typename P>
+Scalar toSeconds(std::chrono::duration<R, P> duration)
+{
+    using Second = std::chrono::duration<Scalar, std::ratio<1>>;
+    return std::chrono::duration_cast<Second>(duration).count();
+}
+
+} // namespace TimeLoopDetail
+#endif // DOXYGEN
+
 /*!
  * \ingroup Core
  * \brief The default time loop for instationary simulations
@@ -105,6 +119,20 @@ public:
     {
         reset(startTime, dt, tEnd, verbose);
     }
+
+    template<class Rep1, class Period1,
+             class Rep2, class Period2,
+             class Rep3, class Period3>
+    TimeLoop(std::chrono::duration<Rep1, Period1> startTime,
+             std::chrono::duration<Rep2, Period2> dt,
+             std::chrono::duration<Rep3, Period3> tEnd,
+             bool verbose = true)
+    : TimeLoop(
+        TimeLoopDetail::toSeconds<Scalar>(startTime),
+        TimeLoopDetail::toSeconds<Scalar>(dt),
+        TimeLoopDetail::toSeconds<Scalar>(tEnd),
+        verbose
+    ){}
 
     /*!
      *  \name Simulated time and time step management
@@ -405,12 +433,13 @@ template <class Scalar>
 class CheckPointTimeLoop : public TimeLoop<Scalar>
 {
 public:
-    CheckPointTimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
-    : TimeLoop<Scalar>(startTime, dt, tEnd, verbose)
+    template<class... Args>
+    CheckPointTimeLoop(Args&&... args)
+    : TimeLoop<Scalar>(std::forward<Args>(args)...)
     {
         periodicCheckPoints_ = false;
         deltaPeriodicCheckPoint_ = 0.0;
-        lastPeriodicCheckPoint_ = startTime;
+        lastPeriodicCheckPoint_ = this->startTime_;
         isCheckPoint_ = false;
     }
 
