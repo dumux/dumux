@@ -17,15 +17,9 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/timeloop.hh>
 
-int main(int argc, char* argv[])
+template<class MPIHelper>
+void testTimeLoops(const MPIHelper& mpiHelper, double tStart, double tEnd, double dt)
 {
-    // maybe initialize MPI and/or multithreading backend
-    Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    //! Standard time loop
-    double tStart = 0; double tEnd = 1; double dt = 0.1;
-
     //! Standard time loop
     {
         if (mpiHelper.rank() == 0) std::cout << "------- Test time loop ----------" << std::endl;
@@ -203,6 +197,15 @@ int main(int argc, char* argv[])
         if (result.empty())
             DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to std::cerr");
     }
+}
+
+int main(int argc, char* argv[])
+{
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
+
+    testTimeLoops(mpiHelper, 0.0, 1.0, 0.1);
 
     return 0;
 }
