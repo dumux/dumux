@@ -243,7 +243,8 @@ private:
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        typename GridIVIndexSets::DualGridIndexSet dualIdSet(this->gridView());
+        using DualGridIndexSet = CCMpfaDualGridIndexSet<GridView>;
+        typename DualGridIndexSet::Factory dualIdSetFactory(this->gridView());
 
         // Build the SCVs and SCV faces
         GridIndexType scvfIdx = 0;
@@ -349,7 +350,7 @@ private:
                                         boundary);
 
                     // insert the scvf data into the dual grid index set
-                    dualIdSet[vIdxGlobal].insert(scvfs_.back());
+                    dualIdSetFactory.insertAt(vIdxGlobal, scvfs_.back());
 
                     // increment scvf counter
                     scvfIdx++;
@@ -401,7 +402,7 @@ private:
 
         // Initialize the grid interaction volume index sets
         timer.reset();
-        ivIndexSets_.update(*this, std::move(dualIdSet));
+        ivIndexSets_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
         std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
 
         // build the connectivity map for an efficient assembly
@@ -621,7 +622,8 @@ private:
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        typename GridIVIndexSets::DualGridIndexSet dualIdSet(this->gridView());
+        using DualGridIndexSet = CCMpfaDualGridIndexSet<GridView>;
+        typename DualGridIndexSet::Factory dualIdSetFactory(this->gridView());
 
         // keep track of boundary scvfs and scvf vertex indices in order to set up flip scvf index set
         const auto maxNumScvfs = numScvs_*LocalView::maxNumElementScvfs;
@@ -712,7 +714,7 @@ private:
                                                     } ();
 
                     // insert the scvf data into the dual grid index set
-                    dualIdSet[vIdxGlobal].insert(numScvf_, eIdx, boundary);
+                    dualIdSetFactory.insertAt(vIdxGlobal, numScvf_, eIdx, boundary);
 
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
@@ -773,7 +775,7 @@ private:
 
         // Initialize the grid interaction volume index sets
         timer.reset();
-        ivIndexSets_.update(*this, std::move(dualIdSet));
+        ivIndexSets_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
         std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
 
         // build the connectivity map for an efficient assembly

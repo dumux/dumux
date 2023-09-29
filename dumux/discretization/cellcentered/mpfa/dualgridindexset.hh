@@ -67,11 +67,8 @@ public:
         using GridView = GV;
     };
 
-    //! Constructor
-    CCMpfaDualGridNodalIndexSet() : numBoundaryScvfs_(0) {}
-
     //! Inserts data for a given scvf
-    template<typename SubControlVolumeFace>
+    template<class SubControlVolumeFace>
     void insert(const SubControlVolumeFace& scvf)
     { insert(scvf.index(), scvf.insideScvIdx(), scvf.boundary()); }
 
@@ -107,6 +104,12 @@ public:
             localScvfIndicesInScv_.push_back({curScvfLocalIdx});
             scvIndices_.push_back(insideScvIdx);
         }
+    }
+
+    template<class FlipScvfIndexSet>
+    void build(const FlipScvfIndexSet& flipScvfIndexSet)
+    {
+
     }
 
     //! returns the number of scvs around the node
@@ -177,7 +180,7 @@ private:
     typename Storage::NodalScvDataStorage<GI> scvIndices_;                        //!< The indices of the scvs around a dual grid node
     typename Storage::NodalScvDataStorage<DimIndexVector> localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
 
-    std::size_t numBoundaryScvfs_;                                    //!< stores how many boundary scvfs are embedded in this dual grid node
+    std::size_t numBoundaryScvfs_ = 0;                                //!< stores how many boundary scvfs are embedded in this dual grid node
     typename Storage::NodalScvfDataStorage<GI> scvfIndices_;          //!< the indices of the scvfs around a dual grid node
     typename Storage::NodalScvfDataStorage<bool> scvfIsOnBoundary_;   //!< Maps to each scvf a boolean to indicate if it is on the boundary
     typename Storage::NodalScvfDataStorage<LI> scvfInsideScvIndices_; //!< The inside local scv index for each scvf
@@ -194,6 +197,29 @@ public:
     using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
     using GridIndexType = typename NodalIndexSet::GridIndexType;
 
+    class Factory
+    {
+    public:
+        Factory(const GridView& gv)
+        : indexSet_{gv}
+        {}
+
+        template<class... Args>
+        void insertAt(GridIndexType i, Args&&... args)
+        { indexSet_.nodalIndexSets_[i].insert(std::forward<Args>(args)...); }
+
+        template<class FlipScvfIndexSet>
+        CCMpfaDualGridIndexSet<GridView>&& build(const FlipScvfIndexSet& flipScvfIndexSet) &&
+        {
+            for (auto& indexSet : indexSet_.nodalIndexSets_)
+                indexSet.build(flipScvfIndexSet);
+            return std::move(indexSet_);
+        }
+
+    private:
+        CCMpfaDualGridIndexSet<GridView> indexSet_;
+    };
+
     CCMpfaDualGridIndexSet() = delete;
     CCMpfaDualGridIndexSet(const GridView& gridView)
     : nodalIndexSets_(gridView.size(GridView::dimension))
@@ -203,19 +229,14 @@ public:
     const NodalIndexSet& operator[](const SubControlVolumeFace& scvf) const
     { return nodalIndexSets_[scvf.vertexIndex()]; }
 
-    template<class SubControlVolumeFace>
-    NodalIndexSet& operator[](const SubControlVolumeFace& scvf)
-    { return nodalIndexSets_[scvf.vertexIndex()]; }
-
     const NodalIndexSet& operator[](GridIndexType i) const
     { return nodalIndexSets_[i]; }
 
-    NodalIndexSet& operator[](GridIndexType i)
-    { return nodalIndexSets_[i]; }
-
 private:
+    friend Factory;
     std::vector<NodalIndexSet> nodalIndexSets_;
 };
+
 
 } // end namespace Dumux
 
