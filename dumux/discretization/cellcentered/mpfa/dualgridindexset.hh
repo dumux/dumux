@@ -57,6 +57,7 @@ class CCMpfaDualGridNodalIndexSet
     using GI = typename GV::IndexSet::IndexType;
     using DimIndexVector = Dumux::ReservedVector<LI, GV::dimension>;
     using ScvfIndicesInScvStorage = typename Storage::NodalScvDataStorage<DimIndexVector>;
+    using LocalScvfLocalNeighborIndices = typename Storage::ScvfNeighborDataStorage<GI>;
 
 public:
     using LocalIndexType = LI;
@@ -65,6 +66,22 @@ public:
     // for compatibility
     struct Traits {
         using GridView = GV;
+    };
+
+    class LocalFace {
+    public:
+        LocalFace(LocalIndexType insideIdx)
+        : adjacentScvfs_(1, insideIdx)
+        {}
+
+        void push_back(LocalIndexType i)
+        { adjacentScvfs_.push_back(i); }
+
+        void reserve(std::size_t n)
+        { adjacentScvfs_.reserve(n); }
+
+    private:
+        typename Storage::ScvfNeighborDataStorage<LI> adjacentScvfs_;
     };
 
     //! Inserts data for a given scvf
@@ -95,21 +112,46 @@ public:
         if (it != scvIndices_.end())
         {
             const auto scvIdxLocal = std::distance(scvIndices_.begin(), it);
-            scvfInsideScvIndices_.push_back(scvIdxLocal);
-            localScvfIndicesInScv_[scvIdxLocal].push_back(curScvfLocalIdx);
+            scvfToInsideScv_.push_back(scvIdxLocal);
+            scvToEmbeddedScvfs_[scvIdxLocal].push_back(curScvfLocalIdx);
         }
         else
         {
-            scvfInsideScvIndices_.push_back(scvIndices_.size());
-            localScvfIndicesInScv_.push_back({curScvfLocalIdx});
+            scvfToInsideScv_.push_back(scvIndices_.size());
+            scvToEmbeddedScvfs_.push_back({curScvfLocalIdx});
             scvIndices_.push_back(insideScvIdx);
         }
     }
 
+    //! Finalize the index set by constructing the local faces
     template<class FlipScvfIndexSet>
     void build(const FlipScvfIndexSet& flipScvfIndexSet)
     {
+        std::vector<bool> isHandled(numScvfs(), false);
+        for (LocalIndexType i = 0; i < numScvfs(); ++i)
+        {
+            if (isHandled[i])
+                continue;
 
+            localFaces_.push_back({i});
+            isHandled[i] = true;
+            if (scvfIsOnBoundary(i))
+                continue;
+
+            // construct local index sets
+            const auto& flipScvfIndices = flipScvfIndexSet[gridScvfIndex(i)];
+            localFaces_.back().reserve(flipScvfIndices.size() + 1);
+
+            for (const auto flipScvfIndex : flipScvfIndices)
+            {
+                auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), flipScvfIndex);
+                if (it == scvfIndices_.end())
+                    DUNE_THROW(Dune::InvalidStateException, "Could not map outside scvf to node-local index set");
+                const auto localScvfIndex = std::distance(scvfIndices_.begin(), it);
+                localFaces_.back().push_back(localScvfIndex);
+                isHandled[localScvfIndex] = true;
+            }
+        }
     }
 
     //! returns the number of scvs around the node
@@ -157,33 +199,37 @@ public:
     GridIndexType gridScvfIndex(unsigned int i, unsigned int j) const
     {
         assert(i < numScvs());
-        assert(j < localScvfIndicesInScv_[i].size());
-        return scvfIndices_[ localScvfIndicesInScv_[i][j] ];
+        assert(j < scvToEmbeddedScvfs_[i].size());
+        return scvfIndices_[scvToEmbeddedScvfs_[i][j]];
     }
 
     //! returns the node-local index of the j-th scvf embedded in the i-th scv
     LocalIndexType localScvfIndex(unsigned int i, unsigned int j) const
     {
         assert(i < numScvs());
-        assert(j < localScvfIndicesInScv_[i].size());
-        return localScvfIndicesInScv_[i][j];
+        assert(j < scvToEmbeddedScvfs_[i].size());
+        return scvToEmbeddedScvfs_[i][j];
     }
 
     //! returns the node-local index of the inside scv of the i-th scvf
     LocalIndexType insideScvLocalIndex(unsigned int i) const
     {
         assert(i < numScvfs());
-        return scvfInsideScvIndices_[i];
+        return scvfToInsideScv_[i];
     }
 
 private:
-    typename Storage::NodalScvDataStorage<GI> scvIndices_;                        //!< The indices of the scvs around a dual grid node
-    typename Storage::NodalScvDataStorage<DimIndexVector> localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
+    std::size_t numBoundaryScvfs_ = 0;
 
-    std::size_t numBoundaryScvfs_ = 0;                                //!< stores how many boundary scvfs are embedded in this dual grid node
-    typename Storage::NodalScvfDataStorage<GI> scvfIndices_;          //!< the indices of the scvfs around a dual grid node
-    typename Storage::NodalScvfDataStorage<bool> scvfIsOnBoundary_;   //!< Maps to each scvf a boolean to indicate if it is on the boundary
-    typename Storage::NodalScvfDataStorage<LI> scvfInsideScvIndices_; //!< The inside local scv index for each scvf
+    typename Storage::NodalScvDataStorage<GI> scvIndices_;
+
+    typename Storage::NodalScvDataStorage<DimIndexVector> scvToEmbeddedScvfs_;
+    typename Storage::NodalScvfDataStorage<LI> scvfToInsideScv_;
+
+    typename Storage::NodalScvfDataStorage<GI> scvfIndices_;
+    typename Storage::NodalScvfDataStorage<bool> scvfIsOnBoundary_;
+
+    typename Storage::NodalScvfDataStorage<LocalFace> localFaces_;
 };
 
 /*!
