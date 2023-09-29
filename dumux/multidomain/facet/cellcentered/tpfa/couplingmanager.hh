@@ -424,7 +424,7 @@ public:
             auto fvGeom = localView(ldGridGeometry);
             for (const auto lowDimElemIdx : elementStencil)
             {
-                const auto& ldSol = Assembler::isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
+                const auto& ldSol = assembler.isImplicit() ? this->curSol(lowDimId) : assembler.prevSol()[lowDimId];
                 const auto& ldProblem = this->problem(lowDimId);
 
                 const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
@@ -484,12 +484,12 @@ public:
             bindCouplingContext(bulkId, bulkElem, assembler);
 
             // evaluate variables on old/new time level depending on time disc scheme
-            const auto& bulkSol = Assembler::isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
+            const auto& bulkSol = assembler.isImplicit() ? this->curSol(bulkId) : assembler.prevSol()[bulkId];
 
             // then simply bind the local views of that first neighbor
             auto bulkFvGeom = localView(bulkGridGeom).bind(bulkElem);
-            auto bulkElemVolVars = Assembler::isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol)
-                                                           : localView(assembler.gridVariables(bulkId).prevGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol);
+            auto bulkElemVolVars = assembler.isImplicit() ? localView(assembler.gridVariables(bulkId).curGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol)
+                                                          : localView(assembler.gridVariables(bulkId).prevGridVolVars()).bind(bulkElem, bulkFvGeom, bulkSol);
             auto bulkElemFluxVarsCache = localView(assembler.gridVariables(bulkId).gridFluxVarsCache()).bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
             lowDimContext_.isSet = true;
@@ -518,7 +518,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!BulkLocalAssembler::isImplicit())
+        if (!bulkLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
@@ -615,7 +615,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!lowDimLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
@@ -662,7 +662,7 @@ public:
         // Since coupling only occurs via the fluxes, the context does not
         // have to be updated in explicit time discretization schemes, where
         // they are strictly evaluated on the old time level
-        if (!LowDimLocalAssembler::isImplicit())
+        if (!lowDimLocalAssembler.isImplicit())
             return;
 
         // skip the rest if context is empty
@@ -718,7 +718,7 @@ public:
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed (implicit only)
-        if (BulkLocalAssembler::isImplicit())
+        if (bulkLocalAssembler.isImplicit())
             fluxVarsCache.update(bulkLocalAssembler.element(),
                                  bulkLocalAssembler.fvGeometry(),
                                  bulkLocalAssembler.curElemVolVars());
@@ -735,7 +735,7 @@ public:
                                 UpdatableFluxVarCache& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed (implicit only)
-        if (BulkLocalAssembler::isImplicit())
+        if (bulkLocalAssembler.isImplicit())
         {
             const auto elemVolVars = localView(gridVolVars).bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol(bulkId));
             fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);

@@ -21,15 +21,16 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/pdesolver.hh>
-#include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+
+#include <dumux/experimental/assembly/multistagefvassembler.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
 #include "properties.hh"
 
@@ -42,11 +43,6 @@ int main(int argc, char** argv)
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    //! print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
 
     // parse the command line arguments and input file
     Parameters::init(argc, argv);
@@ -97,21 +93,22 @@ int main(int argc, char** argv)
 
     //! instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
+    auto timeSteppingMethod = std::make_shared<Experimental::MultiStage::ExplicitEuler<Scalar>>();
 
     //! the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric, /*implicit=*/false>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    using Assembler = Experimental::MultiStageFVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeSteppingMethod, xOld);
 
     //! the linear solver
     using LinearSolver = ExplicitDiagonalSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //! the system solver
-    LinearPDESolver<Assembler, LinearSolver> solver(assembler, linearSolver);
+    using Solver = LinearPDESolver<Assembler, LinearSolver>;
+    auto solver = std::make_shared<Solver>(assembler, linearSolver);
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    // run instationary non-linear simulation
-    /////////////////////////////////////////////////////////////////////////////////////////////////
+    using TimeStepper = Experimental::MultiStageTimeStepper<Solver>;
+    TimeStepper timeStepper(solver, timeSteppingMethod);
 
     //! set some check points for the time loop
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
@@ -120,8 +117,8 @@ int main(int argc, char** argv)
     timeLoop->start();
     while (!timeLoop->finished())
     {
-        // assemble & solve
-        solver.solve(x);
+        // time integration
+        timeStepper.step(x, timeLoop->time(), timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -143,12 +140,7 @@ int main(int argc, char** argv)
 
     timeLoop->finalize(leafGridView.comm());
 
-    ////////////////////////////////////////////////////////////
-    // finalize, print dumux message to say goodbye
-    ////////////////////////////////////////////////////////////
-
-    //! print dumux end message
-    if (mpiHelper.rank() == 0)
+    if (leafGridView.comm().rank() == 0)
         Parameters::print();
 
     return 0;

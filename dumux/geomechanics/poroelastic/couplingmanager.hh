@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <dune/common/std/type_traits.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -93,6 +94,15 @@ class PoroMechanicsCouplingManager : public virtual CouplingManager< MDTraits >
         std::unique_ptr< FVElementGeometry<PMFlowId> > pmFlowFvGeometry;
         std::unique_ptr< ElementVolumeVariables<PMFlowId> > pmFlowElemVolVars;
     };
+
+    template<typename T>
+    using Storage = decltype(std::declval<T>().localResidual().evalStorage(
+        std::declval<T>().fvGeometry(),
+        std::declval<T>().curElemVolVars()
+    ));
+
+    template<typename LA>
+    static constexpr bool hasExperimentalEvalStorage = Dune::Std::is_detected_v<Storage, LA>;
 
 public:
 
@@ -305,10 +315,16 @@ public:
 
         // If the residual instationary, evaluate storage
         if (!pmFlowLocalAssembler.localResidual().isStationary())
-            res += pmFlowLocalAssembler.localResidual().evalStorage(pmFlowLocalAssembler.element(),
-                                                                    pmFlowLocalAssembler.fvGeometry(),
-                                                                    pmFlowLocalAssembler.prevElemVolVars(),
-                                                                    pmFlowLocalAssembler.curElemVolVars());
+        {
+            if constexpr (hasExperimentalEvalStorage<PMFlowLocalAssembler>)
+                res += pmFlowLocalAssembler.localResidual().evalStorage(pmFlowLocalAssembler.fvGeometry(),
+                                                                        pmFlowLocalAssembler.curElemVolVars());
+            else
+                res += pmFlowLocalAssembler.localResidual().evalStorage(pmFlowLocalAssembler.element(),
+                                                                        pmFlowLocalAssembler.fvGeometry(),
+                                                                        pmFlowLocalAssembler.prevElemVolVars(),
+                                                                        pmFlowLocalAssembler.curElemVolVars());
+        }
 
         return res;
     }

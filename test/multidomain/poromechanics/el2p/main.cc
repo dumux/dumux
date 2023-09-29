@@ -25,12 +25,17 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 
+
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+
+#include <dumux/experimental/assembly/multistagemultidomainfvassembler.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
 #include "properties.hh"
 
@@ -138,12 +143,27 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDT);
 
+    const auto timeSteppingMethod = []() -> std::shared_ptr<Experimental::MultiStageMethod<double>>
+    {
+        const auto timeStepScheme = getParam<std::string>("TimeLoop.Scheme", "DIRK3");
+        if (timeStepScheme == "DIRK3")
+            return std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<double>>();
+        else if (timeStepScheme == "ImplicitEuler")
+            return std::make_shared<Experimental::MultiStage::ImplicitEuler<double>>();
+        else if (timeStepScheme == "CrankNicolson")
+            return std::make_shared<Experimental::MultiStage::Theta<double>>(0.5);
+        else
+            DUNE_THROW(Dumux::ParameterException,
+                "Unknown time stepping scheme. Possible values are "
+                << "DIRK3 or ImplicitEuler or CrankNicolson");
+    }();
+
     // the assembler
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( std::make_tuple(twoPProblem, poroMechProblem),
-                                                  std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
-                                                  std::make_tuple(twoPGridVariables, poroMechGridVariables),
-                                                  couplingManager, timeLoop, xOld);
+    using Assembler = Experimental::MultiStageMultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(twoPProblem, poroMechProblem),
+                                                 std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
+                                                 std::make_tuple(twoPGridVariables, poroMechGridVariables),
+                                                 couplingManager, timeSteppingMethod, xOld);
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -151,13 +171,16 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
+
+    using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
+    TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
 
     // time loop
     timeLoop->start(); do
     {
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x, *timeLoop);
+        timeStepper.step(x, timeLoop->time(), timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -179,8 +202,9 @@ int main(int argc, char** argv)
         const auto& twoPLocalResidual = assembler->localResidual(twoPId);
         for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
         {
-            auto storageVec = twoPLocalResidual.evalStorage(*twoPProblem, element, *twoPFvGridGeometry, *twoPGridVariables, x[twoPId]);
-            storage += storageVec[0];
+            const auto fvGeometry = localView(*twoPFvGridGeometry).bindElement(element);
+            const auto elemVolVars = localView(twoPGridVariables->curGridVolVars()).bindElement(element, fvGeometry, x[twoPId]);
+            storage += twoPLocalResidual.evalStorage(fvGeometry, elemVolVars)[0];
         }
         std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
         std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
@@ -190,7 +214,7 @@ int main(int argc, char** argv)
 
 
     // output some Newton statistics
-    nonLinearSolver.report();
+    nonLinearSolver->report();
 
     timeLoop->finalize(leafGridView.comm());
 

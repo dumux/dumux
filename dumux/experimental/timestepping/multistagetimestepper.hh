@@ -16,11 +16,9 @@
 #include <vector>
 #include <cmath>
 
-namespace Dumux::Experimental {
+#include <dumux/experimental/timestepping/multistagemethods.hh>
 
-//! forward declaration
-template<class Scalar>
-class MultiStageMethod;
+namespace Dumux::Experimental {
 
 //! Data object for the parameters of a given stage
 template<class Scalar>
@@ -39,7 +37,7 @@ public:
         for (std::size_t k = 0; k < size_; ++k)
         {
             auto& p = params_[k];
-            p.alpha = m.temporalWeight(i, k);
+            p.alpha = m.temporalWeight(i, k);///dt;
             p.betaDt = m.spatialWeight(i, k)*dt;
             p.timeAtStage = t + m.timeStepWeight(k)*dt;
             p.dtFraction = m.timeStepWeight(k);
@@ -88,11 +86,10 @@ private:
  *       a stage can only depend on the values of the same stage and stages before
  *       but not future stages (which would require solving larger linear systems)
  */
-template<class PDESolver>
+template<class PDESolver, class Scalar = double>
 class MultiStageTimeStepper
 {
     using Variables = typename PDESolver::Variables;
-    using Scalar = typename Variables::Scalar;
     using StageParams = MultiStageParams<Scalar>;
 
 public:
@@ -107,7 +104,11 @@ public:
                           std::shared_ptr<const MultiStageMethod<Scalar>> msMethod)
     : pdeSolver_(pdeSolver)
     , msMethod_(msMethod)
-    {}
+    {
+        std::cout << "Initialize time stepper with method " << msMethod_->name()
+                  << Fmt::format(" ({} stage{})", msMethod_->numStages(), (msMethod_->numStages() > 1 ? "s" : ""))
+                  << std::endl;
+    }
 
     /*!
      * \brief Advance one time step of the given time loop
@@ -124,11 +125,11 @@ public:
 
         for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
         {
-            // extract parameters for this stage from the time stepping method
-            auto stageParams = std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt);
-
             // prepare the assembler for this stage
-            pdeSolver_->assembler().prepareStage(vars, stageParams);
+            pdeSolver_->assembler().prepareStage(
+                vars,
+                std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt)
+            );
 
             // assemble & solve
             pdeSolver_->solve(vars);
@@ -137,12 +138,6 @@ public:
         // clear traces of previously registered stages
         pdeSolver_->assembler().clearStages();
     }
-
-    /*!
-     * \brief Set/change the time step method
-     */
-    void setMethod(std::shared_ptr<const MultiStageMethod<Scalar>> msMethod)
-    { msMethod_ = msMethod; }
 
 private:
     std::shared_ptr<PDESolver> pdeSolver_;
