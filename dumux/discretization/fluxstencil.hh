@@ -103,12 +103,7 @@ public:
                                   const SubControlVolumeFace& scvf)
     {
         const auto& gridGeometry = fvGeometry.gridGeometry();
-
-        // return the scv (element) indices in the interaction region
-        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-            return gridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).gridScvIndices();
-        else
-            return gridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).gridScvIndices();
+        return gridGeometry.gridInteractionVolumeIndexSets().get(scvf).gridScvIndices();
     }
 };
 

@@ -322,8 +322,8 @@ private:
         // search for ivs at boundary vertices
         for (const auto& scvf : scvfs(fvGeometry))
             gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()) ?
-                    handleScvf(scvf, gridIvIndexSets.secondaryIndexSet(scvf), true) :
-                    handleScvf(scvf, gridIvIndexSets.primaryIndexSet(scvf),  false) ;
+                    handleScvf(scvf, gridIvIndexSets.get(scvf), true) :
+                    handleScvf(scvf, gridIvIndexSets.get(scvf),  false) ;
 
         // skip the rest if there are no boundary caches to be created
         if (numCaches > 0)
@@ -336,9 +336,9 @@ private:
                 {
                     const auto& scvfJ = fvGeometry.scvf(scvfJIdx);
                     if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvfJ.vertexIndex()))
-                        handleScvf(scvfJ, gridIvIndexSets.secondaryIndexSet(scvfJ), true);
+                        handleScvf(scvfJ, gridIvIndexSets.get(scvfJ), true);
                     else
-                        handleScvf(scvfJ, gridIvIndexSets.primaryIndexSet(scvfJ), false);
+                        handleScvf(scvfJ, gridIvIndexSets.get(scvfJ), false);
                 }
             }
 
@@ -378,10 +378,7 @@ private:
     {
         const auto& gridGeometry = gridFluxVarsCachePtr_->problem().gridGeometry();
         const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
-        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-            return gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
-        else
-            return gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+        return gridIvIndexSets.get(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
     }
 
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;

@@ -30,8 +30,8 @@ template<class FVG, class PI, class SI = PI>
 class CCMpfaGridInteractionVolumeIndexSets
 {
     using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
-    using PrimaryIVIndexSet = typename PI::Traits::IndexSet;
-    using SecondaryIVIndexSet = typename SI::Traits::IndexSet;
+    // intermediate step. IndexSets are no longer different
+    using IVIndexSet = typename PI::Traits::IndexSet;
     using GV = typename FVG::GridView;
 
 public:
@@ -53,8 +53,7 @@ public:
         dualGridIndexSet_ = std::make_unique<DualGridIndexSet>(std::move(dualGridIdSet));
 
         // clear containers
-        primaryIVIndexSets_.clear();
-        secondaryIVIndexSets_.clear();
+        indexSets_.clear();
         scvfIndexMap_.clear();
 
         // find out how many primary & secondary interaction volumes are needed
@@ -70,8 +69,7 @@ public:
         }
 
         // reserve memory
-        primaryIVIndexSets_.reserve(numPrimaryIV_);
-        secondaryIVIndexSets_.reserve(numSecondaryIV_);
+        indexSets_.reserve(numPrimaryIV_ + numSecondaryIV_);
         scvfIndexMap_.resize(gridGeometry.numScvf());
 
         // create interaction volume index sets around each vertex
@@ -79,12 +77,12 @@ public:
         {
             const auto vIdxGlobal = gridGeometry.vertexMapper().index(vertex);
             if (!gridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                PrimaryInteractionVolume::addIVIndexSets(primaryIVIndexSets_,
+                PrimaryInteractionVolume::addIVIndexSets(indexSets_,
                                                          scvfIndexMap_,
                                                          (*dualGridIndexSet_)[vIdxGlobal],
                                                          gridGeometry.flipScvfIndexSet());
             else
-                SecondaryInteractionVolume::addIVIndexSets(secondaryIVIndexSets_,
+                SecondaryInteractionVolume::addIVIndexSets(indexSets_,
                                                            scvfIndexMap_,
                                                            (*dualGridIndexSet_)[vIdxGlobal],
                                                            gridGeometry.flipScvfIndexSet());
@@ -92,28 +90,19 @@ public:
     }
 
     //! Return the iv index set in which a given scvf is embedded in
-    const PrimaryIVIndexSet& primaryIndexSet(const SubControlVolumeFace& scvf) const
-    { return primaryIndexSet(scvf.index()); }
+    const IVIndexSet& get(const SubControlVolumeFace& scvf) const
+    { return get(scvf.index()); }
 
     //! Return the iv index set in which a given scvf (index) is embedded in
-    const PrimaryIVIndexSet& primaryIndexSet(const GridIndexType scvfIdx) const
-    { return primaryIVIndexSets_[scvfIndexMap_[scvfIdx]]; }
-
-    //! Return the iv index set in which a given scvf is embedded in
-    const SecondaryIVIndexSet& secondaryIndexSet(const SubControlVolumeFace& scvf) const
-    { return secondaryIndexSet(scvf.index()); }
-
-    //! Return the iv index set in which a given scvf (index) is embedded in
-    const SecondaryIVIndexSet& secondaryIndexSet(const GridIndexType scvfIdx) const
-    { return secondaryIVIndexSets_[scvfIndexMap_[scvfIdx]]; }
+    const IVIndexSet& get(const GridIndexType scvfIdx) const
+    { return indexSets_[scvfIndexMap_[scvfIdx]]; }
 
     //! Returns number of primary/secondary interaction volumes on the grid view
     std::size_t numPrimaryInteractionVolumes() const { return numPrimaryIV_; }
     std::size_t numSecondaryInteractionVolumes() const { return numSecondaryIV_; }
 
 private:
-    std::vector<PrimaryIVIndexSet> primaryIVIndexSets_;
-    std::vector<SecondaryIVIndexSet> secondaryIVIndexSets_;
+    std::vector<IVIndexSet> indexSets_;
     std::vector<GridIndexType> scvfIndexMap_;
 
     std::size_t numPrimaryIV_;

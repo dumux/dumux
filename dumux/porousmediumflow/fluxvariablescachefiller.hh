@@ -254,7 +254,7 @@ public:
             {
                 // create new interaction volume
                 const auto ivIndexInContainer = ivDataStorage.secondaryInteractionVolumes.size();
-                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf);
+                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
                 ivDataStorage.secondaryInteractionVolumes.emplace_back();
                 secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes.back();
                 secondaryIv_->bind(indexSet, problem(), fvGeometry);
@@ -287,7 +287,7 @@ public:
             {
                 // create new interaction volume
                 const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
-                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf);
+                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
                 ivDataStorage.primaryInteractionVolumes.emplace_back();
                 primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
                 primaryIv_->bind(indexSet, problem(), fvGeometry);

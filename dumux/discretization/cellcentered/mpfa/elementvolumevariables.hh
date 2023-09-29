@@ -42,12 +42,7 @@ namespace CCMpfa {
 
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
-        {
-            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-            else
-                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
-        }
+            numBoundaryVolVars += gridIvIndexSets.get(scvf).nodalIndexSet().numBoundaryScvfs();
 
         return numBoundaryVolVars;
     }
@@ -159,14 +154,8 @@ namespace CCMpfa {
         // Update boundary volume variables in the neighbors
         const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
         for (const auto& scvf : scvfs(fvGeometry))
-        {
-            if (!gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                          gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet() );
-            else
-                addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                          gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet() );
-        }
+            addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
+                                        gridIvIndexSets.get(scvf).nodalIndexSet() );
     }
 } // end namespace CCMpfa
 
