@@ -15,6 +15,7 @@
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -88,7 +89,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
     class MpfaFicksLawCache
     {
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
-        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
+        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
         static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
         static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();

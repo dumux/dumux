@@ -16,6 +16,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/multilineargeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
 
@@ -57,10 +58,11 @@ class CCMpfaInteractionVolumeBase
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using NodalStencilType = typename T::IndexSet::NodalGridStencilType;
     using LocalIndexType = typename T::IndexSet::LocalIndexType;
+    using GridIndexType = typename T::IndexSet::GridIndexType;
     using LocalScvType = typename T::LocalScvType;
     using LocalScvfType = typename T::LocalScvfType;
+    using NodalStencilType = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     using ScvGeometry = Dune::MultiLinearGeometry<typename LocalScvType::ctype,
                                                   LocalScvType::myDimension,

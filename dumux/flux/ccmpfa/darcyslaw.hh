@@ -19,6 +19,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
 
@@ -80,7 +81,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
 
-        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
+        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
         static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::AdvectionHandle;

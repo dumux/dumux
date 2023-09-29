@@ -17,6 +17,7 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
 
@@ -94,7 +95,7 @@ public:
     using ScvfStencilIForJ = std::vector<GridIndexType>;
 
     //! The flux stencil type
-    using Stencil = typename NodalIndexSet::NodalGridStencilType;
+    using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     //! Returns the indices of the elements required for flux calculation on an scvf.
     static const Stencil& stencil(const Element& element,

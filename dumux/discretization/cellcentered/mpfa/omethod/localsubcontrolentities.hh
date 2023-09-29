@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_SUBCONTROLENTITIES_HH
 
 #include <dune/common/fvector.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux
 {
@@ -124,7 +125,9 @@ private:
 template< class IvIndexSet >
 struct CCMpfaOInteractionVolumeLocalScvf
 {
-  using ScvfNeighborLocalIndexSet = typename IvIndexSet::ScvfNeighborLocalIndexSet;
+    using GI = typename IvIndexSet::GridIndexType;
+    using GV = typename IvIndexSet::NodalIndexSet::Traits::GridView;
+    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<GI>;
 
 public:
     // export index types

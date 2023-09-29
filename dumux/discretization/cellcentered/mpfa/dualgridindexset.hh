@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup CCMpfaDiscretization
- * \brief Class for the index sets of the dual grid in mpfa schemes.
+ * \brief Index set for the dual grid in mpfa schemes.
  */
 #ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
 #define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
@@ -15,68 +15,57 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
 
-#include <dune/common/reservedvector.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/reservedvector.hh>
 
 namespace Dumux {
+namespace CCMpfa {
 
-/*!
- * \ingroup CCMpfaDiscretization
- * \brief Default traits to be used in conjunction
- *        with the dual grid nodal index set.
- *
- * \tparam GV The grid view type
- */
-template<class GV>
-struct NodalIndexSetDefaultTraits
+template<typename GridView>
+inline constexpr unsigned int minNumScvsAtVertex = int(GridView::dimension) == 2 ? 4 : 8;
+
+template<typename GridView>
+inline constexpr unsigned int minNumScvfsAtVertex = int(GridView::dimension) == 2 ? 4 : 12;
+
+template<typename GridView>
+struct DataStorage
 {
-    using GridView = GV;
-    using GridIndexType = typename IndexTraits<GV>::GridIndex;
-    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
-
-    //! per default, we use dynamic data containers (iv size unknown)
-    template< class T > using NodalScvDataStorage = std::vector< T >;
-    template< class T > using NodalScvfDataStorage = std::vector< T >;
-
-    //! store data on neighbors of scvfs in static containers if possible
-    template< class T >
-    using ScvfNeighborDataStorage = typename std::conditional_t< (int(GV::dimension)<int(GV::dimensionworld)),
-                                                                 std::vector< T >,
-                                                                 Dune::ReservedVector< T, 2 > >;
+    template<typename T> using NodalScvDataStorage = Dumux::ReservedVector<T, minNumScvsAtVertex<GridView>>;
+    template<typename T> using NodalScvfDataStorage = Dumux::ReservedVector<T, minNumScvfsAtVertex<GridView>>;
+    template<typename T> using ScvfNeighborDataStorage = std::conditional_t<
+        int(GridView::dimension) < int(GridView::dimensionworld),
+        std::vector<T>,
+        Dumux::ReservedVector<T, 2>
+    >;
 };
 
+} // namespace Mpfa
+
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief Nodal index set for mpfa schemes, constructed
- *        around grid vertices.
- *
- * \tparam T The traits class to be used
+ * \brief Nodal index set for mpfa schemes, constructed around grid vertices.
+ * \tparam GV The grid view
  */
-template< class T >
+template<class GV>
 class CCMpfaDualGridNodalIndexSet
 {
-    using LI = typename T::LocalIndexType;
-    using GI = typename T::GridIndexType;
+    using Storage = CCMpfa::DataStorage<GV>;
 
-    using DimIndexVector = Dune::ReservedVector<LI, T::GridView::dimension>;
-    using ScvfIndicesInScvStorage = typename T::template NodalScvDataStorage< DimIndexVector >;
+    using LI = std::uint_least16_t;
+    using GI = typename GV::IndexSet::IndexType;
+    using DimIndexVector = Dumux::ReservedVector<LI, GV::dimension>;
+    using ScvfIndicesInScvStorage = typename Storage::NodalScvDataStorage<DimIndexVector>;
 
 public:
-    //! Export the traits type
-    using Traits = T;
-
-    //! Export the index types used
     using LocalIndexType = LI;
     using GridIndexType = GI;
 
-    //! Export the stencil types used
-    using NodalGridStencilType = typename T::template NodalScvDataStorage< GI >;
-    using NodalLocalStencilType = typename T::template NodalScvDataStorage< LI >;
-    using NodalGridScvfStencilType = typename T::template NodalScvfDataStorage< GI >;
-
-    //! Data structure to store the neighboring scv indices of an scvf (grid/local indices)
-    using ScvfNeighborLocalIndexSet = typename T::template ScvfNeighborDataStorage< LI >;
+    // for compatibility
+    struct Traits {
+        using GridView = GV;
+    };
 
     //! Constructor
     CCMpfaDualGridNodalIndexSet() : numBoundaryScvfs_(0) {}
@@ -84,9 +73,7 @@ public:
     //! Inserts data for a given scvf
     template<typename SubControlVolumeFace>
     void insert(const SubControlVolumeFace& scvf)
-    {
-        insert(scvf.index(), scvf.insideScvIdx(), scvf.boundary());
-    }
+    { insert(scvf.index(), scvf.insideScvIdx(), scvf.boundary()); }
 
     //! Inserts scvf data
     void insert(const GridIndexType scvfIdx,
@@ -135,11 +122,11 @@ public:
     { return numBoundaryScvfs_; }
 
     //! returns the grid scv indices connected to this dual grid node
-    const NodalGridStencilType& gridScvIndices() const
+    const auto& gridScvIndices() const
     { return scvIndices_; }
 
     //! returns the grid scvf indices connected to this dual grid node
-    const NodalGridScvfStencilType& gridScvfIndices() const
+    const auto& gridScvfIndices() const
     { return scvfIndices_; }
 
     //! returns whether or not the i-th scvf is on a domain boundary
@@ -187,51 +174,43 @@ public:
     }
 
 private:
-    NodalGridStencilType scvIndices_;               //!< The indices of the scvs around a dual grid node
-    ScvfIndicesInScvStorage localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
+    typename Storage::NodalScvDataStorage<GI> scvIndices_;                        //!< The indices of the scvs around a dual grid node
+    typename Storage::NodalScvDataStorage<DimIndexVector> localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
 
-    std::size_t numBoundaryScvfs_;                                         //!< stores how many boundary scvfs are embedded in this dual grid node
-    NodalGridScvfStencilType scvfIndices_;                                 //!< the indices of the scvfs around a dual grid node
-    typename T::template NodalScvfDataStorage< bool > scvfIsOnBoundary_;   //!< Maps to each scvf a boolean to indicate if it is on the boundary
-    typename T::template NodalScvfDataStorage< LI > scvfInsideScvIndices_; //!< The inside local scv index for each scvf
+    std::size_t numBoundaryScvfs_;                                    //!< stores how many boundary scvfs are embedded in this dual grid node
+    typename Storage::NodalScvfDataStorage<GI> scvfIndices_;          //!< the indices of the scvfs around a dual grid node
+    typename Storage::NodalScvfDataStorage<bool> scvfIsOnBoundary_;   //!< Maps to each scvf a boolean to indicate if it is on the boundary
+    typename Storage::NodalScvfDataStorage<LI> scvfInsideScvIndices_; //!< The inside local scv index for each scvf
 };
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Class for the index sets of the dual grid in mpfa schemes.
- *
- * \tparam NI The type used for the nodal index sets.
  */
-template< class NI >
+template<class GridView>
 class CCMpfaDualGridIndexSet
 {
 public:
-    using NodalIndexSet = NI;
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
     using GridIndexType = typename NodalIndexSet::GridIndexType;
 
-    //! Default constructor should not be used
     CCMpfaDualGridIndexSet() = delete;
-
-    //! Constructor taking a grid view
-    template< class GridView >
     CCMpfaDualGridIndexSet(const GridView& gridView)
     : nodalIndexSets_(gridView.size(GridView::dimension))
     {}
 
-    //! Access with an scvf
-    template< class SubControlVolumeFace >
-    const NodalIndexSet& operator[] (const SubControlVolumeFace& scvf) const
+    template<class SubControlVolumeFace>
+    const NodalIndexSet& operator[](const SubControlVolumeFace& scvf) const
     { return nodalIndexSets_[scvf.vertexIndex()]; }
 
-    template< class SubControlVolumeFace >
-    NodalIndexSet& operator[] (const SubControlVolumeFace& scvf)
+    template<class SubControlVolumeFace>
+    NodalIndexSet& operator[](const SubControlVolumeFace& scvf)
     { return nodalIndexSets_[scvf.vertexIndex()]; }
 
-    //! Access with an index
-    const NodalIndexSet& operator[] (GridIndexType i) const
+    const NodalIndexSet& operator[](GridIndexType i) const
     { return nodalIndexSets_[i]; }
 
-    NodalIndexSet& operator[] (GridIndexType i)
+    NodalIndexSet& operator[](GridIndexType i)
     { return nodalIndexSets_[i]; }
 
 private:

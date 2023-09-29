@@ -38,7 +38,7 @@ struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
 {
     using SubControlVolume = CCSubControlVolume<GV>;
     using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GV>;
-    using NodalIndexSet = NI;
+
     //! State the maximum admissible element stencil size
     //! Per default, we use high values that are hopefully enough for all cases
     //! We assume simplex grids where stencils can get quite large but the size is unknown
@@ -50,7 +50,7 @@ struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
     template< class FVGridGeom >
     using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, PIV::MpfaMethod>;
     template< class FVGridGeom >
-    using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, NodalIndexSet, PIV, SIV >;
+    using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, PIV, SIV >;
     template< class FVGridGeom, bool enableCache >
     using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
 };

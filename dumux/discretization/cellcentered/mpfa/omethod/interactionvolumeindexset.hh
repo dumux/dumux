@@ -12,8 +12,7 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 #define DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 
-#include <dune/common/reservedvector.hh>
-
+#include <dumux/common/reservedvector.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
@@ -27,21 +26,17 @@ namespace Dumux {
 template< class DualGridNodalIndexSet >
 class CCMpfaOInteractionVolumeIndexSet
 {
+    using GV = typename DualGridNodalIndexSet::Traits::GridView;
+    using GI = typename DualGridNodalIndexSet::GridIndexType;
+    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<GI>;
+
 public:
     //! Export the type used for the nodal grid index sets
     using NodalIndexSet = DualGridNodalIndexSet;
 
     //! Export the types used for local/grid indices
     using LocalIndexType = typename DualGridNodalIndexSet::LocalIndexType;
-    using GridIndexType = typename DualGridNodalIndexSet::GridIndexType;
-
-    //! Export the stencil types used
-    using NodalGridStencilType = typename DualGridNodalIndexSet::NodalGridStencilType;
-    using NodalLocalStencilType = typename DualGridNodalIndexSet::NodalLocalStencilType;
-    using NodalGridScvfStencilType = typename DualGridNodalIndexSet::NodalGridScvfStencilType;
-
-    //! Export the type used for the neighbor scv index sets of the scvfs
-    using ScvfNeighborLocalIndexSet = typename DualGridNodalIndexSet::ScvfNeighborLocalIndexSet;
+    using GridIndexType = GI;
 
     //! The constructor
     template< class FlipScvfIndexSet >
@@ -114,11 +109,11 @@ public:
     { return nodalIndexSet_; }
 
     //! returns the global scv indices connected to this dual grid node
-    const NodalGridStencilType& gridScvIndices() const
+    const auto& gridScvIndices() const
     { return nodalIndexSet_.gridScvIndices(); }
 
     //! returns the global scvf indices embedded in this interaction volume
-    const NodalGridScvfStencilType& gridScvfIndices() const
+    const auto& gridScvfIndices() const
     { return nodalIndexSet_.gridScvfIndices(); }
 
     //! returns the number of faces in the interaction volume
@@ -165,11 +160,11 @@ private:
     // Index maps from and to nodal index set. For the map to the
     // nodal set we use the same storage type as we know the nodal
     // has more faces, thus sufficient guaranteed here!
-    typename NI::Traits::template NodalScvfDataStorage< LocalIndexType > ivToNodeScvf_;
-    typename NI::Traits::template NodalScvfDataStorage< LocalIndexType > nodeToIvScvf_;
+    typename CCMpfa::DataStorage<GV>::NodalScvfDataStorage<LocalIndexType> ivToNodeScvf_;
+    typename CCMpfa::DataStorage<GV>::NodalScvfDataStorage<LocalIndexType> nodeToIvScvf_;
     // maps to each scvf a list of neighbouring scv indices
     // ordering: 0 - inside scv idx; 1..n - outside scv indices
-    typename NI::Traits::template NodalScvfDataStorage< ScvfNeighborLocalIndexSet > scvfNeighborScvLocalIndices_;
+    typename CCMpfa::DataStorage<GV>::NodalScvfDataStorage<ScvfNeighborLocalIndexSet> scvfNeighborScvLocalIndices_;
 };
 
 } // end namespace Dumux

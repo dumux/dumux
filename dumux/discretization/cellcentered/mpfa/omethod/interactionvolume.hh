@@ -19,6 +19,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
@@ -107,7 +108,7 @@ class CCMpfaOInteractionVolume
     using IndexSet = typename Traits::IndexSet;
     using GridIndexType = typename IndexSet::GridIndexType;
     using LocalIndexType = typename IndexSet::LocalIndexType;
-    using Stencil = typename IndexSet::NodalGridStencilType;
+    using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;

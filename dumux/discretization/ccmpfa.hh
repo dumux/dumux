@@ -53,10 +53,9 @@ struct DualGridNodalIndexSet<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using GV = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-    using Traits = NodalIndexSetDefaultTraits< GV >;
 
 public:
-    using type = CCMpfaDualGridNodalIndexSet< Traits >;
+    using type = CCMpfaDualGridNodalIndexSet<GV>;
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume

@@ -17,6 +17,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
 
@@ -78,7 +79,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     class MpfaFouriersLawCache
     {
         using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
-        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
+        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
         static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle::HeatConductionHandle;

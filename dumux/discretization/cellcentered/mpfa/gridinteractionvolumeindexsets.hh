@@ -23,24 +23,24 @@ namespace Dumux {
  * \brief Class that holds all interaction volume index sets on a grid view.
  *
  * \tparam FVG the finite volume grid geometry
- * \tparam NI the type used for nodal index sets
  * \tparam PI primary interaction volume type
  * \tparam SI secondary interaction volume type
  */
-template<class FVG, class NI, class PI, class SI = PI>
+template<class FVG, class PI, class SI = PI>
 class CCMpfaGridInteractionVolumeIndexSets
 {
     using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
     using PrimaryIVIndexSet = typename PI::Traits::IndexSet;
     using SecondaryIVIndexSet = typename SI::Traits::IndexSet;
+    using GV = typename FVG::GridView;
 
 public:
     using GridGeometry = FVG;
     using PrimaryInteractionVolume = PI;
     using SecondaryInteractionVolume = SI;
 
-    using GridIndexType = typename NI::GridIndexType;
-    using DualGridIndexSet = CCMpfaDualGridIndexSet< NI >;
+    using DualGridIndexSet = CCMpfaDualGridIndexSet< GV >;
+    using GridIndexType = typename DualGridIndexSet::GridIndexType;
 
     /*!
      * \brief Construct all interaction volume index sets on the grid view
