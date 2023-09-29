@@ -43,14 +43,16 @@ template< class Traits > class CCMpfaOStaticInteractionVolume;
  *        statically sized containers for the iv-local data structures and static
  *        matrices and vectors.
  *
- * \tparam NI The type used for the dual grid's nodal index sets
+ * \tparam GV The grid view
  * \tparam S The Type used for scalar values
  * \tparam C The number of sub-control volumes (cells) in the ivs
  * \tparam F The number of sub-control volume faces in the ivs
  */
-template< class NI, class S, int C, int F >
+template< class GV, class S, int C, int F >
 struct CCMpfaODefaultStaticInteractionVolumeTraits
 {
+    using NI = CCMpfaDualGridNodalIndexSet<GV>;
+
 private:
     using GridIndexType = typename NI::GridIndexType;
     using LocalIndexType = typename NI::LocalIndexType;

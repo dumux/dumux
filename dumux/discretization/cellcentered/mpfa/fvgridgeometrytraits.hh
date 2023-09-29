@@ -29,11 +29,10 @@ namespace Dumux {
  * \brief Traits class to be used for the CCMpfaFVGridGeometry.
  *
  * \tparam GV the grid view type
- * \tparam NI the type used for node-local indexing
  * \tparam PIV the primary interaction volume type
  * \tparam SIV the secondary interaction volume type
  */
-template<class GV, class NI, class PIV, class SIV>
+template<class GV, class PIV, class SIV>
 struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
 {
     using SubControlVolume = CCSubControlVolume<GV>;

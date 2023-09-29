@@ -41,12 +41,14 @@ template< class Traits > class CCMpfaOInteractionVolume;
  *        on general grids. For interaction volumes known at compile time use
  *        the static interaction volume implementation.
  *
- * \tparam NodalIndexSet The type used for the dual grid's nodal index sets
+ * \tparam GV The grid view
  * \tparam Scalar The Type used for scalar values
  */
-template< class NodalIndexSet, class Scalar >
+template< class GV, class Scalar >
 struct CCMpfaODefaultInteractionVolumeTraits
 {
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GV>;
+
 private:
     using GridIndexType = typename NodalIndexSet::GridIndexType;
     using LocalIndexType = typename NodalIndexSet::LocalIndexType;

@@ -82,14 +82,14 @@ struct PrimaryInteractionVolume<TypeTag, TTag::InjectionCCMpfa>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
     // structured two-d grid
     static constexpr int numIvScvs = 4;
     static constexpr int numIvScvfs = 4;
 
     // use the default traits
-    using Traits = CCMpfaODefaultStaticInteractionVolumeTraits< NodalIndexSet, Scalar, numIvScvs, numIvScvfs >;
+    using Traits = CCMpfaODefaultStaticInteractionVolumeTraits< GridView, Scalar, numIvScvs, numIvScvfs >;
 public:
     using type = CCMpfaOStaticInteractionVolume< Traits >;
 };

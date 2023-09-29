@@ -88,7 +88,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        using DualGridNodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
         using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
         static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();

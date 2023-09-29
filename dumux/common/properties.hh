@@ -80,7 +80,6 @@ DUMUX_DEFINE_PROPERTY(EnableGridFluxVariablesCache)   //!< Specifies if data on 
 /////////////////////////////////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(PrimaryInteractionVolume)       //!< The primary interaction volume type
 DUMUX_DEFINE_PROPERTY(SecondaryInteractionVolume)     //!< The secondary interaction volume type used e.g. on the boundaries
-DUMUX_DEFINE_PROPERTY(DualGridNodalIndexSet)          //!< The type used for the nodal index sets of the dual grid
 
 /////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:

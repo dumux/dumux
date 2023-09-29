@@ -47,27 +47,16 @@ namespace TTag {
 struct CCMpfaModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
 } // end namespace TTag
 
-//! Set the index set type used on the dual grid nodes
-template<class TypeTag>
-struct DualGridNodalIndexSet<TypeTag, TTag::CCMpfaModel>
-{
-private:
-    using GV = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-
-public:
-    using type = CCMpfaDualGridNodalIndexSet<GV>;
-};
-
 //! Per default, we use the dynamic mpfa-o interaction volume
 template<class TypeTag>
 struct PrimaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
     // use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< GridView, Scalar >;
 public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
@@ -78,10 +67,10 @@ struct SecondaryInteractionVolume<TypeTag, TTag::CCMpfaModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
 
     // use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< GridView, Scalar >;
 public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
@@ -94,8 +83,7 @@ private:
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using PrimaryIV = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using SecondaryIV = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
-    using NodalIndexSet = GetPropType<TypeTag, Properties::DualGridNodalIndexSet>;
-    using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
+    using Traits = CCMpfaFVGridGeometryTraits<GridView, PrimaryIV, SecondaryIV>;
 public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, getPropValue<TypeTag, Properties::EnableGridGeometryCache>()>;
 };
