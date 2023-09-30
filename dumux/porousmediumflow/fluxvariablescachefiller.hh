@@ -257,7 +257,7 @@ public:
                 const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
                 ivDataStorage.secondaryInteractionVolumes.emplace_back();
                 secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes.back();
-                secondaryIv_->bind(indexSet, problem(), fvGeometry);
+                secondaryIv_->bind(indexSet.nodalIndexSet(), problem(), fvGeometry);
 
                 // create the corresponding data handle
                 ivDataStorage.secondaryDataHandles.emplace_back();
@@ -290,7 +290,7 @@ public:
                 const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
                 ivDataStorage.primaryInteractionVolumes.emplace_back();
                 primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
-                primaryIv_->bind(indexSet, problem(), fvGeometry);
+                primaryIv_->bind(indexSet.nodalIndexSet(), problem(), fvGeometry);
 
                 // create the corresponding data handle
                 ivDataStorage.primaryDataHandles.emplace_back();

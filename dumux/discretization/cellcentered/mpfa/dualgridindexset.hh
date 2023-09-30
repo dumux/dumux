@@ -70,8 +70,10 @@ public:
 
     class LocalFace {
     public:
-        LocalFace(LocalIndexType insideIdx)
-        : adjacentScvfs_(1, insideIdx)
+        LocalFace(const CCMpfaDualGridNodalIndexSet& set,
+                  LocalIndexType insideIdx)
+        : nodalIndexSet_{set}
+        , adjacentScvfs_(1, insideIdx)
         {}
 
         void push_back(LocalIndexType i)
@@ -80,7 +82,17 @@ public:
         void reserve(std::size_t n)
         { adjacentScvfs_.reserve(n); }
 
+        std::size_t numAdjacentScvfs() const
+        { return adjacentScvfs_.size(); }
+
+        GridIndexType adjacentScvfIndex(unsigned int i = 0) const
+        {
+            assert(i < adjacentScvfs_.size());
+            return adjacentScvfs_[i];
+        }
+
     private:
+        const CCMpfaDualGridNodalIndexSet& nodalIndexSet_;
         typename Storage::ScvfNeighborDataStorage<LI> adjacentScvfs_;
     };
 
@@ -127,14 +139,16 @@ public:
     template<class FlipScvfIndexSet>
     void build(const FlipScvfIndexSet& flipScvfIndexSet)
     {
+        scvfToFaceIndex_.resize(numScvfs());
         std::vector<bool> isHandled(numScvfs(), false);
         for (LocalIndexType i = 0; i < numScvfs(); ++i)
         {
             if (isHandled[i])
                 continue;
 
-            localFaces_.push_back({i});
+            localFaces_.push_back({*this, i});
             isHandled[i] = true;
+            scvfToFaceIndex_[i] = localFaces_.size() - 1;
             if (scvfIsOnBoundary(i))
                 continue;
 
@@ -149,6 +163,7 @@ public:
                     DUNE_THROW(Dune::InvalidStateException, "Could not map outside scvf to node-local index set");
                 const auto localScvfIndex = std::distance(scvfIndices_.begin(), it);
                 localFaces_.back().push_back(localScvfIndex);
+                scvfToFaceIndex_[localScvfIndex] = localFaces_.size() - 1;
                 isHandled[localScvfIndex] = true;
             }
         }
@@ -165,6 +180,10 @@ public:
     //! returns the number of boundary scvfs around the node
     std::size_t numBoundaryScvfs() const
     { return numBoundaryScvfs_; }
+
+    //! returns the number of faces (possibly with many overlapping scvfs)
+    std::size_t numFaces() const
+    { return localFaces_.size(); }
 
     //! returns the grid scv indices connected to this dual grid node
     const auto& gridScvIndices() const
@@ -218,6 +237,20 @@ public:
         return scvfToInsideScv_[i];
     }
 
+    //! returns the i-th node-local face
+    const LocalFace& face(unsigned int i) const
+    {
+        assert(i < numFaces());
+        return localFaces_[i];
+    }
+
+    //! returns the index of the face that the i-th scvf lies on
+    auto faceIndex(unsigned int i) const
+    {
+        assert(i < numScvfs());
+        return scvfToFaceIndex_[i];
+    }
+
 private:
     std::size_t numBoundaryScvfs_ = 0;
 
@@ -230,6 +263,7 @@ private:
     typename Storage::NodalScvfDataStorage<bool> scvfIsOnBoundary_;
 
     typename Storage::NodalScvfDataStorage<LocalFace> localFaces_;
+    typename Storage::NodalScvfDataStorage<LI> scvfToFaceIndex_;
 };
 
 /*!

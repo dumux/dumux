@@ -59,7 +59,7 @@ public:
                                      const FVElementGeometry& fvGeometry,
                                      const SubControlVolume& scv,
                                      const LocalIndexType localIndex,
-                                     const IvIndexSet& indexSet)
+                                     const typename IvIndexSet::NodalIndexSet& indexSet)
     : indexSet_(&indexSet)
     , globalScvIndex_(scv.dofIndex())
     , localDofIndex_(localIndex)
@@ -71,7 +71,7 @@ public:
         LocalBasis localBasis;
         for (unsigned int coordIdx = 0; coordIdx < myDimension; ++coordIdx)
         {
-            const auto scvfIdx = indexSet.nodalIndexSet().gridScvfIndex(localDofIndex_, coordIdx);
+            const auto scvfIdx = indexSet.gridScvfIndex(localDofIndex_, coordIdx);
             const auto& scvf = fvGeometry.scvf(scvfIdx);
             localBasis[coordIdx] = scvf.ipGlobal();
             localBasis[coordIdx] -= center;
@@ -97,7 +97,8 @@ public:
     LocalIndexType localScvfIndex(unsigned int coordDir) const
     {
         assert(coordDir < myDimension);
-        return indexSet_->localScvfIndex(localDofIndex_, coordDir);
+        const auto localScvfIndex = indexSet_->localScvfIndex(localDofIndex_, coordDir);
+        return indexSet_->faceIndex(localScvfIndex);
     }
 
     //! the nu vectors are needed for setting up the omegas of the iv
@@ -108,7 +109,7 @@ public:
     }
 
 private:
-    const IvIndexSet* indexSet_;
+    const typename IvIndexSet::NodalIndexSet* indexSet_;
     GridIndexType globalScvIndex_;
     LocalIndexType localDofIndex_;
     LocalBasis nus_;
@@ -127,7 +128,7 @@ struct CCMpfaOInteractionVolumeLocalScvf
 {
     using GI = typename IvIndexSet::GridIndexType;
     using GV = typename IvIndexSet::NodalIndexSet::Traits::GridView;
-    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<GI>;
+    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<typename IvIndexSet::LocalIndexType>;
 
 public:
     // export index types
@@ -153,7 +154,7 @@ public:
     : isDirichlet_(isDirichlet)
     , scvfIdxGlobal_(scvf.index())
     , localDofIndex_(localDofIdx)
-    , neighborScvIndicesLocal_(&localScvIndices)
+    , neighborScvIndicesLocal_(localScvIndices)
     {}
 
     //! This is either the iv-local index of the intermediate unknown (interior/Neumann face)
@@ -164,7 +165,7 @@ public:
     GridIndexType gridScvfIndex() const { return scvfIdxGlobal_; }
 
     //! Returns the local indices of the scvs neighboring this scvf
-    const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }
+    const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices() const { return neighborScvIndicesLocal_; }
 
     //! states if this is scvf is on a Dirichlet boundary
     bool isDirichlet() const { return isDirichlet_; }
@@ -173,7 +174,7 @@ private:
     bool isDirichlet_;
     GridIndexType scvfIdxGlobal_;
     LocalIndexType localDofIndex_;
-    const ScvfNeighborLocalIndexSet* neighborScvIndicesLocal_;
+    ScvfNeighborLocalIndexSet neighborScvIndicesLocal_;
 };
 
 } // end namespace Dumux

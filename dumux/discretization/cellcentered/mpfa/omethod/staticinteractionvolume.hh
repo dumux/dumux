@@ -146,14 +146,14 @@ public:
 
     //! Sets up the local scope for a given iv index set
     template< class Problem, class FVElementGeometry >
-    void bind(const IndexSet& indexSet,
+    void bind(const CCMpfaDualGridNodalIndexSet<GridView>& indexSet,
               const Problem& problem,
               const FVElementGeometry& fvGeometry)
     {
         // for the o-scheme, the stencil is equal to the scv
         // index set of the dual grid's nodal index set
         assert(indexSet.numScvs() == numScv);
-        stencil_ = &indexSet.nodalIndexSet().gridScvIndices();
+        stencil_ = &indexSet.gridScvIndices();
 
         // set up stuff related to sub-control volumes
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numScv; scvIdxLocal++)
@@ -169,11 +169,17 @@ public:
         // set up quantities related to sub-control volume faces
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numScvf; ++faceIdxLocal)
         {
-            const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));
+            const auto& face = indexSet.face(faceIdxLocal);
+            const auto numNeighborScvs = face.numAdjacentScvfs();
+            const auto nodeLocalScvfIndex = face.adjacentScvfIndex(0);
+            const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(nodeLocalScvfIndex));
             assert(!scvf.boundary());
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
-            const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
+            typename CCMpfa::DataStorage<GridView>::ScvfNeighborDataStorage<LocalIndexType> neighborScvIndicesLocal;
+            neighborScvIndicesLocal.push_back(indexSet.insideScvLocalIndex(nodeLocalScvfIndex));
+            for (int i = 1; i < numNeighborScvs; ++i)
+                neighborScvIndicesLocal.push_back(indexSet.insideScvLocalIndex(face.adjacentScvfIndex(i)));
 
             // create iv-local scvf objects
             scvfs_[faceIdxLocal] = LocalScvfType(scvf, neighborScvIndicesLocal, faceIdxLocal, /*isDirichlet*/false);
@@ -181,19 +187,12 @@ public:
 
             // add local face data objects for the outside face
             const auto outsideLocalScvIdx = neighborScvIndicesLocal[1];
-            for (int coord = 0; coord < GridView::dimension; ++coord)
-            {
-                if (indexSet.localScvfIndex(outsideLocalScvIdx, coord) == faceIdxLocal)
-                {
-                    const auto globalScvfIdx = indexSet.nodalIndexSet().gridScvfIndex(outsideLocalScvIdx, coord);
-                    const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
-                    localFaceData_[faceIdxLocal*2+1] = LocalFaceData(faceIdxLocal,       // iv-local scvf idx
-                                                                     outsideLocalScvIdx, // iv-local scv index
-                                                                     0,                  // scvf-local index in outside faces
-                                                                     flipScvf.index());  // global scvf index
-                    break; // go to next outside face
-                }
-            }
+            const auto& flipScvfIndex = fvGeometry.gridGeometry().flipScvfIndexSet()[scvf.index()][0];
+            const auto& flipScvf = fvGeometry.scvf(flipScvfIndex);
+            localFaceData_[faceIdxLocal*2+1] = LocalFaceData(faceIdxLocal,       // iv-local scvf idx
+                                                             outsideLocalScvIdx, // iv-local scv index
+                                                             0,                  // scvf-local index in outside faces
+                                                            flipScvf.index());  // global scvf index
 
             // make sure we found it
             assert(localFaceData_[faceIdxLocal*2+1].ivLocalInsideScvIndex() == outsideLocalScvIdx);

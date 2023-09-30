@@ -135,18 +135,18 @@ public:
 
     //! Sets up the local scope for a given iv index set
     template< class Problem, class FVElementGeometry >
-    void bind(const IndexSet& indexSet,
+    void bind(const CCMpfaDualGridNodalIndexSet<GridView>& indexSet,
               const Problem& problem,
               const FVElementGeometry& fvGeometry)
     {
         // for the o-scheme, the stencil is equal to the scv
         // index set of the dual grid's nodal index set
-        stencil_ = &indexSet.nodalIndexSet().gridScvIndices();
+        stencil_ = &indexSet.gridScvIndices();
 
         // number of interaction-volume-local scvs(=node-local for o-scheme) and scvfs
         numFaces_ = indexSet.numFaces();
         const auto numLocalScvs = indexSet.numScvs();
-        const auto numGlobalScvfs = indexSet.nodalIndexSet().numScvfs();
+        const auto numGlobalScvfs = indexSet.numScvfs();
 
         // reserve memory for local entities
         elements_.clear();      elements_.reserve(numLocalScvs);
@@ -171,13 +171,19 @@ public:
         numKnowns_ = numLocalScvs;
 
         // set up quantities related to sub-control volume faces
-        for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
+        for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < indexSet.numFaces(); ++faceIdxLocal)
         {
-            const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(faceIdxLocal));
+            const auto& face = indexSet.face(faceIdxLocal);
+            const auto numNeighborScvs = face.numAdjacentScvfs();
+            const auto nodeLocalScvfIndex = face.adjacentScvfIndex(0);
+            const auto& scvf = fvGeometry.scvf(indexSet.gridScvfIndex(nodeLocalScvfIndex));
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
-            const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
-            const auto numNeighborScvs = neighborScvIndicesLocal.size();
+            typename CCMpfa::DataStorage<GridView>::ScvfNeighborDataStorage<LocalIndexType> neighborScvIndicesLocal;
+            neighborScvIndicesLocal.push_back(indexSet.insideScvLocalIndex(nodeLocalScvfIndex));
+            for (int i = 1; i < numNeighborScvs; ++i)
+                neighborScvIndicesLocal.push_back(indexSet.insideScvLocalIndex(face.adjacentScvfIndex(i)));
+
             localFaceData_.emplace_back(faceIdxLocal, neighborScvIndicesLocal[0], scvf.index());
 
             // create iv-local scvf object
