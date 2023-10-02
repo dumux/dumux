@@ -307,7 +307,7 @@ private:
         auto handleScvf = [&] (const auto& scvf, const auto& indexSet, bool isSecondary)
         {
             const auto& scvfIndices = indexSet.gridScvfIndices();
-            if ( indexSet.nodalIndexSet().numBoundaryScvfs() > 0
+            if ( indexSet.numBoundaryScvfs() > 0
                  && !std::any_of(scvfIndices.begin(), scvfIndices.end(), scvfHandled) )
             {
                 boundaryCacheData_.cacheScvfIndices_.insert(boundaryCacheData_.cacheScvfIndices_.end(),
@@ -378,7 +378,7 @@ private:
     {
         const auto& gridGeometry = gridFluxVarsCachePtr_->problem().gridGeometry();
         const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
-        return gridIvIndexSets.get(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+        return gridIvIndexSets.get(scvf).numBoundaryScvfs() > 0;
     }
 
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;

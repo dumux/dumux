@@ -312,6 +312,9 @@ public:
     const NodalIndexSet& operator[](GridIndexType i) const
     { return nodalIndexSets_[i]; }
 
+    std::size_t size() const
+    { return nodalIndexSets_.size(); }
+
 private:
     friend Factory;
     std::vector<NodalIndexSet> nodalIndexSets_;

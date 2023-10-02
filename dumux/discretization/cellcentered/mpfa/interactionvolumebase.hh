@@ -30,8 +30,6 @@ namespace Dumux {
  * \code
  * //! export the type of grid view
  * using GridView = ...;
- * //! export the type used for local indices
- * using IndexSet = ...;
  * //! export the type of interaction-volume local scvs
  * using LocalScvType = ...;
  * //! export the type of interaction-volume local scvfs
@@ -57,9 +55,10 @@ class CCMpfaInteractionVolumeBase
 {
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
 
-    using LocalIndexType = typename T::IndexSet::LocalIndexType;
-    using GridIndexType = typename T::IndexSet::GridIndexType;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
+    using GridIndexType = typename NodalIndexSet::GridIndexType;
     using LocalScvType = typename T::LocalScvType;
     using LocalScvfType = typename T::LocalScvfType;
     using NodalStencilType = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
@@ -74,7 +73,7 @@ public:
 
     //! Prepares everything for the assembly
     template< class Problem, class FVElementGeometry >
-    void bind(const typename Traits::IndexSet& indexSet,
+    void bind(const NodalIndexSet& indexSet,
               const Problem& problem,
               const FVElementGeometry& fvGeometry)
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume does not provide a bind() function"); }

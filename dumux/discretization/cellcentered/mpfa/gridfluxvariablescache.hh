@@ -244,7 +244,7 @@ private:
     bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const GridGeometry& gridGeometry) const
     {
         const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
-        return gridIvIndexSets.get(scvf).nodalIndexSet().numBoundaryScvfs() > 0;
+        return gridIvIndexSets.get(scvf).numBoundaryScvfs() > 0;
     }
 
     //! clear all containers

@@ -23,18 +23,18 @@ namespace Dumux
  * \brief Class for the interaction volume-local sub-control volume used
  *        in the mpfa-o scheme.
  *
- * \tparam IvIndexSet The type used for index sets within interaction volumes
+ * \tparam NodalIndexSet The dual grid index set around a grid node
  * \tparam dim The dimensionality of the grid
  * \tparam dimWorld The dimension of the world the grid is embedded in
  */
-template< class IvIndexSet, class Scalar, int dim, int dimWorld>
+template< class NodalIndexSet, class Scalar, int dim, int dimWorld>
 class CCMpfaOInteractionVolumeLocalScv
 {
 
 public:
     // export some types
-    using GridIndexType = typename IvIndexSet::GridIndexType;
-    using LocalIndexType = typename IvIndexSet::LocalIndexType;
+    using GridIndexType = typename NodalIndexSet::GridIndexType;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
     using GlobalCoordinate = Dune::FieldVector<Scalar, dimWorld>;
     using ctype = typename GlobalCoordinate::value_type;
     using LocalBasis = std::array< GlobalCoordinate, dim >;
@@ -59,7 +59,7 @@ public:
                                      const FVElementGeometry& fvGeometry,
                                      const SubControlVolume& scv,
                                      const LocalIndexType localIndex,
-                                     const typename IvIndexSet::NodalIndexSet& indexSet)
+                                     const NodalIndexSet& indexSet)
     : indexSet_(&indexSet)
     , globalScvIndex_(scv.dofIndex())
     , localDofIndex_(localIndex)
@@ -109,7 +109,7 @@ public:
     }
 
 private:
-    const typename IvIndexSet::NodalIndexSet* indexSet_;
+    const NodalIndexSet* indexSet_;
     GridIndexType globalScvIndex_;
     LocalIndexType localDofIndex_;
     LocalBasis nus_;
@@ -121,19 +121,19 @@ private:
  * \brief Class for the interaction volume-local sub-control volume face
  *        used in the mpfa-o scheme.
  *
- * \tparam IvIndexSet The type used for index sets within interaction volumes
+ * \tparam NodalIndexSet The dual grid index set around a grid node
  */
-template< class IvIndexSet >
+template< class NodalIndexSet >
 struct CCMpfaOInteractionVolumeLocalScvf
 {
-    using GI = typename IvIndexSet::GridIndexType;
-    using GV = typename IvIndexSet::NodalIndexSet::Traits::GridView;
-    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<typename IvIndexSet::LocalIndexType>;
+    using GI = typename NodalIndexSet::GridIndexType;
+    using GV = typename NodalIndexSet::Traits::GridView;
+    using ScvfNeighborLocalIndexSet = typename CCMpfa::DataStorage<GV>::ScvfNeighborDataStorage<typename NodalIndexSet::LocalIndexType>;
 
 public:
     // export index types
-    using GridIndexType = typename IvIndexSet::GridIndexType;
-    using LocalIndexType = typename IvIndexSet::LocalIndexType;
+    using GridIndexType = typename NodalIndexSet::GridIndexType;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
 
     //! The default constructor
     CCMpfaOInteractionVolumeLocalScvf() = default;

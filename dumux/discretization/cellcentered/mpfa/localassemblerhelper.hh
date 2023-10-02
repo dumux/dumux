@@ -88,8 +88,7 @@ public:
             // bring outside tij container to the right size
             auto& tijOut = handle.tijOutside();
             tijOut.resize(iv.numFaces());
-            using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
-            for (LocalIndexType fIdx = 0; fIdx < iv.numFaces(); ++fIdx)
+            for (unsigned int fIdx = 0; fIdx < iv.numFaces(); ++fIdx)
             {
                 const auto& curGlobalScvf = fvGeometry.scvf(iv.localScvf(fIdx).gridScvfIndex());
                 const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();

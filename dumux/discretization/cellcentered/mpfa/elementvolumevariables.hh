@@ -42,7 +42,7 @@ namespace CCMpfa {
 
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
-            numBoundaryVolVars += gridIvIndexSets.get(scvf).nodalIndexSet().numBoundaryScvfs();
+            numBoundaryVolVars += gridIvIndexSets.get(scvf).numBoundaryScvfs();
 
         return numBoundaryVolVars;
     }
@@ -155,7 +155,7 @@ namespace CCMpfa {
         const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
         for (const auto& scvf : scvfs(fvGeometry))
             addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                        gridIvIndexSets.get(scvf).nodalIndexSet() );
+                                        gridIvIndexSets.get(scvf) );
     }
 } // end namespace CCMpfa
 

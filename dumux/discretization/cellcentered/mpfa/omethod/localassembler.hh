@@ -18,6 +18,7 @@
 #include <dumux/discretization/cellcentered/mpfa/localassemblerbase.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux {
 
@@ -36,6 +37,9 @@ class MpfaOInteractionVolumeAssembler
 {
     using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
     using Helper = InteractionVolumeAssemblerHelper;
+
+    using GridView = typename EG::GridGeometry::GridView;
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
 
     template< class IV >
     using Scalar = typename IV::Traits::MatVecTraits::FaceVector::value_type;
@@ -121,7 +125,7 @@ public:
         Helper::resizeVector(u, iv.numKnowns());
 
         // put the cell unknowns first, then Dirichlet values
-        typename IV::Traits::IndexSet::LocalIndexType i = 0;
+        typename NodalIndexSet::LocalIndexType i = 0;
         for (; i < iv.numScvs(); i++)
             u[i] = getU( this->elemVolVars()[iv.localScv(i).gridScvIndex()] );
         for (const auto& data : iv.dirichletData())
@@ -168,7 +172,7 @@ private:
                                 IV& iv, const TensorFunc& getT,
                                 Scalar<IV> wijZeroThresh)
     {
-        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+        using LocalIndexType = typename NodalIndexSet::LocalIndexType;
         static constexpr int dim = IV::Traits::GridView::dimension;
         static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
 

@@ -143,7 +143,8 @@ class InteractionVolumeAssemblerBase
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
         using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
-        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+        using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
+        using LocalIndexType = typename NodalIndexSet::LocalIndexType;
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {

@@ -27,7 +27,6 @@
 
 #include "localassembler.hh"
 #include "localsubcontrolentities.hh"
-#include "interactionvolumeindexset.hh"
 #include "interactionvolume.hh"
 #include "scvgeometryhelper.hh"
 
@@ -80,12 +79,10 @@ private:
 public:
     //! export the type of grid view
     using GridView = typename NI::Traits::GridView;
-    //! export the type for the interaction volume index set
-    using IndexSet = CCMpfaOInteractionVolumeIndexSet< NI >;
     //! export the type of interaction-volume local scvs
-    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, S, dim, dimWorld >;
+    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< NI, S, dim, dimWorld >;
     //! export the type of interaction-volume local scvfs
-    using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< IndexSet >;
+    using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< NI >;
     //! export the type of used for the iv-local face data
     using LocalFaceData = InteractionVolumeLocalFaceData<GridIndexType, LocalIndexType>;
     //! export the matrix/vector traits to be used by the iv
@@ -117,9 +114,9 @@ class CCMpfaOStaticInteractionVolume
     using GridView = typename Traits::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using IndexSet = typename Traits::IndexSet;
-    using GridIndexType = typename IndexSet::GridIndexType;
-    using LocalIndexType = typename IndexSet::LocalIndexType;
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
+    using GridIndexType = typename NodalIndexSet::GridIndexType;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
     using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     using LocalScvType = typename Traits::LocalScvType;
