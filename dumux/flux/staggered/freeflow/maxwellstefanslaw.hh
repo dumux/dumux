@@ -156,7 +156,21 @@ public:
         }
         else
         {
-            const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            if (scvf.periodic())
+            {
+                const auto& gridGeometry = fvGeometry.gridGeometry();
+                auto periodicFvGeometry = localView(gridGeometry);
+                const auto& periodicElement = gridGeometry.element(outsideScv.elementIndex());
+                periodicFvGeometry.bindElement(periodicElement);
+                for (const auto& outsideScvf : scvfs(periodicFvGeometry))
+                {
+                    if (outsideScvf.unitOuterNormal() * scvf.unitOuterNormal() < -1.0 +1e-6)
+                    {
+                        outsideDistance = (outsideScv.dofPosition() - outsideScvf.ipGlobal()).two_norm();
+                    }
+                }
+            }
             const Scalar omegaj = calculateOmega_(outsideDistance, outsideVolVars.extrusionFactor());
 
             reducedDiffusionMatrixInside.invert();
