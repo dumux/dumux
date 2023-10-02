@@ -104,6 +104,9 @@ public:
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         const Scalar insideDensity = massOrMolarDensity(insideVolVars, referenceSystem, phaseIdx);
 
+        const auto& gridGeometry = fvGeometry.gridGeometry();
+        auto periodicFvGeometry = localView(gridGeometry);
+
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             if (compIdx == FluidSystem::getMainComponent(phaseIdx))
@@ -123,7 +126,20 @@ public:
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const Scalar outsideDiffCoeff = getEffectiveDiffusionCoefficient_(outsideVolVars, phaseIdx, compIdx)
                                       * outsideVolVars.extrusionFactor();
-                const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+
+                Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                if (scvf.periodic())
+                {
+                    const auto& periodicElement = gridGeometry.element(outsideScv.elementIndex());
+                    periodicFvGeometry.bindElement(periodicElement);
+                    for (const auto& outsideScvf : scvfs(periodicFvGeometry))
+                    {
+                        if (outsideScvf.unitOuterNormal() * scvf.unitOuterNormal() < -1.0 +1e-6)
+                        {
+                            outsideDistance = (outsideScv.dofPosition() - outsideScvf.ipGlobal()).two_norm();
+                        }
+                    }
+                }
                 const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
 
                 const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
