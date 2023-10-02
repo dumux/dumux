@@ -152,7 +152,8 @@ public:
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
-      boundary_(is.boundary()),
+      boundary_(is.boundary() && !is.neighbor()),
+      periodic_(is.boundary() && is.neighbor()),
       axisData_(geometryHelper.axisData()),
       pairData_(std::move(geometryHelper.pairData())),
       localFaceIdx_(geometryHelper.localFaceIndex()),
@@ -196,6 +197,12 @@ public:
     bool boundary() const
     {
         return boundary_;
+    }
+
+    //! Returns boolean if the sub control volume face is on the periodic boundary
+    bool periodic() const
+    {
+        return periodic_;
     }
 
     //! The unit outer normal vector
@@ -458,6 +465,7 @@ private:
     GridIndexType scvfIndex_;
     std::vector<GridIndexType> scvIndices_;
     bool boundary_;
+    bool periodic_;
 
     Scalar selfToOppositeDistance_;
     AxisData axisData_;
