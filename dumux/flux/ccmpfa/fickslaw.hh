@@ -72,16 +72,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume related data from the filler class & update the cache
-            if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.secondaryIvLocalFaceData(),
-                                                  fluxVarsCacheFiller.secondaryIvDataHandle(),
-                                                  phaseIdx, compIdx);
-            else
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                  fluxVarsCacheFiller.primaryIvDataHandle(),
-                                                  phaseIdx, compIdx);
+            scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                fluxVarsCacheFiller.primaryIvLocalFaceData(),
+                                                fluxVarsCacheFiller.primaryIvDataHandle(),
+                                                phaseIdx, compIdx);
         }
     };
 
@@ -91,14 +85,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
         using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
         static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
-        static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::DiffusionHandle;
-        using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle::DiffusionHandle;
-
-        //! sets the pointer to the data handle (overload for secondary data handles)
-        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int> = 0 >
-        void setHandlePointer_(const SecondaryDataHandle& dataHandle)
-        { secondaryHandlePtr_ = &dataHandle; }
 
         //! sets the pointer to the data handle (overload for primary data handles)
         void setHandlePointer_(const PrimaryDataHandle& dataHandle)
@@ -133,7 +120,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
 
         //! The corresponding data handles
         const PrimaryDataHandle& diffusionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-        const SecondaryDataHandle& diffusionSecondaryDataHandle() const { return *secondaryHandlePtr_; }
 
         //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
         bool diffusionSwitchFluxSign(unsigned int phaseIdx, unsigned int compIdx) const
@@ -147,7 +133,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
 
         //! pointers to the corresponding iv-data handles
         const PrimaryDataHandle* primaryHandlePtr_;
-        const SecondaryDataHandle* secondaryHandlePtr_;
     };
 
 public:
@@ -193,16 +178,10 @@ public:
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
 
             // compute the flux
-            if (fluxVarsCache.usesSecondaryIv())
-                componentFlux[compIdx] = rho*computeVolumeFlux(problem,
-                                                               fluxVarsCache,
-                                                               fluxVarsCache.diffusionSecondaryDataHandle(),
-                                                               phaseIdx, compIdx);
-            else
-                componentFlux[compIdx] = rho*computeVolumeFlux(problem,
-                                                               fluxVarsCache,
-                                                               fluxVarsCache.diffusionPrimaryDataHandle(),
-                                                               phaseIdx, compIdx);
+            componentFlux[compIdx] = rho*computeVolumeFlux(problem,
+                                                            fluxVarsCache,
+                                                            fluxVarsCache.diffusionPrimaryDataHandle(),
+                                                            phaseIdx, compIdx);
         }
 
         // accumulate the phase component flux

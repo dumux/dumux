@@ -195,9 +195,6 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
     using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
     using PrimaryLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
-    using SecondaryInteractionVolume = GetPropType<TypeTag, Properties::SecondaryInteractionVolume>;
-    using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle;
-    using SecondaryLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -248,69 +245,33 @@ public:
         // 1. prepare interaction volume (iv)
         // 2. solve for all transmissibilities and store them in data handles
         // 3. set pointers to transmissibilities in caches of all the scvfs of the iv
-        if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+        if (forceUpdateAll)
         {
-            if (forceUpdateAll)
-            {
-                // create new interaction volume
-                const auto ivIndexInContainer = ivDataStorage.secondaryInteractionVolumes.size();
-                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
-                ivDataStorage.secondaryInteractionVolumes.emplace_back();
-                secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes.back();
-                secondaryIv_->bind(indexSet, problem(), fvGeometry);
+            // create new interaction volume
+            const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
+            const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
+            ivDataStorage.primaryInteractionVolumes.emplace_back();
+            primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
+            primaryIv_->bind(indexSet, problem(), fvGeometry);
 
-                // create the corresponding data handle
-                ivDataStorage.secondaryDataHandles.emplace_back();
-                secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles.back();
-                prepareDataHandle_(*secondaryIv_, *secondaryIvDataHandle_, forceUpdateAll);
+            // create the corresponding data handle
+            ivDataStorage.primaryDataHandles.emplace_back();
+            primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles.back();
+            prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
 
-                // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *secondaryIv_, ivIndexInContainer);
-            }
-            else
-            {
-                // get previously created interaction volume/handle
-                const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
-                secondaryIv_ = &ivDataStorage.secondaryInteractionVolumes[ivIndexInContainer];
-                secondaryIvDataHandle_ = &ivDataStorage.secondaryDataHandles[ivIndexInContainer];
-                prepareDataHandle_(*secondaryIv_, *secondaryIvDataHandle_, forceUpdateAll);
-
-                // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *secondaryIv_, ivIndexInContainer);
-            }
+            // fill the caches for all the scvfs in the interaction volume
+            fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
         }
-
-        // primary interaction volume type
         else
         {
-            if (forceUpdateAll)
-            {
-                // create new interaction volume
-                const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
-                const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
-                ivDataStorage.primaryInteractionVolumes.emplace_back();
-                primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
-                primaryIv_->bind(indexSet, problem(), fvGeometry);
+            // get previously created interaction volume/handle
+            const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
+            primaryIv_ = &ivDataStorage.primaryInteractionVolumes[ivIndexInContainer];
+            primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles[ivIndexInContainer];
+            prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
 
-                // create the corresponding data handle
-                ivDataStorage.primaryDataHandles.emplace_back();
-                primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles.back();
-                prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
-
-                // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
-            }
-            else
-            {
-                // get previously created interaction volume/handle
-                const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
-                primaryIv_ = &ivDataStorage.primaryInteractionVolumes[ivIndexInContainer];
-                primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles[ivIndexInContainer];
-                prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
-
-                // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
-            }
+            // fill the caches for all the scvfs in the interaction volume
+            fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
         }
     }
 
@@ -318,25 +279,13 @@ public:
     const PrimaryInteractionVolume& primaryInteractionVolume() const
     { return *primaryIv_; }
 
-    //! returns the stored interaction volume pointer
-    const SecondaryInteractionVolume& secondaryInteractionVolume() const
-    { return *secondaryIv_; }
-
     //! returns the stored data handle pointer
     const PrimaryDataHandle& primaryIvDataHandle() const
     { return *primaryIvDataHandle_; }
 
-    //! returns the stored data handle pointer
-    const SecondaryDataHandle& secondaryIvDataHandle() const
-    { return *secondaryIvDataHandle_; }
-
     //! returns the currently stored iv-local face data object
     const PrimaryLocalFaceData& primaryIvLocalFaceData() const
     { return *primaryLocalFaceData_; }
-
-    //! returns the currently stored iv-local face data object
-    const SecondaryLocalFaceData& secondaryIvLocalFaceData() const
-    { return *secondaryLocalFaceData_; }
 
 private:
 
@@ -350,10 +299,6 @@ private:
                                         InteractionVolume& iv,
                                         unsigned int ivIndexInContainer)
     {
-        // determine if secondary interaction volumes are used here
-        static constexpr bool isSecondary = MpfaHelper::considerSecondaryIVs()
-                                            && std::is_same_v<InteractionVolume, SecondaryInteractionVolume>;
-
         // First we update data which are not dependent on the physical processes.
         // We store pointers to the other flux var caches, so that we have to obtain
         // this data only once and can use it again in the sub-cache fillers.
@@ -370,7 +315,6 @@ private:
             ivFluxVarCaches[i] = &fluxVarsCacheStorage[scvfJ];
             ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
             ivFluxVarCaches[i]->setUpdateStatus(true);
-            ivFluxVarCaches[i]->setSecondaryIvUsage(isSecondary);
             ivFluxVarCaches[i]->setIvLocalFaceIndex(d.ivLocalScvfIndex());
             if (dim < dimWorld)
                 if (d.isOutsideFace())
@@ -400,16 +344,7 @@ private:
         {
             // set pointer to current local face data object
             // ifs are evaluated at compile time and are optimized away
-            if (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
-            {
-                // we cannot make a distinction, thus we set both pointers
-                primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-                secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
-            }
-            else if (std::is_same_v<InteractionVolume, PrimaryInteractionVolume>)
-                primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-            else
-                secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
+            primaryLocalFaceData_ = &(iv.localFaceData()[i]);
 
             // fill this scvfs cache
             AdvectionFiller::fill(*ivFluxVarCaches[i],
@@ -448,16 +383,7 @@ private:
                 {
                     // set pointer to current local face data object
                     // ifs are evaluated at compile time and are optimized away
-                    if constexpr (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
-                    {
-                        // we cannot make a distinction, thus we set both pointers
-                        primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-                        secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
-                    }
-                    else if constexpr (std::is_same_v<InteractionVolume, PrimaryInteractionVolume>)
-                        primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-                    else
-                        secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
+                    primaryLocalFaceData_ = &(iv.localFaceData()[i]);
 
                     // fill this scvfs cache
                     DiffusionFiller::fill(*ivFluxVarCaches[i],
@@ -488,16 +414,7 @@ private:
         {
             // set pointer to current local face data object
             // ifs are evaluated at compile time and are optimized away
-            if constexpr (std::is_same_v<PrimaryInteractionVolume, SecondaryInteractionVolume>)
-            {
-                // we cannot make a distinction, thus we set both pointers
-                primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-                secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
-            }
-            else if constexpr (std::is_same_v<InteractionVolume, PrimaryInteractionVolume>)
-                primaryLocalFaceData_ = &(iv.localFaceData()[i]);
-            else
-                secondaryLocalFaceData_ = &(iv.localFaceData()[i]);
+            primaryLocalFaceData_ = &(iv.localFaceData()[i]);
 
             // fill this scvfs cache
             HeatConductionFiller::fill(*ivFluxVarCaches[i],
@@ -673,18 +590,15 @@ private:
     // These are updated during the filling of the caches and the
     // physics-related caches have access to them
     PrimaryInteractionVolume* primaryIv_;
-    SecondaryInteractionVolume* secondaryIv_;
 
     // pointer to the current interaction volume data handle
     PrimaryDataHandle* primaryIvDataHandle_;
-    SecondaryDataHandle* secondaryIvDataHandle_;
 
     // We do an interaction volume-wise filling of the caches
     // While filling, we store a pointer to the current localScvf
     // face data object of the IV so that the individual caches
     // can access it and don't have to retrieve it again
     const PrimaryLocalFaceData* primaryLocalFaceData_;
-    const SecondaryLocalFaceData* secondaryLocalFaceData_;
 };
 
 } // end namespace Dumux

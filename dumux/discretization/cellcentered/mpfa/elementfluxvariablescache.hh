@@ -26,15 +26,11 @@ namespace Dumux {
  * \ingroup CCMpfaDiscretization
  * \brief Structure to store interaction volumes and data handles
  */
-template<class PrimaryIV, class PrimaryIVDataHandle,
-         class SecondaryIV, class SecondaryIVDataHandle>
+template<class PrimaryIV, class PrimaryIVDataHandle>
 struct InteractionVolumeDataStorage
 {
     std::vector<PrimaryIV> primaryInteractionVolumes;
-    std::vector<SecondaryIV> secondaryInteractionVolumes;
-
     std::vector<PrimaryIVDataHandle> primaryDataHandles;
-    std::vector<SecondaryIVDataHandle> secondaryDataHandles;
 };
 
 /*!
@@ -59,11 +55,9 @@ class CCMpfaElementFluxVariablesCache<GFVC, true>
 public:
     //! export the interaction volume types
     using PrimaryInteractionVolume = typename GFVC::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename GFVC::SecondaryInteractionVolume;
 
     //! export the data handle types used
     using PrimaryIvDataHandle = typename GFVC::PrimaryIvDataHandle;
-    using SecondaryIvDataHandle = typename GFVC::SecondaryIvDataHandle;
 
     //! export the flux variable cache type
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
@@ -100,9 +94,7 @@ private:
             fluxVarCaches_.clear();
             cacheScvfIndices_.clear();
             ivDataStorage_.primaryInteractionVolumes.clear();
-            ivDataStorage_.secondaryInteractionVolumes.clear();
             ivDataStorage_.primaryDataHandles.clear();
-            ivDataStorage_.secondaryDataHandles.clear();
         }
 
     private:
@@ -118,10 +110,7 @@ private:
         std::vector<FluxVariablesCache> fluxVarCaches_;
 
         // stored boundary interaction volumes and handles
-        using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume,
-                                                           PrimaryIvDataHandle,
-                                                           SecondaryInteractionVolume,
-                                                           SecondaryIvDataHandle>;
+        using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume, PrimaryIvDataHandle>;
         IVDataStorage ivDataStorage_;
     };
 
@@ -247,24 +236,6 @@ public:
                : gridFluxVarsCachePtr_->primaryDataHandle(scvf);
     }
 
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->secondaryInteractionVolume(scvf);
-    }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
-    {
-        return isEmbeddedInBoundaryIV_(scvf)
-               ? boundaryCacheData_.ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]
-               : gridFluxVarsCachePtr_->secondaryDataHandle(scvf);
-    }
-
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
@@ -289,7 +260,6 @@ private:
 
         // find out how much memory needs to be reserved
         std::size_t numPrimaryIv;   numPrimaryIv = 0;
-        std::size_t numSecondaryIv; numSecondaryIv = 0;
         std::size_t numCaches;      numCaches = 0;
 
         const auto& gridGeometry = fvGeometry.gridGeometry();
@@ -304,7 +274,7 @@ private:
         };
 
         // lambda to increase counters for a given scvf
-        auto handleScvf = [&] (const auto& scvf, const auto& indexSet, bool isSecondary)
+        auto handleScvf = [&] (const auto& scvf, const auto& indexSet)
         {
             const auto& scvfIndices = indexSet.gridScvfIndices();
             if ( indexSet.numBoundaryScvfs() > 0
@@ -314,16 +284,13 @@ private:
                                                             scvfIndices.begin(),
                                                             scvfIndices.end());
                 numCaches += scvfIndices.size();
-                if (isSecondary) numSecondaryIv++;
-                else numPrimaryIv++;
+                numPrimaryIv++;
             }
         };
 
         // search for ivs at boundary vertices
         for (const auto& scvf : scvfs(fvGeometry))
-            gridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()) ?
-                    handleScvf(scvf, gridIvIndexSets.get(scvf), true) :
-                    handleScvf(scvf, gridIvIndexSets.get(scvf),  false) ;
+            handleScvf(scvf, gridIvIndexSets.get(scvf));
 
         // skip the rest if there are no boundary caches to be created
         if (numCaches > 0)
@@ -335,18 +302,13 @@ private:
                 for (const auto& scvfJIdx : dataJ.scvfsJ)
                 {
                     const auto& scvfJ = fvGeometry.scvf(scvfJIdx);
-                    if (gridGeometry.vertexUsesSecondaryInteractionVolume(scvfJ.vertexIndex()))
-                        handleScvf(scvfJ, gridIvIndexSets.get(scvfJ), true);
-                    else
-                        handleScvf(scvfJ, gridIvIndexSets.get(scvfJ), false);
+                    handleScvf(scvfJ, gridIvIndexSets.get(scvfJ));
                 }
             }
 
             // now prepare the caches of all scvfs that have been found to be handled
             boundaryCacheData_.ivDataStorage_.primaryInteractionVolumes.reserve(numPrimaryIv);
-            boundaryCacheData_.ivDataStorage_.secondaryInteractionVolumes.reserve(numSecondaryIv);
             boundaryCacheData_.ivDataStorage_.primaryDataHandles.reserve(numPrimaryIv);
-            boundaryCacheData_.ivDataStorage_.secondaryDataHandles.reserve(numSecondaryIv);
 
             boundaryCacheData_.fluxVarCaches_.resize(numCaches);
             for (auto& cache : boundaryCacheData_.fluxVarCaches_)
@@ -402,11 +364,9 @@ class CCMpfaElementFluxVariablesCache<GFVC, false>
 public:
     //! export the interaction volume types
     using PrimaryInteractionVolume = typename GFVC::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename GFVC::SecondaryInteractionVolume;
 
     //! export the data handle types used
     using PrimaryIvDataHandle = typename GFVC::PrimaryIvDataHandle;
-    using SecondaryIvDataHandle = typename GFVC::SecondaryIvDataHandle;
 
     //! export the flux variable cache type
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
@@ -491,9 +451,7 @@ public:
         constexpr auto numIvEstimate = FVElementGeometry::maxNumElementScvfs
                                        * GridFluxVariablesCache::Traits::maxLocalElementLevelDifference();
         ivDataStorage_.primaryInteractionVolumes.reserve(numIvEstimate);
-        ivDataStorage_.secondaryInteractionVolumes.reserve(numIvEstimate);
         ivDataStorage_.primaryDataHandles.reserve(numIvEstimate);
-        ivDataStorage_.secondaryDataHandles.reserve(numIvEstimate);
 
         // helper class to fill flux variables caches
         FluxVariablesCacheFiller filler(problem);
@@ -639,16 +597,6 @@ public:
     const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
     { return ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
 
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]; }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
-
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
@@ -662,9 +610,7 @@ private:
         fluxVarsCache_.clear();
         globalScvfIndices_.clear();
         ivDataStorage_.primaryInteractionVolumes.clear();
-        ivDataStorage_.secondaryInteractionVolumes.clear();
         ivDataStorage_.primaryDataHandles.clear();
-        ivDataStorage_.secondaryDataHandles.clear();
     }
 
     //! get index of an scvf in the local container
@@ -680,10 +626,7 @@ private:
     std::vector<std::size_t> globalScvfIndices_;
 
     // stored interaction volumes and handles
-    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume,
-                                                       PrimaryIvDataHandle,
-                                                       SecondaryInteractionVolume,
-                                                       SecondaryIvDataHandle>;
+    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume, PrimaryIvDataHandle>;
     IVDataStorage ivDataStorage_;
 };
 

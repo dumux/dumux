@@ -64,14 +64,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume related data from the filler class & update the cache
-            if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.secondaryIvLocalFaceData(),
-                                                  fluxVarsCacheFiller.secondaryIvDataHandle());
-            else
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                  fluxVarsCacheFiller.primaryIvDataHandle());
+            scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                fluxVarsCacheFiller.primaryIvLocalFaceData(),
+                                                fluxVarsCacheFiller.primaryIvDataHandle());
         }
     };
 
@@ -82,14 +77,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
-        static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::AdvectionHandle;
-        using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle::AdvectionHandle;
-
-        //! sets the pointer to the data handle (overload for secondary data handles)
-        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int> = 0 >
-        void setHandlePointer_(const SecondaryDataHandle& dataHandle)
-        { secondaryHandlePtr_ = &dataHandle; }
 
         //! sets the pointer to the data handle (overload for primary data handles)
         void setHandlePointer_(const PrimaryDataHandle& dataHandle)
@@ -122,7 +110,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         //! The corresponding data handles
         const PrimaryDataHandle& advectionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-        const SecondaryDataHandle& advectionSecondaryDataHandle() const { return *secondaryHandlePtr_; }
 
         //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
         bool advectionSwitchFluxSign() const { return switchFluxSign_; }
@@ -132,7 +119,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         //! pointers to the corresponding iv-data handles
         const PrimaryDataHandle* primaryHandlePtr_;
-        const SecondaryDataHandle* secondaryHandlePtr_;
 
         //! The stencil, i.e. the grid indices j
         const Stencil* stencil_;
@@ -168,10 +154,7 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // forward to the private function taking the iv data handle
-        if (fluxVarsCache.usesSecondaryIv())
-            return flux_(problem, fluxVarsCache, fluxVarsCache.advectionSecondaryDataHandle(), phaseIdx);
-        else
-            return flux_(problem, fluxVarsCache, fluxVarsCache.advectionPrimaryDataHandle(), phaseIdx);
+        return flux_(problem, fluxVarsCache, fluxVarsCache.advectionPrimaryDataHandle(), phaseIdx);
     }
 
 private:

@@ -85,24 +85,12 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 {
     using GridIndexType = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::IndexSet::IndexType;
 
-    using MpfaHelper = typename GetPropType<TypeTag, Properties::GridGeometry>::MpfaHelper;
-    static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
     //! export type used for scalar values
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     //! Returns whether or not this cache has been updated
     bool isUpdated() const { return isUpdated_; }
-
-    //! Returns whether or not this cache is associated with a secondary interaction volume
-    //! Specialization for deactivated secondary interaction volumes
-    template< bool doSecondary = considerSecondary, std::enable_if_t<!doSecondary, int> = 0>
-    constexpr bool usesSecondaryIv() const { return false; }
-
-    //! Returns whether or not this cache is associated with a secondary interaction volume
-    //! Specialization for activated secondary interaction volumes
-    template< bool doSecondary = considerSecondary, std::enable_if_t<doSecondary, int> = 0>
-    bool usesSecondaryIv() const { return usesSecondaryIv_; }
 
     //! Returns the index of the iv (this scvf is embedded in) in its container
     GridIndexType ivIndexInContainer() const { return ivIndexInContainer_; }
@@ -113,8 +101,6 @@ public:
 
     //! Sets the update status. When set to true, consecutive updates will be skipped
     void setUpdateStatus(bool status) { isUpdated_ = status; }
-    //! Sets if this cache is associated with a secondary iv
-    void setSecondaryIvUsage(bool status) { usesSecondaryIv_ = status; }
     //! Sets the index of the iv (this scvf is embedded in) in its container
     void setIvIndexInContainer(GridIndexType ivIndex) { ivIndexInContainer_ = ivIndex; }
     //! Sets the iv-local face index

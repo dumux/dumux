@@ -48,9 +48,7 @@ struct CCMpfaDefaultGridFluxVariablesCacheTraits
     using FluxVariablesCacheFiller = FVCF;
 
     using PrimaryInteractionVolume = PIV;
-    using SecondaryInteractionVolume = SIV;
     using PrimaryIvDataHandle = PDH;
-    using SecondaryIvDataHandle = SDH;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = CCMpfaElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
@@ -91,11 +89,9 @@ public:
 
     //! export the interaction volume types
     using PrimaryInteractionVolume = typename Traits::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename Traits::SecondaryInteractionVolume;
 
     //! export the data handle types used
     using PrimaryIvDataHandle = typename Traits::PrimaryIvDataHandle;
-    using SecondaryIvDataHandle = typename Traits::SecondaryIvDataHandle;
 
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
@@ -128,12 +124,9 @@ public:
                 clear_();
 
                 const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
-                const auto numPrimaryIvs = gridIvIndexSets.numPrimaryInteractionVolumes();
-                const auto numSecondaryIVs = gridIvIndexSets.numSecondaryInteractionVolumes();
+                const auto numPrimaryIvs = gridIvIndexSets.size();
                 ivDataStorage_.primaryInteractionVolumes.reserve(numPrimaryIvs);
-                ivDataStorage_.secondaryInteractionVolumes.reserve(numSecondaryIVs);
                 ivDataStorage_.primaryDataHandles.reserve(numPrimaryIvs);
-                ivDataStorage_.secondaryDataHandles.reserve(numSecondaryIVs);
 
                 // reserve memory estimate for caches, interaction volumes and corresponding data
                 fluxVarsCache_.resize(gridGeometry.numScvf());
@@ -225,16 +218,6 @@ public:
     const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
     { return ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
 
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryInteractionVolume& secondaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.secondaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]; }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const SecondaryIvDataHandle& secondaryDataHandle(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.secondaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
-
     const Problem& problem() const
     { return *problemPtr_; }
 
@@ -252,19 +235,14 @@ private:
     {
         fluxVarsCache_.clear();
         ivDataStorage_.primaryInteractionVolumes.clear();
-        ivDataStorage_.secondaryInteractionVolumes.clear();
         ivDataStorage_.primaryDataHandles.clear();
-        ivDataStorage_.secondaryDataHandles.clear();
     }
 
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
 
     // stored interaction volumes and handles
-    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume,
-                                                       PrimaryIvDataHandle,
-                                                       SecondaryInteractionVolume,
-                                                       SecondaryIvDataHandle>;
+    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume, PrimaryIvDataHandle>;
     IVDataStorage ivDataStorage_;
 };
 
@@ -286,11 +264,9 @@ public:
 
     //! export the interaction volume types
     using PrimaryInteractionVolume = typename Traits::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename Traits::SecondaryInteractionVolume;
 
     //! export the data handle types used
     using PrimaryIvDataHandle = typename Traits::PrimaryIvDataHandle;
-    using SecondaryIvDataHandle = typename Traits::SecondaryIvDataHandle;
 
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;

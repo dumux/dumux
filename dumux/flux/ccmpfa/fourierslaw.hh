@@ -63,15 +63,10 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-          // get interaction volume from the flux vars cache filler & update the cache
-          if (fvGeometry.gridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-              scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                     fluxVarsCacheFiller.secondaryIvLocalFaceData(),
-                                                     fluxVarsCacheFiller.secondaryIvDataHandle());
-          else
-              scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                     fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                     fluxVarsCacheFiller.primaryIvDataHandle());
+            // get interaction volume from the flux vars cache filler & update the cache
+            scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                    fluxVarsCacheFiller.primaryIvLocalFaceData(),
+                                                    fluxVarsCacheFiller.primaryIvDataHandle());
         }
     };
 
@@ -80,14 +75,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     {
         using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
 
-        static constexpr bool considerSecondaryIVs = GridGeometry::MpfaHelper::considerSecondaryIVs();
         using PrimaryDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle::HeatConductionHandle;
-        using SecondaryDataHandle = typename ElementFluxVarsCache::SecondaryIvDataHandle::HeatConductionHandle;
-
-        //! sets the pointer to the data handle (overload for secondary data handles)
-        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int> = 0 >
-        void setHandlePointer_(const SecondaryDataHandle& dataHandle)
-        { secondaryHandlePtr_ = &dataHandle; }
 
         //! sets the pointer to the data handle (overload for primary data handles)
         void setHandlePointer_(const PrimaryDataHandle& dataHandle)
@@ -120,7 +108,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         //! The corresponding data handles
         const PrimaryDataHandle& heatConductionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-        const SecondaryDataHandle& heatConductionSecondaryDataHandle() const { return *secondaryHandlePtr_; }
 
         //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
         bool heatConductionSwitchFluxSign() const { return switchFluxSign_; }
@@ -130,7 +117,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
         //! pointers to the corresponding iv-data handles
         const PrimaryDataHandle* primaryHandlePtr_;
-        const SecondaryDataHandle* secondaryHandlePtr_;
 
         //! The stencil, i.e. the grid indices j
         const Stencil* stencil_;
@@ -161,10 +147,7 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // forward to the private function taking the iv data handle
-        if (fluxVarsCache.usesSecondaryIv())
-            return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionSecondaryDataHandle());
-        else
-            return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionPrimaryDataHandle());
+        return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionPrimaryDataHandle());
     }
 
 private:

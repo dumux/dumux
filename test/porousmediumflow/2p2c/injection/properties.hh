@@ -76,24 +76,6 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::Injection> { static constex
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::Injection> { static constexpr bool value = ENABLECACHING; };
 
-// use the static interaction volume around interior vertices in the mpfa test
-template<class TypeTag>
-struct PrimaryInteractionVolume<TypeTag, TTag::InjectionCCMpfa>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-
-    // structured two-d grid
-    static constexpr int numIvScvs = 4;
-    static constexpr int numIvScvfs = 4;
-
-    // use the default traits
-    using Traits = CCMpfaODefaultStaticInteractionVolumeTraits< GridView, Scalar, numIvScvs, numIvScvfs >;
-public:
-    using type = CCMpfaOStaticInteractionVolume< Traits >;
-};
-
 } // end namespace Dumux::Properties
 
 #endif

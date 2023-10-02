@@ -492,9 +492,6 @@ class CCMpfaHelper : public MpfaDimensionHelper<GridGeometry,
                                                 GridGeometry::GridView::dimension,
                                                 GridGeometry::GridView::dimensionworld>
 {
-    using PrimaryInteractionVolume = typename GridGeometry::GridIVIndexSets::PrimaryInteractionVolume;
-    using SecondaryInteractionVolume = typename GridGeometry::GridIVIndexSets::SecondaryInteractionVolume;
-
     using VertexMapper = typename GridGeometry::VertexMapper;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -569,11 +566,6 @@ public:
 
         return ghostVertices;
     }
-
-    //! Returns whether or not secondary interaction volumes have to be considered in the model.
-    //! This is always the case when the specified types for the interaction volumes differ.
-    static constexpr bool considerSecondaryIVs()
-    { return !std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value; }
 
     //! returns whether or not a value exists in a vector
     template<typename V, typename T>

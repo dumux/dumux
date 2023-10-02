@@ -145,8 +145,8 @@ public:
     const NodalIndexSet& get(const GridIndexType scvfIdx) const
     { return (*dualGridIndexSet_)[scvfIndexMap_[scvfIdx]]; }
 
-    std::size_t numPrimaryInteractionVolumes() const { return dualGridIndexSet_->size(); }
-    std::size_t numSecondaryInteractionVolumes() const { return 0; }
+    std::size_t size() const
+    { return interactionVolumes_.size(); }
 
 private:
     std::vector<GridIndexType> scvfIndexMap_;
