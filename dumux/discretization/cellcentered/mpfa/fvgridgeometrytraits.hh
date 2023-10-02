@@ -49,7 +49,7 @@ struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
     template< class FVGridGeom >
     using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, PIV::MpfaMethod>;
     template< class FVGridGeom >
-    using GridInteractionVolumes = CCMpfaGridInteractionVolumes< FVGridGeom, PIV, SIV >;
+    using GridInteractionVolumes = CCMpfaGridInteractionVolumes< FVGridGeom >;
     template< class FVGridGeom, bool enableCache >
     using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
 };

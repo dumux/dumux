@@ -59,10 +59,8 @@ private:
  * \brief Class that holds all interaction volume index sets on a grid view.
  *
  * \tparam FVG the finite volume grid geometry
- * \tparam PI primary interaction volume type
- * \tparam SI secondary interaction volume type
  */
-template<class FVG, class PI, class SI = PI>
+template<class FVG>
 class CCMpfaGridInteractionVolumes
 {
     using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
@@ -99,8 +97,6 @@ class CCMpfaGridInteractionVolumes
 
 public:
     using GridGeometry = FVG;
-    using PrimaryInteractionVolume = PI;
-    using SecondaryInteractionVolume = SI;
 
     using DualGridIndexSet = CCMpfaDualGridIndexSet< GV >;
     using NodalIndexSet = typename DualGridIndexSet::NodalIndexSet;
