@@ -87,9 +87,6 @@ class FluxStencil<FVElementGeometry, DiscretizationMethods::CCMpfa>
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
-    // Use the stencil type of the primary interaction volume
-    using NodalIndexSet = typename GridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
-
 public:
     //! We don't know yet how many faces couple to a neighboring element
     using ScvfStencilIForJ = std::vector<GridIndexType>;
@@ -98,13 +95,10 @@ public:
     using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     //! Returns the indices of the elements required for flux calculation on an scvf.
-    static const Stencil& stencil(const Element& element,
+    static const Stencil& stencil(const Element&,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
-    {
-        const auto& gridGeometry = fvGeometry.gridGeometry();
-        return gridGeometry.gridInteractionVolumeIndexSets().get(scvf).gridScvIndices();
-    }
+    { return fvGeometry.gridGeometry().gridInteractionVolumes().get(scvf).gridScvIndices(); }
 };
 
 } // end namespace Dumux

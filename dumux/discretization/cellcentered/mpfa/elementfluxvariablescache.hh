@@ -263,7 +263,7 @@ private:
         std::size_t numCaches;      numCaches = 0;
 
         const auto& gridGeometry = fvGeometry.gridGeometry();
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
 
         // lambda to check if a scvf was handled already
         auto scvfHandled = [&] (auto idx)
@@ -339,7 +339,7 @@ private:
     bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf) const
     {
         const auto& gridGeometry = gridFluxVarsCachePtr_->problem().gridGeometry();
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
         return gridIvIndexSets.get(scvf).numBoundaryScvfs() > 0;
     }
 

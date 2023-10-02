@@ -249,7 +249,7 @@ public:
         {
             // create new interaction volume
             const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
-            const auto& indexSet = gridGeometry.gridInteractionVolumeIndexSets().get(scvf);
+            const auto& indexSet = gridGeometry.gridInteractionVolumes().get(scvf);
             ivDataStorage.primaryInteractionVolumes.emplace_back();
             primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
             primaryIv_->bind(indexSet, problem(), fvGeometry);

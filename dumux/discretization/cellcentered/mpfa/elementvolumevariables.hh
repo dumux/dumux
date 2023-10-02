@@ -38,7 +38,7 @@ namespace CCMpfa {
     std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
     {
         const auto& gridGeometry = fvGeometry.gridGeometry();
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
 
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
@@ -152,7 +152,7 @@ namespace CCMpfa {
         }
 
         // Update boundary volume variables in the neighbors
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
         for (const auto& scvf : scvfs(fvGeometry))
             addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
                                         gridIvIndexSets.get(scvf) );

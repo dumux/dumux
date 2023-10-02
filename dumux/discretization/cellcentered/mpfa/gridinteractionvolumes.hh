@@ -63,7 +63,7 @@ private:
  * \tparam SI secondary interaction volume type
  */
 template<class FVG, class PI, class SI = PI>
-class CCMpfaGridInteractionVolumeIndexSets
+class CCMpfaGridInteractionVolumes
 {
     using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
     using GV = typename FVG::GridView;
@@ -106,6 +106,7 @@ public:
     using NodalIndexSet = typename DualGridIndexSet::NodalIndexSet;
     using GridIndexType = typename DualGridIndexSet::GridIndexType;
 
+    // for bw-compatibility
     void update(GridGeometry& gridGeometry,
                 DualGridIndexSet&& dualGridIdSet)
     {

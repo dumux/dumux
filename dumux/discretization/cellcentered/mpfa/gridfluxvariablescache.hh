@@ -123,7 +123,7 @@ public:
             {
                 clear_();
 
-                const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+                const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
                 const auto numPrimaryIvs = gridIvIndexSets.size();
                 ivDataStorage_.primaryInteractionVolumes.reserve(numPrimaryIvs);
                 ivDataStorage_.primaryDataHandles.reserve(numPrimaryIvs);
@@ -226,7 +226,7 @@ private:
     template<class SubControlVolumeFace, class GridGeometry>
     bool isEmbeddedInBoundaryIV_(const SubControlVolumeFace& scvf, const GridGeometry& gridGeometry) const
     {
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumeIndexSets();
+        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
         return gridIvIndexSets.get(scvf).numBoundaryScvfs() > 0;
     }
 

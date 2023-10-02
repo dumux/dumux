@@ -19,7 +19,7 @@
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumeindexsets.hh>
+#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumes.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 namespace Dumux {
@@ -49,7 +49,7 @@ struct CCMpfaFVGridGeometryTraits : public DefaultMapperTraits<GV>
     template< class FVGridGeom >
     using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, PIV::MpfaMethod>;
     template< class FVGridGeom >
-    using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, PIV, SIV >;
+    using GridInteractionVolumes = CCMpfaGridInteractionVolumes< FVGridGeom, PIV, SIV >;
     template< class FVGridGeom, bool enableCache >
     using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
 };

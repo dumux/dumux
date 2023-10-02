@@ -77,9 +77,7 @@ public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the grid interaction volume index set type
-    using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
-    //! export the type to be used for indicators where to use the secondary ivs
-    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
+    using GridInteractionVolumes = typename Traits::template GridInteractionVolumes<ThisType>;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -105,24 +103,8 @@ public:
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
 
-    //! State if only a single type is used for interaction volumes
-    static constexpr bool hasSingleInteractionVolumeType = !MpfaHelper::considerSecondaryIVs();
-
-    //! Constructor without indicator function for secondary interaction volumes
-    //! Per default, we use the secondary IVs at branching points & boundaries
     CCMpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
-                               { return is.boundary() || isBranching; } )
-    {
-        checkOverlapSizeCCMpfa(gridView);
-        update_();
-    }
-
-    //! Constructor with user-defined indicator function for secondary interaction volumes
-    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
-    : ParentType(gridView)
-    , secondaryIvIndicator_(indicator)
     {
         checkOverlapSizeCCMpfa(gridView);
         update_();
@@ -148,19 +130,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    //! Returns true if secondary interaction volumes are used around a given vertex (index).
-    //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<useSecondary, bool> = 0>
-    bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    //! Returns true if secondary interaction volumes are used around a given vertex (index).
-    //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
-    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return false; }
-
 
     //! update all fvElementGeometries (call this after grid adaption)
     void update(const GridView& gridView)
@@ -194,8 +163,8 @@ public:
     { return connectivityMap_; }
 
     //! Returns the grid interaction volume index set class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
+    const GridInteractionVolumes& gridInteractionVolumes() const
+    { return gridInteractionVolumes_; }
 
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
@@ -225,7 +194,6 @@ private:
         scvfs_.clear();
 
         // determine the number of geometric entities
-        const auto numVert = this->gridView().size(dim);
         const auto numScvs = numDofs();
         std::size_t numScvf = MpfaHelper::getGlobalNumScvf(this->gridView());
 
@@ -234,10 +202,6 @@ private:
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         hasBoundaryScvf_.assign(numScvs, false);
-
-        // Some methods require to use a second type of interaction volume, e.g.
-        // around vertices on the boundary or branching points (surface grids)
-        secondaryInteractionVolumeVertices_.assign(numVert, false);
 
         // find vertices on processor boundaries
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
@@ -304,10 +268,6 @@ private:
                                                                                       indexInElement,
                                                                                       numCorners);
 
-                // evaluate if vertices on this intersection use primary/secondary IVs
-                const bool isBranchingPoint = dim < dimWorld ? outsideIndices[indexInInside].size() > 1 : false;
-                const bool usesSecondaryIV = secondaryIvIndicator_(element, is, isBranchingPoint);
-
                 // make the scv faces belonging to each corner of the intersection
                 for (std::size_t c = 0; c < numCorners; ++c)
                 {
@@ -318,10 +278,6 @@ private:
                     // do not build scvfs connected to a processor boundary
                     if (isGhostVertex[vIdxGlobal])
                         continue;
-
-                    // if this vertex is tagged to use the secondary IVs, store info
-                    if (usesSecondaryIV)
-                        secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
 
                     // the quadrature point parameterizarion to be used on scvfs
                     static const auto q = getParam<CoordScalar>("MPFA.Q");
@@ -402,8 +358,8 @@ private:
 
         // Initialize the grid interaction volume index sets
         timer.reset();
-        ivIndexSets_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
-        std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
+        gridInteractionVolumes_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
+        std::cout << "Initializing of the grid interaction volumes took " << timer.elapsed() << " seconds." << std::endl;
 
         // build the connectivity map for an efficient assembly
         timer.reset();
@@ -420,7 +376,6 @@ private:
 
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
-    std::vector<bool> secondaryInteractionVolumeVertices_;
     GridIndexType numBoundaryScvf_;
     std::vector<bool> hasBoundaryScvf_;
 
@@ -428,10 +383,7 @@ private:
     FlipScvfIndexSet flipScvfIndices_;
 
     // The grid interaction volume index set
-    GridIVIndexSets ivIndexSets_;
-
-    // Indicator function on where to use the secondary IVs
-    SecondaryIvIndicatorType secondaryIvIndicator_;
+    GridInteractionVolumes gridInteractionVolumes_;
 };
 
 /*!
@@ -463,9 +415,7 @@ public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the grid interaction volume index set type
-    using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
-    //! export the type to be used for indicators where to use the secondary ivs
-    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
+    using GridInteractionVolumes = typename Traits::template GridInteractionVolumes<ThisType>;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, false>;
@@ -491,24 +441,8 @@ public:
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
 
-    //! State if only a single type is used for interaction volumes
-    static constexpr bool hasSingleInteractionVolumeType = !MpfaHelper::considerSecondaryIVs();
-
-    //! Constructor without indicator function for secondary interaction volumes
-    //! Per default, we use the secondary IVs at branching points & boundaries
     CCMpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
-                               { return is.boundary() || isBranching; } )
-    {
-        checkOverlapSizeCCMpfa(gridView);
-        update_();
-    }
-
-    //! Constructor with user-defined indicator function for secondary interaction volumes
-    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
-    : ParentType(gridView)
-    , secondaryIvIndicator_(indicator)
     {
         checkOverlapSizeCCMpfa(gridView);
         update_();
@@ -534,18 +468,6 @@ public:
     //! Returns the total number of degrees of freedom.
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    //! Returns true if secondary interaction volumes are used around a given vertex (index).
-    //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<useSecondary, bool> = 0>
-    bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    //! Returns true if secondary interaction volumes are used around a given vertex (index).
-    //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = !hasSingleInteractionVolumeType, std::enable_if_t<!useSecondary, bool> = 0>
-    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
     bool isGhostVertex(const Vertex& v) const
@@ -597,8 +519,8 @@ public:
     { return connectivityMap_; }
 
     //! Returns the grid interaction volume seeds class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
+    const GridInteractionVolumes& gridInteractionVolumes() const
+    { return gridInteractionVolumes_; }
 
 private:
 
@@ -612,11 +534,6 @@ private:
         numScvs_ = numDofs();
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
-
-        // Some methods require to use a second type of interaction volume, e.g.
-        // around vertices on the boundary or branching points (surface grids)
-        const auto numVert = this->gridView().size(dim);
-        secondaryInteractionVolumeVertices_.assign(numVert, false);
 
         // find vertices on processor boundaries HERE!!
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
@@ -683,10 +600,6 @@ private:
                 const auto eg = e.geometry();
                 const auto refElement = referenceElement(eg);
 
-                // evaluate if vertices on this intersection use primary/secondary IVs
-                const bool isBranchingPoint = dim < dimWorld ? outsideIndices[indexInInside].size() > 1 : false;
-                const bool usesSecondaryIV = secondaryIvIndicator_(element, is, isBranchingPoint);
-
                 // make the scv faces belonging to each corner of the intersection
                 for (std::size_t c = 0; c < is.geometry().corners(); ++c)
                 {
@@ -697,10 +610,6 @@ private:
                     // do not build scvfs connected to a processor boundary
                     if (isGhostVertex_[vIdxGlobal])
                         continue;
-
-                    // if this vertex is tagged to use the secondary IVs, store info
-                    if (usesSecondaryIV)
-                        secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
@@ -775,8 +684,8 @@ private:
 
         // Initialize the grid interaction volume index sets
         timer.reset();
-        ivIndexSets_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
-        std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
+        gridInteractionVolumes_.update(*this, std::move(dualIdSetFactory).build(flipScvfIndices_));
+        std::cout << "Initializing of the grid interaction volumes took " << timer.elapsed() << " seconds." << std::endl;
 
         // build the connectivity map for an efficient assembly
         timer.reset();
@@ -790,7 +699,6 @@ private:
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<ScvfOutsideGridIndexStorage>> neighborVolVarIndices_;
-    std::vector<bool> secondaryInteractionVolumeVertices_;
     std::vector<bool> isGhostVertex_;
     GridIndexType numScvs_;
     GridIndexType numScvf_;
@@ -800,10 +708,7 @@ private:
     FlipScvfIndexSet flipScvfIndices_;
 
     // The grid interaction volume index set
-    GridIVIndexSets ivIndexSets_;
-
-    // Indicator function on where to use the secondary IVs
-    SecondaryIvIndicatorType secondaryIvIndicator_;
+    GridInteractionVolumes gridInteractionVolumes_;
 };
 
 } // end namespace Dumux
