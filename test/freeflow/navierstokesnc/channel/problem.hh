@@ -124,7 +124,7 @@ public:
         {
             if(time() >= 10.0 || inletVelocity_  < eps_)
             {
-                Scalar moleFracTransportedComp = 1e-3;
+                Scalar moleFracTransportedComp = 1e-3*(globalPos[1] > 0.5 ? 1.0 : 0.0);
 #if USE_MASS
                 Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
                                                + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);

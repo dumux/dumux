@@ -5,6 +5,7 @@ TEnd = 1e9 # [s]
 [Grid]
 UpperRight = 5 1
 Cells = 50 10
+Periodic = 0 1
 
 [Problem]
 Name = test_purediffusion

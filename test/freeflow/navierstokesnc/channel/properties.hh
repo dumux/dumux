@@ -16,7 +16,7 @@
 #define ENABLECACHING 1
 #endif
 
-#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/spgrid.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
@@ -52,7 +52,7 @@ struct ReplaceCompEqIdx<TypeTag, TTag::ChannelNCTest> { static constexpr int val
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::ChannelNCTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::ChannelNCTest> { using type = Dune::SPGrid<double, 2>; };
 
 // Set the problem property
 template<class TypeTag>
