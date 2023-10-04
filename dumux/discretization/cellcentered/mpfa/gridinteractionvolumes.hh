@@ -18,89 +18,30 @@
 #include <dune/common/fmatrix.hh>
 
 #include "dualgridindexset.hh"
+#include "interactionvolume.hh"
 
 namespace Dumux {
 
-// TODO: Scalar must come from outside
-template<class GridView, class Scalar = double>
-class CCMpfaTransmissibilities
-{
-    static constexpr int dim = GridView::dimension;
-    using GridIndex = typename GridView::IndexSet::IndexType;
-
-public:
-    virtual ~CCMpfaTransmissibilities() = default;
-
-    class Id {
-        friend CCMpfaTransmissibilities;
-        Id(int i) : id{i} {}
-        int id;
-    };
-
-    using ScalarAccessor = std::function<Scalar(const GridIndex&)>;
-    using TensorAccessor = std::function<Dune::FieldMatrix<Scalar, dim, dim>(const GridIndex&)>;
-    using DofAccessor = std::function<Scalar(const GridIndex&)>;
-
-    Id computeTransmissibilities(const ScalarAccessor& f) { return Id{computeTransmissibilities_(f)}; }
-    Id computeTransmissibilities(const TensorAccessor& f) { return Id{computeTransmissibilities_(f)}; }
-    Scalar computeFlux(const DofAccessor& a, const Id& id) { return computeFlux_(a, id.id); }
-    // TODO: Transmissibility visitor or export?
-
-private:
-    virtual int computeTransmissibilities_(const ScalarAccessor& f) = 0;
-    virtual int computeTransmissibilities_(const TensorAccessor& f) = 0;
-    virtual Scalar computeFlux_(const DofAccessor& a, int) const = 0;
-};
-
-template<class GridView>
-class CCMpfaInteractionVolume
-{
-public:
-    using Transmissibilities = CCMpfaTransmissibilities<GridView>;
-
-    virtual ~CCMpfaInteractionVolume() = default;
-
-    using GridIndex = typename GridView::IndexSet::IndexType;
-    using GridIndexVisitor = std::function<void(const GridIndex&)>;
-
-    std::unique_ptr<Transmissibilities> transmissibilities() const
-    { return transmissibilities_(); }
-
-    void visitGridScvIndices(const GridIndexVisitor& v) const
-    { visitGridScvIndices_(v); }
-
-    void visitGridScvfIndices(const GridIndexVisitor& v) const
-    { visitGridScvfIndices_(v); }
-
-private:
-    virtual void visitGridScvIndices_(const GridIndexVisitor&) const = 0;
-    virtual void visitGridScvfIndices_(const GridIndexVisitor&) const = 0;
-    virtual std::unique_ptr<Transmissibilities> transmissibilities_() const = 0;
-};
-
-template<typename GridView>
+template<class GridView, class Scalar>
 class CCMpfaInteractionVolumeFactory
 {
 public:
     virtual ~CCMpfaInteractionVolumeFactory() = default;
 
-    using InteractionVolumePointer = std::unique_ptr<CCMpfaInteractionVolume<GridView>>;
     using DualGridNodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
+    using InteractionVolumePointer = std::unique_ptr<CCMpfaInteractionVolume<GridView, Scalar>>;
     using InteractionVolumesVisitor = std::function<void(InteractionVolumePointer&&)>;
 
-    void visitInteractionVolumesAt(const DualGridNodalIndexSet& ni,
-                                   const InteractionVolumesVisitor& v) const
+    void visitInteractionVolumesAt(const DualGridNodalIndexSet& ni, const InteractionVolumesVisitor& v) const
     { visitInteractionVolumesAt_(ni, v); }
 
 private:
-    virtual void visitInteractionVolumesAt_(const DualGridNodalIndexSet& ni,
-                                            const InteractionVolumesVisitor&) const = 0;
+    virtual void visitInteractionVolumesAt_(const DualGridNodalIndexSet&, const InteractionVolumesVisitor&) const = 0;
 };
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Class that holds all interaction volume index sets on a grid view.
- *
  * \tparam FVG the finite volume grid geometry
  */
 template<class FVG>
@@ -109,12 +50,12 @@ class CCMpfaGridInteractionVolumes
     using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
     using GV = typename FVG::GridView;
 
-    class DummyTransmissibilities : public CCMpfaTransmissibilities<GV>
+    class DummyTransmissibilities : public CCMpfaTransmissibilities<GV, double>
     {
     public:
-        using typename CCMpfaTransmissibilities<GV>::ScalarAccessor;
-        using typename CCMpfaTransmissibilities<GV>::TensorAccessor;
-        using typename CCMpfaTransmissibilities<GV>::DofAccessor;
+        using typename CCMpfaTransmissibilities<GV, double>::ScalarAccessor;
+        using typename CCMpfaTransmissibilities<GV, double>::TensorAccessor;
+        using typename CCMpfaTransmissibilities<GV, double>::DofAccessor;
 
     private:
         int computeTransmissibilities_(const ScalarAccessor& f) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
@@ -122,12 +63,12 @@ class CCMpfaGridInteractionVolumes
         double computeFlux_(const DofAccessor& a, int) const override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
     };
 
-    class DummyInteractionVolumeFactory : public CCMpfaInteractionVolumeFactory<GV>
+    class DummyInteractionVolumeFactory : public CCMpfaInteractionVolumeFactory<GV, double>
     {
-        class DummyInteractionVolume : public CCMpfaInteractionVolume<GV>
+        class DummyInteractionVolume : public CCMpfaInteractionVolume<GV, double>
         {
         public:
-            using typename CCMpfaInteractionVolume<GV>::GridIndexVisitor;
+            using typename CCMpfaInteractionVolume<GV, double>::GridIndexVisitor;
             DummyInteractionVolume(const CCMpfaDualGridNodalIndexSet<GV>& ni)
             : ni_{ni}
             {}
@@ -145,14 +86,14 @@ class CCMpfaGridInteractionVolumes
                     v(scvfIndex);
             }
 
-            std::unique_ptr<CCMpfaTransmissibilities<GV>> transmissibilities_() const
+            std::unique_ptr<CCMpfaTransmissibilities<GV, double>> transmissibilities_() const
             { return std::make_unique<DummyTransmissibilities>(); }
 
             const CCMpfaDualGridNodalIndexSet<GV>& ni_;
         };
 
-        using typename CCMpfaInteractionVolumeFactory<GV>::DualGridNodalIndexSet;
-        using typename CCMpfaInteractionVolumeFactory<GV>::InteractionVolumesVisitor;
+        using typename CCMpfaInteractionVolumeFactory<GV, double>::DualGridNodalIndexSet;
+        using typename CCMpfaInteractionVolumeFactory<GV, double>::InteractionVolumesVisitor;
         void visitInteractionVolumesAt_(const DualGridNodalIndexSet& ni,
                                         const InteractionVolumesVisitor& v) const
         {
@@ -184,7 +125,7 @@ public:
      */
     void update(GridGeometry& gridGeometry,
                 DualGridIndexSet&& dualGridIdSet,
-                const CCMpfaInteractionVolumeFactory<GV>& factory)
+                const CCMpfaInteractionVolumeFactory<GV, double>& factory)
     {
         dualGridIndexSet_ = std::make_unique<DualGridIndexSet>(std::move(dualGridIdSet));
         scvfIndexMap_.clear();
@@ -208,11 +149,11 @@ public:
     { return (*dualGridIndexSet_)[scvfIndexMap_[scvfIdx]]; }
 
     //! Return the iv in which a given scvf is embedded in
-    const CCMpfaInteractionVolume<GV>& at(const SubControlVolumeFace& scvf) const
+    const CCMpfaInteractionVolume<GV, double>& at(const SubControlVolumeFace& scvf) const
     { return at(scvf.index()); }
 
     //! Return the iv which a given scvf (index) is embedded in
-    const CCMpfaInteractionVolume<GV>& at(const GridIndexType scvfIdx) const
+    const CCMpfaInteractionVolume<GV, double>& at(const GridIndexType scvfIdx) const
     { return *(interactionVolumes_[scvfIndexMap_[scvfIdx]]); }
 
     std::size_t size() const
@@ -221,7 +162,7 @@ public:
 private:
     std::vector<GridIndexType> scvfIndexMap_;
     std::unique_ptr<DualGridIndexSet> dualGridIndexSet_;
-    std::vector<std::unique_ptr<CCMpfaInteractionVolume<GV>>> interactionVolumes_;
+    std::vector<std::unique_ptr<CCMpfaInteractionVolume<GV, double>>> interactionVolumes_;
 };
 
 } // end namespace Dumux
