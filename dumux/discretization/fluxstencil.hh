@@ -95,10 +95,16 @@ public:
     using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<GridIndexType>;
 
     //! Returns the indices of the elements required for flux calculation on an scvf.
-    static const Stencil& stencil(const Element&,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf)
-    { return fvGeometry.gridGeometry().gridInteractionVolumes().get(scvf).gridScvIndices(); }
+    static Stencil stencil(const Element&,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf)
+    {
+        Stencil stencil;
+        fvGeometry.gridGeometry().gridInteractionVolumes().at(scvf).visitGridScvIndices([&] (GridIndexType i) {
+            stencil.push_back(i);
+        });
+        return stencil;
+    }
 };
 
 } // end namespace Dumux

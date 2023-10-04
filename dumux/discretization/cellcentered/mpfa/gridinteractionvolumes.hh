@@ -28,10 +28,14 @@ public:
     using GridIndex = typename GridView::IndexSet::IndexType;
     using GridIndexVisitor = std::function<void(const GridIndex&)>;
 
+    void visitGridScvIndices(const GridIndexVisitor& v) const
+    { visitGridScvIndices_(v); }
+
     void visitGridScvfIndices(const GridIndexVisitor& v) const
-    { return visitGridScvfIndices_(v); }
+    { visitGridScvfIndices_(v); }
 
 private:
+    virtual void visitGridScvIndices_(const GridIndexVisitor&) const = 0;
     virtual void visitGridScvfIndices_(const GridIndexVisitor&) const = 0;
 };
 
@@ -77,6 +81,12 @@ class CCMpfaGridInteractionVolumes
             {}
 
         private:
+            void visitGridScvIndices_(const GridIndexVisitor& v) const
+            {
+                for (const auto& scvfIndex : ni_.gridScvIndices())
+                    v(scvfIndex);
+            }
+
             void visitGridScvfIndices_(const GridIndexVisitor& v) const
             {
                 for (const auto& scvfIndex : ni_.gridScvfIndices())
@@ -141,6 +151,14 @@ public:
     //! Return the iv index set in which a given scvf (index) is embedded in
     const NodalIndexSet& get(const GridIndexType scvfIdx) const
     { return (*dualGridIndexSet_)[scvfIndexMap_[scvfIdx]]; }
+
+    //! Return the iv in which a given scvf is embedded in
+    const CCMpfaInteractionVolume<GV>& at(const SubControlVolumeFace& scvf) const
+    { return at(scvf.index()); }
+
+    //! Return the iv which a given scvf (index) is embedded in
+    const CCMpfaInteractionVolume<GV>& at(const GridIndexType scvfIdx) const
+    { return *(interactionVolumes_[scvfIndexMap_[scvfIdx]]); }
 
     std::size_t size() const
     { return interactionVolumes_.size(); }
