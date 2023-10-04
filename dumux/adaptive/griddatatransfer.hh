@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Adaptive
- * \brief Interface to be used by classes transferring grid data on adpative grids
+ * \brief Interface to be used by classes transferring grid data on adaptive grids
  */
 #ifndef DUMUX_ADAPTIVE_GRIDDATATRANSFER_HH
 #define DUMUX_ADAPTIVE_GRIDDATATRANSFER_HH
@@ -16,7 +16,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Adaptive
- * \brief Interface to be used by classes transferring grid data on adpative grids
+ * \brief Interface to be used by classes transferring grid data on adaptive grids
  */
 template<class Grid>
 class GridDataTransfer

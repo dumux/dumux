@@ -40,7 +40,7 @@ Download: https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
 ## Parallel computing (shared memory)
 
-If one of the following libararies is installation, multi-threaded code is enabled in DuMux:
+If one of the following libraries is installation, multi-threaded code is enabled in DuMux:
 
 * `OpenMP`: OpenMP usually comes with the compiler
 * `OneTBB`: TBB, see https://github.com/oneapi-src/oneTBB

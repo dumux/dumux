@@ -150,7 +150,7 @@ Name = test_ff
 ## Command-line arguments
 
 All parameter that can be specified via the parameter file can also
-be overwritten via the command line using the following examplary form:
+be overwritten via the command line using the following exemplary form:
 ```sh
 ./executable params.input -Key Value -Key2 Value2 -Key3 "a b c"
 ```

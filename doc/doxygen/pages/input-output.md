@@ -57,7 +57,7 @@ Furthermore, petrophysical properties can be defined (for each cell),
 by using eclipse-specific keywords, e.g. `PORO`, `PERMX`, `PERMY`.
 
 DuMux supports the Eclipse Grid Format by using the [`opm-grid` module](https://github.com/OPM/opm-grid)
-of the [Open Porous Media iniative (OPM)](https://opm-project.org).
+of the [Open Porous Media initiave (OPM)](https://opm-project.org).
 See @ref external-libraries for how to install `opm-grid` together with DuMux.
 An example using a corner-point grid can be found in `dumux/test/porousmediumflow/2p/cornerpoint`.
 

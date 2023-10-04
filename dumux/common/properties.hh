@@ -114,7 +114,7 @@ DUMUX_DEFINE_PROPERTY(EnableBoxInterfaceSolver)
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
-DUMUX_DEFINE_PROPERTY(Chemistry)                      //!< The chemistry class with which solves equlibrium reactions
+DUMUX_DEFINE_PROPERTY(Chemistry)                      //!< The chemistry class with which equilibrium reactions are solved
 DUMUX_DEFINE_PROPERTY(SetMoleFractionsForFirstPhase)  //!< Set the mole fraction in the wetting or nonwetting phase
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 3pwateroil model:
