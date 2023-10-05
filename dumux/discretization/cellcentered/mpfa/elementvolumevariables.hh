@@ -38,11 +38,11 @@ namespace CCMpfa {
     std::size_t maxNumBoundaryVolVars(const FVElementGeometry& fvGeometry)
     {
         const auto& gridGeometry = fvGeometry.gridGeometry();
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
+        const auto& gridIvs = gridGeometry.gridInteractionVolumes();
 
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
-            numBoundaryVolVars += gridIvIndexSets.get(scvf).numBoundaryScvfs();
+            numBoundaryVolVars += gridIvs.at(scvf).size().numBoundaryScvfs;
 
         return numBoundaryVolVars;
     }
@@ -61,28 +61,22 @@ namespace CCMpfa {
      * \param fvGeometry    The element finite volume geometry
      * \param nodalIndexSet The dual grid index set around a node
      */
-    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class NodalIndexSet>
+    template<class VolumeVariables, class IndexType, class Problem, class FVElemGeom, class IV>
     void addBoundaryVolVarsAtNode(std::vector<VolumeVariables>& volVars,
                                   std::vector<IndexType>& volVarIndices,
                                   const Problem& problem,
                                   const typename FVElemGeom::GridGeometry::GridView::template Codim<0>::Entity& element,
                                   const FVElemGeom& fvGeometry,
-                                  const NodalIndexSet& nodalIndexSet)
+                                  const IV& interactionVolume)
     {
-        if (nodalIndexSet.numBoundaryScvfs() == 0)
-            return;
-
-        // index of the element the fvGeometry was bound to
         const auto boundElemIdx = fvGeometry.gridGeometry().elementMapper().index(element);
 
-        // check each scvf in the index set for boundary presence
-        for (auto scvfIdx : nodalIndexSet.gridScvfIndices())
-        {
+        interactionVolume.visitGridScvfIndices([&] (auto scvfIdx) {
             const auto& ivScvf = fvGeometry.scvf(scvfIdx);
 
             // only proceed for scvfs on the boundary and not in the bound element
             if (!ivScvf.boundary() || ivScvf.insideScvIdx() == boundElemIdx)
-                continue;
+                return;
 
             const auto insideScvIdx = ivScvf.insideScvIdx();
             const auto insideElement = fvGeometry.gridGeometry().element(insideScvIdx);
@@ -101,7 +95,7 @@ namespace CCMpfa {
                 volVars.emplace_back(std::move(dirichletVolVars));
                 volVarIndices.push_back(ivScvf.outsideScvIdx());
             }
-        }
+        });
     }
 
     /*!
@@ -152,10 +146,9 @@ namespace CCMpfa {
         }
 
         // Update boundary volume variables in the neighbors
-        const auto& gridIvIndexSets = gridGeometry.gridInteractionVolumes();
+        const auto& gridIvs = gridGeometry.gridInteractionVolumes();
         for (const auto& scvf : scvfs(fvGeometry))
-            addBoundaryVolVarsAtNode( volVars, volVarIndices, problem, element, fvGeometry,
-                                        gridIvIndexSets.get(scvf) );
+            addBoundaryVolVarsAtNode(volVars, volVarIndices, problem, element, fvGeometry, gridIvs.at(scvf));
     }
 } // end namespace CCMpfa
 

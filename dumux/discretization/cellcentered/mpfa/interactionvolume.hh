@@ -82,6 +82,19 @@ class CCMpfaInteractionVolume
     using GridView = typename GridGeometry::GridView;
 
 public:
+    struct Size
+    {
+        unsigned int numScvs;
+        unsigned int numFluxScvfs;
+        unsigned int numAuxiliaryScvfs;
+        unsigned int numBoundaryScvfs;
+
+        unsigned int numTotalScvfs() const
+        { return numFluxScvfs + numAuxiliaryScvfs; }
+    };
+
+    virtual ~CCMpfaInteractionVolume() = default;
+
     using GridIndex = typename GridView::IndexSet::IndexType;
     using GridIndexVisitor = std::function<void(const GridIndex&)>;
 
@@ -90,8 +103,6 @@ public:
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using DirichletBoundaryPredicate = std::function<bool(const Element&, const SubControlVolumeFace&)>;
     using Transmissibilities = CCMpfaTransmissibilities<GridGeometry, Scalar>;
-
-    virtual ~CCMpfaInteractionVolume() = default;
 
     //! Return a transmissibility computation instance for this interaction volume.
     std::unique_ptr<Transmissibilities> transmissibilities(const FVElementGeometry& fvGeometry,
@@ -102,13 +113,34 @@ public:
     void visitGridScvIndices(const GridIndexVisitor& v) const
     { visitGridScvIndices_(v); }
 
-    //! Visit the indices of the scvfs whose fluxes are computed in this interaction volume.
+    //! Visit the indices of the all scvfs involved in flux computations.
     void visitGridScvfIndices(const GridIndexVisitor& v) const
     { visitGridScvfIndices_(v); }
 
+    //! Visit the indices of the scvfs whose fluxes are computed in this interaction volume.
+    void visitFluxGridScvfIndices(const GridIndexVisitor& v) const
+    { visitFluxGridScvfIndices_(v); }
+
+    //! Return true if this fluxes across this scvf are computed in this interaction volume.
+    bool isFluxScvf(const SubControlVolumeFace& scvf) const
+    { return isFluxScvf_(scvf); }
+
+    //! Return the size info on this interaction volume
+    const Size& size() const
+    {
+        if (!size_.has_value())
+            DUNE_THROW(Dune::InvalidStateException, "Interaction volume implementation did not set the iv sizes");
+        return size_.value();
+    }
+
+protected:
+    std::optional<Size> size_;
+
 private:
+    virtual bool isFluxScvf_(const SubControlVolumeFace&) const = 0;
     virtual void visitGridScvIndices_(const GridIndexVisitor&) const = 0;
     virtual void visitGridScvfIndices_(const GridIndexVisitor&) const = 0;
+    virtual void visitFluxGridScvfIndices_(const GridIndexVisitor&) const = 0;
     virtual std::unique_ptr<Transmissibilities> transmissibilities_(const FVElementGeometry&,
                                                                     const DirichletBoundaryPredicate&) const = 0;
 };

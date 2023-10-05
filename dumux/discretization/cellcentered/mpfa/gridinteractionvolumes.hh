@@ -72,6 +72,8 @@ class CCMpfaGridInteractionVolumes
     {
         class DummyInteractionVolume : public CCMpfaInteractionVolume<FVG, double>
         {
+            using ParentType = CCMpfaInteractionVolume<FVG, double>;
+
         public:
             using typename CCMpfaInteractionVolume<FVG, double>::DirichletBoundaryPredicate;
             using typename CCMpfaInteractionVolume<FVG, double>::FVElementGeometry;
@@ -79,25 +81,38 @@ class CCMpfaGridInteractionVolumes
 
             DummyInteractionVolume(const CCMpfaDualGridNodalIndexSet<GV>& ni)
             : ni_{ni}
-            {}
+            {
+                this->size_.emplace(typename ParentType::Size{
+                    static_cast<unsigned int>(ni_.gridScvIndices().size()),  // numScvs
+                    static_cast<unsigned int>(ni_.gridScvfIndices().size()), // numTotalScvfs
+                    static_cast<unsigned int>(0),                            // numAuxiliaryScvfs
+                    static_cast<unsigned int>(ni_.numBoundaryScvfs())        // numBoundaryScvfs
+                });
+            }
 
         private:
-            void visitGridScvIndices_(const GridIndexVisitor& v) const
+            bool isFluxScvf_(const SubControlVolumeFace&) const override
+            { return true; }
+
+            void visitGridScvIndices_(const GridIndexVisitor& v) const override
             {
                 for (const auto& scvfIndex : ni_.gridScvIndices())
                     v(scvfIndex);
             }
 
-            void visitGridScvfIndices_(const GridIndexVisitor& v) const
+            void visitGridScvfIndices_(const GridIndexVisitor& v) const override
             {
                 for (const auto& scvfIndex : ni_.gridScvfIndices())
                     v(scvfIndex);
             }
 
+            void visitFluxGridScvfIndices_(const GridIndexVisitor& v) const override
+            { visitGridScvfIndices_(v); }
+
             std::unique_ptr<CCMpfaTransmissibilities<FVG, double>> transmissibilities_(
                 const FVElementGeometry&,
                 const DirichletBoundaryPredicate&
-            ) const
+            ) const override
             { return std::make_unique<DummyTransmissibilities>(); }
 
             const CCMpfaDualGridNodalIndexSet<GV>& ni_;
@@ -145,7 +160,7 @@ public:
             factory.visitInteractionVolumesAt((*dualGridIndexSet_)[gridGeometry.vertexMapper().index(vertex)], [&] (auto&& iv) {
                 const auto ivIndex = interactionVolumes_.size();
                 interactionVolumes_.emplace_back(std::move(iv));
-                interactionVolumes_.back()->visitGridScvfIndices([&] (auto scvfIdx) {
+                interactionVolumes_.back()->visitFluxGridScvfIndices([&] (auto scvfIdx) {
                     scvfIndexMap_[scvfIdx] = ivIndex;
                 });
             });
