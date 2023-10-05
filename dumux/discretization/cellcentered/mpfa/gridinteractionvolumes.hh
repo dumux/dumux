@@ -57,12 +57,10 @@ class CCMpfaGridInteractionVolumes
     public:
         using typename CCMpfaTransmissibilities<FVG, double>::DirichletBoundaryPredicate;
         using typename CCMpfaTransmissibilities<FVG, double>::FVElementGeometry;
-        using typename CCMpfaTransmissibilities<FVG, double>::ScalarAccessor;
         using typename CCMpfaTransmissibilities<FVG, double>::TensorAccessor;
         using typename CCMpfaTransmissibilities<FVG, double>::DofAccessor;
 
     private:
-        int computeTransmissibilities_(const ScalarAccessor& f) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
         int computeTransmissibilities_(const TensorAccessor& f) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
         double computeFlux_(const DofAccessor& a, int) const override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
         void bind_(const FVElementGeometry&, const DirichletBoundaryPredicate&) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
