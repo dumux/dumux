@@ -84,7 +84,7 @@ def getDependencies(modulePath, verbose=False, includeSelf=False):
         except RuntimeError:
             if verbose:
                 print(
-                    f" --- skipping folder '{path}' " "as it could not be identifed as dune module"
+                    f" --- skipping folder '{path}' " "as it could not be identified as dune module"
                 )
         else:
             if verbose:
