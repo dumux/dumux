@@ -58,18 +58,26 @@ public:
     using ForceAccessor = std::function<Vector(const SubControlVolumeFace&)>;
     using DofAccessor = std::function<Scalar(const SubControlVolume&)>;
 
-    //! Compute transmissibilities and return a unique identifier for them
-    Id computeTransmissibilities(const TensorAccessor& t, std::optional<ForceAccessor> f = {})
-    { return Id{computeTransmissibilities_(t, f)}; }
+    //! Compute transmissibilities for the given tensor and return a unique identifier for them
+    Id computeTransmissibilities(const TensorAccessor& t)
+    { return Id{computeTransmissibilities_(t)}; }
 
-    //! Compute the flux for the given face & transmissibilities id
-    Scalar computeFlux(const SubControlVolumeFace& scvf, const DofAccessor& a, const Id& id)
-    { return computeFlux_(scvf, a, id.id); }
+    //! Set the values to be used for evaluating the fluxes for the given id
+    void setValuesFor(const Id& id, const DofAccessor& a, std::optional<ForceAccessor>& f = {})
+    { setValuesFor_(a, f); }
+
+    //! Compute the flux for the given id & face
+    Scalar computeFluxFor(const Id& id, const SubControlVolumeFace& scvf)
+    { return computeFluxFor_(id.id, scvf); }
+
     // TODO: Transmissibility visitor or export?
 
 private:
-    virtual int computeTransmissibilities_(const TensorAccessor&, const std::optional<ForceAccessor>&) = 0;
-    virtual Scalar computeFlux_(const SubControlVolumeFace&, const DofAccessor&, int) const = 0;
+    virtual int computeTransmissibilities_(const TensorAccessor&) = 0;
+    virtual void setValuesFor_(const int,
+                               const DofAccessor&,
+                               const std::optional<ForceAccessor>&) = 0;
+    virtual Scalar computeFluxFor_(const int, const SubControlVolumeFace&) const = 0;
 };
 
 /*!

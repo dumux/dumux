@@ -82,9 +82,10 @@ class MatrixHandle
     using OutsideTij = std::vector<std::vector<Dune::DynamicVector<Scalar>>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
-    using FaceScalars = std::vector<Scalar>;
 
 public:
+    using FaceScalars = Dune::DynamicVector<Scalar>;
+
     MatrixHandle(const bool withForces = false)
     {
         if constexpr (isSurfaceGrid)
@@ -196,27 +197,53 @@ public:
         );
 
         // test assembly
-        computeTransmissibilities_([] (const auto&) { return double{1.0}; }, {});
+        computeTransmissibilities_([] (const auto&) { return double{1.0}; });
+        setValuesFor_(0, [] (const auto&) { return double{1.0}; }, {});
         handles_.clear();
+        dofBuffers_.clear();
+        forceBuffers_.clear();
     }
 
 private:
-    int computeTransmissibilities_(const TensorAccessor& t, const std::optional<ForceAccessor>& f) override
+    int computeTransmissibilities_(const TensorAccessor& t) override
     {
-        if (f.has_value())
-            DUNE_THROW(Dune::NotImplemented, "Force assembly");
         handles_.emplace_back();
+        dofBuffers_.emplace_back();
+        forceBuffers_.emplace_back();
         assembleMatrices(handles_.back(), iv_, t, fvGeometry_);
         return handles_.size() - 1;
     }
 
-    Scalar computeFlux_(const SubControlVolumeFace& scvf, const DofAccessor& u, int id) const override
+    void setValuesFor_(const int id, const DofAccessor& d, const std::optional<ForceAccessor>& f) override
+    {
+        auto& dofBuffer = dofBuffers_.at(id);
+        dofBuffer.resize(indexSet_.gridScvIndices().size());
+        {
+            unsigned int i = 0;
+            for (const auto scvIdx : indexSet_.gridScvIndices())
+                dofBuffer[i++] = d(fvGeometry_.scv(scvIdx));
+        }
+        if (f.has_value())
+        {
+            auto& forceBuffer = forceBuffers_.at(id);
+            forceBuffer.resize(indexSet_.gridScvfIndices().size());
+            for (const auto& localFaceData : iv_.localFaceData())
+            {
+                // compute delta forces and store in forceBuffers...
+                DUNE_THROW(Dune::NotImplemented, "Force buffering");
+            }
+        }
+    }
+
+    Scalar computeFluxFor_(const int id, const SubControlVolumeFace& scvf) const override
     { DUNE_THROW(Dune::NotImplemented, ""); }
 
     const DualGridNodalIndexSet& indexSet_;
     const FVElementGeometry& fvGeometry_;
     CCMpfaOInteractionVolume<CCMpfaODefaultInteractionVolumeTraits<GridView, Scalar>> iv_;
     std::vector<Handle> handles_;
+    std::vector<typename Handle::FaceScalars> dofBuffers_;
+    std::vector<typename Handle::FaceScalars> forceBuffers_;
 };
 
 template<class GridGeometry, class Scalar>
