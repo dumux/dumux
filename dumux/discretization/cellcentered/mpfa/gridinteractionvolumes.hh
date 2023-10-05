@@ -55,15 +55,16 @@ class CCMpfaGridInteractionVolumes
     class DummyTransmissibilities : public CCMpfaTransmissibilities<FVG, double>
     {
     public:
-        using typename CCMpfaTransmissibilities<FVG, double>::DirichletBoundaryPredicate;
-        using typename CCMpfaTransmissibilities<FVG, double>::FVElementGeometry;
+        using typename CCMpfaTransmissibilities<FVG, double>::SubControlVolumeFace;
         using typename CCMpfaTransmissibilities<FVG, double>::TensorAccessor;
         using typename CCMpfaTransmissibilities<FVG, double>::DofAccessor;
 
     private:
-        int computeTransmissibilities_(const TensorAccessor& f) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
-        double computeFlux_(const DofAccessor& a, int) const override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
-        void bind_(const FVElementGeometry&, const DirichletBoundaryPredicate&) override { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
+        int computeTransmissibilities_(const TensorAccessor&) override
+        { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
+
+        double computeFlux_(const SubControlVolumeFace&, const DofAccessor&, int) const override
+        { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
     };
 
     class DummyInteractionVolumeFactory : public CCMpfaInteractionVolumeFactory<FVG, double>
@@ -71,7 +72,10 @@ class CCMpfaGridInteractionVolumes
         class DummyInteractionVolume : public CCMpfaInteractionVolume<FVG, double>
         {
         public:
+            using typename CCMpfaInteractionVolume<FVG, double>::DirichletBoundaryPredicate;
+            using typename CCMpfaInteractionVolume<FVG, double>::FVElementGeometry;
             using typename CCMpfaInteractionVolume<FVG, double>::GridIndexVisitor;
+
             DummyInteractionVolume(const CCMpfaDualGridNodalIndexSet<GV>& ni)
             : ni_{ni}
             {}
@@ -89,7 +93,10 @@ class CCMpfaGridInteractionVolumes
                     v(scvfIndex);
             }
 
-            std::unique_ptr<CCMpfaTransmissibilities<FVG, double>> transmissibilities_() const
+            std::unique_ptr<CCMpfaTransmissibilities<FVG, double>> transmissibilities_(
+                const FVElementGeometry&,
+                const DirichletBoundaryPredicate&
+            ) const
             { return std::make_unique<DummyTransmissibilities>(); }
 
             const CCMpfaDualGridNodalIndexSet<GV>& ni_;

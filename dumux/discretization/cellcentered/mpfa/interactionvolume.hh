@@ -20,6 +20,11 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Abstract interface for transmissibilities in mpfa methods.
+ *        Computes and stores transmissibilities within interaction volumes.
+ */
 template<class GridGeometry, class S>
 class CCMpfaTransmissibilities
 {
@@ -47,46 +52,60 @@ public:
     using TensorAccessor = std::function<TensorVariant(const SubControlVolume&)>;
     using DofAccessor = std::function<Scalar(const SubControlVolume&)>;
 
-    Id computeTransmissibilities(const TensorAccessor& f) { return Id{computeTransmissibilities_(f)}; }
-    Scalar computeFlux(const DofAccessor& a, const Id& id) { return computeFlux_(a, id.id); }
+    //! Compute transmissibilities and return a unique identifier for the transmissibilities
+    Id computeTransmissibilities(const TensorAccessor& f)
+    { return Id{computeTransmissibilities_(f)}; }
+
+    //! Compute the flux for the given face & transmissibilities id
+    Scalar computeFlux(const SubControlVolumeFace& scvf, const DofAccessor& a, const Id& id)
+    { return computeFlux_(scvf, a, id.id); }
     // TODO: Transmissibility visitor or export?
 
-protected:
-    using DirichletBoundaryPredicate = std::function<bool(const Element&, const SubControlVolumeFace&)>;
-
 private:
-    virtual void bind_(const FVElementGeometry&, const DirichletBoundaryPredicate&) = 0;
-    virtual int computeTransmissibilities_(const TensorAccessor& f) = 0;
-    virtual Scalar computeFlux_(const DofAccessor& a, int) const = 0;
+    virtual int computeTransmissibilities_(const TensorAccessor&) = 0;
+    virtual Scalar computeFlux_(const SubControlVolumeFace&, const DofAccessor&, int) const = 0;
 };
 
-// TODO: Scalar must come from outside
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Abstract interface for interaction volumes in mpfa methods.
+ *        Allows extraction of a transmissibilities instance.
+ */
 template<class GridGeometry, class Scalar>
 class CCMpfaInteractionVolume
 {
     using GridView = typename GridGeometry::GridView;
 
 public:
+    using GridIndex = typename GridView::IndexSet::IndexType;
+    using GridIndexVisitor = std::function<void(const GridIndex&)>;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using DirichletBoundaryPredicate = std::function<bool(const Element&, const SubControlVolumeFace&)>;
     using Transmissibilities = CCMpfaTransmissibilities<GridGeometry, Scalar>;
 
     virtual ~CCMpfaInteractionVolume() = default;
 
-    using GridIndex = typename GridView::IndexSet::IndexType;
-    using GridIndexVisitor = std::function<void(const GridIndex&)>;
+    //! Return a transmissibility computation instance for this interaction volume.
+    std::unique_ptr<Transmissibilities> transmissibilities(const FVElementGeometry& fvGeometry,
+                                                           const DirichletBoundaryPredicate& dirichletPredicate) const
+    { return transmissibilities_(fvGeometry, dirichletPredicate); }
 
-    std::unique_ptr<Transmissibilities> transmissibilities() const
-    { return transmissibilities_(); }
-
+    //! Visit the indices of the scvs involved in flux computations in this interaction volume.
     void visitGridScvIndices(const GridIndexVisitor& v) const
     { visitGridScvIndices_(v); }
 
+    //! Visit the indices of the scvfs whose fluxes are computed in this interaction volume.
     void visitGridScvfIndices(const GridIndexVisitor& v) const
     { visitGridScvfIndices_(v); }
 
 private:
     virtual void visitGridScvIndices_(const GridIndexVisitor&) const = 0;
     virtual void visitGridScvfIndices_(const GridIndexVisitor&) const = 0;
-    virtual std::unique_ptr<Transmissibilities> transmissibilities_() const = 0;
+    virtual std::unique_ptr<Transmissibilities> transmissibilities_(const FVElementGeometry&,
+                                                                    const DirichletBoundaryPredicate&) const = 0;
 };
 
 } // end namespace Dumux
