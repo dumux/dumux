@@ -253,7 +253,7 @@ public:
         return localFaceIdx_;
     }
 
-    //! Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
+    //! Returns the direction index of the facet (0 = x, 1 = y, 2 = z)
     unsigned int directionIndex() const
     {
         return dirIdx_;

@@ -56,7 +56,7 @@ def checkCppVersion():
     requiredversion = "7"
     result = subprocess.check_output(["g++", "-dumpversion"]).decode().strip()
     if _Version(result) < _Version(requiredversion):
-        print("-- An error occurred while checking for prerequistes.")
+        print("-- An error occurred while checking for prerequisites.")
         raise Exception(
             f"g++ greater than or equal to {requiredversion} "
             "is required for dumux releases >=3.2!"
@@ -108,16 +108,16 @@ with open("installdumux.log", "w") as _:
 
 #################################################################
 #################################################################
-# (1/3) Check some prerequistes
+# (1/3) Check some prerequisites
 #################################################################
 #################################################################
 programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
-showMessage("(1/3) Checking all prerequistes: " + " ".join(programs) + "...")
+showMessage("(1/3) Checking all prerequisites: " + " ".join(programs) + "...")
 
-# check some prerequistes
+# check some prerequisites
 for program in programs:
     if which(program) is None:
-        print("-- An error occurred while checking for prerequistes.")
+        print("-- An error occurred while checking for prerequisites.")
         raise Exception(f"Program {program} has not been found.")
 
 if which("paraview") is None:
@@ -127,7 +127,7 @@ if which("paraview") is None:
 
 checkCppVersion()
 
-showMessage("(1/3) Step completed. All prerequistes found.")
+showMessage("(1/3) Step completed. All prerequisites found.")
 
 #################################################################
 #################################################################

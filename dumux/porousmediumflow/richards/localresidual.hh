@@ -406,7 +406,7 @@ public:
         const auto upwindContributionInside = rho_mu*flux*insideWeight*dkrw_dsw_inside*dsw_dpw_inside;
         const auto upwindContributionOutside = rho_mu*flux*outsideWeight*dkrw_dsw_outside*dsw_dpw_outside;
 
-        // additional constribution of the upwind term only for inside and outside dof
+        // additional contribution of the upwind term only for inside and outside dof
         A[insideScv.dofIndex()][insideScv.dofIndex()][conti0EqIdx][0] += upwindContributionInside;
         A[insideScv.dofIndex()][outsideScv.dofIndex()][conti0EqIdx][0] += upwindContributionOutside;
 

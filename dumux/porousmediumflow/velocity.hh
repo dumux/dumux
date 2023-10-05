@@ -154,7 +154,7 @@ public:
                 if (scvf.boundary())
                     continue;
 
-                // insantiate the flux variables
+                // instantiate the flux variables
                 FluxVariables fluxVars;
                 fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
