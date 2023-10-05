@@ -25,6 +25,7 @@
 // temporarily reuse old implementations
 #include "omethod/interactionvolume.hh"
 #include "omethod/localassembler.hh"
+#include "omethod/ivassembler.hh"
 
 
 namespace Dumux::CCMpfaO {
@@ -78,7 +79,7 @@ class MatrixHandle
     using BMatrix = Dune::DynamicMatrix<Scalar>;
     using CMatrix = Dune::DynamicMatrix<Scalar>;
     using TMatrix = Dune::DynamicMatrix<Scalar>;
-    using OutsideTij = std::vector<DimVector>;
+    using OutsideTij = std::vector<std::vector<Dune::DynamicVector<Scalar>>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
     using FaceScalars = std::vector<Scalar>;
@@ -186,22 +187,34 @@ public:
                        const FVElementGeometry& fvGeometry,
                        const DirichletBoundaryPredicate& dirichletPredicate)
     : indexSet_{indexSet}
+    , fvGeometry_{fvGeometry}
     {
         iv_.bind(
             indexSet_,
             Detail::ProblemFacade<GridView::dimensionworld, DirichletBoundaryPredicate>{dirichletPredicate},
-            fvGeometry
+            fvGeometry_
         );
+
+        // test assembly
+        computeTransmissibilities_([] (const auto&) { return double{1.0}; }, {});
+        handles_.clear();
     }
 
 private:
-    int computeTransmissibilities_(const TensorAccessor& a, const std::optional<ForceAccessor>&) override
-    { DUNE_THROW(Dune::NotImplemented, ""); }
+    int computeTransmissibilities_(const TensorAccessor& t, const std::optional<ForceAccessor>& f) override
+    {
+        if (f.has_value())
+            DUNE_THROW(Dune::NotImplemented, "Force assembly");
+        handles_.emplace_back();
+        assembleMatrices(handles_.back(), iv_, t, fvGeometry_);
+        return handles_.size() - 1;
+    }
 
     Scalar computeFlux_(const SubControlVolumeFace& scvf, const DofAccessor& u, int id) const override
     { DUNE_THROW(Dune::NotImplemented, ""); }
 
     const DualGridNodalIndexSet& indexSet_;
+    const FVElementGeometry& fvGeometry_;
     CCMpfaOInteractionVolume<CCMpfaODefaultInteractionVolumeTraits<GridView, Scalar>> iv_;
     std::vector<Handle> handles_;
 };
