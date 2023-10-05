@@ -18,21 +18,25 @@
 
 namespace Dumux {
 
-template<class GridView, class Scalar>
+template<class GridGeometry, class Scalar>
 class CCMpfaTransmissibilities
 {
-    static constexpr int dim = GridView::dimension;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+    using GridView = typename GridGeometry::GridView;
     using GridIndex = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    static constexpr int dim = GridView::dimension;
 
 public:
-    virtual ~CCMpfaTransmissibilities() = default;
-
     class Id {
         friend CCMpfaTransmissibilities;
         Id(int i) : id{i} {}
         int id;
     };
 
+    virtual ~CCMpfaTransmissibilities() = default;
+
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using ScalarAccessor = std::function<Scalar(const GridIndex&)>;
     using TensorAccessor = std::function<Dune::FieldMatrix<Scalar, dim, dim>(const GridIndex&)>;
     using DofAccessor = std::function<Scalar(const GridIndex&)>;
@@ -42,18 +46,24 @@ public:
     Scalar computeFlux(const DofAccessor& a, const Id& id) { return computeFlux_(a, id.id); }
     // TODO: Transmissibility visitor or export?
 
+protected:
+    using DirichletBoundaryPredicate = std::function<bool(const Element&, const SubControlVolumeFace&)>;
+
 private:
+    virtual void bind_(const FVElementGeometry&, const DirichletBoundaryPredicate&) = 0;
     virtual int computeTransmissibilities_(const ScalarAccessor& f) = 0;
     virtual int computeTransmissibilities_(const TensorAccessor& f) = 0;
     virtual Scalar computeFlux_(const DofAccessor& a, int) const = 0;
 };
 
 // TODO: Scalar must come from outside
-template<class GridView, class Scalar>
+template<class GridGeometry, class Scalar>
 class CCMpfaInteractionVolume
 {
+    using GridView = typename GridGeometry::GridView;
+
 public:
-    using Transmissibilities = CCMpfaTransmissibilities<GridView, Scalar>;
+    using Transmissibilities = CCMpfaTransmissibilities<GridGeometry, Scalar>;
 
     virtual ~CCMpfaInteractionVolume() = default;
 
