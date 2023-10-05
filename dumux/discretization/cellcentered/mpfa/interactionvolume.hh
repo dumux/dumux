@@ -17,7 +17,8 @@
 #include <functional>
 
 #include <dune/common/fmatrix.hh>
-#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+
+#include "dualgridindexset.hh"
 
 namespace Dumux {
 
@@ -130,11 +131,11 @@ public:
     {
         if (!size_.has_value())
             DUNE_THROW(Dune::InvalidStateException, "Interaction volume implementation did not set the iv sizes");
-        return size_.value();
+        return *size_;
     }
 
 protected:
-    std::optional<Size> size_;
+    std::optional<Size> size_ = std::nullopt;
 
 private:
     virtual bool isFluxScvf_(const SubControlVolumeFace&) const = 0;
@@ -143,6 +144,25 @@ private:
     virtual void visitFluxGridScvfIndices_(const GridIndexVisitor&) const = 0;
     virtual std::unique_ptr<Transmissibilities> transmissibilities_(const FVElementGeometry&,
                                                                     const DirichletBoundaryPredicate&) const = 0;
+};
+
+template<class GridGeometry, class Scalar>
+class CCMpfaInteractionVolumeFactory
+{
+    using GridView = typename GridGeometry::GridView;
+
+public:
+    virtual ~CCMpfaInteractionVolumeFactory() = default;
+
+    using DualGridNodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
+    using InteractionVolume = CCMpfaInteractionVolume<GridGeometry, Scalar>;
+    using InteractionVolumesVisitor = std::function<void(std::unique_ptr<InteractionVolume>&&)>;
+
+    void visitInteractionVolumesAt(const DualGridNodalIndexSet& ni, const InteractionVolumesVisitor& v) const
+    { visitInteractionVolumesAt_(ni, v); }
+
+private:
+    virtual void visitInteractionVolumesAt_(const DualGridNodalIndexSet&, const InteractionVolumesVisitor&) const = 0;
 };
 
 } // end namespace Dumux
