@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
 
 #include <variant>
+#include <optional>
 #include <functional>
 
 #include <dune/common/fmatrix.hh>
@@ -23,7 +24,9 @@ namespace Dumux {
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Abstract interface for transmissibilities in mpfa methods.
- *        Computes and stores transmissibilities within interaction volumes.
+ *        Computes and stores transmissibilities for the assembly of
+ *        fluxes across sub-control volume faces in the form of:
+ *        TODO: doc equations, terminology, etc..
  */
 template<class GridGeometry, class S>
 class CCMpfaTransmissibilities
@@ -47,14 +50,16 @@ public:
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     using Scalar = S;
+    using Vector = Dune::FieldVector<S, dimWorld>;
     using Tensor = Dune::FieldMatrix<S, dimWorld, dimWorld>;
     using TensorVariant = std::variant<Scalar, Tensor>;
     using TensorAccessor = std::function<TensorVariant(const SubControlVolume&)>;
+    using ForceAccessor = std::function<Vector(const SubControlVolumeFace&)>;
     using DofAccessor = std::function<Scalar(const SubControlVolume&)>;
 
-    //! Compute transmissibilities and return a unique identifier for the transmissibilities
-    Id computeTransmissibilities(const TensorAccessor& f)
-    { return Id{computeTransmissibilities_(f)}; }
+    //! Compute transmissibilities and return a unique identifier for them
+    Id computeTransmissibilities(const TensorAccessor& t, std::optional<ForceAccessor> f = {})
+    { return Id{computeTransmissibilities_(t, f)}; }
 
     //! Compute the flux for the given face & transmissibilities id
     Scalar computeFlux(const SubControlVolumeFace& scvf, const DofAccessor& a, const Id& id)
@@ -62,7 +67,7 @@ public:
     // TODO: Transmissibility visitor or export?
 
 private:
-    virtual int computeTransmissibilities_(const TensorAccessor&) = 0;
+    virtual int computeTransmissibilities_(const TensorAccessor&, const std::optional<ForceAccessor>&) = 0;
     virtual Scalar computeFlux_(const SubControlVolumeFace&, const DofAccessor&, int) const = 0;
 };
 

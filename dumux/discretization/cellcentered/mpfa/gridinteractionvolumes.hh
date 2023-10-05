@@ -57,10 +57,11 @@ class CCMpfaGridInteractionVolumes
     public:
         using typename CCMpfaTransmissibilities<FVG, double>::SubControlVolumeFace;
         using typename CCMpfaTransmissibilities<FVG, double>::TensorAccessor;
+        using typename CCMpfaTransmissibilities<FVG, double>::ForceAccessor;
         using typename CCMpfaTransmissibilities<FVG, double>::DofAccessor;
 
     private:
-        int computeTransmissibilities_(const TensorAccessor&) override
+        int computeTransmissibilities_(const TensorAccessor&, const std::optional<ForceAccessor>&) override
         { DUNE_THROW(Dune::NotImplemented, "TransmissibilityFactory"); }
 
         double computeFlux_(const SubControlVolumeFace&, const DofAccessor&, int) const override
