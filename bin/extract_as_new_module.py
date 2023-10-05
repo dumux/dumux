@@ -509,7 +509,7 @@ def infoInitial(moduleDirectory, subFolder, sourceFiles):
         {1}
 
         and all headers contained in '{0}'
-        that are required to build the exectutables from the sources:
+        that are required to build the executables from the sources:
         {2}
 
         The extracted files are copied into a new DUNE module retaining the directory

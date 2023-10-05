@@ -147,7 +147,7 @@ and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/d
 
 A weekly coverage report of the test suite is created by gcovr/gcov. The report
 currently doesn't include non-instantiated code, so the real coverage is likely lower. However,
-only a few lines of code are never instatiated in the comprehensive test suite.
+only a few lines of code are never instantiated in the comprehensive test suite.
 
 
 # Contributing

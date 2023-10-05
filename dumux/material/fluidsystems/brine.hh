@@ -396,7 +396,7 @@ public:
      * The implemented value for NaCl is for a molar concentration of 2.5984 mol/l and a temperature of 25°C,
      * see Rard and Miller, 1979 (DOI: 10.1007/BF00648776) \cite Rard1979.
      * Dependent on the salt concentration the coefficient can vary between 1.47e-9 m^2/s and 1.6e-9 m^2/s, see Rard and Miller, 1979.
-     * It also depends on temperature; values for different temparatures can e.g. found here: Alanis et al., 2000 (DOI: 10.1117/1.602422) \cite Alanis2000.
+     * It also depends on temperature; values for different temperatures can e.g. found here: Alanis et al., 2000 (DOI: 10.1117/1.602422) \cite Alanis2000.
      */
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,

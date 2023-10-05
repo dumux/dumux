@@ -259,7 +259,7 @@ public:
         // loop over all dofs
         for (unsigned int rowIdx = 0; rowIdx < jacobian.N(); ++rowIdx)
         {
-            // reset all entries corrosponding to a non-green vertex
+            // reset all entries corresponding to a non-green vertex
             if (vertexColor_[rowIdx] != EntityColor::green)
             {
                 // set all matrix entries in the row to 0

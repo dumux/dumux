@@ -138,7 +138,7 @@ inline constexpr Scalar shapeFactorRectangle(const Scalar inscribedRadius, const
     return area / (perimeter*perimeter);
 }
 
-//! Returns the value of the shape factor for a cicle
+//! Returns the value of the shape factor for a circle
 template<class Scalar>
 inline constexpr Scalar shapeFactorCircle() noexcept
 {
