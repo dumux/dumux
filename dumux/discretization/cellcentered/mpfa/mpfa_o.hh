@@ -85,7 +85,7 @@ class MatrixHandle
     using OutsideForces = std::vector<std::vector<Scalar>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
-    using CellValues = Dune::DynamicMatrix<Scalar>;
+    using CellValues = Dune::DynamicVector<Scalar>;
 public:
     using FaceScalars = Dune::DynamicVector<Scalar>;
 
@@ -99,6 +99,9 @@ public:
             deltaForces_.emplace();
         }
     }
+
+    bool hasForces() const
+    { return forces_.has_value(); }
 
     const CMatrix& CAInverse() const { return CA_; }
     CMatrix& CAInverse() { return CA_; }
@@ -195,7 +198,10 @@ class Fluxes : public CCMpfaFluxes<GridGeometry, Scalar>
 {
     using ParentType = CCMpfaFluxes<GridGeometry, Scalar>;
     using GridView = typename GridGeometry::GridView;
-    using Handle = Detail::MatrixHandle<GridView::dimension, GridView::dimensionworld, Scalar>;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using Handle = Detail::MatrixHandle<dim, dimWorld, Scalar>;
 
 public:
     using typename ParentType::TensorAccessor;
@@ -264,7 +270,28 @@ private:
     }
 
     Scalar computeFluxFor_(const int id, const SubControlVolumeFace& scvf) const override
-    { DUNE_THROW(Dune::NotImplemented, ""); }
+    {
+        for (const auto& localFaceData : iv_.localFaceData())
+            if (localFaceData.gridScvfIndex() == scvf.index())
+            {
+                const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
+                const auto localDofIndex = iv_.localScvf(localScvfIdx).localDofIndex();
+                const auto& handle = handles_[id];
+                if constexpr (dim < dimWorld)
+                    DUNE_THROW(Dune::NotImplemented, "Fluxes on surface grids");
+                else
+                {
+                    Scalar flux = handle.T()[localScvfIdx]*handle.values();
+                    if (handle.hasForces())
+                    {
+                        flux += handle.CAInverse()[localDofIndex]*handle.deltaForces();
+                        flux += (localFaceData.isOutsideFace() ? -1.0 : 1.0)*handle.forces()[localScvfIdx];
+                    }
+                    return flux;
+                }
+            }
+        DUNE_THROW(Dune::InvalidStateException, "Could not compute flux for the given face");
+    }
 
     void assertId_(const int id) const
     { assert(id < handles_.size() && "No data registered for the given id"); }
