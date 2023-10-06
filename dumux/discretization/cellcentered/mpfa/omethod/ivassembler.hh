@@ -15,6 +15,7 @@
 
 #include <algorithm>
 
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassemblerhelper.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
@@ -383,6 +384,92 @@ void assembleMatrices(DataHandle& handle,
                 std::for_each( handle.tijOutside()[faceIdx].begin(),
                                 handle.tijOutside()[faceIdx].end(),
                                 [] (auto& outsideTij) { outsideTij = 0.0; } );
+        }
+    }
+}
+
+/*!
+ * \brief Assembles the force contributions per face, involved
+ *        in the flux expressions and the local system of equations
+ *        within an interaction volume in an mpfa-o type way.
+ *
+ * \param handle The data handle in which the matrices are stored
+ * \param iv The interaction volume
+ * \param getT Lambda to evaluate the scv-wise tensors
+ * \param getF Lambda to evaluate the scv-wise forces
+ */
+template<class DataHandle, class IV, class TensorFunc, class ForceFunc, class FVElementGeometry>
+void assembleForces(DataHandle& handle,
+                    IV& iv,
+                    const TensorFunc& getT,
+                    const ForceFunc& getF,
+                    const FVElementGeometry& fvGeometry)
+{
+    using GridView = typename IV::Traits::GridView;
+    using Extrusion = Extrusion_t<typename FVElementGeometry::GridGeometry>;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr bool isSurfaceGrid = dim < dimWorld;
+
+    InteractionVolumeAssemblerHelper::resizeVector(handle.forces(), iv.numFaces());
+    InteractionVolumeAssemblerHelper::resizeVector(handle.deltaForces(), iv.numUnknowns());
+    if constexpr (isSurfaceGrid)
+        InteractionVolumeAssemblerHelper::resizeVector(handle.outsideForces(), iv.numFaces());
+
+    //! For each face, we...
+    //! - compute the term \f$ \alpha := \mathbf{n}^T \mathbf{T} \mathbf{f} \f$ in each neighboring cell
+    //! - compute \f$ \delta \alpha^ = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
+    using NodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
+
+
+    for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
+    {
+        const auto& localScvf = iv.localScvf(faceIdx);
+        const auto& gridScvf = fvGeometry.scvf(localScvf.gridScvfIndex());
+        const auto insideLocalScvIdx = localScvf.neighboringLocalScvIndices()[0];
+        const auto& insideScv = fvGeometry.scv(iv.localScv(insideLocalScvIdx).gridScvIndex());
+        std::visit([&] (const auto& tensor) {
+            handle.forces()[faceIdx] = 1.0/*todo:extrusion*/
+                                    *vtmv(gridScvf.unitOuterNormal(), tensor, getF(insideScv))
+                                    *Extrusion::area(fvGeometry, gridScvf);
+        }, getT(insideScv));
+
+        const auto localDofIdx = localScvf.localDofIndex();
+        handle.deltaForces()[localDofIdx] = 0.0;
+        if (gridScvf.boundary())
+            continue;
+
+        const auto numOutsideFaces = gridScvf.numOutsideScvs();
+        handle.deltaForces()[faceIdx] = handle.forces()[faceIdx];
+
+        if constexpr (isSurfaceGrid)
+        {
+            InteractionVolumeAssemblerHelper::resizeVector(handle.outsideForces()[faceIdx], numOutsideFaces);
+            std::fill(handle.outsideForces().begin(), handle.outsideForces().end(), 0.0);
+        }
+
+        for (unsigned int idxInOutside = 0; idxInOutside < numOutsideFaces; ++idxInOutside)
+        {
+            const auto outLocalScvIdx = localScvf.neighboringLocalScvIndices()[idxInOutside+1];
+            const auto& outGlobalScv = fvGeometry.scv(iv.localScv(outLocalScvIdx).gridScvIndex());
+
+            // todo:extrusion
+            std::visit([&] (const auto& outTensor) {
+                if constexpr (isSurfaceGrid)
+                {
+                    const auto& flipScvf = fvGeometry.flipScvf(gridScvf.index(), idxInOutside);
+                    handle.outsideForces()[faceIdx][idxInOutside] = 1.0*vtmv(
+                        flipScvf.unitOuterNormal(), outTensor, getF(outGlobalScv)
+                    )*Extrusion::area(fvGeometry, flipScvf);
+                    handle.deltaForces()[faceIdx] -= handle.outsideForces()[faceIdx][idxInOutside];
+                }
+                else
+                    handle.deltaForces()[faceIdx] -= -1.0
+                                                    *vtmv(gridScvf.unitOuterNormal(), outTensor, getF(outGlobalScv))
+                                                    *Extrusion::area(fvGeometry, gridScvf);
+            }, getT(outGlobalScv));
         }
     }
 }

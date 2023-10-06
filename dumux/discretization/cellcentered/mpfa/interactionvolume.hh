@@ -24,13 +24,12 @@ namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief Abstract interface for transmissibilities in mpfa methods.
- *        Computes and stores transmissibilities for the assembly of
- *        fluxes across sub-control volume faces in the form of:
- *        TODO: doc equations, terminology, etc..
+ * \brief Abstract interface for flux computations in mpfa methods.
+ *        Computes and stores the data required for the assembly of
+ *        fluxes across sub-control volume faces within an interaction volume.
  */
 template<class GridGeometry, class S>
-class CCMpfaTransmissibilities
+class CCMpfaFluxes
 {
     using GridView = typename GridGeometry::GridView;
     using GridIndex = typename GridView::IndexSet::IndexType;
@@ -39,12 +38,12 @@ class CCMpfaTransmissibilities
 
 public:
     class Id {
-        friend CCMpfaTransmissibilities;
+        friend CCMpfaFluxes;
         Id(int i) : id{i} {}
         int id;
     };
 
-    virtual ~CCMpfaTransmissibilities() = default;
+    virtual ~CCMpfaFluxes() = default;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -55,16 +54,20 @@ public:
     using Tensor = Dune::FieldMatrix<S, dimWorld, dimWorld>;
     using TensorVariant = std::variant<Scalar, Tensor>;
     using TensorAccessor = std::function<TensorVariant(const SubControlVolume&)>;
-    using ForceAccessor = std::function<Vector(const SubControlVolumeFace&)>;
-    using DofAccessor = std::function<Scalar(const SubControlVolume&)>;
+    using ForceAccessor = std::function<Vector(const SubControlVolume&)>;
+    using ValueAccesor = std::function<Scalar(const SubControlVolume&)>;
 
-    //! Compute transmissibilities for the given tensor and return a unique identifier for them
-    Id computeTransmissibilities(const TensorAccessor& t)
-    { return Id{computeTransmissibilities_(t)}; }
-
-    //! Set the values to be used for evaluating the fluxes for the given id
-    void setValuesFor(const Id& id, const DofAccessor& a, std::optional<ForceAccessor>& f = {})
-    { setValuesFor_(a, f); }
+    /*!
+     * \brief Register and prepare a new flux computation of the form \f$ f = -T(gradu + f) \f$
+     * \param tensor Functor that returns a tensor (T in the above equation) per scv
+     * \param values Functor that returns the values per scv (u in the above equation)
+     * \param forces (optional) Functor that returns a force vector per scv (e.g. gravity; f in the above equation)
+     * \return An identifier of type `Id` for thie registered flux computation.
+     */
+    Id add(const TensorAccessor& tensor,
+           const ValueAccesor& values,
+           const std::optional<ForceAccessor>& forces = {})
+    { add_(tensor, values, forces); }
 
     //! Compute the flux for the given id & face
     Scalar computeFluxFor(const Id& id, const SubControlVolumeFace& scvf)
@@ -73,10 +76,7 @@ public:
     // TODO: Transmissibility visitor or export?
 
 private:
-    virtual int computeTransmissibilities_(const TensorAccessor&) = 0;
-    virtual void setValuesFor_(const int,
-                               const DofAccessor&,
-                               const std::optional<ForceAccessor>&) = 0;
+    virtual int add_(const TensorAccessor&, const ValueAccesor&, const std::optional<ForceAccessor>&) = 0;
     virtual Scalar computeFluxFor_(const int, const SubControlVolumeFace&) const = 0;
 };
 
@@ -111,12 +111,12 @@ public:
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using DirichletBoundaryPredicate = std::function<bool(const Element&, const SubControlVolumeFace&)>;
-    using Transmissibilities = CCMpfaTransmissibilities<GridGeometry, Scalar>;
+    using Fluxes = CCMpfaFluxes<GridGeometry, Scalar>;
 
     //! Return a transmissibility computation instance for this interaction volume.
-    std::unique_ptr<Transmissibilities> transmissibilities(const FVElementGeometry& fvGeometry,
-                                                           const DirichletBoundaryPredicate& dirichletPredicate) const
-    { return transmissibilities_(fvGeometry, dirichletPredicate); }
+    std::unique_ptr<Fluxes> fluxes(const FVElementGeometry& fvGeometry,
+                                   const DirichletBoundaryPredicate& dirichletPredicate) const
+    { return fluxes_(fvGeometry, dirichletPredicate); }
 
     //! Visit the indices of the scvs involved in flux computations in this interaction volume.
     void visitGridScvIndices(const GridIndexVisitor& v) const
@@ -150,8 +150,7 @@ private:
     virtual void visitGridScvIndices_(const GridIndexVisitor&) const = 0;
     virtual void visitGridScvfIndices_(const GridIndexVisitor&) const = 0;
     virtual void visitFluxGridScvfIndices_(const GridIndexVisitor&) const = 0;
-    virtual std::unique_ptr<Transmissibilities> transmissibilities_(const FVElementGeometry&,
-                                                                    const DirichletBoundaryPredicate&) const = 0;
+    virtual std::unique_ptr<Fluxes> fluxes_(const FVElementGeometry&, const DirichletBoundaryPredicate&) const = 0;
 };
 
 template<class GridGeometry, class Scalar>

@@ -18,6 +18,8 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
 
+#include <dumux/common/math.hh>
+
 #include "interactionvolume.hh"
 #include "dualgridindexset.hh"
 
@@ -80,6 +82,7 @@ class MatrixHandle
     using CMatrix = Dune::DynamicMatrix<Scalar>;
     using TMatrix = Dune::DynamicMatrix<Scalar>;
     using OutsideTij = std::vector<std::vector<Dune::DynamicVector<Scalar>>>; // TODO: size?
+    using OutsideForces = std::vector<std::vector<Scalar>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
 
@@ -154,6 +157,20 @@ public:
         return *deltaForces_;
     }
 
+    const OutsideForces& outsideForces() const
+    {
+        if (!outsideForces_.has_value())
+            DUNE_THROW(Dune::InvalidStateException, "No outside forces available");
+        return *outsideForces_;
+    }
+
+    OutsideForces& outsideForces()
+    {
+        if (!outsideForces_.has_value())
+            DUNE_THROW(Dune::InvalidStateException, "No outside forces available");
+        return *outsideForces_;
+    }
+
 protected:
     OmegaStorage wijk_;
     TMatrix T_;
@@ -163,30 +180,31 @@ protected:
     std::optional<OutsideTij> tijOutside_;
     std::optional<FaceScalars> forces_;
     std::optional<FaceScalars> deltaForces_;
+    std::optional<OutsideForces> outsideForces_;
 };
 
 } // namespace Detail
 #endif // DOXYGEN
 
 template<class GridGeometry, class Scalar>
-class Transmissibilities : public CCMpfaTransmissibilities<GridGeometry, Scalar>
+class Fluxes : public CCMpfaFluxes<GridGeometry, Scalar>
 {
-    using ParentType = CCMpfaTransmissibilities<GridGeometry, Scalar>;
+    using ParentType = CCMpfaFluxes<GridGeometry, Scalar>;
     using GridView = typename GridGeometry::GridView;
     using Handle = Detail::MatrixHandle<GridView::dimension, GridView::dimensionworld, Scalar>;
 
 public:
     using typename ParentType::TensorAccessor;
     using typename ParentType::ForceAccessor;
-    using typename ParentType::DofAccessor;
+    using typename ParentType::ValueAccesor;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using DualGridNodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
 
     template<class DirichletBoundaryPredicate>
-    Transmissibilities(const DualGridNodalIndexSet& indexSet,
-                       const FVElementGeometry& fvGeometry,
-                       const DirichletBoundaryPredicate& dirichletPredicate)
+    Fluxes(const DualGridNodalIndexSet& indexSet,
+           const FVElementGeometry& fvGeometry,
+           const DirichletBoundaryPredicate& dirichletPredicate)
     : indexSet_{indexSet}
     , fvGeometry_{fvGeometry}
     {
@@ -197,53 +215,34 @@ public:
         );
 
         // test assembly
-        computeTransmissibilities_([] (const auto&) { return double{1.0}; });
-        setValuesFor_(0, [] (const auto&) { return double{1.0}; }, {});
+        add_([] (const auto&) { return double{1.0}; }, [] (const auto&) { return double{1.0}; }, {});
+        add_([] (const auto&) { return double{1.0}; }, [] (const auto&) { return double{1.0}; }, [] (const auto&) {
+            return Dune::FieldVector<double, GridView::dimensionworld>(0.0);
+        });
         handles_.clear();
-        dofBuffers_.clear();
-        forceBuffers_.clear();
     }
 
 private:
-    int computeTransmissibilities_(const TensorAccessor& t) override
+    int add_(const TensorAccessor& t, const ValueAccesor& v, const std::optional<ForceAccessor>& f) override
     {
-        handles_.emplace_back();
-        dofBuffers_.emplace_back();
-        forceBuffers_.emplace_back();
+        const bool withForces = f.has_value();
+        handles_.emplace_back(withForces);
         assembleMatrices(handles_.back(), iv_, t, fvGeometry_);
+        if (withForces)
+            assembleForces(handles_.back(), iv_, t, *f, fvGeometry_);
         return handles_.size() - 1;
-    }
-
-    void setValuesFor_(const int id, const DofAccessor& d, const std::optional<ForceAccessor>& f) override
-    {
-        auto& dofBuffer = dofBuffers_.at(id);
-        dofBuffer.resize(indexSet_.gridScvIndices().size());
-        {
-            unsigned int i = 0;
-            for (const auto scvIdx : indexSet_.gridScvIndices())
-                dofBuffer[i++] = d(fvGeometry_.scv(scvIdx));
-        }
-        if (f.has_value())
-        {
-            auto& forceBuffer = forceBuffers_.at(id);
-            forceBuffer.resize(indexSet_.gridScvfIndices().size());
-            for (const auto& localFaceData : iv_.localFaceData())
-            {
-                // compute delta forces and store in forceBuffers...
-                DUNE_THROW(Dune::NotImplemented, "Force buffering");
-            }
-        }
     }
 
     Scalar computeFluxFor_(const int id, const SubControlVolumeFace& scvf) const override
     { DUNE_THROW(Dune::NotImplemented, ""); }
 
+    void assertId_(const int id) const
+    { assert(id < handles_.size() && "No data registered for the given id"); }
+
     const DualGridNodalIndexSet& indexSet_;
     const FVElementGeometry& fvGeometry_;
     CCMpfaOInteractionVolume<CCMpfaODefaultInteractionVolumeTraits<GridView, Scalar>> iv_;
     std::vector<Handle> handles_;
-    std::vector<typename Handle::FaceScalars> dofBuffers_;
-    std::vector<typename Handle::FaceScalars> forceBuffers_;
 };
 
 template<class GridGeometry, class Scalar>
@@ -255,7 +254,7 @@ class InteractionVolume : public CCMpfaInteractionVolume<GridGeometry, Scalar>
 public:
     using DualGridNodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
     using typename ParentType::GridIndexVisitor;
-    using typename ParentType::Transmissibilities;
+    using typename ParentType::Fluxes;
     using typename ParentType::DirichletBoundaryPredicate;
     using typename ParentType::FVElementGeometry;
     using typename ParentType::SubControlVolumeFace;
@@ -290,12 +289,12 @@ private:
     void visitFluxGridScvfIndices_(const GridIndexVisitor& v) const override
     { visitGridScvfIndices_(v); }
 
-    std::unique_ptr<CCMpfaTransmissibilities<GridGeometry, Scalar>> transmissibilities_(
+    std::unique_ptr<CCMpfaFluxes<GridGeometry, Scalar>> fluxes_(
         const FVElementGeometry& fvGeometry,
         const DirichletBoundaryPredicate& dirichletPredicate
     ) const
     {
-        return std::make_unique<CCMpfaO::Transmissibilities<GridGeometry, Scalar>>(
+        return std::make_unique<CCMpfaO::Fluxes<GridGeometry, Scalar>>(
             indexSet_, fvGeometry, dirichletPredicate
         );
     }
