@@ -119,12 +119,16 @@ public:
     class DirichletData
     {
         GridIndexType volVarIndex_;
+        GridIndexType gridScvfIndex_;
     public:
         //! Constructor
-        DirichletData(const GridIndexType index) : volVarIndex_(index) {}
+        DirichletData(const GridIndexType vv, const GridIndexType scvf)
+        : volVarIndex_(vv)
+        , gridScvfIndex_(scvf)
+        {}
 
-        //! Return corresponding vol var index
         GridIndexType volVarIndex() const { return volVarIndex_; }
+        GridIndexType gridScvfIndex() const { return gridScvfIndex_; }
     };
 
     //! publicly state the mpfa-scheme this interaction volume is associated with
@@ -189,7 +193,7 @@ public:
                 if (problem.boundaryTypes(elements_[neighborScvIndicesLocal[0]], scvf).hasOnlyDirichlet())
                 {
                     scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numKnowns_++, /*isDirichlet*/true);
-                    dirichletData_.emplace_back(scvf.outsideScvIdx());
+                    dirichletData_.emplace_back(scvf.outsideScvIdx(), scvf.index());
                 }
                 else
                     scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false);

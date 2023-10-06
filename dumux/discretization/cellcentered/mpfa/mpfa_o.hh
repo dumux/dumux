@@ -85,7 +85,7 @@ class MatrixHandle
     using OutsideForces = std::vector<std::vector<Scalar>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
-
+    using CellValues = Dune::DynamicMatrix<Scalar>;
 public:
     using FaceScalars = Dune::DynamicVector<Scalar>;
 
@@ -114,6 +114,9 @@ public:
 
     const OmegaStorage& omegas() const { return wijk_; }
     OmegaStorage& omegas() { return wijk_; }
+
+    const CellValues& values() const { return values_; }
+    CellValues& values() { return values_; }
 
     const OutsideTij& tijOutside() const
     {
@@ -177,6 +180,7 @@ protected:
     AMatrix A_;
     BMatrix AB_;
     CMatrix CA_;
+    CellValues values_;
     std::optional<OutsideTij> tijOutside_;
     std::optional<FaceScalars> forces_;
     std::optional<FaceScalars> deltaForces_;
@@ -197,6 +201,7 @@ public:
     using typename ParentType::TensorAccessor;
     using typename ParentType::ForceAccessor;
     using typename ParentType::ValueAccesor;
+    using typename ParentType::BoundaryValueAccesor;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using DualGridNodalIndexSet = CCMpfaDualGridNodalIndexSet<GridView>;
@@ -215,21 +220,46 @@ public:
         );
 
         // test assembly
-        add_([] (const auto&) { return double{1.0}; }, [] (const auto&) { return double{1.0}; }, {});
-        add_([] (const auto&) { return double{1.0}; }, [] (const auto&) { return double{1.0}; }, [] (const auto&) {
-            return Dune::FieldVector<double, GridView::dimensionworld>(0.0);
-        });
+        add_(
+            [] (const auto&) { return double{1.0}; },
+            [] (const auto&) { return double{1.0}; },
+            {},
+            [] (const auto&) { return double{1}; }
+        );
+        add_(
+            [] (const auto&) { return double{1.0}; },
+            [] (const auto&) { return double{1.0}; },
+            [] (const auto&) { return Dune::FieldVector<double, GridView::dimensionworld>(0.0); },
+            [] (const auto&) { return double{1}; }
+        );
         handles_.clear();
     }
 
 private:
-    int add_(const TensorAccessor& t, const ValueAccesor& v, const std::optional<ForceAccessor>& f) override
+    int add_(const TensorAccessor& t,
+             const ValueAccesor& v,
+             const std::optional<ForceAccessor>& f,
+             const std::optional<BoundaryValueAccesor>& bv) override
     {
+        if (iv_.dirichletData().size() != 0 && !bv.has_value())
+            DUNE_THROW(
+                Dune::InvalidStateException,
+                "Boundary value accessor required in ivs that touch Dirichlet boundaries"
+            );
+
         const bool withForces = f.has_value();
         handles_.emplace_back(withForces);
+
         assembleMatrices(handles_.back(), iv_, t, fvGeometry_);
         if (withForces)
             assembleForces(handles_.back(), iv_, t, *f, fvGeometry_);
+
+        InteractionVolumeAssemblerHelper::resizeVector(handles_.back().values(), iv_.numKnowns());
+        unsigned int i = 0;
+        for (; i < iv_.numScvs(); i++)
+            handles_.back().values()[i] = v(fvGeometry_.scv(iv_.localScv(i).gridScvIndex()));
+        for (const auto& data : iv_.dirichletData())
+            handles_.back().values()[i++] = (*bv)(fvGeometry_.scvf(data.gridScvfIndex()));
         return handles_.size() - 1;
     }
 

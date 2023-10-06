@@ -56,18 +56,21 @@ public:
     using TensorAccessor = std::function<TensorVariant(const SubControlVolume&)>;
     using ForceAccessor = std::function<Vector(const SubControlVolume&)>;
     using ValueAccesor = std::function<Scalar(const SubControlVolume&)>;
+    using BoundaryValueAccesor = std::function<Scalar(const SubControlVolumeFace&)>;
 
     /*!
      * \brief Register and prepare a new flux computation of the form \f$ f = -T(gradu + f) \f$
      * \param tensor Functor that returns a tensor (T in the above equation) per scv
      * \param values Functor that returns the values per scv (u in the above equation)
      * \param forces (optional) Functor that returns a force vector per scv (e.g. gravity; f in the above equation)
+     * \param boundaryValues (optional) Functor that returns the values at Dirichlet boundary faces
      * \return An identifier of type `Id` for thie registered flux computation.
      */
     Id add(const TensorAccessor& tensor,
            const ValueAccesor& values,
-           const std::optional<ForceAccessor>& forces = {})
-    { add_(tensor, values, forces); }
+           const std::optional<ForceAccessor>& forces = {},
+           const std::optional<BoundaryValueAccesor>& boundaryValues = {})
+    { add_(tensor, values, forces, boundaryValues); }
 
     //! Compute the flux for the given id & face
     Scalar computeFluxFor(const Id& id, const SubControlVolumeFace& scvf)
@@ -76,7 +79,10 @@ public:
     // TODO: Transmissibility visitor or export?
 
 private:
-    virtual int add_(const TensorAccessor&, const ValueAccesor&, const std::optional<ForceAccessor>&) = 0;
+    virtual int add_(const TensorAccessor&,
+                     const ValueAccesor&,
+                     const std::optional<ForceAccessor>&,
+                     const std::optional<BoundaryValueAccesor>&) = 0;
     virtual Scalar computeFluxFor_(const int, const SubControlVolumeFace&) const = 0;
 };
 
