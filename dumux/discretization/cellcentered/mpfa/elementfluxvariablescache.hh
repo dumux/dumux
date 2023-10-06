@@ -422,26 +422,24 @@ public:
     {
         clear_();
 
-        // some references for convenience
         const auto& problem = gridFluxVarsCache().problem();
         const auto& gridGeometry = fvGeometry.gridGeometry();
-
-        // the assembly map of the given element
         const auto& assemblyMapI = gridGeometry.connectivityMap()[gridGeometry.elementMapper().index(element)];
 
-        // reserve memory for scvf index container
-        unsigned int numNeighborScvfs = 0;
-        for (const auto& dataJ : assemblyMapI)
-            numNeighborScvfs += dataJ.scvfsJ.size();
-        globalScvfIndices_.resize(fvGeometry.numScvf() + numNeighborScvfs);
+        globalScvfIndices_.reserve(fvGeometry.numScvf() + std::accumulate(
+            assemblyMapI.begin(),
+            assemblyMapI.end(),
+            std::size_t{0},
+            [] (std::size_t current, const auto& dataJ) {
+                return current + dataJ.scvfsJ.size();
+            }
+        ));
 
-        // set the scvf indices in scvf index container
-        unsigned int i = 0;
         for (const auto& scvf : scvfs(fvGeometry))
-            globalScvfIndices_[i++] = scvf.index();
+            globalScvfIndices_.push_back(scvf.index());
         for (const auto& dataJ : assemblyMapI)
             for (auto scvfIdx : dataJ.scvfsJ)
-                globalScvfIndices_[i++] = scvfIdx;
+                globalScvfIndices_.push_back(scvfIdx);
 
         // Reserve memory (over-) estimate for interaction volumes and corresponding data.
         // The overestimate doesn't hurt as we are not in a memory-limited configuration.
@@ -460,7 +458,7 @@ public:
         fluxVarsCache_.resize(globalScvfIndices_.size());
 
         // go through the caches and fill them
-        i = 0;
+        unsigned i = 0;
         for (const auto& scvf : scvfs(fvGeometry))
         {
             auto& scvfCache = fluxVarsCache_[i++];
