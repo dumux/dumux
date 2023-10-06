@@ -85,23 +85,13 @@ class MatrixHandle
     using OutsideForces = std::vector<std::vector<Scalar>>; // TODO: size?
     using FaceOmegas = Dumux::ReservedVector<DimVector, 2>;
     using OmegaStorage = std::vector<FaceOmegas>;
-    using CellValues = Dune::DynamicVector<Scalar>;
 public:
-    using FaceScalars = Dune::DynamicVector<Scalar>;
 
-    MatrixHandle(const bool withForces = false)
+    MatrixHandle()
     {
         if constexpr (isSurfaceGrid)
             tijOutside_.emplace();
-        if (withForces)
-        {
-            forces_.emplace();
-            deltaForces_.emplace();
-        }
     }
-
-    bool hasForces() const
-    { return forces_.has_value(); }
 
     const CMatrix& CAInverse() const { return CA_; }
     CMatrix& CAInverse() { return CA_; }
@@ -118,9 +108,6 @@ public:
     const OmegaStorage& omegas() const { return wijk_; }
     OmegaStorage& omegas() { return wijk_; }
 
-    const CellValues& values() const { return values_; }
-    CellValues& values() { return values_; }
-
     const OutsideTij& tijOutside() const
     {
         if constexpr (!isSurfaceGrid)
@@ -134,6 +121,39 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Outside tij only available on surface grids");
         return *tijOutside_;
     }
+
+protected:
+    OmegaStorage wijk_;
+    TMatrix T_;
+    AMatrix A_;
+    BMatrix AB_;
+    CMatrix CA_;
+    std::optional<OutsideTij> tijOutside_;
+};
+
+template<class Scalar>
+class ValueHandle
+{
+    using OutsideForces = std::vector<std::vector<Scalar>>; // TODO: size?
+    using CellValues = Dune::DynamicVector<Scalar>;
+
+public:
+    using FaceScalars = Dune::DynamicVector<Scalar>;
+
+    ValueHandle(const bool withForces = false)
+    {
+        if (withForces)
+        {
+            forces_.emplace();
+            deltaForces_.emplace();
+        }
+    }
+
+    bool hasForces() const
+    { return forces_.has_value(); }
+
+    const CellValues& values() const { return values_; }
+    CellValues& values() { return values_; }
 
     const FaceScalars& forces() const
     {
@@ -178,13 +198,7 @@ public:
     }
 
 protected:
-    OmegaStorage wijk_;
-    TMatrix T_;
-    AMatrix A_;
-    BMatrix AB_;
-    CMatrix CA_;
     CellValues values_;
-    std::optional<OutsideTij> tijOutside_;
     std::optional<FaceScalars> forces_;
     std::optional<FaceScalars> deltaForces_;
     std::optional<OutsideForces> outsideForces_;
@@ -201,7 +215,8 @@ class Fluxes : public CCMpfaFluxes<GridGeometry, Scalar>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using Handle = Detail::MatrixHandle<dim, dimWorld, Scalar>;
+    using MatrixHandle = Detail::MatrixHandle<dim, dimWorld, Scalar>;
+    using ValueHandle = Detail::ValueHandle<Scalar>;
 
 public:
     using typename ParentType::TensorAccessor;
@@ -226,26 +241,29 @@ public:
         );
 
         // test assembly
-        add_(
+        registerTensor_([] (const auto&) { return double{1.0}; });
+        registerValuesFor_(0,
             [] (const auto&) { return double{1.0}; },
-            [] (const auto&) { return double{1.0}; },
-            {},
-            [] (const auto&) { return double{1}; }
+            [] (const auto&) { return double{1}; },
+            [] (const auto&) { return Dune::FieldVector<double, GridView::dimensionworld>(0.0); }
         );
-        add_(
-            [] (const auto&) { return double{1.0}; },
-            [] (const auto&) { return double{1.0}; },
-            [] (const auto&) { return Dune::FieldVector<double, GridView::dimensionworld>(0.0); },
-            [] (const auto&) { return double{1}; }
-        );
-        handles_.clear();
+        matrixHandles_.clear();
+        valueHandles_.clear();
     }
 
 private:
-    int add_(const TensorAccessor& t,
-             const ValueAccesor& v,
-             const std::optional<ForceAccessor>& f,
-             const std::optional<BoundaryValueAccesor>& bv) override
+    int registerTensor_(TensorAccessor&& t) override
+    {
+        tensorAccessors_.emplace_back(std::move(t));
+        matrixHandles_.emplace_back();
+        assembleMatrices(matrixHandles_.back(), iv_, tensorAccessors_.back(), fvGeometry_);
+        return matrixHandles_.size() - 1;
+    }
+
+    int registerValuesFor_(int tensorId,
+                           const ValueAccesor& v,
+                           const std::optional<BoundaryValueAccesor>& bv,
+                           const std::optional<ForceAccessor>& f) override
     {
         if (iv_.dirichletData().size() != 0 && !bv.has_value())
             DUNE_THROW(
@@ -254,38 +272,37 @@ private:
             );
 
         const bool withForces = f.has_value();
-        handles_.emplace_back(withForces);
-
-        assembleMatrices(handles_.back(), iv_, t, fvGeometry_);
+        valueHandles_.emplace_back(withForces);
         if (withForces)
-            assembleForces(handles_.back(), iv_, t, *f, fvGeometry_);
+            assembleForces(valueHandles_.back(), iv_, tensorAccessors_.at(tensorId), *f, fvGeometry_);
 
-        InteractionVolumeAssemblerHelper::resizeVector(handles_.back().values(), iv_.numKnowns());
+        InteractionVolumeAssemblerHelper::resizeVector(valueHandles_.back().values(), iv_.numKnowns());
         unsigned int i = 0;
         for (; i < iv_.numScvs(); i++)
-            handles_.back().values()[i] = v(fvGeometry_.scv(iv_.localScv(i).gridScvIndex()));
+            valueHandles_.back().values()[i] = v(fvGeometry_.scv(iv_.localScv(i).gridScvIndex()));
         for (const auto& data : iv_.dirichletData())
-            handles_.back().values()[i++] = (*bv)(fvGeometry_.scvf(data.gridScvfIndex()));
-        return handles_.size() - 1;
+            valueHandles_.back().values()[i++] = (*bv)(fvGeometry_.scvf(data.gridScvfIndex()));
+        return valueHandles_.size() - 1;
     }
 
-    Scalar computeFluxFor_(const int id, const SubControlVolumeFace& scvf) const override
+    Scalar computeFluxFor_(const int tensorId, const int valuesId, const SubControlVolumeFace& scvf) const override
     {
         for (const auto& localFaceData : iv_.localFaceData())
             if (localFaceData.gridScvfIndex() == scvf.index())
             {
                 const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
                 const auto localDofIndex = iv_.localScvf(localScvfIdx).localDofIndex();
-                const auto& handle = handles_[id];
+                const auto& matrixHandle = matrixHandles_[tensorId];
+                const auto& valuesHandle = valueHandles_[valuesId];
                 if constexpr (dim < dimWorld)
                     DUNE_THROW(Dune::NotImplemented, "Fluxes on surface grids");
                 else
                 {
-                    Scalar flux = handle.T()[localScvfIdx]*handle.values();
-                    if (handle.hasForces())
+                    Scalar flux = matrixHandle.T()[localScvfIdx]*valuesHandle.values();
+                    if (valuesHandle.hasForces())
                     {
-                        flux += handle.CAInverse()[localDofIndex]*handle.deltaForces();
-                        flux += (localFaceData.isOutsideFace() ? -1.0 : 1.0)*handle.forces()[localScvfIdx];
+                        flux += matrixHandle.CAInverse()[localDofIndex]*valuesHandle.deltaForces();
+                        flux += (localFaceData.isOutsideFace() ? -1.0 : 1.0)*valuesHandle.forces()[localScvfIdx];
                     }
                     return flux;
                 }
@@ -293,13 +310,13 @@ private:
         DUNE_THROW(Dune::InvalidStateException, "Could not compute flux for the given face");
     }
 
-    void assertId_(const int id) const
-    { assert(id < handles_.size() && "No data registered for the given id"); }
-
     const DualGridNodalIndexSet& indexSet_;
     const FVElementGeometry& fvGeometry_;
     CCMpfaOInteractionVolume<CCMpfaODefaultInteractionVolumeTraits<GridView, Scalar>> iv_;
-    std::vector<Handle> handles_;
+
+    std::vector<TensorAccessor> tensorAccessors_;
+    std::vector<MatrixHandle> matrixHandles_;
+    std::vector<ValueHandle> valueHandles_;
 };
 
 template<class GridGeometry, class Scalar>

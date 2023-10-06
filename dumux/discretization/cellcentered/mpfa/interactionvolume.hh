@@ -37,11 +37,8 @@ class CCMpfaFluxes
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    class Id {
-        friend CCMpfaFluxes;
-        Id(int i) : id{i} {}
-        int id;
-    };
+    struct TensorId { private: friend CCMpfaFluxes; const int id; };
+    struct FluxId { private: friend CCMpfaFluxes; const TensorId tensorId; const int id; };
 
     virtual ~CCMpfaFluxes() = default;
 
@@ -59,31 +56,40 @@ public:
     using BoundaryValueAccesor = std::function<Scalar(const SubControlVolumeFace&)>;
 
     /*!
-     * \brief Register and prepare a new flux computation of the form \f$ f = -T(gradu + f) \f$
+     * \brief Register a tensor to be used in flux computations.
      * \param tensor Functor that returns a tensor (T in the above equation) per scv
-     * \param values Functor that returns the values per scv (u in the above equation)
-     * \param forces (optional) Functor that returns a force vector per scv (e.g. gravity; f in the above equation)
-     * \param boundaryValues (optional) Functor that returns the values at Dirichlet boundary faces
-     * \return An identifier of type `Id` for thie registered flux computation.
+     * \return An identifier of type `TensorId` for the registered tensor.
      */
-    Id add(const TensorAccessor& tensor,
-           const ValueAccesor& values,
-           const std::optional<ForceAccessor>& forces = {},
-           const std::optional<BoundaryValueAccesor>& boundaryValues = {})
-    { add_(tensor, values, forces, boundaryValues); }
+    TensorId registerTensor(TensorAccessor&& tensor)
+    { return {registerTensor_(std::move(tensor))}; }
+
+    /*!
+     * \brief Register the values to be used for flux computations with a registered tensor.
+     * \param tensorId The id of the tensor to be used in this flux expression
+     * \param values Functor to obtain the values per scv
+     * \param boundaryValues (optional) Functor to obtain the values at dirichlet boundary faces
+     * \param forces (optional) Functor to obtain a force per scv occuring in the flux expression.
+     * \return An identifier of type `FluxId` for the registered fluxes.
+     */
+    FluxId registerValuesFor(const TensorId& tensorId,
+                             const ValueAccesor& values,
+                             const std::optional<BoundaryValueAccesor>& boundaryValues = {},
+                             const std::optional<ForceAccessor>& forces = {})
+    { return {tensorId, registerValuesFor_(values, forces, boundaryValues)}; }
 
     //! Compute the flux for the given id & face
-    Scalar computeFluxFor(const Id& id, const SubControlVolumeFace& scvf)
+    Scalar computeFluxFor(const FluxId& id, const SubControlVolumeFace& scvf)
     { return computeFluxFor_(id.id, scvf); }
 
     // TODO: Transmissibility visitor or export?
 
 private:
-    virtual int add_(const TensorAccessor&,
-                     const ValueAccesor&,
-                     const std::optional<ForceAccessor>&,
-                     const std::optional<BoundaryValueAccesor>&) = 0;
-    virtual Scalar computeFluxFor_(const int, const SubControlVolumeFace&) const = 0;
+    virtual int registerTensor_(TensorAccessor&&) = 0;
+    virtual int registerValuesFor_(const int,
+                                   const ValueAccesor&,
+                                   const std::optional<BoundaryValueAccesor>&,
+                                   const std::optional<ForceAccessor>&) = 0;
+    virtual Scalar computeFluxFor_(const int, const int, const SubControlVolumeFace&) const = 0;
 };
 
 /*!
