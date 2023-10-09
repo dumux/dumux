@@ -56,30 +56,25 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! This interface has to be met by any cache filler class for heat conduction quantities
         template<class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
+                         const Problem&,
+                         const Element&,
+                         const FVElementGeometry&,
+                         const ElementVolumeVariables&,
+                         const SubControlVolumeFace&,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            // get interaction volume from the flux vars cache filler & update the cache
-            scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                    fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                    fluxVarsCacheFiller.primaryIvDataHandle());
+            scvfFluxVarsCache.updateHeatConduction(
+                fluxVarsCacheFiller.fluxesPtr(),
+                fluxVarsCacheFiller.heatConductionFluxId()
+            );
         }
     };
 
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
-        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
-
-        using PrimaryDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle::HeatConductionHandle;
-
-        //! sets the pointer to the data handle (overload for primary data handles)
-        void setHandlePointer_(const PrimaryDataHandle& dataHandle)
-        { primaryHandlePtr_ = &dataHandle; }
+        using Fluxes = CCMpfaFluxes<GridGeometry, Scalar>;
+        using FluxId = typename Fluxes::FluxId;
 
     public:
         // export filler type
@@ -93,33 +88,21 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
          */
-         template<class IV, class LocalFaceData, class DataHandle>
-         void updateHeatConduction(const IV& iv,
-                                   const LocalFaceData& localFaceData,
-                                   const DataHandle& dataHandle)
+         void updateHeatConduction(const Fluxes* fluxesPtr, FluxId id)
         {
-            switchFluxSign_ = localFaceData.isOutsideFace();
-            stencil_ = &iv.stencil();
-            setHandlePointer_(dataHandle.heatConductionHandle());
+            fluxes_ = fluxesPtr;
+            id_ = std::move(id);
         }
 
-        //! The stencil corresponding to the transmissibilities (primary type)
-        const Stencil& heatConductionStencil() const { return *stencil_; }
+        const Fluxes& heatConductionFluxes() const
+        { return *fluxes_; }
 
-        //! The corresponding data handles
-        const PrimaryDataHandle& heatConductionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-
-        //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
-        bool heatConductionSwitchFluxSign() const { return switchFluxSign_; }
+        FluxId heatConductionId() const
+        { return id_; }
 
     private:
-        bool switchFluxSign_;
-
-        //! pointers to the corresponding iv-data handles
-        const PrimaryDataHandle* primaryHandlePtr_;
-
-        //! The stencil, i.e. the grid indices j
-        const Stencil* stencil_;
+        const Fluxes* fluxes_;
+        FluxId id_;
     };
 
 public:
@@ -145,32 +128,10 @@ public:
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-
-        // forward to the private function taking the iv data handle
-        return flux_(problem, fluxVarsCache, fluxVarsCache.heatConductionPrimaryDataHandle());
-    }
-
-private:
-    template< class Problem, class FluxVarsCache, class DataHandle >
-    static Scalar flux_(const Problem& problem,
-                        const FluxVarsCache& cache,
-                        const DataHandle& dataHandle)
-    {
-        const bool switchSign = cache.heatConductionSwitchFluxSign();
-
-        const auto localFaceIdx = cache.ivLocalFaceIndex();
-        const auto idxInOutside = cache.indexInOutsideFaces();
-        const auto& Tj = dataHandle.uj();
-        const auto& tij = dim == dimWorld ? dataHandle.T()[localFaceIdx]
-                                          : (!switchSign ? dataHandle.T()[localFaceIdx]
-                                                         : dataHandle.tijOutside()[localFaceIdx][idxInOutside]);
-        Scalar scvfFlux = tij*Tj;
-
-        // switch the sign if necessary
-        if (switchSign)
-            scvfFlux *= -1.0;
-
-        return scvfFlux;
+        return fluxVarsCache.heatConductionFluxes().computeFluxFor(
+            fluxVarsCache.heatConductionId(),
+            scvf
+        );
     }
 };
 

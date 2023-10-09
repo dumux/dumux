@@ -19,6 +19,7 @@
 #include <utility>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 namespace Dumux {
 
@@ -358,19 +359,35 @@ private:
 template<class GFVC>
 class CCMpfaElementFluxVariablesCache<GFVC, false>
 {
-    //! the flux variable cache filler type
     using FluxVariablesCacheFiller = typename GFVC::Traits::FluxVariablesCacheFiller;
+    using GridGeometry = typename ProblemTraits<typename GFVC::Traits::Problem>::GridGeometry;
+    using Scalar = typename GFVC::FluxVariablesCache::Scalar;
+    using InteractionVolume = CCMpfaInteractionVolume<GridGeometry, Scalar>;
+    using Fluxes = typename InteractionVolume::Fluxes;
+
+    struct FluxesStorage {
+        const InteractionVolume* iv;
+        std::unique_ptr<Fluxes> fluxes;
+        std::vector<typename Fluxes::TensorId> tensorIds;
+        std::vector<typename Fluxes::FluxId> fluxIds;
+
+        FluxesStorage(const InteractionVolume* iv, std::unique_ptr<Fluxes>&& f)
+        : iv{iv}
+        , fluxes{std::move(f)}
+        {}
+
+        FluxesStorage(const FluxesStorage& other)
+        {
+            iv = other.iv;
+            fluxes = other.fluxes->clone();
+            tensorIds = other.tensorIds;
+            fluxIds = other.fluxIds;
+        }
+    };
 
 public:
-    //! export the interaction volume types
-    using PrimaryInteractionVolume = typename GFVC::PrimaryInteractionVolume;
-
-    //! export the data handle types used
-    using PrimaryIvDataHandle = typename GFVC::PrimaryIvDataHandle;
-
     //! export the flux variable cache type
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
-
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
@@ -441,21 +458,9 @@ public:
             for (auto scvfIdx : dataJ.scvfsJ)
                 globalScvfIndices_.push_back(scvfIdx);
 
-        // Reserve memory (over-) estimate for interaction volumes and corresponding data.
-        // The overestimate doesn't hurt as we are not in a memory-limited configuration.
-        // We need to avoid reallocation because in the caches we store pointers to the data handles.
-        // Default -> each facet has two neighbors (local adaption) and all scvfs belongs to different ivs.
-        // If you want to use higher local differences change the parameter below.
-        constexpr auto numIvEstimate = FVElementGeometry::maxNumElementScvfs
-                                       * GridFluxVariablesCache::Traits::maxLocalElementLevelDifference();
-        ivDataStorage_.primaryInteractionVolumes.reserve(numIvEstimate);
-        ivDataStorage_.primaryDataHandles.reserve(numIvEstimate);
-
-        // helper class to fill flux variables caches
         FluxVariablesCacheFiller filler(problem);
-
-        // resize the cache container
         fluxVarsCache_.resize(globalScvfIndices_.size());
+        fluxes_.reserve(fluxVarsCache_.size());  // Ixssue, memory reallocation has to be avoided
 
         // go through the caches and fill them
         unsigned i = 0;
@@ -463,7 +468,8 @@ public:
         {
             auto& scvfCache = fluxVarsCache_[i++];
             if (!scvfCache.isUpdated())
-                filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf, true);
+                filler.fill(*this, scvfCache, fluxes_, fvGeometry, elemVolVars, scvf,
+                            FluxVariablesCacheFiller::create);
         }
 
         for (const auto& dataJ : assemblyMapI)
@@ -472,7 +478,8 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx), true);
+                    filler.fill(*this, scvfCache, fluxes_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx),
+                                FluxVariablesCacheFiller::create);
             }
         }
     }
@@ -552,7 +559,8 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, scvf);
+                    filler.fill(*this, scvfCache, fluxes_, fvGeometry, elemVolVars, scvf,
+                                FluxVariablesCacheFiller::update);
             }
 
             for (const auto& dataJ : assemblyMapI)
@@ -561,7 +569,8 @@ public:
                 {
                     auto& scvfCache = fluxVarsCache_[i++];
                     if (!scvfCache.isUpdated())
-                        filler.fill(*this, scvfCache, ivDataStorage_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                        filler.fill(*this, scvfCache, fluxes_, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx),
+                                    FluxVariablesCacheFiller::update);
                 }
             }
         }
@@ -585,16 +594,6 @@ public:
     FluxVariablesCache& operator [](const std::size_t scvfIdx)
     { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
 
-    //! access to the interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const PrimaryInteractionVolume& primaryInteractionVolume(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.primaryInteractionVolumes[ (*this)[scvf].ivIndexInContainer() ]; }
-
-    //! access to the data handle of an interaction volume an scvf is embedded in
-    template<class SubControlVolumeFace>
-    const PrimaryIvDataHandle& primaryDataHandle(const SubControlVolumeFace& scvf) const
-    { return ivDataStorage_.primaryDataHandles[ (*this)[scvf].ivIndexInContainer() ]; }
-
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
@@ -607,8 +606,7 @@ private:
     {
         fluxVarsCache_.clear();
         globalScvfIndices_.clear();
-        ivDataStorage_.primaryInteractionVolumes.clear();
-        ivDataStorage_.primaryDataHandles.clear();
+        fluxes_.clear();
     }
 
     //! get index of an scvf in the local container
@@ -619,13 +617,9 @@ private:
         return std::distance(globalScvfIndices_.begin(), it);
     }
 
-    // the local flux vars caches and corresponding indices
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<std::size_t> globalScvfIndices_;
-
-    // stored interaction volumes and handles
-    using IVDataStorage = InteractionVolumeDataStorage<PrimaryInteractionVolume, PrimaryIvDataHandle>;
-    IVDataStorage ivDataStorage_;
+    std::vector<FluxesStorage> fluxes_;
 };
 
 } // end namespace

@@ -15,6 +15,7 @@
 #include <variant>
 #include <optional>
 #include <functional>
+#include <memory>
 
 #include <dune/common/fmatrix.hh>
 
@@ -37,8 +38,30 @@ class CCMpfaFluxes
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    struct TensorId { private: friend CCMpfaFluxes; const int id; };
-    struct FluxId { private: friend CCMpfaFluxes; const TensorId tensorId; const int id; };
+    class TensorId
+    {
+        friend CCMpfaFluxes;
+        int id = 0;
+    public:
+        TensorId() = default;
+        TensorId(TensorId&&) = default;
+        TensorId(const TensorId&) = default;
+        TensorId(int i) : id(i) {}
+        TensorId& operator=(const TensorId&) = default;
+    };
+
+    class FluxId
+    {
+        friend CCMpfaFluxes;
+        TensorId tensorId{};
+        int id = 0;
+    public:
+        FluxId() = default;
+        FluxId(FluxId&&) = default;
+        FluxId(const FluxId&) = default;
+        FluxId(TensorId t, int i) : tensorId(std::move(t)), id(i) {}
+        FluxId& operator=(const FluxId&) = default;
+    };
 
     virtual ~CCMpfaFluxes() = default;
 
@@ -56,12 +79,26 @@ public:
     using BoundaryValueAccesor = std::function<Scalar(const SubControlVolumeFace&)>;
 
     /*!
+     * \brief Get a copy of this fluxes instance.
+     */
+    std::unique_ptr<CCMpfaFluxes> clone() const
+    { return clone_(); }
+
+    /*!
      * \brief Register a tensor to be used in flux computations.
      * \param tensor Functor that returns a tensor (T in the above equation) per scv
      * \return An identifier of type `TensorId` for the registered tensor.
      */
     TensorId registerTensor(TensorAccessor&& tensor)
     { return {registerTensor_(std::move(tensor))}; }
+
+    /*!
+     * \brief Update a previously registered tensor.
+     * \param id The id of the registered tensor.
+     * \param tensor Functor that returns a tensor (T in the above equation) per scv.
+     */
+    void updateTensor(const TensorId& id, TensorAccessor&& tensor)
+    { updateTensor_(id.id, std::move(tensor)); }
 
     /*!
      * \brief Register the values to be used for flux computations with a registered tensor.
@@ -75,20 +112,42 @@ public:
                              const ValueAccesor& values,
                              const std::optional<BoundaryValueAccesor>& boundaryValues = {},
                              const std::optional<ForceAccessor>& forces = {})
-    { return {tensorId, registerValuesFor_(values, forces, boundaryValues)}; }
+    { return {tensorId, registerValuesFor_(tensorId.id, values, boundaryValues, forces)}; }
+
+    /*!
+     * \brief Update registered values to be used for flux computations.
+     * \param fluxId The id of the flux computation.
+     * \param values Functor to obtain the values per scv
+     * \param boundaryValues (optional) Functor to obtain the values at dirichlet boundary faces
+     * \param forces (optional) Functor to obtain a force per scv occuring in the flux expression.
+     * \return An identifier of type `FluxId` for the registered fluxes.
+     */
+    void updateValuesFor(const FluxId& fluxId,
+                         const ValueAccesor& values,
+                         const std::optional<BoundaryValueAccesor>& boundaryValues = {},
+                         const std::optional<ForceAccessor>& forces = {})
+    { updateValuesFor_(fluxId.id, fluxId.tensorId.id, values, boundaryValues, forces); }
+
 
     //! Compute the flux for the given id & face
-    Scalar computeFluxFor(const FluxId& id, const SubControlVolumeFace& scvf)
-    { return computeFluxFor_(id.id, scvf); }
+    Scalar computeFluxFor(const FluxId& id, const SubControlVolumeFace& scvf) const
+    { return computeFluxFor_(id.id, id.tensorId.id, scvf); }
 
     // TODO: Transmissibility visitor or export?
 
 private:
+    virtual std::unique_ptr<CCMpfaFluxes> clone_() const = 0;
     virtual int registerTensor_(TensorAccessor&&) = 0;
+    virtual void updateTensor_(const int, TensorAccessor&&) = 0;
     virtual int registerValuesFor_(const int,
                                    const ValueAccesor&,
                                    const std::optional<BoundaryValueAccesor>&,
                                    const std::optional<ForceAccessor>&) = 0;
+    virtual void updateValuesFor_(const int,
+                                  const int,
+                                  const ValueAccesor&,
+                                  const std::optional<BoundaryValueAccesor>&,
+                                  const std::optional<ForceAccessor>&) = 0;
     virtual Scalar computeFluxFor_(const int, const int, const SubControlVolumeFace&) const = 0;
 };
 

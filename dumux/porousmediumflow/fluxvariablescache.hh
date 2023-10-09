@@ -90,32 +90,24 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     //! Returns whether or not this cache has been updated
-    bool isUpdated() const { return isUpdated_; }
+    bool isUpdated() const
+    { return isUpdated_; }
 
     //! Returns the index of the iv (this scvf is embedded in) in its container
-    GridIndexType ivIndexInContainer() const { return ivIndexInContainer_; }
-    //! Returns interaction volume-local face index
-    unsigned int ivLocalFaceIndex() const { return ivLocalFaceIdx_; }
-    //! Returns index of the face among "outside" faces of iv-local "positive" face
-    unsigned int indexInOutsideFaces() const { return idxInOutsideFaces_; }
+    GridIndexType ivIndexInContainer() const
+    { return ivIndexInContainer_; }
 
     //! Sets the update status. When set to true, consecutive updates will be skipped
-    void setUpdateStatus(bool status) { isUpdated_ = status; }
+    void setUpdateStatus(bool status)
+    { isUpdated_ = status; }
+
     //! Sets the index of the iv (this scvf is embedded in) in its container
-    void setIvIndexInContainer(GridIndexType ivIndex) { ivIndexInContainer_ = ivIndex; }
-    //! Sets the iv-local face index
-    void setIvLocalFaceIndex(unsigned int idx) { ivLocalFaceIdx_ = idx; }
-    //! Sets the index of the face among the "positive" face's outside scvfs
-    void setIndexInOutsideFaces(unsigned int idx) { idxInOutsideFaces_ = idx; }
+    void setIvIndexInContainer(GridIndexType ivIndex)
+    { ivIndexInContainer_ = ivIndex; }
 
 private:
-
     bool isUpdated_ = false;       // returns true if cache has been fully updated
-    bool usesSecondaryIv_ = false; // returns true if scvf is embedded in secondary interaction volume
-
     GridIndexType ivIndexInContainer_;  // index of the iv (this scvf is embedded in) in its container
-    unsigned int ivLocalFaceIdx_;       // the interaction volume-local face index of this scvf
-    unsigned int idxInOutsideFaces_;    // index of scvf among outside scvfs of iv-local "positive" face (only surface grids)
 };
 
 } // end namespace Dumux

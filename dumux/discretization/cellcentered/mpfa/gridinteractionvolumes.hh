@@ -76,12 +76,12 @@ public:
     }
 
     //! Return the iv index set in which a given scvf is embedded in
-    const NodalIndexSet& get(const SubControlVolumeFace& scvf) const
-    { return get(scvf.index()); }
+    const auto& get(const SubControlVolumeFace& scvf) const
+    { return at(scvf); }
 
     //! Return the iv index set in which a given scvf (index) is embedded in
-    const NodalIndexSet& get(const GridIndexType scvfIdx) const
-    { return (*dualGridIndexSet_)[scvfIndexMap_[scvfIdx]]; }
+    const auto& get(const GridIndexType scvfIdx) const
+    { return at(scvfIdx); }
 
     //! Return the iv in which a given scvf is embedded in
     const CCMpfaInteractionVolume<FVG, double>& at(const SubControlVolumeFace& scvf) const

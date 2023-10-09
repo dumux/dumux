@@ -218,6 +218,14 @@ class Fluxes : public CCMpfaFluxes<GridGeometry, Scalar>
     using MatrixHandle = Detail::MatrixHandle<dim, dimWorld, Scalar>;
     using ValueHandle = Detail::ValueHandle<Scalar>;
 
+    Fluxes(const CCMpfaDualGridNodalIndexSet<GridView>& indexSet,
+           const typename GridGeometry::LocalView& fvGeometry,
+           const CCMpfaOInteractionVolume<CCMpfaODefaultInteractionVolumeTraits<GridView, Scalar>>& iv)
+    : indexSet_{indexSet}
+    , fvGeometry_{fvGeometry}
+    , iv_{iv}
+    {}
+
 public:
     using typename ParentType::TensorAccessor;
     using typename ParentType::ForceAccessor;
@@ -252,6 +260,12 @@ public:
     }
 
 private:
+    std::unique_ptr<ParentType> clone_() const override
+    {
+        Fluxes copy{indexSet_, fvGeometry_, iv_};
+        return std::make_unique<Fluxes>(std::move(copy));
+    }
+
     int registerTensor_(TensorAccessor&& t) override
     {
         tensorAccessors_.emplace_back(std::move(t));
@@ -260,10 +274,29 @@ private:
         return matrixHandles_.size() - 1;
     }
 
-    int registerValuesFor_(int tensorId,
+    void updateTensor_(const int tensorId, TensorAccessor&& t) override
+    {
+        tensorAccessors_.at(tensorId) = std::move(t);
+        assembleMatrices(matrixHandles_.at(tensorId), iv_, tensorAccessors_[tensorId], fvGeometry_);
+    }
+
+    int registerValuesFor_(const int tensorId,
                            const ValueAccesor& v,
                            const std::optional<BoundaryValueAccesor>& bv,
                            const std::optional<ForceAccessor>& f) override
+    {
+        const bool withForces = f.has_value();
+        const auto fluxId = valueHandles_.size();
+        valueHandles_.emplace_back(withForces);
+        updateValuesFor_(fluxId, tensorId, v, bv, f);
+        return fluxId;
+    }
+
+    void updateValuesFor_(const int fluxId,
+                          const int tensorId,
+                          const ValueAccesor& v,
+                          const std::optional<BoundaryValueAccesor>& bv,
+                          const std::optional<ForceAccessor>& f) override
     {
         if (iv_.dirichletData().size() != 0 && !bv.has_value())
             DUNE_THROW(
@@ -272,28 +305,27 @@ private:
             );
 
         const bool withForces = f.has_value();
-        valueHandles_.emplace_back(withForces);
+        auto& handle = valueHandles_.at(fluxId);
         if (withForces)
-            assembleForces(valueHandles_.back(), iv_, tensorAccessors_.at(tensorId), *f, fvGeometry_);
+            assembleForces(handle, iv_, tensorAccessors_.at(tensorId), *f, fvGeometry_);
 
-        InteractionVolumeAssemblerHelper::resizeVector(valueHandles_.back().values(), iv_.numKnowns());
+        InteractionVolumeAssemblerHelper::resizeVector(handle.values(), iv_.numKnowns());
         unsigned int i = 0;
         for (; i < iv_.numScvs(); i++)
-            valueHandles_.back().values()[i] = v(fvGeometry_.scv(iv_.localScv(i).gridScvIndex()));
+            handle.values()[i] = v(fvGeometry_.scv(iv_.localScv(i).gridScvIndex()));
         for (const auto& data : iv_.dirichletData())
-            valueHandles_.back().values()[i++] = (*bv)(fvGeometry_.scvf(data.gridScvfIndex()));
-        return valueHandles_.size() - 1;
+            handle.values()[i++] = (*bv)(fvGeometry_.scvf(data.gridScvfIndex()));
     }
 
-    Scalar computeFluxFor_(const int tensorId, const int valuesId, const SubControlVolumeFace& scvf) const override
+    Scalar computeFluxFor_(const int valuesId, const int tensorId, const SubControlVolumeFace& scvf) const override
     {
         for (const auto& localFaceData : iv_.localFaceData())
             if (localFaceData.gridScvfIndex() == scvf.index())
             {
                 const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
                 const auto localDofIndex = iv_.localScvf(localScvfIdx).localDofIndex();
-                const auto& matrixHandle = matrixHandles_[tensorId];
-                const auto& valuesHandle = valueHandles_[valuesId];
+                const auto& matrixHandle = matrixHandles_.at(tensorId);
+                const auto& valuesHandle = valueHandles_.at(valuesId);
                 if constexpr (dim < dimWorld)
                     DUNE_THROW(Dune::NotImplemented, "Fluxes on surface grids");
                 else
@@ -301,9 +333,11 @@ private:
                     Scalar flux = matrixHandle.T()[localScvfIdx]*valuesHandle.values();
                     if (valuesHandle.hasForces())
                     {
-                        flux += matrixHandle.CAInverse()[localDofIndex]*valuesHandle.deltaForces();
-                        flux += (localFaceData.isOutsideFace() ? -1.0 : 1.0)*valuesHandle.forces()[localScvfIdx];
+                        flux += matrixHandle.CAInverse()[localScvfIdx]*valuesHandle.deltaForces();
+                        flux += valuesHandle.forces()[localScvfIdx];
                     }
+                    if (localFaceData.isOutsideFace())
+                        flux *= -1.0;
                     return flux;
                 }
             }

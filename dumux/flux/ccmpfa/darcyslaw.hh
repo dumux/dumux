@@ -18,8 +18,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 
 namespace Dumux {
 
@@ -42,6 +44,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -56,72 +59,49 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! This interface has to be met by any advection-related cache filler class
         template<class FluxVariablesCache, class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
+                         const Problem&,
+                         const Element&,
+                         const FVElementGeometry&,
+                         const ElementVolumeVariables&,
+                         const SubControlVolumeFace&,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            // get interaction volume related data from the filler class & update the cache
-            scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                fluxVarsCacheFiller.primaryIvDataHandle());
+            scvfFluxVarsCache.updateAdvection(
+                fluxVarsCacheFiller.fluxesPtr(),
+                fluxVarsCacheFiller.advectionFluxIds()
+            );
         }
     };
 
     //! The cache used in conjunction with the mpfa Darcy's Law
     class MpfaDarcysLawCache
     {
-        using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-
-        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
-
-        using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::AdvectionHandle;
-
-        //! sets the pointer to the data handle (overload for primary data handles)
-        void setHandlePointer_(const PrimaryDataHandle& dataHandle)
-        { primaryHandlePtr_ = &dataHandle; }
+        using Fluxes = CCMpfaFluxes<GridGeometry, Scalar>;
+        using FluxId = typename Fluxes::FluxId;
 
     public:
-        // export the filler type
         using Filler = MpfaDarcysLawCacheFiller;
 
         /*!
-         * \brief Update cached objects (transmissibilities and gravity).
-         *        This is used for updates with primary interaction volumes.
-         *
-         * \param iv The interaction volume this scvf is embedded in
-         * \param localFaceData iv-local info on this scvf
-         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \brief Update cached objects (i.e. ptrs to flux computation instance).
+         * \param fluxes The flux computation instance
+         * \param ids Flux ids for advective fluxes
          */
-        template<class IV, class LocalFaceData, class DataHandle>
-        void updateAdvection(const IV& iv,
-                             const LocalFaceData& localFaceData,
-                             const DataHandle& dataHandle)
+        void updateAdvection(const Fluxes* fluxes, const std::array<FluxId, numPhases>& ids)
         {
-            switchFluxSign_ = localFaceData.isOutsideFace();
-            stencil_ = &iv.stencil();
-            setHandlePointer_(dataHandle.advectionHandle());
+            fluxes_ = fluxes;
+            phaseFluxIds_ = ids;
         }
 
-        //! The stencil corresponding to the transmissibilities (primary type)
-        const Stencil& advectionStencil() const { return *stencil_; }
+        const Fluxes& advectionFluxes() const
+        { return *fluxes_; }
 
-        //! The corresponding data handles
-        const PrimaryDataHandle& advectionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-
-        //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
-        bool advectionSwitchFluxSign() const { return switchFluxSign_; }
+        FluxId advectionId(int phaseIdx) const
+        { return phaseFluxIds_[phaseIdx]; }
 
     private:
-        bool switchFluxSign_;
-
-        //! pointers to the corresponding iv-data handles
-        const PrimaryDataHandle* primaryHandlePtr_;
-
-        //! The stencil, i.e. the grid indices j
-        const Stencil* stencil_;
+        const Fluxes* fluxes_{nullptr};
+        std::array<FluxId, numPhases> phaseFluxIds_;
     };
 
 public:
@@ -152,42 +132,10 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-
-        // forward to the private function taking the iv data handle
-        return flux_(problem, fluxVarsCache, fluxVarsCache.advectionPrimaryDataHandle(), phaseIdx);
-    }
-
-private:
-    template< class Problem, class FluxVarsCache, class DataHandle >
-    static Scalar flux_(const Problem& problem,
-                        const FluxVarsCache& cache,
-                        const DataHandle& dataHandle,
-                        int phaseIdx)
-    {
-        dataHandle.setPhaseIndex(phaseIdx);
-
-        const bool switchSign = cache.advectionSwitchFluxSign();
-
-        const auto localFaceIdx = cache.ivLocalFaceIndex();
-        const auto idxInOutside = cache.indexInOutsideFaces();
-        const auto& pj = dataHandle.uj();
-        const auto& tij = dim == dimWorld ? dataHandle.T()[localFaceIdx]
-                                          : (!switchSign ? dataHandle.T()[localFaceIdx]
-                                                         : dataHandle.tijOutside()[localFaceIdx][idxInOutside]);
-        Scalar scvfFlux = tij*pj;
-
-        // maybe add gravitational acceleration
-        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-        if (enableGravity)
-            scvfFlux += dim == dimWorld ? dataHandle.g()[localFaceIdx]
-                                        : (!switchSign ? dataHandle.g()[localFaceIdx]
-                                                       : dataHandle.gOutside()[localFaceIdx][idxInOutside]);
-
-        // switch the sign if necessary
-        if (switchSign)
-            scvfFlux *= -1.0;
-
-        return scvfFlux;
+        return fluxVarsCache.advectionFluxes().computeFluxFor(
+            fluxVarsCache.advectionId(phaseIdx),
+            scvf
+        );
     }
 };
 

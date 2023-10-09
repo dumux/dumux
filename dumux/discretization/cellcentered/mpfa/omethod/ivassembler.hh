@@ -437,12 +437,13 @@ void assembleForces(DataHandle& handle,
         }, getT(insideScv));
 
         const auto localDofIdx = localScvf.localDofIndex();
-        handle.deltaForces()[localDofIdx] = 0.0;
+        if (!localScvf.isDirichlet())
+            handle.deltaForces()[localDofIdx] = 0.0;
         if (gridScvf.boundary())
             continue;
 
         const auto numOutsideFaces = gridScvf.numOutsideScvs();
-        handle.deltaForces()[faceIdx] = handle.forces()[faceIdx];
+        handle.deltaForces()[localDofIdx] = handle.forces()[faceIdx];
 
         if constexpr (isSurfaceGrid)
         {
@@ -463,12 +464,12 @@ void assembleForces(DataHandle& handle,
                     handle.outsideForces()[faceIdx][idxInOutside] = 1.0*vtmv(
                         flipScvf.unitOuterNormal(), outTensor, getF(outGlobalScv)
                     )*Extrusion::area(fvGeometry, flipScvf);
-                    handle.deltaForces()[faceIdx] -= handle.outsideForces()[faceIdx][idxInOutside];
+                    handle.deltaForces()[localDofIdx] -= handle.outsideForces()[faceIdx][idxInOutside];
                 }
                 else
-                    handle.deltaForces()[faceIdx] -= -1.0
-                                                    *vtmv(gridScvf.unitOuterNormal(), outTensor, getF(outGlobalScv))
-                                                    *Extrusion::area(fvGeometry, gridScvf);
+                    handle.deltaForces()[localDofIdx] -= -1.0
+                                                         *vtmv(gridScvf.unitOuterNormal(), outTensor, getF(outGlobalScv))
+                                                         *Extrusion::area(fvGeometry, gridScvf);
             }, getT(outGlobalScv));
         }
     }

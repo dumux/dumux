@@ -18,7 +18,9 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 
 namespace Dumux {
 
@@ -191,10 +193,11 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     using Extrusion = Extrusion_t<GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    using PrimaryInteractionVolume = GetPropType<TypeTag, Properties::PrimaryInteractionVolume>;
-    using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
-    using PrimaryLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
+    using InteractionVolume = CCMpfaInteractionVolume<GridGeometry, Scalar>;
+    using Fluxes = typename InteractionVolume::Fluxes;
+    using FluxId = typename Fluxes::FluxId;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -203,30 +206,56 @@ class PorousMediumFluxVariablesCacheFillerImplementation<TypeTag, Discretization
     static constexpr bool diffusionEnabled = ModelTraits::enableMolecularDiffusion();
     static constexpr bool heatConductionEnabled = ModelTraits::enableEnergyBalance();
 
+    static constexpr bool advectionUsesMpfa = GetPropType<TypeTag, Properties::AdvectionType>::discMethod == DiscretizationMethods::ccmpfa;
+    static constexpr bool diffusionUsesMpfa = GetPropType<TypeTag, Properties::MolecularDiffusionType>::discMethod == DiscretizationMethods::ccmpfa;
+    static constexpr bool heatConductionUsesMpfa = GetPropType<TypeTag, Properties::HeatConductionType>::discMethod == DiscretizationMethods::ccmpfa;
+
     static constexpr bool advectionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentAdvection>();
     static constexpr bool diffusionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentMolecularDiffusion>();
     static constexpr bool heatConductionIsSolDependent = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
 
+    static constexpr unsigned int numFluidPhases = ModelTraits::numFluidPhases();
+    static constexpr unsigned int numFluidComponents = ModelTraits::numFluidComponents();
+
+    // These represent the number of tensors/fluxes handled with mpfa
+    static constexpr unsigned int numDiffusiveFluxesPerPhase = FluidSystem::isTracerFluidSystem() ? numFluidComponents : numFluidComponents - 1;
+    static constexpr unsigned int numAdvectionTensors = advectionUsesMpfa ? 1 : 0;
+    static constexpr unsigned int numAdvectionFluxes = advectionUsesMpfa ? numFluidPhases : 0;
+    static constexpr unsigned int numDiffusionTensors = diffusionUsesMpfa ? numFluidPhases*numDiffusiveFluxesPerPhase : 0;
+    static constexpr unsigned int numDiffusionFluxes = numDiffusionTensors;
+
+    static constexpr unsigned int advectionTensorIdOffset = 0;
+    static constexpr unsigned int advectionFluxIdOffset = 0;
+
+    static constexpr unsigned int firstDiffusionTensorIdOffset = numAdvectionTensors;
+    static constexpr unsigned int firstDiffusionFluxIdOffset = numAdvectionFluxes;
+
+    static constexpr unsigned int heatConductionTensorIdOffset = numAdvectionTensors + numDiffusionTensors;
+    static constexpr unsigned int heatConductionFluxIdOffset = numAdvectionFluxes + numDiffusionFluxes;
+
 public:
+    //! Modes of creating/updating the caches
+    enum Mode { create, update, forcedUpdate };
+
     //! This cache filler is always solution-dependent, as it updates the
-    //! vectors of cell unknowns with which the transmissibilities have to be
+    //! values of cell unknowns with which the transmissibilities have to be
     //! multiplied in order to obtain the fluxes.
     static constexpr bool isSolDependent = true;
 
     //! The constructor. Sets problem pointer.
     PorousMediumFluxVariablesCacheFillerImplementation(const Problem& problem)
-    : problemPtr_(&problem) {}
+    : problemPtr_(&problem)
+    {}
 
     /*!
      * \brief function to fill the flux variables caches
      *
      * \param fluxVarsCacheStorage Class that holds the scvf flux vars caches
      * \param scvfFluxVarsCache The flux var cache to be updated corresponding to the given scvf
-     * \param ivDataStorage Class that stores the interaction volumes & handles
+     * \param ivDataStorage Class that stores the interaction volumes & fluxes
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables (primary/secondary variables)
      * \param scvf The corresponding sub-control volume face
-     * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
     template<class FluxVarsCacheStorage, class FluxVariablesCache, class IVDataStorage>
     void fill(FluxVarsCacheStorage& fluxVarsCacheStorage,
@@ -235,370 +264,292 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
-              bool forceUpdateAll = false)
+              Mode updateMode = Mode::update)
     {
-        // Set pointers
         fvGeometryPtr_ = &fvGeometry;
         elemVolVarsPtr_ = &elemVolVars;
-        const auto& gridGeometry = fvGeometry.gridGeometry();
+        const auto ivIndexInStorage = [&] () {
+            if (updateMode == Mode::create)
+            {
+                const auto& iv = fvGeometry.gridGeometry().gridInteractionVolumes().get(scvf);
+                const auto isDirichletScvf = [pptr=problemPtr_] (const auto& element, const auto& scvf) {
+                    return pptr->boundaryTypes(element, scvf).hasOnlyDirichlet();
+                };
+                ivDataStorage.emplace_back(typename IVDataStorage::value_type{
+                    &iv, iv.fluxes(fvGeometry, isDirichletScvf)
+                });
+                return static_cast<unsigned int>(ivDataStorage.size() - 1);
+            }
+            else
+                return static_cast<unsigned int>(scvfFluxVarsCache.ivIndexInContainer());
+        } ();
 
-        // 1. prepare interaction volume (iv)
-        // 2. solve for all transmissibilities and store them in data handles
-        // 3. set pointers to transmissibilities in caches of all the scvfs of the iv
-        if (forceUpdateAll)
-        {
-            // create new interaction volume
-            const auto ivIndexInContainer = ivDataStorage.primaryInteractionVolumes.size();
-            const auto& indexSet = gridGeometry.gridInteractionVolumes().get(scvf);
-            ivDataStorage.primaryInteractionVolumes.emplace_back();
-            primaryIv_ = &ivDataStorage.primaryInteractionVolumes.back();
-            primaryIv_->bind(indexSet, problem(), fvGeometry);
-
-            // create the corresponding data handle
-            ivDataStorage.primaryDataHandles.emplace_back();
-            primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles.back();
-            prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
-
-            // fill the caches for all the scvfs in the interaction volume
-            fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
-        }
-        else
-        {
-            // get previously created interaction volume/handle
-            const auto ivIndexInContainer = scvfFluxVarsCache.ivIndexInContainer();
-            primaryIv_ = &ivDataStorage.primaryInteractionVolumes[ivIndexInContainer];
-            primaryIvDataHandle_ = &ivDataStorage.primaryDataHandles[ivIndexInContainer];
-            prepareDataHandle_(*primaryIv_, *primaryIvDataHandle_, forceUpdateAll);
-
-            // fill the caches for all the scvfs in the interaction volume
-            fillCachesInInteractionVolume_<FluxVariablesCache>(fluxVarsCacheStorage, *primaryIv_, ivIndexInContainer);
-        }
+        fluxes_ = ivDataStorage[ivIndexInStorage].fluxes.get();
+        fillCachesInInteractionVolume_(fluxVarsCacheStorage,
+                                       ivDataStorage[ivIndexInStorage],
+                                       ivIndexInStorage,
+                                       updateMode);
     }
 
-    //! returns the stored interaction volume pointer
-    const PrimaryInteractionVolume& primaryInteractionVolume() const
-    { return *primaryIv_; }
+    const auto& advectionFluxIds() const { return advectionFluxIds_; }
+    const auto& diffusionFluxIds() const { return diffusionFluxIds_; }
+    const auto& heatConductionFluxId() const { return heatConductionFluxId_; }
 
-    //! returns the stored data handle pointer
-    const PrimaryDataHandle& primaryIvDataHandle() const
-    { return *primaryIvDataHandle_; }
-
-    //! returns the currently stored iv-local face data object
-    const PrimaryLocalFaceData& primaryIvLocalFaceData() const
-    { return *primaryLocalFaceData_; }
+    const Fluxes* fluxesPtr() const
+    { return fluxes_; }
 
 private:
-
-    const Problem& problem() const { return *problemPtr_; }
-    const FVElementGeometry& fvGeometry() const { return *fvGeometryPtr_; }
-    const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }
+    const Problem& problem_() const { return *problemPtr_; }
+    const FVElementGeometry& fvGeometry_() const { return *fvGeometryPtr_; }
+    const ElementVolumeVariables& elemVolVars_() const { return *elemVolVarsPtr_; }
 
     //! Method to fill the flux var caches within an interaction volume
-    template<class FluxVariablesCache, class FluxVarsCacheStorage, class InteractionVolume>
+    template<class FluxVarsCacheStorage, class IVDataStorage>
     void fillCachesInInteractionVolume_(FluxVarsCacheStorage& fluxVarsCacheStorage,
-                                        InteractionVolume& iv,
-                                        unsigned int ivIndexInContainer)
+                                        IVDataStorage& ivDataStorage,
+                                        unsigned int ivIndexInContainer,
+                                        Mode updateMode)
     {
-        // First we update data which are not dependent on the physical processes.
-        // We store pointers to the other flux var caches, so that we have to obtain
-        // this data only once and can use it again in the sub-cache fillers.
-        const auto numGlobalScvfs = iv.localFaceData().size();
-        std::vector<const SubControlVolumeFace*> ivScvfs(numGlobalScvfs);
-        std::vector<FluxVariablesCache*> ivFluxVarCaches(numGlobalScvfs);
-
-        unsigned int i = 0;
-        for (const auto& d : iv.localFaceData())
-        {
-            // obtain the scvf
-            const auto& scvfJ = fvGeometry().scvf(d.gridScvfIndex());
-            ivScvfs[i] = &scvfJ;
-            ivFluxVarCaches[i] = &fluxVarsCacheStorage[scvfJ];
-            ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
-            ivFluxVarCaches[i]->setUpdateStatus(true);
-            ivFluxVarCaches[i]->setIvLocalFaceIndex(d.ivLocalScvfIndex());
-            if (dim < dimWorld)
-                if (d.isOutsideFace())
-                    ivFluxVarCaches[i]->setIndexInOutsideFaces(d.scvfLocalOutsideScvfIndex());
-            i++;
-        }
-
         if constexpr (advectionEnabled)
-            fillAdvection_(iv, ivScvfs, ivFluxVarCaches);
+            fillAdvection_(fluxVarsCacheStorage, ivDataStorage, ivIndexInContainer, updateMode);
         if constexpr (diffusionEnabled)
-            fillDiffusion_(iv, ivScvfs, ivFluxVarCaches);
+            fillDiffusion_(fluxVarsCacheStorage, ivDataStorage, ivIndexInContainer, updateMode);
         if constexpr (heatConductionEnabled)
-            fillHeatConduction_(iv, ivScvfs, ivFluxVarCaches);
+            fillHeatConduction_(fluxVarsCacheStorage, ivDataStorage, ivIndexInContainer, updateMode);
+
+        // after updating the fluxes in the interaction volume, all embedded scvfs are up-to-date
+        ivDataStorage.iv->visitFluxGridScvfIndices([&] (const auto scvfIdx) {
+            const auto& scvf = fvGeometry_().scvf(scvfIdx);
+            auto& cache = fluxVarsCacheStorage[scvf];
+            cache.setIvIndexInContainer(ivIndexInContainer);
+            cache.setUpdateStatus(true);
+        });
     }
 
-    //! fills the advective quantities (enabled advection)
-    template<class InteractionVolume, class FluxVariablesCache>
-    void fillAdvection_(InteractionVolume& iv,
-                        const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
+    template<class FluxVarsCacheStorage, class IVDataStorage>
+    void fillAdvection_(FluxVarsCacheStorage& fluxVarsCacheStorage,
+                        IVDataStorage& ivDataStorage,
+                        unsigned int ivIndexInContainer,
+                        Mode updateMode)
     {
+        static const bool gravity = getParamFromGroup<bool>(problem_().paramGroup(), "Problem.EnableGravity");
+
         using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
-        // fill advection caches
-        for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
-        {
-            // set pointer to current local face data object
-            // ifs are evaluated at compile time and are optimized away
-            primaryLocalFaceData_ = &(iv.localFaceData()[i]);
+        updateTransmissibilities_<advectionIsSolDependent>(
+            ivDataStorage,
+            advectionTensorIdOffset,
+            updateMode,
+            [evv=elemVolVarsPtr_] (const auto& scv) { return (*evv)[scv].permeability(); }
+        );
 
-            // fill this scvfs cache
-            AdvectionFiller::fill(*ivFluxVarCaches[i],
-                                  problem(),
-                                  iv.element(iv.localFaceData()[i].ivLocalInsideScvIndex()),
-                                  fvGeometry(),
-                                  elemVolVars(),
-                                  *ivScvfs[i],
+        for (unsigned int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
+            advectionFluxIds_[pIdx] = updateValues_(
+                ivDataStorage,
+                advectionTensorIdOffset,
+                advectionFluxIdOffset + pIdx,
+                updateMode,
+                [pIdx] (const auto& volVars) { return volVars.pressure(pIdx); },
+                gravity ? std::optional<typename Fluxes::ForceAccessor>{
+                            [pIdx, p=problemPtr_, evv=elemVolVarsPtr_] (const auto& scv) {
+                                auto g = p->spatialParams().gravity(scv.center());
+                                g *= (*evv)[scv].density(pIdx);
+                                return g;
+                        }} : std::optional<typename Fluxes::ForceAccessor>{}
+            );
+
+        ivDataStorage.iv->visitFluxGridScvfIndices([&] (const auto scvfIdx) {
+            const auto& scvf = fvGeometry_().scvf(scvfIdx);
+            const auto& element = fvGeometry_().gridGeometry().element(scvf.insideScvIdx());
+            AdvectionFiller::fill(fluxVarsCacheStorage[scvf],
+                                  problem_(),
+                                  element,
+                                  fvGeometry_(),
+                                  elemVolVars_(),
+                                  scvf,
                                   *this);
-        }
+        });
     }
 
-    //! fills the diffusive quantities (diffusion enabled)
-    template<class InteractionVolume, class FluxVariablesCache>
-    void fillDiffusion_(InteractionVolume& iv,
-                        const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
+    template<class FluxVarsCacheStorage, class IVDataStorage>
+    void fillDiffusion_(FluxVarsCacheStorage& fluxVarsCacheStorage,
+                        IVDataStorage& ivDataStorage,
+                        unsigned int ivIndexInContainer,
+                        Mode updateMode)
     {
         using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-        static constexpr int numPhases = ModelTraits::numFluidPhases();
-        static constexpr int numComponents = ModelTraits::numFluidComponents();
-
-        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
+        unsigned int idOffset = 0;
+        for (unsigned int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
+            for (unsigned int cIdx = 0; cIdx < ModelTraits::numFluidComponents(); ++cIdx)
             {
-                using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+                // skip main component
                 if constexpr (!FluidSystem::isTracerFluidSystem())
-                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    if (cIdx == FluidSystem::getMainComponent(pIdx))
                         continue;
 
-                // fill diffusion caches
-                for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
-                {
-                    // set pointer to current local face data object
-                    // ifs are evaluated at compile time and are optimized away
-                    primaryLocalFaceData_ = &(iv.localFaceData()[i]);
+                // Effective diffusion coefficients might be zero if saturation = 0.
+                // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
+                // TODO: pass/accept zero threshold!!
+                static const auto zeroD = getParamFromGroup<Scalar>(
+                    problem_().paramGroup(),
+                    "Mpfa.ZeroEffectiveDiffusionCoefficientThreshold",
+                    1e-16
+                );
 
-                    // fill this scvfs cache
-                    DiffusionFiller::fill(*ivFluxVarCaches[i],
-                                          phaseIdx,
-                                          compIdx,
-                                          problem(),
-                                          iv.element(iv.localFaceData()[i].ivLocalInsideScvIndex()),
-                                          fvGeometry(),
-                                          elemVolVars(),
-                                          *ivScvfs[i],
+                updateTransmissibilities_<diffusionIsSolDependent>(
+                    ivDataStorage,
+                    firstDiffusionTensorIdOffset + idOffset,
+                    updateMode,
+                    [evv=elemVolVarsPtr_, pIdx, cIdx] (const auto& scv) {
+                        if constexpr (FluidSystem::isTracerFluidSystem())
+                            return (*evv)[scv].effectiveDiffusionCoefficient(0, 0, cIdx);
+                        else
+                            return (*evv)[scv].effectiveDiffusionCoefficient(pIdx, FluidSystem::getMainComponent(pIdx), cIdx);
+                    }
+                );
+
+                diffusionFluxIds_[pIdx][cIdx] = updateValues_(
+                    ivDataStorage,
+                    firstDiffusionTensorIdOffset + idOffset,
+                    firstDiffusionFluxIdOffset + idOffset,
+                    updateMode,
+                    [pIdx, cIdx] (const auto& volVars) {
+                        return (DiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                            ? volVars.massFraction(pIdx, cIdx)
+                            : volVars.moleFraction(pIdx, cIdx);
+                    }
+                );
+
+                ivDataStorage.iv->visitFluxGridScvfIndices([&] (const auto scvfIdx) {
+                    const auto& scvf = fvGeometry_().scvf(scvfIdx);
+                    const auto& element = fvGeometry_().gridGeometry().element(scvf.insideScvIdx());
+                    DiffusionFiller::fill(fluxVarsCacheStorage[scvf],
+                                          pIdx,
+                                          cIdx,
+                                          problem_(),
+                                          element,
+                                          fvGeometry_(),
+                                          elemVolVars_(),
+                                          scvf,
                                           *this);
-                }
+                });
+
+                idOffset++;
             }
-        }
     }
 
-    //! fills the quantities related to heat conduction (heat conduction enabled)
-    template<class InteractionVolume, class FluxVariablesCache>
-    void fillHeatConduction_(InteractionVolume& iv,
-                             const std::vector<const SubControlVolumeFace*>& ivScvfs,
-                             const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
+    template<class FluxVarsCacheStorage, class IVDataStorage>
+    void fillHeatConduction_(FluxVarsCacheStorage& fluxVarsCacheStorage,
+                             IVDataStorage& ivDataStorage,
+                             unsigned int ivIndexInContainer,
+                             Mode updateMode)
     {
         using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
-        // fill heat conduction caches
-        for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
-        {
-            // set pointer to current local face data object
-            // ifs are evaluated at compile time and are optimized away
-            primaryLocalFaceData_ = &(iv.localFaceData()[i]);
+        updateTransmissibilities_<heatConductionIsSolDependent>(
+            ivDataStorage,
+            heatConductionTensorIdOffset,
+            updateMode,
+            [evv=elemVolVarsPtr_] (const auto& scv) { return (*evv)[scv].effectiveThermalConductivity(); }
+        );
 
-            // fill this scvfs cache
-            HeatConductionFiller::fill(*ivFluxVarCaches[i],
-                                       problem(),
-                                       iv.element(iv.localFaceData()[i].ivLocalInsideScvIndex()),
-                                       fvGeometry(),
-                                       elemVolVars(),
-                                       *ivScvfs[i],
+        heatConductionFluxId_ = updateValues_(
+            ivDataStorage,
+            heatConductionTensorIdOffset,
+            heatConductionFluxIdOffset,
+            updateMode,
+            [] (const auto& volVars) { return volVars.temperature(); }
+        );
+
+        ivDataStorage.iv->visitFluxGridScvfIndices([&] (const auto scvfIdx) {
+            const auto& scvf = fvGeometry_().scvf(scvfIdx);
+            const auto& element = fvGeometry_().gridGeometry().element(scvf.insideScvIdx());
+            HeatConductionFiller::fill(fluxVarsCacheStorage[scvf],
+                                       problem_(),
+                                       element,
+                                       fvGeometry_(),
+                                       elemVolVars_(),
+                                       scvf,
                                        *this);
-        }
+        });
     }
 
-    //! Solves the local systems and stores the result in the handles
-    template< class InteractionVolume, class DataHandle>
-    void prepareDataHandle_([[maybe_unused]] InteractionVolume& iv, [[maybe_unused]] DataHandle& handle, [[maybe_unused]] bool forceUpdate)
+    template<bool isSolDependent, class IVDataStorage, class Tensor>
+    void updateTransmissibilities_(IVDataStorage& ivDataStorage,
+                                   const unsigned int expectedTensorOffset,
+                                   const Mode mode,
+                                   Tensor&& tensor)
     {
-        // (maybe) solve system subject to intrinsic permeability
-        if constexpr (advectionEnabled)
+        switch (mode)
         {
-            using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
-            if constexpr (AdvectionType::discMethod == DiscretizationMethods::ccmpfa)
-                prepareAdvectionHandle_(iv, handle, forceUpdate);
-        }
-
-        // (maybe) solve system subject to diffusion tensors
-        if constexpr (diffusionEnabled)
-        {
-            using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
-            if constexpr (DiffusionType::discMethod == DiscretizationMethods::ccmpfa)
-                prepareDiffusionHandles_(iv, handle, forceUpdate);
-        }
-
-        // (maybe) solve system subject to thermal conductivity
-        if constexpr (heatConductionEnabled)
-        {
-            using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
-            if constexpr (HeatConductionType::discMethod == DiscretizationMethods::ccmpfa)
-                prepareHeatConductionHandle_(iv, handle, forceUpdate);
-        }
-    }
-
-    //! prepares the quantities necessary for advective fluxes in the handle
-    template<class InteractionVolume, class DataHandle>
-    void prepareAdvectionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
-    {
-        // get instance of the interaction volume-local assembler
-        using Traits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
-        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
-
-        // lambda to obtain the permeability tensor
-        auto getK = [] (const auto& volVars) { return volVars.permeability(); };
-
-        // Assemble T only if permeability is sol-dependent or if update is forced
-        if (forceUpdateAll || advectionIsSolDependent)
-            localAssembler.assembleMatrices(handle.advectionHandle(), iv, getK);
-
-        // assemble pressure vectors
-        for (unsigned int pIdx = 0; pIdx < ModelTraits::numFluidPhases(); ++pIdx)
-        {
-            // set context in handle
-            handle.advectionHandle().setPhaseIndex(pIdx);
-
-            // maybe (re-)assemble gravity contribution vector
-            auto getRho = [pIdx] (const auto& volVars) { return volVars.density(pIdx); };
-            static const bool enableGravity = getParamFromGroup<bool>(problem().paramGroup(), "Problem.EnableGravity");
-            if (enableGravity)
-                localAssembler.assembleGravity(handle.advectionHandle(), iv, getRho);
-
-            // reassemble pressure vector
-            auto getPressure = [pIdx] (const auto& volVars) { return volVars.pressure(pIdx); };
-            localAssembler.assembleU(handle.advectionHandle(), iv, getPressure);
-        }
-    }
-
-    //! prepares the quantities necessary for diffusive fluxes in the handle
-    template<class InteractionVolume, class DataHandle>
-    void prepareDiffusionHandles_(InteractionVolume& iv,
-                                  DataHandle& handle,
-                                  bool forceUpdateAll)
-    {
-        for (unsigned int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx)
-        {
-            for (unsigned int compIdx = 0; compIdx < ModelTraits::numFluidComponents(); ++compIdx)
+            case Mode::create:
             {
-                // skip main component
-                using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-                if constexpr (!FluidSystem::isTracerFluidSystem())
-                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                        continue;
-
-                // fill data in the handle
-                handle.diffusionHandle().setPhaseIndex(phaseIdx);
-                handle.diffusionHandle().setComponentIndex(compIdx);
-
-                using DiffusionType = GetPropType<TypeTag, Properties::MolecularDiffusionType>;
-
-                // get instance of the interaction volume-local assembler
-                using Traits = typename InteractionVolume::Traits;
-                using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
-                IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
-
-                // maybe (re-)assemble matrices
-                if (forceUpdateAll || diffusionIsSolDependent)
-                {
-                    // lambda to obtain diffusion coefficient
-                    const auto getD = [&](const auto& volVars)
-                    {
-                        if constexpr (FluidSystem::isTracerFluidSystem())
-                            return volVars.effectiveDiffusionCoefficient(0, 0, compIdx);
-                        else
-                            return volVars.effectiveDiffusionCoefficient(phaseIdx, FluidSystem::getMainComponent(phaseIdx), compIdx);
-                    };
-
-                    // Effective diffusion coefficients might be zero if saturation = 0.
-                    // Compute epsilon to detect obsolete rows in the iv-local matrices during assembly
-                    static const auto zeroD = getParamFromGroup<Scalar>(
-                        problem().paramGroup(),
-                        "Mpfa.ZeroEffectiveDiffusionCoefficientThreshold",
-                        1e-16
-                    );
-
-                    // compute a representative transmissibility for this interaction volume, using
-                    // the threshold for zero diffusion coefficients, and use this as epsilon
-                    const auto& scv = fvGeometry().scv(iv.localScv(0).gridScvIndex());
-                    const auto& scvf = fvGeometry().scvf(iv.localScvf(0).gridScvfIndex());
-                    const auto& vv = elemVolVars()[scv];
-                    const auto eps = Extrusion::area(fvGeometry(), scvf)*computeTpfaTransmissibility(
-                        fvGeometry(), scvf, scv, zeroD, vv.extrusionFactor()
-                    );
-
-                    localAssembler.assembleMatrices(handle.diffusionHandle(), iv, getD, eps);
-                }
-
-                // assemble vector of mole fractions
-                auto getMassOrMoleFraction = [phaseIdx, compIdx] (const auto& volVars)
-                {
-                    return (DiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged) ? volVars.massFraction(phaseIdx, compIdx) :
-                                                                                                                       volVars.moleFraction(phaseIdx, compIdx);
-                };
-
-                localAssembler.assembleU(handle.diffusionHandle(), iv, getMassOrMoleFraction);
+                ivDataStorage.tensorIds.push_back(ivDataStorage.fluxes->registerTensor(std::move(tensor)));
+                if (ivDataStorage.tensorIds.size() != expectedTensorOffset + 1)
+                    DUNE_THROW(Dune::InvalidStateException, "Unexpected number of tensor ids");
+                break;
             }
+            case Mode::forcedUpdate:
+                ivDataStorage.fluxes->updateTensor(ivDataStorage.tensorIds.at(expectedTensorOffset), std::move(tensor));
+                break;
+            case Mode::update:
+            {
+                if constexpr (isSolDependent)
+                    ivDataStorage.fluxes->updateTensor(ivDataStorage.tensorIds.at(expectedTensorOffset), std::move(tensor));
+                break;
+            }
+            default:
+                DUNE_THROW(Dune::InvalidStateException, "Unknown update mode");
+                break;
         }
     }
 
-    //! prepares the quantities necessary for conductive fluxes in the handle
-    template<class InteractionVolume, class DataHandle>
-    void prepareHeatConductionHandle_(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
+    template<class IVDataStorage, class Values>
+    FluxId updateValues_(IVDataStorage& ivDataStorage,
+                         const unsigned int tensorIdOffset,
+                         const unsigned int fluxIdOffset,
+                         const Mode mode,
+                         const Values& volVarValues,
+                         const std::optional<typename Fluxes::ForceAccessor>& forces = {})
     {
-        // get instance of the interaction volume-local assembler
-        using Traits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = typename Traits::template LocalAssembler<Problem, FVElementGeometry, ElementVolumeVariables>;
-        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
+        auto values = [evv=elemVolVarsPtr_, v=volVarValues] (const auto& scv) { return v((*evv)[scv]); };
+        auto boundaryValues = [evv=elemVolVarsPtr_, v=volVarValues] (const auto& scvf) { return v((*evv)[scvf.outsideScvIdx()]); };
 
-        // lambda to obtain the effective thermal conductivity
-        auto getLambda = [] (const auto& volVars) { return volVars.effectiveThermalConductivity(); };
-
-        // maybe (re-)assemble matrices
-        if (forceUpdateAll || heatConductionIsSolDependent)
-            localAssembler.assembleMatrices(handle.heatConductionHandle(), iv, getLambda);
-
-        // assemble vector of temperatures
-        auto getTemperature = [] (const auto& volVars) { return volVars.temperature(); };
-        localAssembler.assembleU(handle.heatConductionHandle(), iv, getTemperature);
+        if (mode == Mode::update)
+        {
+            const auto fluxId = ivDataStorage.fluxIds.at(fluxIdOffset);
+            ivDataStorage.fluxes->updateValuesFor(fluxId, std::move(values), std::move(boundaryValues), forces);
+            return fluxId;
+        }
+        else
+        {
+            ivDataStorage.fluxIds.push_back(
+                ivDataStorage.fluxes->registerValuesFor(
+                    ivDataStorage.tensorIds.at(tensorIdOffset), std::move(values), std::move(boundaryValues), forces
+                )
+            );
+            if (ivDataStorage.fluxIds.size() != fluxIdOffset + 1)
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected flux id");
+            return ivDataStorage.fluxIds.back();
+        }
     }
 
     const Problem* problemPtr_;
     const FVElementGeometry* fvGeometryPtr_;
     const ElementVolumeVariables* elemVolVarsPtr_;
 
-    // We store pointers to an inner and a boundary interaction volume.
-    // These are updated during the filling of the caches and the
-    // physics-related caches have access to them
-    PrimaryInteractionVolume* primaryIv_;
+    // during filling, we set this pointer s.t. the individual caches can get and store it
+    const Fluxes* fluxes_;
 
-    // pointer to the current interaction volume data handle
-    PrimaryDataHandle* primaryIvDataHandle_;
-
-    // We do an interaction volume-wise filling of the caches
-    // While filling, we store a pointer to the current localScvf
-    // face data object of the IV so that the individual caches
-    // can access it and don't have to retrieve it again
-    const PrimaryLocalFaceData* primaryLocalFaceData_;
+    // during filling, keep track of registered flux ids
+    std::array<FluxId, numFluidPhases> advectionFluxIds_;
+    std::array<std::array<FluxId, numFluidComponents>, numFluidPhases> diffusionFluxIds_;
+    FluxId heatConductionFluxId_;
 };
 
 } // end namespace Dumux

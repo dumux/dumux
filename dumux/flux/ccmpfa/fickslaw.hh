@@ -15,7 +15,9 @@
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 
 #include <dumux/flux/fickiandiffusioncoefficients.hh>
 #include <dumux/flux/referencesystemformulation.hh>
@@ -72,67 +74,52 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa, referenceSy
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume related data from the filler class & update the cache
-            scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                fluxVarsCacheFiller.primaryIvLocalFaceData(),
-                                                fluxVarsCacheFiller.primaryIvDataHandle(),
-                                                phaseIdx, compIdx);
+            scvfFluxVarsCache.updateDiffusion(
+                fluxVarsCacheFiller.fluxesPtr(),
+                phaseIdx, compIdx,
+                fluxVarsCacheFiller.diffusionFluxIds()[phaseIdx][compIdx]
+            );
         }
     };
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        using Stencil = typename CCMpfa::DataStorage<GridView>::NodalScvDataStorage<typename GridView::IndexSet::IndexType>;
+        using Fluxes = CCMpfaFluxes<GridGeometry, Scalar>;
+        using FluxId = typename Fluxes::FluxId;
 
         static constexpr int numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numFluidPhases();
-        using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle::DiffusionHandle;
-
-        //! sets the pointer to the data handle (overload for primary data handles)
-        void setHandlePointer_(const PrimaryDataHandle& dataHandle)
-        { primaryHandlePtr_ = &dataHandle; }
+        static constexpr int numComponents = GetPropType<TypeTag, Properties::ModelTraits>::numFluidComponents();
 
     public:
         // export filler type
         using Filler = MpfaFicksLawCacheFiller;
 
         /*!
-         * \brief Update cached objects (transmissibilities).
-         *        This is used for updates with primary interaction volumes.
-         *
-         * \param iv The interaction volume this scvf is embedded in
-         * \param localFaceData iv-local info on this scvf
-         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \brief Update cached objects (i.e. ptrs to flux computation instance).
+         * \param fluxes The flux computation instance
+         * \param phaseIdx The index of the phase to update
+         * \param compIdx The index of the component to update
+         * \param ids Flux id for the diffusive flux of the given phase/component
          */
-        template<class IV, class LocalFaceData, class DataHandle>
-        void updateDiffusion(const IV& iv,
-                             const LocalFaceData& localFaceData,
-                             const DataHandle& dataHandle,
-                             unsigned int phaseIdx, unsigned int compIdx)
+        void updateDiffusion(const Fluxes* fluxesPtr,
+                             unsigned int phaseIdx,
+                             unsigned int compIdx,
+                             FluxId id)
         {
-            stencil_[phaseIdx][compIdx] = &iv.stencil();
-            switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutsideFace();
-            setHandlePointer_(dataHandle.diffusionHandle());
+            fluxes_ = fluxesPtr;
+            diffusionFluxIds_[phaseIdx][compIdx] = std::move(id);
         }
 
-        //! The stencils corresponding to the transmissibilities
-        const Stencil& diffusionStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *stencil_[phaseIdx][compIdx]; }
+        const Fluxes& diffusionFluxes() const
+        { return *fluxes_; }
 
-        //! The corresponding data handles
-        const PrimaryDataHandle& diffusionPrimaryDataHandle() const { return *primaryHandlePtr_; }
-
-        //! Returns whether or not this scvf is an "outside" face in the scope of the iv.
-        bool diffusionSwitchFluxSign(unsigned int phaseIdx, unsigned int compIdx) const
-        { return switchFluxSign_[phaseIdx][compIdx]; }
-
+        FluxId diffusionId(int phaseIdx, int compIdx) const
+        { return diffusionFluxIds_[phaseIdx][compIdx]; }
 
     private:
-        //! phase-/component- specific data
-        std::array< std::array<bool, numComponents>, numPhases > switchFluxSign_;
-        std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;
-
-        //! pointers to the corresponding iv-data handles
-        const PrimaryDataHandle* primaryHandlePtr_;
+        const Fluxes* fluxes_;
+        std::array<std::array<FluxId, numComponents>, numPhases> diffusionFluxIds_;
     };
 
 public:
@@ -174,14 +161,11 @@ public:
                 if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
-            // calculate the density at the interface
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
-
-            // compute the flux
-            componentFlux[compIdx] = rho*computeVolumeFlux(problem,
-                                                            fluxVarsCache,
-                                                            fluxVarsCache.diffusionPrimaryDataHandle(),
-                                                            phaseIdx, compIdx);
+            componentFlux[compIdx] = rho*fluxVarsCache.diffusionFluxes().computeFluxFor(
+                fluxVarsCache.diffusionId(phaseIdx, compIdx),
+                scvf
+            );
         }
 
         // accumulate the phase component flux
@@ -194,32 +178,6 @@ public:
     }
 
 private:
-    template< class Problem, class FluxVarsCache, class DataHandle >
-    static Scalar computeVolumeFlux(const Problem& problem,
-                                    const FluxVarsCache& cache,
-                                    const DataHandle& dataHandle,
-                                    int phaseIdx, int compIdx)
-    {
-        dataHandle.setPhaseIndex(phaseIdx);
-        dataHandle.setComponentIndex(compIdx);
-
-        const bool switchSign = cache.diffusionSwitchFluxSign(phaseIdx, compIdx);
-
-        const auto localFaceIdx = cache.ivLocalFaceIndex();
-        const auto idxInOutside = cache.indexInOutsideFaces();
-        const auto& xj = dataHandle.uj();
-        const auto& tij = dim == dimWorld ? dataHandle.T()[localFaceIdx]
-                                          : (!switchSign ? dataHandle.T()[localFaceIdx]
-                                                         : dataHandle.tijOutside()[localFaceIdx][idxInOutside]);
-        Scalar scvfFlux = tij*xj;
-
-        // switch the sign if necessary
-        if (switchSign)
-            scvfFlux *= -1.0;
-
-        return scvfFlux;
-    }
-
     //! compute the density at branching facets for network grids as arithmetic mean
     static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
