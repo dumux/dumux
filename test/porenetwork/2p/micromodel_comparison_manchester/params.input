@@ -1,26 +1,13 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 2 # [s]
+TEnd = 0.01 # [s]
 
 [Grid]
+File = micromodel_network.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
+AddThroatVolumeToPoreVolume = true
 
-UpperRight = 2e-3 2e-3 2e-3
-NumPores = 20 20 20
-
-ParameterType = lognormal
-MeanPoreInscribedRadius = 4.5e-5
-StandardDeviationPoreInscribedRadius = 3e-6
-
-BoundaryFaceMarker = 2 3 1 1 1 1
-MinThroatLength = 1e-9
-DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
-RemoveThroatsOnBoundary = 0 1 2 3 4 5
-PruningSeedIndices = 2 3
-Sanitize = true
-DeletionRandomNumberSeed = 33
-ParameterRandomNumberSeed = 22
 
 [Problem]
 Name = pnm_3d_comparison_manchester
@@ -40,8 +27,7 @@ MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
 MaxTimeStepDivisions = 10
-NewtonOutputFilename = NewtonLog.txt
-NewtonOverview = NewtonOverview.txt
+LogFileName = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true
