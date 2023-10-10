@@ -127,7 +127,7 @@ struct AxisData<GridView, 1>
 
 /*!
  * \ingroup StaggeredDiscretization
- * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
+ * \brief Returns the direction index of the facet (0 = x, 1 = y, 2 = z)
  */
 template<class Vector>
 inline static unsigned int directionIndex(Vector&& vector)

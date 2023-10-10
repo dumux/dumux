@@ -212,7 +212,7 @@ public:
      *
      * \note Such variables do not necessarily exist and then this function does nothing (default)
      * \note some examples
-     *       from geomechanics: the porosity of (physical) domain i (porous medium flow) depends on the displacement vector of physical domain j (mechnanics)
+     *       from geomechanics: the porosity of (physical) domain i (porous medium flow) depends on the displacement vector of physical domain j (mechanics)
      *       from domaindecomposition: the transmissibilities for fluxes of domain i to domain j depend on the permeability in domain j
      *                                 (which might depend in turn on the primary variables of domain i)
      */

@@ -184,7 +184,7 @@ struct EnableBoxInterfaceSolver { using type = UndefinedProperty; };
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
 template<class TypeTag, class MyTypeTag>
-struct Chemistry { using type = UndefinedProperty; };                           //!< The chemistry class with which solves equlibrium reactions
+struct Chemistry { using type = UndefinedProperty; };                           //!< The chemistry class with which solves equilibrium reactions are solved
 template<class TypeTag, class MyTypeTag>
 struct SetMoleFractionsForFirstPhase { using type = UndefinedProperty; };       //!< Set the mole fraction in the wetting or nonwetting phase
 

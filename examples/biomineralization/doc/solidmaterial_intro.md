@@ -23,7 +23,7 @@ For further specialization, the overview over the material subfolder is split in
 
 ## Solids in the folder `material`
 
-As this example is about biomineralization involving many components with complex inteactions, some specific solid material files are necessary.
+As this example is about biomineralization involving many components with complex interactions, some specific solid material files are necessary.
 First, `material/components/biofilm.hh` defines the solid component biofilm, which plays an essential role in biomineralization by providing the essential catalytic activity for biomineralization.
 Second, as biofilm grows or calcite precipitates, the volume fractions of those non-inert solids change, influencing the overall properties of the solids in the system.
 The specific solidsystem `material/solidsystems/biominsolids.hh` gives the relations on how to

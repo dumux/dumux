@@ -483,7 +483,7 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
  * Compares an current position vector with two reference vector, and returns true
  * if the position vector lies in between them.
  * "Between" in this case means that all the entries of each spatial dimension are
- * smaller in comparison with the larger reference vector as well as larger campared
+ * smaller in comparison with the larger reference vector as well as larger compared
  * to the smaller reference.
  * This is comfortable to cheack weather the current position is located inside or
  * outside of a lense with different properties.

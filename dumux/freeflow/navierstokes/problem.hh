@@ -24,7 +24,7 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
-#warning "This header is deprecated and will be removed after release 3.6. Use the new mass and momemtum problem headers"
+#warning "This header is deprecated and will be removed after release 3.6. Use the new mass and momentum problem headers"
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>

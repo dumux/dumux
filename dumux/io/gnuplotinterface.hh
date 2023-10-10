@@ -358,7 +358,7 @@ public:
     }
 
     /*!
-     * \brief Sets the terminal used for interactive outpu
+     * \brief Sets the terminal used for interactive output
      *
      * \param terminal The user-specified terminal
      */

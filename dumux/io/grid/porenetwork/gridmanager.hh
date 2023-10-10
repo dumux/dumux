@@ -212,7 +212,7 @@ public:
 
         if (std::none_of(keepElement.begin(), keepElement.end(), [](const bool i){return i;}))
             DUNE_THROW(Dune::InvalidStateException, "sanitize() deleted all elements! Check your boundary face indices. "
-                << "If the problem persisits, add at least one of your boundary face indices to PruningSeedIndices");
+                << "If the problem persists, add at least one of your boundary face indices to PruningSeedIndices");
 
         // remove the elements in the grid
         std::size_t numDeletedElements = 0;

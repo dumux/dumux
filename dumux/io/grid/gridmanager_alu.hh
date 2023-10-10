@@ -72,11 +72,11 @@ public:
     void init(const std::string& modelParamGroup = "", bool adaptiveRestart = false)
     {
         // restarting an adaptive grid using Dune's BackupRestoreFacility
-        // TODO: the part after first || is backward compatibility with old sequential models remove once sequential adpative restart is replaced
+        // TODO: the part after first || is backward compatibility with old sequential models remove once sequential adaptive restart is replaced
         if (adaptiveRestart || hasParam("Restart") || hasParam("TimeManager.Restart"))
         {
             auto restartTime = getParamFromGroup<double>(modelParamGroup, "TimeLoop.Restart", 0.0);
-            // TODO: backward compatibility with old sequential models remove once sequential adpative restart is replaced
+            // TODO: backward compatibility with old sequential models remove once sequential adaptive restart is replaced
             if (hasParam("Restart") || hasParam("TimeManager.Restart"))
             {
                 restartTime = getParamFromGroup<double>("TimeManager", "Restart");
@@ -155,7 +155,7 @@ public:
             if (domainMarkers)
                 ParentType::enableGmshDomainMarkers_ = true;
 
-            // only filll the factory for rank 0
+            // only fill the factory for rank 0
             if (domainMarkers)
             {
                 std::vector<int> boundaryMarkersInsertionIndex, boundaryMarkers, faceMarkers, elementMarkers;
