@@ -215,12 +215,24 @@ public:
         minSw_ = std::min(elemVolVars[0].saturation(0), elemVolVars[1].saturation(0));
 
 #if !DRAINAGE
-        if (!invaded)
-            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-        else if (invaded)
-            pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
-        // else
-        //     pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
+        {
+            if (!invaded)
+                pc_ = elemVolVars[0].capillaryPressure();
+            else if (invaded)
+                pc_ = elemVolVars[0].capillaryPressure();
+            // else
+            //     pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        }
+        else
+        {
+            if (!invaded)
+                pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+            else if (invaded)
+                pc_ = std::max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+            // else
+            //     pc_ = std::min(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+        }
 #endif
 
         regInvasionInterval_[0] = pcEntry_;

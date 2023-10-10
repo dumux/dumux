@@ -250,14 +250,26 @@ private:
             return Result{}; //nothing happened
         }
 
-
-        if (!invadedBeforeSwitch && *pcMax > pcEntry)
+        if (gridGeometry.throatLabel(eIdx) == 3)
         {
-           invadedAfterSwitch = true;
-           std::cout<<" pcEntry  "<<pcEntry<<std::endl;
+            if (!invadedBeforeSwitch && pc[0] > pcEntry)
+            {
+            invadedAfterSwitch = true;
+            std::cout<<" pcEntry  "<<pcEntry<<std::endl;
+            }
+            else if (invadedBeforeSwitch && *snMin > 0.001 && pc[0] <= pcSnapoff && gridGeometry.throatLabel(eIdx) != 2)
+            invadedAfterSwitch = false;
         }
-        else if (invadedBeforeSwitch && *snMin > 0.001 && *pcMin <= pcSnapoff && gridGeometry.throatLabel(eIdx) != 2)
-           invadedAfterSwitch = false;
+        else
+        {
+            if (!invadedBeforeSwitch && *pcMax > pcEntry)
+            {
+            invadedAfterSwitch = true;
+            std::cout<<" pcEntry  "<<pcEntry<<std::endl;
+            }
+            else if (invadedBeforeSwitch && *snMin > 0.001 && *pcMin <= pcSnapoff && gridGeometry.throatLabel(eIdx) != 2)
+            invadedAfterSwitch = false;
+        }
 // #else
 //         const std::array<Scalar, 2> sn = { elemVolVars[0].saturation(1), elemVolVars[1].saturation(1) };
 //         const auto snMin = std::min_element(sn.begin(), sn.end());

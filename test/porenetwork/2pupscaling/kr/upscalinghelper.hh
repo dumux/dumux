@@ -76,8 +76,10 @@ public:
         const auto inletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{inletPoreLabel}).totalFlux;
         const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel}).totalFlux;
 
+
+
         computeBoundaryAvgValues_(leafGridView);
-        computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
+        computeFluxes_(inletTotalMassFlux, outletTotalMassFlux);
         computeEffPerm_();
     }
 
@@ -91,7 +93,7 @@ public:
         const auto outletTotalMassFlux = boundaryFlux.getFlux(std::vector<int>{outletPoreLabel}).totalFlux;
 
         computeBoundaryAvgValues_(leafGridView);
-        computeVolumeFlux_(inletTotalMassFlux, outletTotalMassFlux);
+        computeFluxes_(inletTotalMassFlux, outletTotalMassFlux);
         return checkIfInEquilibrium_();
     }
 
@@ -361,8 +363,16 @@ private:
         return dofsToNeglect;
     }
 
-    void computeVolumeFlux_(const NumEqVector& inletTotalMassFlux, const NumEqVector& outletTotalMassFlux)
+    void computeFluxes_(const NumEqVector& inletTotalMassFlux, const NumEqVector& outletTotalMassFlux)
     {
+        inletMassFlux_[FS::phase0Idx] = inletTotalMassFlux[FS::phase0Idx];
+        inletMassFlux_[FS::phase1Idx] = inletTotalMassFlux[FS::phase1Idx];
+        outletMassFlux_[FS::phase0Idx] = outletTotalMassFlux[FS::phase0Idx];
+        outletMassFlux_[FS::phase1Idx] = outletTotalMassFlux[FS::phase1Idx];
+
+        std::cout<<" MassFlux_[FS::phase0Idx]  "<<inletMassFlux_[FS::phase0Idx]<<"   "<<outletMassFlux_[FS::phase0Idx]<<std::endl;
+        std::cout<<" MassFlux_[FS::phase1Idx]  "<<inletMassFlux_[FS::phase1Idx]<<"   "<<outletMassFlux_[FS::phase1Idx]<<std::endl;
+
         inletVolumeFlux_[FS::phase0Idx] = inletTotalMassFlux[FS::phase0Idx]/inletAvgValues_.density[FS::phase0Idx];
         inletVolumeFlux_[FS::phase1Idx] = inletTotalMassFlux[FS::phase1Idx]/inletAvgValues_.density[FS::phase1Idx];
         outletVolumeFlux_[FS::phase0Idx] = outletTotalMassFlux[FS::phase0Idx]/outletAvgValues_.density[FS::phase0Idx];
@@ -382,7 +392,8 @@ private:
         for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++)
         {
             const Scalar mu = outletAvgValues_.viscosity[phaseIdx];
-            effPerm_[currentDirection][phaseIdx] = outletVolumeFlux_[phaseIdx] * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
+            const Scalar rho = outletAvgValues_.density[phaseIdx];
+            effPerm_[currentDirection][phaseIdx] = outletMassFlux_[phaseIdx] * 1 / rho * mu * L /(outflowArea * (inletAvgValues_.p[phaseIdx] - outletAvgValues_.p[phaseIdx]));
         }
 
         logfile_ << std::scientific << std::setprecision(2)<< std::left << std::setw(20) << std::setfill(' ') << swAvg_[0]
@@ -411,7 +422,7 @@ private:
         using std::abs;
         Scalar dSwDt = abs(swAvg_[0]-swAvg_[1]) / dt;
         std::cout<<"  equilibrium????   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
-        if (dSwDt < 1e-15)
+        if (dSwDt < 5e-8)
         {
             std::cout<<"  equilibrium????   "<< dSwDt<<"   "<<swAvg_[0]<<"   "<<swAvg_[1]<<std::endl;
             swAvg_[1] = 2.0;
@@ -557,6 +568,8 @@ private:
     BoundaryAvgValues outletAvgValues_;
     std::array<Scalar, 2> inletVolumeFlux_;
     std::array<Scalar, 2> outletVolumeFlux_;
+    std::array<Scalar, 2> inletMassFlux_;
+    std::array<Scalar, 2> outletMassFlux_;
     std::array<std::array<Scalar, 2>, 3>  effPerm_;
     std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
     std::array<Scalar, 3> length_;

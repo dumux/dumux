@@ -46,8 +46,8 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Labels = GetPropType<TypeTag, Properties::Labels>;
     enum {
-        pwIdx = Indices::pressureIdx,
-        snIdx = Indices::saturationIdx,
+        pIdx = Indices::pressureIdx,
+        sIdx = Indices::saturationIdx,
         nPhaseIdx = FluidSystem::phase1Idx,
 
 #if !ISOTHERMAL
@@ -138,13 +138,18 @@ public:
                                const SubControlVolume &scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
-        values[snIdx] = 0.0;
+        values[pIdx] = 1e5;
+        values[sIdx] = 0.0;
 
         const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteraction(element, scv, 0);
         if (isOutletPore_(scv))
         {
-            values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
+            Scalar swNeighborPc = outletPcGradient_->zeroPcGradientSw(element, scv);
+            if (swNeighborPc < 1.0)
+                values[sIdx] = /*1.0 - */swNeighborPc;
+            else
+                values[sIdx] = 0.1;///*1.0 - */outletPcGradient_->zeroPcGradientSw(element, scv);
+
         }
 
         return values;
@@ -178,7 +183,7 @@ public:
             {
                 Scalar distributionRatio = std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
                 values[Indices::conti0EqIdx] = /*sourceEpisopdeW_[step_]*/0.0 * volVar.density(FluidSystem::phase0Idx) * distributionRatio;
-                values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-11 * volVar.density(FluidSystem::phase1Idx) * distributionRatio;
+                values[Indices::conti0EqIdx + 1] = /*sourceEpisopdeN_[step_]*/1e-1 * volVar.density(FluidSystem::phase1Idx) * distributionRatio;
             }
         }
         values /= scv.volume();
@@ -192,12 +197,12 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = pressure_;
-        values[Indices::saturationIdx] = 1.0 - saturationw_;
+        values[Indices::saturationIdx] = /*1.0 - */saturationw_;
 
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
         if (isInletPore_(dofIdxGlobal))
         {
-            values[Indices::saturationIdx] = 1.0 - saturationw_;
+            values[Indices::saturationIdx] = /*1.0 - */saturationw_;
         }
         return values;
     }
