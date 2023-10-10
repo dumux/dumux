@@ -79,7 +79,6 @@ if(NOT DUMUX_MULTITHREADING_BACKEND)
   else()
     set(DUMUX_MULTITHREADING_BACKEND "Serial" CACHE STRING "The multithreading backend")
   endif()
-  message(STATUS "Dumux multithreading backend: ${DUMUX_MULTITHREADING_BACKEND}")
 
 # abort if a multithreading backend has been manually selected
 # but it is not available
@@ -92,7 +91,7 @@ else()
     message(FATAL_ERROR "Selected Kokkos as Dumux multithreading backed but Kokkos has not been found")
   elseif(DUMUX_MULTITHREADING_BACKEND STREQUAL "Cpp" AND NOT DUMUX_HAVE_CXX_EXECUTION_POLICY)
     message(FATAL_ERROR "Selected Cpp as Dumux multithreading backed but your compiler does not implement parallel STL")
-  else()
-    message(STATUS "Dumux multithreading backend: ${DUMUX_MULTITHREADING_BACKEND}")
   endif()
 endif()
+
+message(STATUS "Dumux multithreading backend: ${DUMUX_MULTITHREADING_BACKEND}")
