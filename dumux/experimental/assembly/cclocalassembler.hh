@@ -213,9 +213,7 @@ public:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
+     *        to the global matrix. Calculates the element residual at the current solution.
      */
     void assembleJacobian(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {
@@ -229,7 +227,7 @@ private:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them to the global matrix.
-     * \return The element residual at the current solution.
+     *        Calculates the element residual at the current solution.
      */
     void assembleJacobianImplicit_(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {
@@ -420,9 +418,7 @@ private:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
+     *        to the global matrix. Calculates the element residual at the current solution.
      */
     void assembleJacobianExplicit_(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {
