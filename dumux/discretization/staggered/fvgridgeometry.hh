@@ -111,6 +111,7 @@ template <class ActualGridGeometry>
 class CellCenterFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
     using ParentType = GridGeometryView<ActualGridGeometry>;
+    using GridIndexType = typename IndexTraits<typename ActualGridGeometry::GridView>::GridIndex;
 public:
 
     using ParentType::ParentType;
@@ -125,6 +126,14 @@ public:
      */
     std::size_t numDofs() const
     { return this->gridGeometry_->numCellCenterDofs(); }
+
+    //! Returns the map between dofs across periodic boundaries // TODO rename to periodic dof map in fvassembler
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
+    { return emptyPeriodicVertexMap_; }
+
+private:
+    std::unordered_map<GridIndexType, GridIndexType> emptyPeriodicVertexMap_{};
+
 };
 
 /*!
@@ -136,6 +145,7 @@ template <class ActualGridGeometry>
 class FaceFVGridGeometry : public GridGeometryView<ActualGridGeometry>
 {
     using ParentType = GridGeometryView<ActualGridGeometry>;
+    using GridIndexType = typename IndexTraits<typename ActualGridGeometry::GridView>::GridIndex;
 public:
 
     using ParentType::ParentType;
@@ -150,6 +160,10 @@ public:
      */
     std::size_t numDofs() const
     { return this->gridGeometry_->numFaceDofs(); }
+
+    //! Returns the map between dofs across periodic boundaries // TODO rename to periodic dof map in fvassembler
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
+    { return this->gridGeometry_->periodicFaceMap(); }
 };
 
 /*!
@@ -177,6 +191,7 @@ class StaggeredFVGridGeometry<GV, true, T>
     using ParentType = BaseGridGeometry<GV, T>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
+    using SmallLocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
     using IntersectionMapper = typename T::IntersectionMapper;
@@ -352,6 +367,10 @@ public:
     bool hasBoundaryScvf(GridIndexType eIdx) const
     { return hasBoundaryScvf_[eIdx]; }
 
+    //! Returns the map between face dofs across periodic boundaries
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicFaceMap() const
+    { return periodicFaceMap_; }
+
 private:
 
     void updateIntersectionMapper_()
@@ -415,6 +434,33 @@ private:
                                         geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
+                    // add pair of corresponding periodic staggered dofs to map
+                    if (intersection.boundary())
+                    {
+                        const auto& otherElement = intersection.outside();
+                        const auto dofIndex = intersectionMapper_.globalIntersectionIndex(element,
+                                intersection.indexInInside());
+                        const auto& intersectionUnitOuterNormal =
+                            intersection.centerUnitOuterNormal();
+                        SmallLocalIndexType otherIntersectionLocalIdx = 0;
+                        bool periodicFaceFound = false;
+                        for (const auto& otherIntersection : intersections(this->gridView(),
+                                    otherElement))
+                        {
+                            if (periodicFaceFound)
+                                continue;
+                            if
+                                (Dune::FloatCmp::eq(intersectionUnitOuterNormal*otherIntersection.centerUnitOuterNormal(),
+                                                    -1.0, 1e-7))
+                                {
+                                    const auto periodicDofIdx =
+                                        intersectionMapper_.globalIntersectionIndex(otherElement,
+                                                otherIntersectionLocalIdx);
+                                    periodicFaceMap_[dofIndex] = periodicDofIdx;
+                                }
+                            ++otherIntersectionLocalIdx;
+                        }
+                    }
                 }
                 // boundary sub control volume faces
                 else if (intersection.boundary())
@@ -449,6 +495,9 @@ private:
     std::vector<std::vector<GridIndexType>> localToGlobalScvfIndices_;
     GridIndexType numBoundaryScvf_;
     std::vector<bool> hasBoundaryScvf_;
+
+    // a map for periodic boundary faces
+    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
 };
 
 /*!
@@ -465,6 +514,7 @@ class StaggeredFVGridGeometry<GV, false, T>
     using ParentType = BaseGridGeometry<GV, T>;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
+    using SmallLocalIndexType = typename IndexTraits<GV>::SmallLocalIndex;
     using Element = typename GV::template Codim<0>::Entity;
 
     using IntersectionMapper = typename T::IntersectionMapper;
@@ -627,6 +677,10 @@ public:
     const std::vector<GridIndexType>& neighborVolVarIndices(GridIndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
+    //! Returns the map between face dofs across periodic boundaries
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicFaceMap() const
+    { return periodicFaceMap_; }
+
 private:
 
     void updateIntersectionMapper_()
@@ -672,6 +726,31 @@ private:
                 {
                     const auto nIdx = this->elementMapper().index(intersection.outside());
                     neighborVolVarIndexSet.emplace_back(nIdx);
+                    // add pair of corresponding periodic staggered dofs to map
+                    if (intersection.boundary())
+                    {
+                        const auto& otherElement = intersection.outside();
+                        const auto dofIndex = intersectionMapper_.globalIntersectionIndex(element,
+                                intersection.indexInInside());
+                        const auto& intersectionUnitOuterNormal =
+                            intersection.centerUnitOuterNormal();
+                        SmallLocalIndexType otherIntersectionLocalIdx = 0;
+                        for (const auto& otherIntersection : intersections(this->gridView(),
+                                    otherElement))
+                        {
+                            if (Dune::FloatCmp::eq(intersectionUnitOuterNormal
+                                        *otherIntersection.centerUnitOuterNormal(),
+                                                    -1.0, 1e-7))
+                                {
+                                    const auto periodicDofIdx =
+                                        intersectionMapper_.globalIntersectionIndex(otherElement,
+                                                otherIntersectionLocalIdx);
+                                    periodicFaceMap_[dofIndex] = periodicDofIdx;
+                                    break;
+                                }
+                            ++otherIntersectionLocalIdx;
+                        }
+                    }
                 }
                 else
                     neighborVolVarIndexSet.emplace_back(numScvs_ + numBoundaryScvf_++);
@@ -699,6 +778,9 @@ private:
 
     //! vectors that store the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
+
+    // a map for periodic boundary faces
+    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
 };
 
 } // end namespace

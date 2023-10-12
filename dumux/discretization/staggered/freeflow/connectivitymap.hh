@@ -85,6 +85,47 @@ public:
                 computeFaceToFaceStencil_(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
             }
         }
+        auto periodicFvGeometry = localView(gridGeometry);
+        for(auto&& element: elements(gridGeometry.gridView()))
+        {
+            // bind the FvGeometry to the element
+            fvGeometry.bindElement(element);
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                if (!scvf.periodic())
+                    continue;
+                const auto scvfIdx = scvf.index();
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& periodicElement = gridGeometry.element(outsideScv.elementIndex());
+                periodicFvGeometry.bindElement(periodicElement);
+                bool periodicFaceFound = false;
+                for (const auto& oppositeScvf : scvfs(periodicFvGeometry))
+                {
+                    if (periodicFaceFound)
+                        continue;
+                    if (Dune::FloatCmp::eq(oppositeScvf.unitOuterNormal() * scvf.unitOuterNormal(), -1.0, 1e-7))
+                    {
+                        const auto& ccStencil = faceToCellCenterMap_[scvfIdx];
+                        const auto& oppositeCellCenterStencil = faceToCellCenterMap_[oppositeScvf.index()];
+                        for (auto other : oppositeCellCenterStencil)
+                        {
+                            if (std::find(ccStencil.begin(), ccStencil.end(), other) == ccStencil.end())
+                                faceToCellCenterMap_[scvfIdx].push_back(other);
+                        }
+                        const auto& faceStencil = faceToFaceMap_[scvfIdx];
+                        const auto& oppositeFaceStencil = faceToFaceMap_[oppositeScvf.index()];
+                        for (auto other : oppositeFaceStencil)
+                        {
+                            if (std::find(faceStencil.begin(), faceStencil.end(), other) == faceStencil.end())
+                                faceToFaceMap_[scvfIdx].push_back(other);
+                        }
+                        periodicFaceFound = true;
+                    }
+                }
+            }
+        }
     }
 
     //! Returns the stencil of a cell center dof w.r.t. other cell center dofs

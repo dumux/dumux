@@ -94,6 +94,10 @@ auto getJacobianPattern(const GridGeometry& gridGeometry)
             }
         }
     }
+    for (const auto& m : gridGeometry.periodicVertexMap())
+    {
+        pattern.add(m.first, m.second);
+    }
 
     return pattern;
 }
