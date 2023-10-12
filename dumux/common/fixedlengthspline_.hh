@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Implements a spline with a fixed number of sampling points
  */
 #ifndef DUMUX_FIXED_LENGTH_SPLINE_HH
@@ -21,7 +21,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief The common code for all 3rd order polynomial splines with
  *        more than two sampling points.
  */

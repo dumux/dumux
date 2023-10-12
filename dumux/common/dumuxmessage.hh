@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Provides the class creating the famous DuMu<sup>x</sup> start and end messages
  */
 #ifndef DUMUX_MESSAGE_HH
@@ -21,7 +21,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief DuMu<sup>x</sup> start and end message.
  */
 class DumuxMessage

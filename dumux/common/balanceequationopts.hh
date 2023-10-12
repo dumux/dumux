@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Traits class to set options used by the local residual when
  *        when evaluating the balance equations.
  */
@@ -16,7 +16,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Traits class to set options used by the local residual when
  *        when evaluating the balance equations.
  * \todo include useMoles here

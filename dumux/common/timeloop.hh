@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Manages the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_LOOP_HH
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Manages the handling of time dependent problems.
  *
  * This class facilitates the time management of the simulation.
@@ -93,7 +93,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief The default time loop for instationary simulations
  */
 template <class Scalar>
@@ -390,7 +390,7 @@ protected:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A time loop with a check point mechanism
  */
 template <class Scalar>

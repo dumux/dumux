@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief The initialize function to be called before using Dumux
  */
 #ifndef DUMUX_COMMON_INITIALIZE_HH

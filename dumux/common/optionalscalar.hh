@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A wrapper that can either contain a valid Scalar or NaN
  */
 #ifndef DUMUX_COMMON_OPTIONAL_SCALAR_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A type for an optional scalar (contains either a valid number or NaN)
  * \tparam T Type of the underlying floating point number type
  */

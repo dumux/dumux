@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Backends for operations on different solution vector types
  *        or more generic variable classes to be used in places where
  *        several different types/layouts should be supported.
@@ -35,14 +35,14 @@ class MultiTypeBlockVector;
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class providing operations with primary variable vectors
  */
 template<class DofVector, bool isScalar = Dune::IsNumber<DofVector>::value>
 class DofBackend;
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Specialization providing operations for scalar/number types
  */
 template<class Scalar>
@@ -67,7 +67,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Specialization providing operations for block vectors
  * \tparam Vector a type that is
  *   - default-constructible
@@ -100,7 +100,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Specialization providing operations for multitype block vectors
  */
 template<class... Blocks>
@@ -159,7 +159,7 @@ template<class Vars, bool varsExportSolution>
 class VariablesBackend;
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class providing operations for primary variable vector/scalar types
  * \note We assume the variables being simply a dof vector if we
  *       do not find the variables class to export `SolutionVector`.
@@ -188,7 +188,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class providing operations for generic variable classes,
  *        containing primary and possibly also secondary variables.
  */
@@ -215,7 +215,7 @@ public:
 } // end namespace Detail
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class providing operations for generic variable classes
  *        that represent the state of a numerical solution, possibly
  *        consisting of primary/secondary variables and information on

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Some tools for random number generation
  */
 #ifndef DUMUX_COMMON_RANDOM_HH

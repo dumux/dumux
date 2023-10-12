@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A helper to deduce a vector with the same size as numbers of equations
  */
 #ifndef DUMUX_COMMON_NUMEQVECTOR_HH
@@ -24,7 +24,7 @@ struct NumEqVectorTraits
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A vector with the same size as numbers of equations
  * This is the default implementation and has to be specialized for
  * all custom primary variable vector types

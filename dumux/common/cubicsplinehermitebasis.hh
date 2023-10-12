@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief The cubic hermite spline basis
  */
 #ifndef DUMUX_COMMON_CUBIC_SPLINE_HERMITE_BASIS_HH
@@ -15,7 +15,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief The cubic spline hermite basis
  * \note see https://en.wikipedia.org/wiki/Cubic_Hermite_spline
  */

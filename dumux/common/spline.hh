@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Provides 3rd order polynomial splines.
  */
 #ifndef DUMUX_SPLINE_HH
@@ -19,7 +19,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A 3rd order polynomial spline.
 
  * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
@@ -100,7 +100,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Specialization of a spline with the number of sampling
  *        points only known at run time.
  *
@@ -254,7 +254,7 @@ class Spline<Scalar, /*numSamples=*/1>
 { private: Spline() { }; };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Spline for two sampling points.
  *
  * For this type of spline there is no natural spline.

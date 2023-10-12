@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A class for numeric differentiation
  *
  */
@@ -19,7 +19,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A class for numeric differentiation with respect to a scalar parameter
  */
 class NumericDifferentiation

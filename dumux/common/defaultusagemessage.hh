@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Function printing a default usage message
  */
 #ifndef DUMUX_DEFAULT_USAGE_MESSAGE_HH
@@ -17,7 +17,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Provides a general text block, that is part of error/ help messages.
  *
  * \return The string that is the help / error message.

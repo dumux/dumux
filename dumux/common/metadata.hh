@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief The infrastructure to retrieve metadata information.
  */
 #ifndef DUMUX_COMMON_METADATA_HH
@@ -106,7 +106,7 @@ void collectTypeTagsFromTuple(Collector& collector, int depth=0, int parentBranc
 } // end namespace Detail
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class to collect metadata
  */
 class Collector

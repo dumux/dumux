@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \ingroup StaggeredDiscretization
  * \brief Base class for all staggered fv problems
  */
@@ -22,7 +22,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \ingroup StaggeredDiscretization
  * \brief Base class for all staggered finite-volume problems
  *

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Get only parts of a container or tuple
  */
 #ifndef DUMUX_COMMON_PARTIAL_HH

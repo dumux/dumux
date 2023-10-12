@@ -44,7 +44,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Exponential integration abcissas
  */
 #ifndef DUMUX_COMMON_DOUBLEEXP_INTEGRATION_CONSTANTS_HH

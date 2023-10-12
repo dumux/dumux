@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \ingroup SpatialParameters
  * \brief Basic spatial parameters to be used with finite-volume schemes.
  */
@@ -23,7 +23,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters used with finite-volume schemes.
  */
