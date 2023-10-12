@@ -96,8 +96,9 @@ public:
             return;
 
         clear_();
-        boundaryVolVarIndices_.reserve(fvGeometry.gridGeometry().numBoundaryScv());
-        boundaryVolumeVariables_.reserve(fvGeometry.gridGeometry().numBoundaryScv());
+        // upper bound of size is the number of all scvfs minus frontal scvfs
+        boundaryVolVarIndices_.reserve(fvGeometry.numScvf()-element.subEntities(1));
+        boundaryVolumeVariables_.reserve(fvGeometry.numScvf()-element.subEntities(1));
 
         for (const auto& scvf : scvfs(fvGeometry))
         {
