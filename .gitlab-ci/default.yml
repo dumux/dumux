@@ -175,6 +175,10 @@ doxygen:
     - cd build-cmake
     - make doxygen_dumux
     - |
+      if [ ! -e doc/doxygen/doxyerr.log ]; then
+          echo "No Doxygen log file found"
+          exit 1;
+      fi
       if [ -s doc/doxygen/doxyerr.log ]; then
           echo "Doxygen warnings generated:"
           cat doc/doxygen/doxyerr.log
