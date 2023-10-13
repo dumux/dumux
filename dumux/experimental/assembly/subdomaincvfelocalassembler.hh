@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
@@ -36,6 +37,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
@@ -190,6 +192,7 @@ private:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \ingroup MultiDomain
@@ -203,6 +206,7 @@ template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMet
 class SubDomainCVFELocalAssembler;
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \ingroup MultiDomain

@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup DualNetworkCoupling
  * \ingroup PoreNetworkModels
  * \copydoc Dumux::PoreNetwork::DualNetworkCouplingMapper
  */
@@ -25,6 +26,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
+ * \ingroup DualNetworkCoupling
  * \ingroup PoreNetworkModels
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */

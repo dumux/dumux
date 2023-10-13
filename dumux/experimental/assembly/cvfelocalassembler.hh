@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (CVFE methods)
@@ -38,6 +39,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \brief A base class for all local CVFE assemblers
@@ -312,6 +314,7 @@ public:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (CVFE methods)
@@ -323,6 +326,7 @@ template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::num
 class CVFELocalAssembler;
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CVFEDiscretization
  * \brief Control volume finite element local assembler using numeric differentiation

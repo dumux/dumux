@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
@@ -35,6 +36,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief A base class for all local cell-centered assemblers
@@ -167,6 +169,7 @@ public:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
@@ -178,6 +181,7 @@ template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::num
 class CCLocalAssembler;
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using numeric differentiation

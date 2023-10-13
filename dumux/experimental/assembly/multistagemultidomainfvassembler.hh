@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup MultiDomain
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes
@@ -66,6 +67,7 @@ bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
 namespace Dumux {
 
 /*!
+ * \ingroup Experimental
  * \ingroup MultiDomain
  * \ingroup Assembly
  * \brief Type trait that is specialized for coupling manager supporting multithreaded assembly
@@ -80,6 +82,7 @@ struct CouplingManagerSupportsMultithreadedAssembly : public std::false_type
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup MultiDomain
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
