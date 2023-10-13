@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Core
  * \brief Evaluating string math expressions containing named variables
  */
 #ifndef DUMUX_COMMON_FUNCTION_FROM_STRING_EXPRESSION_HH
@@ -26,6 +27,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Core
  * \brief Evaluating string math expressions containing named variables
  * \tparam numVars number of variables in the expression; number of function arguments of the call operator
  * \tparam Scalar type of numerical values in the expression
