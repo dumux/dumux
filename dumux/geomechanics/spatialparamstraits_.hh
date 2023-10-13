@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
  */
 #ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH

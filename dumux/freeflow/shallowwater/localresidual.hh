@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \copydoc Dumux::ShallowWaterResidual
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_LOCAL_RESIDUAL_HH
@@ -19,7 +19,7 @@
 namespace Dumux{
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Element-wise calculation of the residual for the shallow water equations
  */
 template<class TypeTag>

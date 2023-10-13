@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  *
  * \brief A two-dimensional shallow water equations model
  *
@@ -76,7 +76,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Specifies a number properties of shallow water models.
  */
 struct ShallowWaterModelTraits
@@ -91,7 +91,7 @@ struct ShallowWaterModelTraits
 };
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Traits class for the volume variables of the shallow water model.
  *
  * \tparam PV The type used for primary variables

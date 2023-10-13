@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \copydoc Dumux::ShallowWaterIndices
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_INDICES_HH
@@ -16,7 +16,7 @@ namespace Dumux {
 
 // \{
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief The common indices for the shallow water equations model.
  */
 struct ShallowWaterIndices

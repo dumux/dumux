@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PoreNetwork
+ * \ingroup PoreNetworkModels
  * \brief Extended source stencil helper class for coupling managers
  */
 
@@ -25,7 +25,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetwork
+ * \ingroup PoreNetworkModels
  * \brief A class managing an extended source stencil
  * \tparam CouplingManager the coupling manager type
  */
