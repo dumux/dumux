@@ -203,6 +203,10 @@ public:
     } // end source
 };
 
+/*!
+ * \ingroup ThermalNonEquilibriumModel
+ * \brief TODO docme
+ */
 template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
 : public EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>

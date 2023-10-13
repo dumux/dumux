@@ -130,7 +130,10 @@ protected:
 //! Empty data handle class
 class EmptyDataHandle {};
 
-//! Data handle for quantities related to advection
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Data handle for quantities related to advection
+ */
 template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
 : public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, 1, 1>
@@ -171,7 +174,10 @@ private:
     std::array< OutsideGravityStorage, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
 };
 
-//! Data handle for quantities related to diffusion
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Data handle for quantities related to diffusion
+ */
 template<class MatVecTraits, class PhysicsTraits, bool EnableDiffusion>
 class DiffusionDataHandle
 : public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, PhysicsTraits::numPhases, PhysicsTraits::numComponents>
@@ -190,7 +196,10 @@ public:
     { Base1::setContextIndex2(compIdx); Base2::setContextIndex2(compIdx); }
 };
 
-//! Data handle for quantities related to heat conduction
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Data handle for quantities related to heat conduction
+ */
 template<class MatVecTraits, class PhysicsTraits, bool enableHeatConduction>
 class HeatConductionDataHandle
 : public CCMpfaDataHandleBases::SystemMatricesHandle<MatVecTraits, 1, 1>
