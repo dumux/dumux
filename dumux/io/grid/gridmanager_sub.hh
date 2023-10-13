@@ -238,8 +238,8 @@ public:
             std::ifstream mask(maskFileName, std::ios_base::binary);
             std::vector<char> buffer(std::istreambuf_iterator<char>(mask), std::istreambuf_iterator<char>{});
             const auto cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells");
-            if (std::accumulate(cells.begin(), cells.end(), 1, std::multiplies<int>{}) != buffer.size())
-                DUNE_THROW(Dune::IOError, "Grid dimensions doesn't match number of cells specified");
+            if (const auto c = std::accumulate(cells.begin(), cells.end(), 1, std::multiplies<int>{}); c != buffer.size())
+                DUNE_THROW(Dune::IOError, "Grid dimensions doesn't match number of cells specified " << c << ":" << buffer.size());
 
             maybePostProcessBinaryMask_(buffer, cells, paramGroup);
 
