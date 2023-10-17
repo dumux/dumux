@@ -204,12 +204,45 @@ public:
 protected:
 
     /*!
+     * \brief Evaluate the diffusive mole/mass flux across the interface.
+     */
+    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar conductiveEnergyFlux_(Dune::index_constant<i> domainI,
+                                 Dune::index_constant<j> domainJ,
+                                 const SubControlVolumeFace<freeFlowMassIndex>& scvf,
+                                 const SubControlVolume<i>& scvI,
+                                 const SubControlVolume<j>& scvJ,
+                                 const VolumeVariables<i>& volVarsI,
+                                 const VolumeVariables<j>& volVarsJ) const
+    {
+        const auto& freeFlowVolVars = this->getFreeFlowVolVars_(volVarsI, volVarsJ);
+
+        const Scalar distance = this->getDistance_(scvI, scvJ, scvf);
+
+        const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
+        const Scalar tij = freeFlowVolVars.thermalConductivity() / distance;
+
+        return -deltaT * tij;
+    }
+
+
+    /*!
      * \brief Returns the distance between an scvf and the corresponding scv center.
      */
     template<class Scv, class Scvf>
     Scalar getDistance_(const Scv& scv, const Scvf& scvf) const
     {
         return (scv.dofPosition() - scvf.ipGlobal()).two_norm();
+    }
+
+    const VolumeVariables<freeFlowMassIndex>& getFreeFlowVolVars_(const VolumeVariables<freeFlowMassIndex>& freeFlowVolVars, const VolumeVariables<poreNetworkIndex>&) const
+    {
+        return freeFlowVolVars;
+    }
+
+    const VolumeVariables<freeFlowMassIndex>& getFreeFlowVolVars_(const VolumeVariables<poreNetworkIndex>&, const VolumeVariables<freeFlowMassIndex>& freeFlowVolVars) const
+    {
+        return freeFlowVolVars;
     }
 };
 
@@ -296,7 +329,97 @@ public:
         return ParentType::advectiveFlux(ffDensity, pnmDensity, normalFFVelocity, ffIsUpstream);
     }
 
+
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
+                                   Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                                   const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                                   const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                                   const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                                   const CouplingContext& context) const
+    {
+        Scalar energyFlux(0.0);
+
+        using std::abs;
+
+        for(const auto& c : context)
+        {
+            // positive values indicate flux into pore-network region
+            const Scalar normalFFVelocity = c.velocity * c.scvf.unitOuterNormal();
+            const bool pnmIsUpstream = std::signbit(normalFFVelocity);
+
+            const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
+
+            auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, insideVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
+            flux *= area;
+            flux *= -1.0; // flip the sign because the flux is used as a source term (different sign convention)
+
+            energyFlux += flux;
+        }
+
+        return energyFlux;
+    }
+
+
+    /*!
+     * \brief Returns the energy flux across the coupling boundary as seen from the free-flow domain.
+     */
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
+                                   Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                                   const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                   const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                                   const CouplingContext& context) const
+    {
+        // positive values indicate flux into pore-network region
+        const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
+        const bool ffIsUpstream = !std::signbit(normalFFVelocity);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+
+        return energyFlux_(domainI, domainJ, scvf, insideScv, context.scv, insideVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
+    }
+
 private:
+
+    /*!
+     * \brief Evaluate the diffusive mole/mass flux across the interface.
+     */
+    template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    Scalar energyFlux_(Dune::index_constant<i> domainI,
+                       Dune::index_constant<j> domainJ,
+                       const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                       const SubControlVolume<i>& scvI,
+                       const SubControlVolume<j>& scvJ,
+                       const VolumeVariables<i>& insideVolVars,
+                       const VolumeVariables<j>& outsideVolVars,
+                       const Scalar velocity,
+                       const bool insideIsUpstream) const
+    {
+        Scalar flux(0.0);
+
+        // convective fluxes
+        const Scalar insideTerm = insideVolVars.density(couplingPhaseIdx(domainI)) * insideVolVars.enthalpy(couplingPhaseIdx(domainI));
+        const Scalar outsideTerm = outsideVolVars.density(couplingPhaseIdx(domainJ)) * outsideVolVars.enthalpy(couplingPhaseIdx(domainJ));
+
+        static const bool debugOutput = getParam<bool>("CouplingManager.DebugOutputEnergy", false);
+
+        const Scalar sign = (domainI == ParentType::poreNetworkIndex && insideIsUpstream) ? -scvf.directionSign() : scvf.directionSign(); // compute the flux towards the interface
+        flux += sign * ParentType::advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
+
+        if (debugOutput)
+        {
+            std::cout << "advective energy flux: " << flux << ", conductive flux  " << this->conductiveEnergyFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars) << std::endl;
+            std::cout << "ratio adv/diff " << flux/this->conductiveEnergyFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars) << std::endl;
+        }
+
+        flux += this->conductiveEnergyFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
+
+        if (debugOutput)
+            std::cout << "total energy flux " << flux << std::endl;
+
+        return flux;
+    }
 
 };
 
