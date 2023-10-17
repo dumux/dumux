@@ -365,6 +365,19 @@ public:
     }
 
     /*!
+     * \brief Run the Newton method to solve a non-linear system.
+     *        The solver is responsible for all the strategic decisions.
+     * \param vars The variables object representing the current state of the
+     *             numerical solution (primary and possibly secondary variables).
+     * \post If converged, the `Variables` will represent the solution. If convergence
+     *       fails, they are in some intermediate, undefined state.
+     */
+    bool apply(Variables& vars) override
+    {
+        return solve_(vars);
+    }
+
+    /*!
      * \brief Called before the Newton method is applied to an
      *        non-linear system of equations.
      *

@@ -88,6 +88,17 @@ public:
      * \param vars instance of the `Variables` class representing a numerical
      *             solution, defining primary and possibly secondary variables
      *             and information on the time level.
+     * \return bool true if the solver converged
+     * \post If converged, the given `Variables` will represent the solution. If the solver
+     *       does not converge, it may be the case that they are in some intermediate (implementation-dependent) state.
+     */
+    virtual bool apply(Variables& vars) = 0;
+
+    /*!
+     * \brief Solve the given PDE system (usually assemble + solve linear system + update)
+     * \param vars instance of the `Variables` class representing a numerical
+     *             solution, defining primary and possibly secondary variables
+     *             and information on the time level.
      */
     virtual void solve(Variables& vars) = 0;
 

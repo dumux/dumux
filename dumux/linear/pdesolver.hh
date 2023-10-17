@@ -105,7 +105,7 @@ public:
     /*!
      * \brief Solve a linear PDE system
      */
-    void solve(Variables& vars) override
+    bool apply(Variables& vars) override
     {
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
@@ -152,7 +152,7 @@ public:
         solveTimer.stop();
 
         if (!converged)
-            DUNE_THROW(NumericalProblem, "Linear solver didn't converge.\n");
+            return false;
 
         ///////////////
         // update
@@ -181,6 +181,18 @@ public:
                       <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
                       << "\n";
         }
+
+        return true;
+    }
+
+    /*!
+     * \brief Solve a linear PDE system
+     */
+    void solve(Variables& vars) override
+    {
+        bool converged = apply(vars);
+        if (!converged)
+            DUNE_THROW(NumericalProblem, "Linear solver didn't converge.\n");
     }
 
     /*!
