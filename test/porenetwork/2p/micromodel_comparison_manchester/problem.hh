@@ -24,10 +24,12 @@
 #ifndef DUMUX_PNM2P_PROBLEM_HH
 #define DUMUX_PNM2P_PROBLEM_HH
 
+#include <memory>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 namespace Dumux {
 
@@ -48,6 +50,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -60,6 +63,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+    using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
 public:
     template<class SpatialParams>
@@ -104,11 +108,7 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
-
-        // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            bcTypes.setAllDirichlet();
-        else if (isOutletPore_(scv))
+        if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
         return bcTypes;
     }
@@ -126,9 +126,12 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+        else if (isOutletPore_(scv))
+        {
+            values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
+        }
         return values;
     }
-
 
     // \}
 
@@ -194,6 +197,20 @@ public:
         }
     }
 
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumPoreVolume()
+    {
+        auto sumPoreVolume = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+                sumPoreVolume += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+        }
+        std::cout << "Total pore volume is: " << sumPoreVolume << std::endl;
+    }
+
     /*!
      * \brief Called at the end of each time step
      */
@@ -211,6 +228,9 @@ public:
                  << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
                  << std::endl;
     }
+
+    void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
+    {  outletPcGradient_ = outletPcGradient;}
 
 private:
 
@@ -236,6 +256,7 @@ private:
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
     std::ofstream logfile_;
+    std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
 
 };
 } //end namespace Dumux
