@@ -380,6 +380,45 @@ public:
         return energyFlux_(domainI, domainJ, scvf, insideScv, context.scv, insideVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
     }
 
+    /*!
+     * \brief Returns the temperature of the free flow at the interface.
+     */
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    static Scalar temperature(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
+                              Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                              const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                              const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                              const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                              const CouplingContext& context)
+    {
+        Scalar temperature(0.0);
+
+        using std::abs;
+
+        int count = 0;
+        for(const auto& c : context)
+        {
+            temperature += c.volVars.temperature();
+            count++;
+        }
+
+        return temperature / count;
+    }
+
+    /*!
+     * \brief Returns the temperature of the pore at the interface.
+     */
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    static Scalar temperature(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
+                              Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                              const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                              const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                              const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                              const CouplingContext& context)
+    {
+        return context.volVars.temperature();
+    }
+
 private:
 
     /*!
@@ -558,6 +597,45 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
 
         return energyFlux_(domainI, domainJ, scvf, insideScv, context.scv, insideVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
+    }
+
+    /*!
+     * \brief Returns the temperature of the free flow at the interface.
+     */
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    static Scalar temperature(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
+                              Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                              const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                              const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                              const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                              const CouplingContext& context)
+    {
+        Scalar temperature(0.0);
+
+        using std::abs;
+
+        int count = 0;
+        for(const auto& c : context)
+        {
+            temperature += c.volVars.temperature();
+            count++;
+        }
+
+        return temperature / count;
+    }
+
+    /*!
+     * \brief Returns the temperature of the pore at the interface.
+     */
+    template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
+    static Scalar temperature(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
+                              Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                              const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                              const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                              const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                              const CouplingContext& context)
+    {
+        return context.volVars.temperature();
     }
 
 private:
