@@ -422,9 +422,10 @@ if __name__ == "__main__":
         return label
 
     POLICY = {
-        "pore.inscribedRadius": lambda n: n['pore.inscribed_diameter'] / 2.0 \
-            if 'pore.inscribed_diameter' in n else n['pore.extended_diameter'] / 2.0,
-        "pore.extendedRadius": lambda n: n['pore.extended_diameter'] / 2.0,
+        "pore.inscribedRadius": lambda n: n["pore.inscribed_diameter"] / 2.0
+        if "pore.inscribed_diameter" in n
+        else n["pore.extended_diameter"] / 2.0,
+        "pore.extendedRadius": lambda n: n["pore.extended_diameter"] / 2.0,
         "pore.volume": lambda n: n["pore.region_volume"],
         "pore.label": poreLabelFunc,
         "throat.radius": lambda n: n["throat.inscribed_diameter"] / 2.0,
