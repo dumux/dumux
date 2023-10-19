@@ -25,14 +25,14 @@ __Table of contents__. This description is structured as follows:
 ## Scenario and mathematical model
 
 We model a soil contamination problem where DNAPL infiltrates a porous medium. The initial distribution of DNAPL is known and we can read it from a txt-file.
-To describe that problem we use a two phase model of two immiscible fluids with the multiphase Darcy's law as the description of momentum, i.e.:
+We describe the problem using a two phase model with two immiscible fluid phases (subscripts $`w`$ and $`n`$). We use multiphase Darcy's law for the momentum balance equations of the fluid phases, i.e.:
 
 ```math
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
  \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
 ```
 
-If we insert this into the conservation equations for each phase $`\alpha`$ that leads to:
+Inserting this into the conservation equations for each phase $`\alpha`$ yields:
 
 ```math
 \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
@@ -40,10 +40,16 @@ If we insert this into the conservation equations for each phase $`\alpha`$ that
  \right\} - q_\alpha = 0
 ```
 
-To reduce the number of unknowns and close the system we need closure relations for this equations. For that, we make use of a $`p_c - S_w`$ as well as a $`k_r - S_w`$ - relationship. In this problem we use a Van-Genuchten parameterization. The parameters for that relationship are specified in the `spatialparams.hh` file.
+To reduce the number of unknowns and close the system we need closure relations for these equations. In this example, we use the
+Van Genuchten-Mualem relationships (see
+[Van Genuchten (1980)](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj1980.03615995004400050002x)
+and
+[Mualem (1976)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/WR012i003p00513))
+for the capillary pressure $`pc = p_n - p_w`$ and the relative permeabilities $`k_r\alpha`$.
+The parameters for these relationships are specified in the `spatialparams.hh` file.
 
-With the additional constraint that $`S_w + S_n = 1`$ we reduce the number of primary variables to two.
-In this example we use the wetting phase pressure $`p_0`$ and the saturation of the nonwetting phase $`S_1`$ as primary variables. It is also possible to switch that formulation to the nonwetting pressure and the wetting saturation.
+With the additional constraint that $`S_w + S_n = 1`$, the number of unknowns is reduced to two.
+In this example we use the wetting phase pressure $`p_w`$ and the saturation of the nonwetting phase $`S_n`$ as primary variables. It is also possible to switch that formulation to the nonwetting pressure and the wetting saturation.
 
 The two-dimensional model domain is 6m x 4m and contains a lens with a lower permeability and porosity. We read the initial values for the DNAPL saturation and the water pressure from a file.
 The lens and the initial saturation can be seen in Figures 1 and 2.
@@ -55,7 +61,7 @@ DNAPL enters the model domain at the upper boundary between 1.75m ≤ x ≤ 2m w
 In addition, the DNAPL is injected at a point source at x = 0.502m and y = 3.02m with a rate of 0.1 kg/s.
 
 We discretize the equations with a cell-centered finite volume TPFA scheme in space and an implicit Euler scheme in time. We use Newton's method to solve the system of nonlinear equations.
-The grid is adapitvely refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.
+The grid is adaptively refined around the injection. The adaptive behaviour can be changed with input parameters in the `params.input` file.
 
 # Implementation
 
