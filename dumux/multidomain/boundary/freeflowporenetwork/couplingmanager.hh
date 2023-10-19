@@ -235,12 +235,12 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary.
      */
-    auto massCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI, Dune::index_constant<freeFlowMassIndex> domainJ,
+    auto massCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI,
+                               Dune::index_constant<freeFlowMassIndex> domainJ,
                                const FVElementGeometry<poreNetworkIndex>& fvGeometry,
                                const typename FVElementGeometry<poreNetworkIndex>::SubControlVolume& scv,
                                const ElementVolumeVariables<poreNetworkIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scv);
         });
@@ -261,12 +261,12 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary.
      */
-    auto massCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI, Dune::index_constant<poreNetworkIndex> domainJ,
+    auto massCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI,
+                               Dune::index_constant<poreNetworkIndex> domainJ,
                                const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
                                const typename FVElementGeometry<freeFlowMassIndex>::SubControlVolumeFace& scvf,
                                const ElementVolumeVariables<freeFlowMassIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scvf);
         });
@@ -278,12 +278,12 @@ public:
     /*!
      * \brief Returns the energy flux across the coupling boundary.
      */
-    auto energyCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI, Dune::index_constant<freeFlowMassIndex> domainJ,
+    auto energyCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI,
+                                 Dune::index_constant<freeFlowMassIndex> domainJ,
                                  const FVElementGeometry<poreNetworkIndex>& fvGeometry,
                                  const typename FVElementGeometry<poreNetworkIndex>::SubControlVolume& scv,
                                  const ElementVolumeVariables<poreNetworkIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scv);
         });
@@ -304,12 +304,12 @@ public:
     /*!
      * \brief Returns the energy flux across the coupling boundary.
      */
-    auto energyCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI, Dune::index_constant<poreNetworkIndex> domainJ,
+    auto energyCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI,
+                                 Dune::index_constant<poreNetworkIndex> domainJ,
                                  const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
                                  const typename FVElementGeometry<freeFlowMassIndex>::SubControlVolumeFace& scvf,
                                  const ElementVolumeVariables<freeFlowMassIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scvf);
         });
@@ -317,7 +317,6 @@ public:
         couplingContext.velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(fvGeometry.element(), scvf);
         return CouplingConditions::energyCouplingCondition(domainI, domainJ, fvGeometry, scvf, elemVolVars, couplingContext);
     }
-
 
     //////////////////////// Conditions for FreeFlowMomentum - PoreNetwork coupling //////////
     ///////////////////////////////////////////////////////////////////////////////////////////
