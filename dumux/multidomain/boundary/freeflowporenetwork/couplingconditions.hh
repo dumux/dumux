@@ -216,13 +216,12 @@ public:
         // use properties (distance and thermal conductivity) for transimissibillity coefficient
         //  only from FF side as vertex (pore body) of PNM grid lies on boundary
         const auto& freeFlowVolVars = getFreeFlowVolVars_(volVarsI, volVarsJ);
-        // const auto& freeFlowVolVars = getFreeFlowVolVars_(volVarsI[scvI], volVarsJ);
         const auto& ffScv = getFreeFlowScv_(scvI, scvJ);
         // distance from FF cell center to interface
         const Scalar distance = getDistance_(ffScv, scvf);
+        const Scalar tij = freeFlowVolVars.fluidThermalConductivity() / distance;
 
         const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
-        const Scalar tij = freeFlowVolVars.thermalConductivity() / distance;
 
         return -deltaT * tij;
     }
