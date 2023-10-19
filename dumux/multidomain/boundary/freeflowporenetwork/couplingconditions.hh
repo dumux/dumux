@@ -213,9 +213,13 @@ public:
                                        const VolumeVariables<i>& volVarsI,
                                        const VolumeVariables<j>& volVarsJ)
     {
+        // use properties (distance and thermal conductivity) for transimissibillity coefficient
+        //  only from FF side as vertex (pore body) of PNM grid lies on boundary
         const auto& freeFlowVolVars = getFreeFlowVolVars_(volVarsI, volVarsJ);
-
-        const Scalar distance = getDistance_(scvI, scvJ, scvf);
+        // const auto& freeFlowVolVars = getFreeFlowVolVars_(volVarsI[scvI], volVarsJ);
+        const auto& ffScv = getFreeFlowScv_(scvI, scvJ);
+        // distance from FF cell center to interface
+        const Scalar distance = getDistance_(ffScv, scvf);
 
         const Scalar deltaT = volVarsJ.temperature() - volVarsI.temperature();
         const Scalar tij = freeFlowVolVars.thermalConductivity() / distance;
@@ -243,6 +247,16 @@ protected:
     static const VolumeVariables<freeFlowMassIndex>& getFreeFlowVolVars_(const VolumeVariables<poreNetworkIndex>&, const VolumeVariables<freeFlowMassIndex>& freeFlowVolVars)
     {
         return freeFlowVolVars;
+    }
+
+    static const SubControlVolume<freeFlowMassIndex>& getFreeFlowScv_(const SubControlVolume<freeFlowMassIndex>& freeFlowScv, const SubControlVolume<poreNetworkIndex>&)
+    {
+        return freeFlowScv;
+    }
+
+    static const SubControlVolume<freeFlowMassIndex>& getFreeFlowScv_(const SubControlVolume<poreNetworkIndex>&, const SubControlVolume<freeFlowMassIndex>& freeFlowScv)
+    {
+        return freeFlowScv;
     }
 };
 
