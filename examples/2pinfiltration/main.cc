@@ -129,24 +129,15 @@ int main(int argc, char** argv) try
     TwoPGridDataTransfer<TypeTag> dataTransfer(problem, gridGeometry, gridVariables, x);
     // [[/codeblock]]
 
-    // We do an initial refinement around sources/BCs. We use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh` for that.
-    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
-
-    // We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated.
-    // If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
-     // [[codeblock]]
-    const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
-    for (std::size_t i = 0; i < maxLevel; ++i)
-    {
-        // we calculate the initial indicator for adaption for each grid cell using the initial solution x
-        initIndicator.calculate(x);
-
-        // and then we mark the elements that were adapted.
+    // Convenience functions to perform a grid adaptation given a pre-calculated indicator.
+    // [[codeblock]]
+    const auto adaptGridAndVariables = [&] (auto& indicator) {
+        // We mark and adapt the elements according to the indicator.
         bool wasAdapted = false;
-        if (markElements(gridManager.grid(), initIndicator))
+        if (markElements(gridManager.grid(), indicator))
             wasAdapted = adapt(gridManager.grid(), dataTransfer);
 
-        // In case of any marked elements, the gridvariables and the pointsourcemap are updated.
+        // In case of any adapted elements, the gridvariables and the pointsourcemap are updated.
         if (wasAdapted)
         {
             // We overwrite the old solution with the new (resized & interpolated) one
@@ -156,30 +147,21 @@ int main(int argc, char** argv) try
             // we update the point source map after adaption
             problem->computePointSourceMap();
         }
-    }
+    };
     // [[/codeblock]]
 
-    // Depending on the initial conditions, another grid adaptation might be necessary.
-    // The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
-    // Again, if elements were adapted, we mark them and update gridvariables and the pointsourcemap accordingly.
-    // [[codeblock]]
-    indicator.calculate(x, refineTol, coarsenTol);
-
-    // we mark the elements that were adapted
-    bool wasAdapted = false;
-    if (markElements(gridManager.grid(), indicator))
-        wasAdapted = adapt(gridManager.grid(), dataTransfer);
-
-    // In case of an additional grid adaptation, the gridvariables and the pointsourcemap are updated again.
-    if (wasAdapted)
+    // We do initial refinements around sources/BCs, for which we use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh`.
+    // Afterwards, depending on the initial conditions, another grid adaptation using our `indicator` above might be necessary, which uses
+    // `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
+    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
+    const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
+    for (std::size_t i = 0; i < maxLevel; ++i)
     {
-        // Overwrite the old solution with the new (resized & interpolated) one
-        xOld = x;
-        // Initialize the secondary variables to the new (and "new old") solution
-        gridVariables->updateAfterGridAdaption(x);
-        // Update the point source map
-        problem->computePointSourceMap();
+        initIndicator.calculate(x);
+        adaptGridAndVariables(initIndicator);
     }
+    indicator.calculate(x, refineTol, coarsenTol);
+    adaptGridAndVariables(indicator);
     // [[/codeblock]]
 
     // #### Solving the problem
@@ -221,30 +203,13 @@ int main(int argc, char** argv) try
     {
         // We only want to refine/coarsen after first time step is finished, not before.
         // The initial refinement was already done before the start of the time loop.
-        // This means we only refine when the time is greater than 0.
+        // This means we only refine when the time is greater than 0. Note that we now also
+        // have to update the assembler, since the sizes of the residual vector and jacobian matrix change.
         if (timeLoop->time() > 0)
         {
-            // again we compute the refinement indicator with the `TwoPGridAdaptIndicator`
             indicator.calculate(x, refineTol, coarsenTol);
-
-            // we mark elements and adapt grid if necessary
-            wasAdapted = false;
-            if (markElements(gridManager.grid(), indicator))
-                wasAdapted = adapt(gridManager.grid(), dataTransfer);
-
-            // In case of a grid adaptation, the gridvariables and the pointsourcemap are updated again.
-            if (wasAdapted)
-            {
-                // We overwrite the old solution with the new (resized & interpolated) one
-                xOld = x;
-                // We initialize the secondary variables to the new (and "new old") solution
-                gridVariables->updateAfterGridAdaption(x);
-                // We also need to update the assembler (sizes of residual and Jacobian change)
-                assembler->updateAfterGridAdaption();
-                // We update the point source map
-                problem->computePointSourceMap();
-            }
-        // we leave the refinement step
+            adaptGridAndVariables(indicator);
+            assembler->updateAfterGridAdaption();
         }
 
         // We solve the non-linear system with time step control.
