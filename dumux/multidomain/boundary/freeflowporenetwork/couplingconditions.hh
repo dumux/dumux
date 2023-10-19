@@ -462,7 +462,7 @@ private:
         const Scalar sign = (domainI == ParentType::poreNetworkIndex && insideIsUpstream) ? -scvf.directionSign() : scvf.directionSign(); // compute the flux towards the interface
         flux += sign * ParentType::advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
 
-
+        // conductive fluxes
         flux += ParentType::conductiveEnergyFlux(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
 
         return flux;
