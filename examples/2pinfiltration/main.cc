@@ -53,7 +53,9 @@
 //
 
 // ### The main function
-// At the beginning of the simulation, we create a type tag with a suitable alias for our problem. // This will contain all the properties that are needed to define the problem set-up and the model we use. Additionally, we have to create an instance of `Dune::MPIHelper` and parse the run-time arguments:
+// At the beginning of the simulation, we create an alias for our problem type tag, for which we have
+// defined the properties of our simulation (see `properties.hh`). Additionally, we have to create an
+// instance of `Dune::MPIHelper` and parse the run-time arguments:
 // [[codeblock]]
 int main(int argc, char** argv) try
 {
@@ -62,16 +64,17 @@ int main(int argc, char** argv) try
     // we define the type tag for this problem
     using TypeTag = Properties::TTag::PointSourceExample;
 
-    // maybe initialize MPI and/or multithreading backend
+    // (maybe) initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance();
 
-    //We parse command line arguments and input file
+    // Construct parameter tree from command line arguments (and input file if given in the arguments)
     Parameters::init(argc, argv);
     // [[/codeblock]]
 
     // #### Create the grid
-    // A gridmanager tries to create the grid either from a grid file or the input file.
+    // The `gridManager` creates a grid from our parameter choices in the input file (which could be a grid
+    // file or specified domain dimensions and number of cells, as done in this example).
     // [[codeblock]]
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -83,22 +86,23 @@ int main(int argc, char** argv) try
     // [[/codeblock]]
 
     // #### Set-up of the problem
-    //
-    // We create and initialize the finite volume grid geometry, the problem, the linear system, including the jacobian matrix, the residual and the solution vector and the gridvariables.
-    //
-    // We need the finite volume geometry to build up the subcontrolvolumes (scv) and subcontrolvolume faces (scvf) for each element of the grid partition.
+    // We build the finite volume geometry, which allows us to iterate over subcontrolvolumes (scv) and
+    // subcontrolvolume faces (scvf) embedded in the elements of the grid partition.
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
-    // In the problem, we define the boundary and initial conditions and compute the point sources. The `computePointSourceMap` method is inherited from the fvproblem and therefore specified in the `dumux/common/fvproblem.hh`. It calls the `addPointSources` method specified in the `problem.hh` file.
+    // In the problem, we define the boundary and initial conditions and compute the point sources.
+    // The `computePointSourceMap` function is inherited from `FVProblem` (see `dumux/common/fvproblem.hh`).
+    // It calls the `addPointSources` method, which is empty per default, but can be overloaded in user problems.
+    // As we have seen, in this example we do specify a point source (see `problem.hh`).
      // [[codeblock]]
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
-    // We call the `computePointSourceMap` method to compute the point sources.
     problem->computePointSourceMap();
      // [[/codeblock]]
 
-    // We initialize the solution vector and then use the solution vector to initialize the `gridVariables`.
+    // We initialize the solution vector (all primary variables on the grid) and then use it to initialize the
+    // `gridVariables`, which provide access to both primary & secondary variables (per sub-control volume).
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x;
     problem->applyInitialSolution(x);
@@ -109,7 +113,8 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // ##### Grid adaption
-    // We instantiate the indicator for grid adaption & the data transfer, we read some parameters for indicator from the input file.
+    // The following piece of code shows how we instantiate an indicator class which determines where to adapt the grid,
+    // and a data transfer class that maps a solution to an adapted grid.
     // [[codeblock]]
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
@@ -127,25 +132,26 @@ int main(int argc, char** argv) try
     // We do an initial refinement around sources/BCs. We use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh` for that.
     GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
 
-    //We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated. If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
+    // We refine up to the maximum level. For every level, the indicator used for the refinement/coarsening is calculated.
+    // If any grid cells have to be adapted, the gridvariables and the pointsourcemap are updated.
      // [[codeblock]]
     const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
     for (std::size_t i = 0; i < maxLevel; ++i)
     {
-        //we calculate the initial indicator for adaption for each grid cell using the initial solution x
+        // we calculate the initial indicator for adaption for each grid cell using the initial solution x
         initIndicator.calculate(x);
 
-        //and then we mark the elements that were adapted.
+        // and then we mark the elements that were adapted.
         bool wasAdapted = false;
         if (markElements(gridManager.grid(), initIndicator))
             wasAdapted = adapt(gridManager.grid(), dataTransfer);
 
-        // In case of a grid adaptation, the gridvariables and the pointsourcemap are updated.
+        // In case of any marked elements, the gridvariables and the pointsourcemap are updated.
         if (wasAdapted)
         {
             // We overwrite the old solution with the new (resized & interpolated) one
             xOld = x;
-            //We initialize the secondary variables to the new (and "new old") solution
+            // We initialize the secondary variables to the new (and "new old") solution
             gridVariables->updateAfterGridAdaption(x);
             // we update the point source map after adaption
             problem->computePointSourceMap();
@@ -154,12 +160,12 @@ int main(int argc, char** argv) try
     // [[/codeblock]]
 
     // Depending on the initial conditions, another grid adaptation might be necessary.
-    //The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
-    //Again, if elements were adapted, we mark them and update gridvariables and the pointsourcemap accordingly.
+    // The gridadaptindicator uses the input parameters `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
+    // Again, if elements were adapted, we mark them and update gridvariables and the pointsourcemap accordingly.
     // [[codeblock]]
     indicator.calculate(x, refineTol, coarsenTol);
 
-    //we mark the elements that were adapted
+    // we mark the elements that were adapted
     bool wasAdapted = false;
     if (markElements(gridManager.grid(), indicator))
         wasAdapted = adapt(gridManager.grid(), dataTransfer);
@@ -214,19 +220,19 @@ int main(int argc, char** argv) try
     timeLoop->start(); do
     {
         // We only want to refine/coarsen after first time step is finished, not before.
-        //The initial refinement was already done before the start of the time loop.
-        //This means we only refine when the time is greater than 0.
+        // The initial refinement was already done before the start of the time loop.
+        // This means we only refine when the time is greater than 0.
         if (timeLoop->time() > 0)
         {
             // again we compute the refinement indicator with the `TwoPGridAdaptIndicator`
             indicator.calculate(x, refineTol, coarsenTol);
 
-            //we mark elements and adapt grid if necessary
+            // we mark elements and adapt grid if necessary
             wasAdapted = false;
             if (markElements(gridManager.grid(), indicator))
                 wasAdapted = adapt(gridManager.grid(), dataTransfer);
 
-            //In case of a grid adaptation, the gridvariables and the pointsourcemap are updated again.
+            // In case of a grid adaptation, the gridvariables and the pointsourcemap are updated again.
             if (wasAdapted)
             {
                 // We overwrite the old solution with the new (resized & interpolated) one
@@ -244,20 +250,20 @@ int main(int argc, char** argv) try
         // We solve the non-linear system with time step control.
         nonLinearSolver.solve(x, *timeLoop);
 
-        //We make the new solution the old solution.
+        // We make the new solution the old solution.
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        //We advance to the time loop to the next step.
+        // We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
 
-        //We write vtk output for each time step
+        // We write vtk output for each time step
         vtkWriter.write(timeLoop->time());
 
-        //We report statistics of this time step
+        // We report statistics of this time step
         timeLoop->reportTimeStep();
 
-        //We set a new dt as suggested by the newton solver for the next time step
+        // We set a new dt as suggested by the newton solver for the next time step
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
@@ -265,7 +271,7 @@ int main(int argc, char** argv) try
 
     // The following piece of code prints a final status report of the time loop
     //  before the program is terminated and we print he dumux end message
-     // [[codeblock]]
+    // [[codeblock]]
     timeLoop->finalize(leafGridView.comm());
 
     // print dumux end message
