@@ -99,7 +99,7 @@ public:
 
     // We prescribe zero flux over all of the boundary
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
-    { return { 0.0 }; }
+    { return NumEqVector(0.0); }
 
     // The diffusion coefficient interface is used in the local residual (see Part 1).
     // We can name this interface however we want as long as we adapt the calling site
