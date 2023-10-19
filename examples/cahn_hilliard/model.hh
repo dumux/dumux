@@ -181,14 +181,13 @@ public:
     }
     // [[/codeblock]]
 
-    // **Flux term:** The function `computeFlux` computes the fluxes
-    // over a sub control volume faces, including the integration over
-    // the area of the face.
+    // **Flux term:** The function `computeFlux` computes the integrated
+    // fluxes over a sub control volume face.
     //
     // ```math
     // \begin{aligned}
-    // F_{K,\sigma,0} &= -M \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert \cr
-    // F_{K,\sigma,1} &= -\gamma \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert
+    // F_{K,\sigma,0} &= -M \vert \sigma \vert \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \cr
+    // F_{K,\sigma,1} &= -\gamma \vert \sigma \vert \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n}
     // \end{aligned}
     // ````
     //
@@ -209,7 +208,7 @@ public:
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            // v.axpy(a, w) means v <- v + a*w
+            // v.axpy(a, w) means v += a*w
             gradConcentration.axpy(
                 volVars.concentration(),
                 fluxVarCache.gradN(scv.indexInElement())
