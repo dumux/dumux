@@ -269,7 +269,6 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::CahnHilliardModel>
 { using type = CahnHilliardModelLocalResidual<TypeTag>; };
 
-// The default scalar type is double.
 // We compute with double precision floating point numbers.
 template<class TypeTag>
 struct Scalar<TypeTag, TTag::CahnHilliardModel>
