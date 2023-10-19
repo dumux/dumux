@@ -355,6 +355,9 @@ public:
 
         using std::abs;
 
+        //use VolumeVariables instead of ElementVolumeVariables (context.volVars is also of type VolumeVariables)
+        const auto& pnmVolVars = insideVolVars[scv];
+
         for(const auto& c : context)
         {
             // positive values indicate flux into pore-network region
@@ -363,7 +366,7 @@ public:
 
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, insideVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
+            auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
             flux *= area;
             flux *= -1.0; // flip the sign because the flux is used as a source term (different sign convention)
 
@@ -389,8 +392,10 @@ public:
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
         const bool ffIsUpstream = !std::signbit(normalFFVelocity);
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        //use VolumeVariables instead of ElementVolumeVariables (context.volVars is also of type VolumeVariables)
+        const auto& ffVolVars = insideVolVars[insideScv];
 
-        return energyFlux_(domainI, domainJ, scvf, insideScv, context.scv, insideVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
+        return energyFlux_(domainI, domainJ, scvf, insideScv, context.scv, ffVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
     }
 
     /*!
