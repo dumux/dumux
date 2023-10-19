@@ -98,8 +98,8 @@ public:
         return values;
     }
 
-    // For the boundary we choose boundary flux (or Neumann) conditions for all equations and on
-    // every part of the boundary, specifying zero flux everywhere for both equations.
+    // We choose boundary flux (or Neumann) conditions for all equations on the entire boundary,
+    // while specifying zero flux for both equations.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {

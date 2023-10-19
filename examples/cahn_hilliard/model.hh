@@ -233,7 +233,7 @@ public:
     }
     // [[/codeblock]]
 
-    // **Source term:** The function `computeSource` computes the sources terms for a sub control volume.
+    // **Source term:** The function `computeSource` computes the source terms for a sub control volume.
     // We implement a model-specific source term for the chemical potential equation before
     // deferring further implementation to the problem where we add the derivative of the free
     // energy.
@@ -278,7 +278,7 @@ struct Scalar<TypeTag, TTag::CahnHilliardModel>
 
 // The model traits specify some information about our equation system.
 // Here we have two equations. The indices allow to access primary variables
-// and equations with a named indices.
+// and equations with named indices.
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 {
@@ -298,7 +298,8 @@ struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 };
 
 // The primary variable vector has entries of type `Scalar` and is
-// as large as the number of equations (here 2) but we keep it general.
+// as large as the number of equations (here 2) but we keep it general
+// here by obtaining the number of equations from the `ModelTraits`.
 template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::CahnHilliardModel>
 {
