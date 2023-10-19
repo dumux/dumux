@@ -101,7 +101,9 @@ struct FluidSystem<TypeTag, TTag::PointSourceExample>
 // The two-phase model implements different primary variable formulations.
 // Here we choose the pressure of the first phase and the saturation of the second phase.
 // The order of phases is specified by the fluid system.
-// In this case that means that the primary variables are water pressure and DNAPL saturation.
+// With our choice of FluidSystem this means that the first phase is water and the second
+// phase is DNAPL. We choose the `p0s1` formulation, which means a $`p_w - S_n`$ formulation,
+// as the first phase (i.e. water) is the wetting phase in this example.
 template<class TypeTag>
 struct Formulation<TypeTag, TTag::PointSourceExample>
 { static constexpr auto value = TwoPFormulation::p0s1; };
