@@ -18,6 +18,7 @@
 // [[content]]
 //
 // ### Include files
+// [[details]] includes
 // We include the basic spatial parameters file for finite volumes, from which we will inherit.
 #include <dumux/freeflow/spatialparams.hh>
 // We include all friction laws.
@@ -25,7 +26,9 @@
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/manning.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
+// [[/details]]
 
+//
 // ### The spatial parameters class
 //
 // In the `RoughChannelSpatialParams` class, we define all functions needed to describe
@@ -41,7 +44,8 @@ class RoughChannelSpatialParams
 : public FreeFlowSpatialParams<GridGeometry, Scalar,
                                RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
-    // This convenience aliases will be used throughout this class
+// [[/codeblock]]
+    // [[details]] convenience aliases
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
     using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
@@ -49,14 +53,13 @@ class RoughChannelSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    // [[/codeblock]]
+    // [[/details]]
 
-    // In the following, the properties of the the rough channel are set. Namely, these are
+    // In the constructor, the properties of the the rough channel are set. Namely, these are
     // the friction law, including it's friction parameter, the acceleration
     // due to gravity and the altitude of the channel bed surface.
     // [[codeblock]]
 public:
-    // In the constructor we read some values from the `params.input` and initialize the friciton law.
     RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -90,28 +93,27 @@ public:
                      " `Nikuradse` and `None`!"<<std::endl;
       }
     }
+    // [[/codeblock]]
 
+    // The following functions expose the parameters required by the model.
+
+    // [[codeblock]]
     // This function returns an object of the friction law class, already initialized with a friction value.
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
-    {
-        return *frictionLaw_;
-    }
+    { return *frictionLaw_; }
 
     // This function returns the acceleration due to gravity.
     Scalar gravity(const GlobalPosition& globalPos) const
-    {
-        return gravity_;
-    }
+    { return gravity_; }
 
     // Define the bed surface based on the bed slope and the bed level at the inflow (10 m).
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
-    {
-        return 10.0 - element.geometry().center()[0] * bedSlope_;
-    }
+    { return 10.0 - element.geometry().center()[0] * bedSlope_; }
+    // [[/codeblock]]
 
-// We declare the private variables of the problem.
+    // [[details]] private variables
 private:
     Scalar gravity_;
     Scalar bedSlope_;
@@ -119,6 +121,6 @@ private:
     std::unique_ptr<FrictionLaw<VolumeVariables>> frictionLaw_;
 }; // end class definition of RoughChannelSpatialParams
 } // end of namespace Dumux.
-// [[/codeblock]]
+// [[/details]]
 // [[/content]]
 #endif
