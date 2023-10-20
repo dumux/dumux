@@ -45,7 +45,7 @@ with the concentration $c(x,t)$, the mobility coefficient $M$, and surface tensi
 The domain $\Omega \subset \mathbb{R}^2$ is initialized with a concentration field
 $c(x,t=0) = 0.42 + \zeta$, randomly perturbed by
 noise $\zeta$ following a uniform distribution $\zeta \sim U(-0.02, 0.02)$.
-With time the concentration field evolves towards attaining mostly values near to $0$ or $1$ while
+Over time, the concentration field evolves towards attaining mostly values near to $0$ or $1$ while
 conserving the total concentration. The model describes the separation of two immiscible fluids.
 
 The fourth order PDE cannot be solved by a standard finite volume scheme. We therefore
