@@ -45,12 +45,10 @@
 // are inherited. These other type tag definitions can be found in the included
 // headers `dumux/freeflow/shallowwater/model.hh` and `dumux/discretization/cctpfa.hh`.
 // [[codeblock]]
-// We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
 namespace Dumux::Properties {
-
 namespace TTag {
 struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-}
+} // end namespace TTag
 // [[/codeblock]]
 
 // ### Property specializations
@@ -82,9 +80,11 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 };
 // [[/codeblock]]
 
-// Finally, we enable caching for the grid geometry. The cache
-// stores values that were already calculated for later usage.
-// This makes the simulation run faster but it uses more memory.
+// Finally, we enable caching for the grid geometry. When this feature
+// is enabled, the entire finite-volume grid is precomputed and stored
+// instead of preparing element-local geometries on the fly when assembling
+// the linear system. This speeds up the simulation at the cost of a larger
+// memory footprint.
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::RoughChannel>
 { static constexpr bool value = true; };
