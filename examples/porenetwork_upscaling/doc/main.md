@@ -187,7 +187,7 @@ Get the maximum and minimum pressure gradient and the population of sample point
     const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
 ```
 
-Iterate over all directions specified before, apply several pressure gradient, calculated the mass flux
+Iterate over all directions specified before, apply several pressure gradients, calculate the mass flux
 and finally determine the the upscaled properties.
 
 ```cpp

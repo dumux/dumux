@@ -255,11 +255,12 @@ We determine the domain side length by using the bounding box of the network
     {
         directions_ = directions;
     }
-    // [[codeblock]]
+```
 
+### Save the relevant data for plot of permeability ratio vs. Forchheimer number
+
+```cpp
 private:
-    // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
-    // [[codeblock]]
     void writePermeabilityratioVsForchheimerNumber_(std::size_t dirIdx)
     {
         // open a logfile
@@ -379,6 +380,7 @@ private:
     }
 ```
 
+<details><summary> Click to show private data members</summary>
 
 ```cpp
     std::array<std::vector<Scalar>, 3> samplePointsX_;
@@ -397,7 +399,7 @@ private:
 } // end namespace Dumux
 ```
 
-[[/codeblock]]
+</details>
 
 </details>
 
