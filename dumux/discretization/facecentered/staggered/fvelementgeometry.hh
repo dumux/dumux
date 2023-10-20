@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
 #include <utility>
+#include <bitset>
 
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/reservedvector.hh>
@@ -25,6 +26,71 @@
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 namespace Dumux {
+
+namespace Detail::FCStaggered {
+
+template<class FVElementGeometry, class SubControlVolume>
+typename SubControlVolume::Traits::Geometry scvGeometry(const FVElementGeometry& fvGeometry,
+                                                        const SubControlVolume& scv)
+{
+    typename SubControlVolume::Traits::CornerStorage corners{};
+    // select the containing element
+    const auto elementGeometry = (scv.elementIndex() != fvGeometry.elementIndex()) ?
+        fvGeometry.element().geometry() :
+        fvGeometry.gridGeometry().element(scv.elementIndex()).geometry();
+
+    const auto center = elementGeometry.center();
+    const auto dofAxis = scv.dofAxis();
+    for (int i = 0; i < corners.size(); ++i)
+    {
+        auto& corner = corners[i];
+
+        // copy the corner of the corresponding element
+        corner = elementGeometry.corner(i);
+
+        // shift the corner such that the scv covers half of the element
+        // (keep the corner positions at the face with the staggered dof)
+        if ((corner[dofAxis] - center[dofAxis]) * scv.directionSign() < 0.0)
+            corner[dofAxis] = center[dofAxis];
+    }
+
+    return {corners.front(), corners.back()};
+}
+
+template<class FVElementGeometry, class SubControlVolumeFace>
+typename SubControlVolumeFace::Traits::Geometry scvfGeometry(const FVElementGeometry& fvGeometry,
+                                                             const SubControlVolumeFace& scvf)
+{
+    const auto normalAxis = scvf.normalAxis();
+    const auto center = scvf.center();
+    const auto shift = scvf.ipGlobal() - center;
+    const auto dofAxis = scvf.isLateral() ? Dumux::normalAxis(shift) : normalAxis;
+    const auto insideElementIndex = (fvGeometry.scv(scvf.insideScvIdx())).elementIndex();
+    const auto elementGeometry = (insideElementIndex != fvGeometry.elementIndex()) ?
+        fvGeometry.element().geometry() :
+        fvGeometry.gridGeometry().element(insideElementIndex).geometry();
+
+    auto corners = std::array{
+        elementGeometry.corner(0),
+        elementGeometry.corner(elementGeometry.corners() - 1)
+    };
+
+    // shift corners to scvf plane and halve lateral faces
+    for (int i = 0; i < corners.size(); ++i)
+    {
+        auto& corner = corners[i];
+        corner[normalAxis] = center[normalAxis];
+        if (scvf.isLateral() && (corner - center)*shift < 0.0)
+            corner[dofAxis] = elementGeometry.center()[dofAxis];
+    }
+
+    auto inPlaneAxes = std::move(std::bitset<SubControlVolumeFace::Traits::dimWorld>{}.set());
+    inPlaneAxes.set(normalAxis, false);
+
+    return {corners[0], corners[1], inPlaneAxes};
+}
+
+} // end namespace Detail
 
 template<class GG, bool cachingEnabled>
 class FaceCenteredStaggeredFVElementGeometry;
@@ -209,20 +275,17 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
     }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        return Detail::FCStaggered::scvGeometry(*this, scv);
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        return Detail::FCStaggered::scvfGeometry(*this, scvf);
+    }
 
 private:
 
@@ -436,20 +499,17 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
     }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        return Detail::FCStaggered::scvGeometry(*this, scv);
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        return Detail::FCStaggered::scvfGeometry(*this, scvf);
+    }
 
 private:
     //! Binding of an element preparing the geometries of the whole stencil
