@@ -3,23 +3,34 @@ TEnd = 10
 DtInitial = 1e-5
 MaxTimeStepSize = 1#1
 
+#[PNM.Grid]
+#LowerLeft = 0 0
+#UpperRight = 1e-2 1e-2
+#NumPores = 3 3
+#PoreInscribedRadius = 5e-4
+#ThroatInscribedRadius = 5e-4
+#SubstractRadiiFromThroatLength = true
+#DeletionProbability = 0 0 1 1
+#RemoveThroatsOnBoundary = 3
+#PoreGeometry = Cube
+#ThroatCrossSectionShape = Square
+#BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+#PriorityList = 2 3 0 1
+
+
 [PNM.Grid]
-LowerLeft = 0 0
-UpperRight = 1e-2 1e-2
-NumPores = 3 3
-PoreInscribedRadius = 5e-4
-ThroatInscribedRadius = 5e-4
-SubstractRadiiFromThroatLength = true
-DeletionProbability = 0 0 1 1
-RemoveThroatsOnBoundary = 3
+NumPores = 2
+LowerLeft = 5e-3 0
+UpperRight = 5e-3 1e-2
+PoreInscribedRadius = 1e-4
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
 PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
-LowerLeft = -0.0024 1e-2
-UpperRight = 0.0124 1.2e-2
+LowerLeft = 0 1e-2
+UpperRight = 1e-2 1.2e-2
 UpstreamCells0 = 5
 CellsPerThroat = 3
 DownstreamCells0 = 5
@@ -43,6 +54,7 @@ Height = 10e-4
 Name = pnm
 InitialTemperature = 328.15 # [K]
 InitialPressure = 1e5 # [Pa]
+PressureDiffBottom = 5e4
 
 [Vtk]
 OutputName = test_verticalFlow_convection
