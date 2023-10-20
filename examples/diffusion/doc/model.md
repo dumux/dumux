@@ -123,7 +123,7 @@ F_{K,\sigma} = -D \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            // v.axpy(a, w) means v <- v + a*w
+            // v.axpy(a, w) means v += a*w
             gradConcentration.axpy(
                 volVars.priVar(Indices::concentrationIdx),
                 fluxVarCache.gradN(scv.indexInElement())
