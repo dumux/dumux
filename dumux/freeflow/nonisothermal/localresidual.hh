@@ -145,14 +145,15 @@ public:
         auto diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         for (int compIdx = 0; compIdx < FluxVariables::numComponents; ++compIdx)
         {
-            const bool insideIsUpstream = scvf.directionSign() == sign(diffusiveFlux[compIdx]);
+            // define the upstream direction according to the sign of the diffusive flux
+            using std::signbit;
+            const bool insideIsUpstream = !signbit(diffusiveFlux[compIdx]);
             const auto& upstreamVolVars = insideIsUpstream ? elemVolVars[scvf.insideScvIdx()] : elemVolVars[scvf.outsideScvIdx()];
 
             if (FluxVariables::MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
                 flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx);
             else
                 flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx)* elemVolVars[scvf.insideScvIdx()].molarMass(compIdx);
-
         }
     }
 };

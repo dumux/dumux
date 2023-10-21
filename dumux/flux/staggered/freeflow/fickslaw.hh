@@ -115,7 +115,10 @@ public:
 
             if (scvf.boundary())
             {
-                flux[compIdx] = insideDensity * insideDiffCoeff
+                // When the face lies on a boundary, use the average density
+                const Scalar outsideDensity = massOrMolarDensity(outsideVolVars, referenceSystem, phaseIdx);
+                const Scalar avgDensity = 0.5*(insideDensity + outsideDensity);
+                flux[compIdx] = avgDensity * insideDiffCoeff
                                 * (massOrMoleFractionInside - massOrMoleFractionOutside) / insideDistance;
             }
             else

@@ -20,6 +20,8 @@ be evaluated with the function values provided in the same order as the names wh
 - __Hyperelastic__: Added a hyperelastic model (large deformations) and a test (in geomechanics)
 - __Property system__: Added a function `inheritsFrom` that allows to query whether a type tag is present in the inheritance hierarchy of another type tag
 - __PDESolver__: The LinearPDESolver/NewtonSolver now has an `apply` method that returns a bool (true if converged) instead of throwing an exception
+- __Freeflow Nonisothermal__: An issue with the compositional heat flux's upwinding calculations has been fixed
+- __Compositional Staggered__: The staggered discretization method has been updated to fix inconsistencies in handling density when evaluating diffusive boundary fluxes. In addition, a total mass balance is now always considered, rather than a total mole balance.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
