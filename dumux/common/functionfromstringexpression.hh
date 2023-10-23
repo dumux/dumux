@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>

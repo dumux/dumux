@@ -15,11 +15,13 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/timeloop.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/advectiveflux.hh>
 
 namespace Dumux {
 

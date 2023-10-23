@@ -15,6 +15,9 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <iostream>
+
+#include <dumux/io/format.hh>
 
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 

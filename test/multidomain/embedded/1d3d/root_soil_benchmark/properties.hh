@@ -26,6 +26,8 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/multidomain/traits.hh>
+
 #include "problem_soil.hh"
 #include "problem_root.hh"
 #include "spatialparams_soil.hh"

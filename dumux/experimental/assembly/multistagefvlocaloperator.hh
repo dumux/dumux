@@ -11,6 +11,9 @@
  * \brief A local operator wrapper for multi-stage time stepping schemes
  */
 
+#include <cmath>
+#include <dumux/discretization/extrusion.hh>
+
 namespace Dumux::Experimental {
 
 template<class LocalOperator>
