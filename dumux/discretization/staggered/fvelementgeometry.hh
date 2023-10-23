@@ -15,6 +15,7 @@
 #include <optional>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 
 namespace Dumux {
 
@@ -207,20 +208,41 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
+    {
+        const auto element = gridGeometryPtr_->element(scvf.insideScvIdx());
+        const auto& scvfIndices = gridGeometryPtr_->scvfIndicesOfScv(scvf.insideScvIdx());
+        const LocalIndexType localScvfIdx = Detail::Tpfa::findLocalIndex(scvf.index(), scvfIndices);
+        LocalIndexType localIdx = 0;
+        using FaceCornerStorage = typename SubControlVolumeFace::Traits::CornerStorage;
+        for (const auto& intersection : intersections(gridGeometryPtr_->gridView(), element))
+        {
+            if (intersection.neighbor() || intersection.boundary())
+            {
+                if (localIdx == localScvfIdx)
+                {
+                    FaceCornerStorage corners{};
+                    const auto& isGeometry = intersection.geometry();
+                    if constexpr (Detail::hasResize<FaceCornerStorage>())
+                        corners.resize(isGeometry.corners());
 
-    #pragma GCC diagnostic pop
+                    for (int i = 0; i < isGeometry.corners(); ++i)
+                        corners[i] = isGeometry.corner(i);
+
+                    return {intersection.type(), corners};
+                }
+                else
+                    ++localIdx;
+            }
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Could not find scvf geometry");
+    }
 
 private:
     //! Binding of an element preparing the geometries only inside the element

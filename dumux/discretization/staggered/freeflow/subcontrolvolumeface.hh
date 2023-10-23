@@ -146,7 +146,6 @@ public:
                                           const std::vector<GridIndexType>& scvIndices,
                                           const typename T::GeometryHelper& geometryHelper)
     : ParentType(),
-      geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
       center_(isGeometry.center()),
       unitOuterNormal_(is.centerUnitOuterNormal()),
@@ -220,13 +219,6 @@ public:
     GridIndexType index() const
     {
         return scvfIndex_;
-    }
-
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    const Geometry geometry() const
-    {
-        return Geometry(geomType_, corners_);
     }
 
     //! The local index of this sub control volume face
@@ -442,7 +434,6 @@ public:
     { isGhostFace_ = isGhostFaceFlag; }
 
 private:
-    Dune::GeometryType geomType_;
     CornerStorage corners_;
     Scalar area_;
     GlobalPosition center_;
