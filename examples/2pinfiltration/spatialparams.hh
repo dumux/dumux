@@ -94,7 +94,8 @@ public:
     }
 
 
-     // Here we can define which phase is to be considered as the wetting phase. Here the wetting phase is the the first phase of the fluidsystem. In this case that is water.
+     // Here we can define which phase is to be considered as the wetting phase. We choose the first phase
+     // in the fluid system, which is water in our case (see definition of `FluidSystem` property).
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     {  return FluidSystem::phase0Idx; }

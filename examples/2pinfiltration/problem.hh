@@ -64,10 +64,11 @@ public:
     }
 
     // #### Boundary types
-    // We define the type of boundary conditions depending on location. Two types of boundary conditions
-    // can be specified: Dirichlet or Neumann boundary condition. On a Dirichlet boundary, the values of the
+    // We define the type of boundary conditions depending on the location. Two types of boundary conditions
+    // can be specified: Dirichlet or Neumann boundary conditions. On a Dirichlet boundary, the values of the
     // primary variables need to be fixed. On a Neumann boundary condition, values for derivatives need to be fixed.
-    // Mixed boundary conditions (different types for different equations on the same boundary) are not accepted.
+    // Depending on the chosen discretization scheme, mixed boundary conditions (different types for different equations
+    // on the same boundary) may not be accepted.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
