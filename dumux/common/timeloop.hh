@@ -589,11 +589,11 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*1e-7))
+        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
         {
             if (this->verbose())
                 std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
-                          << Fmt::format("because that's in the past! (current simulation time is {:.5g})\n", this->time());
+                          << Fmt::format("because that's not in the future! (current simulation time is {:.5g})\n", this->time());
             return;
         }
 
