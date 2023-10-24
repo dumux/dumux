@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Base class for all finite volume problems
  */
 #ifndef DUMUX_COMMON_FV_PROBLEM_HH
@@ -30,7 +30,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Base class for all finite-volume problems
  *
  * \note All quantities (regarding the units) are specified assuming a

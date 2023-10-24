@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Boundary flag to store e.g. in sub control volume faces
  */
 #ifndef DUMUX_BOUNDARY_FLAG_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Class for accessing boundary flags
  * \note this works for all grid managers with gmsh meshes.
  */
@@ -45,7 +45,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Boundary flag to store e.g. in sub control volume faces
  * \note Can be specialized for each grid manager (in the gridmanager headers)
  * \tparam Grid the type of the grid

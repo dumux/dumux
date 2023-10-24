@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Some exceptions thrown in DuMu<sup>x</sup>
  */
 #ifndef DUMUX_EXCEPTIONS_HH
@@ -18,7 +18,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Exception thrown if a fixable numerical problem occurs.
  *
  * (e.g. time step too big, etc.)
@@ -41,7 +41,7 @@ public:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Exception thrown if a run-time parameter is not specified correctly.
  */
 class ParameterException : public Dune::Exception

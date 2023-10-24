@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \copydoc Dumux::ShallowWaterProblem
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_PROBLEM_HH
@@ -19,7 +19,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Shallow water problem base class.
  */
 template<class TypeTag>

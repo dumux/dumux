@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief Defines a type tag and some properties for geomechanical DuMuX models.
  */
 

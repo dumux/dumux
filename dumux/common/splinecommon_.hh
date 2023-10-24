@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief The common code for all 3rd order polynomial splines.
  */
 #ifndef DUMUX_SPLINE_COMMON__HH
@@ -24,7 +24,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief The common code for all 3rd order polynomial splines.
  */
 template<class ScalarT, class ImplementationT>

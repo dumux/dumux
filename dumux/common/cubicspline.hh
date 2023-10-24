@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A simple implementation of a cubic spline
  */
 #ifndef DUMUX_COMMON_CUBIC_SPLINE_HH
@@ -24,7 +24,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A simple implementation of a natural cubic spline
  * \note We follow the notation at http://mathworld.wolfram.com/CubicSpline.html
  */

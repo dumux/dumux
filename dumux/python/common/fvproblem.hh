@@ -28,7 +28,7 @@
 namespace Dumux::Python {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A C++ wrapper for a Python problem
  */
 template<class GridGeometry_,  class SpatialParams_, class PrimaryVariables, bool enableInternalDirichletConstraints_>

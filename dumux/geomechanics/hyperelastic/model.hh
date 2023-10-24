@@ -72,7 +72,7 @@ struct HyperelasticIndices
 };
 
 /*!
- * \ingroup HyperelasticModel
+ * \ingroup Hyperelastic
  * \brief HyperelasticModelTraits
  */
 template<int dim>

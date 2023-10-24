@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes
  */
@@ -77,6 +78,7 @@ using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
  * \tparam TypeTag The TypeTag

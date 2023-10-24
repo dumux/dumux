@@ -103,6 +103,11 @@
 @copydoc dumux/porousmediumflow/richards/model.hh
 @ingroup PorousmediumflowModels
 
+@defgroup ExtendedRichardsModel extended Richards' equation
+@brief extended Richards' equation
+@copydoc dumux/porousmediumflow/richardsextended/model.hh
+@ingroup PorousmediumflowModels
+
 @defgroup RichardsNCModel Richards multi-component
 @brief Richards multi-component flow
 @copydoc dumux/porousmediumflow/richardsnc/model.hh

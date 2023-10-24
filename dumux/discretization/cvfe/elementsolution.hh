@@ -111,10 +111,7 @@ private:
     Dune::ReservedVector<PrimaryVariables, numCubeDofs> priVars_;
 };
 
-/*!
- * \ingroup CVFEDiscretization
- * \brief  Make an element solution for control-volume finite element schemes
- */
+//! Make an element solution for control-volume finite element schemes
 template<class Element, class SolutionVector, class GridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const GridGeometry& gg)
 -> std::enable_if_t<DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>,
@@ -126,10 +123,7 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
     return CVFEElementSolution<typename GridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
 }
 
-/*!
- * \ingroup CVFEDiscretization
- * \brief  Make an element solution for control-volume finite element schemes
- */
+//!  Make an element solution for control-volume finite element schemes
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
 -> std::enable_if_t<DiscretizationMethods::isCVFE<typename FVElementGeometry::GridGeometry::DiscretizationMethod>,

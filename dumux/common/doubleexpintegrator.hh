@@ -44,7 +44,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A double exponential integrator
  */
 #ifndef DUMUX_COMMON_DOUBLEEXP_INTEGRATOR_HH

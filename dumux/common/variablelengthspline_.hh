@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Implements a spline with a variable number of sampling points
  */
 #ifndef DUMUX_VARIABLE_LENGTH_SPLINE_HH
@@ -22,7 +22,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief The common code for all 3rd order polynomial splines with
  *        where the number of sampling points only known at run-time.
  */

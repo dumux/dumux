@@ -5,7 +5,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief defines intersection mappers.
  */
 #ifndef DUMUX_INTERSECTIONITERATOR_HH
@@ -20,7 +20,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief defines a standard intersection mapper for mapping of global DOFs assigned
  *        to faces. It only works for conforming grids, without hanging nodes.
  */
@@ -77,7 +77,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for non-conforming grids and corner-point grids.
  */
@@ -191,7 +191,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for adaptive grids.
  */

@@ -7,7 +7,7 @@
 
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Helpers for working with strings
  */
 
@@ -23,7 +23,7 @@ namespace Dumux {
 
 /*
  * \brief Tokenize a string splitting at a given delimiter
- * \ingroup Common
+ * \ingroup Core
  * \param str a string to be tokenized
  * \param delim a set of delimiter characters separating the tokens
  * \note this works without copying the original string, make sure that string
@@ -51,7 +51,7 @@ std::vector<std::string_view> tokenize(std::string_view str, std::string_view de
 
 /*
  * \brief Split a string at a given separator string
- * \ingroup Common
+ * \ingroup Core
  * \param str a string to be split
  * \param delim a set of delimiter characters separating the tokens
  * \param removeEmpty if empty string between two separator should be removed from the result

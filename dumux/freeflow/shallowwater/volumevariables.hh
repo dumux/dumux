@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \copydoc Dumux::ShallowWaterVolumeVariables
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_VOLUME_VARIABLES_HH
@@ -15,7 +15,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Volume variables for the shallow water equations model.
  */
 template <class Traits>

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Basic volume variables for finite volume methods
  */
 #ifndef DUMUX_COMMON_BASIC_VOLUME_VARIABLES_HH

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A point source class,
  *        i.e. sources located at a single point in space
  */
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A point source base class
  * \tparam PositionType the position type
  * \tparam ValueType the a vector type storing the source for all equations
@@ -145,7 +145,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A point source class with an identifier to attach data
  * \tparam GlobalPosition the position type
  * \tparam SourceValues the a vector type storing the source for all equations
@@ -193,7 +193,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
@@ -257,7 +257,7 @@ private:
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A helper class calculating a sub control volume to point source map
  * This class uses the bounding box tree implementation to identify in which
  * sub control volume(s) a point source falls.

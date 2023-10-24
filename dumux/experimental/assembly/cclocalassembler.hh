@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
@@ -35,6 +36,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief A base class for all local cell-centered assemblers
@@ -167,6 +169,7 @@ public:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
@@ -178,6 +181,7 @@ template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::num
 class CCLocalAssembler;
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using numeric differentiation
@@ -213,9 +217,7 @@ public:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
+     *        to the global matrix. Calculates the element residual at the current solution.
      */
     void assembleJacobian(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {
@@ -229,7 +231,7 @@ private:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them to the global matrix.
-     * \return The element residual at the current solution.
+     *        Calculates the element residual at the current solution.
      */
     void assembleJacobianImplicit_(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {
@@ -420,9 +422,7 @@ private:
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     *
-     * \return The element residual at the current solution.
+     *        to the global matrix. Calculates the element residual at the current solution.
      */
     void assembleJacobianExplicit_(JacobianMatrix& A, GridVariables& gridVariables, const NumEqVector& origResidual)
     {

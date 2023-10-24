@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief The infrastructure to retrieve run-time parameters from Dune::ParameterTrees.
  */
 

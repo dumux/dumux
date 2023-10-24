@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief Base class for all geomechanical problems
  */
 #ifndef DUMUX_GEOMECHANICS_FV_PROBLEM_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief Base class for all geomechanical problems
  * \note We require only little additional functionality to the
  *       porous medium flow problem, which is why we inherit from that here.

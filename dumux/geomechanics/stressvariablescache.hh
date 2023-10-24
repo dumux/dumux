@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief Base class for the stress variables cache
  */
 #ifndef DUMUX_GEOMECHANICS_STRESSVARIABLESCACHE_HH
@@ -21,7 +21,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Geomechanics
+ * \ingroup GeomechanicsModels
  * \brief The stress variables cache classes for models involving geomechanics.
  *        Store data required for stress calculation.
  */

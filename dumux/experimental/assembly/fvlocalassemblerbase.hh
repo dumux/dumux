@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \copydoc Dumux::FVLocalAssemblerBase
  */
@@ -25,6 +26,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \brief A base class for all local assemblers
  * \tparam TypeTag The TypeTag

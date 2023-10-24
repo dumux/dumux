@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Helper class to create (named and comparable) tagged types
  */
 #ifndef DUMUX_COMMON_TAG_HH
@@ -21,7 +21,7 @@
 namespace Dumux::Utility {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Helper class to create (named and comparable) tagged types
  * Tags any given type. The tagged type is equality comparable and can be written to streams.
  * A custom name can be provided by implementing the `name()` member function.

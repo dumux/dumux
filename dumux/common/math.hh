@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Define some often used mathematical functions
  */
 #ifndef DUMUX_MATH_HH
@@ -26,7 +26,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Calculate the (weighted) arithmetic mean of two scalar values.
  *
  * \param x The first input value
@@ -45,7 +45,7 @@ constexpr Scalar arithmeticMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy =
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Calculate the (weighted) harmonic mean of two scalar values.
  *
  * \param x The first input value
@@ -64,7 +64,7 @@ constexpr Scalar harmonicMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Calculate the geometric mean of two scalar values.
  *
  * \param x The first input value
@@ -83,7 +83,7 @@ Scalar geometricMean(Scalar x, Scalar y) noexcept
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Calculate the harmonic mean of a fixed-size matrix.
  *
  * This is done by calculating the harmonic mean for each entry
@@ -112,7 +112,7 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Invert a linear polynomial analytically
  *
  * The polynomial is defined as
@@ -138,7 +138,7 @@ int invertLinearPolynomial(SolContainer &sol,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Invert a quadratic polynomial analytically
  *
  * The polynomial is defined as
@@ -216,7 +216,7 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
 //! \endcond
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Invert a cubic polynomial analytically
  *
  * The polynomial is defined as
@@ -413,7 +413,7 @@ int invertCubicPolynomial(SolContainer *sol,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -439,7 +439,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -465,7 +465,7 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Comparison of three position vectors
  *
  * Compares an current position vector with two reference vector, and returns true
@@ -497,7 +497,7 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
 namespace InterpolationPolicy { struct Linear; }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief a generic function to interpolate given a set of parameters and an interpolation point
  * \param params the parameters used for interpolation (depends on the policy used)
  * \param ip the interpolation point
@@ -507,13 +507,13 @@ Scalar interpolate(Scalar ip, Parameter&& ... params)
 { return Policy::interpolate(ip, std::forward<Parameter>(params) ...); }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Interpolation policies
  */
 namespace InterpolationPolicy  {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief interpolate linearly between two given values
  */
 struct Linear
@@ -531,7 +531,7 @@ struct Linear
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief interpolate linearly in a piecewise linear function (tabularized function)
  */
 struct LinearTable
@@ -570,7 +570,7 @@ struct LinearTable
 } // end namespace InterpolationPolicy
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Generates linearly spaced vectors
  *
  * \param begin The first value in the vector
@@ -595,7 +595,7 @@ std::vector<Scalar> linspace(const Scalar begin, const Scalar end,
 
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Evaluates the Antoine equation used to calculate the vapour
  *        pressure of various liquids.
  *
@@ -618,7 +618,7 @@ Scalar antoine(Scalar temperature,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Sign or signum function.
  *
  * Returns 1 for a positive argument.
@@ -632,7 +632,7 @@ constexpr int sign(const ValueType& value) noexcept
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Cross product of two vectors in three-dimensional Euclidean space
  *
  * \param vec1 The first vector
@@ -648,7 +648,7 @@ Dune::FieldVector<Scalar, 3> crossProduct(const Dune::FieldVector<Scalar, 3> &ve
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Cross product of two vectors in two-dimensional Euclidean space retuning scalar
  *
  * \param vec1 The first vector
@@ -660,7 +660,7 @@ Scalar crossProduct(const Dune::FieldVector<Scalar, 2> &vec1,
 {   return vec1[0]*vec2[1]-vec1[1]*vec2[0]; }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Triple product of three vectors in three-dimensional Euclidean space retuning scalar
  *
  * \param vec1 The first vector
@@ -674,7 +674,7 @@ Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
 {   return crossProduct<Scalar>(vec1, vec2)*vec3; }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Transpose a FieldMatrix
  *
  * \param M The matrix to be transposed
@@ -691,7 +691,7 @@ Dune::FieldMatrix<Scalar, n, m> getTransposed(const Dune::FieldMatrix<Scalar, m,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Transpose a DynamicMatrix
  *
  * \param M The matrix to be transposed
@@ -712,7 +712,7 @@ Dune::DynamicMatrix<Scalar> getTransposed(const Dune::DynamicMatrix<Scalar>& M)
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Multiply two dynamic matrices
  *
  * \param M1 The first dynamic matrix
@@ -738,7 +738,7 @@ Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Multiply two field matrices
  *
  * \param M1 The first field matrix
@@ -761,7 +761,7 @@ Dune::FieldMatrix<Scalar, rows1, cols2> multiplyMatrices(const Dune::FieldMatrix
 
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Trace of a dense matrix
  *
  * \param M The dense matrix
@@ -783,7 +783,7 @@ trace(const Dune::DenseMatrix<MatrixType>& M)
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Returns the result of the projection of
  *        a vector v with a Matrix M.
  *
@@ -806,7 +806,7 @@ mv(const Dune::DenseMatrix<MAT>& M,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Returns the result of a vector v multiplied by a scalar m.
  *
  *        Note: We use DenseVector and DenseMatrix here so that
@@ -833,7 +833,7 @@ mv(const FieldScalar m, const Dune::DenseVector<V>& v)
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Evaluates the scalar product of a vector v2, projected by
  *        a matrix M, with a vector v1.
  *
@@ -856,7 +856,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Evaluates the scalar product of a vector v2, scaled by
  *        a scalar m, with a vector v1.
  *
@@ -884,7 +884,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
 }
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Returns the [intercept, slope] of the regression line
  *        fitted to a set of (x, y) data points.
  *

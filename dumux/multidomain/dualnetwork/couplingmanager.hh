@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup DualNetworkCoupling
  * \ingroup DarcyDarcyCoupling
  * \brief Coupling manager for equal-dimension boundary coupling
  */
@@ -36,6 +37,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
+ * \ingroup DualNetworkCoupling
  * \ingroup DarcyDarcyCoupling
  * \brief Coupling manager for dual network approach for pore network models
  * \note Concept and algorithms described in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
