@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Json
+ * \ingroup InputOutput
  * \brief Collection of json classes from JSON for Modern C++ library
  */
 #include "dumux/io/json/json.hpp"

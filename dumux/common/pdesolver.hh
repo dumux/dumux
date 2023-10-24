@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Defines a high-level interface for a PDESolver
  */
 #ifndef DUMUX_COMMON_PDESOLVER_HH
@@ -46,7 +46,7 @@ using AssemblerVariables = typename VariablesChooser<Assembler>::Type;
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A high-level interface for a PDESolver
  *
  * A PDESolver is constructed with an assembler and a linear solver

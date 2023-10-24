@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters in porous medium problems.
  */
@@ -41,7 +41,7 @@ struct hasPorosityAtPos
 #endif
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of porous-medium problems.
  */

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A arithmetic block vector type based on DUNE's reserved vector
  */
 #ifndef DUMUX_RESERVED_BLOCK_VECTOR_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A arithmetic block vector type based on DUNE's reserved vector
  */
 template<class BlockType, int capacity>

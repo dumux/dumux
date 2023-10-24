@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \ingroup MultiDomain
@@ -35,6 +36,7 @@
 namespace Dumux::Experimental {
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \ingroup MultiDomain
@@ -179,6 +181,7 @@ private:
 };
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \ingroup MultiDomain
@@ -192,6 +195,7 @@ template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMet
 class SubDomainCCLocalAssembler;
 
 /*!
+ * \ingroup Experimental
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \ingroup MultiDomain

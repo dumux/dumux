@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Base class for all finite volume problems that are parameterized.
  */
 #ifndef DUMUX_COMMON_FV_PROBLEM_WITH_SPATIAL_PARAMS_HH
@@ -20,7 +20,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Base class for all finite-volume problems using spatial parameters.
  */
 template<class TypeTag>

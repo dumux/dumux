@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Define helper functions for integration
  */
 #ifndef DUMUX_COMMON_INTEGRATE_HH

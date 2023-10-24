@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Compute boundary conditions for the Riemann Solver
  *
  * The boundary conditions are given at the the outer face of the

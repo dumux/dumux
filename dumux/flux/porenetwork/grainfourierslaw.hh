@@ -6,6 +6,7 @@
 //
 /*!
  * \file
+ * \ingroup PoreNetworkFlux
  * \brief This file contains the data which is required to calculate
  *        diffusive heat fluxes with Fourier's law.
  */
@@ -18,6 +19,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
+ * \ingroup PoreNetworkFlux
  * \brief Specialization of Fourier's Law for the pore-network SOLID model.
  * \note See Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
  *       and Khan et al (2019) https://doi.org/10.1016/j.compchemeng.2018.12.025 
@@ -93,6 +95,7 @@ struct TruncatedPyramidGrainFouriersLaw
 };
 
 /*!
+ * \ingroup PoreNetworkFlux
  * \brief Specialization of Fourier's Law for the pore-network SOLID model.
  * \note See Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
  */

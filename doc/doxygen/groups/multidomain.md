@@ -20,6 +20,10 @@
 @brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
 @ingroup BoundaryCoupling
 
+@defgroup DualNetworkCoupling Coupling for dual network approach for pore network models
+@brief Coupling for dual network approach for pore network models
+@ingroup MultiDomain
+
 @defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
 @brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
 @ingroup MultiDomain

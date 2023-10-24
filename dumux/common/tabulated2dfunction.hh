@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Implements tabulation for a two-dimensional function.
  */
 #ifndef DUMUX_TABULATED_2D_FUNCTION_HH
@@ -19,7 +19,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Implements tabulation for a two-dimensional function.
  *
  * This class can be used to tabulate a two dimensional function

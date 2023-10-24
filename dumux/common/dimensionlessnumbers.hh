@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Collection of functions, calculating dimensionless numbers.
  *
  * All the input to the dimensionless numbers has to be provided as function arguments.
@@ -42,7 +42,7 @@ enum class SherwoodFormulation
 };
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Collection of functions which calculate dimensionless numbers.
  * Each number has it's own function.
  * All the parameters for the calculation have to be handed over.

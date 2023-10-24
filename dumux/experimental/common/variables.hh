@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Experimental
- * \ingroup Common
+ * \ingroup Core
  * \copydoc Dumux::Experimental::Variables
  */
 #ifndef DUMUX_COMMON_VARIABLES_HH
@@ -22,7 +22,7 @@ namespace Dumux::Experimental {
 
 /*!
  * \ingroup Experimental
- * \ingroup Common
+ * \ingroup Core
  * \brief Class that represents the variables of a model.
  *        We assume that models are formulated on the basis of primary and
  *        possibly secondary variables, where the latter may non-linearly

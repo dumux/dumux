@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Defines the default element and vertex mapper types
  */
 #ifndef DUMUX_DEFAULT_MAPPER_TRAITS_HH

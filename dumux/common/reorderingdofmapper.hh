@@ -7,7 +7,7 @@
 
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */
@@ -24,7 +24,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief dune-grid capabilities compatibility layer
  */
 #ifndef DUMUX_COMMON_GRID_CAPABILITIES_HH

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \copydoc Dumux::ShallowWaterFluxVariables
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_FLUXVARIABLES_HH
@@ -19,7 +19,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief The flux variables class for the shallow water model.
  *
  */

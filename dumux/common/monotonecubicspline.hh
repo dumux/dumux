@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief A monotone cubic spline
  */
 #ifndef DUMUX_COMMON_MONOTONE_CUBIC_SPLINE_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief A monotone cubic spline
  * \note Construction after Fritsch & Butland (1984) (see https://doi.org/10.1137/0905021)
  * \note The resulting interpolation is globally monotone but only C^1

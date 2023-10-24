@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ExtenndedRichardsModel
+ * \ingroup ExtendedRichardsModel
  * \brief The primary variable switch for the extended Richards model.
  */
 

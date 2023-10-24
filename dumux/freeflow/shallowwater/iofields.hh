@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Add I/O fields specific to shallow water
  */
 #ifndef DUMUX_FREEFLOW_SHALLOW_WATER_IO_FIELDS_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterModel
+ * \ingroup ShallowWaterModels
  * \brief Adds vtk output fields for the shallow water model
  */
 class ShallowWaterIOFields

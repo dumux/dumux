@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Common
+ * \ingroup Core
  * \brief Defines the index types used for grid and local indices.
  */
 #ifndef DUMUX_COMMON_INDEX_TRAITS_HH
@@ -17,7 +17,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
+ * \ingroup Core
  * \brief Structure to define the index types used for grid and local indices.
  * \tparam GridView The grid view type
  */
