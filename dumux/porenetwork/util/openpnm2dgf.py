@@ -213,9 +213,11 @@ def _computeVertexElementData(net, policy):
     vertices = net["pore.coords"]
     elements = net["throat.conns"]
 
-    poreRadius = policy["pore.radius"](net)
+    poreInscribedRadius = policy["pore.inscribedRadius"](net)
+    poreExtendedRadius = policy["pore.extendedRadius"](net)
     poreVolume = policy["pore.volume"](net)
     poreLabel = policy["pore.label"](net)
+
     throatRadius = policy["throat.radius"](net)
     throatLength = policy["throat.length"](net)
     throatArea = policy["throat.area"](net)
@@ -242,13 +244,14 @@ def _computeVertexElementData(net, policy):
                 vertices[:, 0],
                 vertices[:, 1],
                 vertices[:, 2],
-                poreRadius,
+                poreInscribedRadius,
+                poreExtendedRadius,
                 poreVolume,
                 poreLabel,
                 poreDomainType,
             ],
             axis=1,
-        ).reshape(len(poreLabel), 7)
+        ).reshape(len(poreLabel), 8)
         elementData = np.stack(
             [
                 elements[:, 0],
@@ -271,12 +274,13 @@ def _computeVertexElementData(net, policy):
                 vertices[:, 0],
                 vertices[:, 1],
                 vertices[:, 2],
-                poreRadius,
+                poreInscribedRadius,
+                poreExtendedRadius,
                 poreVolume,
                 poreLabel,
             ],
             axis=1,
-        ).reshape(len(poreLabel), 6)
+        ).reshape(len(poreLabel), 7)
         elementData = np.stack(
             [
                 elements[:, 0],
@@ -306,7 +310,7 @@ def writeDGF(filename, net, policy):
     with open(filename, "w") as outputfile:
         outputfile.write("DGF\n")
         outputfile.write(
-            "% Vertex parameters: PoreInscribedRadius PoreVolume PoreLabel"
+            "% Vertex parameters: PoreInscribedRadius PoreExtendedRadius PoreVolume PoreLabel"
             f"{' PoreDomainType' if isDualNetwork else ''}\n"
         )
         outputfile.write(
@@ -418,7 +422,10 @@ if __name__ == "__main__":
         return label
 
     POLICY = {
-        "pore.radius": lambda n: n["pore.extended_diameter"] / 2.0,
+        "pore.inscribedRadius": lambda n: n["pore.inscribed_diameter"] / 2.0
+        if "pore.inscribed_diameter" in n
+        else n["pore.extended_diameter"] / 2.0,
+        "pore.extendedRadius": lambda n: n["pore.extended_diameter"] / 2.0,
         "pore.volume": lambda n: n["pore.region_volume"],
         "pore.label": poreLabelFunc,
         "throat.radius": lambda n: n["throat.inscribed_diameter"] / 2.0,
