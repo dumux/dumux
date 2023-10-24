@@ -40,9 +40,9 @@ Inserting this into the conservation equations for each phase $`\alpha`$ yields:
 
 To reduce the number of unknowns and close the system we need closure relations for these equations. In this example, we use the
 Van Genuchten-Mualem relationships (see
-[Van Genuchten (1980)](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj1980.03615995004400050002x)
+[Van Genuchten (1980)](https://doi.org/10.2136/sssaj1980.03615995004400050002x)
 and
-[Mualem (1976)](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/WR012i003p00513))
+[Mualem (1976)](https://doi.org/10.1029/WR012i003p00513))
 for the capillary pressure $`pc = p_n - p_w`$ and the relative permeabilities $`k_r\alpha`$.
 The parameters for these relationships are specified in the `spatialparams.hh` file.
 
