@@ -584,7 +584,7 @@ public:
 
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
-    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_); }
+    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
 
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
