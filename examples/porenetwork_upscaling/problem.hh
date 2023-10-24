@@ -162,6 +162,7 @@ public:
         return label[direction_];
     }
 
+// [[/details]] private class members
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -180,7 +181,6 @@ private:
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
 
-    // private data members
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
@@ -189,5 +189,6 @@ private:
 };
 
 } // end namespace Dumux
+// [[/details]]
 // [[/content]]
 #endif

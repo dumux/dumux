@@ -44,11 +44,11 @@ Furthermore, the ratio of apparent permeability to Darcy permeability is plotted
     </center>
 </figure>
 
-In addition, in Fig. 3, the inverse of the apparent permeability versus $`\varrho v /\mu`$ is plotted to compare the data from the pore-network model simulation and the data obtained by applying the Forchheimer equation using the Forchheimer permeability and coefficient. As evident in the figure, the Forchheimer equation is not able to accurately predict the flow behavior in the low-velocity regime. 
+In addition, in Fig. 3, the inverse of the apparent permeability versus $`\varrho v /\mu`$ is plotted to compare the data from the pore-network model simulation and the data obtained by applying the Forchheimer equation using the Forchheimer permeability and coefficient. As evident in the figure, the Forchheimer equation is not able to accurately predict the flow behavior in the low-velocity regime.
 <figure>
     <center>
         <img src="img/inverse_apppermeability_versus_rhovmu-1.png" alt="Inverse of apparent permeability vs. rhovmu-1" width="60%"/>
-        <figcaption> <b> Fig.3 </b> - Inverse of apparent permeability versus &#961v / &#956. 
+        <figcaption> <b> Fig.3 </b> - Inverse of apparent permeability versus &#961v / &#956.
         </figcaption>
     </center>
 </figure>
@@ -65,7 +65,7 @@ __Table of contents__. This description is structured as follows:
 We consider a single-phase problem within a randomly generated pore network of 20x20x20 pores cubed from which some of the pore throats were [deleted randomly](https://doi.org/10.1029/2010WR010180).
 The inscribed pore body radii follow a truncated log-normal distribution.
 To calculate the upscaled properties, $`10`$ pressure differences in the range of $`10`$ to $`10^{10}`$ Pa/m are applied sequentially in directions specified by the user by setting the parameter `Problem.Directions` in the `params.input` file, while all lateral sides are closed.
-The resulting mass flow rates are then used to determine upscaled properties as described [later](upscalinghelper.md).
+The resulting mass flow rates are then used to determine upscaled properties as described [later](doc/upscalinghelper.md).
 
 ## Mathematical and numerical model
 
@@ -79,19 +79,19 @@ where $`Q_{ij}`$ is the discrete volume flow rate in a throat connecting pore bo
 ```math
  Q_{ij} = g_{ij} (p_i - p_j),
 ```
-or 
+or
 
 ```math
  (p_i - p_j) = Q_{ij} / g_{ij} .
 ```
 
-In the simulation of non-creeping flow, to capture inertial effects in fluid flow, an extension of the Hagen-Poiseuille-type law which includes the expansion and contraction of the pore space when moving from a throat to a pore and vice versa. 
+In the simulation of non-creeping flow, to capture inertial effects in fluid flow, an extension of the Hagen-Poiseuille-type law which includes the expansion and contraction of the pore space when moving from a throat to a pore and vice versa.
 
 ```math
   (p_i - p_j) = Q_{ij} / g_{ij}  + (C_{exp} + C_{cont})Q^2,
 ```
 
-where $`C_{exp}`$ and $`C_{cont}`$ are the expansion and the contraction coefficient, respectively. 
+where $`C_{exp}`$ and $`C_{cont}`$ are the expansion and the contraction coefficient, respectively.
 
 # Implementation & Post processing
 

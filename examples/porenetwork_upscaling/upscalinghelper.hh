@@ -207,11 +207,11 @@ public:
     {
         directions_ = directions;
     }
-    // [[codeblock]]
+    // [[/codeblock]]
 
-private:
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
     // [[codeblock]]
+private:
     void writePermeabilityratioVsForchheimerNumber_(std::size_t dirIdx)
     {
         // open a logfile
@@ -325,6 +325,8 @@ private:
         }
     }
     // [[/codeblock]]
+    // [[details]] private data members
+    // [[codeblock]]
     std::array<std::vector<Scalar>, 3> samplePointsX_;
     std::array<std::vector<Scalar>, 3> samplePointsY_;
     std::array<std::vector<Scalar>, 3>totalPressureDrop_;
@@ -340,5 +342,6 @@ private:
 
 } // end namespace Dumux
 // [[/codeblock]]
+// [[/details]]
 // [[/content]]
 #endif

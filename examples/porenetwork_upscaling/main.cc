@@ -151,7 +151,7 @@ void runExample()
     const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
     // [[/codeblock]]
 
-    // Iterate over all directions specified before, apply several pressure gradient, calculated the mass flux
+    // Iterate over all directions specified before, apply several pressure gradients, calculate the mass flux
     // and finally determine the the upscaled properties.
     // [[codeblock]]
     const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0, 1, 2});

@@ -49,7 +49,7 @@
 // ### `TypeTag` definition
 // Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
 // which inherit properties from the single-phase pore network model. The non-creeping flow inherits
-// all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
+// all properties from the creeping flow simulation but overrides the `AdvectionType` property.
 namespace Dumux::Properties {
 namespace TTag {
 struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };

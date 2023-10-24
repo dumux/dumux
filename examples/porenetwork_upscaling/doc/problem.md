@@ -78,7 +78,7 @@ The classes that define the problem and parameters used in this simulation
 ### `TypeTag` definition
 Two `TypeTag` for our simulation are defined, one for creeping flow and another for non-creeping flow,
 which inherit properties from the single-phase pore network model. The non-creeping flow inherits
-all properties from the creeping flow simulation but sets an own property for the `AdvectionType`.
+all properties from the creeping flow simulation but overrides the `AdvectionType` property.
 
 ```cpp
 namespace Dumux::Properties {
@@ -337,6 +337,11 @@ Return the label of outlet pores assuming a previously set direction.
         static constexpr std::array<int, 3> label = {2, 4, 6};
         return label[direction_];
     }
+```
+
+</details>
+
+```cpp
 
 private:
 
@@ -355,11 +360,7 @@ private:
         else
             return scv.dofPosition()[direction_] > this->gridGeometry().bBoxMax()[direction_] - eps_;
     }
-```
 
-private data members
-
-```cpp
     Scalar eps_;
     Scalar pressureGradient_;
     int direction_;
@@ -370,6 +371,7 @@ private data members
 } // end namespace Dumux
 ```
 
+</details>
 
 </details>
 
