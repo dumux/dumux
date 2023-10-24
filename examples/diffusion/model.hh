@@ -130,7 +130,7 @@ public:
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            // v.axpy(a, w) means v <- v + a*w
+            // v.axpy(a, w) means v += a*w
             gradConcentration.axpy(
                 volVars.priVar(Indices::concentrationIdx),
                 fluxVarCache.gradN(scv.indexInElement())
