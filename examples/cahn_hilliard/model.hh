@@ -181,14 +181,13 @@ public:
     }
     // [[/codeblock]]
 
-    // **Flux term:** The function `computeFlux` computes the fluxes
-    // over a sub control volume faces, including the integration over
-    // the area of the face.
+    // **Flux term:** The function `computeFlux` computes the integrated
+    // fluxes over a sub control volume face.
     //
     // ```math
     // \begin{aligned}
-    // F_{K,\sigma,0} &= -M \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert \cr
-    // F_{K,\sigma,1} &= -\gamma \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n} \vert \sigma \vert
+    // F_{K,\sigma,0} &= -M \vert \sigma \vert \sum_{B \in \mathcal{B}_K} \mu_{h,B} \nabla N_B \cdot\boldsymbol{n} \cr
+    // F_{K,\sigma,1} &= -\gamma \vert \sigma \vert \sum_{B \in \mathcal{B}_K} c_{h,B} \nabla N_B \cdot\boldsymbol{n}
     // \end{aligned}
     // ````
     //
@@ -209,7 +208,7 @@ public:
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            // v.axpy(a, w) means v <- v + a*w
+            // v.axpy(a, w) means v += a*w
             gradConcentration.axpy(
                 volVars.concentration(),
                 fluxVarCache.gradN(scv.indexInElement())
@@ -233,7 +232,7 @@ public:
     }
     // [[/codeblock]]
 
-    // **Source term:** The function `computeSource` computes the sources terms for a sub control volume.
+    // **Source term:** The function `computeSource` computes the source terms for a sub control volume.
     // We implement a model-specific source term for the chemical potential equation before
     // deferring further implementation to the problem where we add the derivative of the free
     // energy.
@@ -270,7 +269,6 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::CahnHilliardModel>
 { using type = CahnHilliardModelLocalResidual<TypeTag>; };
 
-// The default scalar type is double.
 // We compute with double precision floating point numbers.
 template<class TypeTag>
 struct Scalar<TypeTag, TTag::CahnHilliardModel>
@@ -278,7 +276,7 @@ struct Scalar<TypeTag, TTag::CahnHilliardModel>
 
 // The model traits specify some information about our equation system.
 // Here we have two equations. The indices allow to access primary variables
-// and equations with a named indices.
+// and equations with named indices.
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 {
@@ -298,7 +296,8 @@ struct ModelTraits<TypeTag, TTag::CahnHilliardModel>
 };
 
 // The primary variable vector has entries of type `Scalar` and is
-// as large as the number of equations (here 2) but we keep it general.
+// as large as the number of equations (here 2) but we keep it general
+// here by obtaining the number of equations from the `ModelTraits`.
 template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::CahnHilliardModel>
 {

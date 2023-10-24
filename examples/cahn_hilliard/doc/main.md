@@ -105,7 +105,7 @@ public:
 
 In the `source` function, we implement the derivative of the free energy.
 This demonstrates how parts of the local residual can be split into model specific
-parts and parts that might change from scenario to scenario.
+parts (see `CahnHilliardModelLocalResidual`) and parts that might change from scenario to scenario.
 
 ```cpp
     template<class ElementVolumeVariables>
@@ -121,8 +121,8 @@ parts and parts that might change from scenario to scenario.
     }
 ```
 
-For the boundary we choose boundary flux (or Neumann) conditions for all equations and on
-every part of the boundary, specifying zero flux everywhere for both equations.
+We choose boundary flux (or Neumann) conditions for all equations on the entire boundary,
+while specifying zero flux for both equations.
 
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -138,7 +138,7 @@ every part of the boundary, specifying zero flux everywhere for both equations.
 
 The parameters interfaces are used in the local residual (see Part 1).
 We can name this interface however we want as long as we adapt the calling site
-in the `LocalResidual` class in `model.hh`.
+in the `CahnHilliardModelLocalResidual` class in `model.hh`.
 
 ```cpp
     Scalar mobility() const
