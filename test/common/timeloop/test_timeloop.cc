@@ -150,7 +150,7 @@ void testTimeLoops(double tStart,
 
         timeLoop.finalize();
 
-        if (std::abs(timeLoop.time()-1e9*timeSpan) > 1e-15*timeSpan)
+        if (std::abs(timeLoop.time()-1e9*timeSpan) > 1e9*1e-15*timeSpan)
             DUNE_THROW(Dune::InvalidStateException, "Ended with wrong end time!");
 
     }
