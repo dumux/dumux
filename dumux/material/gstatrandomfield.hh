@@ -87,7 +87,7 @@ public:
         fieldType_ = fieldType;
         if (createNew)
         {
-#if !HAVE_GSTAT
+#if !DUMUX_HAVE_GSTAT
             DUNE_THROW(Dune::InvalidStateException, "Requested data field generation with gstat"
               << " but gstat was not found on your system. Set GSTAT_ROOT to the path where gstat "
               << " is installed and pass it to CMake, e.g. through an opts file.");

@@ -45,7 +45,7 @@ find_package_handle_standard_args(
 )
 
 # set macros for config.h
-set(HAVE_GMSH ${Gmsh_FOUND})
+set(DUMUX_HAVE_GMSH ${Gmsh_FOUND})
 set(GMSH_EXECUTABLE ${GMSH_EXECUTABLE})
 
 # text for feature summary

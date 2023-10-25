@@ -45,7 +45,7 @@ find_package_handle_standard_args(
 )
 
 # set macros for config.h
-set(HAVE_GSTAT ${GSTAT_FOUND})
+set(DUMUX_HAVE_GSTAT ${GSTAT_FOUND})
 set(GSTAT_EXECUTABLE ${GSTAT_EXECUTABLE})
 
 # text for feature summary

@@ -269,7 +269,7 @@ void drawGridGeometry(const GridGeometry& gridGeometry,
                 << ":" << maxCoord[1] << "] NaN notitle" << std::endl;
     plotFile.close();
 
-#if HAVE_GNUPLOT
+#if DUMUX_HAVE_GNUPLOT
     if (executePlot)
     {
         std::string cmd = "gnuplot -p '" + plotFileName + "'";

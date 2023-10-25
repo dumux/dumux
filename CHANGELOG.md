@@ -30,6 +30,14 @@ be evaluated with the function values provided in the same order as the names wh
 - __Newton__: The Newton solver no longer supports linear solvers without a `norm` interface when computing the resisual norm is required. The linear solvers available in Dumux all have such an interface.
 - __MultiDomain__: The MDTraits are now required to state the LocalResidual type in the Subdomain policy (see multidomain/traits.hh). This only affects users that created their own MDTraits and don't use the default MDTraits.
 - __PDESolver__: The PDESolver interface now requires an `apply` method that returns a `bool` instead of throwing when not converged
+- DuMux-specific preprocessor macros (defined in `config.h`) are now prefixed by `DUMUX_` in order to avoid name conflicts when being passed down to other modules. Corresponding CMake variables (if existing) are now also prefixed. Explicitly, the following macros have been renamed:
+  - `HAVE_KOKKOS` to `DUMUX_HAVE_KOKKOS`
+  - `HAVE_OPENMP` to `DUMUX_HAVE_OPENMP`
+  - `HAVE_GNUPLOT` to `DUMUX_HAVE_GNUPLOT`
+  - `HAVE_CPP_PARALLEL_ALGORITHMS` to `DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS`
+  - `HAVE_GMSH` to `DUMUX_HAVE_GMSH`
+  - `HAVE_GSTAT` to `DUMUX_HAVE_GSTAT`
+  - `HAVE_PVPYTHON` to `DUMUX_HAVE_PVPYTHON`
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 

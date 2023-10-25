@@ -16,7 +16,7 @@
 #ifndef DUMUX_GNUPLOT_INTERFACE_HH
 #define DUMUX_GNUPLOT_INTERFACE_HH
 
-#if !HAVE_GNUPLOT
+#if !DUMUX_HAVE_GNUPLOT
 // Gnuplot has not been found by CMake, no output possible.
 #define GNUPLOT_EXECUTABLE "/usr/bin/gnuplot"
 #endif
@@ -379,7 +379,7 @@ private:
     // Give plot command to gnuplot
     void executeGnuplot(const std::string& plotCommand, std::FILE * pipe) const
     {
-#ifdef HAVE_GNUPLOT
+#ifdef DUMUX_HAVE_GNUPLOT
         fputs((plotCommand + "\n").c_str(), pipe);
         fflush(pipe);
 #else

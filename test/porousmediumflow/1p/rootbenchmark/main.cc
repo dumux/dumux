@@ -26,7 +26,7 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
-#if HAVE_GNUPLOT
+#if DUMUX_HAVE_GNUPLOT
 #include <dumux/io/gnuplotinterface.hh>
 #endif
 #include <dumux/io/vtkoutputmodule.hh>
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     // write more output for benchmark plot
     problem->outputL2Norm(x);
 
-#if HAVE_GNUPLOT
+#if DUMUX_HAVE_GNUPLOT
     // plot with gnuplot
     bool enablePlot = getParam<bool>("Problem.EnablePlot", false);
     if (enablePlot)

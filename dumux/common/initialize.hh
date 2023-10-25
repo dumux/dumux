@@ -48,12 +48,12 @@ public:
 #endif // HAVE_TBB
 
 
-#if HAVE_OPENMP
+#if DUMUX_HAVE_OPENMP
 #include <omp.h>
-#endif // HAVE_OPENMP
+#endif // DUMUX_HAVE_OPENMP
 
 
-#if HAVE_KOKKOS
+#if DUMUX_HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
 
 #ifndef DOXYGEN
@@ -76,7 +76,7 @@ public:
 } // namespace Dumux::Detail
 #endif // DOXYGEN
 
-#endif // HAVE_KOKKOS
+#endif // DUMUX_HAVE_KOKKOS
 
 namespace Dumux {
 
@@ -91,14 +91,14 @@ void initialize(int& argc, char* argv[])
     Detail::TBBGlobalControl::instance(argc, argv);
 #endif
 
-#if HAVE_OPENMP
+#if DUMUX_HAVE_OPENMP
     if (const char* dumuxNumThreads = std::getenv("DUMUX_NUM_THREADS"))
         omp_set_num_threads(
             std::max(1, std::stoi(std::string{ dumuxNumThreads }))
         );
 #endif
 
-#if HAVE_KOKKOS
+#if DUMUX_HAVE_KOKKOS
     // initialize Kokkos (command line / environmental variable interface)
     Detail::KokkosScopeGuard::instance(argc, argv);
 #endif

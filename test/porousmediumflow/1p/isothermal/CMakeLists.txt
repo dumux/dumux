@@ -63,6 +63,6 @@ dumux_add_test(NAME test_1p_gstat
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
-              CMAKE_GUARD HAVE_GSTAT
+              CMAKE_GUARD DUMUX_HAVE_GSTAT
               COMMAND ./test_1p_gstat
               CMD_ARGS params_gstat.input)

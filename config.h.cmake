@@ -52,45 +52,45 @@
 #define OPM_GRID_VERSION_MINOR ${OPM_GRID_VERSION_MINOR}
 
 /* Define to 1 if gnuplot was found */
-#cmakedefine HAVE_GNUPLOT 1
+#cmakedefine DUMUX_HAVE_GNUPLOT 1
 
 /* Define path to gnuplot executable */
 #cmakedefine GNUPLOT_EXECUTABLE "@GNUPLOT_EXECUTABLE@"
 
 /* Define to 1 if gstat was found */
-#cmakedefine HAVE_GSTAT 1
+#cmakedefine DUMUX_HAVE_GSTAT 1
 
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
 /* Define to 1 if gmsh was found */
-#cmakedefine HAVE_GMSH 1
+#cmakedefine DUMUX_HAVE_GMSH 1
 
 /* Define path to gmsh executable */
 #cmakedefine GMSH_EXECUTABLE "@GMSH_EXECUTABLE@"
 
 /* Defines whether pvpython has been found */
-#cmakedefine HAVE_PVPYTHON 1
+#cmakedefine DUMUX_HAVE_PVPYTHON 1
 
 /* Define the path to pvpython */
 #define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
 
 /* Define to 1 if quadmath was found */
-#cmakedefine HAVE_QUAD 1
+#cmakedefine DUMUX_HAVE_QUAD 1
 
 /* Set if Kokkos was found */
-#cmakedefine HAVE_KOKKOS ENABLE_KOKKOS
+#cmakedefine DUMUX_HAVE_KOKKOS ENABLE_KOKKOS
 
 /* Set if OpenMP was found */
-#cmakedefine HAVE_OPENMP ENABLE_OPENMP
+#cmakedefine DUMUX_HAVE_OPENMP ENABLE_OPENMP
 
 /* Set the DUMUX_MULTITHREADING_BACKEND */
 #ifndef DUMUX_MULTITHREADING_BACKEND
 #define DUMUX_MULTITHREADING_BACKEND ${DUMUX_MULTITHREADING_BACKEND}
 #endif
 
-/* Set HAVE_CPP_PARALLEL_ALGORITHMS if available */
-#cmakedefine HAVE_CPP_PARALLEL_ALGORITHMS 1
+/* Set DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS if available */
+#cmakedefine DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS 1
 
 /* end dumux
    Everything below here will be overwritten

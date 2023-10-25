@@ -9,7 +9,7 @@ include(DumuxTestMacros)
 
 find_package(GLPK QUIET)
 find_package(Gnuplot QUIET)
-set(HAVE_GNUPLOT ${GNUPLOT_FOUND})
+set(DUMUX_HAVE_GNUPLOT ${GNUPLOT_FOUND})
 find_package(Gstat QUIET)
 find_package(Gmsh QUIET)
 find_package(NLOPT QUIET)
@@ -63,7 +63,7 @@ check_cxx_symbol_exists(
 )
 
 if(DUMUX_HAVE_CXX_EXECUTION_POLICY)
-  set(HAVE_CPP_PARALLEL_ALGORITHMS TRUE)
+  set(DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS TRUE)
 endif()
 
 # setup multithreading backend
