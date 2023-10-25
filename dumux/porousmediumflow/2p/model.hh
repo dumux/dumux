@@ -23,6 +23,16 @@
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  \right\} - q_\alpha = 0 \;,
  \f]
+ *Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
+ * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ q_\alpha \f$ is a source or sink term.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
