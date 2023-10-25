@@ -28,18 +28,18 @@ The model domain is given by a rough channel with a slope of 0.001.
 The domain is 500 meters long and 5 meters wide.
 The bottom altitude is 10 m at the inflow and hence 9.5 m at the outflow.
 Bottom friction is considered by applying
-Manning's law ($`n`$ = 0.025).
+[Manning's law](#mannings-law) ($`n`$ = 0.025).
 
 ### Boundary conditions
-At the lateral sides a no-flow boundary condition is applied. Also no friction is
+At the lateral sides a no-flow boundary condition is applied. Also, no friction is
 considered there and therefore a no slip boundary
-condition is applied. These are the default boundary condition for the shallow
-water model. At the left border a discharge boundary condition
+condition is applied. These are the default boundary conditions for the shallow
+water model. At the left border, a discharge boundary condition
 is applied as inflow boundary condition with $`q = -1.0 m^2 s^{-1}`$.
-At the right border a fixed water depth boundary condition
+At the right border, a fixed water depth boundary condition
 is applied for the outflow. Normal flow is assumed, therefore the water
 depth at the right border is calculated using the equation
-of Gauckler, Manning and Strickler.
+of [Gauckler, Manning and Strickler](#analytical-solution).
 
 ### Initial conditions
 The initial water depth is set to 1 m, which is slightly higher than the normal flow
@@ -48,9 +48,9 @@ water level during the simulation until the normal flow condition is reached in
 the entire model domain. The initial velocity is set to zero.
 
 ## Model description
-As mentioned above, this examples uses the shallow water equations (SWEs) to solve the problem.
-These are a depth averaged simplification of the Navier-Stokes equations. To calculate the
-bottom friction Manning's law is used. An alternative is Nikuradse's law, which is also implemented
+As mentioned above, this example uses the shallow water equations (SWEs) to solve the problem.
+These are a depth-averaged simplification of the Navier-Stokes equations. To calculate the
+bottom friction, Manning's law is used. An alternative is Nikuradse's law, which is also implemented
 in DuMu<sup>x</sup>.
 
 ### Shallow water model
@@ -62,16 +62,16 @@ The shallow water equations are given as:
 \frac{\partial \mathbf{G}}{\partial y} - \mathbf{S_b} - \mathbf{S_f} = 0
 ```
 
-where $`\mathbf{U}`$, $`\mathbf{F}`$ and $`\mathbf{G}`$ defined as
+where $`\mathbf{U}`$, $`\mathbf{F}`$ and $`\mathbf{G}`$ are defined as
 
 ```math
 \mathbf{U} = \begin{bmatrix} h \\ uh \\ vh \end{bmatrix},
 \mathbf{F} = \begin{bmatrix} hu \\ hu^2  + \frac{1}{2} gh^2 \\ huv \end{bmatrix},
-\mathbf{G} = \begin{bmatrix} hv \\ huv \\ hv^2  + \frac{1}{2} gh^2 \end{bmatrix}
+\mathbf{G} = \begin{bmatrix} hv \\ huv \\ hv^2  + \frac{1}{2} gh^2 \end{bmatrix},
 ```
 
-$`h`$ the water depth, $`u`$ the velocity in x-direction and $`v`$ the velocity in y-direction,
-$`g`$ is the constant of gravity.
+$`h`$ is the water depth, $`u`$ and $`v`$ are the velocities in x- and y-direction, respectively,
+and $`g`$ is the gravitational acceleration.
 
 The source terms for the bed slope $`\mathbf{S_b}`$ and friction
 $`\mathbf{S_f}`$ are given as
@@ -79,10 +79,10 @@ $`\mathbf{S_f}`$ are given as
 ```math
 \mathbf{S_b} = \begin{bmatrix} 0 \\ -gh \frac{\partial z}{\partial x}
                \\ -gh \frac{\partial z}{\partial y}\end{bmatrix},
-\mathbf{S_f} = \begin{bmatrix} 0 \\ghS_{fx} \\ghS_{fy}\end{bmatrix}.
+\mathbf{S_f} = \begin{bmatrix} 0 \\ghS_{fx} \\ghS_{fy}\end{bmatrix},
 ```
 
-with the bedSurface $`z`$. $`S_{fx}`$ and $`S_{fy}`$ are the bed shear stess
+with the bed surface $`z`$. $`S_{fx}`$ and $`S_{fy}`$ are the bed shear stess
 components in x- and y-direction, which are calculated by Manning's law.
 
 ### Mannings law
@@ -102,13 +102,13 @@ Since normal flow conditions are assumed, the analytic solution is calculated us
 of Gauckler, Manning and Strickler:
 
 ```math
-v_m = n^{-1} R_{hy}^{2/3} I_s^{1/2}
+v_m = n^{-1} R_{hy}^{2/3} I_s^{1/2},
 ```
 
-Where the mean velocity $`v_m`$ is given as
+where the mean velocity $`v_m`$ is given as
 
 ```math
-v_m = \frac{q}{h}
+v_m = \frac{q}{h},
 ```
 
 $`I_s`$ is the bed slope and $`q`$ the unity inflow discharge.
@@ -119,7 +119,7 @@ Hence, the water depth $`h`$ can be calculated by
 h = \left(\frac{n q}{\sqrt{I_s}} \right)^{3/5}
 ```
 
-### Discretisation
+### Discretization
 For this example, a cell-centered finite volume method (cctpfa) is applied to solve the SWEs
 in combination with a fully-implicit time discretization. For cases where no sharp fronts or
 traveling waves occur it is possible to apply time steps larger than CFL number = 1 to reduce

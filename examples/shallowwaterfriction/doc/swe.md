@@ -77,12 +77,10 @@ are inherited. These other type tag definitions can be found in the included
 headers `dumux/freeflow/shallowwater/model.hh` and `dumux/discretization/cctpfa.hh`.
 
 ```cpp
-// We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
 namespace Dumux::Properties {
-
 namespace TTag {
 struct RoughChannel { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
-}
+} // end namespace TTag
 ```
 
 ### Property specializations
@@ -118,9 +116,11 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 };
 ```
 
-Finally, we enable caching for the grid geometry. The cache
-stores values that were already calculated for later usage.
-This makes the simulation run faster but it uses more memory.
+Finally, we enable caching for the grid geometry. When this feature
+is enabled, the entire finite-volume grid is precomputed and stored
+instead of preparing element-local geometries on the fly when assembling
+the linear system. This speeds up the simulation at the cost of a larger
+memory footprint.
 
 ```cpp
 template<class TypeTag>
@@ -147,6 +147,7 @@ In addition, the analytical solution is defined here.
 
 
 ### Include files
+<details><summary> Click to show includes</summary>
 
 The first include we need here is the `ShallowWaterProblem` class, the base
 class from which we will derive.
@@ -174,7 +175,10 @@ Include the `NumEqVector` class which specifies a field vector with size number 
 #include <dumux/common/numeqvector.hh>
 ```
 
+</details>
+
 ### The problem class
+
 We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 In addition the analytical solution of the problem is calculated.
 As this is a shallow water problem, we inherit from the basic ShallowWaterProblem.
@@ -185,12 +189,16 @@ namespace Dumux {
 template <class TypeTag>
 class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
-    // A few convenience aliases used throughout this class.
+```
+
+<details><summary> Click to show convenience aliases</summary>
+
+```cpp
+
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -203,9 +211,14 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using NeumannFluxes = NumEqVector;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+```
 
+</details>
+In the constructor, we retrieve all required parameters from the input file
+
+```cpp
 public:
-    // This is the constructor of our problem class.
     RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -252,18 +265,6 @@ The analytical solution is calculated using the equation of Gauckler, Manning an
             exactVelocityX_[eIdx] = u;
         }
     }
-
-    // Getter function for the analytical solution of the water depth
-    const std::vector<Scalar>& getExactWaterDepth()
-    {
-        return exactWaterDepth_;
-    }
-
-    // Getter function for the analytical solution of the velocity in x-direction
-    const std::vector<Scalar>& getExactVelocityX()
-    {
-        return exactVelocityX_;
-    }
 ```
 
 #### Bottom friction
@@ -290,7 +291,7 @@ The bottom friction is a source term and therefore handled by the `source` funct
 The calculation of the source term due to bottom friction needs the bottom shear stess.
 This is the force per area, which works between the flow and the channel bed
 (1D vector with two entries) and is calculated within the `FrictionLaw` class.
-The bottom friction causes a loss of momentum. Thus the first entry of the `bottomFrictionSource`,
+The bottom friction causes a loss of momentum. Thus, the first entry of the `bottomFrictionSource`,
 which is related to the mass balance equation is zero.
 The second entry of the `bottomFricitonSource` corresponds to the momentum equation in x-direction
 and is therefore equal to the first, the x-component, of the `bottomShearStress`.
@@ -309,9 +310,9 @@ Accordingly, the third entry of the `bottomFrictionSource` is equal to the secon
         Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).bottomShearStress(volVars);
 
         // source term due to bottom friction
-        bottomFrictionSource[0] = 0.0;
-        bottomFrictionSource[1] = -bottomShearStress[0] / volVars.density();
-        bottomFrictionSource[2] = -bottomShearStress[1] / volVars.density();
+        bottomFrictionSource[Indices::massBalanceIdx] = 0.0;
+        bottomFrictionSource[Indices::momentumXBalanceIdx] = -bottomShearStress[0] / volVars.density();
+        bottomFrictionSource[Indices::momentumYBalanceIdx] = -bottomShearStress[1] / volVars.density();
 
         return bottomFrictionSource;
     }
@@ -319,8 +320,7 @@ Accordingly, the third entry of the `bottomFrictionSource` is equal to the secon
 
 #### Boundary conditions
 
-We define the __type of all boundary conditions__ as neumann-type,
-because we use a weak imposition.
+We use Neumann boundary conditions on the entire boundary.
 
 ```cpp
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
@@ -410,18 +410,14 @@ you have to use the `globalPos` argument.
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        // We set the initial water depth to one meter.
-        initialValues[0] = 1.0;
-        // We set the x-component of the initial velocity to zero.
-        initialValues[1] = 0.0;
-        // We set the y-component of the initial velocity to zero.
-        initialValues[2] = 0.0;
-
+        initialValues[Indices::waterdepthIdx] = 1.0;
+        initialValues[Indices::velocityXIdx] = 0.0;
+        initialValues[Indices::velocityYIdx] = 0.0;
         return initialValues;
     }
 ```
 
-We declare the private variables of the problem.
+<details><summary> Click to show private variables</summary>
 
 ```cpp
 private:
@@ -443,6 +439,7 @@ private:
 } // end namespace Dumux
 ```
 
+</details>
 
 </details>
 
@@ -461,6 +458,7 @@ surface has a non constant distribution.
 
 
 ### Include files
+<details><summary> Click to show includes</summary>
 We include the basic spatial parameters file for finite volumes, from which we will inherit.
 
 ```cpp
@@ -475,6 +473,8 @@ We include all friction laws.
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nikuradse.hh>
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/nofriction.hh>
 ```
+
+</details>
 
 ### The spatial parameters class
 
@@ -492,7 +492,12 @@ class RoughChannelSpatialParams
 : public FreeFlowSpatialParams<GridGeometry, Scalar,
                                RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>>
 {
-    // This convenience aliases will be used throughout this class
+```
+
+<details><summary> Click to show convenience aliases</summary>
+
+```cpp
+
     using ThisType = RoughChannelSpatialParams<GridGeometry, Scalar, VolumeVariables>;
     using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
@@ -502,13 +507,13 @@ class RoughChannelSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 ```
 
-In the following, the properties of the the rough channel are set. Namely, these are
+</details>
+In the constructor, the properties of the the rough channel are set. Namely, these are
 the friction law, including it's friction parameter, the acceleration
 due to gravity and the altitude of the channel bed surface.
 
 ```cpp
 public:
-    // In the constructor we read some values from the `params.input` and initialize the friciton law.
     RoughChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -542,28 +547,30 @@ public:
                      " `Nikuradse` and `None`!"<<std::endl;
       }
     }
+```
 
+The following functions expose the parameters required by the model.
+
+```cpp
     // This function returns an object of the friction law class, already initialized with a friction value.
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element,
                                                     const SubControlVolume& scv) const
-    {
-        return *frictionLaw_;
-    }
+    { return *frictionLaw_; }
 
     // This function returns the acceleration due to gravity.
     Scalar gravity(const GlobalPosition& globalPos) const
-    {
-        return gravity_;
-    }
+    { return gravity_; }
 
     // Define the bed surface based on the bed slope and the bed level at the inflow (10 m).
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
-    {
-        return 10.0 - element.geometry().center()[0] * bedSlope_;
-    }
+    { return 10.0 - element.geometry().center()[0] * bedSlope_; }
+```
 
-// We declare the private variables of the problem.
+<details><summary> Click to show private variables</summary>
+
+```cpp
+
 private:
     Scalar gravity_;
     Scalar bedSlope_;
@@ -573,6 +580,7 @@ private:
 } // end of namespace Dumux.
 ```
 
+</details>
 
 </details>
 

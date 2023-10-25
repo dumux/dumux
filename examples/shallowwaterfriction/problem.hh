@@ -17,6 +17,7 @@
 // [[content]]
 //
 // ### Include files
+// [[details]] includes
 //
 // The first include we need here is the `ShallowWaterProblem` class, the base
 // class from which we will derive.
@@ -28,8 +29,11 @@
 #include <dumux/common/boundarytypes.hh>
 // Include the `NumEqVector` class which specifies a field vector with size number of equations in this problem.
 #include <dumux/common/numeqvector.hh>
+// [[/details]]
 
+//
 // ### The problem class
+//
 // We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
 // In addition the analytical solution of the problem is calculated.
 // As this is a shallow water problem, we inherit from the basic ShallowWaterProblem.
@@ -39,12 +43,12 @@ namespace Dumux {
 template <class TypeTag>
 class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
 {
-    // A few convenience aliases used throughout this class.
+    // [[/codeblock]]
+    // [[details]] convenience aliases
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -57,9 +61,12 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using NeumannFluxes = NumEqVector;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    // [[/details]]
 
+    // In the constructor, we retrieve all required parameters from the input file
+    // [[codeblock]]
 public:
-    // This is the constructor of our problem class.
     RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
@@ -106,6 +113,7 @@ public:
         }
     }
 
+    // [[exclude]]
     // Getter function for the analytical solution of the water depth
     const std::vector<Scalar>& getExactWaterDepth()
     {
@@ -117,6 +125,7 @@ public:
     {
         return exactVelocityX_;
     }
+    // [[/exclude]]
     // [[/codeblock]]
 
     // #### Bottom friction
@@ -142,7 +151,7 @@ public:
     // The calculation of the source term due to bottom friction needs the bottom shear stess.
     // This is the force per area, which works between the flow and the channel bed
     // (1D vector with two entries) and is calculated within the `FrictionLaw` class.
-    // The bottom friction causes a loss of momentum. Thus the first entry of the `bottomFrictionSource`,
+    // The bottom friction causes a loss of momentum. Thus, the first entry of the `bottomFrictionSource`,
     // which is related to the mass balance equation is zero.
     // The second entry of the `bottomFricitonSource` corresponds to the momentum equation in x-direction
     // and is therefore equal to the first, the x-component, of the `bottomShearStress`.
@@ -160,9 +169,9 @@ public:
         Dune::FieldVector<Scalar, 2> bottomShearStress = this->spatialParams().frictionLaw(element, scv).bottomShearStress(volVars);
 
         // source term due to bottom friction
-        bottomFrictionSource[0] = 0.0;
-        bottomFrictionSource[1] = -bottomShearStress[0] / volVars.density();
-        bottomFrictionSource[2] = -bottomShearStress[1] / volVars.density();
+        bottomFrictionSource[Indices::massBalanceIdx] = 0.0;
+        bottomFrictionSource[Indices::momentumXBalanceIdx] = -bottomShearStress[0] / volVars.density();
+        bottomFrictionSource[Indices::momentumYBalanceIdx] = -bottomShearStress[1] / volVars.density();
 
         return bottomFrictionSource;
     }
@@ -170,8 +179,7 @@ public:
 
     // #### Boundary conditions
     //
-    // We define the __type of all boundary conditions__ as neumann-type,
-    // because we use a weak imposition.
+    // We use Neumann boundary conditions on the entire boundary.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -258,18 +266,14 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        // We set the initial water depth to one meter.
-        initialValues[0] = 1.0;
-        // We set the x-component of the initial velocity to zero.
-        initialValues[1] = 0.0;
-        // We set the y-component of the initial velocity to zero.
-        initialValues[2] = 0.0;
-
+        initialValues[Indices::waterdepthIdx] = 1.0;
+        initialValues[Indices::velocityXIdx] = 0.0;
+        initialValues[Indices::velocityYIdx] = 0.0;
         return initialValues;
     }
     // [[/codeblock]]
 
-// We declare the private variables of the problem.
+// [[details]] private variables
 // [[codeblock]]
 private:
     // variables for the analytic solution.
@@ -289,5 +293,6 @@ private:
 }; // end class definition RoughChannelProblem
 } // end namespace Dumux
 // [[/codeblock]]
+// [[/details]]
 // [[/content]]
 #endif
