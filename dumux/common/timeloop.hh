@@ -34,7 +34,7 @@ namespace Dumux {
 
 
 #ifndef DOXYGEN
-namespace Detail {
+namespace Detail::TimeLoop {
 
 template<typename Scalar, typename R, typename P>
 Scalar toSeconds(std::chrono::duration<R, P> duration)
@@ -52,7 +52,7 @@ template<typename Scalar, typename T, std::enable_if_t<!std::is_floating_point_v
 Scalar toSeconds(T duration)
 { static_assert(AlwaysFalse<T>::value, "Given type not supported for representation of time values"); }
 
-} // namespace Detail
+} // namespace Detail::TimeLoop
 #endif // DOXYGEN
 
 /*!
@@ -120,7 +120,7 @@ public:
      */
     template<class Rep, class Period>
     void setTimeStepSize(std::chrono::duration<Rep, Period> dt)
-    { setTimeStepSize(Detail::toSeconds<Scalar>(dt)); }
+    { setTimeStepSize(Detail::TimeLoop::toSeconds<Scalar>(dt)); }
 
     /*!
      * \brief Returns true if the simulation is finished.
@@ -150,9 +150,9 @@ public:
              std::chrono::duration<Rep3, Period3> tEnd,
              bool verbose = true)
     : TimeLoop(
-        Detail::toSeconds<Scalar>(startTime),
-        Detail::toSeconds<Scalar>(dt),
-        Detail::toSeconds<Scalar>(tEnd),
+        Detail::TimeLoop::toSeconds<Scalar>(startTime),
+        Detail::TimeLoop::toSeconds<Scalar>(dt),
+        Detail::TimeLoop::toSeconds<Scalar>(tEnd),
         verbose
     ){}
 
@@ -198,9 +198,9 @@ public:
                bool verbose = true)
     {
         reset(
-            Detail::toSeconds<Scalar>(startTime),
-            Detail::toSeconds<Scalar>(dt),
-            Detail::toSeconds<Scalar>(tEnd)
+            Detail::TimeLoop::toSeconds<Scalar>(startTime),
+            Detail::TimeLoop::toSeconds<Scalar>(dt),
+            Detail::TimeLoop::toSeconds<Scalar>(tEnd)
         );
     }
 
@@ -257,7 +257,7 @@ public:
      */
     template<class ScalarOrDuration>
     void setTime(ScalarOrDuration t)
-    { time_ = Detail::toSeconds<Scalar>(t); }
+    { time_ = Detail::TimeLoop::toSeconds<Scalar>(t); }
 
     /*!
      * \brief Set the current simulated time and the time step index.
@@ -267,7 +267,10 @@ public:
      */
     template<class ScalarOrDuration>
     void setTime(ScalarOrDuration t, int stepIdx)
-    { time_ = Detail::toSeconds<Scalar>(t); timeStepIdx_ = stepIdx; }
+    {
+        time_ = Detail::TimeLoop::toSeconds<Scalar>(t);
+        timeStepIdx_ = stepIdx;
+    }
 
     /*!
      * \brief Return the time \f$\mathrm{[s]}\f$ before the time integration.
@@ -336,7 +339,7 @@ public:
     template<class ScalarOrDuration>
     void setMaxTimeStepSize(ScalarOrDuration maxDt)
     {
-        userSetMaxTimeStepSize_ = Detail::toSeconds<Scalar>(maxDt);
+        userSetMaxTimeStepSize_ = Detail::TimeLoop::toSeconds<Scalar>(maxDt);
         setTimeStepSize(timeStepSize_);
     }
 
@@ -585,7 +588,12 @@ public:
      */
     template<class ScalarOrDuration1, class ScalarOrDuration2 = Scalar>
     void setPeriodicCheckPoint(ScalarOrDuration1 interval, ScalarOrDuration2 offset = 0.0)
-    { setPeriodicCheckPoint_(Detail::toSeconds<Scalar>(interval), Detail::toSeconds<Scalar>(offset)); }
+    {
+        setPeriodicCheckPoint_(
+            Detail::TimeLoop::toSeconds<Scalar>(interval),
+            Detail::TimeLoop::toSeconds<Scalar>(offset)
+        );
+    }
 
     //! disable periodic check points
     void disablePeriodicCheckPoints()
@@ -616,7 +624,7 @@ public:
     void setCheckPoint(ScalarOrDuration t)
     {
         // set the check point
-        setCheckPoint_(Detail::toSeconds<Scalar>(t));
+        setCheckPoint_(Detail::TimeLoop::toSeconds<Scalar>(t));
 
         // make sure we respect this check point on the next time step
         this->setTimeStepSize(this->timeStepSize());
@@ -647,7 +655,7 @@ public:
 
         // set the check points
         for (; first != last; ++first)
-            setCheckPoint_(Detail::toSeconds<Scalar>(*first));
+            setCheckPoint_(Detail::TimeLoop::toSeconds<Scalar>(*first));
 
         // make sure we respect this check point on the next time step
         this->setTimeStepSize(this->timeStepSize());
