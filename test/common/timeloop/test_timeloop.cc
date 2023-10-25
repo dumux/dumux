@@ -10,6 +10,7 @@
 #include <chrono>
 #include <thread>
 #include <limits>
+#include <optional>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
@@ -17,18 +18,20 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/timeloop.hh>
 
-int main(int argc, char* argv[])
+void testTimeLoops(double tStart,
+                   double tEnd,
+                   double dt,
+                   std::optional<double> dtInLoop = {})
 {
-    // maybe initialize MPI and/or multithreading backend
-    Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    //! Standard time loop
-    double tStart = 0; double tEnd = 1; double dt = 0.1;
+    std::cout << "Testing with dt = " << dt
+              << ", tStart = " << tStart
+              << ", tEnd = " << tEnd
+              <<std::endl;
+    const auto timeSpan = tEnd - tStart;
 
     //! Standard time loop
     {
-        if (mpiHelper.rank() == 0) std::cout << "------- Test time loop ----------" << std::endl;
+        std::cout << "------- Test time loop ----------" << std::endl;
         Dumux::TimeLoop<double> timeLoop(tStart, dt, tEnd);
 
         if (std::abs(timeLoop.time()-tStart) > 1e-15)
@@ -38,8 +41,9 @@ int main(int argc, char* argv[])
         if (std::abs(timeLoop.timeStepSize()-dt) > 1e-15)
             DUNE_THROW(Dune::InvalidStateException, "Wrong time step size!");
 
-        timeLoop.setMaxTimeStepSize(0.03333333333333333);
-        if (std::abs(timeLoop.timeStepSize()-0.03333333333333333) > 1e-15)
+        const auto smallerMaxDt = dt*0.03;
+        timeLoop.setMaxTimeStepSize(smallerMaxDt);
+        if (std::abs(timeLoop.timeStepSize()-smallerMaxDt) > 1e-15)
             DUNE_THROW(Dune::InvalidStateException, "Wrong time step size!");
 
         timeLoop.start(); // starts the timer
@@ -59,20 +63,21 @@ int main(int argc, char* argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
             timeLoop.advanceTimeStep();
             timeLoop.reportTimeStep();
-            timeLoop.setTimeStepSize(timeLoop.timeStepSize());
+            timeLoop.setMaxTimeStepSize(dtInLoop.value_or(timeLoop.timeStepSize()));
+            timeLoop.setTimeStepSize(dtInLoop.value_or(timeLoop.timeStepSize()));
         }
 
         timeLoop.finalize();
 
-        if (std::abs(timeLoop.time()-tEnd) > 1e-15)
+        if (std::abs(timeLoop.time()-tEnd) > 1e-15*timeSpan)
             DUNE_THROW(Dune::InvalidStateException, "Ended with wrong end time!");
     }
 
     // check point timeLoop
     {
-        if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
+        std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
         Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
-        timeLoop.setPeriodicCheckPoint(0.03, -0.03);
+        timeLoop.setPeriodicCheckPoint(0.03*dt, -0.03*dt);
         if (!timeLoop.isCheckPoint())
             DUNE_THROW(Dune::InvalidStateException, "This is supposed to be a check point! t = " << timeLoop.time());
 
@@ -80,7 +85,7 @@ int main(int argc, char* argv[])
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeLoop.advanceTimeStep();
         timeLoop.reportTimeStep();
-        timeLoop.setPeriodicCheckPoint(0.03);
+        timeLoop.setPeriodicCheckPoint(0.03*dt);
 
         if (std::signbit(timeLoop.timeStepSize()))
             DUNE_THROW(Dune::InvalidStateException, "Time step size is negative! dt = " << timeLoop.timeStepSize());
@@ -88,8 +93,8 @@ int main(int argc, char* argv[])
         if (!timeLoop.isCheckPoint())
             DUNE_THROW(Dune::InvalidStateException, "This is supposed to be a check point! t = " << timeLoop.time());
 
-        timeLoop.setCheckPoint(0.02); // can't be set because it's in the past
-        timeLoop.setCheckPoint(0.08);
+        timeLoop.setCheckPoint(0.02*dt); // can't be set because it's in the past
+        timeLoop.setCheckPoint(0.08*dt);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeLoop.advanceTimeStep();
         timeLoop.reportTimeStep();
@@ -100,8 +105,8 @@ int main(int argc, char* argv[])
         if (!timeLoop.isCheckPoint())
             DUNE_THROW(Dune::InvalidStateException, "This is supposed to be a check point! t = " << timeLoop.time());
 
-        timeLoop.setEndTime(1e9);
-        timeLoop.setTimeStepSize(1e7);
+        timeLoop.setEndTime(1e9*timeSpan);
+        timeLoop.setTimeStepSize(1e7*timeSpan);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeLoop.advanceTimeStep();
@@ -113,9 +118,10 @@ int main(int argc, char* argv[])
         if (!timeLoop.isCheckPoint())
             DUNE_THROW(Dune::InvalidStateException, "This is supposed to be a check point! t = " << timeLoop.time());
 
+        const double scaling = 1.0e6;
         timeLoop.removeAllCheckPoints();
-        timeLoop.setTimeStepSize(0.5e-6);
-        timeLoop.setPeriodicCheckPoint(1.0e6, 1.0e6);
+        timeLoop.setTimeStepSize(0.5e-6*timeSpan);
+        timeLoop.setPeriodicCheckPoint(scaling*timeSpan, scaling*timeSpan);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         timeLoop.advanceTimeStep();
@@ -124,6 +130,7 @@ int main(int argc, char* argv[])
         if (std::signbit(timeLoop.timeStepSize()))
             DUNE_THROW(Dune::InvalidStateException, "Time step size is negative! dt = " << timeLoop.timeStepSize());
 
+        timeLoop.setTimeStepSize(dtInLoop.value_or(timeLoop.timeStepSize())*scaling);
         while (!timeLoop.finished())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -131,11 +138,11 @@ int main(int argc, char* argv[])
             timeLoop.reportTimeStep();
             timeLoop.setTimeStepSize(std::numeric_limits<double>::max());
 
-            if (std::abs(timeLoop.time() - 2.0e6) < 1e-15 && !timeLoop.isCheckPoint())
+            if (std::abs(timeLoop.time() - 2.0e6*timeSpan) < 1e-15 && !timeLoop.isCheckPoint())
                 DUNE_THROW(Dune::InvalidStateException, "This is supposed to be a check point! t = " << timeLoop.time());
 
             if (timeLoop.timeStepIndex() == 10)
-                timeLoop.setPeriodicCheckPoint(1.0e8);
+                timeLoop.setPeriodicCheckPoint(1.0e8*timeSpan);
 
             if (std::signbit(timeLoop.timeStepSize()))
                 DUNE_THROW(Dune::InvalidStateException, "Time step size is negative! dt = " << timeLoop.timeStepSize());
@@ -143,22 +150,22 @@ int main(int argc, char* argv[])
 
         timeLoop.finalize();
 
-        if (std::abs(timeLoop.time()-1e9) > 1e-15)
+        if (std::abs(timeLoop.time()-1e9*timeSpan) > 1e9*1e-15*timeSpan)
             DUNE_THROW(Dune::InvalidStateException, "Ended with wrong end time!");
 
     }
 
     // check if time loops remembers time step before check point
     {
-        if (mpiHelper.rank() == 0) std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
+        std::cout << std::endl << "------- Test check point time loop ----------" << std::endl;
         Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
-        timeLoop.setCheckPoint(0.101);
+        timeLoop.setCheckPoint(1.01*dt);
         timeLoop.start();
         timeLoop.advanceTimeStep();
         timeLoop.reportTimeStep();
         timeLoop.advanceTimeStep();
         timeLoop.reportTimeStep();
-        if (!(std::abs(timeLoop.timeStepSize()-0.1) < 1e-14))
+        if (!(std::abs(timeLoop.timeStepSize()-dt) < 1e-14))
             DUNE_THROW(Dune::InvalidStateException, "Time Loop reduced time step size to " << timeLoop.timeStepSize()
                          << " after check point unnecessarily!");
 
@@ -178,11 +185,11 @@ int main(int argc, char* argv[])
         // get result and reset buffer
         const auto result = cerrBuffer.str();
         std::cerr.rdbuf(cerrOriginal);
-        std::cout << "Setting check point at the current time printed '" << result << "' to std::cerr" << std::endl;
+        std::cout << "Setting check point at the current time. Printed error message: " << result << std::endl;
 
         if (result.empty())
-            DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to std::cerr");
-        if (Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0, 1e-10*tEnd))
+            DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to the error stream");
+        if (Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0, 1e-10))
             DUNE_THROW(Dune::Exception, "Time Loop reduced time step size to 0!");
     }
 
@@ -198,11 +205,29 @@ int main(int argc, char* argv[])
         // get result and reset buffer
         const auto result = cerrBuffer.str();
         std::cerr.rdbuf(cerrOriginal);
-        std::cout << "Setting zero time step printed '" << result << "' to std::cerr" << std::endl;
+        std::cout << "Setting zero time step. Printed error message: " << result << std::endl;
 
         if (result.empty())
-            DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to std::cerr");
+            DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to the error stream");
     }
+}
+
+int main(int argc, char* argv[])
+{
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+
+    // unit time
+    testTimeLoops(0.0, 1.0, 0.1);
+
+    // microseconds
+    testTimeLoops(0.0, 1.0e-6, 1e-7);
+
+    // large time scales
+    testTimeLoops(0.0, 1.0e12, 1e9, {1e11});
+
+    // large time scales but small initial time step
+    testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
 
     return 0;
 }

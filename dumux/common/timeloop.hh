@@ -245,7 +245,13 @@ public:
     {
         using std::min;
         timeStepSize_ = min(dt, maxTimeStepSize());
-        if (!finished() && Dune::FloatCmp::le(timeStepSize_, 0.0, 1e-14*(endTime_ - startTime_)))
+        // Warn if dt is so small w.r.t. current time that it renders float addition meaningless
+        // For instance, consider (may depend on architecture):
+        //     double cien = 100;
+        //     double mil = 1000;
+        //     if (cien + 1e-14 == cien) std::cout << "Will not be printed" << std::endl;
+        //     if (mil + 1e-14 == mil) std::cout << "Will be printed" << std::endl;
+        if (!finished() && (time_ + timeStepSize_ == time_))
             std::cerr << Fmt::format("You have set a very small timestep size (dt = {:.5g}).", timeStepSize_)
                       << " This might lead to numerical problems!\n";
     }
@@ -301,7 +307,7 @@ public:
      */
     bool finished() const override
     {
-        return finished_ || (endTime_ - time_) < 1e-10*(time_ - startTime_);
+        return finished_ || (endTime_ - time_) < baseEps_*(time_ - startTime_);
     }
 
     /*!
@@ -310,7 +316,7 @@ public:
      */
     bool willBeFinished() const
     {
-        return finished() || (endTime_ - time_ - timeStepSize_) < 1e-10*timeStepSize_;
+        return finished() || (endTime_ - time_ - timeStepSize_) < baseEps_*timeStepSize_;
     }
 
     /*!
@@ -375,6 +381,8 @@ public:
      */
 
 protected:
+    static constexpr Scalar baseEps_ = 1e-10;
+
     Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
@@ -416,14 +424,14 @@ public:
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
         // if we reached a periodic check point
-        if (periodicCheckPoints_ && Dune::FloatCmp::eq(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_, 1e-7))
+        if (periodicCheckPoints_ && fuzzyEqual_(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
         {
             lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
             isCheckPoint_ = true;
         }
 
         // or a manually set check point
-        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(newTime - checkPoints_.front(), 0.0, 1e-7))
+        else if (!checkPoints_.empty() && fuzzyEqual_(newTime - checkPoints_.front(), 0.0))
         {
             checkPoints_.pop();
             isCheckPoint_ = true;
@@ -506,7 +514,7 @@ public:
                       << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
 
         // check if the current time point is a check point
-        if (Dune::FloatCmp::eq(this->time()-lastPeriodicCheckPoint_, 0.0, 1e-7))
+        if (fuzzyEqual_(this->time()-lastPeriodicCheckPoint_, 0.0))
             isCheckPoint_ = true;
 
         // make sure we respect this check point on the next time step
@@ -575,14 +583,17 @@ public:
     }
 
 private:
+    bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
+    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
+
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*1e-7))
+        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
         {
             if (this->verbose())
                 std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
-                          << Fmt::format("because that's in the past! (current simulation time is {:.5g})\n", this->time());
+                          << Fmt::format("because that's not in the future! (current simulation time is {:.5g})\n", this->time());
             return;
         }
 
