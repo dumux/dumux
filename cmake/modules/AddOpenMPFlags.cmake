@@ -4,7 +4,7 @@
 include_guard(GLOBAL)
 
 # set variable for config.h
-set(HAVE_OPENMP ${OpenMP_FOUND})
+set(DUMUX_HAVE_OPENMP ${OpenMP_FOUND})
 
 # perform DUNE-specific setup tasks
 if (OpenMP_FOUND)

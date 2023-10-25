@@ -254,7 +254,7 @@ int main(int argc, char** argv)
     }
 
     //plot the pc-S curve, if desired
-#ifdef HAVE_GNUPLOT
+#ifdef DUMUX_HAVE_GNUPLOT
     if (getParam<bool>("Problem.PlotPcS"))
     {
         Dumux::GnuplotInterface<Scalar> gnuplot(true);

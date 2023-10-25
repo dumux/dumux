@@ -45,7 +45,7 @@ find_package_handle_standard_args(
 )
 
 # set macros for config.h
-set(HAVE_PVPYTHON ${PVPYTHON_FOUND})
+set(DUMUX_HAVE_PVPYTHON ${PVPYTHON_FOUND})
 set(PVPYTHON_EXECUTABLE ${PVPYTHON_EXECUTABLE})
 
 # text for feature summary

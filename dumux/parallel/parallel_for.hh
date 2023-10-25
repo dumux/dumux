@@ -16,7 +16,7 @@
 
 #include <dumux/parallel/multithreading.hh>
 
-#if HAVE_CPP_PARALLEL_ALGORITHMS
+#if DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS
 #include <algorithm>
 #include <execution>
 #include <dune/common/rangeutilities.hh>
@@ -59,7 +59,7 @@ private:
     std::size_t count_;
 };
 
-#if HAVE_CPP_PARALLEL_ALGORITHMS
+#if DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS
 // C++ parallel algorithms backend implementation
 template<class FunctorType>
 class ParallelFor<FunctorType, Multithreading::ExecutionBackends::Cpp>
@@ -121,7 +121,7 @@ private:
 #endif // HAVE_KOKKOS
 
 
-#if HAVE_OPENMP
+#if DUMUX_HAVE_OPENMP
 // OpenMP backend implementation
 template<class FunctorType>
 class ParallelFor<FunctorType, Multithreading::ExecutionBackends::OpenMP>
@@ -141,7 +141,7 @@ private:
     FunctorType functor_;
     std::size_t count_;
 };
-#endif // HAVE_OPENMP
+#endif // DUMUX_HAVE_OPENMP
 
 
 } // end namespace Detail
