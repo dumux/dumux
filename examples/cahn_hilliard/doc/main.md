@@ -44,6 +44,7 @@ We start in `main.cc` with the necessary header includes:
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dune/grid/yaspgrid.hh>
+#include <dumux/io/chrono.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
@@ -329,16 +330,16 @@ the time step size from the parameter tree (`params.input`)
 
 ```cpp
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(
-        getParam<Scalar>("TimeLoop.TStart", 0.0),
-        getParam<Scalar>("TimeLoop.InitialTimeStepSize"),
-        getParam<Scalar>("TimeLoop.TEnd")
+        Chrono::toSeconds(getParam("TimeLoop.TStart", "0")),
+        Chrono::toSeconds(getParam("TimeLoop.InitialTimeStepSize")),
+        Chrono::toSeconds(getParam("TimeLoop.TEnd"))
     );
 ```
 
 We set the maximum time step size allowed in the adaptive time stepping scheme.
 
 ```cpp
-    timeLoop->setMaxTimeStepSize(getParam<Scalar>("TimeLoop.MaxTimeStepSize"));
+    timeLoop->setMaxTimeStepSize(Chrono::toSeconds(getParam("TimeLoop.MaxTimeStepSize")));
 ```
 
 Next, we choose the type of assembler, linear solver and PDE solver
