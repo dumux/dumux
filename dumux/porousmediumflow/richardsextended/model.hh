@@ -27,6 +27,20 @@
  =
  q_w,
  \f]
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_w \f$ represents the saturation of the wetting-phase,
+ * * \f$ \varrho_w \f$ is the mass density of the wetting phase,
+ * * \f$ \varrho_n \f$ is the mass density of the non-wetting phase,
+ * * \f$ k_{rw} \f$ is the relative permeability of the wetting phase,
+ * * \f$ \mu_w \f$ is the dynamic viscosity of the wetting phase,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_w \f$ is the pressure of the wetting phase,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ \bf D_{n,pm}^{w} \f$ is the diffusivity of water in the non-wetting phase,
+ * * \f$ X_n^w \f$ is the mass fraction of water in the non-wetting phase,
+ * * \f$ q_w \f$ is a source or sink term in the wetting phase.
+ *
  * is frequently used to
  * approximate the water distribution above the groundwater level.
  *
@@ -43,14 +57,17 @@
  =
  q_\alpha,
  \f]
- * where \f$\alpha \in \{w, n\}\f$ is the fluid phase,
- * \f$\kappa \in \{ w, a \}\f$ are the components,
- * \f$\rho_\alpha\f$ is the fluid density, \f$S_\alpha\f$ is the fluid
- * saturation, \f$\phi\f$ is the porosity of the soil,
- * \f$k_{r\alpha}\f$ is the relative permeability for the fluid,
- * \f$\mu_\alpha\f$ is the fluid's dynamic viscosity, \f$\mathbf{K}\f$ is the
- * intrinsic permeability, \f$p_\alpha\f$ is the fluid pressure and
- * \f$g\f$ is the potential of the gravity field.
+ *
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
+ * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ q_\alpha \f$ is a source or sink term.
  *
  * In contrast to the full two-phase model, the Richards model assumes
  * gas as the nonwetting fluid and that it exhibits a much lower
