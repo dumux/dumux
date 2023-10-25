@@ -58,7 +58,7 @@ struct TruncatedPyramidGrainFouriersLaw
         // the pyramid base length of the inside pore
         const Scalar insideBaseSideLength = [&]()
         {
-            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "GrainFouriersLaw.UseAdaptedVolumeForPyramid", false);
+            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", false);
 
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*insideVolVars.poreVolume(), insideHeight);
@@ -69,7 +69,7 @@ struct TruncatedPyramidGrainFouriersLaw
         // the pyramid base length of the outside pore
         const Scalar outsideBaseSideLength = [&]()
         {
-            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "GrainFouriersLaw.UseAdaptedVolumeForPyramid", false);
+            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", false);
 
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*outsideVolVars.poreVolume(), outsideHeight);
