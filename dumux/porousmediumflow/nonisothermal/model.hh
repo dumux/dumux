@@ -32,10 +32,23 @@
     & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
     - q^h = 0.
  \f}
- * where \f$h_\alpha\f$ is the specific enthalpy of a fluid phase
- * \f$\alpha\f$ and \f$u_\alpha = h_\alpha -
- * p_\alpha/\varrho_\alpha\f$ is the specific internal energy of the
- * phase.
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ h_\alpha \f$ is the specific enthalpy of phase  \f$ \alpha \f$,
+ * * \f$ u_\alpha \f$ is the specific internal energy of phase \f$ \alpha \f$,
+ * * \f$ \lambda_{pm}\f$ is the heat conductivity in the porous medium,
+ * * \f$ T \f$ is the Temperature,
+ * * \f$ \rho_s \f$ is the mass density of phase the solid,
+ * * \f$ c_s \f$ is the heat capacity of the solid,
+ * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
+ * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ q^h \f$ is a source or sink term.
+ *
  */
 
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH
