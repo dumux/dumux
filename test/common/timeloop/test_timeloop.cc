@@ -185,10 +185,10 @@ void testTimeLoops(double tStart,
         // get result and reset buffer
         const auto result = cerrBuffer.str();
         std::cerr.rdbuf(cerrOriginal);
-        std::cout << "Setting check point at the current time printed '" << result << "' to std::cerr" << std::endl;
+        std::cout << "Setting check point at the current time. Printed error message: " << result << std::endl;
 
         if (result.empty())
-            DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to std::cerr");
+            DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to the error stream");
         if (Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0, 1e-10))
             DUNE_THROW(Dune::Exception, "Time Loop reduced time step size to 0!");
     }
@@ -205,10 +205,10 @@ void testTimeLoops(double tStart,
         // get result and reset buffer
         const auto result = cerrBuffer.str();
         std::cerr.rdbuf(cerrOriginal);
-        std::cout << "Setting zero time step printed '" << result << "' to std::cerr" << std::endl;
+        std::cout << "Setting zero time step. Printed error message: " << result << std::endl;
 
         if (result.empty())
-            DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to std::cerr");
+            DUNE_THROW(Dune::Exception, "Setting a zero timeStepSize should print a warning to the error stream");
     }
 }
 
