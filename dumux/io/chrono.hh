@@ -12,11 +12,14 @@
 #ifndef DUMUX_IO_CHRONO_HH
 #define DUMUX_IO_CHRONO_HH
 
+#include <array>
 #include <cctype>
 #include <chrono>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <algorithm>
+
+#include <dune/common/exceptions.hh>
 
 namespace Dumux::Chrono {
 
@@ -27,7 +30,7 @@ void toDuration(std::chrono::duration<Rep, Period>& duration, const std::string&
     using std::chrono::duration_cast;
     using namespace std::chrono_literals;
     using S = std::chrono::duration<Rep>;
-    static const std::unordered_map<std::string, S> unitMap{
+    constexpr std::array<std::pair<std::string_view, S>, 9> unitMap{{
         {"", S(1)}, // assume seconds if no unit is given
         {"s", S(1)},
         {"ns", duration_cast<S>(std::chrono::nanoseconds(1))},
@@ -38,13 +41,21 @@ void toDuration(std::chrono::duration<Rep, Period>& duration, const std::string&
         // After requiring cpp20, we can use the aliases in std::chrono
         {"d", duration_cast<S>(std::chrono::hours(24))},
         {"y", duration_cast<S>(std::chrono::seconds(31556952))}  // to match cpp20, see https://en.cppreference.com/w/cpp/chrono/duration
-    };
+    }};
 
     const auto unitIt = std::find_if(s.rbegin(), s.rend(), [] (const auto& c) { return !std::isalpha(c); });
     const auto unitPos = s.size() - std::distance(s.rbegin(), unitIt);
     const auto number = std::stod(s.substr(0, unitPos));
     const auto unit = s.substr(unitPos);
-    duration = duration_cast<std::chrono::duration<Rep, Period>>(number*unitMap.at(unit));
+    const auto conversion = [&] () {
+        const auto it = std::find_if(unitMap.begin(), unitMap.end(), [u=std::string_view{unit}] (const auto& p) {
+            return p.first == u;
+        });
+        if (it == unitMap.end())
+            DUNE_THROW(Dune::InvalidStateException, "Unsupported unit " << unit << ".");
+        return it->second;
+    } ();
+    duration = duration_cast<std::chrono::duration<Rep, Period>>(number*conversion);
 }
 
 //! Try to construct an instance of std::chrono::seconds from a string including a unit suffix
