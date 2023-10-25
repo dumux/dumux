@@ -17,6 +17,15 @@
  \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
  - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
  * \f]
+* Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ \varrho \f$ is the mass density,
+ * * \f$ \textbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ \mu \f$ represents the dynamic-viscosity,
+ * * \f$  p \f$ is the pressure,
+ * * \f$ \textbf{g} \f$ is the gravitational acceleration vector,
+ * * and \f$ q \f$ is a source or sink term.
+ *
  *
  * The model supports compressible as well as incompressible fluids.
  */
