@@ -22,6 +22,18 @@
  - \sum_w q_w^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
  w \in \{w, g\}
  \f}
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_w \f$ represents the saturation of the wetting-phase,
+ * * \f$ \varrho_w \f$ is the mass density of the wetting phase,
+ * * \f$ k_{rw} \f$ is the relative permeability of the wetting phase,
+ * * \f$ \mu_w \f$ is the dynamic viscosity of the wetting phase,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_w \f$ is the pressure of the wetting phase,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ \bf D_{w,pm}^{k} \f$ is the diffusivity of component \f$ \kappa \f$ in the wetting phase,
+ * * \f$ X_w^k \f$ is the mass fraction of component \f$ \kappa \f$ in the wetting phase,
+ * * \f$ q_w \f$ is a source or sink term in the wetting phase.
  * is frequently used to
  * approximate the water distribution above the groundwater level.
  *
