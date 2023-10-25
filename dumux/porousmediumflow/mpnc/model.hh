@@ -39,6 +39,17 @@
  * phase \f$\alpha\f$: \f[ \overline M_\alpha = \sum_\kappa M^\kappa
  * \; x_\alpha^\kappa \f]
  *
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
+ * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
+ * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
+ * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
+ * * \f$ \overline M_\alpha \f$ is the average molar mass of phase \f$ \alpha \f$
+ * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ *
  * For the missing \f$M\f$ model assumptions, the model assumes that
  * if a fluid phase is not present, the sum of the mole fractions of
  * this fluid phase is smaller than \f$1\f$, i.e.
