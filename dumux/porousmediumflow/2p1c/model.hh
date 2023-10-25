@@ -26,6 +26,16 @@
 \phi \frac{\partial\ \sum_\alpha (\rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \text{div} \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
 \mathbf{K} (\mathbf{grad}p_\alpha - \rho_\alpha \mathbf{g}) \right \} -q^w =0
  \f]
+ * Where:
+ * * \f$ \phi \f$ is the porosity of the porous-medium,
+ * * \f$ S_\alpha \f$ represents  the  saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
+ * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_\alpha \f$ is the pressure of phase \f$  \alpha \f$,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ q^w \f$ is a source or sink term.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
