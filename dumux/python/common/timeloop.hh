@@ -50,7 +50,7 @@ void registerTimeLoop(pybind11::handle scope,
         &TimeLoop::template setPeriodicCheckPoint<Scalar, Scalar>,
         "interval"_a, "offset"_a=0.0
     );
-    cls.def("setCheckPoints", [](TimeLoop& self, const std::vector<double>& checkPoints) {
+    cls.def("setCheckPoints", [](TimeLoop& self, const std::vector<Scalar>& checkPoints) {
         self.setCheckPoint(checkPoints);
     });
 }
