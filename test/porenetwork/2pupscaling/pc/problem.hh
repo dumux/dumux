@@ -36,6 +36,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -53,6 +54,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+    using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
 public:
     template<class SpatialParams>
@@ -204,6 +206,16 @@ public:
         const auto& fluidMatrixInteraction = this->spatialParams().fluidMatrixInteraction(element, scv, 0);
         if (isInletPore_(scv))
             values[snIdx] = 1.0 - fluidMatrixInteraction.sw(pcEpisopde_[step_]);
+        else if (isOutletPore_(scv))
+        {
+            Scalar swNeighborPc = outletPcGradient_->zeroPcGradientSw(element, scv);
+            // if (swNeighborPc < 1.0)
+                values[snIdx] = 1.0 - swNeighborPc;
+            // else
+            //     values[sIdx] = 0.1;///*1.0 - */outletPcGradient_->zeroPcGradientSw(element, scv);
+
+        }
+
 
         return values;
     }
@@ -238,6 +250,9 @@ public:
     bool initialInvasionState(const Element& element) const
     { return false; }
 
+    void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
+    {  outletPcGradient_ = outletPcGradient;}
+
     // \}
 
 private:
@@ -269,6 +284,7 @@ private:
     mutable bool inEquilibrium_ = false;
     Scalar swShiftThreshold_;
     bool writeOnlyEqPoints_;
+    std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
 
     int step_;
 };

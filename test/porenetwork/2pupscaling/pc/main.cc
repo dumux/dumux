@@ -25,10 +25,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include <dumux/linear/istlsolvers.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/porenetwork/2p/newtonsolver.hh>
 
 #include "properties.hh"
@@ -123,6 +123,9 @@ int main(int argc, char** argv)
             dofsToNeglect.push_back(vIdx);
     }
 
+    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
+    problem->outletCapPressureGradient(outletCapPressureGradient);
+
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
@@ -132,7 +135,7 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

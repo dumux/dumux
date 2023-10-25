@@ -2,10 +2,29 @@
 DtInitial = 1e-5 # [s]
 TEnd = 1e10 # [s]
 
+#[Grid]
+#File = ../../1p/grids/pnm_converted.dgf
+#PoreGeometry = Cube
+#ThroatCrossSectionShape = Square
+
 [Grid]
-File = ../1p/grids/pnm_converted.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
+
+UpperRight = 2e-3 2e-3 2e-3
+NumPores = 5 5 5
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 1e-5
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+RemoveThroatsOnBoundary = 0 1 #2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = true
+DeletionRandomNumberSeed = 33
 
 [Problem]
 Name = test_pnm_2p
@@ -21,10 +40,15 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+NewtonOutputFilename = Newton
+MaxTimeStepDivisions = 40
 
 [InvasionState]
 Verbosity = true
 #AccuracyCriterion = 0.99
 
 [SpatialParams]
+RegularizationLowSw = 0.0001
+RegularizationHighSw = 0.99999
 HighSwRegularizationMethod = Spline
+

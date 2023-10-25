@@ -13,11 +13,11 @@ PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
 UpperRight = 2e-3 2e-3 2e-3
-NumPores = 5 5 5
+NumPores = 4 2 2
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
-StandardDeviationPoreInscribedRadius = 3e-6
+StandardDeviationPoreInscribedRadius = 1e-5
 
 BoundaryFaceMarker = 2 3 1 1 1 1
 MinThroatLength = 1e-9

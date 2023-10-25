@@ -145,10 +145,10 @@ public:
         if (isOutletPore_(scv))
         {
             Scalar swNeighborPc = outletPcGradient_->zeroPcGradientSw(element, scv);
-            if (swNeighborPc < 1.0)
+            // if (swNeighborPc < 1.0)
                 values[sIdx] = /*1.0 - */swNeighborPc;
-            else
-                values[sIdx] = 0.1;///*1.0 - */outletPcGradient_->zeroPcGradientSw(element, scv);
+            // else
+            //     values[sIdx] = 0.1;///*1.0 - */outletPcGradient_->zeroPcGradientSw(element, scv);
 
         }
 
