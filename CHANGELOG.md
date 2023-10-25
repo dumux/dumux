@@ -23,6 +23,7 @@ be evaluated with the function values provided in the same order as the names wh
 - __Freeflow Nonisothermal__: An issue with the compositional heat flux's upwinding calculations has been fixed
 - __Compositional Staggered__: The staggered discretization method has been updated to fix inconsistencies in handling density when evaluating diffusive boundary fluxes. In addition, a total mass balance is now always considered, rather than a total mole balance.
 - __Parameters__: The template argument for `getParam` and `getParamFromGroup` now defaults to `std::string`, such that for string parameters one can simply write `const auto param = getParam("MyParam");`
+- __Compositional Freeflow FCSFV__: Compositional transport has been implemented for the overhauled face-centered staggered finite volume scheme (FCSFV) discretization method. Ported tests are available in the testing suite.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
