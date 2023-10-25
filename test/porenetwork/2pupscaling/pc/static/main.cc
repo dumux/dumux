@@ -32,9 +32,97 @@
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
+#include <dumux/porenetwork/common/throatproperties.hh>
 
 #include <dumux/porenetwork/2p/static/staticdrainge.hh>
 #include <dumux/io/gnuplotinterface.hh>
+
+namespace Dumux::PoreNetwork{
+
+template<class Scalar>
+class SimpleFluxVariablesCache
+{
+    struct WettingLayerCache
+    {
+        using CreviceResistanceFactor = WettingLayerTransmissibility::CreviceResistanceFactorZhou;
+        Scalar creviceResistanceFactor(const int cornerIdx) const
+        { return CreviceResistanceFactor::beta(cornerHalfAngle_, contactAngle_); }
+    };
+
+    using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
+
+public:
+    template< class GridGeometry, class Element>
+    void update(const std::shared_ptr<GridGeometry> gridGeometry, const Element& element, std::array<Scalar,2> pc)
+    {   const auto eIdx = gridGeometry->elementMapper().index(element);
+        const auto& shape = gridGeometry->throatCrossSectionShape(/*eIdx*/0);
+        throatLength_ = gridGeometry->throatLength(eIdx);
+        throatInscribedRadius_ = gridGeometry->throatInscribedRadius(eIdx);
+        Scalar totalThroatCrossSectionalArea = gridGeometry->throatCrossSectionalArea(eIdx);
+
+        const auto numCorners = Throat::numCorners(shape);
+        cornerHalfAngle_ = Throat::cornerHalfAngles<Scalar>(shape)[0];
+        contactAngle_ = getParam<Scalar>("Problem.ContactAngle");
+        surfaceTension_ = getParam<Scalar>("Problem.SurfaceTension");
+        pc_ = *std::max_element(pc.begin(), pc.end());
+        for (std::size_t i = 0U; i<numCorners; ++i)
+            wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), contactAngle_, cornerHalfAngle_);
+
+        throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+            std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+            totalThroatCrossSectionalArea
+        );
+
+        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+    }
+
+
+    Scalar throatLength() const
+    { return throatLength_; }
+
+    Scalar surfaceTension() const
+    { return surfaceTension_; }
+
+    Scalar curvatureRadius() const
+    { return surfaceTension_ / pc_;}
+
+    Scalar throatInscribedRadius() const
+    { return throatInscribedRadius_; }
+
+    Scalar pc() const
+    { return pc_; }
+
+    std::size_t wPhaseIdx() const
+    { return 1 - nPhaseIdx_; }
+
+    std::size_t nPhaseIdx() const
+    { return nPhaseIdx_; }
+
+    Scalar wettingLayerCrossSectionalArea( int corner)
+    { return wettingLayerCrossSectionalArea_; }
+
+    Scalar throatCrossSectionalArea(const int phaseIdx) const
+    { return throatCrossSectionalArea_[phaseIdx]; }
+
+    const auto& wettingLayerFlowVariables() const
+    { return wettingLayerCache_; }
+
+private:
+    Scalar throatLength_{};
+    Scalar surfaceTension_{};
+    Scalar throatInscribedRadius_{};
+    Scalar pc_{};
+    Scalar wettingLayerCrossSectionalArea_{};
+    Scalar cornerHalfAngle_{};
+    Scalar contactAngle_{};
+    std::size_t nPhaseIdx_ = 1;
+    std::array<Scalar, 2> throatCrossSectionalArea_{};
+    NumCornerVector wettingLayerArea_;
+    WettingLayerCache wettingLayerCache_ = WettingLayerCache();
+
+};
+}
 
 namespace Dumux::Properties {
 
@@ -56,6 +144,16 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = Dumux::PoreNetwork::GridGeometry<Scalar, GridView, enableCache>;
+};
+
+// The flux variables cache
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::DrainageProblem>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = PoreNetwork::SimpleFluxVariablesCache<Scalar>;
 };
 
 } // end namespace Dumux::Properties
@@ -187,6 +285,9 @@ int main(int argc, char** argv)
 
     std::cout << "total pore volume is " << totalPoreVolume << std::endl;
 
+    using FluxVariablesCache = GetPropType<TypeTag, Properties::FluxVariablesCache>;
+    FluxVariablesCache fluxVariablesCache;
+
     // do the actual drainage process
     for (int step = 0; step < numSteps + 1; ++step)
     {
@@ -217,11 +318,15 @@ int main(int argc, char** argv)
         for (const auto& element : elements(leafGridView))
         {
             fvGeometry.bind(element);
+            std::array<Scalar, 2> pcElement{};
 
             // get the saturation of each pore by inverting the local pore body pc-s curve
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto dofIdx = scv.dofIndex();
+
+                pcElement[scv.localDofIndex()] = pc[dofIdx];
+
                 if (poreLabel[dofIdx] == inletPoreLabel || (poreLabel[dofIdx] == outletPoreLabel && !allowDraingeOfOutlet))
                     continue;
 
@@ -240,6 +345,7 @@ int main(int argc, char** argv)
                 const Scalar partialPoreVolume = scv.volume();
                 averageSaturation += partialPoreVolume*sw[dofIdx];
             }
+            fluxVariablesCache.update(gridGeometry, element, pcElement);
         }
         averageSaturation /= totalPoreVolume;
 
