@@ -103,6 +103,9 @@ struct FluidOrGrainPyramidFouriersLaw
             static const bool realVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", true);
             if (realVolume)
             {
+                // Using the formula for the volume of a pyramid frustum to calculate its base length and base area:
+                // v = 1/3 h * (a^2 + a*b + b^2), where a is the base side length, b the top side length,
+                // h the height and v the volume of the frustum .
                 using std::sqrt;
                 const Scalar vol = 0.5 * volVars.poreVolume();
                 const Scalar baseLenTop = sqrt(pyramidFrustumTopArea);

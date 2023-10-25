@@ -50,6 +50,9 @@ struct TruncatedPyramidGrainFouriersLaw
 
         auto getPyramidBaseLengthFromVolume = [&](const Scalar v, const Scalar h)
         {
+            // Using the formula for the volume of a pyramid frustum to calculate its base length:
+            // v = 1/3 h * (a^2 + a*b + b^2), where a is the base side length, b the top side length,
+            // h the height and v the volume of the frustum.
             const Scalar b = topSideLength;
             using std::sqrt;
             return 0.5*sqrt(3.0) * sqrt(-(b*b*h-4.0*v)/h) -0.5*b;
@@ -58,7 +61,7 @@ struct TruncatedPyramidGrainFouriersLaw
         // the pyramid base length of the inside pore
         const Scalar insideBaseSideLength = [&]()
         {
-            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "GrainFouriersLaw.UseAdaptedVolumeForPyramid", false);
+            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", false);
 
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*insideVolVars.poreVolume(), insideHeight);
@@ -69,7 +72,7 @@ struct TruncatedPyramidGrainFouriersLaw
         // the pyramid base length of the outside pore
         const Scalar outsideBaseSideLength = [&]()
         {
-            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "GrainFouriersLaw.UseAdaptedVolumeForPyramid", false);
+            static const bool useAdaptedVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", false);
 
             if (useAdaptedVolume)
                 return getPyramidBaseLengthFromVolume(0.5*outsideVolVars.poreVolume(), outsideHeight);
