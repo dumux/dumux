@@ -32,16 +32,18 @@
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
  *
- * Where:
- * * \f$ \phi \f$ is the porosity of the porous-medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
- * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
- * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
- * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
- * * \f$ M_\kappa \f$ is the molar mass of component \f$ \kappa \f$
- * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \phi \f$ is the porosity of the porous-medium, <br>
+ * \f$ \cdot \f$ \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ M_\kappa \f$ is the molar mass of component \f$ \kappa \f$, <br>
+ * \f$ \cdot \f$ \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ * </details>
  *
  * Note that these balance equations are molar.
  *
