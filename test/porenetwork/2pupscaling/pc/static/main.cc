@@ -32,6 +32,7 @@
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
@@ -46,8 +47,15 @@ class SimpleFluxVariablesCache
     struct WettingLayerCache
     {
         using CreviceResistanceFactor = WettingLayerTransmissibility::CreviceResistanceFactorZhou;
+        WettingLayerCache(const SimpleFluxVariablesCache& fluxVariablesCache)
+        :fluxVariablesCache_(fluxVariablesCache)
+        {}
+
         Scalar creviceResistanceFactor(const int cornerIdx) const
-        { return CreviceResistanceFactor::beta(cornerHalfAngle_, contactAngle_); }
+        { return CreviceResistanceFactor::beta(fluxVariablesCache_.cornerHalfAngle_, fluxVariablesCache_.contactAngle_); }
+
+    private:
+        const SimpleFluxVariablesCache<Scalar>& fluxVariablesCache_{};
     };
 
     using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
@@ -57,6 +65,7 @@ public:
     void update(const std::shared_ptr<GridGeometry> gridGeometry, const Element& element, std::array<Scalar,2> pc)
     {   const auto eIdx = gridGeometry->elementMapper().index(element);
         const auto& shape = gridGeometry->throatCrossSectionShape(/*eIdx*/0);
+        throatShapeFactor_ = gridGeometry->throatShapeFactor(eIdx);
         throatLength_ = gridGeometry->throatLength(eIdx);
         throatInscribedRadius_ = gridGeometry->throatInscribedRadius(eIdx);
         Scalar totalThroatCrossSectionalArea = gridGeometry->throatCrossSectionalArea(eIdx);
@@ -90,6 +99,9 @@ public:
     Scalar throatInscribedRadius() const
     { return throatInscribedRadius_; }
 
+    Scalar throatShapeFactor() const
+    { return throatShapeFactor_; }
+
     Scalar pc() const
     { return pc_; }
 
@@ -99,11 +111,14 @@ public:
     std::size_t nPhaseIdx() const
     { return nPhaseIdx_; }
 
-    Scalar wettingLayerCrossSectionalArea( int corner)
-    { return wettingLayerCrossSectionalArea_; }
+    Scalar wettingLayerCrossSectionalArea( int cornerIdx) const
+    { return wettingLayerArea_[cornerIdx]; }
 
     Scalar throatCrossSectionalArea(const int phaseIdx) const
     { return throatCrossSectionalArea_[phaseIdx]; }
+
+    Scalar throatCrossSectionalArea() const
+    { return throatCrossSectionalArea_[0] + throatCrossSectionalArea_[1]; }
 
     const auto& wettingLayerFlowVariables() const
     { return wettingLayerCache_; }
@@ -112,6 +127,7 @@ private:
     Scalar throatLength_{};
     Scalar surfaceTension_{};
     Scalar throatInscribedRadius_{};
+    Scalar throatShapeFactor_{};
     Scalar pc_{};
     Scalar wettingLayerCrossSectionalArea_{};
     Scalar cornerHalfAngle_{};
@@ -119,9 +135,26 @@ private:
     std::size_t nPhaseIdx_ = 1;
     std::array<Scalar, 2> throatCrossSectionalArea_{};
     NumCornerVector wettingLayerArea_;
-    WettingLayerCache wettingLayerCache_ = WettingLayerCache();
+    WettingLayerCache wettingLayerCache_ = WettingLayerCache(*this);
 
 };
+}
+
+namespace Dumux::PoreNetwork::Detail {
+
+template<class... TransmissibilityLawTypes>
+struct Transmissibility : public TransmissibilityLawTypes... {};
+
+}
+namespace Dumux::Porenetwork{
+
+    struct MockProblem{};
+    struct MockElemVolVars{};
+
+    struct MockFVElementGeometry
+    {
+        struct SubControlVolumeFace{};
+    };
 }
 
 namespace Dumux::Properties {
@@ -222,6 +255,11 @@ int main(int argc, char** argv)
                                                                  shapeFactor);
     };
 
+    using Transmissibility = Dumux::PoreNetwork::Detail::Transmissibility<PoreNetwork::TransmissibilityPatzekSilin<Scalar>,
+                                                                          PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>,
+                                                                          PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>>;
+
+
     // simulation data
     std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
     std::vector<Scalar> pcEntry(leafGridView.size(0));
@@ -230,6 +268,7 @@ int main(int argc, char** argv)
     std::vector<Scalar> pc(leafGridView.size(1), 0.0);
     std::vector<Scalar> sw(leafGridView.size(1), 0.0);
     std::vector<int> poreLabel(leafGridView.size(1));
+    std::vector<std::array<Scalar, 2>> throatTransmissibility(leafGridView.size(0));
 
     // add vtk output
     static const auto name = getParam<std::string>("Problem.Name");
@@ -318,6 +357,8 @@ int main(int argc, char** argv)
         for (const auto& element : elements(leafGridView))
         {
             fvGeometry.bind(element);
+            const auto eIdx = leafGridView.indexSet().index(element);
+
             std::array<Scalar, 2> pcElement{};
 
             // get the saturation of each pore by inverting the local pore body pc-s curve
@@ -346,6 +387,31 @@ int main(int argc, char** argv)
                 averageSaturation += partialPoreVolume*sw[dofIdx];
             }
             fluxVariablesCache.update(gridGeometry, element, pcElement);
+                // helper function to evaluate the transmissibility
+            auto calculateTransmissibility = [&](std::size_t phaseIdx)
+            {
+                const auto problem = Dumux::Porenetwork::MockProblem{};
+                const auto elemVolVars = Dumux::Porenetwork::MockElemVolVars{};
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    if (phaseIdx == fluxVariablesCache.wPhaseIdx()) // wetting-wetting phase
+                    {
+                        return elementIsInvaded[eIdx] ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVariablesCache)
+                                                      : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVariablesCache, phaseIdx);
+                    }
+                    else // non-wetting phase
+                    {
+                        return elementIsInvaded[eIdx] ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVariablesCache)
+                                                      : 0.0;
+                    }
+                }
+            };
+
+            throatTransmissibility[eIdx][0] = calculateTransmissibility(0);
+            throatTransmissibility[eIdx][1] = calculateTransmissibility(1);
+
+            std::cout<<throatTransmissibility[eIdx][0]<<"  "<<throatTransmissibility[eIdx][1]<<std::endl;
+
         }
         averageSaturation /= totalPoreVolume;
 

@@ -48,3 +48,10 @@ Verbose = false
 
 [SpatialParams]
 Temperature = 298.0
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+NewtonOutputFilename = Newton
+MaxTimeStepDivisions = 40
