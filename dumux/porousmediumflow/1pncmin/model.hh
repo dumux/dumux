@@ -25,36 +25,42 @@
 - \text{div} \left\{{\bf D_{pm}^\kappa} \varrho_{f} \text{grad}\, X^\kappa \right\}
 -  q_\kappa = 0 \qquad \kappa \in \{w, a,\cdots \}
 * \f]
-* Where:
-* * \f$ \phi \f$ is the  porosity,
-* * \f$ \varrho_f \f$ is the mass density of the fluid,
-* * \f$ X^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in the fluid,
-* * \f$ k_{r} \f$ is the relative permeability,
-* * \f$ \mu \f$ represents the dynamic viscosity,
-* * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
-* * \f$ p \f$ is the pressure,
-* * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
-* * \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium,
-* * \f$ q_\kappa \f$ is a source or sink term.
+* <details>
+* <summary>Click for variables explanations:</summary>
+* \f$ \cdot \f$ \f$ \phi \f$ is the  porosity, <br>
+* \f$ \cdot \f$ \f$ \varrho_f \f$ is the mass density of the fluid, <br>
+* \f$ \cdot \f$ \f$ X^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in the fluid, <br>
+* \f$ \cdot \f$ \f$ k_{r} \f$ is the relative permeability, <br>
+* \f$ \cdot \f$ \f$ \mu \f$ represents the dynamic viscosity, <br>
+* \f$ \cdot \f$ \f$ \mathbf{K} \f$ is the intrinsic permeability tensor, <br>
+* \f$ \cdot \f$ \f$ p \f$ is the pressure, <br>
+* \f$ \cdot \f$ \f$ \mathbf{g} \f$ is the gravitational acceleration vector, <br>
+* \f$ \cdot \f$ \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium, <br>
+* \f$ \cdot \f$ \f$ q_\kappa \f$ is a source or sink term.
+* </details>
 *
 * The solid or mineral phases are assumed to consist of a single component.
 * Their mass balance consist only of a storage and a source term:
 * \f[
  \frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda
 * \f]
-* Where:
-* * \f$ \varrho_\lambda\f$ represents the mass density of the solid phase,
-* * \f$ \phi_\lambda \f$ is the porosity of the solid,
-* * \f$ q_\lambda \f$ is a source or sink term representing.
+* <details>
+* <summary>Click for variables explanations:</summary>
+* \f$ \cdot \f$  \f$ \varrho_\lambda\f$ represents the mass density of the solid phase, <br>
+* \f$ \cdot \f$  \f$ \phi_\lambda \f$ is the porosity of the solid, <br>
+* \f$ \cdot \f$  \f$ q_\lambda \f$ is a source or sink term representing.
+* </details>
 *
 * The primary variables are the pressure \f$p\f$ and the mole fractions of the
 * dissolved components \f$x^k\f$. The primary variable of the solid phases is the volume
 * fraction
 \f$\phi_\lambda = \frac{V_\lambda}{V_{total}}\f$.
 *
-* Where:
-* * \f$ V_\lambda \f$ is the volume of phase \f$ \lambda \f$,
-* * \f$ V_{\text{total}} \f$ is the total volume of the system.
+* <details>
+* <summary>Click for variables explanations:</summary>
+* \f$ \cdot \f$  \f$ V_\lambda \f$ is the volume of phase \f$ \lambda \f$, <br>
+* \f$ \cdot \f$  \f$ V_{\text{total}} \f$ is the total volume of the system.
+* </details>
 *
 * The source an sink terms link the mass balances of the n-transported component to the
 * solid phases. The porosity \f$\phi\f$ is updated according to the reduction of the initial
@@ -62,10 +68,13 @@
 * fractions of the solid phases:
 * \f$ \phi = \phi_0 - \sum (\phi_\lambda)\f$
 *
-* Where:
-* * \f$ \phi \f$ represents the remaining porosity in the system,
-* * \f$ \phi_0 \f$ is the initial porosity,
-* * \f$ \phi_\lambda \f$ denotes the volume fraction of phase \f$ \lambda \f$,
+* <details>
+* <summary>Click for variables explanations:</summary>
+* \f$ \cdot \f$ \f$ \phi \f$ represents the remaining porosity in the system, <br>
+* \f$ \cdot \f$ \f$ \phi_0 \f$ is the initial porosity, <br>
+* \f$ \cdot \f$ \f$ \phi_\lambda \f$ denotes the volume fraction of phase \f$ \lambda \f$,
+* </details>
+*
 * Additionally, the permeability is updated depending on the current porosity.
 */
 
