@@ -28,15 +28,17 @@
    + \sum_\alpha \text{div} \mathbf{F}_{\mathrm{diff, mole}, \alpha}^\kappa
    - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\}.
    \f]
-    * Where:
- * * \f$ \phi \f$ is the porosity of the porous-medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
- * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
- * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
- * * \f$ \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa \f$ represents the diffusive  mass flux of component \f$ \kappa \f$ in phase \f$ \alpha \f$,
- * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \phi \f$ is the porosity of the porous-medium, <br>
+ * \f$ \cdot \f$ \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa \f$ represents the diffusive  mass flux of component \f$ \kappa \f$ in phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ * </details>
  *
  * Boundary conditions and sources have to be defined by the user in the corresponding
  * units. The default setting for the property <tt>UseMoles</tt> can be found in the 2pnc model.
