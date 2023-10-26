@@ -17,18 +17,21 @@
  \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
  - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
  * \f]
-* Where:
- * * \f$ \phi \f$ is the porosity of the porous-medium,
- * * \f$ \varrho \f$ is the mass density,
- * * \f$ \textbf{K} \f$ is the intrinsic permeability tensor,
- * * \f$ \mu \f$ represents the dynamic-viscosity,
- * * \f$  p \f$ is the pressure,
- * * \f$ \textbf{g} \f$ is the gravitational acceleration vector,
- * * and \f$ q \f$ is a source or sink term.
- *
- *
- * The model supports compressible as well as incompressible fluids.
+
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \phi \f$ is the porosity of the porous-medium, <br>
+ * \f$ \cdot \f$ \f$ \varrho \f$ is the mass density,<br>
+ * \f$ \cdot \f$ \f$ \textbf{K} \f$ is the intrinsic permeability tensor,<br>
+ * \f$ \cdot \f$ \f$ \mu \f$ represents the dynamic-viscosity,<br>
+ * \f$ \cdot \f$ \f$  p \f$ is the pressure,<br>
+ * \f$ \cdot \f$ \f$ \textbf{g} \f$ is the gravitational acceleration vector,<br>
+ * \f$ \cdot \f$ \f$ q \f$ is a source or sink term.
+ * </details>
+
+ *The model supports compressible as well as incompressible fluids.
  */
+
 
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
