@@ -221,7 +221,7 @@ __Model equations:__ Single-phase flow pore-network model (`PNMOneP`)<br />
 __Discretization method:__ Pore-network (`PoreNetworkModel`)
 
 </td>
-<td width="35%"><a href="liddrivencavity/README.md">
+<td width="35%"><a href="porenetwork_upscaling/README.md">
 <figure><img src="porenetwork_upscaling/img/result.png" alt="pnm result"/></figure></td>
 </a></td>
 </tr></table>
