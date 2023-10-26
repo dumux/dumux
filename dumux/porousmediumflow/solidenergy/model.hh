@@ -15,14 +15,15 @@
    \frac{ \partial n c_p \varrho T}{\partial t}
    - \text{div} \left\lbrace \lambda_\text{pm} \textbf{grad} T \right\rbrace = q,
  \f]
- * Where:
- * * \f$ n \f$  represents volume fraction of the conducting material,
- * * \f$ c_p \f$ is the specific heat capacity at constant pressure,
- * * \f$ \varrho \f$ is the mass density,
- * * \f$ \lambda_\text{pm} \f$ is the heat conductivity in the  porous medium,
- * * \f$ T \f$ is the temperature,
- * * \f$ q \f$ is the heat source term.
- *
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ n \f$  represents volume fraction of the conducting material, <br>
+ * \f$ \cdot \f$ \f$ c_p \f$ is the specific heat capacity at constant pressure, <br>
+ * \f$ \cdot \f$ \f$ \varrho \f$ is the mass density, <br>
+ * \f$ \cdot \f$ \f$ \lambda_\text{pm} \f$ is the heat conductivity in the  porous medium, <br>
+ * \f$ \cdot \f$ \f$ T \f$ is the temperature, <br>
+ * \f$ \cdot \f$ \f$ q \f$ is the heat source term.
+ * </details>
 */
 
 #ifndef DUMUX_SOLID_ENERGY_MODEL_HH
