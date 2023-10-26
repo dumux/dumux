@@ -18,6 +18,7 @@
 #include <chrono>
 #include <type_traits>
 #include <initializer_list>
+#include <optional>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -493,6 +494,22 @@ TimeLoop(std::chrono::duration<Rep1, Period1>,
 template <class Scalar>
 class CheckPointTimeLoop : public TimeLoop<Scalar>
 {
+    class CheckPointType {
+        static constexpr std::size_t manualIdx = 0;
+        static constexpr std::size_t periodicIdx = 1;
+
+    public:
+        bool isPeriodic() const { return set_[periodicIdx]; }
+        bool isManual() const { return set_[manualIdx]; }
+        bool isAny() const { return set_.any(); }
+
+        CheckPointType& withPeriodic(bool value) { set_[periodicIdx] = value; return *this; }
+        CheckPointType& withManual(bool value) { set_[manualIdx] = value; return *this; }
+
+    private:
+        std::bitset<2> set_;
+    };
+
 public:
     template<class... Args>
     CheckPointTimeLoop(Args&&... args)
@@ -513,25 +530,10 @@ public:
         const auto newTime = this->time()+dt;
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
-        // if we reached a periodic check point
-        if (periodicCheckPoints_ && fuzzyEqual_(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
-        {
-            lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
-            isCheckPoint_ = true;
-        }
-
-        // or a manually set check point
-        else if (!checkPoints_.empty() && fuzzyEqual_(newTime - checkPoints_.front(), 0.0))
-        {
-            checkPoints_.pop();
-            isCheckPoint_ = true;
-        }
-
-        // if not reset the check point flag
-        else
-        {
-            isCheckPoint_ = false;
-        }
+        const auto cpType = nextCheckPointType_(newTime);
+        if (cpType.isManual()) checkPoints_.pop();
+        if (cpType.isPeriodic()) lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
+        isCheckPoint_ = cpType.isAny();
 
         const auto previousTimeStepSize = this->previousTimeStepSize();
 
@@ -553,11 +555,9 @@ public:
             const auto threshold = 0.2*nextDt;
             const auto nextTime = this->time() + nextDt;
 
-            if (periodicCheckPoints_ && Dune::FloatCmp::le(lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - nextTime, threshold))
-                nextDt = lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time();
-
-            if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
-                nextDt = checkPoints_.front() - this->time();
+            const auto nextDtToCheckPoint = maxDtToCheckPoint_(nextTime);
+            if (nextDtToCheckPoint > Scalar{0} && Dune::FloatCmp::le(nextDtToCheckPoint, threshold))
+                nextDt += nextDtToCheckPoint;
 
             assert(nextDt > 0.0);
             this->setTimeStepSize(nextDt);
@@ -670,9 +670,6 @@ private:
 
     void setPeriodicCheckPoint_(Scalar interval, Scalar offset = 0.0)
     {
-        if (!checkPoints_.empty())
-            DUNE_THROW(Dune::NotImplemented, "Cannot use periodic check points while manually inserted ones are still pending.");
-
         using std::signbit;
         if (signbit(interval))
             DUNE_THROW(Dune::InvalidStateException, "Interval has to be positive!");
@@ -687,8 +684,8 @@ private:
             std::cout << Fmt::format("Enabled periodic check points every {:.5g} seconds ", interval)
                       << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
 
-        // check if the current time point is a check point
-        if (fuzzyEqual_(this->time()-lastPeriodicCheckPoint_, 0.0))
+        // check if the current time point is a periodic check point
+        if (nextCheckPointType_(this->time() + deltaPeriodicCheckPoint_).isPeriodic())
             isCheckPoint_ = true;
 
         // make sure we respect this check point on the next time step
@@ -698,9 +695,6 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (periodicCheckPoints_)
-            DUNE_THROW(Dune::NotImplemented, "Checkpoints cannot be manually inserted when using periodic ones.");
-
         if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
         {
             if (this->verbose())
@@ -727,20 +721,55 @@ private:
     }
 
     /*!
+     * \brief Return the type of (next) check point at the given time
+     */
+    CheckPointType nextCheckPointType_(Scalar t)
+    {
+        return CheckPointType{}
+            .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
+            .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
+    }
+
+    /*!
      * \brief Aligns dt to the next check point
      */
     Scalar computeStepSizeRespectingCheckPoints_() const
+    { return maxDtToCheckPoint_(this->time()); }
+
+    /*!
+     * \brief Compute a time step size respecting upcoming checkpoints, starting from the given time t.
+     */
+    Scalar maxDtToCheckPoint_(Scalar t) const
     {
+        static constexpr auto unset = std::numeric_limits<Scalar>::max();
+        const auto dtToPeriodic = dtToNextPeriodicCheckPoint_(t);
+        const auto dtToManual = dtToNextManualCheckPoint_(t);
+
         using std::min;
-        auto maxDt = std::numeric_limits<Scalar>::max();
+        return min(
+            dtToPeriodic.value_or(unset),
+            dtToManual.value_or(unset)
+        );
+    }
 
+    /*!
+     * \brief Compute the time step size to the next periodic check point.
+     */
+    std::optional<Scalar> dtToNextPeriodicCheckPoint_(Scalar t) const
+    {
         if (periodicCheckPoints_)
-            maxDt = min(maxDt, lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time());
+            return lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - t;
+        return {};
+    }
 
+    /*!
+     * \brief Compute a time step size respecting the next manual check point.
+     */
+    std::optional<Scalar> dtToNextManualCheckPoint_(Scalar t) const
+    {
         if (!checkPoints_.empty())
-            maxDt = min(maxDt, checkPoints_.front() - this->time());
-
-        return maxDt;
+            return checkPoints_.front() - t;
+        return {};
     }
 
     bool periodicCheckPoints_;
