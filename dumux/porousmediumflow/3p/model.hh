@@ -24,16 +24,18 @@
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
  \right\} - q_\alpha = 0 \;.
  \f]
- * Where:
- * * \f$ \phi \f$ is the porosity of the porous-medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
- * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
- * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
- * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
- * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ q_\alpha \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \phi \f$ is the porosity of the porous-medium, <br>
+ * \f$ \cdot \f$ \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \mathbf{K} \f$ is the intrinsic permeability tensor, <br>
+ * \f$ \cdot \f$ \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \mathbf{g} \f$ is the gravitational acceleration vector, <br>
+ * \f$ \cdot \f$ \f$ q_\alpha \f$ is a source or sink term.
+ * </details>
  *
  * The model uses commonly applied auxiliary conditions like
  * \f$S_w + S_n + S_g = 1\f$ for the saturations.
