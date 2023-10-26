@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <chrono>
 #include <type_traits>
+#include <initializer_list>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -631,12 +632,17 @@ public:
     }
 
     /*!
-     * \brief add checkpoints to the queue from a vector of time points
+     * \brief add checkpoints to the queue from a list of time points
      * \note checkpoints have to be provided in ascending order
-     * \param checkPoints the vector of check points
+     * \param checkPoints the list of check points
      * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
     template<class ScalarOrDuration>
+    void setCheckPoint(const std::initializer_list<ScalarOrDuration>& checkPoints)
+    { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
+
+    template<class ScalarOrDuration>
+    [[deprecated("Use setCheckpoint(begin, end) instead. Will be removed after release 3.9.")]]
     void setCheckPoint(const std::vector<ScalarOrDuration>& checkPoints)
     { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
 
