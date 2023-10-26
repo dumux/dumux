@@ -174,9 +174,8 @@ Only the following Dune and DuMux versions are compatible:
 | DuMux version     | Dune version              |
 |-------------------|---------------------------|
 | master            | 2.9, master               |
-| 3.8               | 2.9
-| 3.7               | 2.9                       |
-| 3.5, 3.6, 3.7-git | 2.8, 2.9                  |
+| 3.7, 3.8          | 2.9                       |
+| 3.5, 3.6          | 2.8, 2.9                  |
 | 3.3, 3.4          | 2.7, 2.8                  |
 | 3.1, 3.2          | 2.6<sup>*</sup>, 2.7      |
 | 3.0               | 2.6<sup>*</sup>, 2.7      |
