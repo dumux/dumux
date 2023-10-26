@@ -31,25 +31,29 @@
  * \alpha \in \{w, g\}
  * \f}
  *
- * Where:
- * * \f$ \phi \f$ is the porosity of the porous-medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
- * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
- * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
- * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
- * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \phi \f$ is the porosity of the porous-medium, <br>
+ * \f$ \cdot \f$ \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$, <br>
+ * \f$ \cdot \f$ \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ *  </details>
  *
  * The solid or mineral phases are assumed to consist of a single component.
  * Their mass balance consist only of a storage and a source term:
  *  \f$\frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t}
  *  = q_\lambda\f$
  *
- * Where:
- * * \f$ \varrho_\lambda \f$  mass density phase \f$ \lambda \f$,
- * * \f$ \phi_\lambda \f$ the porosity of the solid,
- * * \f$ q_\lambda \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \varrho_\lambda \f$  mass density phase \f$ \lambda \f$, <br>
+ * \f$ \cdot \f$ \f$ \phi_\lambda \f$ the porosity of the solid, <br>
+ * \f$ \cdot \f$ \f$ q_\lambda \f$ is a source or sink term.
+ * </details>
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
