@@ -656,9 +656,6 @@ public:
     template<class ForwardIterator>
     void setCheckPoint(ForwardIterator first, ForwardIterator last)
     {
-        if (periodicCheckPoints_)
-            DUNE_THROW(Dune::NotImplemented, "Checkpoints cannot be manually inserted when using periodic ones.");
-
         // set the check points
         for (; first != last; ++first)
             setCheckPoint_(Detail::TimeLoop::toSeconds<Scalar>(*first));
@@ -701,6 +698,9 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
+        if (periodicCheckPoints_)
+            DUNE_THROW(Dune::NotImplemented, "Checkpoints cannot be manually inserted when using periodic ones.");
+
         if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
         {
             if (this->verbose())
