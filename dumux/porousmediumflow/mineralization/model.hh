@@ -15,10 +15,12 @@
  * Their mass balance consist only of a storage and a source term:
  * \f$\frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda\f$
  *
- * Where:
- * * \f$ \varrho_\lambda \f$  mass density phase \f$ \lambda \f$,
- * * \f$ \phi_\lambda \f$ the porosity of the solid,
- * * \f$ q_\lambda \f$ is a source or sink term.
+ * <details>
+ * <summary>Click for variables explanations:</summary>
+ * \f$ \cdot \f$ \f$ \varrho_\lambda \f$  mass density phase \f$ \lambda \f$, <br>
+ * \f$ \cdot \f$ \f$ \phi_\lambda \f$ the porosity of the solid, <br>
+ * \f$ \cdot \f$ \f$ q_\lambda \f$ is a source or sink term.
+ * </details>
  */
 
 #ifndef DUMUX_MINERALIZATION_MODEL_HH
