@@ -37,7 +37,7 @@ namespace Dumux {
     // Create a callable f(x,t) from a string expression containing variable literals.
     // The constructor compiles the expression in the constructor making calls efficient.
     // The constructor throws a Dune::IOError with detailed info if parsing fails.
-    std::string expr = getParam<std::string>(Problem.Function); // e.g. "5*x + x*sin(x*t)"
+    std::string expr = getParam("Problem.Function"); // e.g. "5*x + x*sin(x*t)"
     FunctionFromStringExpression<2> f(expr, "xt"); // variables "x" and "t"
 
     // evaluate function, result is double (the default scalar type)
