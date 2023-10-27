@@ -16,13 +16,13 @@
  +
  \frac{\partial\;\phi (1-S_w)\varrho_n X_n^w}{\partial t}
  -
- \text{div} \left\lbrace
+ \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
- \left( \text{\textbf{grad}}
+ \left( \text{\nabla}
  p_w - \varrho_w \textbf{g}
  \right)
  +
- {\bf D_{n, pm}^w} \varrho_n \text{grad}\, X^w_n
+ {\bf D_{n, pm}^w} \varrho_n \nabla  X^w_n
  \right\rbrace
  =
  q_w,
@@ -48,9 +48,9 @@
  \f[
  \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}
  -
- \text{div} \left\lbrace
+ \nabla \cdot \left\lbrace
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \left( \text{\textbf{grad}}
+ \left( \text{\nabla}
  p_\alpha - \varrho_\alpha \textbf{g}
  \right)
  \right\rbrace

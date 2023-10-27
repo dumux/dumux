@@ -21,13 +21,13 @@
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_{\alpha,mol} x_\alpha^\kappa
  S_\alpha )}{\partial t}
- - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
+ - \sum\limits_\alpha \nabla \cdot \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
  \varrho_{\alpha,mol} x_\alpha^\kappa \mathbf{K}
- (\textbf{grad}\, p_\alpha - \varrho_{\alpha,mass} \mathbf{g}) \right\}
+ (\nabla  p_\alpha - \varrho_{\alpha,mass} \mathbf{g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \text{div} \left\{ D_\text{pm}^\kappa \frac{1}{M_{\kappa}} \varrho_{\alpha}
- \textbf{grad} X^\kappa_{\alpha} \right\}
+ && - \sum\limits_\alpha \nabla \cdot \left\{ D_\text{pm}^\kappa \frac{1}{M_{\kappa}} \varrho_{\alpha}
+ \nabla X^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha,
  \f}
  * where:

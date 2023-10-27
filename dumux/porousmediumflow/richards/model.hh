@@ -14,9 +14,9 @@
  \f[
  \frac{\partial\;\phi S_w \varrho_w}{\partial t}
  -
- \text{div} \left\lbrace
+ \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
- \left( \textbf{grad}
+ \left( \nabla
  p_w - \varrho_w \textbf{g}
  \right)
  \right\rbrace
@@ -31,9 +31,9 @@
  \f[
  \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}
  -
- \text{div} \left\lbrace
+ \nabla \cdot \left\lbrace
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \left(\textbf{grad}
+ \left(\nabla
  p_\alpha - \varrho_\alpha \textbf{g}
  \right)
  \right\rbrace

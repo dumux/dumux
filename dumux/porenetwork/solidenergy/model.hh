@@ -31,7 +31,7 @@
  * The energy balance is described by the following equation:
  \f[
    \frac{ \partial n c_p \varrho T}{\partial t}
-   - \text{div} \left\lbrace \lambda_\text{pm} \textbf{grad} T \right\rbrace = q,
+   - \nabla \cdot \left\lbrace \lambda_\text{pm} \nabla T \right\rbrace = q,
  \f]
  * where \f$n\f$ is the volume fraction of the conducting material, \f$c_p\f$ its specific heat capacity,
  * \f$\varrho\f$ its density, \f$T\f$ the temperature, and \f$\lambda\f$ the heat conductivity of the porous solid.

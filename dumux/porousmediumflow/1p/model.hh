@@ -14,8 +14,8 @@
  *
  * Furthermore, it solves the mass continuity equation
  * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
+ \phi \frac{\partial \varrho}{\partial t} + \nabla \cdot \left\lbrace
+ - \varrho \frac{\textbf K}{\mu} \left( \nabla  p -\varrho {\textbf g} \right) \right\rbrace = q,
  * \f]
 * where:
  * * \f$ \phi \f$ is the porosity of the porous medium,

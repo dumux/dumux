@@ -13,7 +13,7 @@
  * The energy balance is described by the following equation:
  \f[
    \frac{ \partial n c_p \varrho T}{\partial t}
-   - \text{div} \left\lbrace \lambda_\text{pm} \textbf{grad} T \right\rbrace = q,
+   - \nabla \cdot \left\lbrace \lambda_\text{pm} \nabla T \right\rbrace = q,
  \f]
  * where:
  * * \f$ n \f$  represents volume fraction of the conducting material,

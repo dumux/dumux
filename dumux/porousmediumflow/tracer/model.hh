@@ -20,8 +20,8 @@
  * The transport of the components \f$\kappa \in \{ a, b, c, ... \}\f$ is described by the following equation:
  \f[
  \phi \frac{ \partial \varrho X^\kappa}{\partial t}
- - \text{div} \left\lbrace \varrho X^\kappa {\textbf v_f}
- + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q,
+ - \nabla \cdot \left\lbrace \varrho X^\kappa {\textbf v_f}
+ + \varrho D^\kappa_\text{pm} \nabla X^\kappa \right\rbrace = q,
  \f]
 * where:
  * * \f$ \phi \f$ is the porosity of the porous medium,
