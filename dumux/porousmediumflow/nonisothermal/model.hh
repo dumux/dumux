@@ -23,13 +23,13 @@
  & +
  \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
  -
- \sum_\alpha \text{div}
+ \sum_\alpha \nabla \cdot
  \left\{
  \varrho_\alpha h_\alpha
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mathbf{g} \right)
+ \left( \nabla p_\alpha - \varrho_\alpha \mathbf{g} \right)
  \right\} \\
-    & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
+    & - \nabla \cdot \left(\lambda_{pm} \nabla T \right)
     - q^h = 0,
  \f}
  * where:

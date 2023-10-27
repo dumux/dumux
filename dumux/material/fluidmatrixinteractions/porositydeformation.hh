@@ -42,12 +42,12 @@ public:
      *
      * \note \cite han2003 ( https://doi.org/10.1016/S0920-4105(03)00047-0 )
      *       provide a derivation for \f$\text{d} \phi = -(1 - \phi ) \text{d} \epsilon_v \f$.
-     *       Here, \f$\epsilon_v\f$ is equal to \f$\text{div} \mathbf{u}\f$.
+     *       Here, \f$\epsilon_v\f$ is equal to \f$\nabla \cdot \mathbf{u}\f$.
      *       By using an initial porosity \f$\phi_0\f$ and assuming  \f$ \epsilon_{v, 0} = 0 \f$,
-     *       one obtains \f$\phi = \frac{\phi_0 - \text{div} \mathbf{u}}{1 - \text{div} \mathbf{u}}\f$,
+     *       one obtains \f$\phi = \frac{\phi_0 - \nabla \cdot \mathbf{u}}{1 - \nabla \cdot \mathbf{u}}\f$,
      *       which is the formulation for the rock mechanics sign convention. Here we are
      *       using the continuum mechanics sign convention, thus, the final formula reads:
-     *       \f$\phi = \frac{\phi_0 + \text{div} \mathbf{u}}{1 + \text{div} \mathbf{u}}\f$.
+     *       \f$\phi = \frac{\phi_0 + \nabla \cdot \mathbf{u}}{1 + \nabla \cdot \mathbf{u}}\f$.
      */
     template< class FVGridGeom, class ElemSol >
     static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,

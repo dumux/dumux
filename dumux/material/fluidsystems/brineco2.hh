@@ -504,7 +504,7 @@ public:
      * Molecular diffusion of a component \f$\mathrm{\kappa}\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
-     * \f[ J = - D \textbf{grad} mu_\kappa \f]
+     * \f[ J = - D \nabla mu_\kappa \f]
      *
      * where \f$\mathrm{\mu_\kappa}\f$ is the component's chemical potential,
      * \f$D\f$ is the diffusion coefficient and \f$\mathrm{J}\f$ is the

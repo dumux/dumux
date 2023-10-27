@@ -15,14 +15,14 @@
  *
  * \n
  * \f[
- * \mathbf{j}_{d} = - \varrho D_m \textbf{grad}\, X
+ * \mathbf{j}_{d} = - \varrho D_m \nabla  X
  * \f]
  * \n
  *
  * Extending this to multi-phase, multi-component systems, Fick's law can be expressed as follows:
  * \n
  * \f[
- * \mathbf{j}_{d,\alpha}^\kappa = - \varrho_\alpha D_\alpha^\kappa \textbf{grad}\, X_\alpha^\kappa
+ * \mathbf{j}_{d,\alpha}^\kappa = - \varrho_\alpha D_\alpha^\kappa \nabla  X_\alpha^\kappa
  * \f]
  * \n
  *

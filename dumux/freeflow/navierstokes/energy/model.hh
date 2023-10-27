@@ -14,7 +14,7 @@
  * \f[
  *    \frac{\partial (\varrho  v)}{\partial t}
  *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
- *    - \lambda_\text{eff} \textbf{grad}\, T \right) - q_T = 0
+ *    - \lambda_\text{eff} \nabla  T \right) - q_T = 0
  * \f]
  *
  *

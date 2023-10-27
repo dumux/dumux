@@ -23,8 +23,8 @@
  * By inserting Darcy's law into the equations for the conservation of the
  * phase mass, one gets
  \f[
-\phi \frac{\partial\ \sum_\alpha (\rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \text{div} \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
-\mathbf{K} (\mathbf{grad}p_\alpha - \rho_\alpha \mathbf{g}) \right \} -q^w =0,
+\phi \frac{\partial\ \sum_\alpha (\rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \nabla \cdot \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
+\mathbf{K} (\nabla p_\alpha - \rho_\alpha \mathbf{g}) \right \} -q^w =0,
  \f]
  * where:
  * * \f$ \phi \f$ is the porosity of the porous medium,

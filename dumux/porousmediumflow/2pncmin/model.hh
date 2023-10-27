@@ -22,11 +22,11 @@
  * \f{eqnarray*}{
  * && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
  * {\partial t}
- * - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
+ * - \sum_\alpha  \nabla \cdot \left\{ \varrho_\alpha X_\alpha^\kappa
  * \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K}
- * (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mathbf{g}) \right\}
+ * (\nabla  p_\alpha - \varrho_{\alpha}  \mathbf{g}) \right\}
  * \nonumber \\ \nonumber \\
- *   &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
+ *   &-& \sum_\alpha \nabla \cdot \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \nabla  X^\kappa_{\alpha} \right\}
  * - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
  * \alpha \in \{w, g\},
  * \f}

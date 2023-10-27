@@ -17,7 +17,7 @@
  * For diffusive mass fluxes \f$\textbf{j}_{diff}^i\f$ the Maxwell-Stefan formulation can be defined as:
  *
  * \f[
- * \frac{x^i \textbf{grad}_T \eta^i}{RT} = - \sum\limits_{j=1,j\neq i}^{N} \frac{x^ix^j}{D^{ij}}\left(\frac{\textbf{j}_{diff}^i}{\varrho^i}-\frac{\textbf{j}_{diff}^j}{\varrho^j}\right) = -
+ * \frac{x^i \nabla_T \eta^i}{RT} = - \sum\limits_{j=1,j\neq i}^{N} \frac{x^ix^j}{D^{ij}}\left(\frac{\textbf{j}_{diff}^i}{\varrho^i}-\frac{\textbf{j}_{diff}^j}{\varrho^j}\right) = -
  * \sum\limits_{j=1,j\neq i}^{N} \frac{x^ix^j}{D^{ij}\varrho}\left(\frac{\textbf{j}_{diff}^i}{X^i}-\frac{\textbf{j}_{diff}^j}{X^j}\right)
  * \f]
  *

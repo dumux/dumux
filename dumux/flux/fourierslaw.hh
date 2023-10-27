@@ -14,7 +14,7 @@
  * The flux is calculated as:\n
  * \n
  * \f[
- * \textbf{j}_{heat} = - \lambda \; \textbf{grad}\, T
+ * \textbf{j}_{heat} = - \lambda \; \nabla  T
  * \f]
  * \n
  * \n
