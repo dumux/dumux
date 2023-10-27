@@ -16,13 +16,14 @@
  -
  \text{div} \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
- \left( \text{\textbf{grad}}
+ \left( \textbf{grad}
  p_w - \varrho_w \textbf{g}
  \right)
  \right\rbrace
  =
  q_w,
  \f]
+ *
  * is frequently used to
  * approximate the water distribution above the groundwater level.
  *
@@ -32,21 +33,24 @@
  -
  \text{div} \left\lbrace
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \left( \text{\textbf{grad}}
+ \left(\textbf{grad}
  p_\alpha - \varrho_\alpha \textbf{g}
  \right)
  \right\rbrace
  =
  q_\alpha,
  \f]
- * where \f$\alpha \in \{w, n\}\f$ is the fluid phase,
- * \f$\kappa \in \{ w, a \}\f$ are the components,
- * \f$\rho_\alpha\f$ is the fluid density, \f$S_\alpha\f$ is the fluid
- * saturation, \f$\phi\f$ is the porosity of the soil,
- * \f$k_{r\alpha}\f$ is the relative permeability for the fluid,
- * \f$\mu_\alpha\f$ is the fluid's dynamic viscosity, \f$\mathbf{K}\f$ is the
- * intrinsic permeability, \f$p_\alpha\f$ is the fluid pressure and
- * \f$g\f$ is the potential of the gravity field.
+ *
+ * where:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
+ * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ q_\alpha \f$ is a source or sink term.
  *
  * In contrast to the full two-phase model, the Richards model assumes
  * gas as the nonwetting fluid and that it exhibits a much lower

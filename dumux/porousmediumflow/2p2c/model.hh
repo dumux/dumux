@@ -14,22 +14,30 @@
  * \f$\kappa \in \{ \kappa_w, \kappa_n \}\f$, where \f$\kappa_w\f$ and \f$\kappa_n\f$ are
  * the main components of the wetting and nonwetting phases, respectively.
  * The governing equations are the mass or the mole conservation equations of the two components,
- * depending on the property <tt>UseMoles</tt>. The mass balance equations are given as:
+ * depending on the property <tt>UseMoles</tt>. The mass balance equations are given as
  * \f[
    \phi \frac{\partial (\sum_\alpha \rho_\alpha X_\alpha^\kappa S_\alpha)}{\partial t}
    - \sum_\alpha \text{div} \left\{ \rho_\alpha X_\alpha^\kappa v_\alpha \right\}
    - \sum_\alpha \text{div} \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa
-   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\},
+   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\}.
    \f]
- * using the mass fractions \f$X_\alpha^\kappa\f$ and the mass densities \f$\rho_\alpha\f$, while
- * the mole balance equations use the mole fractions \f$x_\alpha^\kappa\f$ and molar
- * densities \f$\varrho_{m, \alpha}\f$:
+ * The mole balance is given as
  * \f[
    \phi \frac{\partial (\sum_\alpha \varrho_{m, \alpha} x_\alpha^\kappa S_\alpha)}{\partial t}
    + \sum_\alpha \text{div} \left\{ \varrho_{m, \alpha} x_\alpha^\kappa v_\alpha \right\}
    + \sum_\alpha \text{div} \mathbf{F}_{\mathrm{diff, mole}, \alpha}^\kappa
-   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\}.
+   - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\},
    \f]
+    * where:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
+ * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
+ * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
+ * * \f$ \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa \f$ represents the diffusive  mass flux of component \f$ \kappa \f$ in phase \f$ \alpha \f$,
+ * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ *
  * Boundary conditions and sources have to be defined by the user in the corresponding
  * units. The default setting for the property <tt>UseMoles</tt> can be found in the 2pnc model.
  *

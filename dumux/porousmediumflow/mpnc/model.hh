@@ -22,7 +22,7 @@
  *
  * By inserting this into the equations for the conservation of the
  * mass of each component, one gets one mass-continuity equation for
- * each component \f$\kappa\f$
+ * each component \f$\kappa\f$,
  * \f[
  \sum_{\kappa} \left(
     \phi \frac{\partial \left(\varrho_\alpha x_\alpha^\kappa S_\alpha\right)}{\partial t}
@@ -35,9 +35,20 @@
     \right)
     = q^\kappa
     \f]
- * with \f$\overline M_\alpha\f$ being the average molar mass of the
+ * with \f$\overline M_\alpha\f$ being the average molar mass of
  * phase \f$\alpha\f$: \f[ \overline M_\alpha = \sum_\kappa M^\kappa
  * \; x_\alpha^\kappa \f]
+ *
+ * Additionally:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
+ * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
+ * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
+ * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
+ * * \f$ \overline M_\alpha \f$ is the average molar mass of phase \f$ \alpha \f$
+ * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
  *
  * For the missing \f$M\f$ model assumptions, the model assumes that
  * if a fluid phase is not present, the sum of the mole fractions of

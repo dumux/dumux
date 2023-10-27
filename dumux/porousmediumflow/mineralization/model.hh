@@ -12,8 +12,15 @@
  *        components.
  *
  * The solid or mineral phases are assumed to consist of a single component.
- * Their mass balance consist only of a storage and a source term:
- * \f$\frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda\f$
+ * Their mass balance consists of only a storage and a source term,
+ * \f[
+ * \frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t} = q_\lambda,
+ * \f]
+ *
+ * where:
+ * * \f$ \varrho_\lambda \f$ is the mass density of the solid phase \f$ \lambda \f$,
+ * * \f$ \phi_\lambda \f$ is the porosity of the solid,
+ * * \f$ q_\lambda \f$ is a source or sink term.
  */
 
 #ifndef DUMUX_MINERALIZATION_MODEL_HH

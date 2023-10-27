@@ -17,7 +17,7 @@
  \f[
  \phi\frac{\partial \varrho}{\partial t} - \text{div} \left\{
    \varrho \frac{\textbf K}{\mu}  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- \right\} = q \;,
+ \right\} = q.
  \f]
  *
  * The transport of the components \f$\kappa \in \{ w, a, ... \}\f$ is described by the following equation:
@@ -25,8 +25,19 @@
  \phi \frac{ \partial \varrho X^\kappa}{\partial t}
  - \text{div} \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \textbf{grad}\, p -
  \varrho {\textbf g} \right)
- + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q.
+ + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q,
  \f]
+ *
+  * where:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ \varrho \f$ is the mass density,
+ * * \f$ X^\kappa \f$ is the mass fraction of component \f$ \kappa \f$,
+ * * \f$ \textbf{K} \f$ is the intrinsic permeability tensor,
+ * * \f$ \mu \f$ represents the dynamic viscosity,
+ * * \f$ p \f$ is the pressure,
+ * * \f$ \textbf{g} \f$ is the gravitational acceleration vector,
+ * * \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium,
+ * * and \f$ q \f$ is a source or sink term.
  *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
