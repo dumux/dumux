@@ -51,7 +51,6 @@ class MaxwellStefanNCTestProblem : public BaseProblem
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,

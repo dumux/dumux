@@ -13,6 +13,7 @@
 #define DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_FLUID_FOURIERS_LAW_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux::PoreNetwork {
 

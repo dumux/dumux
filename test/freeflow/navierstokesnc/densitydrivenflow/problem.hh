@@ -15,6 +15,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/timeloop.hh>
 
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 

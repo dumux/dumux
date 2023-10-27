@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <stack>
 #include <vector>
+#include <numeric>
 
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/concept.hh>

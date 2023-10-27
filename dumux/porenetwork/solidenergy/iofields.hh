@@ -13,6 +13,7 @@
 #define DUMUX_PNM_SOLID_ENERGY_IO_FIELDS_HH
 
 #include <dumux/porenetwork/common/iofields.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux::PoreNetwork {
 

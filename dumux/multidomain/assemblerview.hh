@@ -13,6 +13,7 @@
 #ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_VIEW_HH
 #define DUMUX_MULTIDOMAIN_ASSEMBLER_VIEW_HH
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/std/type_traits.hh>
 
 namespace Dumux {

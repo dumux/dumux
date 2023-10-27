@@ -18,6 +18,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 

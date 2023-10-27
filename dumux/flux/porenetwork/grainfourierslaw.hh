@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux::PoreNetwork {
 

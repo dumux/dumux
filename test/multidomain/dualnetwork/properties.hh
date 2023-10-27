@@ -11,6 +11,8 @@
 #ifndef DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_PROPERTIES_HH
 #define DUMUX_TEST_MULTIDOMAIN_DUALNETWORK_PROPERTIES_HH
 
+#include <dune/foamgrid/foamgrid.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 

@@ -18,7 +18,11 @@
 #include <unordered_map>
 #include <algorithm>
 #include <vector>
+#include <iostream>
+#include <cassert>
+
 #include <dune/common/iteratorrange.hh>
+#include <dune/common/iteratorfacades.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/entitymap.hh>

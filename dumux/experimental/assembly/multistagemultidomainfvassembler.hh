@@ -127,7 +127,6 @@ private:
     using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<GridGeometry>;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
-    using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiStageMultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod>;
 
     template<std::size_t id>
