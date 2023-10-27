@@ -248,8 +248,8 @@ struct FancyFactorFouriersLaw
             }
             else
             {
-                static const Scalar R = getParam<Scalar>("Problem.SphereRadius", 50e-6);
-                static const Scalar overlapFactor = getParam<Scalar>("Problem.OverlapFactor");
+                static const Scalar R = getParam<Scalar>("DualNetwork.SphereRadius", 50e-6);
+                static const Scalar overlapFactor = getParam<Scalar>("DualNetwork.OverlapFactor");
                 static const auto dx = overlapFactor*R;
                 return dx;
             }
@@ -278,10 +278,10 @@ struct FancyFactorFouriersLaw
             return At*(Cinf + ((C0 - Cinf)*(Cinf - 1.0))/((Cinf - 1.0) + kappaFactor*(1.0 - C0)));
         };
 
-        static const Scalar useExactThroatAreaSphere = getParam<bool>("Problem.UseExactThroatAreaSphere", false);
+        static const Scalar useExactThroatAreaSphere = getParam<bool>("DualNetwork.UseExactThroatAreaSphere", false);
         if (useExactThroatAreaSphere)
         {
-            static const Scalar R = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.SphereRadius", 50e-6);
+            static const Scalar R = getParamFromGroup<Scalar>(problem.paramGroup(), "DualNetwork.SphereRadius", 50e-6);
             const auto As = [](Scalar x, Scalar dx, Scalar R) { return M_PI*(R - x)*(R + x); };
             const auto Asq = [](Scalar x, Scalar dx, Scalar R) { return 4*dx*dx; };
             const auto Asemicirc = [](Scalar x, Scalar dx, Scalar R) {
