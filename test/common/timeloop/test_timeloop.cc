@@ -212,6 +212,51 @@ void testTimeLoops(double tStart,
     }
 }
 
+void testWithDurations()
+{
+    using namespace std::chrono_literals;
+    const auto _test = [&] (auto&& timeLoop) {
+        if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.001, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected initial time step size");
+        if (!Dune::FloatCmp::eq(timeLoop.endTime(), 3600.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected end time");
+        std::cout << "Time loop constructed as expected" << std::endl;
+
+        timeLoop.setTimeStepSize(0.1ms);
+        if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0001, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected time step size");
+        std::cout << "Setting dt from a duration successful" << std::endl;
+
+        timeLoop.reset(1ms, 0.5h, 2h);
+        if (!Dune::FloatCmp::eq(timeLoop.timeStepSize(), 1800.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Resetting time step size failed");
+        if (!Dune::FloatCmp::eq(timeLoop.endTime(), 7200.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Resetting end time failed");
+        std::cout << "Resetting from durations successful" << std::endl;
+
+        timeLoop.setTime(0.5h);
+        timeLoop.setMaxTimeStepSize(1h);
+        if (!Dune::FloatCmp::eq(timeLoop.time(), 1800.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Setting time failed");
+        if (!Dune::FloatCmp::eq(timeLoop.maxTimeStepSize(), 3600.0, 1e-10))
+            DUNE_THROW(Dune::InvalidStateException, "Setting max time step size failed");
+    };
+
+    _test(Dumux::TimeLoop<double>{0s, 1ms, 1h});
+    _test(Dumux::CheckPointTimeLoop<double>{0s, 1ms, 1h});
+
+    // with CTAD
+    _test(Dumux::TimeLoop{0s, 1ms, 1h});
+    _test(Dumux::CheckPointTimeLoop{0s, 1ms, 1h});
+
+    // try setting check points from durations
+    Dumux::CheckPointTimeLoop timeLoop{0s, 1ms, 1h};
+    timeLoop.setMaxTimeStepSize(1h);
+    timeLoop.setPeriodicCheckPoint(0.5ms);
+    if (!Dune::FloatCmp::eq(timeLoop.maxTimeStepSize(), 0.0005, 1e-10))
+        DUNE_THROW(Dune::InvalidStateException, "Setting periodic checkpoint failed");
+}
+
 int main(int argc, char* argv[])
 {
     // maybe initialize MPI and/or multithreading backend
@@ -228,6 +273,8 @@ int main(int argc, char* argv[])
 
     // large time scales but small initial time step
     testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
+
+    testWithDurations();
 
     return 0;
 }

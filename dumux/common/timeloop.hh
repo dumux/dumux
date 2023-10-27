@@ -15,6 +15,10 @@
 #include <algorithm>
 #include <queue>
 #include <iomanip>
+#include <chrono>
+#include <type_traits>
+#include <initializer_list>
+#include <optional>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -24,10 +28,34 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/format.hh>
 
 namespace Dumux {
+
+
+#ifndef DOXYGEN
+namespace Detail::TimeLoop {
+
+template<typename Scalar, typename R, typename P>
+Scalar toSeconds(std::chrono::duration<R, P> duration)
+{
+    using Second = std::chrono::duration<Scalar, std::ratio<1>>;
+    return std::chrono::duration_cast<Second>(duration).count();
+}
+
+template<typename Scalar, typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+Scalar toSeconds(T duration)
+{ return static_cast<Scalar>(duration); }
+
+// overload for nice static_assert message in case of unuspported type
+template<typename Scalar, typename T, std::enable_if_t<!std::is_floating_point_v<T>, bool> = true>
+Scalar toSeconds(T duration)
+{ static_assert(AlwaysFalse<T>::value, "Given type not supported for representation of time values"); }
+
+} // namespace Detail::TimeLoop
+#endif // DOXYGEN
 
 /*!
  * \ingroup Core
@@ -51,10 +79,12 @@ namespace Dumux {
  *
  * \note Time and time step sizes are in units of seconds
  */
-template<class Scalar>
+template<class S>
 class TimeLoopBase
 {
 public:
+    using Scalar = S;
+
     //! Abstract base class needs virtual constructor
     virtual ~TimeLoopBase() {};
 
@@ -87,6 +117,14 @@ public:
     virtual void setTimeStepSize(Scalar dt) = 0;
 
     /*!
+     * \brief Set the current time step size to a given value.
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
+     */
+    template<class Rep, class Period>
+    void setTimeStepSize(std::chrono::duration<Rep, Period> dt)
+    { setTimeStepSize(Detail::TimeLoop::toSeconds<Scalar>(dt)); }
+
+    /*!
      * \brief Returns true if the simulation is finished.
      */
     virtual bool finished() const = 0;
@@ -105,6 +143,20 @@ public:
     {
         reset(startTime, dt, tEnd, verbose);
     }
+
+    template<class Rep1, class Period1,
+             class Rep2, class Period2,
+             class Rep3, class Period3>
+    TimeLoop(std::chrono::duration<Rep1, Period1> startTime,
+             std::chrono::duration<Rep2, Period2> dt,
+             std::chrono::duration<Rep3, Period3> tEnd,
+             bool verbose = true)
+    : TimeLoop(
+        Detail::TimeLoop::toSeconds<Scalar>(startTime),
+        Detail::TimeLoop::toSeconds<Scalar>(dt),
+        Detail::TimeLoop::toSeconds<Scalar>(tEnd),
+        verbose
+    ){}
 
     /*!
      *  \name Simulated time and time step management
@@ -134,6 +186,24 @@ public:
     void resetTimer()
     {
         timer_.reset();
+    }
+
+    /*!
+     * \brief Reset the time loop
+     */
+    template<class Rep1, class Period1,
+             class Rep2, class Period2,
+             class Rep3, class Period3>
+    void reset(std::chrono::duration<Rep1, Period1> startTime,
+               std::chrono::duration<Rep2, Period2> dt,
+               std::chrono::duration<Rep3, Period3> tEnd,
+               bool verbose = true)
+    {
+        reset(
+            Detail::TimeLoop::toSeconds<Scalar>(startTime),
+            Detail::TimeLoop::toSeconds<Scalar>(dt),
+            Detail::TimeLoop::toSeconds<Scalar>(tEnd)
+        );
     }
 
     /*!
@@ -187,8 +257,9 @@ public:
      *
      * \param t The time \f$\mathrm{[s]}\f$ which should be jumped to
      */
-    void setTime(Scalar t)
-    { time_ = t; }
+    template<class ScalarOrDuration>
+    void setTime(ScalarOrDuration t)
+    { time_ = Detail::TimeLoop::toSeconds<Scalar>(t); }
 
     /*!
      * \brief Set the current simulated time and the time step index.
@@ -196,8 +267,12 @@ public:
      * \param t The time \f$\mathrm{[s]}\f$ which should be jumped to
      * \param stepIdx The new time step index
      */
-    void setTime(Scalar t, int stepIdx)
-    { time_ = t; timeStepIdx_ = stepIdx; }
+    template<class ScalarOrDuration>
+    void setTime(ScalarOrDuration t, int stepIdx)
+    {
+        time_ = Detail::TimeLoop::toSeconds<Scalar>(t);
+        timeStepIdx_ = stepIdx;
+    }
 
     /*!
      * \brief Return the time \f$\mathrm{[s]}\f$ before the time integration.
@@ -231,6 +306,7 @@ public:
     double wallClockTime() const
     { return timer_.elapsed(); }
 
+    using TimeLoopBase<Scalar>::setTimeStepSize;
     /*!
      * \brief Set the current time step size to a given value.
      *
@@ -260,11 +336,12 @@ public:
      * \brief Set the maximum time step size to a given value.
      *
      * \param maxDt The new value for the maximum time step size \f$\mathrm{[s]}\f$
-     * \note This also updates the time step size
+     * \note This may also reduce the currently set timestep size if needed to comply with the set maximum
      */
-    void setMaxTimeStepSize(Scalar maxDt)
+    template<class ScalarOrDuration>
+    void setMaxTimeStepSize(ScalarOrDuration maxDt)
     {
-        userSetMaxTimeStepSize_ = maxDt;
+        userSetMaxTimeStepSize_ = Detail::TimeLoop::toSeconds<Scalar>(maxDt);
         setTimeStepSize(timeStepSize_);
     }
 
@@ -397,6 +474,19 @@ protected:
     bool verbose_;
 };
 
+// always fall back to floating-point representation
+template<class Rep1, class Period1,
+         class Rep2, class Period2,
+         class Rep3, class Period3>
+TimeLoop(std::chrono::duration<Rep1, Period1>,
+         std::chrono::duration<Rep2, Period2>,
+         std::chrono::duration<Rep3, Period3>,
+         bool verbose = true) -> TimeLoop<std::conditional_t<
+    std::is_floating_point_v<std::common_type_t<Rep1, Rep2, Rep3>>,
+    std::common_type_t<Rep1, Rep2, Rep3>,
+    double
+>>;
+
 /*!
  * \ingroup Core
  * \brief A time loop with a check point mechanism
@@ -404,13 +494,30 @@ protected:
 template <class Scalar>
 class CheckPointTimeLoop : public TimeLoop<Scalar>
 {
+    class CheckPointType {
+        static constexpr std::size_t manualIdx = 0;
+        static constexpr std::size_t periodicIdx = 1;
+
+    public:
+        bool isPeriodic() const { return set_[periodicIdx]; }
+        bool isManual() const { return set_[manualIdx]; }
+        bool isAny() const { return set_.any(); }
+
+        CheckPointType& withPeriodic(bool value) { set_[periodicIdx] = value; return *this; }
+        CheckPointType& withManual(bool value) { set_[manualIdx] = value; return *this; }
+
+    private:
+        std::bitset<2> set_;
+    };
+
 public:
-    CheckPointTimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
-    : TimeLoop<Scalar>(startTime, dt, tEnd, verbose)
+    template<class... Args>
+    CheckPointTimeLoop(Args&&... args)
+    : TimeLoop<Scalar>(std::forward<Args>(args)...)
     {
         periodicCheckPoints_ = false;
         deltaPeriodicCheckPoint_ = 0.0;
-        lastPeriodicCheckPoint_ = startTime;
+        lastPeriodicCheckPoint_ = this->startTime_;
         isCheckPoint_ = false;
     }
 
@@ -423,25 +530,10 @@ public:
         const auto newTime = this->time()+dt;
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
-        // if we reached a periodic check point
-        if (periodicCheckPoints_ && fuzzyEqual_(newTime - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
-        {
-            lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
-            isCheckPoint_ = true;
-        }
-
-        // or a manually set check point
-        else if (!checkPoints_.empty() && fuzzyEqual_(newTime - checkPoints_.front(), 0.0))
-        {
-            checkPoints_.pop();
-            isCheckPoint_ = true;
-        }
-
-        // if not reset the check point flag
-        else
-        {
-            isCheckPoint_ = false;
-        }
+        const auto cpType = nextCheckPointType_(newTime);
+        if (cpType.isManual()) checkPoints_.pop();
+        if (cpType.isPeriodic()) lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
+        isCheckPoint_ = cpType.isAny();
 
         const auto previousTimeStepSize = this->previousTimeStepSize();
 
@@ -463,11 +555,9 @@ public:
             const auto threshold = 0.2*nextDt;
             const auto nextTime = this->time() + nextDt;
 
-            if (periodicCheckPoints_ && Dune::FloatCmp::le(lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - nextTime, threshold))
-                nextDt = lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time();
-
-            if (!checkPoints_.empty() && Dune::FloatCmp::le(checkPoints_.front() - nextTime, threshold))
-                nextDt = checkPoints_.front() - this->time();
+            const auto nextDtToCheckPoint = maxDtToCheckPoint_(nextTime);
+            if (nextDtToCheckPoint > Scalar{0} && Dune::FloatCmp::le(nextDtToCheckPoint, threshold))
+                nextDt += nextDtToCheckPoint;
 
             assert(nextDt > 0.0);
             this->setTimeStepSize(nextDt);
@@ -497,28 +587,13 @@ public:
      *       periodic check point greater or equal than time
      * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
-    void setPeriodicCheckPoint(Scalar interval, Scalar offset = 0.0)
+    template<class ScalarOrDuration1, class ScalarOrDuration2 = Scalar>
+    void setPeriodicCheckPoint(ScalarOrDuration1 interval, ScalarOrDuration2 offset = 0.0)
     {
-        using std::signbit;
-        if (signbit(interval))
-            DUNE_THROW(Dune::InvalidStateException, "Interval has to be positive!");
-
-        periodicCheckPoints_ = true;
-        deltaPeriodicCheckPoint_ = interval;
-        lastPeriodicCheckPoint_ = offset;
-        while (lastPeriodicCheckPoint_ + interval - this->time() < 1e-14*interval)
-            lastPeriodicCheckPoint_ += interval;
-
-        if (this->verbose())
-            std::cout << Fmt::format("Enabled periodic check points every {:.5g} seconds ", interval)
-                      << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
-
-        // check if the current time point is a check point
-        if (fuzzyEqual_(this->time()-lastPeriodicCheckPoint_, 0.0))
-            isCheckPoint_ = true;
-
-        // make sure we respect this check point on the next time step
-        this->setTimeStepSize(this->timeStepSize());
+        setPeriodicCheckPoint_(
+            Detail::TimeLoop::toSeconds<Scalar>(interval),
+            Detail::TimeLoop::toSeconds<Scalar>(offset)
+        );
     }
 
     //! disable periodic check points
@@ -546,22 +621,29 @@ public:
      * \param t the check point (in seconds)
      * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
-    void setCheckPoint(Scalar t)
+    template<class ScalarOrDuration>
+    void setCheckPoint(ScalarOrDuration t)
     {
         // set the check point
-        setCheckPoint_(t);
+        setCheckPoint_(Detail::TimeLoop::toSeconds<Scalar>(t));
 
         // make sure we respect this check point on the next time step
         this->setTimeStepSize(this->timeStepSize());
     }
 
     /*!
-     * \brief add checkpoints to the queue from a vector of time points
+     * \brief add checkpoints to the queue from a list of time points
      * \note checkpoints have to be provided in ascending order
-     * \param checkPoints the vector of check points
+     * \param checkPoints the list of check points
      * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
-    void setCheckPoint(const std::vector<Scalar>& checkPoints)
+    template<class ScalarOrDuration>
+    void setCheckPoint(const std::initializer_list<ScalarOrDuration>& checkPoints)
+    { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
+
+    template<class ScalarOrDuration>
+    [[deprecated("Use setCheckpoint(begin, end) instead. Will be removed after release 3.9.")]]
+    void setCheckPoint(const std::vector<ScalarOrDuration>& checkPoints)
     { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
 
     /*!
@@ -576,7 +658,7 @@ public:
     {
         // set the check points
         for (; first != last; ++first)
-            setCheckPoint_(*first);
+            setCheckPoint_(Detail::TimeLoop::toSeconds<Scalar>(*first));
 
         // make sure we respect this check point on the next time step
         this->setTimeStepSize(this->timeStepSize());
@@ -585,6 +667,30 @@ public:
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
     { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
+
+    void setPeriodicCheckPoint_(Scalar interval, Scalar offset = 0.0)
+    {
+        using std::signbit;
+        if (signbit(interval))
+            DUNE_THROW(Dune::InvalidStateException, "Interval has to be positive!");
+
+        periodicCheckPoints_ = true;
+        deltaPeriodicCheckPoint_ = interval;
+        lastPeriodicCheckPoint_ = offset;
+        while (lastPeriodicCheckPoint_ + interval - this->time() < 1e-14*interval)
+            lastPeriodicCheckPoint_ += interval;
+
+        if (this->verbose())
+            std::cout << Fmt::format("Enabled periodic check points every {:.5g} seconds ", interval)
+                      << Fmt::format("with the next check point at {:.5g} seconds.\n", lastPeriodicCheckPoint_ + interval);
+
+        // check if the current time point is a periodic check point
+        if (nextCheckPointType_(this->time() + deltaPeriodicCheckPoint_).isPeriodic())
+            isCheckPoint_ = true;
+
+        // make sure we respect this check point on the next time step
+        this->setTimeStepSize(this->timeStepSize());
+    }
 
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
@@ -615,20 +721,55 @@ private:
     }
 
     /*!
+     * \brief Return the type of (next) check point at the given time
+     */
+    CheckPointType nextCheckPointType_(Scalar t)
+    {
+        return CheckPointType{}
+            .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
+            .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
+    }
+
+    /*!
      * \brief Aligns dt to the next check point
      */
     Scalar computeStepSizeRespectingCheckPoints_() const
+    { return maxDtToCheckPoint_(this->time()); }
+
+    /*!
+     * \brief Compute a time step size respecting upcoming checkpoints, starting from the given time t.
+     */
+    Scalar maxDtToCheckPoint_(Scalar t) const
     {
+        static constexpr auto unset = std::numeric_limits<Scalar>::max();
+        const auto dtToPeriodic = dtToNextPeriodicCheckPoint_(t);
+        const auto dtToManual = dtToNextManualCheckPoint_(t);
+
         using std::min;
-        auto maxDt = std::numeric_limits<Scalar>::max();
+        return min(
+            dtToPeriodic.value_or(unset),
+            dtToManual.value_or(unset)
+        );
+    }
 
+    /*!
+     * \brief Compute the time step size to the next periodic check point.
+     */
+    std::optional<Scalar> dtToNextPeriodicCheckPoint_(Scalar t) const
+    {
         if (periodicCheckPoints_)
-            maxDt = min(maxDt, lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time());
+            return lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - t;
+        return {};
+    }
 
+    /*!
+     * \brief Compute a time step size respecting the next manual check point.
+     */
+    std::optional<Scalar> dtToNextManualCheckPoint_(Scalar t) const
+    {
         if (!checkPoints_.empty())
-            maxDt = min(maxDt, checkPoints_.front() - this->time());
-
-        return maxDt;
+            return checkPoints_.front() - t;
+        return {};
     }
 
     bool periodicCheckPoints_;
@@ -637,6 +778,11 @@ private:
     std::queue<Scalar> checkPoints_;
     bool isCheckPoint_;
 };
+
+template<class... Args>
+CheckPointTimeLoop(Args&&... args) -> CheckPointTimeLoop<
+    typename decltype(TimeLoop{std::forward<Args>(args)...})::Scalar
+>;
 
 } // end namespace Dumux
 

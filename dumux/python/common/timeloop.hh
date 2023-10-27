@@ -35,14 +35,22 @@ void registerTimeLoop(pybind11::handle scope,
     cls.def_property_readonly("finished", &TimeLoop::finished);
     cls.def_property_readonly("isCheckPoint", &TimeLoop::isCheckPoint);
     cls.def("start", &TimeLoop::start);
-    cls.def("reset", &TimeLoop::reset, "startTime"_a, "dt"_a, "endTime"_a, "verbose"_a=true);
+    cls.def(
+        "reset",
+        static_cast<void(TimeLoop::*)(Scalar, Scalar, Scalar, bool)>(&TimeLoop::reset),
+        "startTime"_a, "dt"_a, "endTime"_a, "verbose"_a=true
+    );
     cls.def("advanceTimeStep", &TimeLoop::advanceTimeStep);
-    cls.def("setTimeStepSize", &TimeLoop::setTimeStepSize, "dt"_a);
-    cls.def("setMaxTimeStepSize", &TimeLoop::setMaxTimeStepSize, "dt"_a);
+    cls.def("setTimeStepSize", static_cast<void(TimeLoop::*)(Scalar)>(&TimeLoop::setTimeStepSize), "dt"_a);
+    cls.def("setMaxTimeStepSize", &TimeLoop::template setMaxTimeStepSize<Scalar>, "dt"_a);
     cls.def("reportTimeStep", &TimeLoop::reportTimeStep);
     cls.def("finalize", [](TimeLoop& self){ self.finalize(); });
-    cls.def("setPeriodicCheckPoint", &TimeLoop::setPeriodicCheckPoint, "interval"_a, "offset"_a=0.0);
-    cls.def("setCheckPoints", [](TimeLoop& self, const std::vector<double>& checkPoints) {
+    cls.def(
+        "setPeriodicCheckPoint",
+        &TimeLoop::template setPeriodicCheckPoint<Scalar, Scalar>,
+        "interval"_a, "offset"_a=0.0
+    );
+    cls.def("setCheckPoints", [](TimeLoop& self, const std::vector<Scalar>& checkPoints) {
         self.setCheckPoint(checkPoints);
     });
 }
