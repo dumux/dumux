@@ -115,7 +115,6 @@ class FreeFlowStaggeredSubControlVolumeFace
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
-    using CornerStorage = typename T::CornerStorage;
 
     using PairData = typename T::PairData;
     using AxisData = typename T::AxisData;
@@ -159,11 +158,9 @@ public:
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
     {
-        if constexpr (Detail::hasResize<CornerStorage>())
-            corners_.resize(isGeometry.corners());
-
-        for (int i = 0; i < isGeometry.corners(); ++i)
-            corners_[i] = isGeometry.corner(i);
+        dimensions[0] = (isGeometry.corner(1) - isGeometry.corner(0)).two_norm();
+        if constexpr (dim == 3)
+            dimensions[1] = (isGeometry.corner(2) - isGeometry.corner(0)).two_norm();
     }
 
     //! The center of the sub control volume face
@@ -272,15 +269,10 @@ public:
     //! Returns the length of the face in a certain direction (adaptation of area() for 3d)
     Scalar faceLength(const int localSubFaceIdx) const
     {
-        if (dim == 3)
-        {
-            if (localSubFaceIdx < 2)
-                return (corners_[1] - corners_[0]).two_norm();
-            else
-                return (corners_[2] - corners_[0]).two_norm();
-        }
+        if (dim == 3 && localSubFaceIdx > 1)
+            return dimensions[1];
         else
-            return (corners_[1] - corners_[0]).two_norm();
+            return dimensions[0];
     }
 
    /*!
@@ -434,7 +426,7 @@ public:
     { isGhostFace_ = isGhostFaceFlag; }
 
 private:
-    CornerStorage corners_;
+    std::array<Scalar, dim-1> dimensions;
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
