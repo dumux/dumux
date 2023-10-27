@@ -25,6 +25,7 @@ be evaluated with the function values provided in the same order as the names wh
 - __Compositional Staggered__: The staggered discretization method has been updated to fix inconsistencies in handling density when evaluating diffusive boundary fluxes. In addition, a total mass balance is now always considered, rather than a total mole balance.
 - __Parameters__: The template argument for `getParam` and `getParamFromGroup` now defaults to `std::string`, such that for string parameters one can simply write `const auto param = getParam("MyParam");`
 - __Compositional Freeflow FCSFV__: Compositional transport has been implemented for the overhauled face-centered staggered finite volume scheme (FCSFV) discretization method. Ported tests are available in the testing suite.
+- __GridGeometry__: No longer store the corners/geometry for scv/scvfs also for cc-mpfa and staggered discretizations. This improves the memory footprint a lot. Geometries can be obtained via the local view of the grid geometry.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
@@ -41,6 +42,7 @@ be evaluated with the function values provided in the same order as the names wh
   - `HAVE_PVPYTHON` to `DUMUX_HAVE_PVPYTHON`
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
+- __MPFA__: `scvf.corners()/facetCorner()/vertexCorner()` have been deprecated. Use functions from the local view of the grid geometry instead.
 
 
 
