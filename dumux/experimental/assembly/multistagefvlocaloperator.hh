@@ -10,6 +10,8 @@
  * \ingroup Assembly
  * \brief A local operator wrapper for multi-stage time stepping schemes
  */
+#ifndef DUMUX_EXPERIMENTAL_MULTISTAGE_FV_LOCAL_OPERATOR_HH
+#define DUMUX_EXPERIMENTAL_MULTISTAGE_FV_LOCAL_OPERATOR_HH
 
 #include <cmath>
 #include <dumux/discretization/extrusion.hh>
@@ -113,3 +115,5 @@ private:
 };
 
 } // end namespace Dumux::Experimental
+
+#endif
