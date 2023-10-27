@@ -12,6 +12,7 @@ EnableGravity = false
 InitialTemperature = 300
 EnableHeating = true
 PaddingThickness = 5.345e-06
+DualNetworkSourceMode = convection
 
 InletIndex = 5 # for z dir
 OutletIndex = 6
@@ -25,7 +26,6 @@ CInfFactorFluid = 1
 CInfFactorSolid = 0.50
 ConnectionAreaShapeFactor = 0.55
 
-SourceMode = convection
 FluidTemperatureMode = self
 UseAverageConvectionArea = true
 ConvectionLambaFactor = 0.3 # set to 0.9 for metal
