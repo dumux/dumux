@@ -70,7 +70,7 @@ struct FluidOrGrainPyramidFouriersLaw
 
         const auto throatArea = [&]()
         {
-            static const Scalar givenArea = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.ThroatArea", 0.0);
+            static const Scalar givenArea = getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.ThroatArea", 0.0);
             if (givenArea > 0.0)
                 return givenArea;
 
@@ -83,7 +83,7 @@ struct FluidOrGrainPyramidFouriersLaw
 
         const Scalar pyramidFrustumTopArea = [&]()
         {
-            static const bool realArea = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseRealThroatAreaInPyramid", true);
+            static const bool realArea = getParamFromGroup<bool>(problem.paramGroup(), "FouriersLaw.UseRealThroatAreaInPyramid", true);
             if (realArea)
                 return throatArea;
             else
@@ -96,11 +96,11 @@ struct FluidOrGrainPyramidFouriersLaw
 
         const auto getPyramidFrustumBaseArea = [&](const auto& volVars, const Scalar distance)
         {
-            static const Scalar givenArea = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.PoreArea", 0.0);
+            static const Scalar givenArea = getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.PoreArea", 0.0);
             if (givenArea > 0.0)
                 return givenArea;
 
-            static const bool realVolume = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseVolumeEqualPyramid", true);
+            static const bool realVolume = getParamFromGroup<bool>(problem.paramGroup(), "FouriersLaw.UseVolumeEqualPyramid", true);
             if (realVolume)
             {
                 // Using the formula for the volume of a pyramid frustum to calculate its base length and base area:
@@ -181,7 +181,7 @@ struct FixedFactorFouriersLaw
         const auto distanceInside = (insideScv.dofPosition() - throatCenter).two_norm();
         const auto distanceOutside = (outsideScv.dofPosition() - throatCenter).two_norm();
 
-        static const Scalar fixedFactor = getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.FixedFourierFactor");
+        static const Scalar fixedFactor = getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.FixedFourierFactor");
         const auto insideTransmissibility = insideThermalConducitivity*4*distanceInside*fixedFactor;
         const auto outsideTransmissibility = outsideThermalConducitivity*4*distanceOutside*fixedFactor;
 
@@ -240,7 +240,7 @@ struct FancyFactorFouriersLaw
 
         const auto distance = [&](const auto& scv)
         {
-            static const bool useThroatCenter =  getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseThroatCenter", true);
+            static const bool useThroatCenter =  getParamFromGroup<bool>(problem.paramGroup(), "FouriersLaw.UseThroatCenter", true);
             if (useThroatCenter)
             {
                 const auto throatCenter = problem.spatialParams().throatCenter(eIdx);
@@ -310,10 +310,10 @@ struct FancyFactorFouriersLaw
                     return elemFluxVarsCache[scvf].grainContactArea();
             }();
 
-            static const Scalar C0 = isFluid ? getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.C0Fluid")
-                                   : getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.C0Solid");
-            static const Scalar CinfFactor = isFluid ? getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.CInfFactorFluid")
-                                           : getParamFromGroup<Scalar>(problem.paramGroup(), "Problem.CInfFactorSolid");
+            static const Scalar C0 = isFluid ? getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.C0Fluid")
+                                   : getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.C0Solid");
+            static const Scalar CinfFactor = isFluid ? getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.CInfFactorFluid")
+                                           : getParamFromGroup<Scalar>(problem.paramGroup(), "FouriersLaw.CInfFactorSolid");
             using std::max;
             const Scalar CinfInside = max(ApInside/At*CinfFactor, 1.0);
             const Scalar CinfOutside = max(ApOutside/At*CinfFactor, 1.0);
@@ -359,7 +359,7 @@ struct ScalingFouriersLaw
         using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
         const auto deltaT = insideVolVars.temperature() - outsideVolVars.temperature();
 
-        static const bool useScaling = getParamFromGroup<bool>(problem.paramGroup(), "Problem.UseFourierScaling", true);
+        static const bool useScaling = getParamFromGroup<bool>(problem.paramGroup(), "FouriersLaw.UseFourierScaling", true);
         if (!useScaling)
             return transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache) * deltaT;
 
@@ -426,7 +426,7 @@ struct FlexibleFouriersLaw
     {
         static const Mode mode = [&]()
         {
-            const auto m = getParamFromGroup<std::string>(problem.paramGroup(), "Problem.ThroatConductionType");
+            const auto m = getParamFromGroup<std::string>(problem.paramGroup(), "FouriersLaw.ThroatConductionType");
             if (m == "Pyramid")
                 return Mode::pyramid;
             else if (m == "FancyFactor")
