@@ -27,6 +27,7 @@
 
 namespace Dumux {
 
+#ifndef DOXYGEN
 namespace Detail::FCStaggered {
 
 template<class FVElementGeometry, class SubControlVolume>
@@ -90,7 +91,8 @@ typename SubControlVolumeFace::Traits::Geometry scvfGeometry(const FVElementGeom
     return {corners[0], corners[1], inPlaneAxes};
 }
 
-} // end namespace Detail
+} // end namespace Detail::FCStaggered
+#endif // DOXYGEN
 
 template<class GG, bool cachingEnabled>
 class FaceCenteredStaggeredFVElementGeometry;
