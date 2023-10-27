@@ -59,6 +59,31 @@ typename SubControlVolumeFace::Traits::Geometry makeScvfGeometry(const GridGeome
     DUNE_THROW(Dune::InvalidStateException, "Could not construct scvf geometry");
 }
 
+template<typename GridGeometry, typename SubControlVolumeFace>
+auto getVertexCorner(const GridGeometry& gridGeometry, const SubControlVolumeFace& scvf)
+{
+    static constexpr int dim = GridGeometry::GridView::dimension;
+
+    const auto& facetInfo = scvf.facetInfo();
+    const auto element = gridGeometry.element(facetInfo.elementIndex);
+    const auto elemGeo = element.geometry();
+    const auto refElement = referenceElement(elemGeo);
+    return elemGeo.global(refElement.position(
+        refElement.subEntity(facetInfo.facetIndex, 1, facetInfo.facetCornerIndex, dim),
+        dim
+    ));
+}
+
+template<typename GridGeometry, typename SubControlVolumeFace>
+auto getFacetCorner(const GridGeometry& gridGeometry, const SubControlVolumeFace& scvf)
+{
+    const auto& facetInfo = scvf.facetInfo();
+    const auto element = gridGeometry.element(facetInfo.elementIndex);
+    const auto elemGeo = element.geometry();
+    const auto refElement = referenceElement(elemGeo);
+    return elemGeo.global(refElement.position(facetInfo.facetIndex, 1));
+}
+
 } // namespace Detail::Mpfa
 #endif // DOXYGEN
 
@@ -225,6 +250,14 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     { return Detail::Mpfa::makeScvfGeometry(gridGeometry(), scvf); }
 
+    //! Return the position of the scvf corner that coincides with an element vertex
+    typename SubControlVolumeFace::Traits::GlobalPosition vertexCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getVertexCorner(gridGeometry(), scvf); }
+
+    //! Return the corner of the scvf that is inside the facet the scvf is embedded in
+    typename SubControlVolumeFace::Traits::GlobalPosition facetCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getFacetCorner(gridGeometry(), scvf); }
+
 private:
 
     std::optional<Element> element_;
@@ -382,6 +415,14 @@ public:
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     { return Detail::Mpfa::makeScvfGeometry(gridGeometry(), scvf); }
+
+    //! Return the position of the scvf corner that coincides with an element vertex
+    typename SubControlVolumeFace::Traits::GlobalPosition vertexCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getVertexCorner(gridGeometry(), scvf); }
+
+    //! Return the corner of the scvf that is inside the facet the scvf is embedded in
+    typename SubControlVolumeFace::Traits::GlobalPosition facetCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getFacetCorner(gridGeometry(), scvf); }
 
 private:
 

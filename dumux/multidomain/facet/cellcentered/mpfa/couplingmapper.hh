@@ -127,7 +127,7 @@ public:
                     else
                     {
                         const auto eps = lowDimGeometry.volume()*1e-8;
-                        const auto diffVec = lowDimGeometry.center()-scvf.facetCorner();
+                        const auto diffVec = lowDimGeometry.center()-fvGeometry.facetCorner(scvf);
 
                         if ( Dune::FloatCmp::eq<GlobalPosition, Dune::FloatCmp::CmpStyle::absolute>(diffVec, GlobalPosition(0.0), eps) )
                             embeddedScvfIndices.push_back(scvf.index());

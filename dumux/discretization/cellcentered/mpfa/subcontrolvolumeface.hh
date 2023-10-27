@@ -194,14 +194,17 @@ public:
     { return outsideScvIndices_; }
 
     //! Returns the number of corners
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.geometry(scvf).corners().")]]
     std::size_t corners() const
     { return corners_.size(); }
 
     //! Returns the global position of the vertex the scvf is connected to
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.vertexCorner(scvf)")]]
     const GlobalPosition& vertexCorner() const
     { return corners_.back(); }
 
     //! Returns the global position of the center of the element facet this scvf is embedded in
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.facetCorner(scvf)")]]
     const GlobalPosition& facetCorner() const
     { return corners_[0]; }
 
