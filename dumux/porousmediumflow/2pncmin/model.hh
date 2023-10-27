@@ -18,7 +18,7 @@
  * For details on Darcy's law see dumux/flux/darcyslaw.hh.
  *
  * By inserting Darcy's law into the equations for the conservation of the
- * components, one gets one transport equation for each component
+ * components, one gets one transport equation for each component,
  * \f{eqnarray*}{
  * && \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa \phi S_\alpha )}
  * {\partial t}
@@ -28,13 +28,28 @@
  * \nonumber \\ \nonumber \\
  *   &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
  * - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
- * \alpha \in \{w, g\}
+ * \alpha \in \{w, g\},
  * \f}
  *
+ * where:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
+ * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
+ * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
+ * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
+ * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
+ * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
+ * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
+ *
  * The solid or mineral phases are assumed to consist of a single component.
- * Their mass balance consist only of a storage and a source term:
+ * Their mass balance consists of only a storage and a source term,
  *  \f$\frac{\partial ( \varrho_\lambda \phi_\lambda )} {\partial t}
- *  = q_\lambda\f$
+ *  = q_\lambda,\f$
+ *
+ * where:
+ * * \f$ \varrho_\lambda \f$  mass density of the solid phase \f$ \lambda \f$,
+ * * \f$ \phi_\lambda \f$ is the porosity of the solid,
+ * * \f$ q_\lambda \f$ is a source or sink term.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking

@@ -21,8 +21,15 @@
  \f[
  \phi \frac{ \partial \varrho X^\kappa}{\partial t}
  - \text{div} \left\lbrace \varrho X^\kappa {\textbf v_f}
- + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q.
+ + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = q,
  \f]
+* where:
+ * * \f$ \phi \f$ is the porosity of the porous medium,
+ * * \f$ \varrho \f$ is the mass density,
+ * * \f$ X^\kappa \f$ is the mass fraction of component \f$ \kappa \f$,
+ * * \f$ \textbf{v}_f \f$ is the velocity of the fluid,
+ * * \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium,
+ * * \f$ q \f$ is a source or sink term.
  *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
