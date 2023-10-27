@@ -19,7 +19,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
@@ -27,22 +26,6 @@
 #include <typeinfo>
 
 namespace Dumux {
-
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the container class storing the scvf's corners has a resize function
-struct HasResize
-{
-    template<class Container> auto operator()(Container&& c)
-    -> decltype(c.resize(1)) {}
-};
-
-template<class C>
-constexpr bool hasResize()
-{ return decltype(isValid(HasResize{})(std::declval<C>()))::value; }
-
-} // end namespace Detail
-#endif
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -65,22 +48,9 @@ struct FreeFlowStaggeredDefaultScvfGeometryTraits
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
 
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-    };
-
-    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
-    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
-    using GlobalPosition = typename CornerStorage::value_type;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
 };
 
 /*!

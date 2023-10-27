@@ -15,7 +15,7 @@
 #include <optional>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+#include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 
 namespace Dumux {
 
@@ -215,33 +215,24 @@ public:
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
-        const auto element = gridGeometryPtr_->element(scvf.insideScvIdx());
-        const auto& scvfIndices = gridGeometryPtr_->scvfIndicesOfScv(scvf.insideScvIdx());
-        const LocalIndexType localScvfIdx = Detail::Tpfa::findLocalIndex(scvf.index(), scvfIndices);
-        LocalIndexType localIdx = 0;
-        using FaceCornerStorage = typename SubControlVolumeFace::Traits::CornerStorage;
-        for (const auto& intersection : intersections(gridGeometryPtr_->gridView(), element))
-        {
-            if (intersection.neighbor() || intersection.boundary())
-            {
-                if (localIdx == localScvfIdx)
-                {
-                    FaceCornerStorage corners{};
-                    const auto& isGeometry = intersection.geometry();
-                    if constexpr (Detail::hasResize<FaceCornerStorage>())
-                        corners.resize(isGeometry.corners());
+        const auto insideElementIndex = scvf.insideScvIdx();
+        const auto elementGeometry = (insideElementIndex != scvIndices_[0]) ?
+            element_->geometry() :
+            gridGeometryPtr_->element(insideElementIndex).geometry();
+        const auto center = elementGeometry.center();
+        const auto normalAxis = Dumux::normalAxis(scvf.unitOuterNormal());
 
-                    for (int i = 0; i < isGeometry.corners(); ++i)
-                        corners[i] = isGeometry.corner(i);
+        auto lowerLeft = elementGeometry.corner(0);
+        auto upperRight = elementGeometry.corner(elementGeometry.corners()-1);
 
-                    return {intersection.type(), corners};
-                }
-                else
-                    ++localIdx;
-            }
-        }
+        // shift corners to scvf plane and halve lateral faces
+        lowerLeft[normalAxis] = center[normalAxis];
+        upperRight[normalAxis] = center[normalAxis];
 
-        DUNE_THROW(Dune::InvalidStateException, "Could not find scvf geometry");
+        auto inPlaneAxes = std::move(std::bitset<SubControlVolumeFace::Traits::dimWorld>{}.set());
+        inPlaneAxes.set(normalAxis, false);
+
+        return {lowerLeft, upperRight, inPlaneAxes};
     }
 
 private:
