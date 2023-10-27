@@ -394,7 +394,7 @@ public:
             enum class FluidTemperatureMode {mean, self, upstream};
             static const auto fluidTemperatureMode = [&]
             {
-                static const auto mode = getParam<std::string>("Problem.FluidTemperatureMode", "mean");
+                static const auto mode = getParam<std::string>("DualNetwork.FluidTemperatureMode", "mean");
                 std::cout << "Using FluidTemperatureMode " << mode << std::endl;
                 if (mode == "mean")
                     return FluidTemperatureMode::mean;
@@ -422,9 +422,9 @@ public:
             using std::abs;
             const Scalar Re = DimLessNum::reynoldsNumber(abs(velocity), characteristicLength, meanKinematicViscosity);
 
-            static const Scalar fixedLambda = getParam<Scalar>("Problem.FixedConvectionLambda", -1.0);
-            static const Scalar lambaFactor = getParam<Scalar>("Problem.ConvectionLambaFactor", 0.9);
-            static const Scalar lambaExponent = getParam<Scalar>("Problem.ConvectionLambaExponent", 0.4);
+            static const Scalar fixedLambda = getParam<Scalar>("DualNetwork.FixedConvectionLambda", -1.0);
+            static const Scalar lambaFactor = getParam<Scalar>("DualNetwork.ConvectionLambaFactor", 0.9);
+            static const Scalar lambaExponent = getParam<Scalar>("DualNetwork.ConvectionLambaExponent", 0.4);
             using std::pow;
             const Scalar lambda = fixedLambda > 0.0 ? fixedLambda : 1.0 + lambaFactor*pow(Re, lambaExponent); //approximation: see eq.30 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
             const Scalar selfA = connection.connectionArea / connection.convectionVoidElementIdx.size();
@@ -452,12 +452,12 @@ public:
                 DUNE_THROW(Dune::InvalidStateException, "No neighbor area found");
             };
 
-            static const bool useAvgA = getParam<bool>("Problem.UseAverageConvectionArea", false);
+            static const bool useAvgA = getParam<bool>("DualNetwork.UseAverageConvectionArea", false);
             const Scalar A = useAvgA ? 0.5*(selfA + neighborA()) : selfA;
 
             const Scalar deltaT = (elementCouplingContext_.boundDomainId() == voidDomainIdx) ? (tSolid - tFluid) : (tFluid - tSolid);
 
-            static const int verbose = getParam<int>("Problem.SourceVerboseForDof", -1);
+            static const int verbose = getParam<int>("DualNetwork.SourceVerboseForDof", -1);
             if (verbose >= 0 && (connection.voidVertexIdx == verbose || connection.solidVertexIdx == verbose))
             {
                 std::cout << "\n" << std::endl;
@@ -487,7 +487,7 @@ public:
     {
         bindCouplingContext(domainI, element);
 
-        static const int verbose = getParam<int>("Problem.SourceVerboseForDof", -1);
+        static const int verbose = getParam<int>("DualNetwork.SourceVerboseForDof", -1);
         if (scv.dofIndex() == verbose)
             std::cout << "Start Source at elemn " << fvGeometry.gridGeometry().elementMapper().index(element) << " *******************************" <<  std::endl;
 
@@ -557,12 +557,12 @@ public:
 
         const auto poreRadiusVoid = [&]
         {
-            static const bool useExactPoreRadiusVoid = getParam<bool>("Problem.UseExactPoreRadiusVoid", false);
+            static const bool useExactPoreRadiusVoid = getParam<bool>("DualNetwork.UseExactPoreRadiusVoid", false);
             if (useExactPoreRadiusVoid)
             {
                 using std::sqrt;
-                static const Scalar R = getParam<Scalar>("Problem.SphereRadius", 50e-6);
-                static const Scalar overlapFactor = getParam<Scalar>("Problem.OverlapFactor");
+                static const Scalar R = getParam<Scalar>("DualNetwork.SphereRadius", 50e-6);
+                static const Scalar overlapFactor = getParam<Scalar>("DualNetwork.OverlapFactor");
                 static const Scalar dx = overlapFactor*R;
                 static const Scalar r = sqrt(3.0) * dx - R;
                 return r;
@@ -573,10 +573,10 @@ public:
 
         const auto poreRadiusSolid = [&]
         {
-            static const bool useExactPoreRadiusSolid = getParam<bool>("Problem.UseExactPoreRadiusSolid", false);
+            static const bool useExactPoreRadiusSolid = getParam<bool>("DualNetwork.UseExactPoreRadiusSolid", false);
             if (useExactPoreRadiusSolid)
             {
-                static const Scalar R = getParam<Scalar>("Problem.SphereRadius", 50e-6);
+                static const Scalar R = getParam<Scalar>("DualNetwork.SphereRadius", 50e-6);
                 return R;
             }
             else
@@ -624,20 +624,20 @@ public:
         }();
 
         const Scalar kappa = fluidThermalConductivity / solidThermalConductivity;
-        static const Scalar Nu = getParam<Scalar>("Problem.Nu", 1.0);
-        static const Scalar Bi = getParam<Scalar>("Problem.Bi", 1.0);
+        static const Scalar Nu = getParam<Scalar>("DualNetwork.Nu", 1.0);
+        static const Scalar Bi = getParam<Scalar>("DualNetwork.Bi", 1.0);
 
-        static const bool useExactConnectionLength = getParam<bool>("Problem.UseExactConnectionLength", false);
+        static const bool useExactConnectionLength = getParam<bool>("DualNetwork.UseExactConnectionLength", false);
         const Scalar length = useExactConnectionLength ? poreRadiusSolid + poreRadiusVoid : connection.connectionLength;
 
-        static const bool useExactConnectionAreaSphere = getParam<bool>("Problem.UseExactConnectionAreaSphere", false);
-        static const Scalar connectionAreaShapeFactor = getParam<Scalar>("Problem.ConnectionAreaShapeFactor", 0.9);
+        static const bool useExactConnectionAreaSphere = getParam<bool>("DualNetwork.UseExactConnectionAreaSphere", false);
+        static const Scalar connectionAreaShapeFactor = getParam<Scalar>("DualNetwork.ConnectionAreaShapeFactor", 0.9);
         const Scalar area = [&]()
         {
             if (useExactConnectionAreaSphere)
             {
-                static const Scalar R = getParam<Scalar>("Problem.SphereRadius", 50e-6);
-                static const Scalar overlapFactor = getParam<Scalar>("Problem.OverlapFactor");
+                static const Scalar R = getParam<Scalar>("DualNetwork.SphereRadius", 50e-6);
+                static const Scalar overlapFactor = getParam<Scalar>("DualNetwork.OverlapFactor");
                 static const auto dx = overlapFactor*R;
                 static const auto h = R - dx;
                 static const auto interfacialArea = 4*M_PI*R*R - 6*(2*M_PI*R*h);

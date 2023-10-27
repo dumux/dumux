@@ -59,7 +59,7 @@ public:
         inletIndex_ = getParamFromGroup<int>(this->paramGroup(), "Problem.InletIndex");
         heaterIndex_ = getParamFromGroup<int>(this->paramGroup(), "Problem.HeaterIndex");
 
-        const auto mode = getParamFromGroup<std::string>(this->paramGroup(), "Problem.SourceMode", "max");
+        const auto mode = getParamFromGroup<std::string>(this->paramGroup(), "Problem.DualNetworkSourceMode", "max");
         if (mode == "conduction")
             sourceMode_ = SourceMode::conduction;
         else if (mode == "convection")

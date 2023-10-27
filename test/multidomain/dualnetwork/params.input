@@ -12,20 +12,24 @@ EnableGravity = false
 InitialTemperature = 300
 EnableHeating = true
 PaddingThickness = 5.345e-06
+DualNetworkSourceMode = convection
 
 InletIndex = 5 # for z dir
 OutletIndex = 6
 HeaterIndex = 1
 
-Nu = 1
-Bi = 1
+[FouriersLaw]
+ThroatConductionType = FancyFactor
 C0Fluid = 0.1
 C0Solid = 0.45
 CInfFactorFluid = 1
 CInfFactorSolid = 0.50
+
+[DualNetwork]
+Nu = 1
+Bi = 1
 ConnectionAreaShapeFactor = 0.55
 
-SourceMode = convection
 FluidTemperatureMode = self
 UseAverageConvectionArea = true
 ConvectionLambaFactor = 0.3 # set to 0.9 for metal
@@ -38,7 +42,7 @@ OutletPressure = 0
 InletTemperature = 300
 OutletTemperature = 300
 BottomTemperature = 400
-ThroatConductionType = FancyFactor
+
 UseRobinInlet = true
 RobinShapeFactor = 1.0
 # EnableCoupling = false
@@ -47,7 +51,6 @@ RobinShapeFactor = 1.0
 Name = solid
 InletTemperature = 300
 BottomTemperature = 400
-ThroatConductionType = FancyFactor
 UseRobinInlet = true
 RobinShapeFactor = 1.0
 # EnableCoupling = false
