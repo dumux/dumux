@@ -1,0 +1,17 @@
+[TimeLoop]
+TEnd = 50s
+Dt = 0.09s # CFL: c*dt/dx < 1
+Scheme = RK4
+
+[Grid]
+UpperRight = 1 1
+Cells = 100 100
+Overlap = 1
+
+[Problem]
+Name = wave
+WaveSpeed = 0.1s # c
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1 1
+BaseEpsilon = 1
