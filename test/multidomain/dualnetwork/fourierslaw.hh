@@ -191,7 +191,7 @@ struct FixedFactorFouriersLaw
 };
 
 template<bool isFluid>
-struct FancyFactorFouriersLaw
+struct FluidSolidEffectiveAreasFouriersLaw
 {
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
@@ -219,6 +219,7 @@ struct FancyFactorFouriersLaw
                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                  const ElementFluxVariablesCache& elemFluxVarsCache)
     {
+        //For transmissibillity calculation see section 5.2 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
         using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -270,6 +271,7 @@ struct FancyFactorFouriersLaw
         const Scalar ApInside = insideVolVars.poreVolume()/(2.0*distanceInside);
         const Scalar ApOutside = outsideVolVars.poreVolume()/(2.0*distanceOutside);
 
+        //For effective areas see figure 3 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
         Scalar effectiveAreaInside = 0.0;
         Scalar effectiveAreaOutside = 0.0;
         Scalar At = 0.0;
@@ -397,7 +399,7 @@ struct ScalingFouriersLaw
 template<bool isFluid>
 struct FlexibleFouriersLaw
 {
-    enum class Mode {pyramid, fixedFactor, fancyFactor, tpfa};
+    enum class Mode {pyramid, fixedFactor, fluidSolidEffectiveAreas, tpfa};
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
@@ -430,8 +432,8 @@ struct FlexibleFouriersLaw
             const auto m = getParamFromGroup<std::string>(problem.paramGroup(), "FouriersLaw.ThroatConductionType");
             if (m == "Pyramid")
                 return Mode::pyramid;
-            else if (m == "FancyFactor")
-                return Mode::fancyFactor;
+            else if (m == "FluidSolidEffectiveAreas")
+                return Mode::fluidSolidEffectiveAreas;
             else if (m == "FixedFactor")
                 return Mode::fixedFactor;
             else
@@ -442,8 +444,8 @@ struct FlexibleFouriersLaw
             return FluidOrGrainPyramidFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else if (mode == Mode::fixedFactor)
             return FixedFactorFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        else if (mode == Mode::fancyFactor)
-            return FancyFactorFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        else if (mode == Mode::fluidSolidEffectiveAreas)
+            return FluidSolidEffectiveAreasFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else return 0.0; // TODO implement TPFA
     }
 };
