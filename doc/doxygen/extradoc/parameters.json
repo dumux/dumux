@@ -2439,27 +2439,16 @@
         ]
     },
     "Problem.PoissonRatio": {
-        "explanation": [
-            "The poisson ratio."
-        ]
+        "mode": "ignore"
     },
     "Problem.SandGrainRoughness": {
-        "explanation": [
-            "The sand grain roughness"
-        ]
+        "mode": "ignore"
     },
     "Problem.UsePrimaryVariableSwitch": {
-        "explanation": [
-            "Whether to perform variable switch at a degree of freedom location"
-        ]
+        "mode": "ignore"
     },
     "Problem.YoungsModulus": {
-        "explanation": [
-            "The value of Young's modulus."
-        ],
-        "type": [
-            "Scalar"
-        ]
+        "mode": "ignore"
     },
     "RANS.EddyViscosityModel": {
         "explanation": [
