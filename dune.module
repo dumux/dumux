@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 Module: dumux
-Version: 3.8-git
+Version: 3.8
 Author: The DuMux Team
 Maintainer: dumux@listserv.uni-stuttgart.de
 Depends: dune-common (>=2.9) dune-grid (>=2.9) dune-localfunctions (>=2.9) dune-istl (>=2.9)
