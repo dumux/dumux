@@ -17,6 +17,10 @@
 
 namespace Dumux::PoreNetwork {
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law assuming pyramid frustum shapes for the geometry from pore bodies to pore throats.
+*/
 template<bool isFluid>
 struct FluidOrGrainPyramidFouriersLaw
 {
@@ -130,6 +134,10 @@ struct FluidOrGrainPyramidFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law and scales the transmissibillity with a fixed, user-defined factor.
+*/
 template<bool isFluid>
 struct FixedFactorFouriersLaw
 {
@@ -190,8 +198,24 @@ struct FixedFactorFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law taking effective areas available for conduction into account.
+*
+* This Fourier's law is based on the work of Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
+* It assumes pyramid frustum shapes for the geometry from pore bodies to pore throats, but not taking the full area
+* of pore bodies into account, but the effective areas available for conduction.
+*
+* Depending on the conductivity ratio between the fluid and the solid \f$ \kappa = \frac{\łambda_s}{\lambda_s}\f$,
+* the area available for conduction of heat through each phase might be restricted due to the other phase.
+* The effective areas available for heat conduction in the solid are shown in the picture below:
+* \image html effectiveareasforconduction_dnm.png
+* This picture (figure 3) was taken from Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
+* \f$A_{A}\f$ denotes here the contact area between two grains (solid bodies) and
+* \f$\tilde{A}\f$ denotes the effective area of the solid body.
+*/
 template<bool isFluid>
-struct FancyFactorFouriersLaw
+struct FluidSolidEffectiveAreasFouriersLaw
 {
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
@@ -219,6 +243,7 @@ struct FancyFactorFouriersLaw
                                  const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                  const ElementFluxVariablesCache& elemFluxVarsCache)
     {
+        //For transmissibillity calculation see section 5.2 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
         using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -270,6 +295,7 @@ struct FancyFactorFouriersLaw
         const Scalar ApInside = insideVolVars.poreVolume()/(2.0*distanceInside);
         const Scalar ApOutside = outsideVolVars.poreVolume()/(2.0*distanceOutside);
 
+        //For effective areas see figure 3 in Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5
         Scalar effectiveAreaInside = 0.0;
         Scalar effectiveAreaOutside = 0.0;
         Scalar At = 0.0;
@@ -341,6 +367,11 @@ struct FancyFactorFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law and scales a fixed transmissibillity with a factor
+* depending on the position of the throat.
+*/
 template<class BaseLaw>
 struct ScalingFouriersLaw
 {
@@ -397,7 +428,7 @@ struct ScalingFouriersLaw
 template<bool isFluid>
 struct FlexibleFouriersLaw
 {
-    enum class Mode {pyramid, fixedFactor, fancyFactor, tpfa};
+    enum class Mode {pyramid, fixedFactor, fluidSolidEffectiveAreas, tpfa};
 
     template<class Problem, class Element, class FVElementGeometry,
              class ElementVolumeVariables, class ElementFluxVariablesCache>
@@ -430,8 +461,8 @@ struct FlexibleFouriersLaw
             const auto m = getParamFromGroup<std::string>(problem.paramGroup(), "FouriersLaw.ThroatConductionType");
             if (m == "Pyramid")
                 return Mode::pyramid;
-            else if (m == "FancyFactor")
-                return Mode::fancyFactor;
+            else if (m == "FluidSolidEffectiveAreas")
+                return Mode::fluidSolidEffectiveAreas;
             else if (m == "FixedFactor")
                 return Mode::fixedFactor;
             else
@@ -442,8 +473,8 @@ struct FlexibleFouriersLaw
             return FluidOrGrainPyramidFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else if (mode == Mode::fixedFactor)
             return FixedFactorFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        else if (mode == Mode::fancyFactor)
-            return FancyFactorFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        else if (mode == Mode::fluidSolidEffectiveAreas)
+            return FluidSolidEffectiveAreasFouriersLaw<isFluid>::transmissibility(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else return 0.0; // TODO implement TPFA
     }
 };

@@ -19,7 +19,7 @@ OutletIndex = 6
 HeaterIndex = 1
 
 [FouriersLaw]
-ThroatConductionType = FancyFactor
+ThroatConductionType = FluidSolidEffectiveAreas
 C0Fluid = 0.1
 C0Solid = 0.45
 CInfFactorFluid = 1
