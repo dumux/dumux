@@ -1,0 +1,39 @@
+[TimeLoop]
+DtInitial = 1e-2 # [s]
+TEnd = 10000 # [s]
+
+[Grid]
+File = ./grids/samplecrop.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+Sanitize = true
+AddThroatVolumeToPoreVolume = true
+
+[Problem]
+Name = test_pnm_2pnc_reg
+VtpOutputFrequency = 10 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 5000
+UseFixedPressureAndSaturationBoundary = false
+Source = 1e-7
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 20
+TargetSteps = 4
+MaxTimeStepDivisions = 20
+MaxRelativeShift = 1e-5
+LogFileName = NewtonLog.txt
+UseLineSearch = true
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+
+[Regularization]
+RegPercentage = 0.05
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline

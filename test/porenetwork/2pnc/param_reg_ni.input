@@ -1,0 +1,35 @@
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 0.002 # [s]
+
+[Grid]
+File = ./grids/samplecrop.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm2pnc_ni_reg
+VtpOutputFrequency = 1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured
+CapillaryPressure = 5000
+EnableGravity = false
+UseFixedPressureAndSaturationBoundary = false
+InletTemperature = 288.15
+OutletTemperature = 283.15
+Source = 1e-5
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+LogFileName = NewtonOverview.txt
+
+[Component]
+SolidHeatCapacity = 1.0 # for compatibility
+SolidDensity = 1.0 # for compatibility
+SolidThermalConductivity = 1.0 # for compatibility
+
+[Regularization]
+RegPercentage = 0.02
