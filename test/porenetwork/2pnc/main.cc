@@ -172,4 +172,6 @@ int main(int argc, char** argv)
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }
+
+    return 0;
 }
