@@ -19,12 +19,73 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/geometry/type.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail::Mpfa {
+
+template<typename GridGeometry, typename SubControlVolumeFace>
+typename SubControlVolumeFace::Traits::Geometry makeScvfGeometry(const GridGeometry& gridGeometry,
+                                                                 const SubControlVolumeFace& scvf)
+{
+    static constexpr int dim = GridGeometry::GridView::dimension;
+
+    const auto& facetInfo = scvf.facetInfo();
+    const auto element = gridGeometry.element(facetInfo.elementIndex);
+    const auto elemGeo = element.geometry();
+    const auto refElement = referenceElement(elemGeo);
+    for (const auto& is : intersections(gridGeometry.gridView(), element))
+    {
+        if (is.indexInInside() == facetInfo.facetIndex)
+        {
+            const auto numCorners = is.geometry().corners();
+            const auto isPositions = GridGeometry::MpfaHelper::computeScvfCornersOnIntersection(
+                elemGeo, refElement, facetInfo.facetIndex, numCorners
+            );
+            return {
+                Dune::GeometryTypes::cube(dim-1),
+                GridGeometry::MpfaHelper::getScvfCorners(
+                    isPositions, numCorners, facetInfo.facetCornerIndex
+                )
+            };
+        }
+    }
+    DUNE_THROW(Dune::InvalidStateException, "Could not construct scvf geometry");
+}
+
+template<typename GridGeometry, typename SubControlVolumeFace>
+auto getVertexCorner(const GridGeometry& gridGeometry, const SubControlVolumeFace& scvf)
+{
+    static constexpr int dim = GridGeometry::GridView::dimension;
+
+    const auto& facetInfo = scvf.facetInfo();
+    const auto element = gridGeometry.element(facetInfo.elementIndex);
+    const auto elemGeo = element.geometry();
+    const auto refElement = referenceElement(elemGeo);
+    return elemGeo.global(refElement.position(
+        refElement.subEntity(facetInfo.facetIndex, 1, facetInfo.facetCornerIndex, dim),
+        dim
+    ));
+}
+
+template<typename GridGeometry, typename SubControlVolumeFace>
+auto getFacetCorner(const GridGeometry& gridGeometry, const SubControlVolumeFace& scvf)
+{
+    const auto& facetInfo = scvf.facetInfo();
+    const auto element = gridGeometry.element(facetInfo.elementIndex);
+    const auto elemGeo = element.geometry();
+    const auto refElement = referenceElement(elemGeo);
+    return elemGeo.global(refElement.position(facetInfo.facetIndex, 1));
+}
+
+} // namespace Detail::Mpfa
+#endif // DOXYGEN
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -52,6 +113,7 @@ class CCMpfaFVElementGeometry<GG, true>
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
 
     static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     //! export type of the element
@@ -184,16 +246,17 @@ public:
     typename Element::Geometry geometry(const SubControlVolume& scv) const
     { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
+    { return Detail::Mpfa::makeScvfGeometry(gridGeometry(), scvf); }
 
-    #pragma GCC diagnostic pop
+    //! Return the position of the scvf corner that coincides with an element vertex
+    typename SubControlVolumeFace::Traits::GlobalPosition vertexCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getVertexCorner(gridGeometry(), scvf); }
+
+    //! Return the corner of the scvf that is inside the facet the scvf is embedded in
+    typename SubControlVolumeFace::Traits::GlobalPosition facetCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getFacetCorner(gridGeometry(), scvf); }
 
 private:
 
@@ -215,8 +278,8 @@ class CCMpfaFVElementGeometry<GG, false>
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using MpfaHelper = typename GG::MpfaHelper;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
 
 public:
@@ -345,20 +408,21 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
+    { return Detail::Mpfa::makeScvfGeometry(gridGeometry(), scvf); }
 
-    #pragma GCC diagnostic pop
+    //! Return the position of the scvf corner that coincides with an element vertex
+    typename SubControlVolumeFace::Traits::GlobalPosition vertexCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getVertexCorner(gridGeometry(), scvf); }
+
+    //! Return the corner of the scvf that is inside the facet the scvf is embedded in
+    typename SubControlVolumeFace::Traits::GlobalPosition facetCorner(const SubControlVolumeFace& scvf) const
+    { return Detail::Mpfa::getFacetCorner(gridGeometry(), scvf); }
 
 private:
 
@@ -489,10 +553,15 @@ private:
                     continue;
 
                 hasBoundaryScvf_ = (hasBoundaryScvf_ || is.boundary());
-
+                typename SubControlVolumeFace::FacetInfo facetInfo{
+                    gridGeometry().elementMapper().index(e),
+                    useNeighbor ? is.indexInOutside() : is.indexInInside(),
+                    c
+                };
                 scvfs_.emplace_back(MpfaHelper(),
                                     MpfaHelper::getScvfCorners(isPositions, numCorners, c),
                                     is,
+                                    std::move(facetInfo),
                                     vIdxGlobal,
                                     vIdxLocal,
                                     scvFaceIndices[scvfCounter],
@@ -580,9 +649,15 @@ private:
                 }
 
                 // build scvf
+                typename SubControlVolumeFace::FacetInfo facetInfo{
+                    gridGeometry().elementMapper().index(e),
+                    useNeighbor ? is.indexInOutside() : is.indexInInside(),
+                    c
+                };
                 neighborScvfs_.emplace_back(MpfaHelper(),
                                             MpfaHelper::getScvfCorners(isPositions, numCorners, c),
                                             is,
+                                            std::move(facetInfo),
                                             vIdxGlobal,
                                             vIdxLocal,
                                             scvFaceIndices[scvfCounter],

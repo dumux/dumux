@@ -308,7 +308,7 @@ private:
                 const bool usesSecondaryIV = secondaryIvIndicator_(element, is, isBranchingPoint);
 
                 // make the scv faces belonging to each corner of the intersection
-                for (std::size_t c = 0; c < numCorners; ++c)
+                for (int c = 0; c < numCorners; ++c)
                 {
                     // get the global vertex index the scv face is connected to
                     const auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
@@ -337,9 +337,15 @@ private:
                                                     } ();
 
                     scvfIndexSet.push_back(scvfIdx);
+                    typename SubControlVolumeFace::FacetInfo facetInfo{
+                        this->elementMapper().index(e),
+                        useNeighbor ? is.indexInOutside() : is.indexInInside(),
+                        c
+                    };
                     scvfs_.emplace_back(MpfaHelper(),
                                         MpfaHelper::getScvfCorners(isPositions, numCorners, c),
                                         is,
+                                        std::move(facetInfo),
                                         vIdxGlobal,
                                         vIdxLocal,
                                         scvfIdx,

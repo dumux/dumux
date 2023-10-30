@@ -71,9 +71,9 @@ public:
 
             typename MLGTraits::template CornerStorage<dim, dimWorld>::Type corners;
             corners[0] = fvGeometry.scv( scv.gridScvIndex() ).center();
-            corners[1] = firstGridScvf.facetCorner();
-            corners[2] = secondGridScvf.facetCorner();
-            corners[3] = secondGridScvf.vertexCorner();
+            corners[1] = fvGeometry.facetCorner(firstGridScvf);
+            corners[2] = fvGeometry.facetCorner(secondGridScvf);
+            corners[3] = fvGeometry.vertexCorner(secondGridScvf);
 
             using std::swap;
             typename LocalScvType::LocalBasis basis;

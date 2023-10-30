@@ -85,11 +85,15 @@ private:
 template<class GridView>
 struct StaggeredDefaultScvfGeometryTraits
 {
-    using Geometry = typename GridView::template Codim<1>::Geometry;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using Scalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr int dim = GridView::Grid::dimension;
+    static constexpr int dimWorld = GridView::Grid::dimensionworld;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
 };
 
 /*!
@@ -129,7 +133,6 @@ public:
                                   const std::vector<GridIndexType>& scvIndices,
                                   const GeometryHelper& geometryHelper)
     : ParentType()
-    , geomType_(isGeometry.type())
     , area_(isGeometry.volume())
     , center_(isGeometry.center())
     , unitOuterNormal_(is.centerUnitOuterNormal())
@@ -137,10 +140,6 @@ public:
     , scvIndices_(scvIndices)
     , boundary_(is.boundary())
     {
-        corners_.resize(isGeometry.corners());
-        for (int i = 0; i < isGeometry.corners(); ++i)
-            corners_[i] = isGeometry.corner(i);
-
         dofIdx_ = geometryHelper.dofIndex();
         localFaceIdx_ = geometryHelper.localFaceIndex();
     }
@@ -200,13 +199,6 @@ public:
         return scvfIndex_;
     }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    const Geometry geometry() const
-    {
-        return Geometry(geomType_, corners_);
-    }
-
     //! The global index of the dof living on this face
     GridIndexType dofIndex() const
     {
@@ -220,8 +212,6 @@ public:
     }
 
 private:
-    Dune::GeometryType geomType_;
-    std::vector<GlobalPosition> corners_;
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
