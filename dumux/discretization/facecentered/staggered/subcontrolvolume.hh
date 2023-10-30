@@ -86,21 +86,6 @@ public:
     , eIdx_(eIdx)
     , boundary_(boundary)
     {
-        for (int i = 0; i < corners_.size(); ++i)
-        {
-            auto& corner = corners_[i];
-
-            // copy the corner of the corresponding element
-            corner = elementGeometry.corner(i);
-
-            // shift the corner such that the scvf covers half of the lateral facet
-            // (keep the outer corner positions)
-            using std::abs;
-            const auto eps =  1e-8; // TODO
-            if (abs(corner[dofAxis] - intersectionGeometry.center()[dofAxis]) > eps)
-                corner[dofAxis] = elementGeometry.center()[dofAxis];
-        }
-
         directionSign_ = (indexInElement % 2) ? 1.0 : -1.0;
     }
 
@@ -139,17 +124,9 @@ public:
     bool boundary() const
     { return boundary_; }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).")]]
-    Geometry geometry() const
-    {
-        return Geometry(corners_.front(), corners_.back());
-    }
-
 private:
     GlobalPosition center_;
     GlobalPosition dofPosition_;
-    CornerStorage corners_;
     Scalar volume_;
     GridIndexType globalIndex_;
     SmallLocalIndexType indexInElement_;

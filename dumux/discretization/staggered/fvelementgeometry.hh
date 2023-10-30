@@ -15,6 +15,7 @@
 #include <optional>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 
 namespace Dumux {
 
@@ -207,20 +208,32 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    { return gridGeometryPtr_->element(scv.dofIndex()).geometry(); }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
+    {
+        const auto insideElementIndex = scvf.insideScvIdx();
+        const auto elementGeometry = (insideElementIndex != scvIndices_[0]) ?
+            element_->geometry() :
+            gridGeometryPtr_->element(insideElementIndex).geometry();
+        const auto center = elementGeometry.center();
+        const auto normalAxis = Dumux::normalAxis(scvf.unitOuterNormal());
 
-    #pragma GCC diagnostic pop
+        auto lowerLeft = elementGeometry.corner(0);
+        auto upperRight = elementGeometry.corner(elementGeometry.corners()-1);
+
+        // shift corners to scvf plane and halve lateral faces
+        lowerLeft[normalAxis] = center[normalAxis];
+        upperRight[normalAxis] = center[normalAxis];
+
+        auto inPlaneAxes = std::move(std::bitset<SubControlVolumeFace::Traits::dimWorld>{}.set());
+        inPlaneAxes.set(normalAxis, false);
+
+        return {lowerLeft, upperRight, inPlaneAxes};
+    }
 
 private:
     //! Binding of an element preparing the geometries only inside the element

@@ -19,7 +19,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
@@ -27,22 +26,6 @@
 #include <typeinfo>
 
 namespace Dumux {
-
-#ifndef DOXYGEN
-namespace Detail {
-// helper struct detecting if the container class storing the scvf's corners has a resize function
-struct HasResize
-{
-    template<class Container> auto operator()(Container&& c)
-    -> decltype(c.resize(1)) {}
-};
-
-template<class C>
-constexpr bool hasResize()
-{ return decltype(isValid(HasResize{})(std::declval<C>()))::value; }
-
-} // end namespace Detail
-#endif
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -65,22 +48,9 @@ struct FreeFlowStaggeredDefaultScvfGeometryTraits
     static constexpr int dim = Grid::dimension;
     static constexpr int dimWorld = Grid::dimensionworld;
 
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-    };
-
-    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
-    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
-    using GlobalPosition = typename CornerStorage::value_type;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using Geometry = Dune::AxisAlignedCubeGeometry<Scalar, dim-1, dimWorld>;
 };
 
 /*!
@@ -115,7 +85,6 @@ class FreeFlowStaggeredSubControlVolumeFace
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
-    using CornerStorage = typename T::CornerStorage;
 
     using PairData = typename T::PairData;
     using AxisData = typename T::AxisData;
@@ -146,7 +115,6 @@ public:
                                           const std::vector<GridIndexType>& scvIndices,
                                           const typename T::GeometryHelper& geometryHelper)
     : ParentType(),
-      geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
       center_(isGeometry.center()),
       unitOuterNormal_(is.centerUnitOuterNormal()),
@@ -160,11 +128,9 @@ public:
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
     {
-        if constexpr (Detail::hasResize<CornerStorage>())
-            corners_.resize(isGeometry.corners());
-
-        for (int i = 0; i < isGeometry.corners(); ++i)
-            corners_[i] = isGeometry.corner(i);
+        dimensions[0] = (isGeometry.corner(1) - isGeometry.corner(0)).two_norm();
+        if constexpr (dim == 3)
+            dimensions[1] = (isGeometry.corner(2) - isGeometry.corner(0)).two_norm();
     }
 
     //! The center of the sub control volume face
@@ -222,13 +188,6 @@ public:
         return scvfIndex_;
     }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    const Geometry geometry() const
-    {
-        return Geometry(geomType_, corners_);
-    }
-
     //! The local index of this sub control volume face
     LocalIndexType localFaceIdx() const
     {
@@ -280,15 +239,10 @@ public:
     //! Returns the length of the face in a certain direction (adaptation of area() for 3d)
     Scalar faceLength(const int localSubFaceIdx) const
     {
-        if (dim == 3)
-        {
-            if (localSubFaceIdx < 2)
-                return (corners_[1] - corners_[0]).two_norm();
-            else
-                return (corners_[2] - corners_[0]).two_norm();
-        }
+        if (dim == 3 && localSubFaceIdx > 1)
+            return dimensions[1];
         else
-            return (corners_[1] - corners_[0]).two_norm();
+            return dimensions[0];
     }
 
    /*!
@@ -442,8 +396,7 @@ public:
     { isGhostFace_ = isGhostFaceFlag; }
 
 private:
-    Dune::GeometryType geomType_;
-    CornerStorage corners_;
+    std::array<Scalar, dim-1> dimensions;
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;

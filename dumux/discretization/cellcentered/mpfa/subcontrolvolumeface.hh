@@ -12,6 +12,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
 
+#include <utility>
 #include <vector>
 #include <array>
 
@@ -92,6 +93,14 @@ class CCMpfaSubControlVolumeFace
     using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
+    // Information on the intersection from which this scvf was constructed
+    struct FacetInfo
+    {
+        GridIndexType elementIndex;
+        int facetIndex;
+        int facetCornerIndex;
+    };
+
     //! export the type used for global coordinates
     using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
@@ -103,6 +112,7 @@ public:
      * \param helper The helper class for mpfa schemes
      * \param corners The corners of the scv face
      * \param intersection The intersection
+     * \param facetInfo Information on the facet from which this scvf is constructed
      * \param vIdxGlobal The global vertex index the scvf is connected to
      * \param vIdxLocal The element-local vertex index the scvf is connected to
      * \param scvfIndex The global index of this scv face
@@ -116,6 +126,7 @@ public:
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
                                CornerStorage&& corners,
                                const Intersection& intersection,
+                               FacetInfo facetInfo,
                                GridIndexType vIdxGlobal,
                                unsigned int vIdxLocal,
                                GridIndexType scvfIndex,
@@ -133,6 +144,7 @@ public:
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , boundaryFlag_{intersection}
+    , facetInfo_{std::move(facetInfo)}
     {
           // compute the center of the scvf
           for (const auto& corner : corners_)
@@ -182,14 +194,17 @@ public:
     { return outsideScvIndices_; }
 
     //! Returns the number of corners
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.geometry(scvf).corners().")]]
     std::size_t corners() const
     { return corners_.size(); }
 
     //! Returns the global position of the vertex the scvf is connected to
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.vertexCorner(scvf)")]]
     const GlobalPosition& vertexCorner() const
     { return corners_.back(); }
 
     //! Returns the global position of the center of the element facet this scvf is embedded in
+    [[deprecated("Will be removed after 3.8. Use fvGeometry.facetCorner(scvf)")]]
     const GlobalPosition& facetCorner() const
     { return corners_[0]; }
 
@@ -205,14 +220,13 @@ public:
     const GlobalPosition& unitOuterNormal() const
     { return unitOuterNormal_; }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    Geometry geometry() const
-    { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
-
     //! Return the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
+
+    //! Return information on the facet from which this scvf was constructed
+    const FacetInfo& facetInfo() const
+    { return facetInfo_; }
 
 private:
     bool boundary_;
@@ -228,6 +242,7 @@ private:
     GlobalPosition unitOuterNormal_;
     Scalar area_;
     BoundaryFlag boundaryFlag_;
+    FacetInfo facetInfo_;
 };
 
 } // end namespace Dumux

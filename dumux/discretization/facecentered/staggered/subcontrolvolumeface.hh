@@ -13,7 +13,6 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_SUBCONTROLVOLUMEFACE_HH
 
 #include <array>
-#include <utility>
 
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
@@ -98,13 +97,6 @@ public:
 
         if (!boundary())
             outerNormalSign_ *= -1.0;
-
-        // the corners (coincide with intersection corners for boundary scvfs)
-        const auto frontalOffSet = boundary() ? GlobalPosition(0.0)
-                                    : intersectionGeometry.center() - elementGeometry.center();
-
-        for (int i = 0; i < corners_.size(); ++i)
-            corners_[i] = intersectionGeometry.corner(i) + frontalOffSet;
     }
 
     //! The constructor for lateral faces
@@ -131,22 +123,6 @@ public:
         const auto shift = intersectionGeometry.center() - elementGeometry.center();
         ipGlobal_ = lateralFacetGeometry.center() + shift;
         center_ = 0.5*(lateralFacetGeometry.center() + ipGlobal_);
-
-        const auto dofAxis = Dumux::normalAxis(shift);
-        const auto eps = shift.two_norm() * 1e-8;
-
-        for (int i = 0; i < corners_.size(); ++i)
-        {
-            // copy the corner of the corresponding lateral facet
-            auto& corner = corners_[i];
-            corner = lateralFacetGeometry.corner(i);
-
-            // shift the corner such that the scvf covers half of the lateral facet
-            // (keep the outer corner positions)
-            using std::abs;
-            if (abs(corner[dofAxis] - intersectionGeometry.center()[dofAxis]) > eps)
-                corner[dofAxis] = elementGeometry.center()[dofAxis];
-        }
     }
 
     //! The center of the sub control volume face
@@ -203,19 +179,9 @@ public:
     std::int_least8_t directionSign() const
     { return outerNormalSign_; }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    Geometry geometry() const
-    {
-        auto inPlaneAxes = std::move(std::bitset<T::dimWorld>{}.set());
-        inPlaneAxes.set(normalAxis_, false);
-        return { corners_.front(), corners_.back(), inPlaneAxes };
-    }
-
 private:
     GlobalPosition center_;
     GlobalPosition ipGlobal_;
-    CornerStorage corners_;
     std::array<GridIndexType, 2> globalScvIndices_;
     SmallLocalIndexType localScvfIdx_;
     GridIndexType globalScvfIdx_;
