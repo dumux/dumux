@@ -17,6 +17,10 @@
 
 namespace Dumux::PoreNetwork {
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law assuming pyramid frustum shapes for the geometry from pore bodies to pore throats.
+*/
 template<bool isFluid>
 struct FluidOrGrainPyramidFouriersLaw
 {
@@ -130,6 +134,10 @@ struct FluidOrGrainPyramidFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law and scales the transmissibillity with a fixed, user-defined factor.
+*/
 template<bool isFluid>
 struct FixedFactorFouriersLaw
 {
@@ -190,6 +198,22 @@ struct FixedFactorFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law taking effective areas available for conduction into account.
+*
+* This Fourier's law is based on the work of Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
+* It assumes pyramid frustum shapes for the geometry from pore bodies to pore throats, but not taking the full area
+* of pore bodies into account, but the effective areas available for conduction.
+*
+* Depending on the conductivity ratio between the fluid and the solid \f$ \kappa = \frac{\łambda_s}{\lambda_s}\f$,
+* the area available for conduction of heat through each phase might be restricted due to the other phase.
+* The effective areas available for heat conduction in the solid are shown in the picture below:
+* \image html effectiveareasforconduction_dnm.png
+* This picture (figure 3) was taken from Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
+* \f$A_{A}\f$ denotes here the contact area between two grains (solid bodies) and
+* \f$\tilde{A}\f$ denotes the effective area of the solid body.
+*/
 template<bool isFluid>
 struct FluidSolidEffectiveAreasFouriersLaw
 {
@@ -343,6 +367,11 @@ struct FluidSolidEffectiveAreasFouriersLaw
     }
 };
 
+/*!
+* \ingroup DualNetworkCoupling
+* \brief Implements a Fourier's law and scales a fixed transmissibillity with a factor
+* depending on the position of the throat.
+*/
 template<class BaseLaw>
 struct ScalingFouriersLaw
 {
