@@ -4,4 +4,5 @@
 add_subdirectory(1p)
 add_subdirectory(1pnc)
 add_subdirectory(2p)
+add_subdirectory(2pupscaling)
 add_subdirectory(solidenergy)
