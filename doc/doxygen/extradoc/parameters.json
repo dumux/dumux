@@ -541,6 +541,165 @@
             "The triple temperature of the component"
         ]
     },
+    "DualNetwork.Bi": {
+        "explanation": [
+            "The Biot number."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "1.0"
+        ]
+    },
+    "DualNetwork.ConnectionAreaShapeFactor": {
+        "explanation": [
+            "The factor for the connection are shape."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "0.9"
+        ]
+    },
+    "DualNetwork.ConvectionLambaExponent": {
+        "explanation": [
+            "The exponent for the convection lambda."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "0.4"
+        ]
+    },
+    "DualNetwork.ConvectionLambaFactor": {
+        "explanation": [
+            "The multiplicative factor for the convection lambda."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "0.9"
+        ]
+    },
+    "DualNetwork.FixedConvectionLambda": {
+        "explanation": [
+            "Fixed value for the convecion lambda if used."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "-1.0"
+        ]
+    },
+    "DualNetwork.FluidTemperatureMode": {
+        "explanation": [
+            "The computation mode of the fluid temperature."
+        ],
+        "type": [
+            "std::string"
+        ],
+        "defaultValue": [
+            "mean"
+        ]
+    },
+    "DualNetwork.Nu": {
+        "explanation": [
+            "The Nusselt number."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "1.0"
+        ]
+    },
+    "DualNetwork.OverlapFactor": {
+        "explanation": [
+            "The overlap factor for the computation of exact pore radius."
+        ]
+    },
+    "DualNetwork.SourceVerboseForDof": {
+        "explanation": [
+            "Whether status should be printed."
+        ],
+        "type": [
+            "int"
+        ],
+        "defaultValue": [
+            "-1"
+        ]
+    },
+    "DualNetwork.SphereRadius": {
+        "explanation": [
+            "The radius of a spherical pore."
+        ],
+        "type": [
+            "Scalar"
+        ],
+        "defaultValue": [
+            "50e-6"
+        ]
+    },
+    "DualNetwork.UseAverageConvectionArea": {
+        "explanation": [
+            "Whether to use an averaged convection area."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
+    "DualNetwork.UseExactConnectionAreaSphere": {
+        "explanation": [
+            "Whether to use the exact connection area."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
+    "DualNetwork.UseExactConnectionLength": {
+        "explanation": [
+            "Whether to use the exact connection length."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
+    "DualNetwork.UseExactPoreRadiusSolid": {
+        "explanation": [
+            "Whether to use the exact pore radius for the solid."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
+    "DualNetwork.UseExactPoreRadiusVoid": {
+        "explanation": [
+            "Whether to use the exact pore radius for the void space."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
     "ElectroChemistry.ActivationBarrier": {
         "explanation": [
             "The activation barrier to calculate the exchange current density."
@@ -671,6 +830,17 @@
             "The error tolerance in the Newton method for solving the Forchheimer equation"
         ]
     },
+    "FouriersLaw.UseVolumeEqualPyramid":{
+        "explanation": [
+            "Whether to deduce pyramid base length from volume. The base side length for the frustum of the pyramid is obtained by assuming that the volume of the frustum is the same as half the volume of the pore body. Otherwise the side length is set as the diameter of the pore body."
+        ],
+        "type": [
+            "bool"
+        ],
+        "defaultValue": [
+            "false"
+        ]
+    },
     "FreeFlow.EnableDilatationTerm": {
         "explanation": [
             "For enabling the turbulent dilation term."
@@ -725,6 +895,15 @@
             "std::vector<Scalar>"
         ]
     },
+    "Grid.BinaryMask": {
+        "explanation": [
+            "Name of the mask file."
+        ],
+        "type": [
+            "std::string"
+        ]
+    },
+
     "Grid.BoundaryPoreLabels": {
         "explanation": [
             "With this, the boundary faces can be set in the format xmin xmax ymin ymax (zmin zmax)."
@@ -906,6 +1085,11 @@
     "Grid.Image": {
         "explanation": [
             "The image file if the sub grid is constructed from a raster image"
+        ]
+    },
+    "Grid.KeepOnlyConnected": {
+        "explanation": [
+            "Whether non-connected cells should be removed."
         ]
     },
     "Grid.KeepPhysicalOverlap": {
@@ -1535,6 +1719,11 @@
             "Whether to enable the production limiter"
         ]
     },
+    "LinearPDESolver.EnableDynamicOutput": {
+        "explanation": [
+            "Whether dynamic output should be enabled."
+        ]
+    },
     "LinearSolver.DirectSolverForVelocity": {
         "mode": "ignore"
     },
@@ -1976,11 +2165,6 @@
             "std::string"
         ]
     },
-    "LinearSolver.UMFPackOrdering": {
-        "explanation": [
-            "You can choose from one of the following ordering strategies: 0: UMFPACK_ORDERING_CHOLMOD, 1: UMFPACK_ORDERING_AMD (default), 2: UMFPACK_ORDERING_GIVEN, 3: UMFPACK_ORDERING_METIS, 4: UMFPACK_ORDERING_BEST, 5: UMFPACK_ORDERING_NONE, 6: UMFPACK_ORDERING_USER. See https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf page 17 for details."
-        ]
-    },
     "LinearSolver.Verbosity": {
         "explanation": [
             "The verbosity level of the linear solver"
@@ -2211,7 +2395,7 @@
     },
     "Newton.SaturationChangeIsRelative": {
         "explanation": [
-            "See explanatio of AllowedSaturationChange."
+            "See explanation of AllowedSaturationChange."
         ]
     },
     "Newton.TargetSteps": {
@@ -2254,15 +2438,17 @@
             "Set a name for a problem"
         ]
     },
+    "Problem.PoissonRatio": {
+        "mode": "ignore"
+    },
     "Problem.SandGrainRoughness": {
-        "explanation": [
-            "The sand grain roughness"
-        ]
+        "mode": "ignore"
     },
     "Problem.UsePrimaryVariableSwitch": {
-        "explanation": [
-            "Whether to perform variable switch at a degree of freedom location"
-        ]
+        "mode": "ignore"
+    },
+    "Problem.YoungsModulus": {
+        "mode": "ignore"
     },
     "RANS.EddyViscosityModel": {
         "explanation": [
