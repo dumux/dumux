@@ -1,7 +1,7 @@
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================
 
-- __Requirements__:
+- __Requirements__: DuMux requires Dune >=2.9 and CMake >= 3.14. It was successfully tested with dune-mmesh 1.4 and OPM 2023.10.
 
 ### General changes / structure
 
