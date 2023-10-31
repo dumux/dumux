@@ -27,7 +27,7 @@
  (\nabla  p_\alpha - \varrho_\alpha \mathbf{g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \nabla \cdot \left\{ D_\text{pm}^\kappa \varrho_\alpha \frac{1}{M_\kappa}
+ && - \sum\limits_\alpha \nabla \cdot \left\{ D_{\alpha, \text{pm}}^\kappa \varrho_\alpha \frac{1}{M_\kappa}
  \nabla X^\kappa_{\alpha} \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha,
  \f}
@@ -39,7 +39,7 @@
  * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
  * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
  * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
- * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
+ * * \f$ D_{\alpha, \text{pm}}^\kappa \f$ is the effective diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
  * * \f$ M_\kappa \f$ is the molar mass of component \f$ \kappa \f$
  * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
  *

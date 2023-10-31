@@ -34,7 +34,7 @@
 * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
 * * \f$ p \f$ is the pressure,
 * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
-* * \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium,
+* * \f$ {\bf D_{pm}^\kappa} \f$ is the effective diffusivity in the porous medium,
 * * \f$ q_\kappa \f$ is a source or sink term.
 *
 * The solid or mineral phases are assumed to consist of a single component.
