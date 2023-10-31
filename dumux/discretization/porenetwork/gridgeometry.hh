@@ -125,9 +125,13 @@ public:
         {
             static const auto poreInscribedRadiusIdx = gridData.parameterIndex("PoreInscribedRadius");
             static const auto poreLabelIdx = gridData.parameterIndex("PoreLabel");
+            static const bool utrechtGrid = getParam<bool>("Problem.UtrechtGrid", false);
             const auto vIdx = gridView.indexSet().index(vertex);
             const auto& params = gridData.parameters(vertex);
-            poreInscribedRadius_[vIdx] = params[poreInscribedRadiusIdx];
+            if (utrechtGrid)
+                poreInscribedRadius_[vIdx] = std::max(1e-4, params[poreInscribedRadiusIdx]);
+            else
+                poreInscribedRadius_[vIdx] = params[poreInscribedRadiusIdx];
             assert(poreInscribedRadius_[vIdx] > 0.0);
             poreLabel_[vIdx] = params[poreLabelIdx];
 
@@ -355,8 +359,9 @@ private:
     Scalar getPoreVolume_(const GridData& gridData, const Vertex& vertex, const std::size_t vIdx) const
     {
         static const bool gridHasPoreVolume = gridData.gridHasVertexParameter("PoreVolume");
+        static const bool utrechtGrid = getParam<bool>("Problem.UtrechtGrid", false);
 
-        if (gridHasPoreVolume)
+        if (gridHasPoreVolume && !utrechtGrid)
         {
             static const auto poreVolumeIdx = gridData.parameterIndex("PoreVolume");
             return gridData.parameters(vertex)[poreVolumeIdx];
