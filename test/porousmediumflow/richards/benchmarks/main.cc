@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
-    timeLoop->setCheckPoint(checkPoints);
+    timeLoop->setCheckPoint(checkPoints.begin(), checkPoints.end());
     int checkPointCounter = 0;
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
