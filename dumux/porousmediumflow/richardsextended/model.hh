@@ -10,11 +10,11 @@
  * \brief This model implements a variant of the extended Richards'
  *        equation for quasi-twophase flow (see e.g. Vanderborght et al. 2017).
  *
- * In the unsaturated zone, Richards' equation
+ * The extended Richards' equation
  \f[
- \frac{\partial\;\phi S_w \varrho_w}{\partial t}
+ \frac{\partial (\phi S_w \varrho_w) }{\partial t}
  +
- \frac{\partial\;\phi (1-S_w)\varrho_n X_n^w}{\partial t}
+ \frac{\partial (\phi (1-S_w)\varrho_n X_n^w ) }{\partial t}
  -
  \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;

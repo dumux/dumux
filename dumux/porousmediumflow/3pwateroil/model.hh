@@ -20,7 +20,7 @@
  * By inserting Darcy's law into the equations for the conservation of the
  * components, one transport equation for each component is obtained as
  * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa
+ && \frac{\partial (\sum_\alpha \phi \varrho_\alpha X_\alpha^\kappa
  S_\alpha )}{\partial t}
  - \sum\limits_\alpha \nabla \cdot \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
  \varrho_\alpha x_\alpha^\kappa \mathbf{K}

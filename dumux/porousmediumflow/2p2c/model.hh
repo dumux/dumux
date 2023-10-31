@@ -16,14 +16,14 @@
  * The governing equations are the mass or the mole conservation equations of the two components,
  * depending on the property <tt>UseMoles</tt>. The mass balance equations are given as
  * \f[
-   \phi \frac{\partial (\sum_\alpha \rho_\alpha X_\alpha^\kappa S_\alpha)}{\partial t}
+   \frac{\partial (\sum_\alpha \phi \rho_\alpha X_\alpha^\kappa S_\alpha)}{\partial t}
    - \sum_\alpha \nabla \cdot \left\{ \rho_\alpha X_\alpha^\kappa v_\alpha \right\}
    - \sum_\alpha \nabla \cdot \mathbf{F}_{\mathrm{diff, mass}, \alpha}^\kappa
    - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\}.
    \f]
  * The mole balance is given as
  * \f[
-   \phi \frac{\partial (\sum_\alpha \varrho_{m, \alpha} x_\alpha^\kappa S_\alpha)}{\partial t}
+   \frac{\partial (\sum_\alpha \phi \varrho_{m, \alpha} x_\alpha^\kappa S_\alpha)}{\partial t}
    + \sum_\alpha \nabla \cdot \left\{ \varrho_{m, \alpha} x_\alpha^\kappa v_\alpha \right\}
    + \sum_\alpha \nabla \cdot \mathbf{F}_{\mathrm{diff, mole}, \alpha}^\kappa
    - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{\kappa_w, \kappa_n\} \, , \alpha \in \{w, n\},

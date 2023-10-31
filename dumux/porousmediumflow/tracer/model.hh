@@ -19,7 +19,7 @@
  *
  * The transport of the components \f$\kappa \in \{ a, b, c, ... \}\f$ is described by the following equation:
  \f[
- \phi \frac{ \partial \varrho X^\kappa}{\partial t}
+ \frac{ \partial (\phi \varrho X^\kappa)}{\partial t}
  - \nabla \cdot \left\lbrace \varrho X^\kappa {\textbf v_f}
  + \varrho D^\kappa_\text{pm} \nabla X^\kappa \right\rbrace = q,
  \f]

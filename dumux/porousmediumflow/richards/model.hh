@@ -11,8 +11,10 @@
  *        equation for quasi-twophase flow.
  *
  * In the unsaturated zone, Richards' equation
+ * is frequently used to approximate the water distribution
+ * above the groundwater level (in the unsaturated zone):
  \f[
- \frac{\partial\;\phi S_w \varrho_w}{\partial t}
+ \frac{\partial (\phi S_w \varrho_w)}{\partial t}
  -
  \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;

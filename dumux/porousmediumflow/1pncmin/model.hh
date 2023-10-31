@@ -18,7 +18,7 @@
 * By inserting Darcy's law into the equations for the conservation of the
 * components, one gets one transport equation for each component,
 * \f[
- \frac{\partial ( \varrho_f X^\kappa \phi  )}
+ \frac{\partial ( \phi \varrho_f X^\kappa )}
 {\partial t} -  \nabla \cdot \left\{ \varrho_f X^\kappa
 \frac{k_{r}}{\mu} \mathbf{K}
 (\nabla  p - \varrho_{f}  \mathbf{g}) \right\}

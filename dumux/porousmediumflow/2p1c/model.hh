@@ -23,7 +23,7 @@
  * By inserting Darcy's law into the equations for the conservation of the
  * phase mass, one gets
  \f[
-\phi \frac{\partial\ \sum_\alpha (\rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \nabla \cdot \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
+\frac{\partial\ \sum_\alpha (\phi \rho_\alpha S_\alpha)}{\partial t} \\-\sum \limits_ \alpha \nabla \cdot \left \{\rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}
 \mathbf{K} (\nabla p_\alpha - \rho_\alpha \mathbf{g}) \right \} -q^w =0,
  \f]
  * where:

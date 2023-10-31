@@ -15,14 +15,14 @@
  * Gravity can be enabled or disabled via the property system.
  * By inserting Darcy's law into the continuity equation, one gets
  \f[
- \phi\frac{\partial \varrho}{\partial t} - \nabla \cdot \left\{
+ \frac{\partial (\phi \varrho) }{\partial t} - \nabla \cdot \left\{
    \varrho \frac{\textbf K}{\mu}  \left(\nabla  p - \varrho {\textbf g} \right)
  \right\} = q.
  \f]
  *
  * The transport of the components \f$\kappa \in \{ w, a, ... \}\f$ is described by the following equation:
  \f[
- \phi \frac{ \partial \varrho X^\kappa}{\partial t}
+ \frac{ \partial (\phi \varrho X^\kappa) }{\partial t}
  - \nabla \cdot \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \nabla  p -
  \varrho {\textbf g} \right)
  + \varrho D^\kappa_\text{pm} \nabla X^\kappa \right\rbrace = q,
