@@ -26,43 +26,27 @@
  q_w,
  \f]
  *
- * is frequently used to
- * approximate the water distribution above the groundwater level.
- *
- * It can be derived from the two-phase equations, i.e.
- \f[
- \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}
- -
- \nabla \cdot \left\lbrace
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \left(\nabla
- p_\alpha - \varrho_\alpha \textbf{g}
- \right)
- \right\rbrace
- =
- q_\alpha,
- \f]
- *
  * where:
  * * \f$ \phi \f$ is the porosity of the porous medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
- * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
+ * * \f$ S_w \f$ represents the water saturation,
+ * * \f$ \varrho_w \f$ is the water density,
+ * * \f$ k_{rw} \f$ is the relative permeability of the water phase,
+ * * \f$ \mu_w \f$ is the dynamic viscosity of the water phase,
  * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
- * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
+ * * \f$ p_w \f$ is the liquid water pressure,
  * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ q_\alpha \f$ is a source or sink term.
+ * * \f$ q_w \f$ is a source or sink term.
  *
+ * It can be derived from the two-phase flow equations.
  * In contrast to the full two-phase model, the Richards model assumes
  * gas as the nonwetting fluid and that it exhibits a much lower
  * viscosity than the (liquid) wetting phase. (For example at
  * atmospheric pressure and at room temperature, the viscosity of air
  * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
- * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
- * typically is much larger for the gas phase than for the wetting
+ * consequence, the mobility (\f$\frac{k_{r}}{\mu}\f$) is
+ * typically much larger for the gas phase than for the wetting
  * phase. For this reason, the Richards model assumes that
- * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitely large. This implies that
+ * gas phase mobility is infinitely large. This implies that
  * the pressure of the gas phase is equivalent to the static pressure
  * distribution and that therefore, mass conservation only needs to be
  * considered for the wetting phase.
@@ -72,9 +56,9 @@
  * saturation is calculated using the inverse of the capillary
  * pressure, i.e.
  \f[
- S_w = p_c^{-1}(p_n - p_w)
+ S_w = p_c^{-1}(p_g - p_w)
  \f]
- * holds, where \f$p_n\f$ is a given reference pressure. Nota bene,
+ * holds, where \f$p_g\f$ is a given reference gas pressure. Nota bene,
  * that the last step is assumes that the capillary
  * pressure-saturation curve can be uniquely inverted, so it is not
  * possible to set the capillary pressure to zero when using the
