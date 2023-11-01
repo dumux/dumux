@@ -19,9 +19,9 @@
  * results in one energy conservation equation for the porous solid
  * matrix and the fluids,
  \f{align*}{
- \phi \frac{\partial \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
+ \frac{\partial (\sum_\alpha \phi \varrho_\alpha u_\alpha S_\alpha )}{\partial t}
  & +
- \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
+ \frac{\partial \left((\left( 1 - \phi \right) \varrho_s c_s T\right)}{\partial t}
  -
  \sum_\alpha \nabla \cdot
  \left\{
