@@ -10,11 +10,11 @@
  * \brief This model implements a variant of the extended Richards'
  *        equation for quasi-twophase flow (see e.g. Vanderborght et al. 2017).
  *
- * In the unsaturated zone, Richards' equation
+ * The extended Richards' equation
  \f[
- \frac{\partial\;\phi S_w \varrho_w}{\partial t}
+ \frac{\partial (\phi S_w \varrho_w) }{\partial t}
  +
- \frac{\partial\;\phi (1-S_w)\varrho_n X_n^w}{\partial t}
+ \frac{\partial (\phi (1-S_w)\varrho_n X_n^w ) }{\partial t}
  -
  \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
@@ -37,63 +37,14 @@
  * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
  * * \f$ p_w \f$ is the pressure of the wetting phase,
  * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ \bf D_{n,pm}^{w} \f$ is the diffusivity of water in the non-wetting phase,
+ * * \f$ \bf D_{n,pm}^{w} \f$ is the effective diffusivity of water in the non-wetting phase,
  * * \f$ X_n^w \f$ is the mass fraction of water in the non-wetting phase,
  * * \f$ q_w \f$ is a source or sink term in the wetting phase,
  *
- * is frequently used to
- * approximate the water distribution above the groundwater level.
- *
- * It can be derived from the two-phase equations, i.e.
- \f[
- \phi\frac{\partial S_\alpha \varrho_\alpha}{\partial t}
- -
- \nabla \cdot \left\lbrace
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
- \left( \text{\nabla}
- p_\alpha - \varrho_\alpha \textbf{g}
- \right)
- \right\rbrace
- =
- q_\alpha,
- \f]
- *
- * where:
- * * \f$ \phi \f$ is the porosity of the porous medium,
- * * \f$ S_\alpha \f$ represents the saturation of phase \f$ \alpha \f$,
- * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
- * * \f$ k_{r\alpha} \f$ is the relative permeability of phase \f$ \alpha \f$,
- * * \f$ \mu_\alpha \f$ is the dynamic viscosity of phase \f$ \alpha \f$,
- * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
- * * \f$ p_\alpha \f$ is the pressure of phase \f$ \alpha \f$,
- * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ q_\alpha \f$ is a source or sink term.
- *
- * In contrast to the full two-phase model, the Richards model assumes
- * gas as the nonwetting fluid and that it exhibits a much lower
- * viscosity than the (liquid) wetting phase. (For example at
- * atmospheric pressure and at room temperature, the viscosity of air
- * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
- * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
- * typically is much larger for the gas phase than for the wetting
- * phase. For this reason, the Richards model assumes that
- * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitely large. This implies that
- * the pressure of the gas phase is equivalent to the static pressure
- * distribution and that therefore, mass conservation only needs to be
- * considered for the wetting phase.
- *
- * The model thus chooses the absolute pressure of the wetting phase
- * \f$p_w\f$ as its only primary variable. The wetting phase
- * saturation is calculated using the inverse of the capillary
- * pressure, i.e.
- \f[
- S_w = p_c^{-1}(p_n - p_w)
- \f]
- * holds, where \f$p_n\f$ is a given reference pressure. Nota bene,
- * that the last step is assumes that the capillary
- * pressure-saturation curve can be uniquely inverted, so it is not
- * possible to set the capillary pressure to zero when using the
- * Richards model!
+ * additionally models water vapor diffusion in the gas phase.
+ * The model is derived based on the two-phase flow equations
+ * based on the assumption that the gas phase does not move but
+ * and remains at constant pressure.
  */
 
 #ifndef DUMUX_RICHARDSEXTENDED_MODEL_HH

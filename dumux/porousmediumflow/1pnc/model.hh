@@ -15,14 +15,14 @@
  * Gravity can be enabled or disabled via the property system.
  * By inserting Darcy's law into the continuity equation, one gets
  \f[
- \phi\frac{\partial \varrho}{\partial t} - \nabla \cdot \left\{
+ \frac{\partial (\phi \varrho) }{\partial t} - \nabla \cdot \left\{
    \varrho \frac{\textbf K}{\mu}  \left(\nabla  p - \varrho {\textbf g} \right)
  \right\} = q.
  \f]
  *
  * The transport of the components \f$\kappa \in \{ w, a, ... \}\f$ is described by the following equation:
  \f[
- \phi \frac{ \partial \varrho X^\kappa}{\partial t}
+ \frac{ \partial (\phi \varrho X^\kappa) }{\partial t}
  - \nabla \cdot \left\lbrace \varrho X^\kappa \frac{{\textbf K}}{\mu} \left( \nabla  p -
  \varrho {\textbf g} \right)
  + \varrho D^\kappa_\text{pm} \nabla X^\kappa \right\rbrace = q,
@@ -36,7 +36,7 @@
  * * \f$ \mu \f$ represents the dynamic viscosity,
  * * \f$ p \f$ is the pressure,
  * * \f$ \textbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ {\bf D_{pm}^\kappa} \f$ is the diffusivity in the porous medium,
+ * * \f$ {\bf D_{pm}^\kappa} \f$ is the effective diffusivity in the porous medium,
  * * and \f$ q \f$ is a source or sink term.
  *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the

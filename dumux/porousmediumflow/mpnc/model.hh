@@ -25,7 +25,7 @@
  * each component \f$\kappa\f$,
  * \f[
  \sum_{\kappa} \left(
-    \phi \frac{\partial \left(\varrho_\alpha x_\alpha^\kappa S_\alpha\right)}{\partial t}
+    \frac{\partial \left(\phi \varrho_\alpha x_\alpha^\kappa S_\alpha\right)}{\partial t}
     +
     \mathrm{div}\;
     \left\{

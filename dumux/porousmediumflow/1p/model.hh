@@ -14,7 +14,7 @@
  *
  * Furthermore, it solves the mass continuity equation
  * \f[
- \phi \frac{\partial \varrho}{\partial t} + \nabla \cdot \left\lbrace
+ \frac{\partial (\phi \varrho) }{\partial t} + \nabla \cdot \left\lbrace
  - \varrho \frac{\textbf K}{\mu} \left( \nabla  p -\varrho {\textbf g} \right) \right\rbrace = q,
  * \f]
 * where:

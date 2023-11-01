@@ -17,7 +17,7 @@
  * By inserting Darcy's law into the equations for the conservation of the
  * phase mass, one gets
  \f[
- \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
+ \frac{\partial (\phi \varrho_\alpha S_\alpha) }{\partial t}
  -
  \nabla \cdot \left\{
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\nabla  p_\alpha - \varrho_{\alpha} \mathbf{g} \right)
