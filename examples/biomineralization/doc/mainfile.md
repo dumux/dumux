@@ -200,7 +200,7 @@ Based on that, the checkpoints for the simulation are set.
 
         // We set the time loop with episodes of various lengths as specified in the injection file
         // set the episode ends /check points:
-        timeLoop->setCheckPoint(injectionCheckPoints);
+        timeLoop->setCheckPoint(injectionCheckPoints.begin(), injectionCheckPoints.end());
 
         // We also set the initial episodeIdx in the problem to zero, as in the problem the boundary conditions depend on the episode.
         problem->setEpisodeIdx(episodeIdx);

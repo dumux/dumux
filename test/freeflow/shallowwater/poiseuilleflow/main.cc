@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     if (hasParam("TimeLoop.PrintoutTimes"))
     {
         const auto timeLoopPrintoutTimes = getParam<std::vector<double>>("TimeLoop.PrintoutTimes");
-        timeLoop->setCheckPoint(timeLoopPrintoutTimes);
+        timeLoop->setCheckPoint(timeLoopPrintoutTimes.begin(), timeLoopPrintoutTimes.end());
     }
 
     timeLoop->setCheckPoint(tEnd);
