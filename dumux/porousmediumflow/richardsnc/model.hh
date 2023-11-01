@@ -10,7 +10,8 @@
  * \brief Base class for all models which use the Richards,
  *        n-component fully implicit model.
  *
- * In the unsaturated zone, Richards' equation
+ * This extension of Richards' equation, allows for
+ * the wetting phase to consist of multiple components:
  *\f{eqnarray*}
  && \frac{\partial (\sum_w \varrho_w X_w^\kappa \phi S_w )}
  {\partial t}
@@ -31,38 +32,9 @@
  * * \f$ \mathbf{K} \f$ is the intrinsic permeability tensor,
  * * \f$ p_w \f$ is the pressure of the wetting phase,
  * * \f$ \mathbf{g} \f$ is the gravitational acceleration vector,
- * * \f$ \bf D_{w,pm}^{k} \f$ is the diffusivity of component \f$ \kappa \f$ in the wetting phase,
+ * * \f$ \bf D_{w,pm}^{k} \f$ is the effective diffusivity of component \f$ \kappa \f$ in the wetting phase,
  * * \f$ X_w^k \f$ is the mass fraction of component \f$ \kappa \f$ in the wetting phase,
- * * \f$ q_w \f$ is a source or sink term in the wetting phase,
- *
- * is frequently used to
- * approximate the water distribution above the groundwater level.
- *
- * In contrast to the full two-phase model, the Richards model assumes
- * gas as the nonwetting fluid and that it exhibits a much lower
- * viscosity than the (liquid) wetting phase. (For example at
- * atmospheric pressure and at room temperature, the viscosity of air
- * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
- * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
- * typically is much larger for the gas phase than for the wetting
- * phase. For this reason, the Richards model assumes that
- * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitely large. This implies that
- * the pressure of the gas phase is equivalent to the static pressure
- * distribution and that therefore, mass conservation only needs to be
- * considered for the wetting phase.
- *
- * The model thus chooses the absolute pressure of the wetting phase
- * \f$p_w\f$ as its only primary variable. The wetting phase
- * saturation is calculated using the inverse of the capillary
- * pressure, i.e.
- \f[
- S_w = p_c^{-1}(p_n - p_w)
- \f]
- * holds, where \f$p_n\f$ is a given reference pressure. Nota bene,
- * that the last step is assumes that the capillary
- * pressure-saturation curve can be uniquely inverted, so it is not
- * possible to set the capillary pressure to zero when using the
- * Richards model!
+ * * \f$ q_w \f$ is a source or sink term in the wetting phase.
  */
 
 #ifndef DUMUX_RICHARDSNC_MODEL_HH

@@ -12,7 +12,7 @@
  *
  * The energy balance is described by the following equation:
  \f[
-   \frac{ \partial n c_p \varrho T}{\partial t}
+   \frac{ \partial (n c_p \varrho T)}{\partial t}
    - \nabla \cdot \left\lbrace \lambda_\text{pm} \nabla T \right\rbrace = q,
  \f]
  * where:
