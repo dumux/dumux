@@ -94,6 +94,7 @@ int main(int argc, char** argv)
     SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);
     problem->calculateSumInletVolume();
+    problem->calculateSumPoreVolume();
     auto xOld = x;
 
     // the grid variables
@@ -117,7 +118,25 @@ int main(int argc, char** argv)
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
+    vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
+    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
+    vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
     vtkWriter.write(0.0);
+
+    Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
+    using FS = typename GridVariables::VolumeVariables::FluidSystem;
+    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+    std::vector<std::size_t> dofsToNeglect;
+
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        using Labels = GetPropType<TypeTag, Properties::Labels>;
+        const auto vIdx = gridGeometry->vertexMapper().index(vertex);
+        if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
+            dofsToNeglect.push_back(vIdx);
+    }
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -143,6 +162,11 @@ int main(int argc, char** argv)
 
         // make the new solution the old solution
         xOld = x;
+
+        // calculate the averaged values
+        avgValues.eval();
+        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step

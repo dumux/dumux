@@ -71,6 +71,7 @@ public:
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         outletTemperature_ = getParam<Scalar>("Problem.OutletTemperature", 283.15);
 #endif
+        logfile_.open("logfile_" + this->name() + ".txt");
     }
 
     /*!
@@ -116,7 +117,11 @@ public:
             bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
         else if (isOutletPore_(scv))
+#if EVAPORATION
+            bcTypes.setAllNeumann();
+#else
             bcTypes.setAllDirichlet();
+#endif
 
         return bcTypes;
     }
@@ -227,6 +232,35 @@ public:
         }
     }
 
+    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
+    void calculateSumPoreVolume()
+    {
+        auto sumPoreVolume = 0.0;
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->gridGeometry());
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+                sumPoreVolume += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
+        }
+        std::cout << "Total pore volume is: " << sumPoreVolume << std::endl;
+    }
+
+    /*!
+     * \brief Called at the end of each time step
+     */
+    template<class AveragedValues>
+    void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
+    {
+        logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                 << std::endl;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -236,12 +270,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == 4;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == 3;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
 
     int vtpOutputFrequency_;
@@ -251,6 +285,8 @@ private:
     Scalar inletPressure_;
     Scalar outletPressure_;
     Scalar sumInletPoresVolume_;
+    std::ofstream logfile_;
+
 #if !ISOTHERMAL
     Scalar inletTemperature_;
     Scalar outletTemperature_;
