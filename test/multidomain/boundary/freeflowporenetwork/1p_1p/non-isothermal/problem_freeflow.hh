@@ -60,9 +60,7 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
         outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-        deltaT_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.TemperatureDifference", 10.0);
         outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletTemperature", 273.15 + 20.0);
         verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
     }
@@ -102,27 +100,17 @@ public:
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             }
-            else if (!verticalFlow_ && (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)))
-                values.setAllNeumann(); //inflow/outflow
             else if (verticalFlow_ && onUpperBoundary_(globalPos))
                 values.setAllNeumann(); //outflow
             else
-                values.setAllDirichlet(); //e.g. velocities at walls (parallel to flow direction)
+                values.setAllDirichlet(); //e.g. fixed velocities at walls
         }
         else
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
                 values.setAllCouplingNeumann(); //mass and energy coupling
             else
-            {
-                if (!verticalFlow_ && (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)))
-                {
-                    values.setDirichlet(Indices::pressureIdx);
-                    values.setDirichlet(Indices::temperatureIdx);
-                }
-                else
-                    values.setAllNeumann();
-            }
+                values.setAllNeumann(); //outflow or zero flux BCs for p,T
         }
         return values;
     }
@@ -134,17 +122,7 @@ public:
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        DirichletValues values = initialAtPos(globalPos);
-
-        if constexpr (!ParentType::isMomentumProblem())
-        {
-            if (onLeftBoundary_(globalPos))
-            {
-                values[Indices::pressureIdx] = outletPressure_ + deltaP_;
-                values[Indices::temperatureIdx] = outletTemperature_ + deltaT_;
-            }
-        }
-        return values;
+        return initialAtPos(globalPos);
     }
 
     /*!
@@ -188,12 +166,11 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else //inlet, outlet
+            else if (verticalFlow_ && onUpperBoundary_(globalPos))
             {
-                const Scalar inletPressure = onLeftBoundary_(globalPos) ? outletPressure_ + deltaP_ : outletPressure_;
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, inletPressure, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -207,7 +184,7 @@ public:
                 values[Indices::energyEqIdx] = couplingManager_->energyCouplingCondition(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars);
             }
-            else
+            else if (verticalFlow_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 DirichletValues outsideBoundaryPriVars;
@@ -290,9 +267,7 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
-    Scalar deltaP_;
     Scalar outletPressure_;
-    Scalar deltaT_;
     Scalar outletTemperature_;
     bool verticalFlow_;
 
