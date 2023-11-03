@@ -1,22 +1,7 @@
 [TimeLoop]
 TEnd = 10
 DtInitial = 1e-5
-MaxTimeStepSize = 1#1
-
-#[PNM.Grid]
-#LowerLeft = 0 0
-#UpperRight = 1e-2 1e-2
-#NumPores = 3 3
-#PoreInscribedRadius = 5e-4
-#ThroatInscribedRadius = 5e-4
-#SubstractRadiiFromThroatLength = true
-#DeletionProbability = 0 0 1 1
-#RemoveThroatsOnBoundary = 3
-#PoreGeometry = Cube
-#ThroatCrossSectionShape = Square
-#BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
-#PriorityList = 2 3 0 1
-
+MaxTimeStepSize = 1
 
 [PNM.Grid]
 NumPores = 2
@@ -37,7 +22,6 @@ DownstreamCells0 = 5
 Cells1 = 6
 
 [Problem]
-Name = test
 EnableGravity = false
 VerticalFlow = true
 
@@ -48,7 +32,6 @@ OutletPressure = 1e5 # [Pa]
 TemperatureDifference = 0 # [K]
 OutletTemperature = 298.15 # [K]
 EnableInertiaTerms = false
-Height = 10e-4
 
 [PNM.Problem]
 Name = pnm
@@ -57,7 +40,7 @@ InitialPressure = 1e5 # [Pa]
 PressureDiffBottom = 5e4
 
 [Vtk]
-OutputName = test_verticalFlow_convection
+OutputName = test_convection
 AddVelocity = true
 
 [Component] #water
@@ -73,9 +56,3 @@ SolidHeatCapacity = 790
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-4
-
-[FluxOverAxisAlignedSurface]
-Verbose = false
-
-[SpatialParams]
-Temperature = 298.0
