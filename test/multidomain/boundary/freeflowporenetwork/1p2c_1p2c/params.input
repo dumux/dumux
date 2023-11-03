@@ -1,0 +1,50 @@
+[PNM.Grid]
+LowerLeft = 0 0
+UpperRight = 1e-2 1e-2
+NumPores = 3 3
+PoreInscribedRadius = 5e-4
+ThroatInscribedRadius = 5e-4
+SubstractRadiiFromThroatLength = true
+BoundaryPoreLabels = xMin:1 xMax:1 yMin:1 yMax:1
+DeletionProbability = 0 0 1 1
+RemoveThroatsOnBoundary = 3
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[FreeFlow.Grid]
+LowerLeft = -0.0024 1e-2
+UpperRight = 0.0124 1.2e-2
+UpstreamCells0 = 5
+CellsPerThroat = 3
+DownstreamCells0 = 5
+Cells1 = 6
+
+[Problem]
+Name = test
+EnableGravity = false
+SingleThroatTest = false
+
+[FreeFlow.Problem]
+Name = ff
+PressureDifference = 1
+EnableInertiaTerms = false
+Height = 10e-4
+
+[PNM.Problem]
+Name = pnm
+
+[Vtk]
+OutputName = test
+
+[Component]
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
+
+[FluxOverAxisAlignedSurface]
+Verbose = false
+
+[SpatialParams]
+Temperature = 298.0
