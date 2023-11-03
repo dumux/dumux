@@ -108,7 +108,7 @@ public:
             const auto& vv = elemVolVars[scv];
             const auto phi = vv.porosity();
             const auto rhoFluid = problem.effectiveFluidDensity(element, scv);
-            const auto rhoAverage = phi*rhoFluid + (1.0 - phi*vv.solidDensity());
+            const auto rhoAverage = phi*rhoFluid + (1.0 - phi)*vv.solidDensity();
 
             // add body force
             const auto& g = problem.spatialParams().gravity(scv.center());
@@ -176,7 +176,7 @@ public:
             // compute average density
             const auto phi = secVars.porosity();
             const auto rhoFluid = problem.effectiveFluidDensity(element, ipData, elemSol);
-            const auto rhoAverage = phi*rhoFluid + (1.0 - phi*secVars.solidDensity());
+            const auto rhoAverage = phi*rhoFluid + (1.0 - phi)*secVars.solidDensity();
 
             // add body force
             const auto& g = problem.spatialParams().gravity(ipData.ipGlobal());
