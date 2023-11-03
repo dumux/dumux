@@ -1,12 +1,12 @@
 [TimeLoop]
 TEnd = 10
-DtInitial = 1e-5
+DtInitial = 1e-2
 MaxTimeStepSize = 1
 
 [PNM.Grid]
 NumPores = 2
-LowerLeft = 5e-3 0
-UpperRight = 5e-3 1e-2
+LowerLeft = 2.5e-3 0
+UpperRight = 2.5e-3 2e-3
 PoreInscribedRadius = 1e-4
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
@@ -14,8 +14,8 @@ BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
 PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
-LowerLeft = 0 1e-2
-UpperRight = 1e-2 1.2e-2
+LowerLeft = 0 2e-3
+UpperRight = 5e-3 4e-3
 UpstreamCells0 = 5
 CellsPerThroat = 3
 DownstreamCells0 = 5
