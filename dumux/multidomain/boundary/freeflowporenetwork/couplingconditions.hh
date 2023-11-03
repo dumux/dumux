@@ -499,8 +499,8 @@ class FreeFlowPoreNetworkCouplingConditionsImplementation<MDTraits, CouplingMana
     static constexpr auto referenceSystemFormulation = GetPropType<SubDomainTypeTag<ParentType::freeFlowMassIndex>, Properties::MolecularDiffusionType>::referenceSystemFormulation();
     static constexpr auto replaceCompEqIdx = GetPropType<SubDomainTypeTag<ParentType::freeFlowMassIndex>, Properties::ModelTraits>::replaceCompEqIdx();
 
-    static_assert(GetPropType<SubDomainTypeTag<ParentType::poreNetworkIndex>, Properties::ModelTraits>::numFluidComponents() == GetPropType<SubDomainTypeTag<ParentType::poreNetworkIndex>, Properties::ModelTraits>::numFluidPhases(),
-                  "Pore-network model must not be compositional");
+    static_assert(GetPropType<SubDomainTypeTag<ParentType::poreNetworkIndex>, Properties::ModelTraits>::numFluidComponents() == numComponents,
+                  "Models must have same number of components");
 
 public:
     using ParentType::ParentType;
