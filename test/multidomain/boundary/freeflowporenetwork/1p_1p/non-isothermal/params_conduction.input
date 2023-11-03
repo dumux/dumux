@@ -27,9 +27,7 @@ VerticalFlow = false
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 0 # [Pa]
 OutletPressure = 1e5 # [Pa]
-TemperatureDifference = 0 # [K]
 OutletTemperature = 298.15 # [K]
 EnableInertiaTerms = false
 
