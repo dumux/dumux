@@ -160,6 +160,11 @@ public:
                 scv,
                 elemVolVars) / this->gridGeometry().poreVolume(scv.dofIndex());
         }
+        else if (!verticalFlow_ && onLowerBoundary_(scv))
+        {
+            values[Indices::conti0EqIdx] = 0.0;
+            values[Indices::energyEqIdx] = 1.0e10;
+        }
 
         return values;
     }
