@@ -10,6 +10,8 @@ UpperRight = 2.5e-3 2e-3
 PoreInscribedRadius = 1e-4
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
 LowerLeft = 0 2e-3
