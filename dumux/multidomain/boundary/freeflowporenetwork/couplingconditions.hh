@@ -40,7 +40,7 @@ using FreeFlowPoreNetworkCouplingConditions
     = FreeFlowPoreNetworkCouplingConditionsImplementation<
         MDTraits, CouplingManager,
         GetPropType<typename MDTraits::template SubDomain<1>::TypeTag, Properties::ModelTraits>::enableEnergyBalance(),
-        (GetPropType<typename MDTraits::template SubDomain<0>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)
+        (GetPropType<typename MDTraits::template SubDomain<1>::TypeTag, Properties::ModelTraits>::numFluidComponents() > 1)
     >;
 
 /*!
