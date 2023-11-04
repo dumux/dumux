@@ -15,9 +15,11 @@
 #include <cmath>
 #include <iostream>
 
+#include <dune/common/stdstreams.hh>
 #include <dune/common/math.hh>
 
 #include <dumux/common/exceptions.hh>
+
 #include <dumux/material/constants.hh>
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
