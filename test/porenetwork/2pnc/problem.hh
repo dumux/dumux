@@ -117,11 +117,7 @@ public:
             bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
         else if (isOutletPore_(scv))
-#if EVAPORATION
-            bcTypes.setAllNeumann();
-#else
             bcTypes.setAllDirichlet();
-#endif
 
         return bcTypes;
     }
@@ -139,9 +135,14 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
         {
-            values.setState(Indices::secondPhaseOnly);
+            values.setState(Indices::bothPhases);
+#if EVAPORATION
+            values[Indices::pressureIdx] = inletPressure_ - pc_;
+            values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+#else
             values[Indices::pressureIdx] = inletPressure_;
             values[Indices::switchIdx] = 0.0;
+#endif
 #if !ISOTHERMAL
             values[Indices::temperatureIdx] = inletTemperature_;
 #endif
@@ -149,7 +150,7 @@ public:
         else if (isOutletPore_(scv))
         {
             values.setState(Indices::firstPhaseOnly);
-            values[Indices::pressureIdx] = outletPressure_;
+            values[Indices::pressureIdx] = outletPressure_ - pc_;
             values[Indices::switchIdx] = 0.0;
 #if !ISOTHERMAL
             values[Indices::temperatureIdx] = outletTemperature_;
@@ -184,7 +185,7 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = outletPressure_;
+        values[Indices::pressureIdx] = outletPressure_ - pc_;
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
