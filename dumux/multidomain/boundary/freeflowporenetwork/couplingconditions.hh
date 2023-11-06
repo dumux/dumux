@@ -584,10 +584,12 @@ public:
             // positive values indicate flux into pore-network region
             const Scalar normalFFVelocity = c.velocity * c.scvf.unitOuterNormal();
             const bool pnmIsUpstream = std::signbit(normalFFVelocity);
+            const Scalar normalPNMVelocity = -normalFFVelocity;
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
+            auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalPNMVelocity, pnmIsUpstream);
             flux *= area;
+            flux *= -1.0; // flip the sign, since it is used as a source term for pnm
 
             energyFlux += flux;
         }
