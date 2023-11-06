@@ -39,6 +39,8 @@
 #include <dumux/porenetwork/2p/static/staticdrainge.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
+#include "problem_static.hh"
+
 namespace Dumux::PoreNetwork{
 
 template<class Scalar>
@@ -62,13 +64,13 @@ class SimpleFluxVariablesCache
 
 public:
     template< class GridGeometry, class Element>
-    void update(const std::shared_ptr<GridGeometry> gridGeometry, const Element& element, std::array<Scalar,2> pc)
-    {   const auto eIdx = gridGeometry->elementMapper().index(element);
-        const auto& shape = gridGeometry->throatCrossSectionShape(/*eIdx*/0);
-        throatShapeFactor_ = gridGeometry->throatShapeFactor(eIdx);
-        throatLength_ = gridGeometry->throatLength(eIdx);
-        throatInscribedRadius_ = gridGeometry->throatInscribedRadius(eIdx);
-        Scalar totalThroatCrossSectionalArea = gridGeometry->throatCrossSectionalArea(eIdx);
+    void update(const GridGeometry& gridGeometry, const Element& element, std::array<Scalar,2> pc)
+    {   const auto eIdx = gridGeometry.elementMapper().index(element);
+        const auto& shape = gridGeometry.throatCrossSectionShape(/*eIdx*/0);
+        throatShapeFactor_ = gridGeometry.throatShapeFactor(eIdx);
+        throatLength_ = gridGeometry.throatLength(eIdx);
+        throatInscribedRadius_ = gridGeometry.throatInscribedRadius(eIdx);
+        Scalar totalThroatCrossSectionalArea = gridGeometry.throatCrossSectionalArea(eIdx);
 
         const auto numCorners = Throat::numCorners(shape);
         cornerHalfAngle_ = Throat::cornerHalfAngles<Scalar>(shape)[0];
@@ -140,36 +142,19 @@ private:
 };
 }
 
-namespace Dumux::PoreNetwork::Detail {
-
-template<class... TransmissibilityLawTypes>
-struct Transmissibility : public TransmissibilityLawTypes... {};
-
-}
-namespace Dumux::Porenetwork{
-
-    struct MockProblem{};
-    struct MockElemVolVars{};
-
-    struct MockFVElementGeometry
-    {
-        struct SubControlVolumeFace{};
-    };
-}
-
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DrainageProblem { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
+struct PNMTWOPStatic { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
+struct Grid<TypeTag, TTag::PNMTWOPStatic> { using type = Dune::FoamGrid<1, 3>; };
 
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DrainageProblem>
+struct GridGeometry<TypeTag, TTag::PNMTWOPStatic>
 {
 private:
     static constexpr bool enableCache = false;
@@ -181,12 +166,16 @@ public:
 
 // The flux variables cache
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::DrainageProblem>
+struct FluxVariablesCache<TypeTag, TTag::PNMTWOPStatic>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = PoreNetwork::SimpleFluxVariablesCache<Scalar>;
 };
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PNMTWOPStatic> { using type = Dumux::PoreNetwork::DrainageProblemStatic<TypeTag>; };
 
 } // end namespace Dumux::Properties
