@@ -1,0 +1,55 @@
+[TimeLoop]
+DtInitial = 1e-2 # [s]
+TEnd = 10 # [s]
+
+[Grid]
+#File = grids/sample3_sigma2.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+Sanitize = true
+AddThroatVolumeToPoreVolume = false
+UpperRight = 1e-2 5e-3 5e-3
+NumPores = 10 5 5
+
+ParameterType = lognormal
+MeanPoreInscribedRadius = 2e-4
+StandardDeviationPoreInscribedRadius = 0
+
+BoundaryFaceMarker = 2 3 1 1 1 1
+MinThroatLength = 1e-9
+DeletionProbability = 0 0 0 1 1 1 1 1 1 1 1 1 1
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Problem]
+Name = test_pnm_2pnc_reg_circular_throat
+VtpOutputFrequency = 10 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 5000
+UseFixedPressureAndSaturationBoundary = true
+Source = 0
+UtrechtGrid = false
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 20
+TargetSteps = 10
+MaxTimeStepDivisions = 20
+MaxRelativeShift = 1e-5
+LogFileName = NewtonLog.txt
+UseLineSearch = true
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+
+[Regularization]
+RegPercentage = 0.05
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline
+RegularizationLowSw = 0.01
