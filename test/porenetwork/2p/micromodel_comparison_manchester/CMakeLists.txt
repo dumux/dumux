@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES 4_homo_pores.dgf 8-pores-network.dgf run_and_plot.py iterations_and_timesteps.py)
+dune_symlink_to_source_files(FILES micromodel_network.dgf run_and_plot.py iterations_and_timesteps.py)
 
 dumux_add_test(NAME pnm_3d_comparison_manchester
                SOURCES main.cc
