@@ -307,6 +307,7 @@ public:
         {
             // positive values indicate flux into pore-network region
             const Scalar normalFFVelocity = c.velocity * c.scvf.unitOuterNormal();
+            const Scalar normalPNMVelocity = -normalFFVelocity;
             const bool pnmIsUpstream = std::signbit(normalFFVelocity);
 
             const Scalar pnmDensity = insideVolVars[scv].density(couplingPhaseIdx(ParentType::poreNetworkIndex));
@@ -314,7 +315,11 @@ public:
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
             // flux is used as source term: positive values mean influx
-            massFlux += ParentType::advectiveFlux(pnmDensity, ffDensity, normalFFVelocity*area, pnmIsUpstream);
+            auto flux = ParentType::advectiveFlux(pnmDensity, ffDensity, normalPNMVelocity, pnmIsUpstream);
+            flux *= area;
+            flux *= -1.0; // flip the sign, since it is used as a source term for pnm
+
+            massFlux += flux;
         }
 
         return massFlux;
