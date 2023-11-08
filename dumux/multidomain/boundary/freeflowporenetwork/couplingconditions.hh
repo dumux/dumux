@@ -800,7 +800,8 @@ private:
                                      + massOrMolarDensity(volVarsJ, referenceSystemFormulation, couplingPhaseIdx(domainJ)));
 
         const auto& freeFlowVolVars = ParentType::getFreeFlowVolVars_(volVarsI, volVarsJ);
-        const Scalar distance = ParentType::getDistance_(scvI, scvJ, scvf);
+        const auto& ffScv = ParentType::getFreeFlowScv_(scvI, scvJ);
+        const Scalar distance = ParentType::getDistance_(ffScv, scvf);
 
         for (int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
