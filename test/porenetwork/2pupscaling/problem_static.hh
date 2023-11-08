@@ -8,17 +8,15 @@
  * \file
  *
  * \brief Test for the pore network model
- */
- #include <config.h>
-
- #include <ctime>
- #include <iostream>
-
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
+*/
+#include <config.h>
+#include <ctime>
+#include <iostream>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
@@ -39,12 +37,12 @@
 #include <dumux/porenetwork/2p/static/staticdrainge.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
-namespace Dumux::PoreNetwork::Detail {
+// namespace Dumux::PoreNetwork::Detail {
 
-template<class... TransmissibilityLawTypes>
-struct Transmissibility : public TransmissibilityLawTypes... {};
+// template<class... TransmissibilityLawTypes>
+// struct Transmissibility : public TransmissibilityLawTypes... {};
 
-}
+// }
 
 namespace Dumux::Porenetwork{
 
@@ -73,6 +71,13 @@ class DrainageProblemStatic{
                                                                           PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>,
                                                                           PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>>;
 
+    struct FlowPropertiesStatic
+    {
+        Scalar pcGlobal;
+        Scalar averageSaturation;
+        std::vector<std::array<Scalar, 2>> throatTransmissibility;
+    };
+
 public:
 
     DrainageProblemStatic(const GridGeometry& gridGeometry)
@@ -97,7 +102,7 @@ public:
 
         pcGlobal_ = initialPc_;
 
-
+        flowPropertiesStatic_.resize(numSteps_+1);
         const auto& leafGridView = gridGeometry_.gridView();
         elementIsInvaded_.resize(leafGridView.size(0), false);
         pcEntry_.resize(leafGridView.size(0));
@@ -145,7 +150,7 @@ public:
 
     }
 
-    void pcSwStatic(DrainageModel& drainageModel)
+    const auto pcSwStatic(DrainageModel& drainageModel)
     {
         const auto& leafGridView = gridGeometry_.gridView();
 
@@ -156,10 +161,19 @@ public:
         // const auto logfileName = name_ + "_pc-s-curve.txt";
         // logfile.open(logfileName);
 
-    //////////////////////////////////////////////
-        // do the actual drainage process
-            std::cout << ": Applying global pc of " << pcGlobal_ << " --> ";
+        for (int step = 0; step < numSteps_ + 1; ++step)
+        {
+            flowPropertiesStatic_[step].throatTransmissibility.resize(leafGridView.size(0));
+            std::cout << "Step " << step << " --> "<<": Applying global pc of " << pcGlobal_ << " --> ";
             runDrainage_(leafGridView, drainageModel);
+            //sequenceWriter.write(step);
+            flowPropertiesStatic_[step] = {pcGlobal_, averageSaturation_, throatTransmissibility_};
+
+            // increment the global capillary pressure
+            pcGlobal_ += deltaPc_;
+        }
+
+        return flowPropertiesStatic_;
     }
 
     //plot the pc-S curve, if desired
@@ -195,6 +209,10 @@ public:
                              inletThroatLabel_, outletThroatLabel_,
                              allowDraingeOfOutlet_);
     }
+
+    const auto throatTransmissibility() const
+    { return throatTransmissibility_; }
+
 
 private:
 
@@ -244,7 +262,7 @@ private:
         drainageModel.updateInvasionState(elementIsInvaded_, pcGlobal_);
 
         // calculate the average saturation of the network
-        Scalar averageSaturation = 0;
+        averageSaturation_ = 0;
         auto fvGeometry = localView(gridGeometry_);
         std::fill(sw_.begin(), sw_.end(), 1.0);
 
@@ -267,7 +285,6 @@ private:
         for (const auto& element : elements(leafGridView))
         {
             fvGeometry.bind(element);
-            const auto eIdx = leafGridView.indexSet().index(element);
 
             std::array<Scalar, 2> pcElement{};
 
@@ -294,47 +311,47 @@ private:
                     sw_[dofIdx] = 1.0;
 
                 const Scalar partialPoreVolume = scv.volume();
-                averageSaturation += partialPoreVolume*sw_[dofIdx];
+                averageSaturation_ += partialPoreVolume*sw_[dofIdx];
             }
-            fluxVariablesCache_.update(gridGeometry_, element, pcElement);
-                // helper function to evaluate the transmissibility
-            auto calculateTransmissibility = [&](std::size_t phaseIdx)
-            {
-                const auto problem = Dumux::Porenetwork::MockProblem{};
-                const auto elemVolVars = Dumux::Porenetwork::MockElemVolVars{};
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    if (phaseIdx == fluxVariablesCache_.wPhaseIdx()) // wetting-wetting phase
-                    {
-                        return elementIsInvaded_[eIdx] ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVariablesCache_)
-                                                        : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVariablesCache_, phaseIdx);
-                    }
-                    else // non-wetting phase
-                    {
-                        return elementIsInvaded_[eIdx] ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVariablesCache_)
-                                                        : 0.0;
-                    }
-                }
-                return 0.0;
-            };
 
-            throatTransmissibility_[eIdx][0] = calculateTransmissibility(0);
-            throatTransmissibility_[eIdx][1] = calculateTransmissibility(1);
-
-            std::cout<<throatTransmissibility_[eIdx][0]<<"  "<<throatTransmissibility_[eIdx][1]<<std::endl;
+            calculateTransmissibility_(element, fvGeometry, pcElement);
 
         }
-        averageSaturation /= totalPoreVolume_;
+        averageSaturation_ /= totalPoreVolume_;
 
         // write to logfile
-        logfile_ << averageSaturation << " " << pcGlobal_ << std::endl;
+        logfile_ << averageSaturation_ << " " << pcGlobal_ << std::endl;
 
-        // increment the global capillary pressure
-        pcGlobal_ += deltaPc_;
-
-        std::cout << drainageModel.numThroatsInvaded() << " of " << elementIsInvaded_.size() << " throats invaded; S_avg " << averageSaturation << std::endl;
+        std::cout << drainageModel.numThroatsInvaded() << " of " << elementIsInvaded_.size() << " throats invaded; S_avg " << averageSaturation_ << std::endl;
 
     }
+
+    template<class Element, class FVElementGeometry>
+    void calculateTransmissibility_(const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const std::array<Scalar,2> pc)
+    {
+        fluxVariablesCache_.update(gridGeometry_, element, pc);
+        const auto eIdx = gridGeometry_.gridView().indexSet().index(element);
+        const auto wPhaseIdx = fluxVariablesCache_.wPhaseIdx();
+        const auto nPhaseIdx = fluxVariablesCache_.nPhaseIdx();
+
+        const auto problem = Dumux::Porenetwork::MockProblem{};
+        const auto elemVolVars = Dumux::Porenetwork::MockElemVolVars{};
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (elementIsInvaded_[eIdx])
+            {
+                throatTransmissibility_[eIdx][wPhaseIdx] = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVariablesCache_);
+                throatTransmissibility_[eIdx][nPhaseIdx] = Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVariablesCache_);
+            }
+            else
+            {
+                throatTransmissibility_[eIdx][wPhaseIdx] = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVariablesCache_, wPhaseIdx);
+                throatTransmissibility_[eIdx][nPhaseIdx] = 0.0;
+            }
+        }
+    };
 
     const GridGeometry& gridGeometry_;
     FluxVariablesCache fluxVariablesCache_;
@@ -362,11 +379,14 @@ private:
     std::vector<Scalar> poreVolume_;
     std::vector<Scalar> pc_;
     std::vector<Scalar> sw_;
+    Scalar averageSaturation_;
     std::vector<int> poreLabel_;
     std::vector<std::array<Scalar, 2>> throatTransmissibility_;
     Scalar totalPoreVolume_;
 
     std::string logfileName_;
+
+    std::vector<FlowPropertiesStatic> flowPropertiesStatic_;
 
 };
 

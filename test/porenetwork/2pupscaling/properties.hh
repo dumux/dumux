@@ -4,6 +4,8 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+#ifndef DUMUX_PNM_UPSCALING_PROPERTIES_HH
+#define DUMUX_PNM_UPSCALING_PROPERTIES_HH
 /*!
  * \file
  *
@@ -39,114 +41,38 @@
 #include <dumux/porenetwork/2p/static/staticdrainge.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
+#include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
+
+// The class that contains a collection of single-phase flow throat transmissibilities
+// among them the transmisibility model to be used can be specified in AdvectionType class
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
+
+// The class that provides specializations for both creeping and non-creeping advection types.
+#include <dumux/flux/porenetwork/advection.hh>
+
+// The local residual for incompressible flow is included.
+// The one-phase flow model (included above) uses a default implementation of the
+// local residual for single-phase flow. However, in this example we are using an
+// incompressible fluid phase. Therefore, we are including the specialized local
+// residual which contains functionality to analytically compute the entries of
+// the Jacobian matrix. We will use this in the main file.
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
+
+// We will use a single liquid phase consisting of a component with constant fluid properties.
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+
+#include "helper.hh"
 #include "problem_static.hh"
-
-namespace Dumux::PoreNetwork{
-
-template<class Scalar>
-class SimpleFluxVariablesCache
-{
-    struct WettingLayerCache
-    {
-        using CreviceResistanceFactor = WettingLayerTransmissibility::CreviceResistanceFactorZhou;
-        WettingLayerCache(const SimpleFluxVariablesCache& fluxVariablesCache)
-        :fluxVariablesCache_(fluxVariablesCache)
-        {}
-
-        Scalar creviceResistanceFactor(const int cornerIdx) const
-        { return CreviceResistanceFactor::beta(fluxVariablesCache_.cornerHalfAngle_, fluxVariablesCache_.contactAngle_); }
-
-    private:
-        const SimpleFluxVariablesCache<Scalar>& fluxVariablesCache_{};
-    };
-
-    using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
-
-public:
-    template< class GridGeometry, class Element>
-    void update(const GridGeometry& gridGeometry, const Element& element, std::array<Scalar,2> pc)
-    {   const auto eIdx = gridGeometry.elementMapper().index(element);
-        const auto& shape = gridGeometry.throatCrossSectionShape(/*eIdx*/0);
-        throatShapeFactor_ = gridGeometry.throatShapeFactor(eIdx);
-        throatLength_ = gridGeometry.throatLength(eIdx);
-        throatInscribedRadius_ = gridGeometry.throatInscribedRadius(eIdx);
-        Scalar totalThroatCrossSectionalArea = gridGeometry.throatCrossSectionalArea(eIdx);
-
-        const auto numCorners = Throat::numCorners(shape);
-        cornerHalfAngle_ = Throat::cornerHalfAngles<Scalar>(shape)[0];
-        contactAngle_ = getParam<Scalar>("Problem.ContactAngle");
-        surfaceTension_ = getParam<Scalar>("Problem.SurfaceTension");
-        pc_ = *std::max_element(pc.begin(), pc.end());
-        for (std::size_t i = 0U; i<numCorners; ++i)
-            wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), contactAngle_, cornerHalfAngle_);
-
-        throatCrossSectionalArea_[wPhaseIdx()] = std::min(
-            std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
-            totalThroatCrossSectionalArea
-        );
-
-        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
-    }
-
-
-    Scalar throatLength() const
-    { return throatLength_; }
-
-    Scalar surfaceTension() const
-    { return surfaceTension_; }
-
-    Scalar curvatureRadius() const
-    { return surfaceTension_ / pc_;}
-
-    Scalar throatInscribedRadius() const
-    { return throatInscribedRadius_; }
-
-    Scalar throatShapeFactor() const
-    { return throatShapeFactor_; }
-
-    Scalar pc() const
-    { return pc_; }
-
-    std::size_t wPhaseIdx() const
-    { return 1 - nPhaseIdx_; }
-
-    std::size_t nPhaseIdx() const
-    { return nPhaseIdx_; }
-
-    Scalar wettingLayerCrossSectionalArea( int cornerIdx) const
-    { return wettingLayerArea_[cornerIdx]; }
-
-    Scalar throatCrossSectionalArea(const int phaseIdx) const
-    { return throatCrossSectionalArea_[phaseIdx]; }
-
-    Scalar throatCrossSectionalArea() const
-    { return throatCrossSectionalArea_[0] + throatCrossSectionalArea_[1]; }
-
-    const auto& wettingLayerFlowVariables() const
-    { return wettingLayerCache_; }
-
-private:
-    Scalar throatLength_{};
-    Scalar surfaceTension_{};
-    Scalar throatInscribedRadius_{};
-    Scalar throatShapeFactor_{};
-    Scalar pc_{};
-    Scalar wettingLayerCrossSectionalArea_{};
-    Scalar cornerHalfAngle_{};
-    Scalar contactAngle_{};
-    std::size_t nPhaseIdx_ = 1;
-    std::array<Scalar, 2> throatCrossSectionalArea_{};
-    NumCornerVector wettingLayerArea_;
-    WettingLayerCache wettingLayerCache_ = WettingLayerCache(*this);
-
-};
-}
+#include "problem.hh"
+#include "spatialparams.hh"
 
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
 struct PNMTWOPStatic { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
+struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -178,4 +104,57 @@ public:
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PNMTWOPStatic> { using type = Dumux::PoreNetwork::DrainageProblemStatic<TypeTag>; };
 
+
+// ### Property specializations
+//
+// In the following piece of code, mandatory `properties` for which no meaningful
+// default can be set, are specialized for our type tag `PNMUpscaling`.
+// [[codeblock]]
+// We use `dune-foamgrid`, which is especially tailored for 1D networks.
+template<class TypeTag>
+struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{ using type = Dune::FoamGrid<1, 3>; };
+
+// The problem class specifying initial and boundary conditions:
+template<class TypeTag>
+struct Problem<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{ using type = UpscalingProblem<TypeTag>; };
+
+//! The spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = PoreNetwork::UpscalingSpatialParams<GridGeometry, Scalar>;
+};
+
+//! The advection type for creeping flow
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using TransmissibilityLaw = PoreNetwork::SinglePhaseTransmissibility<Scalar>;
+public:
+    using type = PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+};
+
+// We use a single liquid phase consisting of a component with constant fluid properties.
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+};
+// [[/codeblock]]
+
+// Moreover, here we use a local residual specialized for incompressible flow
+// that contains functionality related to analytic differentiation.
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::PNMUpscalingCreepingFlow>
+{ using type = OnePIncompressibleLocalResidual<TypeTag>; };
+
+
 } // end namespace Dumux::Properties
+#endif
