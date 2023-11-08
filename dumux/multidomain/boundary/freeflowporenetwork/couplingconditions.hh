@@ -704,8 +704,7 @@ private:
 
             assert(FluidSystem<i>::componentName(domainICompIdx) == FluidSystem<j>::componentName(domainJCompIdx));
 
-            const Scalar sign = (domainI == ParentType::poreNetworkIndex) ? -scvf.directionSign() : scvf.directionSign(); // compute the flux towards the interface
-            flux[domainICompIdx] += sign * ParentType::advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
+            flux[domainICompIdx] += ParentType::advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
         }
 
         NumCompVector diffusiveFlux = diffusiveMolecularFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
