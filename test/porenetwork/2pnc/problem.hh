@@ -117,7 +117,11 @@ public:
             bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
         else if (isOutletPore_(scv))
+#if EVAPORATION
+            bcTypes.setAllNeumann();
+#else
             bcTypes.setAllDirichlet();
+#endif
 
         return bcTypes;
     }
@@ -135,10 +139,12 @@ public:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
         {
-            values.setState(Indices::bothPhases);
+            values.setState(Indices::secondPhaseOnly);
 #if EVAPORATION
-            values[Indices::pressureIdx] = inletPressure_ - pc_;
-            values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+            values[Indices::pressureIdx] = 1e5 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).pc(0.0);
+            values[Indices::switchIdx] = 0.0;
+            // values[Indices::pressureIdx] = inletPressure_ - pc_;
+            // values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
 #else
             values[Indices::pressureIdx] = inletPressure_;
             values[Indices::switchIdx] = 0.0;
@@ -271,12 +277,12 @@ private:
 
     bool isInletPore_(const std::size_t dofIdxGlobal) const
     {
-        return this->gridGeometry().poreLabel(dofIdxGlobal) == Labels::inlet;
+        return this->gridGeometry().poreLabel(dofIdxGlobal) == 4;
     }
 
     bool isOutletPore_(const SubControlVolume& scv) const
     {
-        return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+        return this->gridGeometry().poreLabel(scv.dofIndex()) == 3;
     }
 
     int vtpOutputFrequency_;
