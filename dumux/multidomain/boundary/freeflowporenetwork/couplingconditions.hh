@@ -527,6 +527,7 @@ public:
                                         const CouplingContext& context)
     {
         NumCompVector massFlux(0.0);
+        const auto& pnmVolVars = insideVolVars[scv.indexInElement()];
 
         for (const auto& c : context)
         {
@@ -538,7 +539,7 @@ public:
             const Scalar ffDensity = c.volVars.density(couplingPhaseIdx(ParentType::freeFlowMassIndex));
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, insideVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
+            auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
 
             flux *= area;
             // TODO: check it
@@ -566,9 +567,9 @@ public:
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
         const bool ffIsUpstream = !std::signbit(normalFFVelocity);
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& ffVolVars = insideVolVars[scvf.insideScvIdx()];
 
-        return massFlux_(domainI, domainJ, scvf, insideScv, context.scv, insideVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
-
+        return massFlux_(domainI, domainJ, scvf, insideScv, context.scv, ffVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
     }
 
     /*!
