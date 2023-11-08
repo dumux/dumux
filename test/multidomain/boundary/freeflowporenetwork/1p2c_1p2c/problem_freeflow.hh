@@ -16,7 +16,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/advectiveflux.hh>
 
 namespace Dumux {
 
@@ -26,7 +26,7 @@ namespace Dumux {
  *         A two-dimensional Stokes flow region coupled to a pore-network model.
  */
 template <class TypeTag, class BaseProblem>
-class FreeFlowOnePTestProblem :  public BaseProblem
+class FreeFlowOnePNCTestProblem :  public BaseProblem
 {
     using ParentType = BaseProblem;
 
@@ -51,8 +51,10 @@ class FreeFlowOnePTestProblem :  public BaseProblem
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    static constexpr bool useMoles = ModelTraits::useMoles();
+
 public:
-    FreeFlowOnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    FreeFlowOnePNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager, "FreeFlow")
     , couplingManager_(couplingManager)
     {
@@ -195,10 +197,14 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                values = couplingManager_->massCouplingCondition(
+                values[Indices::conti0EqIdx] = couplingManager_->massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars
-                );
+                )[Indices::conti0EqIdx];
+                values[Indices::conti0EqIdx + 1] = couplingManager_->massCouplingCondition(
+                    CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
+                    fvGeometry, scvf, elemVolVars
+                )[Indices::conti0EqIdx + 1];
             }
             else
             {

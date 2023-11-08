@@ -27,7 +27,7 @@ namespace Dumux {
  *         A two-dimensional pore-network region coupled to a free-flow model.
  */
 template <class TypeTag>
-class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
+class PNMOnePNCProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -37,12 +37,12 @@ class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     template<class SpatialParams>
-    PNMOnePProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+    PNMOnePNCProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<SpatialParams> spatialParams,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
@@ -96,8 +96,12 @@ public:
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
+        PrimaryVariables priVars(0.0);
         static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 10.0);
-        return PrimaryVariables(pressureBottom);
+        static const Scalar moleFractionBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MoleFractionBottom", 1e-3);
+        priVars[Indices::pressureIdx] = pressureBottom;
+        priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
+        return priVars;
     }
 
     // \}
@@ -135,11 +139,16 @@ public:
 
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
         {
-            values = couplingManager().massCouplingCondition(
+            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
                 CouplingManager::poreNetworkIndex,
                 CouplingManager::freeFlowMassIndex, fvGeometry,
                 scv,
-                elemVolVars) / this->gridGeometry().poreVolume(scv.dofIndex());
+                elemVolVars)[Indices::conti0EqIdx] / this->gridGeometry().poreVolume(scv.dofIndex());
+            values[Indices::conti0EqIdx + 1] = couplingManager().massCouplingCondition(
+                CouplingManager::poreNetworkIndex,
+                CouplingManager::freeFlowMassIndex, fvGeometry,
+                scv,
+                elemVolVars)[Indices::conti0EqIdx + 1] / this->gridGeometry().poreVolume(scv.dofIndex());
         }
 
         return values;
