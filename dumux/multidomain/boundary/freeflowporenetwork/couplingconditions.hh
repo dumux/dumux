@@ -706,7 +706,7 @@ private:
             flux[domainICompIdx] += sign * ParentType::advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
         }
 
-        NumEqVector<i> diffusiveFlux = diffusiveMolecularFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
+        NumCompVector diffusiveFlux = diffusiveMolecularFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
 
        //convert to correct units if necessary
         if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged && useMoles)
