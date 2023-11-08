@@ -16,6 +16,7 @@
 #include <numeric>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
@@ -512,18 +513,20 @@ public:
     using ParentType::couplingPhaseIdx;
     using ParentType::couplingCompIdx;
 
+    using NumCompVector = Dune::FieldVector<Scalar, numComponents>;
+
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the pore-network domain.
      */
     template<class CouplingContext>
-    static Scalar massCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
+    static NumCompVector massCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
                                         Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
                                         const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
                                         const SubControlVolume<ParentType::poreNetworkIndex>& scv,
                                         const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
                                         const CouplingContext& context)
     {
-        Scalar massFlux(0.0);
+        NumCompVector massFlux(0.0);
 
         for (const auto& c : context)
         {
@@ -552,7 +555,7 @@ public:
      * \brief Returns the mass flux across the coupling boundary as seen from the free-flow domain.
      */
     template<class CouplingContext>
-    static Scalar massCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
+    static NumCompVector massCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
                                         Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
                                         const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
                                         const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
@@ -666,7 +669,7 @@ private:
      * \brief Evaluate the compositional mole/mass flux across the interface.
      */
     template<std::size_t i, std::size_t j>
-    static NumEqVector<i> massFlux_(Dune::index_constant<i> domainI,
+    static NumCompVector massFlux_(Dune::index_constant<i> domainI,
                                     Dune::index_constant<j> domainJ,
                                     const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
                                     const SubControlVolume<i>& scvI,
@@ -676,7 +679,7 @@ private:
                                     const Scalar velocity,
                                     const bool insideIsUpstream)
     {
-        NumEqVector<i> flux(0.0);
+        NumCompVector flux(0.0);
 
         auto moleOrMassFraction = [&](const auto& volVars, int phaseIdx, int compIdx)
         { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
@@ -782,7 +785,7 @@ private:
      * \brief Evaluate the diffusive mole/mass flux across the interface.
      */
     template<std::size_t i, std::size_t j>
-    static NumEqVector<i> diffusiveMolecularFlux_(Dune::index_constant<i> domainI,
+    static NumCompVector diffusiveMolecularFlux_(Dune::index_constant<i> domainI,
                                                   Dune::index_constant<j> domainJ,
                                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
                                                   const SubControlVolume<i>& scvI,
@@ -790,7 +793,7 @@ private:
                                                   const VolumeVariables<i>& volVarsI,
                                                   const VolumeVariables<j>& volVarsJ)
     {
-        NumEqVector<i> diffusiveFlux(0.0);
+        NumCompVector diffusiveFlux(0.0);
         const Scalar avgDensity = 0.5*(massOrMolarDensity(volVarsI, referenceSystemFormulation, couplingPhaseIdx(domainI))
                                      + massOrMolarDensity(volVarsJ, referenceSystemFormulation, couplingPhaseIdx(domainJ)));
 
