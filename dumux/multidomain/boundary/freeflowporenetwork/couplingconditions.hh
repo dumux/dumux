@@ -534,12 +534,13 @@ public:
             // positive values indicate flux into pore-network region
             const Scalar normalFFVelocity = c.velocity * c.scvf.unitOuterNormal();
             const bool pnmIsUpstream = std::signbit(normalFFVelocity);
+            const Scalar normalPNMVelocity = -normalFFVelocity;
 
             const Scalar pnmDensity = insideVolVars[scv].density(couplingPhaseIdx(ParentType::poreNetworkIndex));
             const Scalar ffDensity = c.volVars.density(couplingPhaseIdx(ParentType::freeFlowMassIndex));
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalFFVelocity, pnmIsUpstream);
+            auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalPNMVelocity, pnmIsUpstream);
 
             flux *= area;
             // TODO: check it
