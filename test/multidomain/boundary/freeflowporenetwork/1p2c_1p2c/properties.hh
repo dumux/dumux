@@ -15,14 +15,16 @@
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/porenetwork/1p/model.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/porenetwork/1pnc/model.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
+
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/couplingmanager.hh>
@@ -36,24 +38,26 @@ namespace Dumux::Properties {
 //////////////////////////////////// PNM ////////////////////////////////////
 // Create new type tags
 namespace TTag {
-struct PNMOnePModel { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMOnePNCModel { using InheritsFrom = std::tuple<PNMOnePNC>; }; //TODO: use nc model
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMOnePModel> { using type = Dumux::PNMOnePProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::PNMOnePNCModel> { using type = Dumux::PNMOnePNCProblem<TypeTag>; };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMOnePModel>
+struct FluidSystem<TypeTag, TTag::PNMOnePNCModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
 //! The advection type
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::PNMOnePModel>
+struct AdvectionType<TypeTag, TTag::PNMOnePNCModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -64,27 +68,40 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMOnePModel> { using type = Dune::FoamGrid<1, 2>; };
+struct Grid<TypeTag, TTag::PNMOnePNCModel> { using type = Dune::FoamGrid<1, 2>; };
+
+// default usesMoles
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::PNMOnePNCModel> { static constexpr bool value = true; };
+
+//! Set as default that no component mass balance is replaced by the total mass balance
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::PNMOnePNCModel>
+{
+    static constexpr auto value = 3;
+};
 
 //////////////////////////////////// FF ////////////////////////////////////
 // Create new type tags
 namespace TTag {
-struct FreeFlowOneP {};
-struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, CCTpfaModel>; };
-struct FreeFlowOnePMomentum { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct FreeFlowOnePNC {};
+struct FreeFlowOnePNCMass { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMassOnePNC, CCTpfaModel>; };
+struct FreeFlowOnePNCMomentum { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
 } // end namespace TTag
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
+struct FluidSystem<TypeTag, TTag::FreeFlowOnePNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::FreeFlowOneP>
+struct Grid<TypeTag, TTag::FreeFlowOnePNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<Scalar, 2>>;
@@ -92,7 +109,7 @@ struct Grid<TypeTag, TTag::FreeFlowOneP>
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::FreeFlowOneP>
+struct SpatialParams<TypeTag, TTag::FreeFlowOnePNC>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -101,31 +118,38 @@ struct SpatialParams<TypeTag, TTag::FreeFlowOneP>
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOnePMomentum>
-{ using type = Dumux::FreeFlowOnePTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+struct Problem<TypeTag, TTag::FreeFlowOnePNCMomentum>
+{ using type = Dumux::FreeFlowOnePNCTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOnePMass>
-{ using type = Dumux::FreeFlowOnePTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
+struct Problem<TypeTag, TTag::FreeFlowOnePNCMass>
+{ using type = Dumux::FreeFlowOnePNCTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOnePNC> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::FreeFlowOnePNC> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOnePNC> { static constexpr bool value = true; };
+//Use mole fraction formulation
+template<class TypeTag>
+struct UseMoles<TypeTag, TTag::FreeFlowOnePNC> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::PNMOnePModel>
+struct ReplaceCompEqIdx<TypeTag, TTag::FreeFlowOnePNC>
+{ static constexpr int value = 3; };
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::PNMOnePNCModel>
 {
-    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePMomentum, Properties::TTag::FreeFlowOnePMass, TTag::PNMOnePModel>;
+    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMOnePNCModel>;
     using type = Dumux::FreeFlowPoreNetworkCouplingManager<Traits>;
 };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
+struct CouplingManager<TypeTag, TTag::FreeFlowOnePNC>
 {
-    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePMomentum, Properties::TTag::FreeFlowOnePMass, TTag::PNMOnePModel>;
+    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMOnePNCModel>;
     using type = Dumux::FreeFlowPoreNetworkCouplingManager<Traits>;
 };
 
