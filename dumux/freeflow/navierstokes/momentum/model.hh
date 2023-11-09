@@ -58,7 +58,7 @@ namespace Dumux {
  *
  * \tparam dimension The dimension of the problem
  */
-template<int dimension>
+template<int dimension, bool enableBrinkmanTerm>
 struct NavierStokesMomentumModelTraits
 {
     //! The dimension of the model
@@ -89,6 +89,9 @@ struct NavierStokesMomentumModelTraits
     //! return the type of turbulence model used
     static constexpr auto turbulenceModel()
     { return TurbulenceModel::none; }
+
+    //! Enable use of a Darcy-Brinkman term
+    static constexpr bool enableBrinkman() {return enableBrinkmanTerm; }
 
     //! the indices
     using Indices = NavierStokesMomentumIndices<dim()>;
@@ -146,7 +149,7 @@ private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     static constexpr auto dim = GridView::dimension;
 public:
-    using type = NavierStokesMomentumModelTraits<dim>;
+    using type = NavierStokesMomentumModelTraits<dim, getPropValue<TypeTag, Properties::EnableBrinkman>()>;
 };
 
 /*!

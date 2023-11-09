@@ -126,6 +126,10 @@ public:
             }
         }
 
+        if constexpr (ModelTraits::enableBrinkman())
+            std::cout << "Reached" << "\n";
+
+
         return source;
     }
 
