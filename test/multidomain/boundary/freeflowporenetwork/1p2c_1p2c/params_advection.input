@@ -1,0 +1,43 @@
+[TimeLoop]
+TEnd = 10
+DtInitial = 1e-2
+MaxTimeStepSize = 1
+
+[PNM.Grid]
+NumPores = 2
+LowerLeft = 0.5e-3 -1e-3
+UpperRight = 0.5e-3 0.0
+PoreInscribedRadius = 1e-4
+PoreGeometry = Sphere
+ThroatCrossSectionShape = Circle
+
+[FreeFlow.Grid]
+LowerLeft = 0 0
+UpperRight = 1e-3 1e-3
+UpstreamCells0 = 5
+CellsPerThroat = 5
+DownstreamCells0 = 5
+Cells1 = 10
+
+[Problem]
+EnableGravity = false
+Advection = true
+
+[FreeFlow.Problem]
+Name = ff
+PressureDifference = 1000
+OutletPressure = 1e5
+OutletMoleFraction = 1e-3
+EnableInertiaTerms = false
+
+[PNM.Problem]
+Name = pnm
+PressureBottom = 1.02e5
+MoleFractionBottom = 2e-3
+
+[Vtk]
+OutputName = test_advection
+AddVelocity = true
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
