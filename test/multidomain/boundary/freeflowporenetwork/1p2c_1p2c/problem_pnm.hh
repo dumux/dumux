@@ -40,6 +40,8 @@ class PNMOnePNCProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
 public:
     template<class SpatialParams>
     PNMOnePNCProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -47,7 +49,9 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
-        singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFrac", 2e-3);
+        advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
     }
 
     /*!
@@ -82,9 +86,13 @@ public:
         BoundaryTypes bcTypes;
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
             bcTypes.setAllCouplingNeumann();
-
-        if (singleThroatTest_ && scv.dofIndex() == 0)
-            bcTypes.setAllDirichlet();
+        else
+        {
+            if (advection_ && scv.dofIndex() == 0)
+                bcTypes.setAllDirichlet();
+            else
+                bcTypes.setAllNeumann();
+        }
 
         return bcTypes;
     }
@@ -97,10 +105,14 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables priVars(0.0);
-        static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 10.0);
+        static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 1e5);
         static const Scalar moleFractionBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MoleFractionBottom", 1e-3);
-        priVars[Indices::pressureIdx] = pressureBottom;
+        if (advection_ && scv.dofIndex() == 0)
+        {
+            priVars[Indices::pressureIdx] = pressureBottom;
+        }
         priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
+
         return priVars;
     }
 
@@ -150,13 +162,28 @@ public:
                 scv,
                 elemVolVars)[Indices::conti0EqIdx + 1] / this->gridGeometry().poreVolume(scv.dofIndex());
         }
+        else if (!advection_ && scv.dofIndex() == 0)
+        {
+            values[Indices::conti0EqIdx] = 0.0;
+            values[Indices::conti0EqIdx + 1] = 0.0; //5.0; //random value in the order to have a compositional source term
+        }
 
         return values;
     }
 
-    // \}
-
-    // \}
+    /*!
+     * \brief Evaluate the initial value for a given global position.
+     *
+     * For this method, the \a priVars parameter stores primary
+     * variables.
+     */
+    PrimaryVariables initialAtPos(const GlobalPosition& pos) const
+    {
+        PrimaryVariables values(0.0);
+        values[Indices::pressureIdx] = initialPressure_;
+        values[Indices::conti0EqIdx + 1] = initialMoleFraction_;
+        return values;
+    }
 
     //! Set the coupling manager
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
@@ -168,7 +195,9 @@ public:
 
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
-    bool singleThroatTest_;
+    Scalar initialPressure_;
+    Scalar initialMoleFraction_;
+    bool advection_;
 };
 
 } // end namespace Dumux
