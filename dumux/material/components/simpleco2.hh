@@ -13,6 +13,8 @@
 #ifndef DUMUX_SIMPLE_CO2_HH
 #define DUMUX_SIMPLE_CO2_HH
 
+#include <dune/common/stdstreams.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/material/idealgas.hh>
 

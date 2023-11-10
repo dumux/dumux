@@ -15,6 +15,8 @@
 #include <string>
 
 #include <dune/common/math.hh>
+#include <dune/common/stdstreams.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
