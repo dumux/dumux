@@ -24,7 +24,7 @@ VanGenuchtenN = 4.7
 Permeability = 1e-09 # [m^2]
 
 [Problem]
-Name = test_2ptracer_lens_tpfa
+Name = test_2ptracer_lens
 EnableGravity = true
 BinaryDiffusionCoefficient = 0.0 # only advective transport
 

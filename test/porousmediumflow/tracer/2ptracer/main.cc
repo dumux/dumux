@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     //! define the type tags for this problem
-    using TwoPTypeTag = Properties::TTag::TwoPIncompressibleTpfa;
-    using TracerTypeTag = Properties::TTag::TwoPTracerTestTpfa;
+    using TwoPTypeTag = Properties::TTag::TWOPTYPETAG;
+    using TracerTypeTag = Properties::TTag::TRACERTYPETAG;
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
@@ -95,10 +95,6 @@ int main(int argc, char** argv)
     twoPProblem->applyInitialSolution(p);
     auto pOld = p;
 
-    // maybe update the interface parameters
-    if constexpr (ENABLEINTERFACESOLVER)
-        twoPProblem->spatialParams().updateMaterialInterfaces(p);
-
     // the grid variables
     using TwoPGridVariables = GetPropType<TwoPTypeTag, Properties::GridVariables>;
     auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, gridGeometry);
@@ -106,12 +102,8 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module
     using TwoPIOFields = GetPropType<TwoPTypeTag, Properties::IOFields>;
-
-    // use non-conforming output for the test with interface solver
-    const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
     VtkOutputModule<TwoPGridVariables, TwoPSolutionVector> twoPVtkWriter(*twoPGridVariables, p, twoPProblem->name()+"_2p", "",
-                                                                        (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
-
+                                                                        Dune::VTK::conforming);
     TwoPIOFields::initOutputModule(twoPVtkWriter); //!< Add model specific output fields
     twoPVtkWriter.write(0.0);
 
@@ -143,9 +135,15 @@ int main(int argc, char** argv)
     auto xOld = x;
 
     //! initialize the flux, density and saturation vectors
-    std::vector<Scalar> volumeFlux_(gridGeometry->numScvf(), 0.0);
-    std::vector<Scalar> density_(gridGeometry->numScv(), 0.0);
-    std::vector<Scalar> saturation_(gridGeometry->numScv(), 0.0);
+    std::vector<Scalar> volumeFlux_;
+    constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
+    if constexpr (isBox)
+        // assume a maximum of 8 scvfs per element
+        volumeFlux_.resize(gridGeometry->elementMapper().size()*8, 0.0);
+    else
+        volumeFlux_.resize(gridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> density_(gridGeometry->numDofs(), 0.0);
+    std::vector<Scalar> saturation_(gridGeometry->numDofs(), 0.0);
 
     //! the grid variables
     using TracerGridVariables = GetPropType<TracerTypeTag, Properties::GridVariables>;
@@ -224,22 +222,26 @@ int main(int argc, char** argv)
 
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                const auto idx = scvf.index();
+                std::size_t idx;
+                if constexpr (isBox)
+                    idx = gridGeometry->elementMapper().index(element)*8 + scvf.index();
+                else
+                    idx = scvf.index();
 
                 if (!scvf.boundary())
                 {
                     FluxVariables fluxVars;
                     fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                            volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+                    volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
                 }
                 else
                 {
-                    const auto bcTypes = twoPProblem->boundaryTypes(element, scvf);
+                    const auto bcTypes = twoPProblem->boundaryTypesAtPos(scvf.ipGlobal());
                     if (bcTypes.hasOnlyDirichlet())
                     {
                         FluxVariables fluxVars;
                         fluxVars.init(*twoPProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
-                                volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
+                        volumeFlux_[idx] = fluxVars.advectiveFlux(0, upwindTerm);
                     }
                 }
             }

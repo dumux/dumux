@@ -122,11 +122,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     Scalar stripeWidth_;
 
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] > this->gridGeometry().bBoxMax()[1] - 0.1 - eps_;
-    }
-
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;

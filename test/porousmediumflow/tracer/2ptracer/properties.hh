@@ -29,6 +29,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct TwoPTracerTest { using InheritsFrom = std::tuple<Tracer>; };
 struct TwoPTracerTestTpfa { using InheritsFrom = std::tuple<TwoPTracerTest, CCTpfaModel>; };
+struct TwoPTracerTestBox { using InheritsFrom = std::tuple<TwoPTracerTest, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type

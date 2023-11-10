@@ -36,6 +36,7 @@ class TwoPTracerTestSpatialParams
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
+    static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
 
 public:
 
@@ -75,7 +76,16 @@ public:
                       const FVElementGeometry& fvGeometry,
                       const ElementVolumeVariables& elemVolVars,
                       const SubControlVolumeFace& scvf) const
-    { return volumeFlux_[scvf.index()]; }
+    {
+        // the numbering has to be consistent with the one in main
+        std::size_t idx;
+        if constexpr (isBox)
+            idx = this->gridGeometry().elementMapper().index(element)*8 + scvf.index();
+        else
+            idx = scvf.index();
+
+        return volumeFlux_[idx];
+    }
 
     void setVolumeFlux(const std::vector<Scalar>& f)
     { volumeFlux_ = f; }
