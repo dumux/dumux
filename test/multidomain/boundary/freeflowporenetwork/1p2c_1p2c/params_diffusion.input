@@ -10,6 +10,8 @@ UpperRight = 0.5e-3 0.0
 PoreInscribedRadius = 1e-4
 PoreGeometry = Sphere
 ThroatCrossSectionShape = Circle
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
 LowerLeft = 0 0
@@ -21,7 +23,7 @@ Cells1 = 10
 
 [Problem]
 EnableGravity = false
-Advection = False #only diffusion test
+Advection = false #only diffusion test
 
 [FreeFlow.Problem]
 Name = ff

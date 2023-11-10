@@ -88,7 +88,7 @@ public:
             bcTypes.setAllCouplingNeumann();
         else
         {
-            if (advection_ && scv.dofIndex() == 0)
+            if (advection_ && onLowerBoundary_(scv))
                 bcTypes.setAllDirichlet();
             else
                 bcTypes.setAllNeumann();
@@ -104,10 +104,10 @@ public:
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
-        PrimaryVariables priVars(0.0);
+        PrimaryVariables priVars = initialAtPos(scv.dofPosition());
         static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 1e5);
         static const Scalar moleFractionBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MoleFractionBottom", 1e-3);
-        if (advection_ && scv.dofIndex() == 0)
+        if (advection_ && onLowerBoundary_(scv))
         {
             priVars[Indices::pressureIdx] = pressureBottom;
         }
@@ -162,7 +162,7 @@ public:
                 scv,
                 elemVolVars)[Indices::conti0EqIdx + 1] / this->gridGeometry().poreVolume(scv.dofIndex());
         }
-        else if (!advection_ && scv.dofIndex() == 0)
+        else if (!advection_ && onLowerBoundary_(scv))
         {
             values[Indices::conti0EqIdx] = 0.0;
             values[Indices::conti0EqIdx + 1] = 0.0; //5.0; //random value in the order to have a compositional source term
@@ -194,6 +194,9 @@ public:
     { return *couplingManager_; }
 
 private:
+    bool onLowerBoundary_(const SubControlVolume& scv) const
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; }
+
     std::shared_ptr<CouplingManager> couplingManager_;
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
