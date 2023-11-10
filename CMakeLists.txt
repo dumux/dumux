@@ -23,13 +23,27 @@ list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
 include(DuneMacros)
 
 # option for enabling Python bindings
-option(DUNE_ENABLE_PYTHONBINDINGS "Enable Dune Python bindings" ON)
+# The default is OFF, however, note that this does not affect upstream modules
+# since they are configured already before Dumux is configured. We set this option
+# to have a default for DUMUX_ENABLE_PYTHONBINDINGS that is consistent
+# with the Dune configuration.
+option(DUNE_ENABLE_PYTHONBINDINGS "Enable Dune Python bindings" OFF)
 # this option can be used to turn off Dumux Python bindings independent of Dune
 option(DUMUX_ENABLE_PYTHONBINDINGS "Enable Dumux Python bindings" ${DUNE_ENABLE_PYTHONBINDINGS})
 
-# if Python bindings are enabled with need to build shared libraries
-# we set the default depending on whether the Python bindings are enabled
-option(BUILD_SHARED_LIBS "Build using shared libraries" ${DUMUX_ENABLE_PYTHONBINDINGS})
+if (DUMUX_ENABLE_PYTHONBINDINGS AND NOT DUNE_ENABLE_PYTHONBINDINGS)
+  message(FATAL_ERROR "Using the Python bindings requires DUNE_ENABLE_PYTHONBINDINGS=ON")
+endif()
+
+# If Python bindings are enabled we need to build shared libraries.
+# Note that when building Dumux with shared libraries, we should also build all
+# upstream Dune libraries as shared libraries. In the case of mixing
+# upstream static and downstream shared libraries which depend on the
+# upstream libraries (e.g. libdumux), there is a risk of symbols existing
+# multiple times which can lead to nasty memory leaks
+# (e.g. for global variables such as Dune's stdstreams).
+# The option BUILD_SHARED_LIBS should be set (e.g. via the cmake.opts file)
+# and used when configuring and compiling upstream modules (e.g. with dunecontrol).
 if (DUMUX_ENABLE_PYTHONBINDINGS AND NOT BUILD_SHARED_LIBS)
   message(FATAL_ERROR "Using the Python bindings requires BUILD_SHARED_LIBS=ON")
 endif()
