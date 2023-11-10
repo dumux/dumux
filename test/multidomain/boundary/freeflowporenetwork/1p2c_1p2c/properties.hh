@@ -139,6 +139,7 @@ template<class TypeTag>
 struct ReplaceCompEqIdx<TypeTag, TTag::FreeFlowOnePNC>
 { static constexpr int value = 3; };
 
+////////////////////////////////CouplingManager///////////////////////////////
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PNMOnePNCModel>
 {
