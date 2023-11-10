@@ -20,8 +20,9 @@ Feedback over the mailing list or the issue tracker is highly welcome.
 
 Using Python bindings require at least Dune core modules version 2.9
 and at least DuMu<sup>x</sup> version 3.7. Python bindings are
-configured **automatically** with `dunecontrol` if Python is found on your system.
-Nothing special needs to be done if you following the installation instructions.
+configured **automatically** with `dunecontrol` if Python is found on your system
+and DuMux and upstream modules are built using the default options in `cmake.opts`.
+Nothing special needs to be done if you follow the installation instructions.
 
 ### Running a test
 
