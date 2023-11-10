@@ -26,6 +26,7 @@ be evaluated with the function values provided in the same order as the names wh
 - __Parameters__: The template argument for `getParam` and `getParamFromGroup` now defaults to `std::string`, such that for string parameters one can simply write `const auto param = getParam("MyParam");`
 - __Compositional Freeflow FCSFV__: Compositional transport has been implemented for the overhauled face-centered staggered finite volume scheme (FCSFV) discretization method. Ported tests are available in the testing suite.
 - __GridGeometry__: No longer store the corners/geometry for scv/scvfs also for cc-mpfa and staggered discretizations. This improves the memory footprint a lot. Geometries can be obtained via the local view of the grid geometry.
+- __Python bindings__: Python bindings are now disabled by default if DuMux is built without custom configuration (building without any *.opts file / passing variables to CMake). The default options in `cmake.opts` still enable the Python bindings (like before release 3.8) and thus ensure that all libraries are built when `cmake.opts` is passed to dunecontrol. (This applies also to upstream modules if cmake.opts` is used to configure them.) If you follow the default installation instructions everything should stay the same. This update tries to avoid a problem that occurs when mixing static and shared libraries and tries to make it harder for users to get the wrong setup.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
