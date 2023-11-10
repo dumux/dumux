@@ -70,7 +70,7 @@ for the whole project. You can choose five different levels of severity:
 They are used as shown in the following example
 
 ```cpp
-#include <dune/common/debugstream.hh>
+#include <dune/common/stdstreams.hh>
 // define the minimal debug level somewhere in your code
 #define DUNE_MINIMAL_DEBUG_LEVEL 4
 Dune::dgrave << "message"; // will be printed
