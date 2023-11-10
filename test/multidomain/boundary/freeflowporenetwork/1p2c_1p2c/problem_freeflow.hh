@@ -122,13 +122,7 @@ public:
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        DirichletValues dirichletVal(0.0);
-        if constexpr (!ParentType::isMomentumProblem())
-        {
-            dirichletVal[Indices::conti0EqIdx + 1] = outletMoleFraction_;
-        }
-
-        return dirichletVal;
+        return initialAtPos(globalPos);
     }
 
     /*!
