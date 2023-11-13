@@ -127,13 +127,17 @@ public:
         }
 
         if constexpr (ModelTraits::enableBrinkman())
-            std::cout << "Reached" << "\n";
-
+        {
+            auto permeability = problem.spatialParams().permeability(element, scv);
+            auto brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
+            auto velocity = elemVolVars[scv].velocity();
+            source -= brinkmanEpsilon * velocity / permeability; // eps * velocity / K;
+        }
 
         return source;
     }
 
-        /*!
+    /*!
      * \brief Evaluates the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
