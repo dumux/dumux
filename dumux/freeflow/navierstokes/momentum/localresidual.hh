@@ -131,7 +131,7 @@ public:
             auto permeability = problem.spatialParams().permeability(element, scv);
             auto brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
             auto velocity = elemVolVars[scv].velocity();
-            source -= brinkmanEpsilon * velocity / permeability; // eps * velocity / K;
+            source -= brinkmanEpsilon * velocity / permeability[scv.dofAxis()][scv.dofAxis()]; // eps * velocity / K;
         }
 
         return source;

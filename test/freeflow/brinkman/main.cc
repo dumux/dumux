@@ -103,9 +103,16 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    const auto& permeability = massProblem->permeabilityOutput();
-    const auto& brinkmanEpsilon = massProblem->brinkmanEpsilon();
+
+    // Write out the permeability field
+    const auto& permeabilityOutput = massProblem->permeabilityOutput();
+    std::vector<std::array<double, 4>> permeability(massGridGeometry->numDofs());
+    for (int i = 0; i < permeabilityOutput.size(); i++)
+        permeability[i] = {permeabilityOutput[i][0][0], permeabilityOutput[i][0][1], permeabilityOutput[i][1][0], permeabilityOutput[i][1][1]};
     vtkWriter.addField(permeability, "permeability");
+
+    // Write out the brinkan coefficient field
+    const auto& brinkmanEpsilon = massProblem->brinkmanEpsilon();
     vtkWriter.addField(brinkmanEpsilon, "brinkmanEpsilon");
     vtkWriter.write(0.0);
 

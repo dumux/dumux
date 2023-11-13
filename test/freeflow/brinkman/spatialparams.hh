@@ -15,6 +15,7 @@
 #define DUMUX_BRINKMAN_SPATIAL_PARAMS_HH
 
 #include <dumux/freeflow/spatialparams.hh>
+#include <dune/common/fmatrix.hh>
 
 namespace Dumux {
 
@@ -35,13 +36,21 @@ class BrinkmanSpatialParams
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-    using PermeabilityType = Scalar;
+    using PermeabilityType = DimWorldMatrix;
+
     BrinkmanSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    : ParentType(gridGeometry),
+    permeability_(1.0),
+    ffPermeability_(1.0)
     {
-        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
+        isotropicK_ = getParam<Scalar>("SpatialParams.Permeability");
+
+        permeability_[0][0] = isotropicK_;
+        permeability_[1][1] = isotropicK_ * 1e4;
+
         pmLowerLeft_ = getParam<GlobalPosition>("SpatialParams.PorousMediumLowerLeft");
         pmUpperRight_ = getParam<GlobalPosition>("SpatialParams.PorousMediumUpperRight");
 
@@ -56,7 +65,7 @@ public:
      */
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv) const
-    { return isPM_(scv.dofPosition()) ? permeability_ : 1.0; }
+    { return isPM_(scv.dofPosition()) ? permeability_ : ffPermeability_; }
 
 
     Scalar brinkmanEpsilon(const Element& element,
@@ -75,7 +84,9 @@ private:
         return true;
     }
 
-    Scalar permeability_;
+    Scalar isotropicK_;
+    PermeabilityType permeability_;
+    PermeabilityType ffPermeability_;
 
     GlobalPosition pmLowerLeft_;
     GlobalPosition pmUpperRight_;
