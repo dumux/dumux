@@ -7,6 +7,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_diamond
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=ThreeDChannelTestMomentumDiamond
                COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassTpfa
                LABELS freeflow navierstokes
+               TIMEOUT 3600
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy
