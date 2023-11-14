@@ -170,14 +170,12 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                values[Indices::conti0EqIdx] = couplingManager_->massCouplingCondition(
+                const auto& massCouplingCondition = couplingManager_->massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars
-                )[Indices::conti0EqIdx];
-                values[Indices::conti0EqIdx + 1] = couplingManager_->massCouplingCondition(
-                    CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
-                    fvGeometry, scvf, elemVolVars
-                )[Indices::conti0EqIdx + 1];
+                );
+                values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
+                values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
             }
             else if (advection_ && onUpperBoundary_(globalPos))
             {
