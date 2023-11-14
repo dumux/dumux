@@ -52,7 +52,7 @@ public:
     {
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
-        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFrac", 2e-3);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
     }
 
@@ -90,7 +90,7 @@ public:
             bcTypes.setAllCouplingNeumann();
         else
         {
-            if(advection_ && onLowerBoundary_(scv)) //TODO: add poreLabels etc
+            if(onLowerBoundary_(scv))
                 bcTypes.setAllDirichlet(); //pressure, Temperature, mole fraction fixed for inflow from bottom
             else
                 bcTypes.setAllNeumann();
@@ -160,12 +160,6 @@ public:
                 CouplingManager::freeFlowMassIndex, fvGeometry,
                 scv,
                 elemVolVars)[Indices::conti0EqIdx + 1] / this->gridGeometry().poreVolume(scv.dofIndex());
-        }
-        else if (!advection_ && onLowerBoundary_(scv))
-        {
-            values[Indices::conti0EqIdx] = 0.0;
-            values[Indices::conti0EqIdx + 1] = 0.0; //5.0; //random value in the order to have a compositional source term
-            values[Indices::energyEqIdx] = 1.0e10;
         }
 
         return values;
