@@ -51,7 +51,7 @@ struct FluidSystem<TypeTag, TTag::PNMOnePNCModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    static constexpr int phaseIdx = H2OAir::gasPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
@@ -95,7 +95,7 @@ struct FluidSystem<TypeTag, TTag::FreeFlowOnePNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    static constexpr int phaseIdx = H2OAir::gasPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 

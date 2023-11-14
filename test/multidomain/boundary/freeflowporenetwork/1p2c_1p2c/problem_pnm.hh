@@ -50,7 +50,7 @@ public:
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
-        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFrac", 2e-3);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
     }
 
@@ -110,8 +110,8 @@ public:
         if (advection_ && onLowerBoundary_(scv))
         {
             priVars[Indices::pressureIdx] = pressureBottom;
+            priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
         }
-        priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
 
         return priVars;
     }
@@ -151,22 +151,19 @@ public:
 
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
         {
-            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
-                CouplingManager::poreNetworkIndex,
-                CouplingManager::freeFlowMassIndex, fvGeometry,
-                scv,
-                elemVolVars)[Indices::conti0EqIdx] / this->gridGeometry().poreVolume(scv.dofIndex());
-            values[Indices::conti0EqIdx + 1] = couplingManager().massCouplingCondition(
-                CouplingManager::poreNetworkIndex,
-                CouplingManager::freeFlowMassIndex, fvGeometry,
-                scv,
-                elemVolVars)[Indices::conti0EqIdx + 1] / this->gridGeometry().poreVolume(scv.dofIndex());
+            const auto& massCouplingCondition = couplingManager().massCouplingCondition(
+                CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex,
+                fvGeometry, scv, elemVolVars
+            );
+            values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
+            values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
         }
         else if (!advection_ && onLowerBoundary_(scv))
         {
             values[Indices::conti0EqIdx] = 0.0;
-            values[Indices::conti0EqIdx + 1] = 0.0; //5.0; //random value in the order to have a compositional source term
+            values[Indices::conti0EqIdx + 1] = 1e-7; //random value in the order to have a compositional source term
         }
+        values /= this->gridGeometry().poreVolume(scv.dofIndex());
 
         return values;
     }
