@@ -62,7 +62,6 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 1e-3);
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
@@ -278,7 +277,6 @@ private:
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
 
-    Scalar deltaP_;
     Scalar initialPressure_;
     Scalar initialTemperature_;
     Scalar initialMoleFraction_;
