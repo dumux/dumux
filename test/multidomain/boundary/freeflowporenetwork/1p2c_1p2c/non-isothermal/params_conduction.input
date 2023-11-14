@@ -28,9 +28,9 @@ VerticalFlow = false
 [FreeFlow.Problem]
 Name = ff
 PressureDifference = 1e3
-OutletPressure = 1e5
-OutletMoleFraction = 1e-3
-OutletTemperature = 298.15 # [K]
+InitialPressure = 1e5
+InitialMoleFraction = 1e-3
+InitialTemperature = 298.15 # [K]
 EnableInertiaTerms = false
 
 [PNM.Problem]

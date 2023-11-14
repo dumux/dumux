@@ -63,9 +63,9 @@ public:
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-        outletMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletMoleFraction", 0.001);
-        outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletTemperature", 273.15 + 20.0);
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 1e-3);
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
     }
 
@@ -174,7 +174,7 @@ public:
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -198,10 +198,7 @@ public:
             else if (advection_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-                DirichletValues outsideBoundaryPriVars;
-                outsideBoundaryPriVars[Indices::pressureIdx] = outletPressure_;
-                outsideBoundaryPriVars[Indices::conti0EqIdx+1] = outletMoleFraction_;
-                outsideBoundaryPriVars[Indices::temperatureIdx] = outletTemperature_;
+                DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
                 values = FluxHelper::scalarOutflowFlux(
                     *this, element, fvGeometry, scvf, elemVolVars, std::move(outsideBoundaryPriVars)
                 );
@@ -232,9 +229,9 @@ public:
 
         if constexpr (!ParentType::isMomentumProblem())
         {
-            values[Indices::pressureIdx] = outletPressure_;
-            values[Indices::conti0EqIdx +1] = outletMoleFraction_;
-            values[Indices::temperatureIdx] = outletTemperature_;
+            values[Indices::pressureIdx] = initialPressure_;
+            values[Indices::conti0EqIdx +1] = initialMoleFraction_;
+            values[Indices::temperatureIdx] = initialTemperature_;
         }
         return values;
     }
@@ -282,9 +279,9 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar deltaP_;
-    Scalar outletPressure_;
-    Scalar outletTemperature_;
-    Scalar outletMoleFraction_;
+    Scalar initialPressure_;
+    Scalar initialTemperature_;
+    Scalar initialMoleFraction_;
     bool advection_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
