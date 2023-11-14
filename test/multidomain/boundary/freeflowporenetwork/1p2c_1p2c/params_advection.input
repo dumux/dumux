@@ -28,8 +28,8 @@ Advection = true
 [FreeFlow.Problem]
 Name = ff
 PressureDifference = 1000
-OutletPressure = 1e5
-OutletMoleFraction = 1e-3
+InitialPressure = 1e5
+InitialMoleFraction = 1e-3
 EnableInertiaTerms = false
 
 [PNM.Problem]
