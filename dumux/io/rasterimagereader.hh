@@ -285,9 +285,10 @@ public:
     template<class Image>
     static auto flattenImageToVector(const Image& image)
     {
-        using OutputValueType = std::decay_t<decltype(image[0][0])>;
-
-        std::vector<OutputValueType> data;
+        // deducing the type from the access operator fails for std::vector<bool>
+        // for some implementation since the access operator might return a proxy
+        // so we expect a STL container interface here with value_type defined
+        std::vector<std::decay_t<typename Image::value_type::value_type>> data;
         data.reserve(image.size()*image[0].size());
         for (const auto& row : image)
             data.insert(data.end(), row.begin(), row.end());
