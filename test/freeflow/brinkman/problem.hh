@@ -157,7 +157,7 @@ public:
     Scalar referencePressure(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const SubControlVolumeFace& scvf) const
-    { return 1e5; }
+    { return 0.0; }
 
     const std::vector<PermeabilityType> permeabilityOutput() const
     { return outputPermeability_; }

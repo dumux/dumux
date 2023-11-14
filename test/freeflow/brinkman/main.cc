@@ -111,10 +111,9 @@ int main(int argc, char** argv)
         permeability[i] = {permeabilityOutput[i][0][0], permeabilityOutput[i][0][1], permeabilityOutput[i][1][0], permeabilityOutput[i][1][1]};
     vtkWriter.addField(permeability, "permeability");
 
-    // Write out the brinkan coefficient field
+    // Write out the brinkman coefficient field
     const auto& brinkmanEpsilon = massProblem->brinkmanEpsilon();
     vtkWriter.addField(brinkmanEpsilon, "brinkmanEpsilon");
-    vtkWriter.write(0.0);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;

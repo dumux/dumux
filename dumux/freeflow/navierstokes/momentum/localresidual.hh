@@ -128,10 +128,14 @@ public:
 
         if constexpr (ModelTraits::enableBrinkman())
         {
-            auto permeability = problem.spatialParams().permeability(element, scv);
-            auto brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
-            auto velocity = elemVolVars[scv].velocity();
-            source -= brinkmanEpsilon * velocity / permeability[scv.dofAxis()][scv.dofAxis()]; // eps * velocity / K;
+            const auto& brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
+            const auto& K = problem.spatialParams().permeability(element, scv);
+
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
+            {
+                const auto& velocity = elemVolVars[scv].velocity();
+                source -= brinkmanEpsilon * velocity / K;
+            }
         }
 
         return source;

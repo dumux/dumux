@@ -1,10 +1,10 @@
 [Grid]
-UpperRight = 5 1
-Cells = 150 30
+UpperRight = 3 1
+Cells = 150 50
 
 [Problem]
-Name = test_ff_brinkman
-PressureDifference = 5
+Name = test_ff_brinkman_obstacle
+PressureDifference = 1
 EnableGravity = false
 
 [Component]
@@ -23,6 +23,8 @@ NumericDifference.BaseEpsilon =  1e-6
 
 [SpatialParams]
 Temperature = 293.15
-Permeability = 1e-8
-PorousMediumLowerLeft = 1.5 0.0
-PorousMediumUpperRight = 3.5 0.5
+Permeability = 1e-6
+AnisotropyRatio = 100
+PermeabilityRotation = -45.0
+PorousMediumLowerLeft = 1 0.0
+PorousMediumUpperRight = 2 0.8

@@ -14,8 +14,9 @@
 #ifndef DUMUX_BRINKMAN_SPATIAL_PARAMS_HH
 #define DUMUX_BRINKMAN_SPATIAL_PARAMS_HH
 
-#include <dumux/freeflow/spatialparams.hh>
+#include <cmath>
 #include <dune/common/fmatrix.hh>
+#include <dumux/freeflow/spatialparams.hh>
 
 namespace Dumux {
 
@@ -43,17 +44,16 @@ public:
 
     BrinkmanSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry),
-    permeability_(1.0),
+    permeability_(0.0),
+    inversePermeability_(0.0),
     ffPermeability_(1.0)
     {
-        isotropicK_ = getParam<Scalar>("SpatialParams.Permeability");
-
-        permeability_[0][0] = isotropicK_;
-        permeability_[1][1] = isotropicK_ * 1e4;
+        storePermeability_();
+        rotatePermeabilityTensor_();
+        storeInversePermeability_();
 
         pmLowerLeft_ = getParam<GlobalPosition>("SpatialParams.PorousMediumLowerLeft");
         pmUpperRight_ = getParam<GlobalPosition>("SpatialParams.PorousMediumUpperRight");
-
     }
 
     /*!
@@ -66,6 +66,17 @@ public:
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv) const
     { return isPM_(scv.dofPosition()) ? permeability_ : ffPermeability_; }
+
+    /*!
+     * \brief Function for returning the inverse of the permeability tensor \f$[m^2]\f$.
+     *
+     * \param element The element
+     * \param scv The sub control volume
+     * \return the intrinsic permeability
+     */
+    PermeabilityType inversePermeability(const Element& element,
+                                         const SubControlVolume& scv) const
+    { return isPM_(scv.dofPosition()) ? inversePermeability_ : ffPermeability_; }
 
 
     Scalar brinkmanEpsilon(const Element& element,
@@ -84,8 +95,42 @@ private:
         return true;
     }
 
-    Scalar isotropicK_;
+    void storePermeability_()
+    {
+        Scalar k = getParam<Scalar>("SpatialParams.Permeability");
+        Scalar anisotropyRatio = getParam<Scalar>("SpatialParams.AnisotropyRatio", 0.0);
+        permeability_[0][0] = k;
+        permeability_[1][1] = k * anisotropyRatio;
+    }
+
+    void rotatePermeabilityTensor_()
+    {
+        Scalar theta_ = getParam<Scalar>("SpatialParams.PermeabilityRotation", 0.0);
+        // Degrees to Radians for the rotation angle, store rotation entries
+        Scalar radTheta = theta_ * M_PI / 180.0;
+        Scalar cosTheta = std::cos(radTheta);
+        Scalar sinTheta = std::sin(radTheta);
+
+        // Create a rotation matrix according to the rotation angle
+        PermeabilityType rotationMatrix;
+        rotationMatrix[0][0] = cosTheta;
+        rotationMatrix[0][1] = sinTheta * -1.0;
+        rotationMatrix[1][0] = sinTheta;
+        rotationMatrix[1][1] = cosTheta;
+
+        // Rotate the permeability tensor
+        PermeabilityType originalPermeability = permeability_;
+        permeability_ = rotationMatrix * originalPermeability * getTransposed(rotationMatrix);
+    }
+
+    void storeInversePermeability_()
+    {
+        inversePermeability_ = permeability_;
+        inversePermeability_.invert();
+    }
+
     PermeabilityType permeability_;
+    PermeabilityType inversePermeability_;
     PermeabilityType ffPermeability_;
 
     GlobalPosition pmLowerLeft_;
