@@ -60,8 +60,8 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-        outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletTemperature", 273.15 + 20.0);
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
         verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
     }
 
@@ -170,7 +170,7 @@ public:
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -187,9 +187,7 @@ public:
             else if (verticalFlow_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-                DirichletValues outsideBoundaryPriVars;
-                outsideBoundaryPriVars[Indices::pressureIdx] = outletPressure_;
-                outsideBoundaryPriVars[Indices::temperatureIdx] = outletTemperature_;
+                DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
                 values = FluxHelper::scalarOutflowFlux(
                     *this, element, fvGeometry, scvf, elemVolVars, std::move(outsideBoundaryPriVars)
                 );
@@ -220,8 +218,8 @@ public:
 
         if constexpr (!ParentType::isMomentumProblem())
         {
-            values[Indices::pressureIdx] = outletPressure_;
-            values[Indices::temperatureIdx] = outletTemperature_;
+            values[Indices::pressureIdx] = initialPressure_;
+            values[Indices::temperatureIdx] = initialTemperature_;
         }
         return values;
     }
@@ -267,8 +265,8 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
-    Scalar outletPressure_;
-    Scalar outletTemperature_;
+    Scalar initialPressure_;
+    Scalar initialTemperature_;
     bool verticalFlow_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
