@@ -36,6 +36,7 @@ EnableInertiaTerms = false
 Name = pnm
 PressureBottom = 1.02e5
 MoleFractionBottom = 2e-3
+InitialMoleFraction = 2e-3
 
 [Vtk]
 OutputName = test_advection
