@@ -59,9 +59,8 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-        outletMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletMoleFraction", 0.001);
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 0.001);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
     }
 
@@ -163,7 +162,7 @@ public:
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -183,9 +182,7 @@ public:
             else if (advection_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-                DirichletValues outsideBoundaryPriVars;
-                outsideBoundaryPriVars[Indices::pressureIdx] = outletPressure_;
-                outsideBoundaryPriVars[Indices::conti0EqIdx+1] = outletMoleFraction_;
+                DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
                 values = FluxHelper::scalarOutflowFlux(
                     *this, element, fvGeometry, scvf, elemVolVars, std::move(outsideBoundaryPriVars)
                 );
@@ -217,8 +214,8 @@ public:
 
         if constexpr (!ParentType::isMomentumProblem())
         {
-            values[Indices::pressureIdx] = outletPressure_;
-            values[Indices::conti0EqIdx +1] = outletMoleFraction_;
+            values[Indices::pressureIdx] = initialPressure_;
+            values[Indices::conti0EqIdx +1] = initialMoleFraction_;
         }
         return values;
     }
@@ -266,8 +263,8 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar deltaP_;
-    Scalar outletPressure_;
-    Scalar outletMoleFraction_;
+    Scalar initialPressure_;
+    Scalar initialMoleFraction_;
 
     bool advection_;
 
