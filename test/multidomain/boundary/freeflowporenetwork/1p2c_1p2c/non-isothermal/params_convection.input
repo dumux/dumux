@@ -23,7 +23,7 @@ Cells1 = 6
 
 [Problem]
 EnableGravity = false
-VerticalFlow = true
+Advection = true
 
 [FreeFlow.Problem]
 Name = ff
@@ -36,18 +36,12 @@ EnableInertiaTerms = false
 Name = pnm
 InitialPressure = 1e5 # [Pa]
 InitialTemperature = 328.15 # [K]
+InitialMoleFraction = 2e-3
 PressureBottom = 1.02e5
-MoleFractionBottom = 2e-3
 
 [Vtk]
 OutputName = test_convection
 AddVelocity = true
-
-[Component] #water
-LiquidDensity = 1e3
-LiquidKinematicViscosity = 1e-6
-LiquidHeatCapacity = 4184.0 # [J/(kg K)]
-LiquidThermalConductivity = 0.68
 
 [Component] #solid (for compatability)
 SolidDensity = 2700
