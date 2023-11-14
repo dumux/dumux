@@ -27,9 +27,7 @@ VerticalFlow = true
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 100 # [Pa]
 InitialPressure = 1e5 # [Pa]
-TemperatureDifference = 0 # [K]
 InitialTemperature = 298.15 # [K]
 EnableInertiaTerms = false
 
