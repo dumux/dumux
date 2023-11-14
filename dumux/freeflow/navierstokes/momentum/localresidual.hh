@@ -12,13 +12,14 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/fclocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
-
+#include <dumux/freeflow/navierstokes/momentum/velocityreconstruction.hh>
 namespace Dumux {
 
 /*!
@@ -135,6 +136,15 @@ public:
             {
                 const auto& velocity = elemVolVars[scv].velocity();
                 source -= brinkmanEpsilon * velocity / K;
+            }
+            else
+            {
+                // Permeability is not a tensor, use full reconstruction and mv
+                const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
+                const auto& velocity = StaggeredVelocityReconstruction::faceVelocityVector(scv, fvGeometry, getVelocitySCV);
+                const auto& inversePermeability = problem.spatialParams().inversePermeability(element, scv);
+                const auto& fullTerm = brinkmanEpsilon * mv(inversePermeability, velocity); // eps K^-1 velocity;
+                source -= fullTerm[scv.dofAxis()];
             }
         }
 
