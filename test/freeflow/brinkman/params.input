@@ -1,0 +1,28 @@
+[Grid]
+UpperRight = 5 1
+Cells = 150 30
+
+[Problem]
+Name = test_ff_brinkman
+PressureDifference = 5
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false
+
+[Assembly]
+NumericDifference.BaseEpsilon =  1e-6
+
+[SpatialParams]
+Temperature = 293.15
+Permeability = 1e-8
+PorousMediumLowerLeft = 1.5 0.0
+PorousMediumUpperRight = 3.5 0.5
