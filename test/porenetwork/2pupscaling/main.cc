@@ -288,6 +288,8 @@ int main(int argc, char** argv)
     using TypeTagLiquid = Properties::TTag::PNMUpscalingCreepingFlowLiquid;
     using TypeTagGas = Properties::TTag::PNMUpscalingCreepingFlowGas;
 
+    using Scalar = GetPropType<TypeTagGas, Properties::Scalar>;
+
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance();
@@ -310,7 +312,7 @@ int main(int argc, char** argv)
     runSinglePhaseUpscaling<TypeTagLiquid>(gridManager, flowPropertiesStatic);
     runSinglePhaseUpscaling<TypeTagGas>(gridManager, flowPropertiesStatic);
 
-
+    UpscalingHelper<Scalar>::plot();
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

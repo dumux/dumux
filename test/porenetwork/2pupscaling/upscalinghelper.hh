@@ -63,7 +63,7 @@ public:
         const auto KApparent = vApparent / pressureGradient * dynamicViscosity;
 
         // store the required data for further calculations
-        darcyPermeability_[problem.direction()].push_back(KApparent);
+        EffectivePermeability_[problem.direction()].push_back(KApparent);
         averageSaturation_[problem.direction()].push_back(staticProperties.averageSaturation);
     }
     // [[/codeblock]]
@@ -89,13 +89,10 @@ public:
     // ### Plot the data using Gnuplot
     //
     // [[codeblock]]
-    void plot()
+    static void plot()
     {
         // // plot permeability ratio vs. Forchheimer number
-        // plotPermeabilityratioVsForchheimerNumber_();
-
-        // // plot inverse of apparent permability vs. rho v / mu
-        // plotInversePrmeabilityVsInertiaToViscousRatio_();
+        plotRelPermeabilityratioVsSw_();
     }
     // [[/codeblock]]
     //
@@ -122,7 +119,7 @@ public:
         // {
         //     std::cout << Fmt::format("\n{:#>{}}\n\n", "", 40)
         //               << Fmt::format("{}-direction:\n", dirName_[dirIdx])
-        //               << Fmt::format("-- Darcy (intrinsic) permeability = {:.3e} m^2\n", darcyPermeability_[dirIdx]);
+        //               << Fmt::format("-- Darcy (intrinsic) permeability = {:.3e} m^2\n", EffectivePermeability_[dirIdx]);
 
         //     std::cout << Fmt::format("\n{:#>{}}\n", "", 40) << std::endl;
         // }
@@ -135,7 +132,7 @@ public:
     {
         // for (const auto dirIdx : directions_)
         // {
-        //     const auto K = darcyPermeability_[dirIdx];
+        //     const auto K = EffectivePermeability_[dirIdx];
         //     static const Scalar eps = getParam<Scalar>("Problem.TestEpsilon", 1e-3);
         //     if (Dune::FloatCmp::ne<Scalar>(K, referenceData[dirIdx], eps))
         //     {
@@ -168,9 +165,9 @@ private:
     //     for (int i = 0; i < apparentPermeability_[dirIdx].size(); i++)
     //     {
     //         // compute the Forchheimer number
-    //         const Scalar forchheimerNumber = darcyPermeability_[dirIdx] * forchheimerCoefficient_[dirIdx] * inertiaToViscousRatio_[dirIdx][i];
+    //         const Scalar forchheimerNumber = EffectivePermeability_[dirIdx] * forchheimerCoefficient_[dirIdx] * inertiaToViscousRatio_[dirIdx][i];
     //         // ratio between apparrent permeability and darcy permeability
-    //         const Scalar permeabilityRatio = apparentPermeability_[dirIdx][i] / darcyPermeability_[dirIdx];
+    //         const Scalar permeabilityRatio = apparentPermeability_[dirIdx][i] / EffectivePermeability_[dirIdx];
 
     //         logfile << forchheimerNumber << " " << permeabilityRatio << std::endl;
     //     }
@@ -178,11 +175,14 @@ private:
     void writePermeabilityVsAverageSaturation_(std::size_t dirIdx, int phaseIdx)
     {
         // open a logfile
-        std::ofstream logfile(phaseName_[phaseIdx] + dirName_[dirIdx] + "-dir-PermeabilityratioVsAverageSaturation.dat");
+        std::string fileName = phaseName_[phaseIdx] + dirName_[dirIdx] + "-dir-PermeabilityratioVsAverageSaturation.dat";
+        std::ofstream logfile(fileName);
 
         // save the data needed to be plotted in logfile
-        for (int i = 0; i < darcyPermeability_[dirIdx].size(); i++)
-            logfile << averageSaturation_[dirIdx][i] << " " << darcyPermeability_[dirIdx][i] << std::endl;
+        for (int i = 0; i < EffectivePermeability_[dirIdx].size(); i++)
+            logfile << averageSaturation_[dirIdx][i] << " " << EffectivePermeability_[dirIdx][i] << std::endl;
+
+        filesToPlot_.push_back(fileName);
     }
     // [[/codeblock]]
 
@@ -210,44 +210,46 @@ private:
     // ### Plot permeability ratio vs. Forchheimer number using Gnuplot
     //
     // [[codeblock]]
-    void plotPermeabilityratioVsForchheimerNumber_()
+    static void plotRelPermeabilityratioVsSw_()
     {
         // using gnuplot interface
         Dumux::GnuplotInterface<Scalar> gnuplot(true);
         gnuplot.setOpenPlotWindow(true);
+        gnuplot.resetAll();
+        std::string title{}, option{};
+        for (const auto& fileName : filesToPlot_)
+        {
 
-        // for (const auto dirIdx : directions_)
-        // {
-        //     gnuplot.resetAll();
-        //     std::string title{}, option{};
+            // add the data in each direction for plot
+            gnuplot.addFileToPlot(fileName);
 
-        //     // add the data in each direction for plot
-        //     gnuplot.addFileToPlot(dirName_[dirIdx] + "-dir-PermeabilityratioVsForchheimerNumber.dat", "notitle with lines");
-        //     // set the properties of lines to be plotted
-        //     option += "set linetype 1 linecolor 1 linewidth 7\n";
-        //     // report the darcy permeability in each direction as the title of the plot
-        //     title += Fmt::format("{}-direction, Darcy permeability= {:.3e} m^2   ", dirName_[dirIdx], darcyPermeability_[dirIdx]);
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 5\n";
+        }
 
-        //     option += "set title \"" + title + "\"\n";
-        //     option += "set logscale x""\n";
-        //     option += "set format x '10^{%L}'""\n";
+        // report the darcy permeability in each direction as the title of the plot
+        title += Fmt::format("Relative permeability vs. Sw");
 
-        //     gnuplot.setXlabel("Forchheimer Number [-]");
-        //     gnuplot.setYlabel("Apparent permeability / Darcy permeability [-]");
-        //     gnuplot.setOption(option);
-        //     gnuplot.plot("permeability_ratio_versus_forchheimer_number");
-        // }
+        option += "set title \"" + title + "\"\n";
+        // option += "set logscale x""\n";
+        // option += "set format x '10^{%L}'""\n";
+
+        gnuplot.setXlabel("Sw [-]");
+        gnuplot.setYlabel("Effective Permeability [m2]");
+        gnuplot.setOption(option);
+        gnuplot.plot("Effective Permeability vs. Sw");
     }
     // [[/codeblock]]
     // [[details]] private data members
     // [[codeblock]]
     std::array<std::vector<Scalar>, 3> samplePointsX_;
     std::array<std::vector<Scalar>, 3> samplePointsY_;
-    std::array<std::vector<Scalar>, 3> darcyPermeability_;
+    std::array<std::vector<Scalar>, 3> EffectivePermeability_;
     std::array<std::vector<Scalar>, 3> averageSaturation_;
     const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
     const std::array<std::string, 2> phaseName_{"Liquid", "Gas"};
     std::vector<std::size_t> directions_;
+    inline static std::vector<std::string> filesToPlot_;
 };
 
 } // end namespace Dumux
