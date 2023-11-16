@@ -19,6 +19,8 @@
 
 #include <dumux/io/format.hh>
 
+#include <dumux/common/variablesbackend.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 
 namespace Dumux::Experimental {
@@ -40,7 +42,7 @@ public:
         for (std::size_t k = 0; k < size_; ++k)
         {
             auto& p = params_[k];
-            p.alpha = m.temporalWeight(i, k);///dt;
+            p.alpha = m.temporalWeight(i, k);
             p.betaDt = m.spatialWeight(i, k)*dt;
             p.timeAtStage = t + m.timeStepWeight(k)*dt;
             p.dtFraction = m.timeStepWeight(k);
@@ -94,6 +96,7 @@ class MultiStageTimeStepper
 {
     using Variables = typename PDESolver::Variables;
     using StageParams = MultiStageParams<Scalar>;
+    using Backend = VariablesBackend<Variables>;
 
 public:
 
@@ -101,16 +104,20 @@ public:
      * \brief The constructor
      * \param pdeSolver Solver class for solving a PDE in each stage
      * \param msMethod The multi-stage method which is to be used for time integration
-     * \todo TODO: Add time step control if the pde solver doesn't converge
+     * \param paramGroup A parameter group in which we look for parameters
      */
     MultiStageTimeStepper(std::shared_ptr<PDESolver> pdeSolver,
-                          std::shared_ptr<const MultiStageMethod<Scalar>> msMethod)
+                          std::shared_ptr<const MultiStageMethod<Scalar>> msMethod,
+                          const std::string& paramGroup = "")
     : pdeSolver_(pdeSolver)
     , msMethod_(msMethod)
     {
-        std::cout << "Initialize time stepper with method " << msMethod_->name()
-                  << Fmt::format(" ({} stage{})", msMethod_->numStages(), (msMethod_->numStages() > 1 ? "s" : ""))
-                  << std::endl;
+        initParams_(paramGroup);
+
+        if (pdeSolver_->verbosity() >= 1)
+            std::cout << "Initialize time stepper with method " << msMethod_->name()
+                    << Fmt::format(" ({} stage{})", msMethod_->numStages(), (msMethod_->numStages() > 1 ? "s" : ""))
+                    << std::endl;
     }
 
     /*!
@@ -119,13 +126,78 @@ public:
      * \param t The current time level
      * \param dt The time step size to be used
      * \note We expect the time level in vars to correspond to the given time `t`
-     * \todo: TODO: Add time step control if the pde solver doesn't converge
      */
     void step(Variables& vars, const Scalar t, const Scalar dt)
     {
         // make sure there are no traces of previous stages
         pdeSolver_->assembler().clearStages();
 
+        // do time integration
+        bool converged = step_(vars, t, dt);
+
+        // clear traces of previously registered stages
+        pdeSolver_->assembler().clearStages();
+
+        // if the solver didn't converge we can't recover
+        if (!converged)
+            DUNE_THROW(NumericalProblem, "Solver did not converge!");
+    }
+
+    /*!
+     * \brief Advance one time step of the given time loop (adaptive time stepping on solver failure)
+     * \param vars The variables object at the current time level.
+     * \param timeLoop An instance of a time loop
+     * \note We expect the time level in vars to correspond to the given time `t`
+     */
+    void step(Variables& vars, TimeLoopBase<Scalar>& timeLoop)
+    {
+        // make sure there are no traces of previous stages
+        pdeSolver_->assembler().clearStages();
+
+        // try solving the non-linear system
+        for (std::size_t i = 0; i <= maxTimeStepDivisions_; ++i)
+        {
+            // try solving the non-linear system
+            bool converged = step_(vars, timeLoop.time(), timeLoop.timeStepSize());
+            if (converged)
+            {
+                // clear traces of previously registered stages
+                pdeSolver_->assembler().clearStages();
+                return;
+            }
+
+            else if (!converged && i < maxTimeStepDivisions_)
+            {
+                // set solution to previous solution & reset time step
+                Backend::update(vars, pdeSolver_->assembler().prevSol());
+                pdeSolver_->assembler().resetTimeStep(Backend::dofs(vars));
+
+                if (pdeSolver_->verbosity() >= 1)
+                {
+                    const auto dt = timeLoop.timeStepSize();
+                    std::cout << Fmt::format("Solver did not converge with dt = {} seconds. ", dt)
+                            << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
+                }
+
+                // try again with dt = dt * retryTimeStepReductionFactor_
+                timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
+            }
+
+            else
+            {
+                pdeSolver_->assembler().clearStages();
+                DUNE_THROW(NumericalProblem,
+                    Fmt::format("Solver didn't converge after {} time-step divisions; dt = {}.\n",
+                                maxTimeStepDivisions_, timeLoop.timeStepSize()));
+            }
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Unreachable");
+    }
+
+private:
+    bool step_(Variables& vars, const Scalar t, const Scalar dt)
+    {
         for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
         {
             // prepare the assembler for this stage
@@ -135,16 +207,25 @@ public:
             );
 
             // assemble & solve
-            pdeSolver_->solve(vars);
+            bool converged = pdeSolver_->apply(vars);
+            if (!converged)
+                return false;
         }
 
-        // clear traces of previously registered stages
-        pdeSolver_->assembler().clearStages();
+        return true;
     }
 
-private:
+    void initParams_(const std::string& group = "")
+    {
+        maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "TimeStepper.MaxTimeStepDivisions", 10);
+        retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "TimeStepper.RetryTimeStepReductionFactor", 0.5);
+    }
+
     std::shared_ptr<PDESolver> pdeSolver_;
     std::shared_ptr<const MultiStageMethod<Scalar>> msMethod_;
+
+    Scalar maxTimeStepDivisions_;
+    Scalar retryTimeStepReductionFactor_;
 };
 
 } // end namespace Dumux::Experimental
