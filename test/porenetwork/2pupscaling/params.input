@@ -40,5 +40,8 @@ HighSwRegularizationMethod = Spline
 LiquidKinematicViscosity = 1e-6
 LiquidDensity = 1e3
 
+GasKinematicViscosity = 1.561e-5
+GasDensity = 1.184
+
 [Assembly.NumericDifference]
 PriVarMagnitude = 1e5

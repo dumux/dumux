@@ -39,6 +39,14 @@ class UpscalingProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::size()>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    struct FlowPropertiesStatic
+    {
+        Scalar pcGlobal;
+        Scalar averageSaturation;
+        std::vector<std::array<Scalar, 2>> throatTransmissibility;
+    };
     // [[/codeblock]]
     // [[/details]]
     //
@@ -130,17 +138,15 @@ public:
     { return length_; }
 
     // Return the liquid mass density.
-    Scalar liquidDensity() const
+    Scalar density() const
     {
-        static const Scalar liquidDensity = getParam<Scalar>("Component.LiquidDensity");
-        return liquidDensity;
+        return FluidSystem::density(0.0, 0.0); // dummy values for pressure and temperature
     }
 
     // Return the liquid dynamic viscosity.
-    Scalar liquidDynamicViscosity() const
+    Scalar dynamicViscosity() const
     {
-        static const Scalar liquidDynamicViscosity = getParam<Scalar>("Component.LiquidKinematicViscosity") * liquidDensity();
-        return liquidDynamicViscosity;
+        return FluidSystem::viscosity(0.0, 0.0); // dummy values for pressure and temperature
     }
 
     // Return the applied pressure gradient.
@@ -163,10 +169,10 @@ public:
         return label[direction_];
     }
 
-    template<class StaticProperties>
-    void importTransmissibility(const StaticProperties& staticProperties)
+    template<class Transmissibility>
+    void importTransmissibility(const Transmissibility& transmissibility)
     {
-        Dumux::PoreNetwork::SinglePhaseTransmissibility<Scalar>::importTransmissibility(staticProperties.throatTransmissibility);
+        Dumux::PoreNetwork::SinglePhaseTransmissibility<Scalar>::importTransmissibility(transmissibility);
     }
 // [[/details]] private class members
 private:

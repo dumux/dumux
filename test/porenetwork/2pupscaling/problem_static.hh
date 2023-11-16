@@ -348,7 +348,7 @@ private:
             else
             {
                 throatTransmissibility_[eIdx][wPhaseIdx] = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVariablesCache_, wPhaseIdx);
-                throatTransmissibility_[eIdx][nPhaseIdx] = 0.0;
+                throatTransmissibility_[eIdx][nPhaseIdx] = 1e-10 * throatTransmissibility_[eIdx][wPhaseIdx];
             }
         }
     };

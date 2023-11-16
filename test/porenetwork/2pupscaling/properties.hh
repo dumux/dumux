@@ -61,6 +61,7 @@
 // We will use a single liquid phase consisting of a component with constant fluid properties.
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 
 #include "helper.hh"
 #include "problem_static.hh"
@@ -72,7 +73,8 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct PNMTWOPStatic { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
-struct PNMUpscalingCreepingFlow { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingCreepingFlowLiquid { using InheritsFrom = std::tuple<PNMOneP>; };
+struct PNMUpscalingCreepingFlowGas { using InheritsFrom = std::tuple<PNMUpscalingCreepingFlowLiquid>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -112,17 +114,17 @@ struct Problem<TypeTag, TTag::PNMTWOPStatic> { using type = Dumux::PoreNetwork::
 // [[codeblock]]
 // We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 { using type = Dune::FoamGrid<1, 3>; };
 
 // The problem class specifying initial and boundary conditions:
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct Problem<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 { using type = UpscalingProblem<TypeTag>; };
 
 //! The spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct SpatialParams<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -132,7 +134,7 @@ public:
 
 //! The advection type for creeping flow
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct AdvectionType<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using TransmissibilityLaw = PoreNetwork::SinglePhaseTransmissibility<Scalar>;
@@ -142,17 +144,25 @@ public:
 
 // We use a single liquid phase consisting of a component with constant fluid properties.
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+};
+
+// We use a single liquid phase consisting of a component with constant fluid properties.
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlowGas>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::OnePGas<Scalar, Components::Constant<1, Scalar> >;
 };
 // [[/codeblock]]
 
 // Moreover, here we use a local residual specialized for incompressible flow
 // that contains functionality related to analytic differentiation.
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::PNMUpscalingCreepingFlow>
+struct LocalResidual<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
 

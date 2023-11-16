@@ -185,8 +185,10 @@ public:
                                               const FluxVariablesCache& fluxVarsCache,
                                               const int phaseIdx)
     {
+        using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
+        constexpr bool isGas = FluidSystem::isGas();
         const auto eIdx = problem.gridGeometry().gridView().indexSet().index(element);
-        return throatTransmissibility_[eIdx][phaseIdx];
+        return throatTransmissibility_[eIdx][isGas];
     }
 
     static void importTransmissibility(const std::vector<std::array<Scalar, 2>> throatTransmissibility)

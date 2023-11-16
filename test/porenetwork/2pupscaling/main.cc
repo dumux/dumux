@@ -63,10 +63,10 @@
 // `Problem.AssumeCreepingFlow` in the input file.
 namespace Dumux {
 
-template<class GridManager, class StaticProperties>
+template<class TypeTag, class GridManager, class StaticProperties>
 void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& staticProperties)
 {
-    using TypeTag = Properties::TTag::PNMUpscalingCreepingFlow;
+    constexpr int phaseIdx = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlowLiquid> ? 0:1;
     const auto& staticFlowProperties = staticProperties;
     // ### Create the grid and the grid geometry
     // [[codeblock]]
@@ -88,7 +88,8 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
     // [[codeblock]]
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
-    problem->importTransmissibility(staticFlowProperties[0]);
+
+    problem->importTransmissibility(staticFlowProperties[0].throatTransmissibility);
 
     // instantiate and initialize the discrete and exact solution vectors
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -137,7 +138,7 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
     // // [[codeblock]]
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using UpscalingHelper = UpscalingHelper<Scalar>;
-    // UpscalingHelper upscalingHelper;
+    UpscalingHelper upscalingHelper;
     // // [[/codeblock]]
 
     // // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
@@ -173,76 +174,79 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
     // [[codeblock]]
     const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0, 1, 2});
     // upscalingHelper.setDirections(directions);
-    for (std::size_t i = 0; i<staticFlowProperties.size(); ++i)
+
+    for (int dimIdx : directions)
     {
-        problem->importTransmissibility(staticFlowProperties[i]);
+        // set the direction in which the pressure gradient will be applied
+        problem->setDirection(dimIdx);
+        // ### The actual upscaling procedure
+        // #### Instantiate the upscaling helper
+        // [[codeblock]]
 
-        for (int dimIdx : directions)
+        upscalingHelper.setDirections(directions);
+        // [[/codeblock]]
+
+        // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
+        // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
+        // determine it automatically based on the network's bounding box.
+        // [[codeblock]]
+        const auto sideLengths = [&]()
         {
-            // set the direction in which the pressure gradient will be applied
-            problem->setDirection(dimIdx);
-            // ### The actual upscaling procedure
-            // #### Instantiate the upscaling helper
-            // [[codeblock]]
+            using GlobalPosition = typename GridGeometry::GlobalCoordinate;
+            if (hasParam("Problem.SideLength"))
+                return getParam<GlobalPosition>("Problem.SideLength");
+            else
+                return upscalingHelper.getSideLengths(*gridGeometry);
+        }();
 
-            UpscalingHelper upscalingHelper;
-            upscalingHelper.setDirections(directions);
-            // [[/codeblock]]
+        problem->setSideLengths(sideLengths);
 
-            // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
-            // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
-            // determine it automatically based on the network's bounding box.
-            // [[codeblock]]
-            const auto sideLengths = [&]()
-            {
-                using GlobalPosition = typename GridGeometry::GlobalCoordinate;
-                if (hasParam("Problem.SideLength"))
-                    return getParam<GlobalPosition>("Problem.SideLength");
-                else
-                    return upscalingHelper.getSideLengths(*gridGeometry);
-            }();
+        for (std::size_t step = 0; step<staticFlowProperties.size(); ++step)
+        {
+            problem->importTransmissibility(staticFlowProperties[step].throatTransmissibility);
+            // for (int i = 0; i < 1; i++)
+            // {
+            int i = 0;
+            // reset the solution
+            x = 0;
 
-            problem->setSideLengths(sideLengths);
-            for (int i = 0; i < 1; i++)
-            {
-                // reset the solution
-                x = 0;
+            // set the pressure gradient to be applied
+            Scalar pressureGradient = maxPressureGradient * std::exp(i + 1 - numberOfSamples);
+            if (i == 0)
+                pressureGradient = std::min(minPressureGradient, pressureGradient);
 
-                // set the pressure gradient to be applied
-                Scalar pressureGradient = maxPressureGradient * std::exp(i + 1 - numberOfSamples);
-                if (i == 0)
-                    pressureGradient = std::min(minPressureGradient, pressureGradient);
+            problem->setPressureGradient(pressureGradient);
 
-                problem->setPressureGradient(pressureGradient);
+            // solve problem
+            nonLinearSolver.solve(x);
 
-                // solve problem
-                nonLinearSolver.solve(x);
-
-                // set the sample points
-                const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
-                upscalingHelper.setDataPoints(*problem, totalFluidMassFlux);
-            }
+            // set the sample points
+            const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
+            upscalingHelper.setDataPoints(*problem, totalFluidMassFlux, staticFlowProperties[step]);
+            // }
 
             // write a vtu file for the given direction for the last sample
             vtkWriter.write(dimIdx);
 
-                    // calculate and report the upscaled properties
-            constexpr bool isCreepingFlow = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlow>;
-            upscalingHelper.calculateUpscaledProperties(*problem, isCreepingFlow);
-            upscalingHelper.report(isCreepingFlow);
-
-            // compare the Darcy permeability with reference data if provided in input file and report in case of inconsistency
-            static const auto referenceData = getParam<std::vector<Scalar>>("Problem.ReferencePermeability", std::vector<Scalar>{});
-            if (!referenceData.empty())
-                upscalingHelper.compareWithReference(referenceData);
-
-            // plot the results just for non-creeping flow
-            // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
-            bool plotConductivity = getParam<bool>("Output.PlotConductivity", true);
-            if (!isCreepingFlow && plotConductivity)
-                upscalingHelper.plot();
         }
 
+        // calculate and report the upscaled properties
+        constexpr bool isCreepingFlow = 0;
+        // upscalingHelper.calculateUpscaledProperties(*problem, isCreepingFlow);
+        upscalingHelper.report(isCreepingFlow);
+
+        // compare the Darcy permeability with reference data if provided in input file and report in case of inconsistency
+        static const auto referenceData = getParam<std::vector<Scalar>>("Problem.ReferencePermeability", std::vector<Scalar>{});
+        if (!referenceData.empty())
+            upscalingHelper.compareWithReference(referenceData);
+
+        // plot the results just for non-creeping flow
+        // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
+        bool plotConductivity = getParam<bool>("Output.PlotConductivity", true);
+        if (plotConductivity)
+            upscalingHelper.plot();
+
+        upscalingHelper.writePlotDataToFile(dimIdx, phaseIdx);
     }
 };
 
@@ -281,7 +285,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     using TypeTagStatic = Properties::TTag::PNMTWOPStatic;
-    using TypeTag = Properties::TTag::PNMUpscalingCreepingFlow;
+    using TypeTagLiquid = Properties::TTag::PNMUpscalingCreepingFlowLiquid;
+    using TypeTagGas = Properties::TTag::PNMUpscalingCreepingFlowGas;
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
@@ -302,7 +307,8 @@ int main(int argc, char** argv)
     gridManager.init();
 
     const auto flowPropertiesStatic = runStaticProblem(gridManager);
-    runSinglePhaseUpscaling(gridManager, flowPropertiesStatic);
+    runSinglePhaseUpscaling<TypeTagLiquid>(gridManager, flowPropertiesStatic);
+    runSinglePhaseUpscaling<TypeTagGas>(gridManager, flowPropertiesStatic);
 
 
     ////////////////////////////////////////////////////////////
