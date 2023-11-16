@@ -91,6 +91,31 @@ typename SubControlVolumeFace::Traits::Geometry scvfGeometry(const FVElementGeom
     return {corners[0], corners[1], inPlaneAxes};
 }
 
+//! Get the scv on the outside side of a periodic boundary
+template<class FVElementGeometry, class SubControlVolume>
+const SubControlVolume& outsidePeriodicScv(const FVElementGeometry& fvGeometry,
+                                    const SubControlVolume& selfScv)
+{
+    assert(fvGeometry.gridGeometry().dofOnPeriodicBoundary(selfScv.dofIndex()));
+
+    auto localOppositeIndex = FVElementGeometry::GridGeometry::GeometryHelper::localOppositeIdx(selfScv.localDofIndex());
+    const auto& normalScvf =  std::next(scvfs(fvGeometry, selfScv).begin());
+
+    // at a lateral velocity, find the inner and outer normal velocities
+    const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(*normalScvf);
+    const auto orthogonalOutsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
+
+    auto outsidePeriodicFVGeometry = localView(fvGeometry.gridGeometry());
+    const auto& periodicElement = fvGeometry.gridGeometry().element(orthogonalOutsideScv.elementIndex());
+    outsidePeriodicFVGeometry.bindElement(periodicElement);
+
+    for (const auto& outerPeriodicScv : scvs(outsidePeriodicFVGeometry))
+        if (outerPeriodicScv.localDofIndex() == localOppositeIndex)
+            return outerPeriodicScv;
+
+    DUNE_THROW(Dune::InvalidStateException, "No outside periodic scv found");
+}
+
 } // end namespace Detail::FCStaggered
 #endif // DOXYGEN
 
@@ -275,6 +300,12 @@ public:
                 return otherScvf;
 
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
+    }
+
+    //! Get the scv on the outside side of a periodic boundary
+    const SubControlVolume& outsidePeriodicScv(const SubControlVolume& selfScv) const
+    {
+        return Detail::FCStaggered::outsidePeriodicScv(*this, selfScv);
     }
 
     //! Create the geometry of a given sub control volume
@@ -499,6 +530,12 @@ public:
                 return otherScvf;
 
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
+    }
+
+    //! Get the scv on the outside side of a periodic boundary
+    SubControlVolume outsidePeriodicScv(const SubControlVolume& selfScv) const
+    {
+        return Detail::FCStaggered::outsidePeriodicScv(*this, selfScv);
     }
 
     //! Create the geometry of a given sub control volume
