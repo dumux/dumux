@@ -111,7 +111,7 @@ public:
         Dune::Timer solveTimer(false);
         Dune::Timer updateTimer(false);
 
-        if (verbose_ && enableDynamicOutput_)
+        if (verbosity_ >= 1 && enableDynamicOutput_)
             std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
                       << std::flush;
 
@@ -136,7 +136,7 @@ public:
         // http://en.wikipedia.org/wiki/ANSI_escape_code
         const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-        if (verbose_ && enableDynamicOutput_)
+        if (verbosity_ >= 1 && enableDynamicOutput_)
             std::cout << "\rSolve: M deltax^k = r"
                       << clearRemainingLine << std::flush;
 
@@ -157,7 +157,7 @@ public:
         ///////////////
         // update
         ///////////////
-        if (verbose_ && enableDynamicOutput_)
+        if (verbosity_ >= 1 && enableDynamicOutput_)
             std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
                       << clearRemainingLine << std::flush;
 
@@ -170,7 +170,7 @@ public:
             this->assembler().updateGridVariables(Backend::dofs(vars));
         updateTimer.stop();
 
-        if (verbose_)
+        if (verbosity_ >= 1)
         {
             const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
             if (enableDynamicOutput_)
@@ -214,14 +214,28 @@ public:
     /*!
      * \brief Specifies if the solver ought to be chatty.
      */
+    [[deprecated("Will be removed after release 3.9. Use setVerbosity(int).")]]
     void setVerbose(bool val)
-    { verbose_ = val; }
+    { verbosity_ = val ? 1 : 0; }
 
     /*!
      * \brief Returns true if the solver ought to be chatty.
      */
+    [[deprecated("Will be removed after release 3.9. Use int verbsity().")]]
     bool verbose() const
-    { return verbose_ ; }
+    { return verbosity_ > 0; }
+
+    /*!
+     * \brief Specifies if the solver ought to be chatty.
+     */
+    void setVerbosity(int val)
+    { verbosity_ = val; }
+
+    /*!
+     * \brief Returns true if the solver ought to be chatty.
+     */
+    int verbosity() const
+    { return verbosity_ ; }
 
     /*!
      * \brief Returns the parameter group
@@ -273,12 +287,12 @@ private:
     //! initialize the parameters by reading from the parameter tree
     void initParams_(const std::string& group = "")
     {
-        verbose_ = (Dune::MPIHelper::getCommunication().rank() == 0);
+        verbosity_ = comm_.rank() == 0 ? getParamFromGroup<int>(group, "LinearPDESolver.Verbosity", 2) : 0;
         enableDynamicOutput_ = getParamFromGroup<bool>(group, "LinearPDESolver.EnableDynamicOutput", true);
     }
 
-    //! switches on/off verbosity
-    bool verbose_;
+    //! sets verbosity-level
+    int verbosity_;
 
     //! further parameters
     bool enableDynamicOutput_;
