@@ -14,6 +14,7 @@
 
 #include <utility>
 
+#include <dune/geometry/axisalignedcubegeometry.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
