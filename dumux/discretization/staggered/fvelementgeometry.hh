@@ -13,6 +13,8 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <bitset>
+
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
