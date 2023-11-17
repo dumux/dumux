@@ -86,7 +86,7 @@ The master branch (developer version) can be cloned with
     git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 
 Alternatively, it is also possible to download release tarballs
-from [DaRUS](https://doi.org/10.18419/darus-3405) or
+from [DaRUS](https://doi.org/10.18419/darus-3788) or
 from [GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases).
 
 ### 2.3 Configure and build
