@@ -1,3 +1,17 @@
+Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
+=============================================
+
+- __Requirements__:
+
+### General changes / structure
+
+### Improvements and Enhancements
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+### Deprecated properties/classes/functions/files, to be removed after 3.9:
+
+
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================
 
@@ -44,7 +58,6 @@ be evaluated with the function values provided in the same order as the names wh
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.8:
 - __MPFA__: `scvf.corners()/facetCorner()/vertexCorner()` have been deprecated. Use functions from the local view of the grid geometry instead.
-
 
 
 Differences Between DuMu<sup>x</sup> 3.7 and DuMu<sup>x</sup> 3.6
