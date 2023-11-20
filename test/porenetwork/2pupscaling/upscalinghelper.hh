@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <numeric>
 #include <functional>
+#include <filesystem>
 
 #include <dune/common/float_cmp.hh>
 
@@ -65,6 +66,7 @@ public:
         // store the required data for further calculations
         EffectivePermeability_[problem.direction()].push_back(KApparent);
         averageSaturation_[problem.direction()].push_back(staticProperties.averageSaturation);
+        pc_[problem.direction()].push_back(staticProperties.pcGlobal);
     }
     // [[/codeblock]]
 
@@ -92,7 +94,8 @@ public:
     static void plot()
     {
         // // plot permeability ratio vs. Forchheimer number
-        plotRelPermeabilityratioVsSw_();
+        plotRelPermeabilityVsSw_();
+        plotCapillaryPressureVsSw_();
     }
     // [[/codeblock]]
     //
@@ -106,7 +109,8 @@ public:
         // // write inverse of apparent permability vs. rho v / mu
         // writeInversePrmeabilityVsInertiaToViscousRatio_(dirIdx);
 
-        writePermeabilityVsAverageSaturation_(dirIdx, phaseIdx );
+        writeEffPermeabilityVsAverageSaturation_(dirIdx, phaseIdx );
+        writeCapillaryPressureVsAverageSaturation_(dirIdx);
     }
     // [[/codeblock]]
     //
@@ -172,17 +176,33 @@ private:
     //         logfile << forchheimerNumber << " " << permeabilityRatio << std::endl;
     //     }
     // }
-    void writePermeabilityVsAverageSaturation_(std::size_t dirIdx, int phaseIdx)
+    void writeEffPermeabilityVsAverageSaturation_(std::size_t dirIdx, int phaseIdx)
     {
         // open a logfile
-        std::string fileName = phaseName_[phaseIdx] + dirName_[dirIdx] + "-dir-PermeabilityratioVsAverageSaturation.dat";
+        std::string fileName = dirName_[dirIdx] + "-dir-" + phaseName_[phaseIdx] +"-EffPermeabilityVsAverageSaturation.dat";
         std::ofstream logfile(fileName);
 
         // save the data needed to be plotted in logfile
         for (int i = 0; i < EffectivePermeability_[dirIdx].size(); i++)
             logfile << averageSaturation_[dirIdx][i] << " " << EffectivePermeability_[dirIdx][i] << std::endl;
 
-        filesToPlot_.push_back(fileName);
+        filesToPlot_[0].push_back(fileName);
+    }
+
+    void writeCapillaryPressureVsAverageSaturation_(std::size_t dirIdx)
+    {
+        if(filesToPlot_[1].size())
+            return;
+        // open a logfile
+        std::string fileName = dirName_[dirIdx] + "-dir-CapillaryPressureVsAverageSaturation.dat";
+
+        std::ofstream logfile(fileName);
+
+        // save the data needed to be plotted in logfile
+        for (int i = 0; i < EffectivePermeability_[dirIdx].size(); i++)
+            logfile << averageSaturation_[dirIdx][i] << " " << pc_[dirIdx][i] << std::endl;
+
+        filesToPlot_[1].push_back(fileName);
     }
     // [[/codeblock]]
 
@@ -210,25 +230,32 @@ private:
     // ### Plot permeability ratio vs. Forchheimer number using Gnuplot
     //
     // [[codeblock]]
-    static void plotRelPermeabilityratioVsSw_()
+    static void plotRelPermeabilityVsSw_()
     {
         // using gnuplot interface
         Dumux::GnuplotInterface<Scalar> gnuplot(true);
         gnuplot.setOpenPlotWindow(true);
         gnuplot.resetAll();
         std::string title{}, option{};
-        for (const auto& fileName : filesToPlot_)
-        {
 
+        int count = 1;
+        using std::to_string;
+        for (const auto& fileName : filesToPlot_[0])
+        {
+            std::size_t isWetting = fileName.find("Wetting");
+
+            std::string legend = isWetting != std::string::npos ? "u 1:2 title \" Wetting\" with lines" :
+                                                                  "u 1:2 title \" Non-wetting\" with lines";
             // add the data in each direction for plot
-            gnuplot.addFileToPlot(fileName);
+            gnuplot.addFileToPlot(fileName, legend);
 
             // set the properties of lines to be plotted
-            option += "set linetype 1 linecolor 1 linewidth 5\n";
+            option += "set linetype " + to_string(count) + " linecolor " + to_string(count) + " linewidth 5\n";
+            count++;
         }
 
         // report the darcy permeability in each direction as the title of the plot
-        title += Fmt::format("Relative permeability vs. Sw");
+        title += Fmt::format("Effective permeability vs. Sw");
 
         option += "set title \"" + title + "\"\n";
         // option += "set logscale x""\n";
@@ -239,6 +266,36 @@ private:
         gnuplot.setOption(option);
         gnuplot.plot("Effective Permeability vs. Sw");
     }
+
+    static void plotCapillaryPressureVsSw_()
+    {
+        // using gnuplot interface
+        Dumux::GnuplotInterface<Scalar> gnuplot(true);
+        gnuplot.setOpenPlotWindow(true);
+        gnuplot.resetAll();
+        std::string title{}, option{};
+        for (const auto& fileName : filesToPlot_[1])
+        {
+            std::string legend = "u 1:2 title \" \" with lines";
+            // add the data in each direction for plot
+            gnuplot.addFileToPlot(fileName, legend);
+
+            // set the properties of lines to be plotted
+            option += "set linetype 1 linecolor 1 linewidth 5\n";
+        }
+
+        // report the darcy permeability in each direction as the title of the plot
+        title += Fmt::format("Capillary Pressure vs. Sw");
+
+        option += "set title \"" + title + "\"\n";
+        // option += "set logscale x""\n";
+        // option += "set format x '10^{%L}'""\n";
+
+        gnuplot.setXlabel("Sw [-]");
+        gnuplot.setYlabel("Capillary Pressure [Pa]");
+        gnuplot.setOption(option);
+        gnuplot.plot("Capillary Pressure vs. Sw");
+    }
     // [[/codeblock]]
     // [[details]] private data members
     // [[codeblock]]
@@ -246,10 +303,11 @@ private:
     std::array<std::vector<Scalar>, 3> samplePointsY_;
     std::array<std::vector<Scalar>, 3> EffectivePermeability_;
     std::array<std::vector<Scalar>, 3> averageSaturation_;
+    std::array<std::vector<Scalar>, 3> pc_;
     const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
-    const std::array<std::string, 2> phaseName_{"Liquid", "Gas"};
+    const std::array<std::string, 2> phaseName_{"Wetting", "Non-wetting"};
     std::vector<std::size_t> directions_;
-    inline static std::vector<std::string> filesToPlot_;
+    inline static std::array<std::vector<std::string>, 2> filesToPlot_; // 0 index for rel perm vs. sw and 1 index for pc vs. sw
 };
 
 } // end namespace Dumux
