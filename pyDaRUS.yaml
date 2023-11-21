@@ -1,0 +1,175 @@
+lib_name: pyDaRUS
+dataset_id: doi:10.18419/darus-3788
+metadatablocks:
+  citation:
+    author:
+      - name: Buntic, Ivan
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0001-9376-1260
+      - name: Coltman, Edward
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0001-9934-9162
+      - name: Flemisch, Bernd
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0001-8188-620X
+      - name: Ghosh, Tufan
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0003-4164-1501
+      - name: "Gl\xE4ser, Dennis"
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0001-9646-881X
+      - name: "Gr\xFCninger, Christoph"
+        identifier_scheme: GND
+        identifier: 115323503X
+      - name: Hommel, Johannes
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-2061-0303
+      - name: Keim, Leon
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0003-2456-1809
+      - name: Kelm, Mathis
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-7900-2214
+      - name: Koch, Timo
+        affiliation: University of Oslo
+        identifier_scheme: ORCID
+        identifier: 0000-0003-4776-5222
+      - name: Kostelecky, Anna Mareike
+        affiliation: University of Stuttgart
+      - name: Lipp, Melanie
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-3422-7954
+      - name: Oukili, Hamza
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0003-4695-8532
+      - name: Schneider, Martin
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-4128-4930
+      - name: Utz, Martin
+        affiliation: Federal Waterways Engineering and Research Institute
+        identifier_scheme: ORCID
+        identifier: 0000-0002-2303-0662
+      - name: Wang, Yue
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-9455-7621
+      - name: Weishaupt, Kilian
+        identifier_scheme: ORCID
+        identifier: 0000-0001-8187-7485
+      - name: Wendel, Kai
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0003-1871-1540
+      - name: Winter, Roman
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0001-8684-3161
+      - name: Wu, Hanchuan
+        affiliation: University of Stuttgart
+        identifier_scheme: ORCID
+        identifier: 0000-0002-5502-0418
+    related_publication:
+      - citation: "T. Koch, D. Gl\xE4ser, K. Weishaupt, S. Ackermann, M. Beck, B.\
+          \ Becker, S. Burbulla, H. Class, E. Coltman, S. Emmert, T. Fetzer, C. Gr\xFC\
+          ninger, K. Heck, J. Hommel, T. Kurz, M. Lipp, F. Mohammadi, S. Scherrer,\
+          \ M. Schneider, G. Seitz, L. Stadler, M. Utz, F. Weinhardt and B. Flemisch,\
+          \ DuMux 3 - an open-source simulator for solving flow and transport problems\
+          \ in porous media with a focus on model coupling. Computers and Mathematics\
+          \ with Applications 81: 423-443 (2021)."
+        id_type: doi
+        id_number: 10.1016/j.camwa.2020.02.012
+        url: https://doi.org/10.1016/j.camwa.2020.02.012
+    description:
+      - text: 'Release 3.8.0 of DuMux, DUNE for Multi-{Phase, Component, Scale, Physics,
+          ...} flow and transport in porous media. DuMux is a free and open-source
+          simulator for flow and transport processes in and around porous media. It
+          is based on the Distributed and Unified Numerics Environment DUNE.
+
+
+          <!--<p>The individual files correspond to the main module <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/3.8.0">"dumux"</a>
+          and two dependent modules <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/-/tree/3.8.0">"dumux-course"</a>
+          and <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-lecture/-/tree/3.8.0">"dumux-lecture"</a>.</p>-->'
+    other_id:
+      - agency: Software Heritage
+        identifier: swh:1:rel:f47f65b811ec11c7e165290dc51219dbe24e370c
+    grant_information:
+      - grant_agency: DFG
+        grant_number: '327154368'
+      - grant_agency: DFG
+        grant_number: '390740016'
+      - grant_agency: DFG
+        grant_number: '391049448'
+      - grant_agency: DFG
+        grant_number: '442146713'
+    keyword:
+      - term: Porous Media
+        vocabulary: Wikidata
+        vocabulary_url: https://www.wikidata.org/wiki/Q3271208
+      - term: Porous Medium
+        vocabulary: Wikidata
+        vocabulary_url: https://www.wikidata.org/wiki/Q3271208
+      - term: Research Software
+        vocabulary: Wikidata
+        vocabulary_url: https://www.wikidata.org/wiki/Q95001953
+    contact:
+      - name: Flemisch, Bernd
+        affiliation: University of Stuttgart
+    title: DuMux 3.8.0
+    alternative_url: https://github.com/dumux/dumux
+    subject:
+      - Computer and Information Science
+      - Earth and Environmental Sciences
+      - Engineering
+      - Mathematical Sciences
+    notes: '<a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/3.8.0/CHANGELOG.md">https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/3.8.0/CHANGELOG.md</a>
+
+      <p> <br> Use persistent identifiers from Software Heritage (<a href="https://archive.softwareheritage.org/swh:1:rel:f47f65b811ec11c7e165290dc51219dbe24e370c;origin=https://github.com/dumux/dumux;visit=swh:1:snp:50fb10d5d33803233d6475cf1fab33b088c8a143"><img
+      src="https://archive.softwareheritage.org/badge/release/f47f65b811ec11c7e165290dc51219dbe24e370c/"/></a>
+      ) to cite individual files or even lines of DuMux.</p>'
+    depositor: Oukili, Hamza
+    deposit_date: '2023-11-15'
+    related_datasets:
+      - "Newer version of:\n<p>Oukili, Hamza; Ackermann, Sina; Buntic, Ivan; Class,\
+        \ Holger; Coltman, Edward; Flemisch, Bernd; Ghosh, Tufan; Gl\xE4ser, Dennis;\
+        \ Gr\xFCninger, Christoph; Hommel, Johannes; Jupe, Tim; Keim, Leon; Kelm,\
+        \ Mathis; Kiemle, Stefanie; Koch, Timo; Kostelecky, Anna Mareike; Pallam,\
+        \ Harsha Vardhan; Schneider, Martin; Stadler, Leopold; Utz, Martin; Wang,\
+        \ Yue; Wendel, Kai; Winter, Roman; Wu, Hanchuan, 2023, \"DuMux 3.7.0\", \n\
+        <a href=\"https://doi.org/10.18419/darus-3405\">doi: 10.18419/darus-3405</a>,\
+        \ DaRUS, V1<p>"
+  process: {}
+  codeMeta:
+    software_requirements:
+      - name: DUNE 2.9.0
+        url: https://dune-project.org/
+    software_version: '3.8'
+    development_status: active
+    code_repository:
+      - https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/3.8.0
+    programming_language:
+      - C++
+      - Python
+    operating_systems:
+      - Linux
+      - macOS
+      - WSL
+    application_category:
+      - Numerical Simulation
+    software_help_documentation:
+      - https://dumux.org/docs/
+    build_instructions: https://dumux.org/docs/doxygen/master/installation.html
+    release_notes: https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/3.8.0/CHANGELOG.md
+    continous_integration:
+      - https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines
+    issue_tracker: https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/issues
