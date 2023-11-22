@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective diffusion coefficient
- */
 #ifndef DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 #define DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
@@ -18,9 +13,15 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+* \addtogroup EffectiveDiffusivity
+* \copydoc Dumux::DiffusivityMillingtonQuirk
+*/
+
+/*!
+ * \ingroup EffectiveDiffusivity
  * \brief Relation for the saturation-dependent effective diffusion coefficient
  *
+ * ### Millington Quirk
  * The material law is:
  * \f[
  *  D_\text{eff,pm} = \phi * S_w * \tau * D

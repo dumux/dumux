@@ -11,7 +11,8 @@
 @defgroup Parameter Parameters and runtime configuration
 
 @defgroup Material Constitutive modeling
-@brief Constitutive model framework, material models, fluids, solids.
+@brief Constitutive model framework - Constitutive relations for fluids, solids, fluid-matrix-interactions and more
+@details Constitutive relations formalize the functional dependence among physical variables, thereby providing the missing equations to close systems.
 
 @defgroup MultiDomain Multidomain framework
 @brief Coupling of several regular DuMu<sup>x</sup> problems

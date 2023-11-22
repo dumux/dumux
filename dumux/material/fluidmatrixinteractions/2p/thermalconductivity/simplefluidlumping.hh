@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
@@ -18,8 +13,17 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
+ * \addtogroup EffectiveHeatConductivity
+ * \copydoc Dumux::ThermalConductivitySimpleFluidLumping
+*/
+
+/*!
+ * \ingroup EffectiveHeatConductivity
+ * \brief Relation for the saturation-dependent effective thermal conductivity
+ *
+ * ### Simple Fluid Lumping
+ *
+ * TODO: DOCUMENTATION of the fluid lumping method
  */
 template<class Scalar>
 class ThermalConductivitySimpleFluidLumping

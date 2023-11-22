@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
 #define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
 
@@ -18,35 +13,42 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup EffectiveHeatConductivity
+ * \copydoc Dumux::ThermalConductivitySomerton
+*/
+
+/*!
+ * \ingroup EffectiveHeatConductivity
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
- *  The Somerton method computes the thermal conductivity of dry and the wet soil material.
- *  It is extended here to a three phase system of water (w), NAPL (n) and gas (g).
- *  It uses a root function of the water and NAPL saturation to compute the
- *  effective thermal conductivity for a three-phase fluidsystem. The individual thermal
- *  conductivities are calculated as geometric mean of the thermal conductivity of the porous
- *  material and of the respective fluid phase.
+ * ### Somerton Method (3p)
+ *
+ * The Somerton method computes the thermal conductivity of dry and the wet soil material.
+ * It is extended here to a three phase system of water (w), NAPL (n) and gas (g).
+ * It uses a root function of the water and NAPL saturation to compute the
+ * effective thermal conductivity for a three-phase fluidsystem. The individual thermal
+ * conductivities are calculated as geometric mean of the thermal conductivity of the porous
+ * material and of the respective fluid phase.
  *
  * The material law is:
  * \f[
- \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{(S_w)} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right) +
- \sqrt{(S_n)} \left(\lambda0_\text{n,eff} - \lambda_\text{g,eff}\right)
- \f]
+ * \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{(S_w)} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right) +
+ * \sqrt{(S_n)} \left(\lambda0_\text{n,eff} - \lambda_\text{g,eff}\right)
+ * \f]
  *
  * with
  * \f[
- \lambda_\text{w,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- \f]
+ * \lambda_\text{w,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
+ * \f]
  * and
  *
  * \f[
- \lambda0_\text{n,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- \f]
+ * \lambda0_\text{n,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
+ * \f]
  *
- * * \f[
- \lambda_\text{g,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
- \f]
+ * \f[
+ * \lambda_\text{g,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
+ * \f]
  */
 template<class Scalar>
 class ThermalConductivitySomerton

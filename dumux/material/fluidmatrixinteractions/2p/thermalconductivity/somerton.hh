@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_HH
 
@@ -18,29 +13,41 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup EffectiveHeatConductivity
+ * \copydoc Dumux::ThermalConductivitySomerton
+*/
+
+/*!
+ * \addtogroup EffectiveHeatConductivity
+ * \ingroup EffectiveHeatConductivity
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
- *  The Somerton method computes the thermal conductivity of dry and the wet soil material
- *  and uses a root function of the wetting saturation to compute the
- *  effective thermal conductivity for a two-phase fluidsystem. The individual thermal
- *  conductivities are calculated as geometric mean of the thermal conductivity of the porous
- *  material and of the respective fluid phase.
+ * ### Somerton Method (2p)
+ *
+ * The Somerton method computes the thermal conductivity of dry and the wet soil material
+ * and uses a root function of the wetting saturation to compute the
+ * effective thermal conductivity for a two-phase fluidsystem. The individual thermal
+ * conductivities are calculated as geometric mean of the thermal conductivity of the porous
+ * material and of the respective fluid phase.
  *
  * The material law is:
- * \f$\mathrm{
- \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- }\f$
+ * \f[
+ * \mathrm{
+ * \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
+ * }
+ * \f]
  *
  * with
- * \f$\mathrm{
- \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- }\f$
+ * \f[
+ * \mathrm{
+ * \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
+ * }\f]
  * and
  *
- * \f$\mathrm{
- \lambda_\text{dry} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- }\f$
+ * \f[
+ * \mathrm{
+ * \lambda_\text{dry} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
+ * }\f]
  *
  */
 template<class Scalar>

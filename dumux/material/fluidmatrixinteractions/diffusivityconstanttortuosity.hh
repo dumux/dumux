@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective diffusion coefficient
- */
 #ifndef DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
 #define DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
 
@@ -17,15 +12,25 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+* \addtogroup EffectiveDiffusivity
+* \copydoc Dumux::DiffusivityConstantTortuosity
+*/
+
+/*!
+ * \ingroup EffectiveDiffusivity
  * \brief Relation for the saturation-dependent effective diffusion coefficient
+ *
+ * ### Constant Tortuosity
  *
  * The material law is:
  * \f[
  *  D_\text{eff,pm} = \phi * S_w * \tau * D
  * \f]
  *
- * with a constant tau.
+ * with
+ * \f[
+ * \tau = \text{const}
+ * \f]
  *
  * The default value is 0.5, empirically obtained in Carman 1937:
  * <i>Fluid flow through granular beds</i> \cite carman1937

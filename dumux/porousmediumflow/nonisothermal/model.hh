@@ -38,7 +38,7 @@
  * * \f$ \rho_\alpha \f$ is the mass density of phase \f$ \alpha \f$,
  * * \f$ h_\alpha \f$ is the specific enthalpy of phase  \f$ \alpha \f$,
  * * \f$ u_\alpha \f$ is the specific internal energy of phase \f$ \alpha \f$,
- * * \f$ \lambda_{pm}\f$ is the heat conductivity in the porous medium,
+ * * \f$ \lambda_{pm}\f$ is the effective heat conductivity in the porous medium,
  * * \f$ T \f$ is the temperature,
  * * \f$ \rho_s \f$ is the mass density of the solid phase,
  * * \f$ c_s \f$ is the heat capacity of the solid,

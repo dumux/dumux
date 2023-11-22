@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_JOHANSEN_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_JOHANSEN_HH
 
@@ -18,8 +13,15 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup EffectiveHeatConductivity
+ * \copydoc Dumux::ThermalConductivityJohansen
+*/
+
+/*!
+ * \ingroup EffectiveHeatConductivity
  * \brief Relation for the saturation-dependent effective thermal conductivity
+ *
+ * ### Johansen Method
  *
  * The Johansen method (Johansen 1975 \cite johansen1977 ) computes the thermal conductivity of dry and the
  * wet soil material and uses a root function of the wetting saturation to compute the
@@ -27,19 +29,22 @@ namespace Dumux {
  * conductivities are calculated as geometric mean of the thermal conductivity of the porous
  * material and of the respective fluid phase.
  * The material law is:
- * \f$\mathrm{[
- \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- }\f$
+ * \f[
+ * \mathrm{[
+ * \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
+ * }\f]
  *
  * with
- * \f$\mathrm{
- \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- }\f$
+ * \f[
+ * \mathrm{
+ * \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
+ * }\f]
  * and the semi-empirical relation
  *
- * \f$\mathrm{
- \lambda_\text{dry} = \frac{0.135*\rho_s*\phi + 64.7}{\rho_s - 0.947 \rho_s*\phi}.
- }\f$
+ * \f[
+ * \mathrm{
+ * \lambda_\text{dry} = \frac{0.135*\rho_s*\phi + 64.7}{\rho_s - 0.947 \rho_s*\phi}.
+ * }\f]
  *
  * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975 \cite johansen1977
  */

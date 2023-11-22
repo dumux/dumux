@@ -38,7 +38,7 @@
  * * \f$ X_\alpha^\kappa \f$ is the mass fraction of component \f$ \kappa \f$ in phase  \f$ \alpha \f$,
  * * \f$ x_\alpha^\kappa \f$ is the mole fraction of component \f$ \kappa \f$ in phase    \f$ \alpha \f$,
  * * \f$ v_\alpha \f$ is the velocity of phase \f$ \alpha \f$,
- * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
+ * * \f$ {\bf D_{\alpha, pm}^\kappa} \f$ is the effective diffusivity of component \f$ \kappa \f$  in phase \f$ \alpha \f$,
  * * \f$ q_\alpha^\kappa \f$ is a source or sink term.
  *
  * The solid or mineral phases are assumed to consist of a single component.
