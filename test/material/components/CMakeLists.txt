@@ -7,6 +7,10 @@ dumux_add_test(SOURCES test_componenttraits.cc
 
 add_executable(plot_component plotproperties.cc)
 
+dumux_add_test(NAME test_h2o_simpleh2o_consistency
+               SOURCES test_h2o_simpleh2o_consistency.cc
+               LABELS unit material)
+
 dumux_add_test(NAME plot_air
               TARGET plot_component
               COMMAND ./plot_component
