@@ -155,7 +155,7 @@ public:
 
         using std::pow;
         static const Scalar vaporizationEnthalpy = A + B*tRef + C*(pow(tRef, 1.5)) + D*(pow(tRef, 2.5)) + E*(pow(tRef, 3));
-        return vaporizationEnthalpy;
+        return vaporizationEnthalpy * 1e3; // kJ/kg to J/kg
     }
 
 

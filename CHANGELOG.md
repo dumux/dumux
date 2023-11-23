@@ -7,6 +7,8 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 
 ### Improvements and Enhancements
 
+- __SimpleH2O__: Fixed an issue where the function vaporizationEnthalpy returned the result in the wrong unit
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
