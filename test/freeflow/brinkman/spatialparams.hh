@@ -26,10 +26,10 @@ namespace Dumux {
  */
 
 template<class GridGeometry, class Scalar>
-class BrinkmanSpatialParams
-: public FreeFlowSpatialParams<GridGeometry, Scalar, BrinkmanSpatialParams<GridGeometry, Scalar>>
+class BrinkmanTestSpatialParams
+: public BrinkmanSpatialParams<GridGeometry, Scalar, BrinkmanTestSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FreeFlowSpatialParams<GridGeometry, Scalar, BrinkmanSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = BrinkmanSpatialParams<GridGeometry, Scalar, BrinkmanTestSpatialParams<GridGeometry, Scalar>>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -42,7 +42,7 @@ class BrinkmanSpatialParams
 public:
     using PermeabilityType = DimWorldMatrix;
 
-    BrinkmanSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    BrinkmanTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry),
     permeability_(0.0),
     inversePermeability_(0.0),
@@ -63,9 +63,8 @@ public:
      * \param scv The sub control volume
      * \return the intrinsic permeability
      */
-    PermeabilityType permeability(const Element& element,
-                                  const SubControlVolume& scv) const
-    { return isPM_(scv.dofPosition()) ? permeability_ : ffPermeability_; }
+    const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return isPM_(globalPos) ? permeability_ : ffPermeability_; }
 
     /*!
      * \brief Function for returning the inverse of the permeability tensor \f$[m^2]\f$.
@@ -74,14 +73,12 @@ public:
      * \param scv The sub control volume
      * \return the intrinsic permeability
      */
-    PermeabilityType inversePermeability(const Element& element,
-                                         const SubControlVolume& scv) const
-    { return isPM_(scv.dofPosition()) ? inversePermeability_ : ffPermeability_; }
+    PermeabilityType inversePermeabilityAtPos(const GlobalPosition& globalPos) const
+    { return isPM_(globalPos)  ? inversePermeability_ : ffPermeability_; }
 
 
-    Scalar brinkmanEpsilon(const Element& element,
-                           const SubControlVolume& scv) const
-    { return isPM_(scv.dofPosition()) ? 1.0 : 0.0; }
+    Scalar brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const
+    { return isPM_(globalPos)  ? 1.0 : 0.0; }
 
 private:
     bool isPM_(const GlobalPosition &globalPos) const

@@ -52,7 +52,7 @@ struct Problem<TypeTag, TTag::BrinkmanTestMass>
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::BrinkmanTest>
-{ using type = BrinkmanSpatialParams<GetPropType<TypeTag, GridGeometry>, GetPropType<TypeTag, Scalar>>; };
+{ using type = BrinkmanTestSpatialParams<GetPropType<TypeTag, GridGeometry>, GetPropType<TypeTag, Scalar>>; };
 
 // the fluid system
 template<class TypeTag>
@@ -77,10 +77,6 @@ struct EnableGridFluxVariablesCache<TypeTag, TTag::BrinkmanTest>
 
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::BrinkmanTest>
-{ static constexpr bool value = true; };
-
-template<class TypeTag>
-struct EnableBrinkman<TypeTag, TTag::BrinkmanTest>
 { static constexpr bool value = true; };
 
 // Set the problem property

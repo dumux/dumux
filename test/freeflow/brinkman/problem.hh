@@ -185,16 +185,11 @@ private:
         {
             outputPermeability_.resize(this->gridGeometry().numDofs());
             outputBrinkmanEpsilon_.resize(this->gridGeometry().numDofs());
-            auto fvGeometry = localView(this->gridGeometry());
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                const auto eIdx = this->gridGeometry().elementMapper().index(element);
-                fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
-                {
-                    outputPermeability_[eIdx] = this->spatialParams().permeability(element, scv);
-                    outputBrinkmanEpsilon_[eIdx] = this->spatialParams().brinkmanEpsilon(element, scv);
-                }
+                const auto& eIdx = this->gridGeometry().elementMapper().index(element);
+                outputPermeability_[eIdx] = this->spatialParams().permeabilityAtPos(element.geometry().center());
+                outputBrinkmanEpsilon_[eIdx] = this->spatialParams().brinkmanEpsilonAtPos(element.geometry().center());
             }
         }
     }
