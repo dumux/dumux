@@ -33,10 +33,6 @@ struct FreeFlow { using InheritsFrom = std::tuple<ModelProperties>; };
 template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::FreeFlow> { using type = FouriersLaw<TypeTag>; };
 
-//! Add an option to enbale a darcy-brinkman model
-template<class TypeTag>
-struct EnableBrinkman<TypeTag, TTag::FreeFlow> { static constexpr bool value = false; };
-
 // Set the default spatial parameters
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::FreeFlow>

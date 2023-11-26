@@ -22,6 +22,18 @@
 #include <dumux/freeflow/navierstokes/momentum/velocityreconstruction.hh>
 namespace Dumux {
 
+namespace BrinkmanDetail {
+template <class Problem, class Element, class FVElementGeometry, class SubControlVolume>
+using HasBrinkmanSpatialParams = decltype(std::declval<Problem>().spatialParams().brinkmanEpsilon(std::declval<Element>(),
+                                                                                                  std::declval<FVElementGeometry>(),
+                                                                                                  std::declval<SubControlVolume>()));
+
+template<class Problem, class Element, class FVElementGeometry, class SubControlVolume>
+static constexpr bool hasBrinkmanSpatialParams()
+{ return Dune::Std::is_detected<HasBrinkmanSpatialParams, Problem, Element, FVElementGeometry, SubControlVolume>::value; }
+
+} // end namespace BrinkmanDetail
+
 /*!
  * \ingroup NavierStokesModel
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
@@ -127,7 +139,7 @@ public:
             }
         }
 
-        if constexpr (ModelTraits::enableBrinkman())
+        if constexpr (BrinkmanDetail::hasBrinkmanSpatialParams<Problem, Element, FVElementGeometry, SubControlVolume>() )
         {
             const auto& brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
             const auto& K = problem.spatialParams().permeability(element, scv);

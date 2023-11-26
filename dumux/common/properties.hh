@@ -172,8 +172,6 @@ DUMUX_DEFINE_PROPERTY(SherwoodFormulation)
 
 DUMUX_DEFINE_PROPERTY(NormalizePressure) //!<  Returns whether to normalize the pressure term in the momentum balance or not
 DUMUX_DEFINE_PROPERTY(ViscousFluxType)   //!< The type for the calculation of the (turbulent) viscous (momentum) fluxes
-DUMUX_DEFINE_PROPERTY(EnableBrinkman)   //!< Enables the darcy brinkman model correction
-
 
 /////////////////////////////////////////////////////////////
 // Properties used by multidomain simulations
