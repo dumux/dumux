@@ -141,22 +141,24 @@ public:
 
         if constexpr (BrinkmanDetail::hasBrinkmanSpatialParams<Problem, Element, FVElementGeometry, SubControlVolume>() )
         {
-            const auto& brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, scv);
-            const auto& K = problem.spatialParams().permeability(element, scv);
-
-            if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
+            if (problem.spatialParams().brinkmanEpsilon(element, fvGeometry, scv) > 0)
             {
-                const auto& velocity = elemVolVars[scv].velocity();
-                source -= brinkmanEpsilon * velocity / K;
-            }
-            else
-            {
-                // Permeability is not a tensor, use full reconstruction and mv
-                const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
-                const auto& velocity = StaggeredVelocityReconstruction::faceVelocityVector(scv, fvGeometry, getVelocitySCV);
-                const auto& inversePermeability = problem.spatialParams().inversePermeability(element, scv);
-                const auto& fullTerm = brinkmanEpsilon * mv(inversePermeability, velocity); // eps K^-1 velocity;
-                source -= fullTerm[scv.dofAxis()];
+                const auto& brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, fvGeometry, scv);
+                const auto& K = problem.spatialParams().permeability(element, fvGeometry, scv);
+                if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
+                {
+                    const auto& velocity = elemVolVars[scv].velocity();
+                    source -= brinkmanEpsilon * velocity / K;
+                }
+                else
+                {
+                    // Permeability is not a tensor, use full reconstruction and mv
+                    const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
+                    const auto& velocity = StaggeredVelocityReconstruction::faceVelocityVector(scv, fvGeometry, getVelocitySCV);
+                    const auto& inversePermeability = problem.spatialParams().inversePermeability(element, fvGeometry, scv);
+                    const auto& fullTerm = brinkmanEpsilon * mv(inversePermeability, velocity); // eps K^-1 velocity;
+                    source -= fullTerm[scv.dofAxis()];
+                }
             }
         }
 
