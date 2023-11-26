@@ -65,7 +65,7 @@ struct StaggeredVelocityReconstruction
             // iterate through the inner lateral velocities,
             for (const auto& scvf : scvfs(fvGeometry, scv))
             {
-                if (scvf.isFrontal() || (scvf.isFrontal() && scvf.boundary()))
+                if (scvf.isFrontal())
                     continue;
 
                 // at a lateral velocity, find the inner and outer normal velocities
