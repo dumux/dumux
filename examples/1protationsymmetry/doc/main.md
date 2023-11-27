@@ -151,7 +151,7 @@ solution and stores the result therein.
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
-    solver.setVerbose(false); // suppress output during solve()
+    solver.setVerbosity(0); // suppress output during solve()
 ```
 
 ### Solution of the problem and error computation
