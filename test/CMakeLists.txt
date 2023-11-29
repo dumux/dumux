@@ -16,6 +16,7 @@ add_subdirectory(parallel)
 add_subdirectory(porenetwork)
 add_subdirectory(porousmediumflow)
 add_subdirectory(discretization)
+add_subdirectory(uq)
 
 
 # if Python bindings are enabled, include Python binding tests
