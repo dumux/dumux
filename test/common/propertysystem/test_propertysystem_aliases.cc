@@ -11,6 +11,10 @@
  * \brief Testing the Dumux property system
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <iostream>
 #include <type_traits>
 

@@ -9,6 +9,10 @@
 //
 // For the license information refer to format.h.
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "format-inl.h"
 
 FMT_BEGIN_NAMESPACE
