@@ -128,7 +128,7 @@ int main(int argc, char** argv) try
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     LinearPDESolver<Assembler, LinearSolver> solver(assembler,  linearSolver);
-    solver.setVerbose(false); // suppress output during solve()
+    solver.setVerbosity(0); // suppress output during solve()
     // [[/codeblock]]
 
     // ### Solution of the problem and error computation
