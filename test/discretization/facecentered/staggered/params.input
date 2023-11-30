@@ -1,3 +1,16 @@
 [Grid]
 Cells = 5 5
 UpperRight = 10 10
+
+[VelocityReconstruction.Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 3 3
+Periodic = 1 1
+
+[VelocityReconstruction.VTK]
+OutputName = test_velocity_reconstruction
+
+[VelocityReconstruction.Problem]
+Verbose = false
+Threshold = 1e-10

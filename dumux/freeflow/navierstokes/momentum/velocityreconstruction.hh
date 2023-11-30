@@ -11,6 +11,8 @@
  */
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYRECONSTRUCTION_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYRECONSTRUCTION_HH
+
+#include <numeric>
 #include <algorithm>
 #include <dumux/discretization/method.hh>
 
@@ -41,9 +43,86 @@ struct StaggeredVelocityReconstruction
             const auto dirIdx = directionIndex(scvf.unitOuterNormal());
             result[dirIdx] += 0.5*getFaceVelocity(fvGeometry, scvf)[dirIdx];
         }
-
         return result;
     }
+
+    //! Return the velocity vector at the center of the primal grid.
+    template<class SubControlVolume, class FVElementGeometry,  class VelocityHelper>
+    static auto faceVelocityVector(const SubControlVolume& scv,
+                                   const FVElementGeometry& fvGeometry,
+                                   const VelocityHelper& getVelocity)
+    {
+        int axis = scv.dofAxis();
+        const int dim = FVElementGeometry::GridGeometry::GridView::dimension;
+        using Scalar = typename SubControlVolume::Traits::Scalar;
+        using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
+        using VelocityVector = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
+        VelocityVector faceVelocityVector(0.0);
+
+        std::array<std::vector<Scalar>, dim> normalVelocities;
+        if (scv.boundary() && !fvGeometry.gridGeometry().dofOnPeriodicBoundary(scv.dofIndex()))
+        {
+            // iterate through the inner lateral velocities,
+            for (const auto& scvf : scvfs(fvGeometry, scv))
+            {
+                if (scvf.isFrontal())
+                    continue;
+
+                // at a lateral velocity, find the inner and outer normal velocities
+                const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                const auto& lateralScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
+                auto lateralAxis = lateralScv.dofAxis();
+                normalVelocities[lateralAxis].push_back( getVelocity(lateralScv) ) ;
+            }
+        }
+        else
+        {
+            // Find the location of interpolation, if periodic, from both sides
+            const GlobalPosition selfPosition = scv.dofPosition();
+            GlobalPosition outsideSelfPosition = selfPosition;
+            if (fvGeometry.gridGeometry().dofOnPeriodicBoundary(scv.dofIndex()))
+                outsideSelfPosition = fvGeometry.outsidePeriodicScv(scv).dofPosition();
+
+            // iterate through the lateral velocities to get to the normal locations
+            for (const auto& scvf : scvfs(fvGeometry, scv))
+            {
+                if (scvf.isFrontal())
+                    continue;
+
+                // at a lateral velocity, find the inner and outer normal velocities
+                const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
+                const auto& insideLateralScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
+                const auto& outsideLateralScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
+                const auto& lateralAxis = insideLateralScv.dofAxis();
+
+                // Find the inside Velocities
+                const auto& insideNormalVelocity = getVelocity(insideLateralScv);
+                const auto& insideNormalPosition = insideLateralScv.dofPosition()[axis];
+
+                // Find the outside Velocities
+                const auto& outsideNormalVelocity = getVelocity(outsideLateralScv);
+                const auto& outsideNormalPosition = outsideLateralScv.dofPosition()[axis];
+
+                // Linear interpolation to face position and add to normal velocity collection
+                const auto& innerDistance = std::abs(insideNormalPosition - selfPosition[axis]);
+                const auto& totalDistance = std::abs(outsideNormalPosition - outsideSelfPosition[axis]) + innerDistance;
+                const auto& velDiff = outsideNormalVelocity - insideNormalVelocity;
+
+                normalVelocities[lateralAxis].push_back(insideNormalVelocity + (velDiff * innerDistance / totalDistance));
+            }
+        }
+
+        for (int i = 0; i < faceVelocityVector.size(); i++)
+        {
+            if (i == axis)
+                faceVelocityVector[i] = getVelocity(scv);
+            else
+                faceVelocityVector[i] = std::accumulate(normalVelocities[i].begin(), normalVelocities[i].end(), 0.0) / normalVelocities[i].size();
+        }
+
+        return faceVelocityVector;
+    }
+
 };
 
 } // end namespace Dumux
