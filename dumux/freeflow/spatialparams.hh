@@ -17,15 +17,7 @@
 namespace Dumux {
 
 #ifndef DOXYGEN
-namespace Detail {
-template<class GlobalPosition>
-struct hasPermeabilityAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
-    {}
-};
+namespace Detail::BrinkmanSpatialParams {
 
 template<class GlobalPosition>
 struct hasInversePermeabilityAtPos
@@ -84,25 +76,11 @@ public:
     : ParentType(gridGeometry)
     {}
 
-    decltype(auto) permeability(const Element& element,
-                                const FVElementGeometry& fvGeometry,
-                                const SubControlVolume& scv) const
-    {
-        static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
-        "   Your spatial params class has to either implement\n\n"
-        "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
-        "   or overload this function\n\n"
-        "         const PermeabilityType& permeability(const Element& element,\n"
-        "                                              const FVElementGeometry& fvGeometry,\n"
-        "                                              const SubControlVolume& scv) const\n\n");
-        return this->asImp_().permeabilityAtPos(scv.dofPosition());
-    }
-
     decltype(auto) inversePermeability(const Element& element,
                                        const FVElementGeometry& fvGeometry,
                                        const SubControlVolume& scv) const
     {
-        static_assert(decltype(isValid(Detail::hasInversePermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        static_assert(decltype(isValid(Detail::BrinkmanSpatialParams::hasInversePermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         const PermeabilityType& inversePermeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
         "   or overload this function\n\n"
@@ -117,7 +95,7 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolume& scv) const
     {
-        static_assert(decltype(isValid(Detail::hasBrinkmanEpsilonAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        static_assert(decltype(isValid(Detail::BrinkmanSpatialParams::hasBrinkmanEpsilonAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
         "         const Scalar& brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const\n\n"
         "   or overload this function\n\n"

@@ -19,6 +19,7 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/momentum/brinkman.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
@@ -27,11 +28,7 @@ namespace Dumux {
 /*!
  * \ingroup NavierStokesTests
  * \brief  Darcy Brinkman model for a single-domain evaluation of coupled freeflow and porous medium flows
- *
- *  TODO: ADD TEXT!
- *
  */
-
 template <class TypeTag, class BaseProblem>
 class BrinkmanProblem : public BaseProblem
 {
@@ -159,12 +156,24 @@ public:
                              const SubControlVolumeFace& scvf) const
     { return 0.0; }
 
+    //! Add the Brinkman term via the source using the helper function addBrinkmanTerm
+    template <class ElementVolumeVariables>
+    Sources source(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume& scv) const
+    {
+        Sources source(0.0);
+        if constexpr (ParentType::isMomentumProblem())
+            addBrinkmanTerm(source, *this, element, fvGeometry, elemVolVars, scv);
+        return source;
+    }
+
     const std::vector<PermeabilityType> permeabilityOutput() const
     { return outputPermeability_; }
 
     const std::vector<Scalar> brinkmanEpsilon() const
     { return outputBrinkmanEpsilon_; }
-
 
 private:
     bool isInlet_(const GlobalPosition& globalPos) const
@@ -204,5 +213,7 @@ private:
     std::string problemName_;
 
 };
+
 } // end namespace Dumux
+
 #endif

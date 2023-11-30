@@ -22,9 +22,8 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesTests
- * \brief The spatial parameters class for the darcy-brinkman model
+ * \brief The spatial parameters class for the Darcy-Brinkman model test
  */
-
 template<class GridGeometry, class Scalar>
 class BrinkmanTestSpatialParams
 : public BrinkmanSpatialParams<GridGeometry, Scalar, BrinkmanTestSpatialParams<GridGeometry, Scalar>>
@@ -43,91 +42,68 @@ public:
     using PermeabilityType = DimWorldMatrix;
 
     BrinkmanTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry),
-    permeability_(0.0),
-    inversePermeability_(0.0),
-    ffPermeability_(1.0)
+    : ParentType(gridGeometry)
+    , permeability_(0.0)
+    , inversePermeability_(0.0)
     {
-        storePermeability_();
-        rotatePermeabilityTensor_();
-        storeInversePermeability_();
+        initPermeability_();
 
         pmLowerLeft_ = getParam<GlobalPosition>("SpatialParams.PorousMediumLowerLeft");
         pmUpperRight_ = getParam<GlobalPosition>("SpatialParams.PorousMediumUpperRight");
     }
 
-    /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \return the intrinsic permeability
-     */
-    const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return isPM_(globalPos) ? permeability_ : ffPermeability_; }
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return isPM_(globalPos) ? permeability_ : PermeabilityType(0.0); }
 
-    /*!
-     * \brief Function for returning the inverse of the permeability tensor \f$[m^2]\f$.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \return the intrinsic permeability
-     */
     PermeabilityType inversePermeabilityAtPos(const GlobalPosition& globalPos) const
-    { return isPM_(globalPos)  ? inversePermeability_ : ffPermeability_; }
-
+    { return inversePermeability_; }
 
     Scalar brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const
-    { return isPM_(globalPos)  ? 1.0 : 0.0; }
+    { return isPM_(globalPos) ? 1.0 : 0.0; }
 
 private:
     bool isPM_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i)
-        {
-            if (globalPos[i] < pmLowerLeft_[i] + eps_
-             || globalPos[i] > pmUpperRight_[i] - eps_)
+            if (globalPos[i] < pmLowerLeft_[i] + eps_ || globalPos[i] > pmUpperRight_[i] - eps_)
                 return false;
-        }
+
         return true;
     }
 
-    void storePermeability_()
+    void initPermeability_()
     {
         Scalar k = getParam<Scalar>("SpatialParams.Permeability");
         Scalar anisotropyRatio = getParam<Scalar>("SpatialParams.AnisotropyRatio", 0.0);
         permeability_[0][0] = k;
         permeability_[1][1] = k * anisotropyRatio;
-    }
 
-    void rotatePermeabilityTensor_()
-    {
+        // rotate the tensor by theta
         Scalar theta_ = getParam<Scalar>("SpatialParams.PermeabilityRotation", 0.0);
-        // Degrees to Radians for the rotation angle, store rotation entries
+
+        // degrees to Radians for the rotation angle, store rotation entries
         Scalar radTheta = theta_ * M_PI / 180.0;
         Scalar cosTheta = std::cos(radTheta);
         Scalar sinTheta = std::sin(radTheta);
 
-        // Create a rotation matrix according to the rotation angle
+        // create a rotation matrix according to the rotation angle
         PermeabilityType rotationMatrix;
         rotationMatrix[0][0] = cosTheta;
         rotationMatrix[0][1] = sinTheta * -1.0;
         rotationMatrix[1][0] = sinTheta;
         rotationMatrix[1][1] = cosTheta;
 
-        // Rotate the permeability tensor
+        // rotate the permeability tensor
         PermeabilityType originalPermeability = permeability_;
         permeability_ = rotationMatrix * originalPermeability * getTransposed(rotationMatrix);
-    }
 
-    void storeInversePermeability_()
-    {
         inversePermeability_ = permeability_;
         inversePermeability_.invert();
     }
 
     PermeabilityType permeability_;
     PermeabilityType inversePermeability_;
+
     PermeabilityType ffPermeability_;
 
     GlobalPosition pmLowerLeft_;
