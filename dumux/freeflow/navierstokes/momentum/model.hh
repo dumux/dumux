@@ -22,14 +22,6 @@
  * \f]
  * is neglected.
  *
- * In addition, the model can be extended to a darcy-brinkman model by introducing a spatial parameters class based on <code>BrinkmanSpatialParams</code>.
- * This class will provide a permeability and a brinkman epsilon term throughout the domain.
- * If these parameters are provided, an additional source term to the momentum balance, which can represent flow in a porous medium, is included.
- * This term will look like this:
- * \f[
- *    + \frac{\epsilon_B \textbf{v}}{\textbf{K}}
- * \f]
- *
  * The <B> mass balance equation </B>
  * \f[
        \frac{\partial \varrho}{\partial t} + \nabla \cdot (\varrho \textbf{v}) - q = 0
