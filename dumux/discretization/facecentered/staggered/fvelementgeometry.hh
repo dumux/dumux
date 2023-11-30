@@ -94,7 +94,7 @@ typename SubControlVolumeFace::Traits::Geometry scvfGeometry(const FVElementGeom
 //! Get the scv on the outside side of a periodic boundary
 template<class FVElementGeometry, class SubControlVolume>
 const SubControlVolume& outsidePeriodicScv(const FVElementGeometry& fvGeometry,
-                                    const SubControlVolume& selfScv)
+                                           const SubControlVolume& selfScv)
 {
     assert(fvGeometry.gridGeometry().dofOnPeriodicBoundary(selfScv.dofIndex()));
 
