@@ -35,8 +35,9 @@ configure:
     - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
-    - dunecontrol --opts=opts_file.opts --current configure
-    - dunecontrol --opts=opts_file.opts --current make -j8
+    - cd /dune/modules/dune-common; git remote set-branches origin '356*'; git fetch; git switch 356-follow-up-from-split-config-file-into-public-and-private-config-files; cd /builds/dumux-repositories/dumux/
+    - dunecontrol --opts=opts_file.opts --current-dep configure
+    - dunecontrol --opts=opts_file.opts --current-dep make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
     - |
       if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
