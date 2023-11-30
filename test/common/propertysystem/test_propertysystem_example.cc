@@ -10,6 +10,11 @@
  * \ingroup Tests
  * \brief A property system example using property type aliases
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <iostream>
 #include <type_traits>
 #include <dumux/common/properties/propertysystem.hh>
