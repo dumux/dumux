@@ -17,9 +17,10 @@
 
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/reservedvector.hh>
+#include <dune/common/iteratorrange.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dune/common/iteratorrange.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
