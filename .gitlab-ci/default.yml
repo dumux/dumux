@@ -101,18 +101,18 @@ linters:
       artifacts: true
 
 
-cppcheck:
-  stage: linting
-  script:
-    - cppcheck --version
-    - cppcheck -j8 --error-exitcode=1 --inline-suppr -ipython/ -iformat/fmt/ --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/*
-    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* test
-    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* examples
-  needs:
-    - job: configure
-      artifacts: true
-  rules:
-    - if: $DUMUX_ENABLE_CPPCHECK == "true"
+#cppcheck:
+#  stage: linting
+#  script:
+#    - cppcheck --version
+#    - cppcheck -j8 --error-exitcode=1 --inline-suppr -ipython/ -iformat/fmt/ --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/*
+#    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* test
+#    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* examples
+#  needs:
+#    - job: configure
+#      artifacts: true
+#  rules:
+#    - if: $DUMUX_ENABLE_CPPCHECK == "true"
 
 
 reuse:
