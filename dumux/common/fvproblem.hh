@@ -86,7 +86,7 @@ public:
     , paramGroup_(paramGroup)
     {
         // set a default name for the problem
-        problemName_ = getParamFromGroup<std::string>(paramGroup, "Problem.Name");
+        problemName_ = getParamFromGroup<std::string>(paramGroup, "Problem.Name", "sim");
     }
 
     /*!
@@ -103,10 +103,6 @@ public:
 
     /*!
      * \brief Set the problem name.
-     *
-     * This static method sets the simulation name, which should be
-     * called before the application problem is declared! If not, the
-     * default name "sim" will be used.
      *
      * \param newName The problem's name
      */
