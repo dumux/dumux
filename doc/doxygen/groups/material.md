@@ -82,6 +82,18 @@ The following laws are implemented:
 @details In porous media, the effective heat conductivity depends on the solid-fluid conductivity ratio, the volume fractions of the constituent phases, and the geometry of the solid-fluid interface \cite aichlmayr2006effective. The following laws are implemented:
 @ingroup Fluidmatrixinteractions
 
+@defgroup FrictionLaws Friction Laws
+@brief Friction Laws
+@ingroup Fluidmatrixinteractions
+
+@defgroup DispersionTensors Dispersion Tensors
+@brief Dispersion Tensors
+@ingroup Fluidmatrixinteractions
+
+@defgroup PoreNetwork Pore Network
+@brief Constitutive Relations for pore networks models
+@ingroup Pore Network
+
 <!-- FluidStates -->
 
 @defgroup FluidStates Fluid States

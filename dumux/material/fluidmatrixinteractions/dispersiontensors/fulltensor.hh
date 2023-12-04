@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup DispersionTensors
  * \copydoc Dumux::FullDispersionTensor
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
@@ -18,7 +18,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup DispersionTensors
+ * \ingroup DispersionTensors
  * \brief Full dispersion tensor
  */
 template<class TypeTag>
