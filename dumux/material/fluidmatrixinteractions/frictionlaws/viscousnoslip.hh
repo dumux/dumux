@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \copydoc Dumux::FrictionLawViscousNoSlip
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_VISCOUS_NOSLIP_HH
@@ -21,7 +21,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup FrictionLaws
+ * \ingroup FrictionLaws
  * \brief Implementation of a viscous no-slip bottom friction law
  *
  * This assumes thin film flow with a parabolic velocity profile in depth

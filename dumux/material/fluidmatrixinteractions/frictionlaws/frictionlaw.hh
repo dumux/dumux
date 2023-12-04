@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \copydoc Dumux::FrictionLaw
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_HH
@@ -19,7 +19,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \brief Implementation of the abstract base class for friction laws.
  *
  * A LET mobility model can be used to add an artificial water depth to
