@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \copydoc Dumux::FrictionLawManning
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
@@ -19,7 +19,8 @@
 
 namespace Dumux {
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup FrictionLaws
+ * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Manning.
  *
  * The LET mobility model is used to limit the friction for small water
