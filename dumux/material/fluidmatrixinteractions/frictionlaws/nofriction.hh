@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \copydoc Dumux::FrictionLawNoFriction
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_NOFRICTION_HH
@@ -17,7 +17,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup FrictionLaws
+ * \ingroup FrictionLaws
  * \brief A pseudo friction law with no bottom friction
  */
 template <typename VolumeVariables>

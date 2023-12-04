@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Pore-local pc-Sw curves for for platonic bodies
  *        (tetrahedron, cube, octahedron, dodecahedron, icosahedron).
@@ -82,7 +82,7 @@ private:
 };
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Implementation of the simplified pore-local capillary pressure-saturation curve
  *        for platonic bodies (tetrahedron, cube, octahedron, dodecahedron, icosahedron).
@@ -223,7 +223,7 @@ private:
 };
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Two-phase rules for regularizing the pc-SW for platonic bodies.
  */
@@ -575,7 +575,7 @@ private:
 };
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \brief A default configuration for using the VanGenuchten material law
  */
 template<Pore::Shape shape, typename Scalar = double>
@@ -585,7 +585,7 @@ using TwoPLocalRulesPlatonicBodyDefault = SingleShapeTwoPLocalRules<Scalar,
                                                                                                              TwoPLocalRulesPlatonicBody<shape>>>;
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \brief A default configuration without regularization for using the VanGenuchten material law
  */
 template<Pore::Shape shape, typename Scalar = double>

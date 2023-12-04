@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Base classes for standard pore-local pc-Sw curves.
  */
@@ -21,7 +21,7 @@
 namespace Dumux::PoreNetwork::FluidMatrix {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Base class for all standard pore-local pc-Sw curves.
  */

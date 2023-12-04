@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup DispersionTensors
  * \copydoc Dumux::ScheideggersDispersionTensor
  */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_SCHEIDEGGER_HH
@@ -35,7 +35,8 @@ static constexpr bool hasVelocityInSpatialParams()
 }
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup DispersionTensors
+ * \ingroup DispersionTensors
  * \brief Scheidegger's dispersion tensor
  */
 template<class TypeTag>
