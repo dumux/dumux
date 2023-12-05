@@ -38,7 +38,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include "properties.hh"
+#include "../properties.hh"
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
