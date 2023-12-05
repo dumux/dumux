@@ -203,7 +203,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the diffusive mole/mass flux across the interface.
+     * \brief Evaluate the conductive energy flux across the interface.
      */
     template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar conductiveEnergyFlux(Dune::index_constant<i> domainI,
@@ -306,8 +306,11 @@ public:
 
         for (const auto& c : context)
         {
-            // positive values indicate flux into pore-network region
+            // positive values of normal free-flow velocity indicate flux leaving the free flow into the pore-network region
             const Scalar normalFFVelocity = c.velocity * c.scvf.unitOuterNormal();
+
+            // normal pnm velocity (correspondign to its normal vector) is in the opposit direction of normal free flow velocity
+            // positive values of normal pnm velocity indicate flux leaving the pnm into the free-flow region
             const Scalar normalPNMVelocity = -normalFFVelocity;
             const bool pnmIsUpstream = std::signbit(normalFFVelocity);
 
@@ -315,10 +318,12 @@ public:
             const Scalar ffDensity = c.volVars.density(couplingPhaseIdx(ParentType::freeFlowMassIndex));
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            // flux is used as source term: positive values mean influx
             auto flux = ParentType::advectiveFlux(pnmDensity, ffDensity, normalPNMVelocity, pnmIsUpstream);
+
+            // flux is used as source term: positive values mean influx
+            // thus, it is multiplied with area and we flip the sign
             flux *= area;
-            flux *= -1.0; // flip the sign, since it is used as a source term for pnm
+            flux *= -1.0;
 
             massFlux += flux;
         }
@@ -353,11 +358,11 @@ public:
      */
     template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar energyCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
-                                   Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
-                                   const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
-                                   const SubControlVolume<ParentType::poreNetworkIndex>& scv,
-                                   const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
-                                   const CouplingContext& context)
+                                          Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                                          const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                                          const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                                          const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                                          const CouplingContext& context)
     {
         Scalar energyFlux(0.0);
 
@@ -373,8 +378,11 @@ public:
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
             auto flux = energyFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalPNMVelocity, pnmIsUpstream);
+
+            // flux is used as source term: positive values mean influx
+            // thus, it is multiplied with area and we flip the sign
             flux *= area;
-            flux *= -1.0; // flip the sign, since it is used as a source term for pnm
+            flux *= -1.0;
 
             energyFlux += flux;
         }
@@ -388,11 +396,11 @@ public:
      */
     template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar energyCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
-                                   Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
-                                   const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
-                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
-                                   const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
-                                   const CouplingContext& context)
+                                          Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                                          const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                                          const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                          const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                                          const CouplingContext& context)
     {
         // positive values indicate flux into pore-network region
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
@@ -405,7 +413,7 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature of the free flow at the interface.
+     * \brief Returns the average temperature of the free flow at the interface.
      */
     template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar temperature(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
@@ -424,7 +432,7 @@ public:
             count++;
         }
 
-        return temperature / count;
+        return temperature / count; // average temperature
     }
 
     /*!
@@ -444,7 +452,7 @@ public:
 private:
 
     /*!
-     * \brief Evaluate the diffusive mole/mass flux across the interface.
+     * \brief Evaluate the energy flux across the interface.
      */
     template<std::size_t i, std::size_t j, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar energyFlux_(Dune::index_constant<i> domainI,
@@ -465,7 +473,7 @@ private:
 
         flux += ParentType::advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
 
-        // conductive fluxes
+        // conductive energy fluxes
         flux += ParentType::conductiveEnergyFlux(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
 
         return flux;
@@ -520,11 +528,11 @@ public:
      */
     template<class CouplingContext>
     static NumCompVector massCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
-                                        Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
-                                        const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
-                                        const SubControlVolume<ParentType::poreNetworkIndex>& scv,
-                                        const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
-                                        const CouplingContext& context)
+                                               Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                                               const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                                               const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                                               const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                                               const CouplingContext& context)
     {
         NumCompVector massFlux(0.0);
         const auto& pnmVolVars = insideVolVars[scv.indexInElement()];
@@ -555,11 +563,11 @@ public:
      */
     template<class CouplingContext>
     static NumCompVector massCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
-                                        Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
-                                        const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
-                                        const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
-                                        const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
-                                        const CouplingContext& context)
+                                               Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                                               const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                                               const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                               const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                                               const CouplingContext& context)
     {
         // positive values indicate flux into pore-network region
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
@@ -575,11 +583,11 @@ public:
      */
     template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar energyCouplingCondition(Dune::index_constant<ParentType::poreNetworkIndex> domainI,
-                                   Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
-                                   const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
-                                   const SubControlVolume<ParentType::poreNetworkIndex>& scv,
-                                   const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
-                                   const CouplingContext& context)
+                                          Dune::index_constant<ParentType::freeFlowMassIndex> domainJ,
+                                          const FVElementGeometry<ParentType::poreNetworkIndex>& fvGeometry,
+                                          const SubControlVolume<ParentType::poreNetworkIndex>& scv,
+                                          const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
+                                          const CouplingContext& context)
     {
         Scalar energyFlux(0.0);
 
@@ -610,11 +618,11 @@ public:
      */
     template<class CouplingContext, bool isNI = enableEnergyBalance, typename std::enable_if_t<isNI, int> = 0>
     static Scalar energyCouplingCondition(Dune::index_constant<ParentType::freeFlowMassIndex> domainI,
-                                   Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
-                                   const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
-                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
-                                   const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
-                                   const CouplingContext& context)
+                                          Dune::index_constant<ParentType::poreNetworkIndex> domainJ,
+                                          const FVElementGeometry<ParentType::freeFlowMassIndex>& fvGeometry,
+                                          const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                          const ElementVolumeVariables<ParentType::freeFlowMassIndex>& insideVolVars,
+                                          const CouplingContext& context)
     {
         // positive values indicate flux into pore-network region
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
@@ -669,14 +677,14 @@ private:
      */
     template<std::size_t i, std::size_t j>
     static NumCompVector massFlux_(Dune::index_constant<i> domainI,
-                                    Dune::index_constant<j> domainJ,
-                                    const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
-                                    const SubControlVolume<i>& scvI,
-                                    const SubControlVolume<j>& scvJ,
-                                    const VolumeVariables<i>& insideVolVars,
-                                    const VolumeVariables<j>& outsideVolVars,
-                                    const Scalar velocity,
-                                    const bool insideIsUpstream)
+                                   Dune::index_constant<j> domainJ,
+                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                   const SubControlVolume<i>& scvI,
+                                   const SubControlVolume<j>& scvJ,
+                                   const VolumeVariables<i>& insideVolVars,
+                                   const VolumeVariables<j>& outsideVolVars,
+                                   const Scalar velocity,
+                                   const bool insideIsUpstream)
     {
         NumCompVector flux(0.0);
 
@@ -784,12 +792,12 @@ private:
      */
     template<std::size_t i, std::size_t j>
     static NumCompVector diffusiveMolecularFlux_(Dune::index_constant<i> domainI,
-                                                  Dune::index_constant<j> domainJ,
-                                                  const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
-                                                  const SubControlVolume<i>& scvI,
-                                                  const SubControlVolume<j>& scvJ,
-                                                  const VolumeVariables<i>& volVarsI,
-                                                  const VolumeVariables<j>& volVarsJ)
+                                                 Dune::index_constant<j> domainJ,
+                                                 const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                                 const SubControlVolume<i>& scvI,
+                                                 const SubControlVolume<j>& scvJ,
+                                                 const VolumeVariables<i>& volVarsI,
+                                                 const VolumeVariables<j>& volVarsJ)
     {
         NumCompVector diffusiveFlux(0.0);
         const Scalar avgDensity = 0.5*(massOrMolarDensity(volVarsI, referenceSystemFormulation, couplingPhaseIdx(domainI))

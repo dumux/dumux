@@ -4,4 +4,5 @@
 add_input_file_links()
 
 dumux_add_test(NAME test_md_boundary_ff1pni_pnm1pni
-                SOURCES main.cc) #TODO: add reference files as soon as solutions seem reasonable
+               SOURCES main.cc
+               COMPILE_DEFINITIONS ISOTHERMAL=0) #TODO: add reference files as soon as solutions seem reasonable
