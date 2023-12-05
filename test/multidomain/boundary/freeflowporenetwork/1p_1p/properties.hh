@@ -35,7 +35,11 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
+#if ISOTHERMAL
 struct PNMOnePModel { using InheritsFrom = std::tuple<PNMOneP>; };
+#else
+struct PNMOnePModel { using InheritsFrom = std::tuple<PNMOnePNI>; };
+#endif
 } // end namespace TTag
 
 // Set the problem property
@@ -68,9 +72,14 @@ struct Grid<TypeTag, TTag::PNMOnePModel> { using type = Dune::FoamGrid<1, 2>; };
 // Create new type tags
 namespace TTag {
 struct FreeFlowOneP {};
-struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, CCTpfaModel>; };
 struct FreeFlowOnePMomentum { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+#if ISOTHERMAL
+struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, CCTpfaModel>; };
+#else
+struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOnePNI, CCTpfaModel>; };
+#endif
 } // end namespace TTag
+
 
 // the fluid system
 template<class TypeTag>
