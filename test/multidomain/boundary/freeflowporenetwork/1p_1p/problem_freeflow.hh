@@ -14,6 +14,9 @@
 #define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_FREEFLOW_HH
 
 #include <dumux/common/properties.hh>
+
+#include <dumux/freeflow/navierstokes/boundarytypes.hh>
+
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
@@ -57,9 +60,11 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
-        singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
-        enablePseudoThreeDWallFriction_ = !singleThroatTest_;
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
+#if !ISOTHERMAL
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
+#endif
     }
 
     /*!
@@ -90,51 +95,25 @@ public:
         BoundaryTypes values;
         const auto& globalPos = scvf.center(); //avoid ambiguities at corners
 
-        if (singleThroatTest_) // vertical flow
+        if constexpr (ParentType::isMomentumProblem())
         {
-            if constexpr (ParentType::isMomentumProblem())
+            if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::poreNetworkIndex, scvf))
-                {
-                    values.setCouplingNeumann(Indices::momentumYBalanceIdx);
-                    values.setCouplingNeumann(Indices::momentumXBalanceIdx);
-                }
-                else if (onUpperBoundary_(globalPos))
-                    values.setAllNeumann();
-                else
-                    values.setAllDirichlet();
+                values.setCouplingNeumann(Indices::momentumXBalanceIdx);
+                values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             }
+            else if (verticalFlow_ && onUpperBoundary_(globalPos))
+                values.setAllNeumann(); //outflow
             else
-            {
-                if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
-                    values.setAllCouplingNeumann();
-                else
-                    values.setAllNeumann();
-            }
+                values.setAllDirichlet(); //e.g. fixed velocities at walls
         }
-        else // horizontal flow
+        else
         {
-            if constexpr (ParentType::isMomentumProblem())
-            {
-                if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
-                    values.setAllNeumann();
-                else if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::poreNetworkIndex, scvf))
-                {
-                    values.setCouplingNeumann(Indices::momentumXBalanceIdx);
-                    values.setCouplingNeumann(Indices::momentumYBalanceIdx);
-                }
-                else
-                    values.setAllDirichlet();
-            }
+            if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
+                values.setAllCouplingNeumann(); //mass and energy coupling
             else
-            {
-                if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
-                    values.setAllCouplingNeumann();
-                else
-                    values.setAllNeumann();
-            }
+                values.setAllNeumann(); //outflow or zero flux BCs for p,T
         }
-
         return values;
     }
 
@@ -145,17 +124,24 @@ public:
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        return DirichletValues(0.0);
+        return initialAtPos(globalPos);
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     * \brief Evaluates the boundary conditions for a Neumann
+     *        boundary segment/ control volume.
      *
-     * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param elemFaceVars The element face variables
-     * \param scvf The boundary sub control volume face
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
+     * \param scvf The sub control volume face
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     BoundaryFluxes neumann(const Element& element,
@@ -182,12 +168,11 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else
+            else if (verticalFlow_ && onUpperBoundary_(globalPos))
             {
-                const Scalar pressure = onLeftBoundary_(globalPos) ? deltaP_ : 0.0;
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, pressure, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -195,16 +180,20 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                values = couplingManager_->massCouplingCondition(
+                values[Indices::conti0EqIdx] = couplingManager_->massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
-                    fvGeometry, scvf, elemVolVars
-                );
+                    fvGeometry, scvf, elemVolVars);
+#if !ISOTHERMAL
+                values[Indices::energyEqIdx] = couplingManager_->energyCouplingCondition(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
+                    fvGeometry, scvf, elemVolVars);
+#endif
             }
-            else
+            else if (verticalFlow_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+                DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
                 values = FluxHelper::scalarOutflowFlux(
-                    *this, element, fvGeometry, scvf, elemVolVars
+                    *this, element, fvGeometry, scvf, elemVolVars, std::move(outsideBoundaryPriVars)
                 );
             }
         }
@@ -223,18 +212,22 @@ public:
                        const SubControlVolume& scv) const
     {
         auto source = Sources(0.0);
-
-        if constexpr (ParentType::isMomentumProblem())
-        {
-            if (enablePseudoThreeDWallFriction_)
-            {
-                const Scalar height = elemVolVars[scv].extrusionFactor();
-                static const Scalar factor = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PseudoWallFractionFactor", 8.0);
-                source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height, factor);
-            }
-        }
-
         return source;
+    }
+
+    // The following function defines the initial conditions
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    {
+        InitialValues values(0.0); //velocity is 0.0
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            values[Indices::pressureIdx] = initialPressure_;
+#if !ISOTHERMAL
+            values[Indices::temperatureIdx] = initialTemperature_;
+#endif
+        }
+        return values;
     }
 
     /*!
@@ -278,9 +271,11 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
-    Scalar deltaP_;
-    bool singleThroatTest_;
-    bool enablePseudoThreeDWallFriction_;
+    Scalar initialPressure_;
+    bool verticalFlow_;
+#if !ISOTHERMAL
+    Scalar initialTemperature_;
+#endif
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };
