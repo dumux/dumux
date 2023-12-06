@@ -27,14 +27,15 @@ def PcEntry(theta=0, sigma=0.0725, radius=defaultPoreRadius*0.5):
     PcEntry = sigma / radius * cosTheta * (1 + 2*np.sqrt(np.pi*shapeFactor)) * factorF
     return PcEntry
 
-Sw_array = np.linspace(0.01, 1, 1000)
-Pc_array = Pc(Sw_array)
-dPc_dSw_array = dPc_dSw(Sw_array)
-PcValue = PcEntry()
-SwValue = Sw(PcValue)
-dPc_dSwValue = dPc_dSw(SwValue)
-plt.plot(Sw_array, dPc_dSw_array)
-plt.axhline(y = dPc_dSwValue, color = 'r', linestyle = '-')
-plt.xlabel("Sw [-]")
-plt.ylabel("dPc_dSw [Pa]")
-plt.show()
+if __name__ == "__main__":
+    Sw_array = np.linspace(0.01, 1, 1000)
+    Pc_array = Pc(Sw_array)
+    dPc_dSw_array = dPc_dSw(Sw_array)
+    PcValue = PcEntry()
+    SwValue = Sw(PcValue)
+    dPc_dSwValue = dPc_dSw(SwValue)
+    plt.plot(Sw_array, dPc_dSw_array)
+    plt.axhline(y = dPc_dSwValue, color = 'r', linestyle = '-')
+    plt.xlabel("Sw [-]")
+    plt.ylabel("dPc_dSw [Pa]")
+    plt.show()
