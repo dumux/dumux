@@ -9,4 +9,6 @@ jq -c '.[]' build-cmake/compile_commands.json | while read -r compile_command; d
     echo "[$compile_command]" > "$tmp_file"
     echo "$tmp_file"
 done | parallel --keep-order cppcheck "$options" --project={}
+return_value=$?
 rm -r "$tmp_dir"
+exit $return_value
