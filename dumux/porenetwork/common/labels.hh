@@ -40,6 +40,7 @@ struct Labels
     static constexpr int inlet = 2; //!< Label for pores/throats on an inlet
     static constexpr int outlet = 3; //!< Label for pores/throats on an outlet
     static constexpr int source = 4; //!< Label for pores/throats with a sink/source term
+    static constexpr int internalDirichlet = 10; //!< Label for internal pores/throats with Dirichlet BC
 };
 
 // \}
