@@ -83,9 +83,9 @@ public:
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
 
-        // const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-        // if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3)
-        //     return 0;
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        if (fvGeometry.gridGeometry().throatLabel(eIdx) == 3 && phaseIdx == 0 && deltaP < 0)
+            return 0;
 
         const Scalar transmissibility = fluxVarsCache.transmissibility(phaseIdx);
         using std::isfinite;    
