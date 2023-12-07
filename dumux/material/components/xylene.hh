@@ -201,8 +201,8 @@ public:
 
         // Chen method, eq. 7-11.4 (at boiling)
         using std::log;
-        // cppcheck-suppress invalidFunctionArg
         const Scalar DH_v_boil = Consts::R * T_crit * Tr1
+                                  // cppcheck-suppress invalidFunctionArg
                                   * (3.978 * Tr1 - 3.958 + 1.555*log(p_crit * 1e-5 /*Pa->bar*/ ) )
                                   / (1.07 - Tr1); /* [J/mol] */
 
