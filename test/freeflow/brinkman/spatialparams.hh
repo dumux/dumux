@@ -55,8 +55,11 @@ public:
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     { return isPM_(globalPos) ? permeability_ : PermeabilityType(0.0); }
 
-    PermeabilityType inversePermeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType inversePermeability(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
     { return inversePermeability_; }
+
+    Scalar brinkmanEpsilon(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
+    { return brinkmanEpsilonAtPos(scv.center()); }
 
     Scalar brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const
     { return isPM_(globalPos) ? 1.0 : 0.0; }

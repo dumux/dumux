@@ -7,17 +7,22 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief The properties of the channel flow test for the staggered grid (Navier-)Stokes model.
+ * \brief The properties of the Darcy-Brinkman test
  */
-#ifndef DUMUX_CHANNEL_TEST_PROPERTIES_HH
-#define DUMUX_CHANNEL_TEST_PROPERTIES_HH
+#ifndef DUMUX_BRINKMAN_TEST_PROPERTIES_HH
+#define DUMUX_BRINKMAN_TEST_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
-
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -32,13 +37,33 @@
 #include "problem.hh"
 #include "spatialparams.hh"
 
+#ifndef NAVIER_STOKES_MODEL
+#define NAVIER_STOKES_MODEL NavierStokesMomentum
+#endif
+
+#ifndef MOMENTUM_DISCRETIZATION_MODEL
+#define MOMENTUM_DISCRETIZATION_MODEL FaceCenteredStaggeredModel
+#endif
+
+#ifndef MASS_DISCRETIZATION_MODEL
+#define MASS_DISCRETIZATION_MODEL CCTpfaModel
+#endif
+
+#ifndef GRIDTYPE
+#if HAVE_DUNE_ALUGRID
+#define GRIDTYPE Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+#else
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
+#endif
+
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
 struct BrinkmanTest {};
-struct BrinkmanTestMomentum { using InheritsFrom = std::tuple<BrinkmanTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct BrinkmanTestMass { using InheritsFrom = std::tuple<BrinkmanTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct BrinkmanTestMomentum { using InheritsFrom = std::tuple<BrinkmanTest, NAVIER_STOKES_MODEL, MOMENTUM_DISCRETIZATION_MODEL>; };
+struct BrinkmanTestMass { using InheritsFrom = std::tuple<BrinkmanTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -65,7 +90,7 @@ struct FluidSystem<TypeTag, TTag::BrinkmanTest>
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::BrinkmanTest>
-{ using type = Dune::YaspGrid<2>; };
+{ using type = GRIDTYPE; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::BrinkmanTest>

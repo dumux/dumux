@@ -1,11 +1,12 @@
 [Grid]
 UpperRight = 3 1
-Cells = 90 30
+Cells = 90 40
 
 [Problem]
 Name = test_ff_brinkman_obstacle
 PressureDifference = 1
 EnableGravity = false
+EnableInertiaTerms = false
 
 [Component]
 LiquidDensity = 1.0

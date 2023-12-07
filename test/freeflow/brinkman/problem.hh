@@ -47,6 +47,7 @@ class BrinkmanProblem : public BaseProblem
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    static constexpr auto dim = GridGeometry::GridView::dimension;
     using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -129,31 +130,64 @@ public:
         BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
 
+        const auto pRef = referencePressure();
+        const auto p = isInlet_(globalPos) ? pRef + deltaP_ : pRef;
+
+        using DM = typename FVElementGeometry::GridGeometry::DiscretizationMethod;
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto p = isInlet_(globalPos) ? referencePressure(element, fvGeometry, scvf) + deltaP_
-                                               : referencePressure(element, fvGeometry, scvf);
-            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
-                *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p);
+            if constexpr (DiscretizationMethods::isCVFE<DM>)
+            {
+                // TODO implement helper for CVFE
+                values.axpy(p, scvf.unitOuterNormal());
+
+                const auto& localBasis = fvGeometry.feLocalBasis();
+                using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
+                std::vector<ShapeValue> shapeValues;
+                const auto geometry = element.geometry();
+                const auto ipLocal = geometry.local(globalPos);
+                using ShapeJacobian = typename std::decay_t<decltype(localBasis)>::Traits::JacobianType;
+                std::vector<ShapeJacobian> shapeJacobian;
+                localBasis.evaluateJacobian(ipLocal, shapeJacobian);
+                const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+
+                using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
+                Tensor gradV(0.0);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    GlobalPosition gradN;
+                    jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
+
+                    const auto& volVars = elemVolVars[scv];
+                    for (int dir = 0; dir < dim; ++dir)
+                        gradV[dir].axpy(volVars.velocity(dir), gradN);
+                }
+
+                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                BoundaryFluxes gradVTn = mv(getTransposed(gradV), scvf.unitOuterNormal());
+                values.axpy(-mu, gradVTn);
+            }
+            else
+                values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
+                );
         }
         else
         {
-            values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(
-                *this, element, fvGeometry, scvf, elemVolVars);
+            if constexpr (DiscretizationMethods::isCVFE<DM>)
+                values = (this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal())
+                    * elemVolVars[scvf.insideScvIdx()].density();
+            else
+                values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(
+                    *this, element, fvGeometry, scvf, elemVolVars
+                );
         }
 
         return values;
     }
 
-
-    /*!
-     * \brief Returns a reference pressure at a given sub control volume face.
-     *        This pressure is subtracted from the actual pressure for the momentum balance
-     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
-     */
-    Scalar referencePressure(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const SubControlVolumeFace& scvf) const
+    template<class ... Args>
+    Scalar referencePressure(Args&&...) const
     { return 0.0; }
 
     //! Add the Brinkman term via the source using the helper function addBrinkmanTerm
@@ -192,11 +226,11 @@ private:
     {
         if constexpr (!ParentType::isMomentumProblem())
         {
-            outputPermeability_.resize(this->gridGeometry().numDofs());
-            outputBrinkmanEpsilon_.resize(this->gridGeometry().numDofs());
+            outputPermeability_.resize(this->gridGeometry().gridView().size(0));
+            outputBrinkmanEpsilon_.resize(this->gridGeometry().gridView().size(0));
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                const auto& eIdx = this->gridGeometry().elementMapper().index(element);
+                const auto eIdx = this->gridGeometry().elementMapper().index(element);
                 outputPermeability_[eIdx] = this->spatialParams().permeabilityAtPos(element.geometry().center());
                 outputBrinkmanEpsilon_[eIdx] = this->spatialParams().brinkmanEpsilonAtPos(element.geometry().center());
             }
