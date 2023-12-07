@@ -38,7 +38,11 @@ namespace Dumux::Properties {
 //////////////////////////////////// PNM ////////////////////////////////////
 // Create new type tags
 namespace TTag {
+#if ISOTHERMAL
 struct PNMOnePNCModel { using InheritsFrom = std::tuple<PNMOnePNC>; }; //TODO: use nc model
+#else
+struct PNMOnePNCModel { using InheritsFrom = std::tuple<PNMOnePNCNI>; };
+#endif
 } // end namespace TTag
 
 // Set the problem property
@@ -85,8 +89,12 @@ struct ReplaceCompEqIdx<TypeTag, TTag::PNMOnePNCModel>
 // Create new type tags
 namespace TTag {
 struct FreeFlowOnePNC {};
-struct FreeFlowOnePNCMass { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMassOnePNC, CCTpfaModel>; };
 struct FreeFlowOnePNCMomentum { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+#if ISOTHERMAL
+struct FreeFlowOnePNCMass { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMassOnePNC, CCTpfaModel>; };
+#else
+struct FreeFlowOnePNCMass { using InheritsFrom = std::tuple<FreeFlowOnePNC, NavierStokesMassOnePNCNI, CCTpfaModel>; };
+#endif
 } // end namespace TTag
 
 // the fluid system
