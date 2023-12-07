@@ -52,6 +52,9 @@ public:
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
+#if !ISOTHERMAL
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
+#endif
     }
 
     /*!
@@ -92,6 +95,9 @@ public:
                 bcTypes.setAllDirichlet();
             else
                 bcTypes.setAllNeumann();
+#if !ISOTHERMAL
+                bcTypes.setDirichlet(Indices::temperatureIdx);
+#endif
         }
 
         return bcTypes;
@@ -112,6 +118,9 @@ public:
             priVars[Indices::pressureIdx] = pressureBottom;
             priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
         }
+#if !ISOTHERMAL
+            priVars[Indices::temperatureIdx] = initialTemperature_;
+#endif
 
         return priVars;
     }
@@ -157,6 +166,13 @@ public:
             );
             values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
             values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
+#if !ISOTHERMAL
+            values[Indices::energyEqIdx] = couplingManager().energyCouplingCondition(
+                CouplingManager::poreNetworkIndex,
+                CouplingManager::freeFlowMassIndex, fvGeometry,
+                scv,
+                elemVolVars);
+#endif
         }
         else if (!advection_ && onLowerBoundary_(scv))
         {
@@ -179,6 +195,10 @@ public:
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = initialPressure_;
         values[Indices::conti0EqIdx + 1] = initialMoleFraction_;
+
+#if !ISOTHERMAL
+        values[Indices::temperatureIdx] = initialTemperature_;
+#endif
         return values;
     }
 
@@ -198,6 +218,9 @@ private:
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
     bool advection_;
+#if !ISOTHERMAL
+    Scalar initialTemperature_;
+#endif
 };
 
 } // end namespace Dumux
