@@ -62,6 +62,10 @@ public:
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 0.001);
         advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
+
+#if !ISOTHERMAL
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
+#endif
     }
 
     /*!
@@ -176,6 +180,11 @@ public:
                 );
                 values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
                 values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
+
+#if !ISOTHERMAL
+                values[Indices::energyEqIdx] = couplingManager_->energyCouplingCondition(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
+                    fvGeometry, scvf, elemVolVars);
+#endif
             }
             else if (advection_ && onUpperBoundary_(globalPos))
             {
@@ -214,7 +223,11 @@ public:
         {
             values[Indices::pressureIdx] = initialPressure_;
             values[Indices::conti0EqIdx +1] = initialMoleFraction_;
+#if !ISOTHERMAL
+            values[Indices::temperatureIdx] = initialTemperature_;
+#endif
         }
+
         return values;
     }
 
@@ -265,7 +278,9 @@ private:
     Scalar initialMoleFraction_;
 
     bool advection_;
-
+#if !ISOTHERMAL
+    Scalar initialTemperature_;
+#endif
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } // end namespace Dumux
