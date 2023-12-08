@@ -66,15 +66,15 @@ void addBrinkmanTerm(
         {
             if constexpr (Dune::IsNumber<std::decay_t<decltype(invK)>>::value)
             {
-                const auto& velocity = elemVolVars[scv].velocity();
+                const auto velocity = elemVolVars[scv].velocity();
                 source -= brinkmanEpsilon * invK * velocity;
             }
             else
             {
-                // permeability is tensor-valued, use full reconstruction
+                // permeability is tensor-valued, use velocity vector reconstruction
                 const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
-                const auto velocity = StaggeredVelocityReconstruction::faceVelocityVector(scv, fvGeometry, getVelocitySCV);
-                source -= (brinkmanEpsilon * mv(invK, velocity))[scv.dofAxis()]; // eps K^-1 velocity
+                const auto velocity = StaggeredVelocityReconstruction::faceVelocity(scv, fvGeometry, getVelocitySCV);
+                source -= brinkmanEpsilon * mv(invK, velocity)[scv.dofAxis()]; // eps K^-1 velocity
             }
         }
         else

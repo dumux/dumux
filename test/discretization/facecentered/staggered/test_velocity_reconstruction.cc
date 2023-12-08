@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
         for (auto&& scv : scvs(momentumFVGeometry))
         {
             const auto getVelocitySCV = [&](const auto& scv){ return faceOnlySolution[scv.index()]; };
-            faceReconstructedVelocityVector[scv.index()] = StaggeredVelocityReconstruction::faceVelocityVector(scv, momentumFVGeometry, getVelocitySCV);
+            faceReconstructedVelocityVector[scv.index()] = StaggeredVelocityReconstruction::faceVelocity(scv, momentumFVGeometry, getVelocitySCV);
             if ((faceReconstructedVelocityVector[scv.index()] - velocityVectorSolutionFace[scv.index()]).two_norm() > threshold)
             {
                 std::cout << "error in element: " << eIdx << " at scv(dof, idx): " << scv.dofIndex() << ", " << scv.index() << ". "

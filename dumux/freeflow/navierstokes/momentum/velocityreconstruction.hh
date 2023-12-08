@@ -14,6 +14,7 @@
 
 #include <numeric>
 #include <algorithm>
+#include <dune/common/reservedvector.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -46,11 +47,11 @@ struct StaggeredVelocityReconstruction
         return result;
     }
 
-    //! Return the velocity vector at the center of the primal grid.
+    //! Return the velocity vector at dof position given an scv
     template<class SubControlVolume, class FVElementGeometry,  class VelocityHelper>
-    static auto faceVelocityVector(const SubControlVolume& scv,
-                                   const FVElementGeometry& fvGeometry,
-                                   const VelocityHelper& getVelocity)
+    static auto faceVelocity(const SubControlVolume& scv,
+                             const FVElementGeometry& fvGeometry,
+                             const VelocityHelper& getNormalVelocityDofValue)
     {
         int axis = scv.dofAxis();
         const int dim = FVElementGeometry::GridGeometry::GridView::dimension;
@@ -59,7 +60,8 @@ struct StaggeredVelocityReconstruction
         using VelocityVector = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
         VelocityVector faceVelocityVector(0.0);
 
-        std::array<std::vector<Scalar>, dim> normalVelocities;
+        // per dimension, we have at max two velocities from which we'll compute an average
+        std::array<Dune::ReservedVector<Scalar, 2>, dim> normalVelocities;
         if (scv.boundary() && !fvGeometry.gridGeometry().dofOnPeriodicBoundary(scv.dofIndex()))
         {
             // iterate through the inner lateral velocities,
@@ -72,7 +74,7 @@ struct StaggeredVelocityReconstruction
                 const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
                 const auto& lateralScv = fvGeometry.scv(orthogonalScvf.insideScvIdx());
                 auto lateralAxis = lateralScv.dofAxis();
-                normalVelocities[lateralAxis].push_back( getVelocity(lateralScv) ) ;
+                normalVelocities[lateralAxis].push_back( getNormalVelocityDofValue(lateralScv) ) ;
             }
         }
         else
@@ -95,15 +97,15 @@ struct StaggeredVelocityReconstruction
                 const auto& outsideLateralScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
                 const auto& lateralAxis = insideLateralScv.dofAxis();
 
-                // Find the inside Velocities
-                const auto& insideNormalVelocity = getVelocity(insideLateralScv);
+                // Find the inside normal velocities
+                const auto& insideNormalVelocity = getNormalVelocityDofValue(insideLateralScv);
                 const auto& insideNormalPosition = insideLateralScv.dofPosition()[axis];
 
-                // Find the outside Velocities
-                const auto& outsideNormalVelocity = getVelocity(outsideLateralScv);
+                // Find the outside normal velocities
+                const auto& outsideNormalVelocity = getNormalVelocityDofValue(outsideLateralScv);
                 const auto& outsideNormalPosition = outsideLateralScv.dofPosition()[axis];
 
-                // Linear interpolation to face position and add to normal velocity collection
+                // Linear interpolation at the face plane and add to normal velocity collection
                 const auto& innerDistance = std::abs(insideNormalPosition - selfPosition[axis]);
                 const auto& totalDistance = std::abs(outsideNormalPosition - outsideSelfPosition[axis]) + innerDistance;
                 const auto& velDiff = outsideNormalVelocity - insideNormalVelocity;
@@ -115,7 +117,7 @@ struct StaggeredVelocityReconstruction
         for (int i = 0; i < faceVelocityVector.size(); i++)
         {
             if (i == axis)
-                faceVelocityVector[i] = getVelocity(scv);
+                faceVelocityVector[i] = getNormalVelocityDofValue(scv);
             else
                 faceVelocityVector[i] = std::accumulate(normalVelocities[i].begin(), normalVelocities[i].end(), 0.0) / normalVelocities[i].size();
         }
