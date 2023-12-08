@@ -15,6 +15,8 @@
 #define DUMUX_BRINKMAN_SPATIAL_PARAMS_HH
 
 #include <cmath>
+#include <numeric>
+#include <algorithm>
 #include <dune/common/fmatrix.hh>
 #include <dumux/freeflow/spatialparams.hh>
 
@@ -50,10 +52,14 @@ public:
 
         pmLowerLeft_ = getParam<GlobalPosition>("SpatialParams.PorousMediumLowerLeft");
         pmUpperRight_ = getParam<GlobalPosition>("SpatialParams.PorousMediumUpperRight");
+        pmCenter_ = 0.5*(pmLowerLeft_ + pmUpperRight_);
+        pmDimensions_ = pmUpperRight_ - pmLowerLeft_;
+        pmRoundedness_ = getParam<Scalar>("SpatialParams.PorousMediumRoundedness", 0.0);
+        pmTransitionHalfLength_ = 0.5*getParam<Scalar>("SpatialParams.PorousMediumTransitionLength");
     }
 
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return isPM_(globalPos) ? permeability_ : PermeabilityType(0.0); }
+    { return permeability_ * brinkmanEpsilonAtPos(globalPos); }
 
     PermeabilityType inversePermeability(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
     { return inversePermeability_; }
@@ -62,18 +68,19 @@ public:
     { return brinkmanEpsilonAtPos(scv.center()); }
 
     Scalar brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const
-    { return isPM_(globalPos) ? 1.0 : 0.0; }
-
-private:
-    bool isPM_(const GlobalPosition &globalPos) const
     {
+        const auto p = globalPos - pmCenter_;
+        GlobalPosition q(0.0);
         for (int i = 0; i < dimWorld; ++i)
-            if (globalPos[i] < pmLowerLeft_[i] + eps_ || globalPos[i] > pmUpperRight_[i] - eps_)
-                return false;
+            q[i] += std::abs(p[i]) - 0.5*pmDimensions_[i] + pmRoundedness_;
 
-        return true;
+        const auto length = std::hypot(std::max(q[0], 0.0), std::max(q[1], 0.0));
+        const auto sdf = std::min(std::max(q[0], q[1]), 0.0) + length - pmRoundedness_;
+        const auto clampedSDF = -std::clamp(sdf, -pmTransitionHalfLength_, pmTransitionHalfLength_) + pmTransitionHalfLength_;
+        return 0.5*clampedSDF/pmTransitionHalfLength_;
     }
 
+private:
     void initPermeability_()
     {
         Scalar k = getParam<Scalar>("SpatialParams.Permeability");
@@ -111,6 +118,10 @@ private:
 
     GlobalPosition pmLowerLeft_;
     GlobalPosition pmUpperRight_;
+    GlobalPosition pmCenter_;
+    GlobalPosition pmDimensions_;
+    Scalar pmRoundedness_;
+    Scalar pmTransitionHalfLength_;
 
     static constexpr Scalar eps_ = 1e-7;
 };
