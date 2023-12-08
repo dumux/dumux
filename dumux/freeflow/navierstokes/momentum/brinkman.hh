@@ -14,8 +14,12 @@
 
 #include <type_traits>
 #include <dune/common/typetraits.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocityreconstruction.hh>
 
 namespace Dumux {
@@ -51,20 +55,30 @@ void addBrinkmanTerm(
     {
         const auto brinkmanEpsilon = problem.spatialParams().brinkmanEpsilon(element, fvGeometry, scv);
         const auto invK = problem.spatialParams().inversePermeability(element, fvGeometry, scv);
-        if constexpr (Dune::IsNumber<std::decay_t<decltype(invK)>>::value)
+
+        using DM = typename FVElementGeometry::GridGeometry::DiscretizationMethod;
+        if constexpr (DiscretizationMethods::isCVFE<DM>)
         {
-            const auto& velocity = elemVolVars[scv].velocity();
-            source -= brinkmanEpsilon * invK * velocity;
+            const auto velocity = elemVolVars[scv].velocity();
+            source -= brinkmanEpsilon * mv(invK, velocity); // eps K^-1 velocity
+        }
+        else if constexpr (DM{} == DiscretizationMethods::fcstaggered)
+        {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(invK)>>::value)
+            {
+                const auto velocity = elemVolVars[scv].velocity();
+                source -= brinkmanEpsilon * invK * velocity;
+            }
+            else
+            {
+                // permeability is tensor-valued, use velocity vector reconstruction
+                const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
+                const auto velocity = StaggeredVelocityReconstruction::faceVelocity(scv, fvGeometry, getVelocitySCV);
+                source -= brinkmanEpsilon * mv(invK, velocity)[scv.dofAxis()]; // eps K^-1 velocity
+            }
         }
         else
-        {
-            // permeability is tensor-valued, use full reconstruction
-            const auto getVelocitySCV = [&](const auto& scv){ return elemVolVars[scv].velocity(); };
-            const auto velocity = StaggeredVelocityReconstruction::faceVelocityVector(scv, fvGeometry, getVelocitySCV);
-            const auto inversePermeability = problem.spatialParams().inversePermeability(element, fvGeometry, scv);
-            const auto fullTerm = brinkmanEpsilon * mv(inversePermeability, velocity); // eps K^-1 velocity;
-            source -= fullTerm[scv.dofAxis()];
-        }
+            DUNE_THROW(Dune::NotImplemented, "Brinkman term only implemented for CVFE and Staggered");
     }
 }
 

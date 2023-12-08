@@ -30,6 +30,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
 #include "properties.hh"
@@ -106,7 +107,7 @@ int main(int argc, char** argv)
 
     // Write out the permeability field
     const auto& permeabilityOutput = massProblem->permeabilityOutput();
-    std::vector<std::array<double, 4>> permeability(massGridGeometry->numDofs());
+    std::vector<std::array<double, 4>> permeability(massGridGeometry->gridView().size(0));
     for (int i = 0; i < permeabilityOutput.size(); i++)
         permeability[i] = {permeabilityOutput[i][0][0], permeabilityOutput[i][0][1], permeabilityOutput[i][1][0], permeabilityOutput[i][1][1]};
     vtkWriter.addField(permeability, "permeability");

@@ -47,6 +47,7 @@ class BrinkmanProblem : public BaseProblem
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    static constexpr auto dim = GridGeometry::GridView::dimension;
     using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -129,31 +130,47 @@ public:
         BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
 
+        const auto pRef = referencePressure();
+        const auto p = isInlet_(globalPos) ? pRef + deltaP_ : pRef;
+
+        using DM = typename FVElementGeometry::GridGeometry::DiscretizationMethod;
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto p = isInlet_(globalPos) ? referencePressure(element, fvGeometry, scvf) + deltaP_
-                                               : referencePressure(element, fvGeometry, scvf);
-            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
-                *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p);
+            if constexpr (DiscretizationMethods::isCVFE<DM>)
+            {
+                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> gradV(0.0);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    const auto& volVars = elemVolVars[scv];
+                    for (int dir = 0; dir < dimWorld; ++dir)
+                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                }
+                gradV.mtv(-mu*scvf.unitOuterNormal(), values); // - μ ∇v^T n
+                values.axpy(p, scvf.unitOuterNormal()); // + p n
+            }
+            else
+                values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
+                );
         }
         else
         {
-            values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(
-                *this, element, fvGeometry, scvf, elemVolVars);
+            if constexpr (DiscretizationMethods::isCVFE<DM>)
+                values = (this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal())
+                    * elemVolVars[scvf.insideScvIdx()].density();
+            else
+                values = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>::scalarOutflowFlux(
+                    *this, element, fvGeometry, scvf, elemVolVars
+                );
         }
 
         return values;
     }
 
-
-    /*!
-     * \brief Returns a reference pressure at a given sub control volume face.
-     *        This pressure is subtracted from the actual pressure for the momentum balance
-     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
-     */
-    Scalar referencePressure(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const SubControlVolumeFace& scvf) const
+    template<class ... Args>
+    Scalar referencePressure(Args&&...) const
     { return 0.0; }
 
     //! Add the Brinkman term via the source using the helper function addBrinkmanTerm
@@ -192,11 +209,11 @@ private:
     {
         if constexpr (!ParentType::isMomentumProblem())
         {
-            outputPermeability_.resize(this->gridGeometry().numDofs());
-            outputBrinkmanEpsilon_.resize(this->gridGeometry().numDofs());
+            outputPermeability_.resize(this->gridGeometry().gridView().size(0));
+            outputBrinkmanEpsilon_.resize(this->gridGeometry().gridView().size(0));
             for (const auto& element : elements(this->gridGeometry().gridView()))
             {
-                const auto& eIdx = this->gridGeometry().elementMapper().index(element);
+                const auto eIdx = this->gridGeometry().elementMapper().index(element);
                 outputPermeability_[eIdx] = this->spatialParams().permeabilityAtPos(element.geometry().center());
                 outputBrinkmanEpsilon_[eIdx] = this->spatialParams().brinkmanEpsilonAtPos(element.geometry().center());
             }

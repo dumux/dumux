@@ -1,11 +1,13 @@
 [Grid]
 UpperRight = 3 1
-Cells = 90 30
+Cells = 90 40
+Refinement = 0
 
 [Problem]
 Name = test_ff_brinkman_obstacle
 PressureDifference = 1
 EnableGravity = false
+EnableInertiaTerms = false
 
 [Component]
 LiquidDensity = 1.0
@@ -26,5 +28,7 @@ Temperature = 293.15
 Permeability = 1e-6
 AnisotropyRatio = 100
 PermeabilityRotation = -45.0
-PorousMediumLowerLeft = 1 0.0
+PorousMediumLowerLeft = 1 -0.8
 PorousMediumUpperRight = 2 0.8
+PorousMediumTransitionLength = 0.05
+PorousMediumRoundedness = 0.05
