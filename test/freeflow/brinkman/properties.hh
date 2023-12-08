@@ -50,11 +50,7 @@
 #endif
 
 #ifndef GRIDTYPE
-#if HAVE_DUNE_ALUGRID
-#define GRIDTYPE Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
-#else
 #define GRIDTYPE Dune::YaspGrid<2>
-#endif
 #endif
 
 namespace Dumux::Properties {
