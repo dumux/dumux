@@ -138,34 +138,17 @@ public:
         {
             if constexpr (DiscretizationMethods::isCVFE<DM>)
             {
-                // TODO implement helper for CVFE
-                values.axpy(p, scvf.unitOuterNormal());
-
-                const auto& localBasis = fvGeometry.feLocalBasis();
-                using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-                std::vector<ShapeValue> shapeValues;
-                const auto geometry = element.geometry();
-                const auto ipLocal = geometry.local(globalPos);
-                using ShapeJacobian = typename std::decay_t<decltype(localBasis)>::Traits::JacobianType;
-                std::vector<ShapeJacobian> shapeJacobian;
-                localBasis.evaluateJacobian(ipLocal, shapeJacobian);
-                const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
-
-                using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
-                Tensor gradV(0.0);
+                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
+                const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                Dune::FieldMatrix<Scalar, dimWorld, dimWorld> gradV(0.0);
                 for (const auto& scv : scvs(fvGeometry))
                 {
-                    GlobalPosition gradN;
-                    jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
-
                     const auto& volVars = elemVolVars[scv];
-                    for (int dir = 0; dir < dim; ++dir)
-                        gradV[dir].axpy(volVars.velocity(dir), gradN);
+                    for (int dir = 0; dir < dimWorld; ++dir)
+                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
                 }
-
-                const auto mu = this->effectiveViscosity(element, fvGeometry, scvf);
-                BoundaryFluxes gradVTn = mv(getTransposed(gradV), scvf.unitOuterNormal());
-                values.axpy(-mu, gradVTn);
+                gradV.mtv(-mu*scvf.unitOuterNormal(), values); // - μ ∇v^T n
+                values.axpy(p, scvf.unitOuterNormal()); // + p n
             }
             else
                 values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
