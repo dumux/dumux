@@ -65,7 +65,7 @@ public:
     { return inversePermeability_; }
 
     Scalar brinkmanEpsilon(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
-    { return brinkmanEpsilonAtPos(scv.center()); }
+    { return brinkmanEpsilonAtPos(scv.dofPosition()); }
 
     Scalar brinkmanEpsilonAtPos(const GlobalPosition& globalPos) const
     {

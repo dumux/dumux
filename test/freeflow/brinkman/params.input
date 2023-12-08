@@ -1,6 +1,7 @@
 [Grid]
 UpperRight = 3 1
 Cells = 90 40
+Refinement = 0
 
 [Problem]
 Name = test_ff_brinkman_obstacle
