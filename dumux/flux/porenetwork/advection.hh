@@ -14,6 +14,7 @@
 #define DUMUX_FLUX_PNM_ADVECTION_HH
 
 #include <array>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux::PoreNetwork::Detail {
@@ -68,7 +69,7 @@ public:
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
         const Scalar transmissibility = fluxVarsCache.transmissibility(phaseIdx);
-        using std::isfinite;    
+        using std::isfinite;
         assert(isfinite(transmissibility));
 
         Scalar volumeFlow = transmissibility*deltaP;
@@ -110,17 +111,36 @@ public:
             const auto& spatialParams = problem.spatialParams();
             using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
-            const bool invaded = fluxVarsCache.invaded();
 
-            if (phaseIdx == wPhaseIdx)
+            if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache>())
             {
-                return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                const auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache);
+                if (phaseIdx == wPhaseIdx)
+                {
+                    const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                    const auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    const auto kw = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return theta*std::min(entryKw,kw) + (1-theta)*k1p;
+                }
+                else // non-wetting phase
+                {
+                    // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return  theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                }
             }
-            else // non-wetting phase
+            else
             {
-                return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : 0.0;
+                const bool invaded = fluxVarsCache.invaded();
+                if (phaseIdx == wPhaseIdx)
+                {
+                    return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                   : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                }
+                else // non-wetting phase
+                {
+                    return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                   : 0.0;
+                }
             }
         }
     }
