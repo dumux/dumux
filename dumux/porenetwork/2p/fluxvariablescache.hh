@@ -66,28 +66,24 @@ public:
         const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
         wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
         const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
+        entryWettingLayerArea_.clear(); entryWettingLayerArea_.resize(cornerHalfAngles.size());
+        snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
 
-        if (invaded) // two-phase flow
+        const Scalar alpha = spatialParams.contactAngle(element, elemVolVars);
+        for (int i = 0; i< cornerHalfAngles.size(); ++i)
         {
-            const Scalar theta = spatialParams.contactAngle(element, elemVolVars);
-            for (int i = 0; i< cornerHalfAngles.size(); ++i)
-                wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
-
-            // make sure the wetting phase area does not exceed the total cross-section area
-            throatCrossSectionalArea_[wPhaseIdx()] = std::min(
-                std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
-                totalThroatCrossSectionalArea
-            );
-            throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+            wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
+            entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
+            snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
         }
-        else // single-phase flow
-        {
-            for (int i = 0; i< cornerHalfAngles.size(); ++i)
-                wettingLayerArea_[i] = 0.0;
 
-            throatCrossSectionalArea_[wPhaseIdx()] = totalThroatCrossSectionalArea;
-            throatCrossSectionalArea_[nPhaseIdx()] = 0.0;
-        }
+        // make sure the wetting phase area does not exceed the total cross-section area
+        throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+            std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+            totalThroatCrossSectionalArea
+        );
+        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -180,7 +176,7 @@ public:
      * \brief Returns the curvature radius within the throat.
      */
     Scalar curvatureRadius() const
-    { return surfaceTension_ / pc_;}
+    { return surfaceTension_ / (pc_ + 1e-16);}
 
     /*!
      * \brief Returns the cross-sectional area of a wetting layer within
@@ -225,6 +221,32 @@ public:
     Scalar poreToPoreDistance() const
     { return poreToPoreDistance_; }
 
+    /*!
+     * \brief Returns the curvature radius within the throat corresponds to entry pressure.
+     */
+    Scalar curvatureRadiusInvasion() const
+    { return surfaceTension_/pcEntry_;}
+
+    /*!
+     * \brief Returns the curvature radius within the throat corresponds to snap off pressure.
+     */
+    Scalar curvatureRadiusSnapoff() const
+    { return surfaceTension_/pcSnapoff_;}
+
+    /*!
+     * \brief Returns wetting layer area for each corner
+     * at regularization pc right interval boundary for invasion
+     */
+    Scalar entryWettingLayerArea(const int cornerIdx) const
+    { return entryWettingLayerArea_[cornerIdx]; }
+
+    /*!
+     * \brief Returns wetting layer area for each corner
+     * at regularization pc right interval boundary for snap-off
+     */
+    Scalar snapoffWettingLayerArea(const int cornerIdx) const
+    { return snapoffWettingLayerArea_[cornerIdx]; }
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
@@ -244,6 +266,9 @@ private:
     typename AdvectionType::Transmissibility::SinglePhaseCache singlePhaseCache_;
     typename AdvectionType::Transmissibility::NonWettingPhaseCache nonWettingPhaseCache_;
     typename AdvectionType::Transmissibility::WettingLayerCache wettingLayerCache_;
+
+    NumCornerVector entryWettingLayerArea_;
+    NumCornerVector snapoffWettingLayerArea_;
 };
 
 } // end Dumux::PoreNetwork
