@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(embedded)
+add_subdirectory(porenetwork)
 add_subdirectory(poromechanics)
 add_subdirectory(boundary)
 add_subdirectory(facet)
