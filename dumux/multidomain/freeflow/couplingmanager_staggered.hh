@@ -324,7 +324,19 @@ public:
         return mu(momentumCouplingContext_()[0].curElemVolVars);
     }
 
-     /*!
+    /*!
+     * \brief Returns the pressure at a given sub control volume.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolume<freeFlowMomentumIndex>& scv) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
+        const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(scv.elementIndex());
+        return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].viscosity();
+    }
+
+    /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
     VelocityVector faceVelocity(const Element<freeFlowMassIndex>& element,

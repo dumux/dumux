@@ -318,6 +318,20 @@ public:
     }
 
     /*!
+     * \brief Returns the effective dynamic viscosity at a given sub control volume.
+     * \note  Overload this if a fixed viscosity shall be prescribed.
+     */
+    Scalar effectiveViscosity(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const SubControlVolume& scv) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->effectiveViscosity(element, fvGeometry, scv);
+        else
+            return asImp_().effectiveViscosityAtPos(scv.dofPosition());
+    }
+
+    /*!
      * \brief Returns the effective dynamic viscosity at a given position.
      */
     Scalar effectiveViscosityAtPos(const GlobalPosition&) const
