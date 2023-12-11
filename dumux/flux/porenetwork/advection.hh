@@ -118,9 +118,8 @@ public:
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
-                    const auto entryKw = Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    const auto kw = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    return theta*std::min(entryKw,kw) + (1-theta)*k1p;
+                    const Scalar kw = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return theta*kw + (1-theta)*k1p;
                 }
                 else // non-wetting phase
                 {
