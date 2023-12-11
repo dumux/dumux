@@ -76,7 +76,10 @@ public:
         {
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
             {
-                wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
+                wettingLayerArea_[i] = std::min(
+                    Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]),
+                    totalThroatCrossSectionalArea
+                );
                 entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
                 snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
             }
