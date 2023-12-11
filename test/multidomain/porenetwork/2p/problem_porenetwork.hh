@@ -226,8 +226,8 @@ private:
     {
         //  0.5*(1 + regSign_(dp))
         using std::sin; using std::min; using std::max;
-        v = max(0.0,min(v,regDelta_)) - regDelta_;
-        return 0.5*(1+sin(M_PI*v/(2.0*regDelta_)));
+        v = max(0.0,min(v,2*regDelta_));
+        return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
     }
 
     int vtpOutputFrequency_;
