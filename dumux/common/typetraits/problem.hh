@@ -13,6 +13,7 @@
 #define DUMUX_TYPETRAITS_PROBLEM_HH
 
 #include <type_traits>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -21,6 +22,18 @@ namespace Dumux {
 namespace Detail {
 template<class Problem, class DiscretizationMethod>
 struct ProblemTraits;
+
+template<class Imp, class E, class G, class V, class F, class S>
+using ProblemThetaFunctionDetector = decltype(
+    std::declval<Imp>().theta(
+        std::declval<E>(), std::declval<G>(), std::declval<V>(), std::declval<F>(), std::declval<S>()
+    )
+);
+
+template<class Imp, class E, class G, class V, class F, class S>
+constexpr inline bool hasProblemThetaFunction()
+{ return Dune::Std::is_detected<ProblemThetaFunctionDetector, Imp, E, G, V, F, S>::value; }
+
 } // end namespace Detail
 
 /*!
