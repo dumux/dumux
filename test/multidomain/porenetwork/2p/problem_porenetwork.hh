@@ -171,7 +171,7 @@ public:
                 auto dp = max(elemVolVars[0].capillaryPressure(),
                                 elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
                 // Use a regularized heavyside function (1+sign) for theta
-                auto theta = 0.5*(1 + regSign_(dp));
+                auto theta = regHeaviside_(dp);
 
                 return std::min(std::max(0.0,theta),1.0);
             }
@@ -220,6 +220,14 @@ private:
     Scalar regSign_(Scalar v) const
     {
         return v/(regAbs_(v) + regDelta_);
+    }
+
+    Scalar regHeaviside_(Scalar v) const
+    {
+        //  0.5*(1 + regSign_(dp))
+        using std::sin; using std::min; using std::max;
+        v = max(0.0,min(v,regDelta_)) - regDelta_;
+        return 0.5*(1+sin(M_PI*v/(2.0*regDelta_)));
     }
 
     int vtpOutputFrequency_;
