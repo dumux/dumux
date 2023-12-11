@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <dune/common/reservedvector.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
+#include <dumux/common/typetraits/problem.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -27,6 +28,7 @@ namespace Dumux::PoreNetwork {
 template<class AdvectionType, int maxNumCorners = 4>
 class TwoPFluxVariablesCache
 {
+    using ThisType = TwoPFluxVariablesCache<AdvectionType, maxNumCorners>;
     using Scalar = typename AdvectionType::Scalar;
     static constexpr auto numPhases = 2;
     using NumCornerVector = Dune::ReservedVector<Scalar, maxNumCorners>;
@@ -70,20 +72,45 @@ public:
         snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
 
         const Scalar alpha = spatialParams.contactAngle(element, elemVolVars);
-        for (int i = 0; i< cornerHalfAngles.size(); ++i)
+        if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, ThisType, SubControlVolumeFace>())
         {
-            wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
-            entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
-            snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+            for (int i = 0; i< cornerHalfAngles.size(); ++i)
+            {
+                wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
+                entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
+                snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+            }
+
+            // make sure the wetting phase area does not exceed the total cross-section area
+            throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+                std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+                totalThroatCrossSectionalArea
+            );
+            throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
         }
+        else
+        {
+            if (invaded) // two-phase flow
+            {
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                    wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
 
-        // make sure the wetting phase area does not exceed the total cross-section area
-        throatCrossSectionalArea_[wPhaseIdx()] = std::min(
-            std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
-            totalThroatCrossSectionalArea
-        );
-        throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+                // make sure the wetting phase area does not exceed the total cross-section area
+                throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+                    std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+                    totalThroatCrossSectionalArea
+                );
+                throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+            }
+            else // single-phase flow
+            {
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                    wettingLayerArea_[i] = 0.0;
 
+                throatCrossSectionalArea_[wPhaseIdx()] = totalThroatCrossSectionalArea;
+                throatCrossSectionalArea_[nPhaseIdx()] = 0.0;
+            }
+        }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
