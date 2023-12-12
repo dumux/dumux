@@ -1,11 +1,12 @@
 [TimeLoop]
-DtInitial = 0.1 # [s]
-CheckPoints = 
-TEnd = 500 # [s]
+DtInitial = 1e-3 # [s]
+CheckPoints = 113.8439 226
+TEnd = 226 # [s]
+#MaxTimeStepSize = 1
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Circle
+ThroatCrossSectionShape = Square
 LowerLeft = 0
 UpperRight = 4.5e-3
 NumPores = 10
@@ -22,12 +23,12 @@ NonWettingMassFlux = 5e-10
 
 [Pnm.Problem]
 Name = test_pnm_2p
-RegularizationDelta = 1e-8
+RegularizationDelta = 1e-4
 UseThetaRegularization = true
 
 [Newton]
-MaxSteps = 10
-TargetSteps = 4
+MaxSteps = 50
+TargetSteps = 20
 #UseLineSearch = true
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
@@ -42,9 +43,6 @@ Verbosity = true
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
-
-[Regularization]
-RegPercentage = 0.01
 
 [Component]
 LiquidKinematicViscosity = 1e-7
