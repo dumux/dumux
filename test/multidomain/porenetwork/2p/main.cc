@@ -93,9 +93,9 @@ int main(int argc, char** argv)
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto dt = getParam<double>("TimeLoop.DtInitial");
+    const auto checkPoints = getParam<std::vector<double>>("TimeLoop.CheckPoints");
+    const auto tEnd = getParam<double>("TimeLoop.TEnd");
 
     // check if we are about to restart a previously interrupted simulation
     Scalar restartTime = 0;
@@ -110,8 +110,9 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
+    timeLoop->setCheckPoint(checkPoints.begin(), checkPoints.end());
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
