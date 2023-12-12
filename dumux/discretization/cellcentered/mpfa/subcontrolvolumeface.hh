@@ -140,20 +140,19 @@ public:
     , insideScvIdx_(insideScvIdx)
     , outsideScvIndices_(outsideScvIndices)
     , vIdxInElement_(vIdxLocal)
-    , corners_(std::move(corners))
     , center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , boundaryFlag_{intersection}
     , facetInfo_{std::move(facetInfo)}
     {
           // compute the center of the scvf
-          for (const auto& corner : corners_)
+          for (const auto& corner : corners)
               center_ += corner;
-          center_ /= corners_.size();
+          center_ /= corners.size();
 
           // use helper class to obtain area & integration point
-          ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
-          area_ = helper.computeScvfArea(corners_);
+          ipGlobal_ = helper.getScvfIntegrationPoint(corners, q);
+          area_ = helper.computeScvfArea(corners);
     }
 
     //! The area of the sub control volume face
@@ -193,21 +192,6 @@ public:
     const OutsideGridIndexStorage& outsideScvIndices() const
     { return outsideScvIndices_; }
 
-    //! Returns the number of corners
-    [[deprecated("Will be removed after 3.8. Use fvGeometry.geometry(scvf).corners().")]]
-    std::size_t corners() const
-    { return corners_.size(); }
-
-    //! Returns the global position of the vertex the scvf is connected to
-    [[deprecated("Will be removed after 3.8. Use fvGeometry.vertexCorner(scvf)")]]
-    const GlobalPosition& vertexCorner() const
-    { return corners_.back(); }
-
-    //! Returns the global position of the center of the element facet this scvf is embedded in
-    [[deprecated("Will be removed after 3.8. Use fvGeometry.facetCorner(scvf)")]]
-    const GlobalPosition& facetCorner() const
-    { return corners_[0]; }
-
     //! The center of the sub control volume face
     const GlobalPosition& center() const
     { return center_; }
@@ -236,7 +220,6 @@ private:
     OutsideGridIndexStorage outsideScvIndices_;
     unsigned int vIdxInElement_;
 
-    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition ipGlobal_;
     GlobalPosition unitOuterNormal_;
