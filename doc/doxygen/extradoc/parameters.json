@@ -2438,9 +2438,6 @@
             "Set a name for a problem"
         ]
     },
-    "Problem.SandGrainRoughness": {
-        "mode": "ignore"
-    },
     "RANS.EddyViscosityModel": {
         "explanation": [
             "Choose the eddy viscosity model"
@@ -2454,6 +2451,11 @@
     "RANS.IsFlatWallBounded": {
         "explanation": [
             "Set to true, if geometry consists of flat walls"
+        ]
+    },
+    "RANS.SandGrainRoughness": {
+        "explanation": [
+            "The roughness of a sand grain"
         ]
     },
     "RANS.SSTModelVersion": {
