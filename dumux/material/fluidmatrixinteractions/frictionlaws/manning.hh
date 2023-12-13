@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup FrictionLaws
- * \copydoc Dumux::FrictionLawManning
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
 
