@@ -18,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \addtogroup DispersionTensors
  * \ingroup DispersionTensors
  * \brief Full dispersion tensor
  */
