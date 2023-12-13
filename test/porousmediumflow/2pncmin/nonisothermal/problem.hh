@@ -217,7 +217,7 @@ public:
 
             // get porous medium values:
             const Scalar massFracH2OInside = volVars.massFraction(gasPhaseIdx, H2OIdx);
-            static const Scalar referencePermeability = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+
 
             // calculate fluxes
             // liquid phase
@@ -248,7 +248,7 @@ public:
                 values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
                                       *volVars.mobility(gasPhaseIdx)
-                                      *referencePermeability
+                                      *volVars.permeability()
                                       *volVars.molarDensity(gasPhaseIdx)
                                       *volVars.moleFraction(gasPhaseIdx, AirIdx);
             }
@@ -257,7 +257,7 @@ public:
                 values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
                                       *volVars.mobility(gasPhaseIdx)
-                                      *referencePermeability
+                                      *volVars.permeability()
                                       *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
             }
 
