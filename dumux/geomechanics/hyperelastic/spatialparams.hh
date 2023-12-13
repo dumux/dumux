@@ -24,8 +24,8 @@ class DefaultHyperelasticSpatialParams
 public:
     DefaultHyperelasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , E_(getParam<Scalar>("Problem.YoungsModulus"))
-    , nu_(getParam<Scalar>("Problem.PoissonRatio"))
+    , E_(getParam<Scalar>("SpatialParams.YoungsModulus"))
+    , nu_(getParam<Scalar>("SpatialParams.PoissonRatio"))
     {
         mu_ = E_/(2*(1 + nu_));
         K_ = E_/(3*(1 - 2*nu_));

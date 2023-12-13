@@ -4,6 +4,8 @@ Cells = 24 16 16
 
 [Problem]
 Name = test_hyperelastic_box
+
+[SpatialParams]
 YoungsModulus = 10
 PoissonRatio = 0.3
 
