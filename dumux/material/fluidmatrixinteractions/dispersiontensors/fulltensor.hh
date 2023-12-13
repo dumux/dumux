@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup DispersionTensors
- * \copydoc Dumux::FullDispersionTensor
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 
