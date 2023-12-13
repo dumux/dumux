@@ -1,0 +1,47 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 1200 # [s]
+
+[Grid]
+File = capillary_multiple_tubes.dgf # DGF file can be generated with pyhton script in this folder
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+
+[Problem]
+Name = validate_preferential_path
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 7000
+UseFixedPressureAndSaturationBoundary = false
+DistributeByVolume = false
+NonWettingMassFlux = 5e-10
+RegularizationDelta = 1e-4
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+MaxSteps = 20
+TargetSteps = 10
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+BlockNonwettingPhaseAtThroatLabel = 3
+
+[SpatialParams]
+RegularizationLowSw = 0.001
+RegularizationHighSw = 0.9
+HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 0.01
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3
