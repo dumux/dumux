@@ -211,21 +211,22 @@ public:
         {
             // get free-flow properties:
             static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
+            static const Scalar massFracRefH2O = refMoleToRefMassFrac_(moleFracRefH2O);
             static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
             static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
 
             // get porous medium values:
-            const Scalar moleFracH2OInside = volVars.moleFraction(gasPhaseIdx, H2OIdx);
+            const Scalar massFracH2OInside = volVars.massFraction(gasPhaseIdx, H2OIdx);
             static const Scalar referencePermeability = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
 
             // calculate fluxes
             // liquid phase
             Scalar evaporationRateMole = 0;
-            if (moleFracH2OInside - moleFracRefH2O > 0)
+            if (massFracH2OInside - massFracRefH2O > 0)
             {
                 evaporationRateMole = massTransferCoefficient
                                         * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (moleFracH2OInside - moleFracRefH2O)
+                                        * (massFracH2OInside - massFracRefH2O)
                                         / boundaryLayerThickness
                                         * volVars.molarDensity(gasPhaseIdx);
             }
@@ -233,7 +234,7 @@ public:
             {
                 evaporationRateMole = massTransferCoefficient
                                         * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (moleFracH2OInside - moleFracRefH2O)
+                                        * (massFracH2OInside - massFracRefH2O)
                                         / boundaryLayerThickness
                                         * 1.2;
 
@@ -389,6 +390,21 @@ private:
        /* XwNaCl: conversion from mass fraction to mol fraction */
        auto xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
        return xwNaCl;
+    }
+
+    /*!
+     * \brief Returns the mass fraction of H2O in the gaseous phase for a given mole fraction.
+     *
+     * \param xgH2O_ref The reference mole fraction of H2O in the gaseous phase.
+     */
+    static Scalar refMoleToRefMassFrac_(Scalar xgH2O_ref)
+    {
+       const Scalar M_H2O = FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */
+       const Scalar M_air = FluidSystem::molarMass(NaClIdx); /* molecular weight of air  [kg/mol] */
+
+       /* XwNaCl: conversion from mass fraction to mol fraction */
+       auto XgH2O_ref = M_H2O * xgH2O_ref / (M_H2O * xgH2O_ref + M_air * (1 - xgH2O_ref));
+       return XgH2O_ref;
     }
 
 
