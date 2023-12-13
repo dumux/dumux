@@ -100,7 +100,7 @@ public:
         ParentType::updateDynamicWallProperties(curSol);
 
         // correct roughness lengths if a sand grain roughness is specified
-        if (hasParam("Problem.SandGrainRoughness"))
+        if (hasParam("RANS.SandGrainRoughness"))
             calculateRoughnessLength_(curSol);
 
         // update routine for specific models
@@ -235,7 +235,7 @@ private:
         auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
-            static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.SandGrainRoughness");
+            static const Scalar sandGrainRoughness = getParamFromGroup<Scalar>(this->paramGroup(), "RANS.SandGrainRoughness");
             unsigned int elementIdx = this->gridGeometry().elementMapper().index(element);
             fvGeometry.bindElement(element);
 

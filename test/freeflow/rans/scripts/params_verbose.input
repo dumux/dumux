@@ -15,13 +15,13 @@ Grading1 = 1.25 -1.25
 Name = pipe_laufer
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
-SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
 IsFlatWallBounded = True
 WriteFlatWallBoundedFields = True
+SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [KEpsilon]
 YPlusThreshold = 60. # should be large (30-60) for fine grids
