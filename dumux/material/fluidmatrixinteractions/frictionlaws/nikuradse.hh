@@ -19,9 +19,10 @@
 
 namespace Dumux {
 /*!
- * \addtogroup FrictionLaws
  * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Nikuradse.
+ *
+ * ### Nikuradse
  *
  * This friction law calculates the stress between the flow and the bottom,
  * which is called bottom shear stress, using the Nikuradse friction law.
