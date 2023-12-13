@@ -25,7 +25,7 @@ namespace Dumux {
  * \ingroup FrictionLaws
  * \brief Implementation of a viscous no-slip bottom friction law
  *
- * This assumes thin film flow with a parabolic velocity profile in depth
+ * This friction law assumes thin film flow with a parabolic velocity profile in depth
  * (for the depth-averaged shallow water equations). The velocity profile
  * and associated bottom shear stress can be derived from plane Poiseuille flow
  * with a free surface boundary condition on top and a no-slip boundary condition
