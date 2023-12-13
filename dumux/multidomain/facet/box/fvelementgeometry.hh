@@ -158,20 +158,31 @@ public:
     const Element& element() const
     { return *element_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        using ScvfGeometry = SubControlVolumeFace::Traits::Geometry;
+        SubControlVolumeFace::Traits::CornerStorage corners;
+        if (scvf.boundary() || scvf.interiorBoundary())
+        {
+            corners = geometryHelper.getBoundaryScvfCorners(scvf.facetIndexInElement(),
+                                                            scvf.indexInElementFacet());
+            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+        }
+        else
+        {
+            corners = geometryHelper.getScvfCorners(scvf.index());
+            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+        }
+    }
 
 private:
     const GridGeometry* gridGeometryPtr_;
@@ -306,20 +317,31 @@ public:
     const Element& element() const
     { return *element_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        assert(isBound());
+        const auto geo = element().geometry();
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        using ScvfGeometry = SubControlVolumeFace::Traits::Geometry;
+        SubControlVolumeFace::Traits::CornerStorage corners;
+        if (scvf.boundary() || scvf.interiorBoundary())
+        {
+            corners = geometryHelper.getBoundaryScvfCorners(scvf.facetIndexInElement(),
+                                                            scvf.indexInElementFacet());
+            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+        }
+        else
+        {
+            corners = geometryHelper.getScvfCorners(scvf.index());
+            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+        }
+    }
 
 private:
 
