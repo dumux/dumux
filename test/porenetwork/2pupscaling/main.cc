@@ -121,12 +121,12 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
     // ### Initialize VTK output
     using VtkOutputFields = GetPropType<TypeTag, Properties::IOFields>;
     using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
-    VtkWriter vtkWriter(*gridVariables, x, problem->name());
+    auto name = phaseIdx ? "Upscaling_gas":"Upscaling_water";
+    VtkWriter vtkWriter(*gridVariables, x, name);
     VtkOutputFields::initOutputModule(vtkWriter);
     // specify the field type explicitly since it may not be possible
     // to deduce this from the vector size in a pore network
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
-    vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
 
     // ### Prepare the upscaling procedure.
@@ -226,7 +226,7 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
             // }
 
             // write a vtu file for the given direction for the last sample
-            vtkWriter.write(dimIdx);
+            vtkWriter.write(step);
 
         }
 
@@ -273,8 +273,15 @@ const auto runStaticProblem(GridManager& gridManager)
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     PoreNetwork::TwoPStaticDrainage<GridGeometry, Scalar> drainageModel = std::move(problem.drainageModelStatic());
 
+    auto numSteps = problem.numberOfSteps();
     // const auto& flowProperties = problem.pcSwStatic(drainageModel);
-    return problem.pcSwStatic(drainageModel);
+    for (int step = 0; step < numSteps + 1; ++step)
+    {
+        problem.pcSwStatic(drainageModel, step);
+        sequenceWriter.write(step);
+    }
+
+    return problem.staticProperties();
 }
 
 } // end namespace Dumux

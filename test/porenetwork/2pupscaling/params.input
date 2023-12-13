@@ -15,7 +15,7 @@ DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
 
 [Problem]
-Name = test_pnm_2p_static
+Name = test_pnm_2p_upscaling
 InitialPc = 3500 # [Pa]
 FinalPc = 7000 # [Pa]
 NumSteps = 60 # the number of episodes to run

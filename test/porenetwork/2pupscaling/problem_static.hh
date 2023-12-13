@@ -95,7 +95,7 @@ public:
         numSteps_ = getParam<int>("Problem.NumSteps");
         initialPc_ = getParam<Scalar>("Problem.InitialPc");
         finalPc_ = getParam<Scalar>("Problem.FinalPc");
-        allowDraingeOfOutlet_ = getParam<bool>("Problem.AllowDraingeOfOutlet", false);
+        allowDraingeOfOutlet_ = getParam<bool>("Problem.AllowDraingeOfOutlet", true);
 
         pcRange_ = finalPc_ - initialPc_;
         deltaPc_ = pcRange_ / numSteps_;
@@ -109,7 +109,7 @@ public:
         throatLabel_.resize(leafGridView.size(0));
         poreVolume_.resize(leafGridView.size(1));
         pc_.resize(leafGridView.size(1), 0.0);
-        sw_.resize(leafGridView.size(1), 0.0);
+        sw_.resize(leafGridView.size(1), 1.0);
         poreLabel_.resize(leafGridView.size(1));
         throatTransmissibility_.resize(leafGridView.size(0));
 
@@ -150,7 +150,7 @@ public:
 
     }
 
-    const auto pcSwStatic(DrainageModel& drainageModel)
+    void pcSwStatic(DrainageModel& drainageModel, int step)
     {
         const auto& leafGridView = gridGeometry_.gridView();
 
@@ -161,19 +161,19 @@ public:
         // const auto logfileName = name_ + "_pc-s-curve.txt";
         // logfile.open(logfileName);
 
-        for (int step = 0; step < numSteps_ + 1; ++step)
-        {
-            flowPropertiesStatic_[step].throatTransmissibility.resize(leafGridView.size(0));
-            std::cout << "Step " << step << " --> "<<": Applying global pc of " << pcGlobal_ << " --> ";
-            runDrainage_(leafGridView, drainageModel);
-            //sequenceWriter.write(step);
-            flowPropertiesStatic_[step] = {pcGlobal_, averageSaturation_, throatTransmissibility_};
+        // for (int step = 0; step < numSteps_ + 1; ++step)
+        // {
+        flowPropertiesStatic_[step].throatTransmissibility.resize(leafGridView.size(0));
+        std::cout << "Step " << step << " --> "<<": Applying global pc of " << pcGlobal_ << " --> ";
+        runDrainage_(leafGridView, drainageModel);
+        //sequenceWriter.write(step);
+        flowPropertiesStatic_[step] = {pcGlobal_, averageSaturation_, throatTransmissibility_};
 
-            // increment the global capillary pressure
-            pcGlobal_ += deltaPc_;
-        }
+        // increment the global capillary pressure
+        pcGlobal_ += deltaPc_;
+        //}
 
-        return flowPropertiesStatic_;
+        // return flowPropertiesStatic_;
     }
 
     //plot the pc-S curve, if desired
@@ -193,7 +193,7 @@ public:
         const auto& leafGridView = gridGeometry_.gridView();
 
         // add vtk output TODO: Bring it outside the loop
-        static const auto name = getParam<std::string>("Problem.Name");
+        static const auto name = "static";//getParam<std::string>("Problem.Name");
         auto writer = std::make_shared<Dune::VTKWriter<GridView>>(leafGridView);
         Dune::VTKSequenceWriter<GridView> sequenceWriter(writer, name);
         sequenceWriterAddCell_(sequenceWriter);
@@ -213,7 +213,11 @@ public:
     const auto throatTransmissibility() const
     { return throatTransmissibility_; }
 
+    auto numberOfSteps()
+    { return numSteps_; };
 
+    auto staticProperties()
+    { return flowPropertiesStatic_; };
 private:
 
     void sequenceWriterAddCell_(Dune::VTKSequenceWriter<GridView>& sequenceWriter)
