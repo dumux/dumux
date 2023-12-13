@@ -17,10 +17,11 @@
 namespace Dumux {
 
 /*!
- * \addtogroup FrictionLaws
  * \ingroup FrictionLaws
  * \brief A pseudo friction law with no bottom friction
-
+ *
+ * ### No Friction
+ *
  * This friction law sets the stress between the flow and the bottom,
  * which is called bottom shear stress, to zero.
  * The bottom shear stress is needed to calculate on the one hand the loss of
