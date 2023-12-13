@@ -240,12 +240,6 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
         if (!referenceData.empty())
             upscalingHelper.compareWithReference(referenceData);
 
-        // plot the results just for non-creeping flow
-        // creeping flow would just result in a straight line (permeability is independent of the pressure gradient)
-        bool plotConductivity = getParam<bool>("Output.PlotConductivity", true);
-        if (plotConductivity)
-            upscalingHelper.plot();
-
         upscalingHelper.writePlotDataToFile(dimIdx, phaseIdx);
     }
 };
