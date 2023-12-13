@@ -22,6 +22,11 @@ namespace Dumux {
  * \ingroup FrictionLaws
  * \brief Implementation of the abstract base class for friction laws.
  *
+ * Friction laws calculate the stress between the flow and the bottom,
+ * which is called bottom shear stress. The bottom shear stress is
+ * needed to calculate on the one hand the loss of momentum due to
+ * bottom friction and on the other hand the bedload transport rate.
+ *
  * A LET mobility model can be used to add an artificial water depth to
  * limit the friction for small water depths.
  */

@@ -83,7 +83,11 @@ The following laws are implemented:
 @ingroup Fluidmatrixinteractions
 
 @defgroup FrictionLaws Friction Laws
-@brief Friction Laws
+@brief Friction Laws for calculating bottom shear stress
+@details Friction laws calculate the stress between the flow and the bottom,
+which is called bottom shear stress. The bottom shear stress is
+needed to calculate on the one hand the loss of momentum due to
+bottom friction and on the other hand the bedload transport rate.
 @ingroup Fluidmatrixinteractions
 
 @defgroup DispersionTensors Dispersion Tensors

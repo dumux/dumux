@@ -23,6 +23,11 @@ namespace Dumux {
  * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Manning.
  *
+ * This friction law calculates the stress between the flow and the bottom,
+ * which is called bottom shear stress, using the Manning friction law.
+ * The bottom shear stress is needed to calculate on the one hand the loss of
+ * momentum due to bottom friction and on the other hand the bedload transport rate.
+ *
  * The LET mobility model is used to limit the friction for small water
  * depths if a roughness height > 0.0 is provided (default roughnessHeight = 0.0).
  */
