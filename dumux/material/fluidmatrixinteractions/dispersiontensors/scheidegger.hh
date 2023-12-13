@@ -35,7 +35,6 @@ static constexpr bool hasVelocityInSpatialParams()
 }
 
 /*!
- * \addtogroup DispersionTensors
  * \ingroup DispersionTensors
  * \brief Scheidegger's dispersion tensor
  */
