@@ -2438,16 +2438,10 @@
             "Set a name for a problem"
         ]
     },
-    "Problem.PoissonRatio": {
-        "mode": "ignore"
-    },
     "Problem.SandGrainRoughness": {
         "mode": "ignore"
     },
     "Problem.UsePrimaryVariableSwitch": {
-        "mode": "ignore"
-    },
-    "Problem.YoungsModulus": {
         "mode": "ignore"
     },
     "RANS.EddyViscosityModel": {
@@ -2559,6 +2553,11 @@
             "The permeability"
         ]
     },
+    "SpatialParams.PoissonRatio": {
+        "explanation": [
+            "The Poisson ratio of the porous medium"
+        ]
+    },
     "SpatialParams.Porosity": {
         "explanation": [
             "The porosity"
@@ -2580,6 +2579,11 @@
     "SpatialParams.Tortuosity": {
         "explanation": [
             "The tortuosity"
+        ]
+    },
+    "SpatialParams.YoungsModulus": {
+        "explanation": [
+            "The Young's modulus \\f$\\mathrm{[Pa]}\\f$ of the porous medium"
         ]
     },
     "TimeLoop.Restart": {
