@@ -91,8 +91,9 @@ The following laws are implemented:
 @ingroup Fluidmatrixinteractions
 
 @defgroup PoreNetwork Pore Network
-@brief Constitutive Relations for pore networks models
-@ingroup Pore Network
+@brief Constitutive Relations for pore networks models.
+@details In the pore-network model, a porous medium is represented as large void spaces called pore body (pore) connected to each other by narrow void spaces called pore throat (throat). The primary variables like pressure and saturation are located at the pore bodies and pore throats determine flow conductivity. Constitutive relations for pore bodies describe capillary pressure-saturation relationships for different pore shapes to be used in two-phase flow simulations. For pore throats, threshold capillary pressures that indicate when a throat is invaded by the non-wetting phase and when it is filled with the wetting phase are provided. Furthermore, relations for computing single-phase and two-phase transmissibility at the pore throats are given.
+@ingroup Fluidmatrixinteractions
 
 <!-- FluidStates -->
 
