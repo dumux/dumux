@@ -2441,9 +2441,6 @@
     "Problem.SandGrainRoughness": {
         "mode": "ignore"
     },
-    "Problem.UsePrimaryVariableSwitch": {
-        "mode": "ignore"
-    },
     "RANS.EddyViscosityModel": {
         "explanation": [
             "Choose the eddy viscosity model"
@@ -2487,6 +2484,11 @@
     "RANS.WriteFlatWallBoundedFields": {
         "explanation": [
             "Whether to write output fields for flat wall geometries"
+        ]
+    },
+    "Richards.UsePrimaryVariableSwitch": {
+        "explanation": [
+            "Whether to use primary variable switch in richards model"
         ]
     },
     "ShallowWater.EnableViscousFlux": {
