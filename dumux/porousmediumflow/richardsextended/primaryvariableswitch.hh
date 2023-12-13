@@ -46,7 +46,7 @@ protected:
         using Indices = typename VolumeVariables::Indices;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        static const bool usePriVarSwitch = getParam<bool>("Problem.UsePrimaryVariableSwitch");
+        static const bool usePriVarSwitch = getParam<bool>("Richards.UsePrimaryVariableSwitch");
         if (!usePriVarSwitch)
             return false;
 
