@@ -2438,18 +2438,6 @@
             "Set a name for a problem"
         ]
     },
-    "Problem.PoissonRatio": {
-        "mode": "ignore"
-    },
-    "Problem.SandGrainRoughness": {
-        "mode": "ignore"
-    },
-    "Problem.UsePrimaryVariableSwitch": {
-        "mode": "ignore"
-    },
-    "Problem.YoungsModulus": {
-        "mode": "ignore"
-    },
     "RANS.EddyViscosityModel": {
         "explanation": [
             "Choose the eddy viscosity model"
@@ -2463,6 +2451,11 @@
     "RANS.IsFlatWallBounded": {
         "explanation": [
             "Set to true, if geometry consists of flat walls"
+        ]
+    },
+    "RANS.SandGrainRoughness": {
+        "explanation": [
+            "The roughness of a sand grain"
         ]
     },
     "RANS.SSTModelVersion": {
@@ -2493,6 +2486,11 @@
     "RANS.WriteFlatWallBoundedFields": {
         "explanation": [
             "Whether to write output fields for flat wall geometries"
+        ]
+    },
+    "Richards.UsePrimaryVariableSwitch": {
+        "explanation": [
+            "Whether to use primary variable switch in richards model"
         ]
     },
     "ShallowWater.EnableViscousFlux": {
@@ -2559,6 +2557,11 @@
             "The permeability"
         ]
     },
+    "SpatialParams.PoissonRatio": {
+        "explanation": [
+            "The Poisson ratio of the porous medium"
+        ]
+    },
     "SpatialParams.Porosity": {
         "explanation": [
             "The porosity"
@@ -2580,6 +2583,11 @@
     "SpatialParams.Tortuosity": {
         "explanation": [
             "The tortuosity"
+        ]
+    },
+    "SpatialParams.YoungsModulus": {
+        "explanation": [
+            "The Young's modulus \\f$\\mathrm{[Pa]}\\f$ of the porous medium"
         ]
     },
     "TimeLoop.Restart": {

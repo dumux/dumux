@@ -11,6 +11,8 @@ Cells = 5 30
 Name = test_richardsevaporation
 OutputInterval = 5
 EnableGravity = false
+
+[Richards]
 UsePrimaryVariableSwitch = true
 
 [Newton]
