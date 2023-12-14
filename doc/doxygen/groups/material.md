@@ -92,7 +92,7 @@ bottom friction and on the other hand the bedload transport rate.
 
 @defgroup DispersionTensors Dispersion Tensors
 @brief Dispersion tensor models characterising mechanical dispersion in porous media
-@details Dispersion is caused by particles traveling with different velocity through the porous medium. A particle in the middle of a pore has a higher velociy than a particle close to the grain. Additionaly, due to the tortuosity of the porous medium particles have to take different paths through it. This leads to an effect, which is like an enhanced diffusion, equalizing concentration gradients. 
+@details Mechanical dispersion is caused by particles traveling at different velocities through the porous medium \cite Fried1971. A particle in the middle of a pore has a higher velocity than a particle close to a grain. Due to the tortuosity of the porous medium, particles take different paths through it. Given the existence of an REV, mechanical dispersion typically leads to increased Fickian diffusion on the Darcy scale \cite Bear1986. The magnitude and directionality of the increase diffusive transport depends on the size of the averaging volumes and characteristics of the flow such as average velocity magnitude and direction.
 @ingroup Fluidmatrixinteractions
 
 @defgroup PoreNetwork Pore Network
