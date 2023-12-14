@@ -27,7 +27,7 @@ namespace Dumux {
 class DumuxMessage
 {
     //! The current number of messages. Please adjust if you add one.
-    static const int nMessages_ = 12;
+    static const int nMessages_ = 34;
 
 public:
 
@@ -165,6 +165,248 @@ public:
                 }
                 else
                     std::cout << "\n" << std::endl;
+            break;
+            case 13:
+                if(firstCall)
+                {
+                    std::cout << "Everything starts somewhere, though many physicists disagree." << std::endl
+                              << " - Terry Pratchett " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Opera happens because a large number of things amazingly fail to go wrong." << std::endl
+                              << " - Terry Pratchett " << std::endl;
+                }
+            break;
+            case 14:
+                    std::cout << "To infinity and beyond." << std::endl
+                              << " - Buzz Lightyear, Toy Story" << std::endl;
+            break;
+            case 15:
+                if(firstCall)
+                {
+                    std::cout << "C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off." << std::endl
+                              << " - Bjarne Stroustrup " << std::endl;
+                }
+                else
+                {
+                    std::cout << "There's an old story about the person who wished his computer were as easy to use as his telephone." << std::endl
+                              << "That wish has come true, since I no longer know how to use my telephone." << std::endl
+                              << " - Bjarne Stroustrup " << std::endl;
+                }
+            break;
+            case 16:
+                if(firstCall)
+                {
+                    std::cout << "Now, all we need is a little Energon and a lot of luck!" << std::endl
+                              << " - Optimus Prime, The Transformers: The Movie " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Sometimes even the wisest of men and machines can be in error." << std::endl
+                              << " - Optimus Prime, The Transformers: The Movie " << std::endl;
+                }
+            break;
+            case 17:
+                if(firstCall)
+                {
+                    std::cout << "Let's go. In and out, 20 minutes adventure." << std::endl
+                              << " - Rick Sanchez, Rick & Morty " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Losers look stuff up while the rest of us are carpin' all them diems." << std::endl
+                              << " - Summer Smith, Rick & Morty" << std::endl;
+                }
+            break;
+            case 18:
+                if(firstCall)
+                {
+                    std::cout << "It's the job that's never started as takes longest to finish." << std::endl
+                              << " - Sam Gamgee, LotR " << std::endl;
+                }
+                else
+                {
+                    std::cout << "He that breaks a thing to find out what it is, has left the path of wisdom." << std::endl
+                              << " - Gandalf, LotR " << std::endl;
+                }
+            break;
+            case 19:
+                if(firstCall)
+                {
+                    std::cout << "The Ring has awoken, it's heard its master's call." << std::endl
+                              << " - Gandalf, LotR " << std::endl;
+                }
+                else
+                {
+                    std::cout << "It's a dangerous business, Frodo, going out your door. " << std::endl
+                              << "You step onto the road, and if you don't keep your feet, there's no knowing where you might be swept off to." << std::endl
+                              << " - Frodo Baggins, LotR " << std::endl;
+                }
+            break;
+            case 20:
+                if(firstCall)
+                {
+                    std::cout << "Who knows? Have patience. Go where you must go, and hope!" << std::endl
+                              << " - Gandalf, LotR " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Don't adventures ever have an end? I suppose not. Someone else always has to carry on the story." << std::endl
+                              << " - Bilbo Baggins, LotR " << std::endl;
+                }
+            break;
+            case 21:
+                if(firstCall)
+                {
+                    std::cout << "As long as I'm better than everyone else I suppose it doesn't matter." << std::endl
+                              << " - Jamie Lannister, GoT" << std::endl;
+                }
+                else
+                {
+                    std::cout << "My watch has ended." << std::endl
+                              << " - Jon Snow, GoT" << std::endl;
+                }
+            break;
+            case 22:
+                if(firstCall)
+                {
+                    std::cout << "You'll find I'm full of surprises." << std::endl
+                              << " - Luke Skywalker, Star Wars: The Empire Strikes Back " << std::endl;
+                }
+                else
+                {
+                    std::cout << "I find your lack of faith disturbing." << std::endl
+                              << " - Darth Vader, Star Wars: A New Hope " << std::endl;
+                }
+            break;
+            case 23:
+                if(firstCall)
+                {
+                    std::cout << "Here goes nothing." << std::endl
+                              << " - Lando Calrissian, Star Wars: Return of the Jedi" << std::endl;
+                }
+                else
+                {
+                    std::cout << "Chewie, we're home." << std::endl
+                              << " - Han Solo, Star Wars: The Force Awakens" << std::endl;
+                }
+            break;
+            case 24:
+                if(firstCall)
+                {
+                    std::cout << "The Force is strong with this one." << std::endl
+                              << " - Darth Vader, Star Wars: A New Hope " << std::endl;
+                }
+                else
+                {
+                    std::cout << "In my experience, there's no such thing as luck." << std::endl
+                              << " - Obi-Wan Kenobi, Star Wars: A New Hope " << std::endl;
+                }
+            break;
+            case 25:
+                if(firstCall)
+                {
+                    std::cout << "The city's central computer told you? R2D2, you know better than to trust a strange computer!" << std::endl
+                              << " - C3PO, Star Wars: The Empire Strikes Back " << std::endl;
+                }
+                else
+                {
+                    std::cout << "He's quite clever, you know...for a human being." << std::endl
+                              << " - C3PO, Star Wars: The Empire Strikes Back " << std::endl;
+                }
+            break;
+            case 26:
+                if(firstCall)
+                {
+                    std::cout << "I know some things. I can, you know, do math and stuff." << std::endl
+                              << " - Harry Potter " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Harry then did something that was both very brave and very stupid." << std::endl
+                              << " - Harry Potter and the Sorcerer's Stone " << std::endl;
+                }
+            break;
+            case 27:
+                if(firstCall)
+                {
+                    std::cout << "I'll be in my bedroom, making no noise and pretending I'm not there." << std::endl
+                              << " - Harry Potter " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Honestly, if you were any slower, you'd be going backward." << std::endl
+                              << " - Draco Malfoy " << std::endl;
+                }
+            break;
+            case 28:
+                    std::cout << "I can do this all day." << std::endl
+                              << " - Captain America " << std::endl;
+            break;
+            case 29:
+                if(firstCall)
+                {
+                    std::cout << "Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should." << std::endl
+                              << " - Ian Malcolm, Jurassic Park " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Boy, do I hate being right all the time." << std::endl
+                              << " - Ian Malcolm, Jurassic Park " << std::endl;
+                }
+            break;
+            case 30:
+                if(firstCall)
+                {
+                    std::cout << "It's a UNIX System! I know this! "
+                              << " - Lex Murphy, Jurassic Park " << std::endl;
+                }
+                else
+                {
+                    std::cout << "When you gotta go, you gotta go." << std::endl
+                              << " - Ian Malcolm, Jurassic Park " << std::endl;
+                }
+            break;
+            case 31:
+                if(firstCall)
+                {
+                    std::cout << "Whatever happens, that's the plan. "
+                              << " - Kayla Watts, Jurassic World Dominion " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Can we start over?" << std::endl
+                              << " - Claire Dearing, Jurassic World Dominion " << std::endl;
+                }
+            break;
+            case 32:
+                if(firstCall)
+                {
+                    std::cout << "The code is more what you'd call 'guidelines' than actual rules. "
+                              << " - Hector Barbossa, Pirates of the Caribbean " << std::endl;
+                }
+                else
+                {
+                    std::cout << "Did everyone see that? Because I will not be doing it again." << std::endl
+                              << " - Jack Sparrow, Pirates of the Caribbean " << std::endl;
+                }
+            break;
+            case 33:
+                if(firstCall)
+                {
+                    std::cout << "If you were waiting for the opportune moment, that was it. "
+                              << " - Jack Sparrow, Pirates of the Caribbean " << std::endl;
+                }
+                else
+                {
+                    std::cout << "I love those moments. I like to wave at them as they pass by." << std::endl
+                              << " - Jack Sparrow, Pirates of the Caribbean " << std::endl;
+                }
+            break;
+            case 34:
+                std::cout << "And that was without even a single drop of rum." << std::endl
+                          << " - Jack Sparrow, Pirates of the Caribbean " << std::endl;
             break;
 
             // Note: If you add a case, you have to increase the number of messages (nMessages_ variable).
