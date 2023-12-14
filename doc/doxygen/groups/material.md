@@ -91,7 +91,7 @@ bottom friction and on the other hand the bedload transport rate.
 @ingroup Fluidmatrixinteractions
 
 @defgroup DispersionTensors Dispersion Tensors
-@brief Dispersion Tensors for calculating the dispersion in all spatial dimensions
+@brief Dispersion tensor models characterising mechanical dispersion in porous media
 @details Dispersion is caused by particles traveling with different velocity through the porous medium. A particle in the middle of a pore has a higher velociy than a particle close to the grain. Additionaly, due to the tortuosity of the porous medium particles have to take different paths through it. This leads to an effect, which is like an enhanced diffusion, equalizing concentration gradients. 
 @ingroup Fluidmatrixinteractions
 
