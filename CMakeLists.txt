@@ -4,6 +4,20 @@
 cmake_minimum_required(VERSION 3.16)
 
 project("dumux" C CXX)
+set(dune-common_DIR ../dune-common/build-cmake)
+find_package(dune-common REQUIRED)
+set(dune-grid_DIR ../dune-grid/build-cmake)
+find_package(dune-grid REQUIRED)
+set(dune-geometry_DIR ../dune-geometry/build-cmake)
+find_package(dune-geometry REQUIRED)
+set(dune-alugrid_DIR ../dune-alugrid/build-cmake)
+find_package(dune-alugrid REQUIRED)
+set(dune-istl_DIR ../dune-istl/build-cmake)
+find_package(dune-istl REQUIRED)
+set(dune-localfunctions_DIR ../dune-localfunctions/build-cmake)
+find_package(dune-localfunctions REQUIRED)
+set(dune-uggrid_DIR ../dune-uggrid/build-cmake)
+find_package(dune-uggrid REQUIRED)
 
 if(NOT (dune-common_DIR
         OR dune-common_ROOT
