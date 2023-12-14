@@ -19,7 +19,7 @@ namespace Dumux {
  *
  * ### Manning
  *
- * This friction law calculates the stress between the flow and the bottom,
+ * This friction law calculates the stress between the flowing fluid and the bottom,
  * which is called bottom shear stress, using the Manning friction law.
  * The bottom shear stress is needed to calculate on the one hand the loss of
  * momentum due to bottom friction and on the other hand the bedload transport rate.
