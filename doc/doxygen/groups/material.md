@@ -17,7 +17,7 @@
 <!-- Components -->
 
 @defgroup Components Thermodynamical properties of chemical species
-@brief Thermodynamical properties of single chemical species or fixed mixtures of species (\f$ \text{CO}_2, \text{H}_2\text{O}, \text{Air}, ... \f$)
+@brief Thermodynamical properties of single chemical species or fixed mixtures of species ($ \text{CO}_2, \text{H}_2\text{O}, \text{Air}, ... $)
 @details Components provide the thermodynamic relations for the liquid, gaseous and/or solid state of a single
 chemical species or a _fixed_ mixture of species. Fluid systems use components to compute thermodynamic quantities of phases. An example would be the dynamic viscosity at different temperatures and pressures.
 @ingroup Material
@@ -45,8 +45,8 @@ chemical species or a _fixed_ mixture of species. Fluid systems use components t
 <!-- Fluidmatrixinteractions -->
 
 @defgroup Fluidmatrixinteractions Fluid-matrix interactions
-@brief Constitutive relations such as pc-Sw relations, kr-Sw relations, effective diffusion coefficients, friction laws
-@details Constitutive models for interaction of fluids and solids. The relations depend on the fluid state as well as material parameters of the matrix. For example, in porous media theory, the effective heat conductivity depends on the solid heat conductivity, the fluid heat conductivity, as well as the porosity of the solid and the fluid saturation.
+@brief Constitutive models for interaction of fluids and solids
+@details This module includes constitutive relations such as pc-Sw relations, kr-Sw relations, effective diffusion coefficients, friction laws. The relations depend on both the fluid state as well as material parameters of the solid matrix. For example, in porous media theory, the effective heat conductivity depends on the solid heat conductivity, the fluid heat conductivity, as well as the porosity of the solid and the fluid saturation.
 @ingroup Material
 
 <!-- Fluidmatrixinteractions subgroups  -->
