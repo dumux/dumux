@@ -13,41 +13,37 @@ namespace Dumux {
 
 /*!
 * \addtogroup EffectiveDiffusivity
-* \copydoc Dumux::DiffusivityConstantTortuosity
+* \copydetails Dumux::DiffusivityConstantTortuosity
 */
 
 /*!
  * \ingroup EffectiveDiffusivity
- * \brief Relation for the saturation-dependent effective diffusion coefficient
+ * \brief Relation for the effective diffusion coefficient with constant tortuosity
  *
  * ### Constant Tortuosity
  *
- * The material law is:
- * \f[
- *  D_\text{eff,pm} = \phi * S_w * \tau * D
- * \f]
- *
- * with
- * \f[
- * \tau = \text{const}
- * \f]
- *
- * The default value is 0.5, empirically obtained in Carman 1937:
- * <i>Fluid flow through granular beds</i> \cite carman1937
- * Additionally, Bear 1972 \cite bear1972 mentions values 0.4 and in the
- * range of 0.56 to 0.8.
+ * For `DiffusivityConstantTortuosity`, \f$ \tau = \text{const.} \f$,
+ * with default value 0.5, empirically obtained by Carman \cite carman1937.
+ * The value can be changed at runtime by setting parameter
+ * `"SpatialParams.Tortuosity"`. This will change the value of \f$ \tau \f$,
+ * and therefore the effective diffusion coefficient wherever
+ * the function `effectiveDiffusionCoefficient` is used.
  */
 template<class Scalar>
 class DiffusivityConstantTortuosity
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
-     *        on a constant tortuosity value
-     * \param volVars The Volume Variables
-     * \param phaseIdx the index of the phase
-     * \param compIdxI the component index i
-     * \param compIdxJ the component index j
+     * \brief Returns the effective diffusion coefficient (\f$\mathrm{m^2/s}\f$)
+     *
+     * Returns the effective diffusion coefficient (\f$\mathrm{m^2/s}\f$)
+     * of component \f$ \kappa \f$ (index `compIdxI`) in phase \f$ \alpha \f$ based
+     * on a constant tortuosity coefficient: \f$ D^\kappa_{\text{eff},\alpha} = \phi S_\alpha \tau D^\kappa_\alpha \f$.
+     *
+     * \param volVars The volume variables
+     * \param phaseIdx the index of phase \f$ \alpha \f$
+     * \param compIdxI the component index i (the component diffusing in phase \f$ \alpha \f$)
+     * \param compIdxJ the component index j (the main component of phase \f$ \alpha \f$)
      */
     template<class VolumeVariables>
     static Scalar effectiveDiffusionCoefficient(const VolumeVariables& volVars,

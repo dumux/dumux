@@ -54,6 +54,27 @@ chemical species or a _fixed_ mixture of species. Fluid systems use components t
 @defgroup EffectiveDiffusivity Effective diffusivity in porous media
 @brief Laws for calculating effective diffusion coefficients.
 @details When averaging over a given volume of a porous medium, diffusion appears effectively restricted since not all volume is accessible to particles and diffusion is hindered by the solid matrix acting as obstacles. Effective diffusivity laws provide constitutive relations for the effective diffusion coefficients based on the solid matrix material parameters and the fluid configuration in the pore space.
+
+The effective diffusion coefficient of component $ \kappa $
+in phase $ \alpha $ can be modeled as
+\begin{equation}
+D^\kappa_{\text{eff},\alpha} = \phi S_\alpha \tau D^\kappa_\alpha,
+\end{equation}
+where
+$ \phi $ is the porosity (volume fraction of the pore space),
+$ S_\alpha $ is the saturation of phase $ \alpha $ (the volume
+fraction of phase $ \alpha $ being $ n_\alpha = \phi S_\alpha $),
+$ D^\kappa_\alpha $ denotes the binary diffusion coefficient of
+component $ \kappa $ in phase $ \alpha $, and $ \tau $
+is the tortuosity coefficient.
+
+Bear \cite bear1972 reports values of $\tau$ in the range of 0.4 to 0.8.
+Note that in some literature the tortuosity $ \lambda $ is used instead
+of the tortuosity coefficient $\tau$. The two
+quantities are related by $ \lambda = \sqrt{1/\tau} $.
+
+The following laws are implemented:
+
 @ingroup Fluidmatrixinteractions
 
 @defgroup EffectiveHeatConductivity Effective heat conductivity in porous media
