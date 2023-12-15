@@ -4,8 +4,8 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
-#define DUMUX_MATERIAL_THERMALCONDUCTIVITY_SOMERTON_3P_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_THREE_P_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_THREE_P_HH
 
 #include <algorithm>
 #include <cmath>
@@ -14,57 +14,41 @@ namespace Dumux {
 
 /*!
  * \addtogroup EffectiveHeatConductivity
- * \copydoc Dumux::ThermalConductivitySomerton
-*/
+ * \copydetails Dumux::ThermalConductivitySomertonThreeP
+ */
 
 /*!
  * \ingroup EffectiveHeatConductivity
- * \brief Relation for the saturation-dependent effective thermal conductivity
+ * \brief Effective thermal conductivity after Somerton
  *
- * ### Somerton Method (3p)
+ * ### Somerton (three fluid phases)
  *
- * The Somerton method computes the thermal conductivity of dry and the wet soil material.
+ * The Somerton method \cite somerton1974 computes the thermal conductivity of dry and the wet soil material.
  * It is extended here to a three phase system of water (w), NAPL (n) and gas (g).
  * It uses a root function of the water and NAPL saturation to compute the
  * effective thermal conductivity for a three-phase fluidsystem. The individual thermal
  * conductivities are calculated as geometric mean of the thermal conductivity of the porous
  * material and of the respective fluid phase.
  *
- * The material law is:
+ * The effective thermal conductivity of `ThermalConductivitySomertonThreeP` is given by
  * \f[
- * \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{(S_w)} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right) +
- * \sqrt{(S_n)} \left(\lambda0_\text{n,eff} - \lambda_\text{g,eff}\right)
+ * \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{S_\text{w}} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right) +
+ * \sqrt{S_\text{n}} \left(\lambda_\text{n,eff} - \lambda_\text{g,eff}\right)
  * \f]
  *
- * with
- * \f[
- * \lambda_\text{w,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- * \f]
- * and
- *
- * \f[
- * \lambda0_\text{n,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- * \f]
- *
- * \f[
- * \lambda_\text{g,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
- * \f]
+ * with \f$ S_\text{w} \f$ the water saturation,
+ * \f$ S_\text{n} \f$ the NAPL saturation, the effective phase saturations given by
+ * \f$ \lambda_{\alpha,\text{eff}} = (\lambda_\text{s})^{\left(1-\phi\right)} (\lambda_\alpha)^\phi, \alpha \in \{\text{w,n,g}\}\f$
+ * (geometric mean) and \f$ \lambda_\text{s} \f$ is the thermal conductivity of the solid phase.
  */
 template<class Scalar>
-class ThermalConductivitySomerton
+class ThermalConductivitySomertonThreeP
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) extended for a three phase system
-     *
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for three phases
      * \param volVars volume variables
-     *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
-     *
-     * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the water phase (w), a NAPL phase (n) and a gas phase (g).
-     * These two effective conductivities are computed as geometric mean of the solid and the
-     * fluid conductivities and interpolated with the square root of the wetting saturation.
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for three phases
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
@@ -83,17 +67,17 @@ public:
     }
 
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for three phases
      *
      * \param sw The saturation of the wetting phase
      * \param sn The saturation of the nonwetting phase
-     * \param lambdaW The thermal conductivity of the water phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the NAPL phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaG The thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaW The thermal conductivity of the water phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaN The thermal conductivity of the NAPL phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaG The thermal conductivity of the gas phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{W/(m K)}\f$
      * \param porosity The porosity
      *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974)
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for three phases
      */
     static Scalar effectiveThermalConductivity(const Scalar sw,
                                                const Scalar sn,
@@ -119,5 +103,14 @@ public:
 
     }
 };
+
+#ifndef DOXYGEN
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_TWO_P_HH
+template<class Scalar>
+using ThermalConductivitySomerton [[deprecated("Use ThermalConductivitySomertonThreeP. Will be removed after 3.9.")]] = ThermalConductivitySomertonThreeP<Scalar>;
+#endif
+#endif
+
 } // end namespace Dumux
+
 #endif

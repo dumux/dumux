@@ -4,8 +4,8 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_HH
-#define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_HH
+#ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_TWO_P_HH
+#define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_TWO_P_HH
 
 #include <algorithm>
 #include <cmath>
@@ -14,65 +14,49 @@ namespace Dumux {
 
 /*!
  * \addtogroup EffectiveHeatConductivity
- * \copydoc Dumux::ThermalConductivitySomerton
-*/
+ * \copydetails Dumux::ThermalConductivitySomertonTwoP
+ */
 
 /*!
- * \addtogroup EffectiveHeatConductivity
  * \ingroup EffectiveHeatConductivity
- * \brief Relation for the saturation-dependent effective thermal conductivity
+ * \brief Effective thermal conductivity after Somerton
  *
- * ### Somerton Method (2p)
+ * ### Somerton (two fluid phases)
  *
- * The Somerton method computes the thermal conductivity of dry and the wet soil material
- * and uses a root function of the wetting saturation to compute the
+ * The Somerton method \cite somerton1974 computes the thermal conductivity of dry and the wet soil material.
+ * It uses a root function of the water saturation to compute the
  * effective thermal conductivity for a two-phase fluidsystem. The individual thermal
  * conductivities are calculated as geometric mean of the thermal conductivity of the porous
  * material and of the respective fluid phase.
  *
- * The material law is:
+ * The effective thermal conductivity of `ThermalConductivitySomertonTwoP` is given by
  * \f[
- * \mathrm{
- * \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- * }
+ * \lambda_\text{eff} = \lambda_\text{g,eff} + \sqrt{S_\text{w}} \left(\lambda_\text{w,eff} - \lambda_\text{g,eff}\right)
  * \f]
  *
- * with
- * \f[
- * \mathrm{
- * \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- * }\f]
- * and
- *
- * \f[
- * \mathrm{
- * \lambda_\text{dry} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_n^\phi.
- * }\f]
- *
+ * with \f$ S_\text{w} \f$ the water saturation,
+ * \f$ S_\text{n} \f$ the NAPL saturation, the effective phase saturations given by
+ * \f$ \lambda_{\alpha,\text{eff}} = (\lambda_\text{s})^{\left(1-\phi\right)} (\lambda_\alpha)^\phi, \alpha \in \lbrace\text{w,n,g}\rbrace \f$
+ * (geometric mean) and \f$ \lambda_\text{s} \f$ is the thermal conductivity of the solid phase.
+ * The effective conductivity \f$ \lambda_\text{g,eff} \f$ corresponds to dry conditions, whereas the
+ * effective conductivity \f$ \lambda_\text{g,eff} \f$ corresponds to wet conditions.
  */
 template<class Scalar>
-class ThermalConductivitySomerton
+class ThermalConductivitySomertonTwoP
 {
 public:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
-     *
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      * \param volVars volume variables
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
-     *
-     * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the nonwetting phase and a porous medium filled with the wetting phase.
-     * These two effective conductivities are computed as geometric mean of the solid and the
-     * fluid conductivities and interpolated with the square root of the wetting saturation.
-     * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis \cite ebigbo2005 .
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
-        static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
+        static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomertonTwoP only works for two-phase fluid systems!");
         static_assert((FluidSystem::isGas(0) && !FluidSystem::isGas(1)) || (!FluidSystem::isGas(0) && FluidSystem::isGas(1)),
-                     "ThermalConductivitySomerton only works if one phase is gaseous and one is liquid!");
+                     "ThermalConductivitySomertonTwoP only works if one phase is gaseous and one is liquid!");
 
         constexpr int liquidPhaseIdx = FluidSystem::isGas(0) ? 1 : 0;
         constexpr int gasPhaseIdx = FluidSystem::isGas(0) ? 0 : 1;
@@ -88,23 +72,21 @@ public:
 
 private:
     /*!
-     * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      *
      * \param satLiquid The saturation of the liquid phase
-     * \param lambdaLiquid The thermal conductivity of the liquid phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaGas The thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaLiquid The thermal conductivity of the liquid phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaGas The thermal conductivity of the gas phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{W/(m K)}\f$
      * \param porosity The porosity
-     * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     static Scalar effectiveThermalConductivity_(const Scalar satLiquid,
                                                 const Scalar lambdaLiquid,
                                                 const Scalar lambdaGas,
                                                 const Scalar lambdaSolid,
-                                                const Scalar porosity,
-                                                const Scalar rhoSolid = 0.0 /*unused*/)
+                                                const Scalar porosity)
     {
         using std::max;
         using std::pow;
@@ -117,6 +99,11 @@ private:
         return lambdaDry + sqrt(satLiquidPhysical) * (lambdaSaturated - lambdaDry);
     }
 };
+
+#ifndef DOXYGEN
+template<class Scalar>
+using ThermalConductivitySomerton [[deprecated("Use ThermalConductivitySomertonTwoP. Will be removed after 3.9.")]] = ThermalConductivitySomertonTwoP<Scalar>;
+#endif
 
 } // end namespace Dumux
 
