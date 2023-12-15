@@ -300,17 +300,15 @@ private:
     /*!
      * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction.
      *
-     * \param XwNaCl The XwNaCl [kg NaCl / kg solution]
+     * \param massFracNaClInWater The mass fraction of NaCl in liquid phase water (kg NaCl / kg solution)
      */
-    static Scalar massToMoleFrac_(Scalar XwNaCl)
+    static Scalar massToMoleFrac_(Scalar massFracNaClInWater)
     {
-       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */ //TODO use correct link to FluidSyswem later
-       const Scalar Ms = 58.44e-3;  //FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
+        const Scalar molarMassWater = FluidSystem::molarMass(H2OIdx); // in kg/mol
+        const Scalar molarMassNaCl = FluidSystem::molarMass(NaClIdx); // in kg/mol
 
-       const Scalar X_NaCl = XwNaCl;
-       /* XwNaCl: conversion from mass fraction to mol fraction */
-       auto xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-       return xwNaCl;
+        const auto moleFracNaClInWater = -molarMassWater * massFracNaClInWater / ((molarMassNaCl - molarMassWater) * massFracNaClInWater - molarMassNaCl);
+        return moleFracNaClInWater;
     }
 
     int nTemperature_;
