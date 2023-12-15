@@ -379,32 +379,29 @@ private:
     /*!
      * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction.
      *
-     * \param XwNaCl The XwNaCl [kg NaCl / kg solution]
+     * \param massFracNaClInWater The mass fraction of NaCl in liquid phase water [kg NaCl / kg solution]
      */
-    static Scalar massToMoleFrac_(Scalar XwNaCl)
+    static Scalar massToMoleFrac_(Scalar massFracNaClInWater)
     {
-       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */
-       const Scalar Ms = 58.44e-3;  //FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
+        const Scalar molarMassWater = FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */
+        const Scalar molarMassNaCl = FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
 
-       const Scalar X_NaCl = XwNaCl;
-       /* XwNaCl: conversion from mass fraction to mol fraction */
-       auto xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-       return xwNaCl;
+        const auto moleFracNaClInWater = -molarMassWater * massFracNaClInWater / ((molarMassNaCl - molarMassWater) * massFracNaClInWater - molarMassNaCl);
+        return moleFracNaClInWater;
     }
 
     /*!
      * \brief Returns the mass fraction of H2O in the gaseous phase for a given mole fraction.
      *
-     * \param xgH2O_ref The reference mole fraction of H2O in the gaseous phase.
+     * \param moleFracH2OInGasRef The reference mole fraction of H2O in the gaseous phase.
      */
-    static Scalar refMoleToRefMassFrac_(Scalar xgH2O_ref)
+    static Scalar refMoleToRefMassFrac_(Scalar moleFracH2OInGasRef)
     {
-       const Scalar M_H2O = FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */
-       const Scalar M_air = FluidSystem::molarMass(NaClIdx); /* molecular weight of air  [kg/mol] */
+        const Scalar molarMassWater = FluidSystem::molarMass(H2OIdx); // in kg/mol
+        const Scalar molarMassAir = FluidSystem::molarMass(AirIdx); // in kg/mol
 
-       /* XwNaCl: conversion from mass fraction to mol fraction */
-       auto XgH2O_ref = M_H2O * xgH2O_ref / (M_H2O * xgH2O_ref + M_air * (1 - xgH2O_ref));
-       return XgH2O_ref;
+        auto massFracH2OInGasRef = molarMassWater * moleFracH2OInGasRef / (molarMassWater * moleFracH2OInGasRef + molarMassAir * (1 - moleFracH2OInGasRef));
+        return massFracH2OInGasRef;
     }
 
 
