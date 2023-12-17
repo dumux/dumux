@@ -17,7 +17,7 @@
 <!-- Components -->
 
 @defgroup Components Thermodynamical properties of chemical species
-@brief Thermodynamical properties of single chemical species or fixed mixtures of species (\f$ \text{CO}_2, \text{H}_2\text{O}, \text{Air}, ... \f$)
+@brief Thermodynamical properties of single chemical species or fixed mixtures of species ($ \text{CO}_2, \text{H}_2\text{O}, \text{Air}, ... $)
 @details Components provide the thermodynamic relations for the liquid, gaseous and/or solid state of a single
 chemical species or a _fixed_ mixture of species. Fluid systems use components to compute thermodynamic quantities of phases. An example would be the dynamic viscosity at different temperatures and pressures.
 @ingroup Material
@@ -45,9 +45,42 @@ chemical species or a _fixed_ mixture of species. Fluid systems use components t
 <!-- Fluidmatrixinteractions -->
 
 @defgroup Fluidmatrixinteractions Fluid-matrix interactions
-@brief Constitutive relations such as pc-Sw relations, kr-Sw relations, effective diffusion coefficients, friction laws
-@details Constitutive models for interaction of fluids and solids. The relations depend on the fluid state as well as material parameters of the matrix. For example, in porous media theory, capillary pressure is often expressed as a function of the phase saturation and some shape parameter \f$\lambda\f$ which is dependent on the material (Brooks-Corey model).
+@brief Constitutive models for interaction of fluids and solids
+@details This module includes constitutive relations such as pc-Sw relations, kr-Sw relations, effective diffusion coefficients, friction laws. The relations depend on both the fluid state as well as material parameters of the solid matrix. For example, in porous media theory, the effective heat conductivity depends on the solid heat conductivity, the fluid heat conductivity, as well as the porosity of the solid and the fluid saturation.
 @ingroup Material
+
+<!-- Fluidmatrixinteractions subgroups  -->
+
+@defgroup EffectiveDiffusivity Effective diffusivity in porous media
+@brief Laws for calculating effective diffusion coefficients.
+@details When averaging over a given volume of a porous medium, diffusion appears effectively restricted since not all volume is accessible to particles and diffusion is hindered by the solid matrix acting as obstacles. Effective diffusivity laws provide constitutive relations for the effective diffusion coefficients based on the solid matrix material parameters and the fluid configuration in the pore space.
+
+The effective diffusion coefficient of component $ \kappa $
+in phase $ \alpha $ can be modeled as
+\begin{equation}
+D^\kappa_{\text{eff},\alpha} = \phi S_\alpha \tau D^\kappa_\alpha,
+\end{equation}
+where
+$ \phi $ is the porosity (volume fraction of the pore space),
+$ S_\alpha $ is the saturation of phase $ \alpha $ (the volume
+fraction of phase $ \alpha $ being $ n_\alpha = \phi S_\alpha $),
+$ D^\kappa_\alpha $ denotes the binary diffusion coefficient of
+component $ \kappa $ in phase $ \alpha $, and $ \tau $
+is the tortuosity coefficient.
+
+Bear \cite bear1972 reports values of $\tau$ in the range of 0.4 to 0.8.
+Note that in some literature the tortuosity $ \lambda $ is used instead
+of the tortuosity coefficient $\tau$. The two
+quantities are related by $ \lambda = \sqrt{1/\tau} $.
+
+The following laws are implemented:
+
+@ingroup Fluidmatrixinteractions
+
+@defgroup EffectiveHeatConductivity Effective heat conductivity in porous media
+@brief Laws for calculating effective heat conductivity coefficients.
+@details In porous media, the effective heat conductivity depends on the solid-fluid conductivity ratio, the volume fractions of the constituent phases, and the geometry of the solid-fluid interface \cite aichlmayr2006effective. The following laws are implemented:
+@ingroup Fluidmatrixinteractions
 
 <!-- FluidStates -->
 

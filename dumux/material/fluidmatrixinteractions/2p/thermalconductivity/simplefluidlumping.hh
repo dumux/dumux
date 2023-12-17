@@ -4,32 +4,28 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
 #include <assert.h>
 #include <algorithm>
+#warning "This header is deprecated and will be removed after 3.9. Use ThermalConductivityAverage"
 
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
+ * \ingroup EffectiveHeatConductivity
+ * \brief Relation for the saturation-dependent effective thermal conductivity
+ * \deprecated This does the same as `ThermalConductivityAverage` but only works for two fluid phases
  */
 template<class Scalar>
-class ThermalConductivitySimpleFluidLumping
+class [[deprecated("Use ThermalConductivityAverage. Will be removed after 3.9.")]] ThermalConductivitySimpleFluidLumping
 {
 public:
     /*!
-     * \brief Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
-     *
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      * \param volVars volume variables
-     * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
@@ -46,15 +42,15 @@ public:
 
 private:
     /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$.
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      *
      * \param sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{W/(m K)}\f$
      * \param porosity The porosity
      *
-     * \return Effective thermal conductivity of the fluid phases
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     static Scalar effectiveThermalConductivity_(const Scalar sw,
                                                 const Scalar lambdaW,
@@ -68,5 +64,7 @@ private:
         return porosity * ( (1. - satW) * lambdaN + satW * lambdaW ) + (1.0 - porosity) * lambdaSolid ; ; // arithmetic
     }
 };
+
 } // end namespace Dumux
+
 #endif

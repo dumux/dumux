@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective diffusion coefficient
- */
 #ifndef DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 #define DUMUX_MATERIAL_DIFFUSIVITY_MILLINGTON_QUIRK_HH
 
@@ -18,29 +13,35 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
- * \brief Relation for the saturation-dependent effective diffusion coefficient
+* \addtogroup EffectiveDiffusivity
+* \copydetails Dumux::DiffusivityMillingtonQuirk
+*/
+
+/*!
+ * \ingroup EffectiveDiffusivity
+ * \brief Relation for the effective diffusion coefficient after Millington and Quirk
  *
- * The material law is:
+ * ### Millington Quirk
+ *
+ * For `DiffusivityMillingtonQuirk`,
+ * the tortuosity coefficient is estimated after Millington and Quirk (1961) \cite millington1961
+ * by
  * \f[
- *  D_\text{eff,pm} = \phi * S_w * \tau * D
+ *  \tau = \frac{1}{\phi^2} \left(\phi S_\alpha\right)^{7/3}.
  * \f]
  *
- * with
- * \f[
- *  \tau = \frac{1}{\phi^2} * \left(\phi S_w\right)^{7/3}
- * \f]
- *
- * after Millington and Quirk 1961: <i>Permeability of porous solids</i> \cite millington1961
- * and Helmig 1997: <i>Multiphase Flow and Transport Processes in the Subsurface: A Contribution
- * to the Modeling of Hydrosystems</i>, page 129 \cite helmig1997
+ * See also Helmig (1997) \cite helmig1997 [page 129].
  */
 template<class Scalar>
 class DiffusivityMillingtonQuirk
 {
 public:
     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ after Millington Quirk.
+     * \brief Returns the effective diffusion coefficient (\f$\mathrm{m^2/s}\f$)
+     *
+     * Returns the effective diffusion coefficient (\f$\mathrm{m^2/s}\f$)
+     * of component \f$ \kappa \f$ (index `compIdxI`) in phase \f$ \alpha \f$ computed as
+     * \f$ D^\kappa_{\text{eff},\alpha} = \phi S_\alpha \tau D^\kappa_\alpha \f$.
      *
      * \param volVars The Volume Variables
      * \param phaseIdx the index of the phase
@@ -53,10 +54,8 @@ public:
                                                 const int compIdxI,
                                                 const int compIdxJ)
     {
-        // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
-        // we calculate the more efficient
-        // D_eff,pm = phi * Sw^3 * cubicroot(phi * Sw) * D
-
+        // instead of D_eff = phi S tau D = phi S 1/phi^2 (phi S)^(7/3) D
+        // we implement more efficiently D_eff = phi S^3 cubicroot(phi S) D
         using std::cbrt;
         using std::max;
         const Scalar diffCoeff = volVars.diffusionCoefficient(phaseIdx, compIdxI, compIdxJ);
@@ -64,7 +63,8 @@ public:
         const Scalar sat = max<Scalar>(volVars.saturation(phaseIdx), 0.0);
         return porosity * (sat*sat*sat) * cbrt(porosity * sat) * diffCoeff;
     }
-
 };
-}
+
+} // end namespace Dumux
+
 #endif

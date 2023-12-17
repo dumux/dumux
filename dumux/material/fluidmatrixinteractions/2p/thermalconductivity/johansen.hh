@@ -4,11 +4,6 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup Fluidmatrixinteractions
- * \brief   Relation for the saturation-dependent effective thermal conductivity
- */
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_JOHANSEN_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_JOHANSEN_HH
 
@@ -18,49 +13,41 @@
 namespace Dumux {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup EffectiveHeatConductivity
+ * \copydetails Dumux::ThermalConductivityJohansen
+ */
+
+/*!
+ * \ingroup EffectiveHeatConductivity
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
- * The Johansen method (Johansen 1975 \cite johansen1977 ) computes the thermal conductivity of dry and the
- * wet soil material and uses a root function of the wetting saturation to compute the
- * effective thermal conductivity for a two-phase fluidsystem. The individual thermal
- * conductivities are calculated as geometric mean of the thermal conductivity of the porous
- * material and of the respective fluid phase.
- * The material law is:
- * \f$\mathrm{[
- \lambda_\text{eff} = \lambda_{\text{dry}} + \sqrt{(S_w)} \left(\lambda_\text{wet} - \lambda_\text{dry}\right)
- }\f$
+ * ### Johansen (two fluid phases)
  *
- * with
- * \f$\mathrm{
- \lambda_\text{wet} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_w^\phi
- }\f$
- * and the semi-empirical relation
+ * `ThermalConductivityJohansen` \cite johansen1977 computes the thermal conductivity of dry and the
+ * wet soil material and interpolates using the Kersten number. The effective wet conductivity
+ * is based on a geometric average and the effective dry conductivity is based on a semi-emprical
+ * relation and fitted to medium quartz sand.
  *
- * \f$\mathrm{
- \lambda_\text{dry} = \frac{0.135*\rho_s*\phi + 64.7}{\rho_s - 0.947 \rho_s*\phi}.
- }\f$
- *
- * Source: Phdthesis (Johansen1975) Johansen, O. Thermal conductivity of soils Norw. Univ. of Sci. Technol., Trondheim, Norway, 1975 \cite johansen1977
+ * The effective thermal conductivity is given by
+ * \f[
+ * \lambda_\text{eff} = \lambda_{\text{dry}} + \text{Ke} \left(\lambda_\text{wet} - \lambda_\text{dry}\right), \quad
+ * \lambda_\text{wet} = \lambda_\text{s}^{\left(1-\phi\right)} \lambda_\text{w}^\phi, \quad
+ * \lambda_\text{dry} = \frac{0.135 \rho_\text{s} \phi + 64.7}{\rho_\text{s} - 0.947 \rho_\text{s} \phi},
+ * \f]
+ * where \f$ \phi \f$ is the porosity, \f$ \lambda_\alpha \f$ is the thermal conductivity
+ * of phase \f$ \alpha \f$, \f$ \rho_\text{s} \f$ denotes the density of the solid phase, and the
+ * Kersten number is given by \f$ \text{Ke} = (\kappa S_\text{w})/(1 + (1-\kappa) S_\text{w}) \f$,
+ * with the wetting phase saturation \f$ S_w \f$ and a fitting parameter \f$ \kappa = 15.6 \f$
+ * for medium quartz sand.
  */
 template<class Scalar>
 class ThermalConductivityJohansen
 {
 public:
     /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
-     *
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      * \param volVars volume variables
-     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 <BR>
-     *
-     * This formulation is semi-empirical and fitted to quartz sand.
-     * This gives an interpolation of the effective thermal conductivities of a porous medium
-     * filled with the nonwetting phase and a porous medium filled with the wetting phase.
-     * These two effective conductivities are computed as geometric mean of the solid and the
-     * fluid conductivities and interpolated with the Kersten number.<br>
-     * Johansen, O. 1975. Thermal conductivity of soils. Ph.D. diss. Norwegian Univ.
-     *                    of Sci. and Technol., Trondheim. (Draft Transl. 637. 1977. U.S. Army
-     *                    Corps of Eng., Cold Regions Res. and Eng. Lab., Hanover, NH.) \cite johansen1977
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     template<class VolumeVariables>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars)
@@ -81,16 +68,16 @@ public:
 
 private:
     /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977 .
+     * \brief Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      *
      * \param Sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaN The thermal conductivity of the nonwetting phase in \f$\mathrm{W/(m K)}\f$
+     * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{W/(m K)}\f$
      * \param porosity The porosity
-     * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$
+     * \param rhoSolid The density of solid phase in \f$\mathrm{kg/m^3}\f$
      *
-     * \return Effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Johansen (1975) \cite johansen1977
+     * \return Effective thermal conductivity in \f$\mathrm{W/(m K)}\f$ for two phases
      */
     static Scalar effectiveThermalConductivity_(const Scalar Sw,
                                                 const Scalar lambdaW,
@@ -106,6 +93,7 @@ private:
         const Scalar rhoBulk = rhoSolid*porosity;
 
         using std::pow;
+
         const Scalar lambdaSaturated = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);
         const Scalar lambdaDry = (0.135*rhoBulk + 64.7)/(rhoSolid - 0.947*rhoBulk);
         const Scalar Ke = (kappa*satW)/(1+(kappa-1)*satW);// Kersten number, equation 13
@@ -113,5 +101,7 @@ private:
         return lambdaDry + Ke * (lambdaSaturated - lambdaDry); // equation 14
     }
 };
+
 } // end namespace Dumux
+
 #endif

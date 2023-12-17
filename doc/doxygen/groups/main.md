@@ -10,8 +10,23 @@
 
 @defgroup Parameter Parameters and runtime configuration
 
-@defgroup Material Constitutive modeling
-@brief Constitutive model framework, material models, fluids, solids.
+@defgroup Material Constitutive models
+@brief Constitutive relations for fluids, solids, fluid-matrix interactions, and more
+@details Constitutive relations formalize the functional dependence among physical variables, thereby providing the missing equations to close systems. Some constitutive relations, in particular if they are ad-hoc (e.g. Hooke's law) or empirical
+and not derived from basic principles, are also called material laws.
+Implementations of the functional relationships available in DuMu<sup>x</sup> are collected in the folder `dumux/material`.
+
+Most implementations follow one of the following paradigms
+
+* free functions (in nested namespaces),
+* stateless classes with static member functions where all parameters are function arguments,
+* statefull classes that contain parameters that need to be initialized.
+
+Stateless, purely static classes have the advantage that only the class type needs to be known to
+the class using them. Statefull classes need to be instantiated
+and the instantiated object is passed to the consumer class.
+
+To view the description of individual constitutive models and classes, click on one the modules below.
 
 @defgroup MultiDomain Multidomain framework
 @brief Coupling of several regular DuMu<sup>x</sup> problems
