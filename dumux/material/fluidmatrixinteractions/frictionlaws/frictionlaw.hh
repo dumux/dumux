@@ -22,8 +22,12 @@ namespace Dumux {
  * needed to calculate on the one hand the loss of momentum due to
  * bottom friction and on the other hand the bedload transport rate.
  *
- * A LET mobility model can be used to add an artificial water depth to
- * limit the friction for small water depths.
+ * A LET mobility model of Lomeland et al. 2005 \cite Lomeland2005 can be used to add an
+ * artificial water depth to limit the friction for small water depths.
+ *
+ * \note Instead of calculating the bed friction term \f$\mathbf{S_f}\f$
+ *       of the shallow water equations, the implemented friction laws
+ *       calculate the shear stress \f$\tau_{x}\f$ and \f$\tau_{y}\f$.
  */
 
 template <typename VolumeVariables >
