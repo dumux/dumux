@@ -299,8 +299,8 @@ private:
 
                 pcElement[scv.localDofIndex()] = pc_[dofIdx];
 
-                if (poreLabel_[dofIdx] == inletPoreLabel_ || (poreLabel_[dofIdx] == outletPoreLabel_ && !allowDraingeOfOutlet_))
-                    continue;
+                // if (poreLabel_[dofIdx] == inletPoreLabel_ || (poreLabel_[dofIdx] == outletPoreLabel_ && !allowDraingeOfOutlet_))
+                //     continue;
 
                 if (pc_[dofIdx] > 0.0)
                 {
