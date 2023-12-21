@@ -1082,6 +1082,189 @@ using BlockDiagAMGGMResSolver = BlockDiagAMGPreconditionedSolver<LinearSolverTra
                                                                  Matrix
                                                                 >;
 
+/*!
+ * \ingroup Linear
+ * \brief Linear solvers preconditioned by Uzawa
+ */
+template<class LinearSolverTraitsTuple, class InverseOperator, class Matrix>
+class UzawaPreconditionedSolver : public LinearSolver
+{
+    using Vector = typename InverseOperator::domain_type;
+    using Scalar = typename InverseOperator::real_type;
+    using Category = Dune::SolverCategory::Category;
+    static constexpr auto numBlocks = std::tuple_size_v<LinearSolverTraitsTuple>;
+
+    template<std::size_t i>
+    using VecBlockType = std::decay_t<decltype(std::declval<Vector>()[Dune::index_constant<i>{}])>;
+
+    template<std::size_t i>
+    using LinearSolverTraits = std::tuple_element_t<i, LinearSolverTraitsTuple>;
+
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+
+    template<std::size_t i>
+    using ParallelHelper = ParallelISTLHelper<LinearSolverTraits<i>>;
+    template<std::size_t i>
+    using ParallelHelperSP = std::shared_ptr<ParallelHelper<i>>;
+    using ParallelHelperTuple = typename makeFromIndexedType<std::tuple,
+                                                             ParallelHelperSP,
+                                                             std::make_index_sequence<numBlocks>
+                                                            >::type;
+
+public:
+    /*!
+     * \brief Construct the linear solver
+     *
+     * \param gridViews a tuple of grid views
+     * \param dofMappers a tuple of dof mappers
+     * \param paramGroup parameter group
+     */
+    template<class GridViewTuple, class DofMapperTuple>
+    UzawaPreconditionedSolver(const GridViewTuple& gridViews,
+                                     const DofMapperTuple& dofMappers,
+                                     const std::string& paramGroup = "")
+    : UzawaPreconditionedSolver(gridViews, dofMappers, paramGroup, std::make_index_sequence<numBlocks>{})
+    {}
+
+    /*!
+     * \brief Solve a linear system
+     *
+     * \param A the matrix
+     * \param x the seeked solution vector, containing an initial guess
+     * \param b the right hand side vector
+     */
+    bool solve(Matrix& A, Vector& x, Vector& b)
+    {
+        using Prec = UzawaPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
+        auto prec = std::make_shared<Prec>(A, b, comms_, parHelpers_);
+
+        using LOP = TupleLinearOperator<Vector, Matrix, decltype(prec->linearOperators())>;
+        auto op = std::make_shared<LOP>(prec->linearOperators(), A);
+
+        auto rank = Dune::MPIHelper::getCommunication().rank();
+        if (rank != 0)
+            params_["verbose"] = "0";
+        InverseOperator solver(op, scalarProduct_, prec, params_);
+
+        auto bTmp(b);
+        solver.apply(x, bTmp, result_);
+
+        return result_.converged;
+    }
+
+    /*!
+     * \brief Result containing the convergence history
+     */
+    const Dune::InverseOperatorResult& result() const
+    {
+      return result_;
+    }
+
+    /*!
+     * \brief Calculate the norm of a right-hand side vector
+     *
+     * \param x vector for which the norm will be calculated
+     *
+     * The norm calculation employs the scalar product after
+     * possibly making the parts consistent that correspond
+     * to a non-overlapping distribution in the parallel regime.
+     */
+    Scalar norm(const Vector& x) const
+    {
+        auto y(x); // make a copy because the vector needs to be made consistent
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
+        {
+            if (categories_[i] == Dune::SolverCategory::nonoverlapping)
+            {
+                using GV = typename LinearSolverTraits<i>::GridView;
+                using DM = typename LinearSolverTraits<i>::DofMapper;
+                using PVHelper = ParallelVectorHelper<GV, DM, LinearSolverTraits<i>::dofCodim>;
+
+                const auto& parHelper = *std::get<i>(parHelpers_);
+
+                PVHelper vectorHelper(parHelper.gridView(), parHelper.dofMapper());
+
+                vectorHelper.makeNonOverlappingConsistent(y[i]);
+            }
+        });
+
+        return scalarProduct_->norm(y);
+    }
+
+    /*!
+     * \brief Name of the solver
+     */
+    std::string name() const
+    { return "Uzawa preconditioned linear solver"; }
+
+private:
+
+    template <class ParallelTraits, class PH>
+    void prepareComm_(std::shared_ptr<Comm>& comm, PH& parHelper, Category& category)
+    {
+        if constexpr (ParallelTraits::isNonOverlapping)
+            category = Dune::SolverCategory::nonoverlapping;
+        else
+            category = Dune::SolverCategory::overlapping;
+
+        comm = std::make_shared<Comm>(parHelper.gridView().comm(), category);
+        parHelper.createParallelIndexSet(*comm);
+    }
+
+    template<class GridViewTuple, class DofMapperTuple, std::size_t... Is>
+    UzawaPreconditionedSolver(const GridViewTuple& gridViews,
+                                     const DofMapperTuple& dofMappers,
+                                     const std::string& paramGroup,
+                                     std::index_sequence<Is...> is)
+    : parHelpers_(std::make_tuple(std::make_shared<ParallelHelper<Is>>(std::get<Is>(gridViews), std::get<Is>(dofMappers))...))
+    {
+        params_ = LinearSolverParameters<LinearSolverTraits<0>>::createParameterTree(paramGroup);
+
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<numBlocks>{}, [&](const auto i)
+        {
+            using LSTraits = LinearSolverTraits<i>;
+            using DiagBlock = std::decay_t<decltype(std::declval<Matrix>()[i][i])>;
+            using RHSBlock = VecBlockType<i>;
+
+            auto& parHelper = *std::get<i>(parHelpers_);
+
+            if (LSTraits::isNonOverlapping(parHelper.gridView()))
+            {
+                using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
+                prepareComm_<PTraits>(comms_[i], parHelper, categories_[i]);
+            }
+            else
+            {
+                using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
+                prepareComm_<PTraits>(comms_[i], parHelper, categories_[i]);
+            }
+        });
+
+        scalarProduct_ = std::make_shared<ParallelMultiTypeScalarProduct<Vector, Comm>>(comms_);
+    }
+
+    ParallelHelperTuple parHelpers_;
+    std::array<std::shared_ptr<Comm>, numBlocks> comms_;
+    std::shared_ptr<ParallelMultiTypeScalarProduct<Vector, Comm>> scalarProduct_;
+    std::array<Category, numBlocks> categories_;
+    Dune::InverseOperatorResult result_;
+    Dune::ParameterTree params_;
+};
+
+template<class LinearSolverTraitsTuple, class Matrix, class Vector>
+using UzawaBiCGSTABSolver = UzawaPreconditionedSolver<LinearSolverTraitsTuple,
+                                                      Dune::BiCGSTABSolver<Vector>,
+                                                      Matrix
+                                                     >;
+
+template<class LinearSolverTraitsTuple, class Matrix, class Vector>
+using UzawaGMResSolver = UzawaPreconditionedSolver<LinearSolverTraitsTuple,
+                                                   Dune::RestartedGMResSolver<Vector>,
+                                                   Matrix
+                                                  >;
+
 } // end namespace Dumux
 
 #endif

@@ -183,8 +183,13 @@ int main(int argc, char** argv)
         );
 
     // the linear solver
-    using LinearSolver = LINEARSOLVER;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LSTraits = std::tuple<LinearSolverTraits<MomentumGridGeometry>,
+                                LinearSolverTraits<MassGridGeometry>>;
+    using LinearSolver = UzawaGMResSolver<LSTraits, typename Assembler::JacobianMatrix, SolutionVector>;
+    auto views = std::make_tuple(leafGridView, leafGridView);
+    const auto& momentumDofMapper = LinearSolverTraits<MomentumGridGeometry>::dofMapper(*momentumGridGeometry);
+    auto mappers = std::make_tuple(momentumDofMapper, massGridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(views, mappers);
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
