@@ -1,4 +1,5 @@
 [Grid]
+File = ./grids/980_98.dgf
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 10 10 10
 PoreGeometry = Cube
@@ -16,8 +17,8 @@ ParameterRandomNumberSeed = 22
 
 [Problem]
 Name = test_pnm_2p_upscaling
-InitialPc = 3500 # [Pa]
-FinalPc = 7000 # [Pa]
+InitialPc = 400000 # [Pa]
+FinalPc = 10000000 # [Pa]
 NumSteps = 60 # the number of episodes to run
 PlotPcS = true
 SurfaceTension = 0.0725
