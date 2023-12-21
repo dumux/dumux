@@ -867,12 +867,13 @@ namespace Dumux {
 template<class LSTraits, class LATraits>
 using SuperLUIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::SuperLU>;
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif // HAVE_SUPERLU
 
 #if HAVE_UMFPACK
 #include <dune/istl/umfpack.hh>
+#include <dune/common/version.hh>
 
 namespace Dumux {
 
@@ -885,7 +886,12 @@ namespace Dumux {
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
 template<class LSTraits, class LATraits>
-using UMFPackIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::UMFPack>;
+using UMFPackIstlSolver = Detail::DirectIstlSolver<
+    LSTraits, LATraits, Dune::UMFPack
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,10)
+    , false // no need to convert multi-type matrix anymore
+#endif
+>;
 
 } // end namespace Dumux
 

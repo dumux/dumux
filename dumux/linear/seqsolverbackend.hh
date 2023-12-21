@@ -29,7 +29,6 @@
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
 #include <dumux/linear/parallelmatrixadapter.hh>
-#include <dumux/linear/parallelhelpers.hh>
 
 namespace Dumux {
 

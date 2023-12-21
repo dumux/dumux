@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Preconditioners for iterative solvers
+ * \brief Dumux preconditioners for iterative solvers
  */
 #ifndef DUMUX_LINEAR_PRECONDITIONERS_HH
 #define DUMUX_LINEAR_PRECONDITIONERS_HH
