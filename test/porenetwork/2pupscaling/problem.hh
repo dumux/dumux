@@ -66,6 +66,9 @@ public:
 
         // an epsilon value for the floating point comparisons to determine inlet/outlet pores
         eps_ = getParam<Scalar>("Problem.Epsilon", 1e-7);
+
+        inletPoreLabel_ = getParam<int>("Problem.InletPoreLabel");
+        outletPoreLabel_ = getParam<int>("Problem.OutletPoreLabel");
     }
     // [[/codeblock]]
 
@@ -159,14 +162,14 @@ public:
     int inletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {1, 3, 5};
-        return label[direction_];
+        return inletPoreLabel_;//label[direction_];
     }
 
     // Return the label of outlet pores assuming a previously set direction.
     int outletPoreLabel() const
     {
         static constexpr std::array<int, 3> label = {2, 4, 6};
-        return label[direction_];
+        return outletPoreLabel_;//label[direction_];
     }
 
     template<class Transmissibility>
@@ -198,6 +201,9 @@ private:
     int direction_;
     GlobalPosition length_;
     bool useLabels_;
+
+    int inletPoreLabel_;
+    int outletPoreLabel_;
 };
 
 } // end namespace Dumux
