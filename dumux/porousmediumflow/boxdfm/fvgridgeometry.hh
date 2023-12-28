@@ -159,18 +159,11 @@ public:
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (call this after grid adaption)
-    template< class FractureGridAdapter >
-    void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
+    template< class _GV, class FractureGridAdapter >
+    void update(_GV&& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
-        ParentType::update(gridView);
-        update_(fractureGridAdapter);
-    }
-
-    //! update all fvElementGeometries (call this after grid adaption)
-    template< class FractureGridAdapter >
-    void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
-    {
-        ParentType::update(std::move(gridView));
+        static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
+        ParentType::update(std::forward<_GV>(gridView));
         update_(fractureGridAdapter);
     }
 
@@ -481,22 +474,15 @@ public:
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (call this after grid adaption)
-    template< class FractureGridAdapter >
-    void update(const GridView& gridView, const FractureGridAdapter& fractureGridAdapter)
+    template< class _GV, class FractureGridAdapter >
+    void update(const _GV& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
+        static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(gridView);
         updateFacetMapper_();
         update_(fractureGridAdapter);
     }
 
-    //! update all fvElementGeometries (call this after grid adaption)
-    template< class FractureGridAdapter >
-    void update(GridView&& gridView, const FractureGridAdapter& fractureGridAdapter)
-    {
-        ParentType::update(std::move(gridView));
-        updateFacetMapper_();
-        update_(fractureGridAdapter);
-    }
 
     //! The finite element cache for creating local FE bases
     const FeCache& feCache() const { return feCache_; }
