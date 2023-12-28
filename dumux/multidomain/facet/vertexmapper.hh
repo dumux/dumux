@@ -227,6 +227,16 @@ public:
     void enrich(const CodimOneGridView& codimOneGridView,
                 const CodimOneGridAdapter& codimOneGridAdapter,
                 bool verbose = false)
+    { enrich(codimOneGridView, codimOneGridAdapter, EnrichmentIndicator{}, verbose); }
+
+    /*!
+     * \brief Overload with custom enrichment marker.
+     */
+    template<class CodimOneGridView, class CodimOneGridAdapter, class EnrichmentMarker>
+    void enrich(const CodimOneGridView& codimOneGridView,
+                const CodimOneGridAdapter& codimOneGridAdapter,
+                const EnrichmentMarker& enrichmentMarker,
+                bool verbose = false)
     {
         static const int codimOneDim = CodimOneGridView::dimension;
         static_assert(codimOneDim == dim-1, "Grid dimension mismatch!");
@@ -237,7 +247,7 @@ public:
         Dune::Timer watch;
 
         // mark vertices for enrichment using the indicator
-        EnrichmentIndicator::markVerticesForEnrichment(isEnriched_, gridView_, vertexMapper_, codimOneGridView, codimOneGridAdapter);
+        enrichmentMarker.markVerticesForEnrichment(isEnriched_, gridView_, vertexMapper_, codimOneGridView, codimOneGridAdapter);
 
         // let the helper class do the enrichment of the index map
         size_ = VertexEnrichmentHelper< GridView, CodimOneGridView >::enrich(indexMap_,
