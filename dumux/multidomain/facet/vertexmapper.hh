@@ -77,21 +77,17 @@ public:
                                                              dim ) ] = true;
         }
 
-        // for now, set all markers to true for vertices on codim one grid
-        for (const auto& vertex : vertices(codimOneGridView))
-            vertexMarkers[codimOneGridAdapter.bulkGridVertexIndex(vertex)] = true;
-
-        // unmark where necessary
+        // mark all vertices on the lower-dimensional grid to be enriched (except immersed boundaries)
+        std::vector<typename GridView::IndexSet::IndexType> vertexIndicesStorage;
         for (const auto& codimOneElement : elements(codimOneGridView))
         {
-            // if a codimension one element has less than two embedments  we do not need to enrich
-            if (codimOneGridAdapter.numEmbedments(codimOneElement) < 2)
-                for (int i = 0; i < codimOneElement.subEntities(dim-1); ++i)
-                    vertexMarkers[ codimOneGridAdapter.bulkGridVertexIndex(codimOneElement.template subEntity<dim-1>(i)) ] = false;
-
-            // otherwise, we check for immersed boundaries where we also must not enrich
-            else
+            // if a codimension one element has 2 or more embedments, we need to enrich
+            if (codimOneGridAdapter.numEmbedments(codimOneElement) >= 2)
             {
+                for (int i = 0; i < codimOneElement.subEntities(dim-1); ++i)
+                    vertexMarkers[ codimOneGridAdapter.bulkGridVertexIndex(codimOneElement.template subEntity<dim-1>(i)) ] = true;
+
+                // however, we have to exclude immersed boundaries
                 const auto refElem = referenceElement(codimOneElement);
                 for (const auto& intersection : intersections(codimOneGridView, codimOneElement))
                 {
@@ -99,18 +95,18 @@ public:
                     if (!intersection.boundary())
                         continue;
 
-                    // obtain all grid indices of the intersection corners
+                    // obtain all bulk grid indices of the lower-dimensional intersection corners
                     const auto numCorners = intersection.geometry().corners();
-                    std::vector<typename GridView::IndexSet::IndexType> vertexIndices(numCorners);
+                    vertexIndicesStorage.resize(numCorners);
                     for (int i = 0; i < numCorners; ++i)
                     {
                         const auto vIdxLocal = refElem.subEntity(intersection.indexInInside(), 1, i, dim-1);
-                        vertexIndices[i] = codimOneGridAdapter.bulkGridVertexIndex( codimOneElement.template subEntity<dim-1>(vIdxLocal) );
+                        vertexIndicesStorage[i] = codimOneGridAdapter.bulkGridVertexIndex( codimOneElement.template subEntity<dim-1>(vIdxLocal) );
                     }
 
                     // if any of the vertices is on an immersed boundary, we must not enrich any of them
-                    if (std::any_of(vertexIndices.begin(), vertexIndices.end(), [&isOnBoundary] (auto idx) { return !isOnBoundary[idx]; }))
-                        std::for_each(vertexIndices.begin(), vertexIndices.end(), [&vertexMarkers] (auto idx) { vertexMarkers[idx] = false; });
+                    if (std::any_of(vertexIndicesStorage.begin(), vertexIndicesStorage.end(), [&isOnBoundary] (auto idx) { return !isOnBoundary[idx]; }))
+                        std::for_each(vertexIndicesStorage.begin(), vertexIndicesStorage.end(), [&vertexMarkers] (auto idx) { vertexMarkers[idx] = false; });
                 }
             }
         }
