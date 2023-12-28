@@ -18,6 +18,7 @@
 
 #include "fvgridgeometry.hh"
 #include "fluxvariablescache.hh"
+#include "vertexmapper.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -33,11 +34,20 @@ template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::BoxDfmModel>
 {
 private:
+    template<class GridView>
+    struct MapperTraits
+    {
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+        using VertexMapper = BoxDfmVertexMapper<GridView>;
+    };
+
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = BoxDfmFVGridGeometry<Scalar, GridView, enableCache>;
+    using type = BoxDfmFVGridGeometry<
+        Scalar, GridView, enableCache, BoxDfmDefaultGridGeometryTraits<GridView, MapperTraits<GridView>>
+    >;
 };
 
 //! The flux variables cache class specific to box-dfm porous medium flow models
