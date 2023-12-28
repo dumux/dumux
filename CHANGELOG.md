@@ -12,6 +12,7 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 - __Darcy-Brinkman Freeflow__: There is no a convenience function to add a Brinkman term to turn the Navier-Stokes model into the Darcy-Brinkman model. With this, a single domain can contain both free flow and flow through a porous medium.
 The term is added as a source term in the problem using the new helper function `addBrinkmanTerm`.
 The function uses new spatial parameter interface implemented in the new `BrinkmanSpatialParams` class (`dumux/freeflow/spatialparams.hh`). The helper function can deal with isotropic and anisotropic permeabilites.
+- __Facet-Coupling__: Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
