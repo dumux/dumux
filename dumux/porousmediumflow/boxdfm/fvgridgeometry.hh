@@ -223,9 +223,89 @@ private:
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
+            // convenience function to add the entities on a fracture intersection
+            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
+            const auto handleFractureIntersection = [&] (
+                const auto& intersection,
+                const auto& isGeometry,
+                const auto& isVertexIndices,
+                auto& scvLocalIdx,
+                auto& scvfLocalIdx
+            ) {
+                for (auto vIdx : isVertexIndices)
+                    fractureDofIndices_[vIdx] = true;
+
+                // add fracture scv for each vertex of intersection
+                const auto numCorners = isGeometry.corners();
+                const auto idxInInside = intersection.indexInInside();
+                numScv_ += numCorners;
+                const auto curNumScvs = scvs_[eIdx].size();
+                scvs_[eIdx].reserve(curNumScvs+numCorners);
+                for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
+                    scvs_[eIdx].emplace_back(geometryHelper,
+                                            intersection,
+                                            isGeometry,
+                                            vIdxLocal,
+                                            static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
+                                            scvLocalIdx++,
+                                            idxInInside,
+                                            eIdx,
+                                            isVertexIndices[vIdxLocal]);
+
+                // add fracture scvf for each edge of the intersection in 3d
+                if (dim == 3)
+                {
+                    const auto& faceRefElement = referenceElement(isGeometry);
+                    for (unsigned int edgeIdx = 0; edgeIdx < faceRefElement.size(1); ++edgeIdx)
+                    {
+                        // inside/outside scv indices in face local node numbering
+                        std::vector<LocalIndexType> localScvIndices({
+                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
+                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))
+                        });
+
+                        // add offset to get the right scv indices
+                        std::for_each( localScvIndices.begin(),
+                                    localScvIndices.end(),
+                                    [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
+
+                        // add scvf
+                        numScvf_++;
+                        scvfs_[eIdx].emplace_back(geometryHelper,
+                                                intersection,
+                                                isGeometry,
+                                                edgeIdx,
+                                                scvfLocalIdx++,
+                                                std::move(localScvIndices),
+                                                intersection.boundary());
+                    }
+                }
+
+                // dim == 2, intersection is an edge, make 1 scvf
+                else
+                {
+                    // inside/outside scv indices in face local node numbering
+                    std::vector<LocalIndexType> localScvIndices({0, 1});
+
+                    // add offset such that the fracture scvs above are addressed
+                    std::for_each( localScvIndices.begin(),
+                                localScvIndices.end(),
+                                [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
+
+                    // add scvf
+                    numScvf_++;
+                    scvfs_[eIdx].emplace_back(geometryHelper,
+                                            intersection,
+                                            isGeometry,
+                                            /*idxOnIntersection*/0,
+                                            scvfLocalIdx++,
+                                            std::move(localScvIndices),
+                                            intersection.boundary());
+                }
+            };
+
             // construct the sub control volumes
             scvs_[eIdx].resize(elementGeometry.corners());
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
@@ -271,11 +351,6 @@ private:
                 const auto numCorners = isGeometry.corners();
                 const auto idxInInside = intersection.indexInInside();
 
-                std::vector<GridIndexType> isVertexIndices(numCorners);
-                for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                    isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
-                                                                               refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
-                                                                               dim);
                 // maybe add boundary scvf
                 if (intersection.boundary() && !intersection.neighbor())
                 {
@@ -310,75 +385,13 @@ private:
                     DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
 
                 // maybe add fracture scvs & scvfs
+                std::vector<GridIndexType> isVertexIndices(numCorners);
+                for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
+                    isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
+                                                                               refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
+                                                                               dim);
                 if (fractureGridAdapter.composeFacetElement(isVertexIndices))
-                {
-                    for (auto vIdx : isVertexIndices)
-                        fractureDofIndices_[vIdx] = true;
-
-                    // add fracture scv for each vertex of intersection
-                    numScv_ += numCorners;
-                    const auto curNumScvs = scvs_[eIdx].size();
-                    scvs_[eIdx].reserve(curNumScvs+numCorners);
-                    for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                        scvs_[eIdx].emplace_back(geometryHelper,
-                                                 intersection,
-                                                 isGeometry,
-                                                 vIdxLocal,
-                                                 static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
-                                                 scvLocalIdx++,
-                                                 idxInInside,
-                                                 eIdx,
-                                                 isVertexIndices[vIdxLocal]);
-
-                    // add fracture scvf for each edge of the intersection in 3d
-                    if (dim == 3)
-                    {
-                        const auto& faceRefElement = referenceElement(isGeometry);
-                        for (unsigned int edgeIdx = 0; edgeIdx < faceRefElement.size(1); ++edgeIdx)
-                        {
-                            // inside/outside scv indices in face local node numbering
-                            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
-                                                                         static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))});
-
-                            // add offset to get the right scv indices
-                            std::for_each( localScvIndices.begin(),
-                                           localScvIndices.end(),
-                                           [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
-
-                            // add scvf
-                            numScvf_++;
-                            scvfs_[eIdx].emplace_back(geometryHelper,
-                                                      intersection,
-                                                      isGeometry,
-                                                      edgeIdx,
-                                                      scvfLocalIdx++,
-                                                      std::move(localScvIndices),
-                                                      intersection.boundary());
-                        }
-                    }
-
-                    // dim == 2, intersection is an edge, make 1 scvf
-                    else
-                    {
-                        // inside/outside scv indices in face local node numbering
-                        std::vector<LocalIndexType> localScvIndices({0, 1});
-
-                        // add offset such that the fracture scvs above are addressed
-                        std::for_each( localScvIndices.begin(),
-                                       localScvIndices.end(),
-                                       [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
-
-                        // add scvf
-                        numScvf_++;
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                  intersection,
-                                                  isGeometry,
-                                                  /*idxOnIntersection*/0,
-                                                  scvfLocalIdx++,
-                                                  std::move(localScvIndices),
-                                                  intersection.boundary());
-                    }
-                }
+                    handleFractureIntersection(intersection, isGeometry, isVertexIndices, scvLocalIdx, scvfLocalIdx);
             }
         }
     }
