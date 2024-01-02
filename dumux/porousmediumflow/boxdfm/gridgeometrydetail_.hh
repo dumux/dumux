@@ -9,8 +9,27 @@
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_GEOMETRY_DETAIL_HH
 
 #include <utility>
+#include <dune/geometry/referenceelements.hh>
 
 namespace Dumux::BoxDfmDetail {
+
+template<class GridView>
+struct DefaultBulkFractureIntersection
+{
+private:
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+public:
+    const Element& element;
+    const typename Element::Geometry& elementGeometry;
+    const std::decay_t<decltype(referenceElement(std::declval<Element>()))>& referenceElement;
+
+    const Intersection& intersection;
+    const typename Intersection::Geometry& intersectionGeometry;
+    const std::vector<IndexType>& intersectionVertexIndices;
+};
 
 // Add fracture geometries on a bulk grid intersection to storage containers
 template<class LocalIndexType = unsigned int,

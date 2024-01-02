@@ -142,20 +142,6 @@ public:
     //! export the geometry helper type
     using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
-private:
-
-    template<class ReferenceElement>
-    struct FractureIntersection
-    {
-        const Element& element;
-        const typename Element::Geometry& elementGeometry;
-        const ReferenceElement& referenceElement;
-
-        const Intersection& intersection;
-        const typename Intersection::Geometry& intersectionGeometry;
-        const std::vector<GridIndexType>& intersectionVertexIndices;
-    };
-
 public:
 
     //! Constructor
@@ -370,7 +356,7 @@ private:
                             fractureDofIndices_[vIdx] = true;
 
                         const auto [numFracScv, numFracScvf] = BoxDfmDetail::pushFractureGeometries<LocalIndexType>(
-                            FractureIntersection<std::decay_t<decltype(refElement)>>{
+                            BoxDfmDetail::DefaultBulkFractureIntersection<GridView>{
                                 element, elementGeometry, refElement, intersection, isGeometry, isVertexIndices
                             },
                             eIdx, geometryHelper,
