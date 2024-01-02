@@ -20,6 +20,8 @@
 #include <utility>
 #include <unordered_map>
 
+#include <dune/common/exceptions.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/common/mcmgmapper.hh>
@@ -30,6 +32,7 @@
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include "gridgeometrydetail_.hh"
 #include "fvelementgeometry.hh"
 #include "geometryhelper.hh"
 #include "subcontrolvolume.hh"
@@ -38,12 +41,21 @@
 namespace Dumux {
 
 namespace Detail {
+
 template<class GV, class T>
 using BoxDfmGeometryHelper_t = Dune::Std::detected_or_t<
     Dumux::BoxDfmGeometryHelper<GV, GV::dimension, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
     SpecifiesGeometryHelper,
     T
 >;
+
+// helpers for deprecation period
+template<class T>
+using DetectCodimOneGridAdapterInterface = decltype(std::declval<const T>().composeFacetElement(std::vector<int>{}));
+
+template<class T>
+inline constexpr bool isCodimOneGridAdapter = Dune::Std::is_detected<DetectCodimOneGridAdapterInterface, T>::value;
+
 } // end namespace Detail
 
 /*!
@@ -99,7 +111,9 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
     using GridIndexType = typename GV::IndexSet::IndexType;
+    using LocalIndexType = typename Traits::SubControlVolumeFace::Traits::LocalIndexType;
 
+    using Intersection = typename GV::Intersection;
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
     static const int dim = GV::dimension;
@@ -128,14 +142,36 @@ public:
     //! export the geometry helper type
     using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
+private:
+
+    template<class ReferenceElement>
+    struct FractureIntersection
+    {
+        const Element& element;
+        const typename Element::Geometry& elementGeometry;
+        const ReferenceElement& referenceElement;
+
+        const Intersection& intersection;
+        const typename Intersection::Geometry& intersectionGeometry;
+        const std::vector<GridIndexType>& intersectionVertexIndices;
+    };
+
+public:
+
     //! Constructor
-    template< class FractureGridAdapter >
+    template< class FractureGridAdapter, std::enable_if_t<Detail::isCodimOneGridAdapter<FractureGridAdapter>, bool> = true >
+    [[deprecated("Use fracture intersections interface instead, see dumux/porousmediumflow/boxdfm/fractureintersections.hh for an example. Will be removed after 3.9.")]]
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
-    {
-        update_(fractureGridAdapter);
-    }
+    { update_<false>(fractureGridAdapter); }
+
+    //! Constructor
+    template< class FractureIntersections, std::enable_if_t<!Detail::isCodimOneGridAdapter<FractureIntersections>, bool> = true >
+    BoxDfmFVGridGeometry(const GridView gridView, const FractureIntersections& fractureIntersections)
+    : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    { update_<true>(fractureIntersections); }
 
     //! The vertex mapper is the dofMapper
     //! This is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -159,13 +195,23 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(dim); }
 
-    //! update all fvElementGeometries (call this after grid adaption)
-    template< class _GV, class FractureGridAdapter >
+    //! update all fv element geometries (call this after grid adaption)
+    template< class _GV, class FractureGridAdapter, std::enable_if_t<Detail::isCodimOneGridAdapter<FractureGridAdapter>, bool> = true >
+    [[deprecated("Use fracture intersections interface instead, see dumux/porousmediumflow/boxdfm/fractureintersections.hh for an example. Will be removed after 3.9.")]]
     void update(_GV&& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(std::forward<_GV>(gridView));
-        update_(fractureGridAdapter);
+        update_<false>(fractureGridAdapter);
+    }
+
+    //! update all fv element geometries (call this after grid adaption)
+    template< class _GV, class FractureIntersections, std::enable_if_t<!Detail::isCodimOneGridAdapter<FractureIntersections>, bool> = true >
+    void update(_GV&& gridView, const FractureIntersections& fractureIntersections)
+    {
+        static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
+        ParentType::update(std::forward<_GV>(gridView));
+        update_<true>(fractureIntersections);
     }
 
     //! The finite element cache for creating local FE bases
@@ -194,24 +240,24 @@ public:
     { return std::unordered_map<std::size_t, std::size_t>(); }
 
 private:
-
-    template< class FractureGridAdapter >
-    void update_(const FractureGridAdapter& fractureGridAdapter)
+    // TODO: Once deprecation phase is finished, remove bool from template args
+    template< bool useNewUpdate, class FractureIntersections>
+    void update_(const FractureIntersections& fractureIntersections)
     {
         scvs_.clear();
         scvfs_.clear();
 
-        auto numElements = this->gridView().size(0);
-        scvs_.resize(numElements);
-        scvfs_.resize(numElements);
+        scvs_.resize(this->gridView().size(0));
+        scvfs_.resize(this->gridView().size(2));
 
         boundaryDofIndices_.assign(numDofs(), false);
-        fractureDofIndices_.assign(this->gridView.size(dim), false);
+        fractureDofIndices_.assign(numDofs(), false);
         facetOnFracture_.assign(this->gridView().size(1), false);
 
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
+
         // Build the SCV and SCV faces
         for (const auto& element : elements(this->gridView()))
         {
@@ -228,87 +274,6 @@ private:
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
-
-            // convenience function to add the entities on a fracture intersection
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
-            const auto handleFractureIntersection = [&] (
-                const auto& intersection,
-                const auto& isGeometry,
-                const auto& isVertexIndices,
-                auto& scvLocalIdx,
-                auto& scvfLocalIdx
-            ) {
-                for (auto vIdx : isVertexIndices)
-                    fractureDofIndices_[vIdx] = true;
-
-                // add fracture scv for each vertex of intersection
-                const auto numCorners = isGeometry.corners();
-                const auto idxInInside = intersection.indexInInside();
-                numScv_ += numCorners;
-                const auto curNumScvs = scvs_[eIdx].size();
-                scvs_[eIdx].reserve(curNumScvs+numCorners);
-                for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                    scvs_[eIdx].emplace_back(geometryHelper,
-                                            intersection,
-                                            isGeometry,
-                                            vIdxLocal,
-                                            static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
-                                            scvLocalIdx++,
-                                            idxInInside,
-                                            eIdx,
-                                            isVertexIndices[vIdxLocal]);
-
-                // add fracture scvf for each edge of the intersection in 3d
-                if (dim == 3)
-                {
-                    const auto& faceRefElement = referenceElement(isGeometry);
-                    for (unsigned int edgeIdx = 0; edgeIdx < faceRefElement.size(1); ++edgeIdx)
-                    {
-                        // inside/outside scv indices in face local node numbering
-                        std::vector<LocalIndexType> localScvIndices({
-                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
-                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))
-                        });
-
-                        // add offset to get the right scv indices
-                        std::for_each( localScvIndices.begin(),
-                                    localScvIndices.end(),
-                                    [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
-
-                        // add scvf
-                        numScvf_++;
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                intersection,
-                                                isGeometry,
-                                                edgeIdx,
-                                                scvfLocalIdx++,
-                                                std::move(localScvIndices),
-                                                intersection.boundary());
-                    }
-                }
-
-                // dim == 2, intersection is an edge, make 1 scvf
-                else
-                {
-                    // inside/outside scv indices in face local node numbering
-                    std::vector<LocalIndexType> localScvIndices({0, 1});
-
-                    // add offset such that the fracture scvs above are addressed
-                    std::for_each( localScvIndices.begin(),
-                                localScvIndices.end(),
-                                [curNumScvs] (auto& elemLocalIdx) { elemLocalIdx += curNumScvs; } );
-
-                    // add scvf
-                    numScvf_++;
-                    scvfs_[eIdx].emplace_back(geometryHelper,
-                                            intersection,
-                                            isGeometry,
-                                            /*idxOnIntersection*/0,
-                                            scvfLocalIdx++,
-                                            std::move(localScvIndices),
-                                            intersection.boundary());
-                }
-            };
 
             // construct the sub control volumes
             scvs_[eIdx].resize(elementGeometry.corners());
@@ -349,7 +314,6 @@ private:
             //      In that case, the fracture boundary scvf wouldn't make sense. In order to do it properly
             //      we would have to find only those fractures that are at the boundary and aren't connected
             //      to a fracture which is a boundary.
-            LocalIndexType scvLocalIdx = element.subEntities(dim);
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 // first, obtain all vertex indices on this intersection
@@ -390,19 +354,50 @@ private:
                 else if (intersection.boundary() && intersection.neighbor())
                     DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
 
-                // maybe add fracture scvs & scvfs
-                std::vector<GridIndexType> isVertexIndices(numCorners);
-                for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                    isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
-                                                                               refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
-                                                                               dim);
-                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
+                // TODO: Remove after deprecation phase
+                if constexpr (!useNewUpdate)
                 {
-                    facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
-                    handleFractureIntersection(intersection, isGeometry, isVertexIndices, scvLocalIdx, scvfLocalIdx);
+                    std::vector<GridIndexType> isVertexIndices(numCorners);
+                    for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
+                        isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(
+                            element, refElement.subEntity(idxInInside, 1, vIdxLocal, dim), dim
+                        );
+
+                    if (fractureIntersections.composeFacetElement(isVertexIndices))
+                    {
+                        facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
+                        for (auto vIdx : isVertexIndices)
+                            fractureDofIndices_[vIdx] = true;
+
+                        const auto [numFracScv, numFracScvf] = BoxDfmDetail::pushFractureGeometries<LocalIndexType>(
+                            FractureIntersection<std::decay_t<decltype(refElement)>>{
+                                element, elementGeometry, refElement, intersection, isGeometry, isVertexIndices
+                            },
+                            eIdx, geometryHelper,
+                            scvs_[eIdx], scvfs_[eIdx]
+                        );
+                        numScv_ += numFracScv;
+                        numScvf_ += numFracScvf;
+                        scvfLocalIdx += numFracScvf;
+                    }
                 }
             }
         }
+
+        // Construct fracture scvs/scvfs on all fractures of the network
+        if constexpr (useNewUpdate)
+            fractureIntersections.visit([&] (const auto& is) {
+                facetOnFracture_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
+                for (auto vIdx : is.intersectionVertexIndices)
+                    fractureDofIndices_[vIdx] = true;
+
+                const auto eIdx = this->elementMapper().index(is.element);
+                const auto [numFracScv, numFracScvf] = BoxDfmDetail::pushFractureGeometries<LocalIndexType>(
+                    is, eIdx, GeometryHelper{is.elementGeometry}, scvs_[eIdx], scvfs_[eIdx]
+                );
+                numScv_ += numFracScv;
+                numScvf_ += numFracScvf;
+            });
     }
 
     const FeCache feCache_;
