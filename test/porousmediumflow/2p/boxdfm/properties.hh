@@ -37,6 +37,10 @@
 #define GRIDTYPE Dune::ALUGrid<2, 2, Dune::simplex , Dune::conforming>;
 #endif
 
+#ifndef GRIDGEOMETRYCACHING
+#define GRIDGEOMETRYCACHING 0
+#endif
+
 namespace Dumux::Properties {
 
 // we need to derive first from twop and then from the box-dfm Model
@@ -85,7 +89,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> {
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = false; };
+struct EnableGridGeometryCache<TypeTag, TTag::TwoPIncompressibleBoxDfm> { static constexpr bool value = GRIDGEOMETRYCACHING; };
 
 // Enable the box-interface solver
 template<class TypeTag>

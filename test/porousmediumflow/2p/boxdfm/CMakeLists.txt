@@ -31,6 +31,21 @@ dumux_add_test(NAME test_2p_boxdfm_quads_ug
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug-00023.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug params.input -Problem.Name test_2p_boxdfm_quads_ug -Grid.File grids/quads_2d.msh")
 
+# quad grid with active grid geometry caching
+dumux_add_test(NAME test_2p_boxdfm_quads_ug_caching
+              LABELS porousmediumflow 2p boxdfm
+              SOURCES main.cc
+              CMAKE_GUARD dune-uggrid_FOUND
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
+              COMPILE_DEFINITIONS GRIDGEOMETRYCACHING=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_quads-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug_caching-00023.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug_caching params.input -Problem.Name test_2p_boxdfm_quads_ug_caching -Grid.File grids/quads_2d.msh")
+
 # triangles alu
 dumux_add_test(NAME test_2p_boxdfm_trias_alu
               LABELS porousmediumflow 2p boxdfm
