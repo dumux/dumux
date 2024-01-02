@@ -125,6 +125,12 @@ public:
     }
 
     /*!
+     * \brief Return a reference to the bulk grid vertex mapper used.
+     */
+    const auto& bulkGridVertexMapper() const
+    { return bulkVertexMapper_; }
+
+    /*!
      * \brief Returns the index within the d-dimensional grid of a vertex
      *        of the (d-1)-dimensional grid.
      * \note  Leads to undefined behaviour if called for a vertex which doesn't
