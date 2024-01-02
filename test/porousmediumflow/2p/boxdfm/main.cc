@@ -34,6 +34,7 @@
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/porousmediumflow/boxdfm/vtkoutputmodule.hh>
+#include <dumux/porousmediumflow/boxdfm/fractureintersections.hh>
 
 #include "properties.hh"
 
@@ -64,19 +65,12 @@ int main(int argc, char** argv)
     GridManager gridManager;
     gridManager.init();
 
-    // use the grid adapter from the facet coupling framework to
-    // identify the grid facets that coincide with a fracture.
-    // For instantiation we extract the info on the embeddings from
-    // the grid manager (info is read from the grid file)
-    using MatrixFractureGridAdapter = CodimOneGridAdapter<typename GridManager::Embeddings>;
-    MatrixFractureGridAdapter fractureGridAdapter(gridManager.getEmbeddings());
-
     // matrix grid view is the first one (index 0) inside the manager
     const auto& leafGridView = gridManager.template grid<0>().leafGridView();
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, fractureGridAdapter);
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, BoxDfmFractureIntersections{Dune::Indices::_1, gridManager});
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -105,7 +99,7 @@ int main(int argc, char** argv)
     // initialize the vtk output module
     using VtkOutputModule = BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid>;
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), fractureGridAdapter, "", Dune::VTK::nonconforming);
+    VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
