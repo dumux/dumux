@@ -132,6 +132,7 @@ public:
     template< class FractureGridAdapter >
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
     {
         update_(fractureGridAdapter);
     }
@@ -180,6 +181,10 @@ public:
     //! Periodic boundaries are not supported for the box-dfm scheme
     bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
 
+    //! Returns true if an intersection coincides with a fracture element
+    bool isOnFracture(const Element& element, const Intersection& intersection) const
+    { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
+
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
@@ -202,6 +207,7 @@ private:
 
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(this->gridView.size(dim), false);
+        facetOnFracture_.assign(this->gridView().size(1), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -391,7 +397,10 @@ private:
                                                                                refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
                                                                                dim);
                 if (fractureGridAdapter.composeFacetElement(isVertexIndices))
+                {
+                    facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
                     handleFractureIntersection(intersection, isGeometry, isVertexIndices, scvLocalIdx, scvfLocalIdx);
+                }
             }
         }
     }
@@ -409,6 +418,10 @@ private:
     // vertices on the boundary & fracture facets
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> fractureDofIndices_;
+
+    // facet mapper and markers which facets lie on interior boundaries
+    typename Traits::FacetMapper facetMapper_;
+    std::vector<bool> facetOnFracture_;
 };
 
 /*!

@@ -14,6 +14,7 @@
 #define POROUSMEDIUMFLOW_BOXDFM_VTK_OUTPUT_MODULE_HH
 
 #include <set>
+#include <limits>
 
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh>
@@ -73,17 +74,30 @@ public:
 
     //! The constructor
     template< class FractureGridAdapter >
+    [[deprecated("Use constructor without fractureGridAdapter instead. Will be removed after 3.9!")]]
     BoxDfmVtkOutputModule(const GridVariables& gridVariables,
                           const SolutionVector& sol,
                           const std::string& name,
-                          const FractureGridAdapter& fractureGridAdapter,
+                          const FractureGridAdapter&,
                           const std::string& paramGroup = "",
                           Dune::VTK::DataMode dm = Dune::VTK::conforming,
                           bool verbose = true)
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
         // create the fracture grid and all objects needed on it
-        initializeFracture_(fractureGridAdapter);
+        initializeFracture_();
+    }
+
+    BoxDfmVtkOutputModule(const GridVariables& gridVariables,
+                          const SolutionVector& sol,
+                          const std::string& name,
+                          const std::string& paramGroup = "",
+                          Dune::VTK::DataMode dm = Dune::VTK::conforming,
+                          bool verbose = true)
+    : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
+    {
+        // create the fracture grid and all objects needed on it
+        initializeFracture_();
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,9 +222,9 @@ private:
                         else
                         {
                             for (std::size_t i = 0; i < volVarScalarDataInfo.size(); ++i)
-                                volVarScalarDataFracture[i][vertexToFractureVertexIdx_[dofIdxGlobal]] = volVarScalarDataInfo[i].get(volVars);
+                                volVarScalarDataFracture[i][dofToFractureVertexIdx_[dofIdxGlobal]] = volVarScalarDataInfo[i].get(volVars);
                             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
-                                volVarVectorDataFracture[i][vertexToFractureVertexIdx_[dofIdxGlobal]] = volVarVectorDataInfo[i].get(volVars);
+                                volVarVectorDataFracture[i][dofToFractureVertexIdx_[dofIdxGlobal]] = volVarVectorDataInfo[i].get(volVars);
                         }
                     }
                 }
@@ -477,55 +491,60 @@ private:
     }
 
     //! Creates the lower-dimensional fracture grid, index maps and writers
-    template< class FractureGridAdapter >
-    void initializeFracture_(const FractureGridAdapter& fractureGridAdapter)
+    void initializeFracture_()
     {
         const auto& gridGeometry = this->gridGeometry();
         const auto& gridView = gridGeometry.gridView();
         Dune::GridFactory<FractureGrid> gridFactory;
 
-        // insert fracture vertices
+        // insert fracture vertices & elements
         std::size_t fracVertexCount = 0;
-        vertexToFractureVertexIdx_.resize(gridView.size(dim));
-        for (const auto& v : vertices(gridView))
-        {
-            if (fractureGridAdapter.isOnFacetGrid(v))
-            {
-                gridFactory.insertVertex(v.geometry().center());
-                vertexToFractureVertexIdx_[gridGeometry.vertexMapper().index(v)] = fracVertexCount++;
-            }
-        }
-
-        // insert fracture elements
         std::size_t fractureElementCount = 0;
-        fractureElementMap_.resize(gridView.size(0));
+
+        static constexpr std::size_t undefinedIdx = std::numeric_limits<GridIndexType>::max();
         std::set< std::pair<GridIndexType, unsigned int> > handledFacets;
+        dofToFractureVertexIdx_.assign(gridGeometry.numDofs(), undefinedIdx);
+        fractureElementMap_.resize(gridView.size(0));
+
+        std::vector<GridIndexType> isVertexIndices;
+        std::vector<int> isElementCorners;
         for (const auto& element : elements(gridView))
         {
             const auto eIdxGlobal = gridGeometry.elementMapper().index(element);
             const auto refElement = referenceElement(element);
 
+            // convenience function to get the indices of the given vertices within the fracture grid
+            const auto getFractureGridVertexIndices = [&] () {
+                static std::vector<unsigned int> fractureVertexIndexStorage;
+                fractureVertexIndexStorage.resize(isVertexIndices.size());
+                for (int c = 0; c < isVertexIndices.size(); ++c)
+                {
+                    const auto dofBulk = isVertexIndices[c];
+                    const auto elemLocalCorner = isElementCorners[c];
+                    const auto fractureVertexIdx = dofToFractureVertexIdx_[dofBulk];
+                    if (fractureVertexIdx == undefinedIdx)
+                    {
+                        gridFactory.insertVertex(element.template subEntity<dim>(elemLocalCorner).geometry().center());
+                        fractureVertexIndexStorage[c] = fracVertexCount;
+                        dofToFractureVertexIdx_[dofBulk] = fracVertexCount;
+                        fracVertexCount++;
+                    }
+                    else
+                        fractureVertexIndexStorage[c] = fractureVertexIdx;
+                }
+                return fractureVertexIndexStorage;
+            };
+
             for (const auto& is : intersections(gridView, element))
             {
-                // obtain all vertex indices on this intersection
-                const auto& isGeometry = is.geometry();
-                const auto numCorners = isGeometry.corners();
-                const auto indexInInside = is.indexInInside();
-
-                std::vector<GridIndexType> isVertexIndices(numCorners);
-                for (unsigned int i = 0; i < numCorners; ++i)
-                    isVertexIndices[i] = gridGeometry.vertexMapper().subIndex(element,
-                                                                                refElement.subEntity(indexInInside, 1, i, dim),
-                                                                                dim);
-
-                // determine if this is a fracture facet & if it has to be inserted
-                bool insertFacet = false;
-                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
+                if (gridGeometry.isOnFracture(element, is))
                 {
-                    insertFacet = true;
+                    const auto indexInInside = is.indexInInside();
+
+                    // only proceed if facet has not been handled yet
+                    bool insertFacet = true;
                     if (!is.boundary())
                     {
-                        // only proceed if facet has not been handled yet
                         const auto outsideEIdx = gridGeometry.elementMapper().index(is.outside());
                         const auto idxInOutside = is.indexInOutside();
                         const auto pair = std::make_pair(outsideEIdx, idxInOutside);
@@ -539,22 +558,26 @@ private:
                             fractureElementMap_[eIdxGlobal].push_back( std::make_pair(indexInInside, it->second) );
                         }
                     }
-                }
 
-                if (insertFacet)
-                {
-                    // transform intersection vertex indices to frac grid indices
-                    std::for_each( isVertexIndices.begin(),
-                                   isVertexIndices.end(),
-                                   [&] (auto& idx) { idx = this->vertexToFractureVertexIdx_[idx]; } );
+                    if (insertFacet)
+                    {
+                        const auto& isGeometry = is.geometry();
+                        const auto numCorners = isGeometry.corners();
 
-                    // insert the element
-                    gridFactory.insertElement(isGeometry.type(), isVertexIndices);
+                        isVertexIndices.resize(numCorners);
+                        isElementCorners.resize(numCorners);
+                        for (unsigned int i = 0; i < numCorners; ++i)
+                        {
+                            isElementCorners[i] = refElement.subEntity(indexInInside, 1, i, dim);
+                            isVertexIndices[i] = gridGeometry.vertexMapper().subIndex(element, isElementCorners[i], dim);
+                        }
 
-                    // insert to set of handled facets
-                    handledFacets.insert( std::make_pair(eIdxGlobal, indexInInside) );
-                    fractureElementMap_[eIdxGlobal].push_back( std::make_pair(indexInInside, fractureElementCount) );
-                    fractureElementCount++;
+                        const auto& fractureVertexIndices = getFractureGridVertexIndices();
+                        gridFactory.insertElement(isGeometry.type(), fractureVertexIndices);
+                        handledFacets.insert( std::make_pair(eIdxGlobal, indexInInside) );
+                        fractureElementMap_[eIdxGlobal].push_back( std::make_pair(indexInInside, fractureElementCount) );
+                        fractureElementCount++;
+                    }
                 }
             }
         }
@@ -574,9 +597,9 @@ private:
         for (const auto& e : elements(fractureGridView)) insToElemIdx[ gridFactory.insertionIndex(e) ] = fractureElementMapper_->index(e);
 
         // update vertex index map
-        for (GridIndexType dofIdx = 0; dofIdx < gridView.size(GridView::dimension); ++dofIdx)
+        for (GridIndexType dofIdx = 0; dofIdx < gridGeometry.numDofs(); ++dofIdx)
             if (gridGeometry.dofOnFracture(dofIdx))
-                vertexToFractureVertexIdx_[dofIdx] = insToVertexIdx[ vertexToFractureVertexIdx_[dofIdx] ];
+                dofToFractureVertexIdx_[dofIdx] = insToVertexIdx[ dofToFractureVertexIdx_[dofIdx] ];
 
         // update fracture element map
         for (auto& elemLocalMap : fractureElementMap_)
@@ -597,7 +620,7 @@ private:
     std::unique_ptr< Dune::VTKSequenceWriter<FractureGridView> > fractureSequenceWriter_;
 
     // maps to a bulk grid vertex the vertex index within the fracture grid
-    std::vector<GridIndexType> vertexToFractureVertexIdx_;
+    std::vector<GridIndexType> dofToFractureVertexIdx_;
 
     // maps to the local facet indices of an element the corresponding fracture element indices
     std::vector< std::vector<std::pair<GridIndexType, unsigned int>> > fractureElementMap_;
