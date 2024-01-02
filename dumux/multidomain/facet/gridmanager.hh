@@ -154,8 +154,10 @@ class FacetCouplingEmbeddings
 
     //! we use the bulk grid's index type here
     using GIType = typename IndexTraits< typename Grid<0>::LeafGridView >::GridIndex;
+    using Stencil = std::vector<GIType>;
+
     //! the map type to store embedment data
-    using EmbedmentMap = std::unordered_map<GIType, std::vector<GIType>>;
+    using EmbedmentMap = std::unordered_map<GIType, Stencil>;
 
 public:
     //! export the i-th grid view type
@@ -185,24 +187,22 @@ public:
 
     //! Returns the insertion indices of the entities embedded in given element
     template<std::size_t id>
-    typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type
-    embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
+    const Stencil& embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = embeddedEntityMaps_[id];
         auto it = map.find( std::get<id>(gridFactoryPtrTuple_)->insertionIndex(element) );
         if (it != map.end()) return it->second;
-        else return typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type();
+        else return emptyStencil_;
     }
 
     //! Returns the insertion indices of the entities in which the element is embedded
     template<std::size_t id>
-    typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type
-    adjoinedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
+    const Stencil& adjoinedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = adjoinedEntityMaps_[id];
         auto it = map.find( std::get<id>(gridFactoryPtrTuple_)->insertionIndex(element) );
         if (it != map.end()) return it->second;
-        else return typename std::unordered_map< GridIndexType, std::vector<GridIndexType> >::mapped_type();
+        else return emptyStencil_;
     }
 
     //! Returns const reference to maps of the embedded entities
@@ -273,6 +273,9 @@ private:
     template<std::size_t id> using GridFactoryPtr = std::shared_ptr< Dune::GridFactory<Grid<id>> >;
     using GridFactoryPtrTuple = typename makeFromIndexedType<std::tuple, GridFactoryPtr, Indices>::type;
     GridFactoryPtrTuple gridFactoryPtrTuple_;
+
+    //! Empty stencil to return for non-coupled entities
+    typename EmbedmentMap::mapped_type emptyStencil_;
 };
 
 /*!
