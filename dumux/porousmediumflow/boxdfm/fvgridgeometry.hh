@@ -464,13 +464,21 @@ public:
     using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
     //! Constructor
-    template< class FractureGridAdapter >
+    template< class FractureGridAdapter, std::enable_if_t<Detail::isCodimOneGridAdapter<FractureGridAdapter>, bool> = true >
+    [[deprecated("Use fracture intersections interface instead, see dumux/porousmediumflow/boxdfm/fractureintersections.hh for an example. Will be removed after 3.9.")]]
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
     {
-        update_(fractureGridAdapter);
+        update_<false>(fractureGridAdapter);
     }
+
+    //! Constructor
+    template< class FractureIntersections, std::enable_if_t<!Detail::isCodimOneGridAdapter<FractureIntersections>, bool> = true >
+    BoxDfmFVGridGeometry(const GridView gridView, const FractureIntersections& fractureIntersections)
+    : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    { update_<true>(fractureIntersections); }
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -495,15 +503,25 @@ public:
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (call this after grid adaption)
-    template< class _GV, class FractureGridAdapter >
+    template< class _GV, class FractureGridAdapter, std::enable_if_t<Detail::isCodimOneGridAdapter<FractureGridAdapter>, bool> = true >
+    [[deprecated("Use fracture intersections interface instead, see dumux/porousmediumflow/boxdfm/fractureintersections.hh for an example. Will be removed after 3.9.")]]
     void update(const _GV& gridView, const FractureGridAdapter& fractureGridAdapter)
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(gridView);
         updateFacetMapper_();
-        update_(fractureGridAdapter);
+        update_<false>(fractureGridAdapter);
     }
 
+    //! update all fvElementGeometries (call this after grid adaption)
+    template< class _GV, class FractureIntersections, std::enable_if_t<!Detail::isCodimOneGridAdapter<FractureIntersections>, bool> = true >
+    void update(const _GV& gridView, const FractureIntersections& fractureIntersections)
+    {
+        static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
+        ParentType::update(gridView);
+        updateFacetMapper_();
+        update_<true>(fractureIntersections);
+    }
 
     //! The finite element cache for creating local FE bases
     const FeCache& feCache() const { return feCache_; }
@@ -533,15 +551,16 @@ private:
         facetMapper_.update(this->gridView());
     }
 
-    template< class FractureGridAdapter >
-    void update_(const FractureGridAdapter& fractureGridAdapter)
+    // TODO: Remove bool template arg after deprecation period
+    template< bool useNewUpdate, class FractureIntersections >
+    void update_(const FractureIntersections& fractureIntersections)
     {
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
         facetOnFracture_.assign(this->gridView().size(1), false);
 
         // save global data on the grid's scvs and scvfs
-        // TODO do we need those information?
+        // TODO do we need this information?
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
@@ -589,18 +608,30 @@ private:
                     DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
 
                 // maybe add fracture scvs & scvfs
-                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
-                {
-                    facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
-                    for (auto vIdx : isVertexIndices)
-                        fractureDofIndices_[vIdx] = true;
+                if constexpr (!useNewUpdate)
+                    if (fractureIntersections.composeFacetElement(isVertexIndices))
+                    {
+                        facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
+                        for (auto vIdx : isVertexIndices)
+                            fractureDofIndices_[vIdx] = true;
 
-                    const auto isGeometry = intersection.geometry();
-                    numScv_ += isGeometry.corners();
-                    numScvf_ += dim == 3 ? referenceElement(isGeometry).size(1) : 1;
-                }
+                        const auto isGeometry = intersection.geometry();
+                        numScv_ += isGeometry.corners();
+                        numScvf_ += dim == 3 ? referenceElement(isGeometry).size(1) : 1;
+                    }
             }
         }
+
+        // flag fracture facets
+        if constexpr (useNewUpdate)
+            fractureIntersections.visit([&] (const auto& is) {
+                facetOnFracture_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
+                for (auto vIdx : is.intersectionVertexIndices)
+                    fractureDofIndices_[vIdx] = true;
+
+                numScv_ += is.intersectionGeometry.corners();
+                numScvf_ += dim == 3 ? referenceElement(is.intersectionGeometry).size(1) : 1;
+            });
     }
 
     const FeCache feCache_;
