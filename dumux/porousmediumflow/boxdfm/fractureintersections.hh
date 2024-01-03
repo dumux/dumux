@@ -15,6 +15,9 @@
 
 #include <type_traits>
 #include <algorithm>
+#include <optional>
+#include <functional>
+#include <utility>
 
 #include <dune/common/indices.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -34,6 +37,7 @@ template<std::size_t fractureGridId, class... Grids>
 class BoxDfmFractureIntersections
 {
     using GridManager = FacetCouplingGridManager<Grids...>;
+    using GridData = typename GridManager::GridData;
 
     static_assert(fractureGridId > 0);
     static_assert(fractureGridId < GridManager::numGrids);
@@ -54,6 +58,8 @@ class BoxDfmFractureIntersections
     using BulkGridIndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
 
 public:
+    using BarrierMarker = std::function<bool(const FractureGridElement&, const Embeddings&, std::optional<int>)>;
+
     //! Structure to hold information on a bulk grid intersection coinciding with a fracture
     struct BulkFractureIntersection
     {
@@ -67,17 +73,24 @@ public:
     };
 
     //! Construction from a grid manager and the grid id of the fracture grid.
-    BoxDfmFractureIntersections(Dune::index_constant<fractureGridId>, const GridManager& gridManager)
+    BoxDfmFractureIntersections(Dune::index_constant<fractureGridId>,
+                                const GridManager& gridManager,
+                                BarrierMarker&& isBarrier = [] (auto&&...) { return false; })
     : gridManager_(gridManager)
     , embeddings_{gridManager_.getEmbeddings()}
     , adapter_{embeddings_}
     , bulkElementMap_{makeBulkElementMap_()}
+    , gridData_{}
+    , isBarrierFunction_{std::move(isBarrier)}
     {
         const auto& bulkGridView = gridManager_.template grid<bulkGridId>().leafGridView();
         bulkInsertionToElementIndex_.resize(bulkGridView.size(0));
         std::size_t i = 0;
         for (const auto& element : elements(bulkGridView))
             bulkInsertionToElementIndex_.at(embeddings_->template insertionIndex<bulkGridId>(element)) = i++;
+
+        if (gridManager_.hasGridData())
+            gridData_ = gridManager_.getGridData();
     }
 
     //! Visit all bulk grid intersections that coincide with fractures
@@ -150,7 +163,12 @@ private:
     { return gridManager_.template grid<fractureGridId>().leafGridView(); }
 
     bool isBarrier_(const FractureGridElement& fractureElement) const
-    { return false; }
+    {
+        std::optional<int> marker;
+        if (gridData_)
+            marker = gridData_.value()->template getElementDomainMarker<fractureGridId>(fractureElement);
+        return isBarrierFunction_(fractureElement, *embeddings_, marker);
+    }
 
     unsigned int numAdjoinedBulkElements_(const FractureGridElement& fractureElement) const
     { return adapter_.numEmbedments(fractureElement); }
@@ -180,6 +198,8 @@ private:
     GridAdapter adapter_;
     BulkElementMap bulkElementMap_;
     std::vector<std::size_t> bulkInsertionToElementIndex_;
+    std::optional<std::shared_ptr<const GridData>> gridData_;
+    BarrierMarker isBarrierFunction_;
 };
 
 } // namespace Dumux
