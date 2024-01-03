@@ -110,9 +110,6 @@ public:
     {
         BoundaryTypes values;
 
-        // turbulence model-specific boundary types
-        setBcTypes_(values, globalPos);
-
         if(isInlet_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
@@ -140,6 +137,9 @@ public:
         }
         else
             values.setAllSymmetry();
+
+        // turbulence model-specific boundary types
+        setBcTypes_(values, globalPos);
 
         return values;
     }
