@@ -20,6 +20,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+#include <dumux/flux/forchheimervelocity.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 namespace Dumux {
@@ -186,7 +187,7 @@ template <class TypeTag, class DiscretizationMethod>
 class DarcysLawImplementation;
 
 //! forward declare
-template <class TypeTag, class DiscretizationMethod>
+template <class TypeTag, class ForchheimerVelocity, class DiscretizationMethod>
 class ForchheimersLawImplementation;
 
 
@@ -225,12 +226,15 @@ class StokesDarcyCouplingDataImplementationBase
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
+    template<std::size_t id> using FluxVariables = GetPropType<SubDomainTypeTag<id>, Properties::FluxVariables>;
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
     using AdvectionType = GetPropType<SubDomainTypeTag<darcyIdx>, Properties::AdvectionType>;
     using DarcysLaw = DarcysLawImplementation<SubDomainTypeTag<darcyIdx>, typename GridGeometry<darcyIdx>::DiscretizationMethod>;
-    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>, typename GridGeometry<darcyIdx>::DiscretizationMethod>;
+    using ForchheimersLaw = ForchheimersLawImplementation<SubDomainTypeTag<darcyIdx>,
+                                                          ForchheimerVelocity<Scalar, GridGeometry<darcyIdx>, FluxVariables<darcyIdx>>,
+                                                          typename GridGeometry<darcyIdx>::DiscretizationMethod>;
 
     static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numFluidPhases() > 1;
     using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
@@ -428,6 +432,9 @@ protected:
                                                      const typename Element<stokesIdx>::Geometry::GlobalCoordinate& couplingPhaseVelocity,
                                                      ForchheimersLaw) const
     {
+        if (!std::is_same<typename Problem<darcyIdx>::SpatialParams::PermeabilityType, Scalar>::value)
+            DUNE_THROW(Dune::NotImplemented, "Pressure reconstruction for Anisotropic Permeability not implemented");
+
         const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
         const Scalar cellCenterPressure = volVars.pressure(darcyPhaseIdx);
         using std::sqrt;
@@ -443,13 +450,13 @@ protected:
         const auto alpha = vtmv(scvf.unitOuterNormal(), K, couplingManager_.problem(darcyIdx).spatialParams().gravity(scvf.center()));
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto ti = computeTpfaTransmissibility(scvf, insideScv, K, 1.0);
+        const auto ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, K, 1.0);
 
         // get the Forchheimer coefficient
         Scalar cF = couplingManager_.problem(darcyIdx).spatialParams().forchCoeff(scvf);
 
         const Scalar interfacePressure = ((-mu*(scvf.unitOuterNormal() * velocity))
-                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * sqrt(darcyPermeability(element, scvf)) * cF)
+                                        + (-(scvf.unitOuterNormal() * velocity) * velocity.two_norm() * rho * sqrt(K) * cF)
                                         +  rho * alpha)/ti + cellCenterPressure;
         return interfacePressure;
     }
