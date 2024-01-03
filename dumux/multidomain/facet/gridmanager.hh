@@ -317,6 +317,10 @@ public:
     const Grid<id>& grid() const
     { return *std::get<id>(gridPtrTuple_); }
 
+    //! return true if grid data is available
+    bool hasGridData() const
+    { return enableEntityMarkers_; }
+
     //! return a pointer to the grid data object
     std::shared_ptr<const GridData> getGridData() const
     {
