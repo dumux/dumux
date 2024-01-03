@@ -219,9 +219,12 @@ private:
                 communication.allgather(numGeosPerProcLocal.data(), 1, numGeosPerProcGlobal.data());
 
                 std::vector<int> disp(communication.size(), 0);
-                disp[1] = numGeosPerProcGlobal[0];
-                for (int i = 2; i < numGeosPerProcGlobal.size(); ++i)
-                    disp[i] = disp[i-1] + numGeosPerProcGlobal[i-1];
+                if (disp.size() > 1)
+                {
+                    disp[1] = numGeosPerProcGlobal[0];
+                    for (int i = 2; i < numGeosPerProcGlobal.size(); ++i)
+                        disp[i] = disp[i-1] + numGeosPerProcGlobal[i-1];
+                }
 
                 // concatenate the wall geometries and temp scvf data of each process into a global vector
                 communication.allgatherv(
