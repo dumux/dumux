@@ -51,7 +51,7 @@ computeConnectedElements(const GridGeometry& gg)
                        || GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
     {
         static constexpr int dim = GridGeometry::GridView::dimension;
-        connectedElements.resize(gg.gridView().size(dim));
+        connectedElements.resize(gg.numDofs());
         const auto& vMapper = gg.vertexMapper();
         for (const auto& element : elements(gg.gridView()))
         {

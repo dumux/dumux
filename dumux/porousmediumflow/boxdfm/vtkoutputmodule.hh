@@ -502,7 +502,7 @@ private:
         std::size_t fractureElementCount = 0;
 
         static constexpr std::size_t undefinedIdx = std::numeric_limits<GridIndexType>::max();
-        std::set< std::pair<GridIndexType, unsigned int> > handledFacets;
+        std::set< std::pair<GridIndexType, unsigned int> > handledFacets; // TODO: speed-up
         dofToFractureVertexIdx_.assign(gridGeometry.numDofs(), undefinedIdx);
         fractureElementMap_.resize(gridView.size(0));
 

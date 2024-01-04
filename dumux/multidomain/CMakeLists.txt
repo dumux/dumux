@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(boundary)
+add_subdirectory(boxdfm)
 add_subdirectory(dualnetwork)
 add_subdirectory(embedded)
 add_subdirectory(facet)

@@ -93,9 +93,46 @@ public:
             gridData_ = gridManager_.getGridData();
     }
 
+    //! Visit all bulk grid intersections that coincide with barrier
+    template<class Visitor>
+    void visitBarriers(const Visitor& visitor) const
+    {
+        static_assert(
+            std::is_invocable_v<Visitor, const FractureGridElement&>,
+            "Visitor must be invocable with const FractureGridElement&"
+        );
+        for (const auto& element : elements(fractureGridView_()))
+            if (isBarrier_(element))
+                visitor(element);
+    }
+
+    //! Visit all bulk grid intersections that coincide with barriers
+    template<class Visitor>
+    void visitBarrierIntersections(const Visitor visitor) const
+    { visit_(visitor, [&] (const auto& e) { return isBarrier_(e); }); }
+
+
     //! Visit all bulk grid intersections that coincide with fractures
     template<class Visitor>
     void visit(const Visitor& visitor) const
+    { visit_(visitor, [&] (const auto& e) { return !isBarrier_(e); }); }
+
+    //! Enrich the given vertex mapper according to the defined barriers
+    template<class VertexMapper>
+    void enrich(VertexMapper& mapper) const
+    {
+        mapper.enrich(fractureGridView_(),
+                      adapter_,
+                      [&] (const auto& e) { return isBarrier_(e); });
+    }
+
+private:
+    auto fractureGridView_() const
+    { return gridManager_.template grid<fractureGridId>().leafGridView(); }
+
+    //! Visit all bulk grid intersections that coincide with fractures
+    template<class Visitor, class Filter>
+    void visit_(const Visitor& visitor, const Filter& filter) const
     {
         static_assert(
             std::is_invocable_v<Visitor, const BulkFractureIntersection&>,
@@ -108,7 +145,7 @@ public:
         std::vector<BulkGridIndexType> sortedIsVertexIndices;
         for (const auto& element : elements(fractureGridView_()))
         {
-            if (isBarrier_(element))
+            if (!filter(element))
                 continue;
 
             const auto numElementCorners = element.subEntities(FractureGrid::dimension);
@@ -157,10 +194,6 @@ public:
             }
         }
     }
-
-private:
-    auto fractureGridView_() const
-    { return gridManager_.template grid<fractureGridId>().leafGridView(); }
 
     bool isBarrier_(const FractureGridElement& fractureElement) const
     {

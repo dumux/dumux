@@ -101,10 +101,13 @@ public:
     {}
 
     // returns number of green elements
-    std::size_t computeColors(const Assembler& assembler,
+    template<typename A>
+    std::size_t computeColors(const A& assembler,
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
+
         const auto& gridGeometry = assembler.gridGeometry();
         const auto& gridView = gridGeometry.gridView();
         const auto& elementMapper = gridGeometry.elementMapper();
@@ -252,8 +255,10 @@ public:
                              [](EntityColor c){ return c == EntityColor::green; });
     }
 
-    void resetJacobian(Assembler& assembler) const
+    template<class A>
+    void resetJacobian(A& assembler) const
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
         auto& jacobian = assembler.jacobian();
 
         // loop over all dofs
@@ -310,10 +315,13 @@ public:
     {}
 
     // returns number of green elements
-    std::size_t computeColors(const Assembler& assembler,
+    template<class A>
+    std::size_t computeColors(const A& assembler,
                               const std::vector<Scalar>& distanceFromLastLinearization,
                               Scalar threshold)
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
+
         const auto& gridGeometry = assembler.gridGeometry();
         const auto& gridView = gridGeometry.gridView();
         const auto& elementMapper = gridGeometry.elementMapper();
@@ -355,8 +363,11 @@ public:
 
     }
 
-    void resetJacobian(Assembler& assembler) const
+    template<class A>
+    void resetJacobian(A& assembler) const
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
+
         auto& jacobian = assembler.jacobian();
         const auto& connectivityMap = assembler.gridGeometry().connectivityMap();
 
@@ -456,10 +467,12 @@ public:
      * \param threshold Reassemble only if the distance from the last
      *        linearization is above this value.
      */
-    void computeColors(const Assembler& assembler,
+    template<class A>
+    void computeColors(const A& assembler,
                        const std::vector<Scalar>& distanceFromLastLinearization,
                        Scalar threshold)
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
         greenElems_ = engine_.computeColors(assembler, distanceFromLastLinearization, threshold);
     }
 
@@ -468,8 +481,10 @@ public:
         engine_.resetColors();
     }
 
-    void resetJacobian(Assembler& assembler) const
+    template<class A>
+    void resetJacobian(A& assembler) const
     {
+        static_assert(std::is_base_of_v<A, Assembler>, "Incompatible assembler provided");
         engine_.resetJacobian(assembler);
     }
 

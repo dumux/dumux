@@ -188,6 +188,7 @@ public:
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(std::forward<_GV>(gridView));
+        facetMapper_.update(this->gridView());
         update_<false>(fractureGridAdapter);
     }
 
@@ -197,6 +198,7 @@ public:
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(std::forward<_GV>(gridView));
+        facetMapper_.update(this->gridView());
         update_<true>(fractureIntersections);
     }
 
@@ -217,6 +219,10 @@ public:
     bool isOnFracture(const Element& element, const Intersection& intersection) const
     { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
 
+    //! Returns true if an intersection coincides with a fracture element
+    bool isOnBarrier(const Element& element, const Intersection& intersection) const
+    { return facetOnBarrier_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
+
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
@@ -230,6 +236,9 @@ private:
     template< bool useNewUpdate, class FractureIntersections>
     void update_(const FractureIntersections& fractureIntersections)
     {
+        // enrich dofs around barriers
+        fractureIntersections.enrich(this->vertexMapper());
+
         scvs_.clear();
         scvfs_.clear();
 
@@ -239,6 +248,7 @@ private:
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
         facetOnFracture_.assign(this->gridView().size(1), false);
+        facetOnBarrier_.assign(this->gridView().size(1), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -372,6 +382,7 @@ private:
 
         // Construct fracture scvs/scvfs on all fractures of the network
         if constexpr (useNewUpdate)
+        {
             fractureIntersections.visit([&] (const auto& is) {
                 facetOnFracture_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
                 for (auto vIdx : is.intersectionVertexIndices)
@@ -384,6 +395,10 @@ private:
                 numScv_ += numFracScv;
                 numScvf_ += numFracScvf;
             });
+            fractureIntersections.visitBarrierIntersections([&] (const auto& is) {
+                facetOnBarrier_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
+            });
+        }
     }
 
     const FeCache feCache_;
@@ -403,6 +418,7 @@ private:
     // facet mapper and markers which facets lie on interior boundaries
     typename Traits::FacetMapper facetMapper_;
     std::vector<bool> facetOnFracture_;
+    std::vector<bool> facetOnBarrier_;
 };
 
 /*!
@@ -486,7 +502,7 @@ public:
 
     //! The total number of degrees of freedom
     std::size_t numDofs() const
-    { return this->gridView().size(dim); }
+    { return this->vertexMapper().size(); }
 
     //! update all fvElementGeometries (call this after grid adaption)
     template< class _GV, class FractureGridAdapter, std::enable_if_t<Detail::isCodimOneGridAdapter<FractureGridAdapter>, bool> = true >
@@ -495,7 +511,7 @@ public:
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(gridView);
-        updateFacetMapper_();
+        facetMapper_.update(this->gridView());
         update_<false>(fractureGridAdapter);
     }
 
@@ -505,7 +521,7 @@ public:
     {
         static_assert(std::is_same_v<std::decay_t<_GV>, GridView>, "Different GridView type provided");
         ParentType::update(gridView);
-        updateFacetMapper_();
+        facetMapper_.update(this->gridView());
         update_<true>(fractureIntersections);
     }
 
@@ -522,6 +538,10 @@ public:
     bool isOnFracture(const Element& element, const Intersection& intersection) const
     { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
 
+    //! Returns true if an intersection coincides with a fracture element
+    bool isOnBarrier(const Element& element, const Intersection& intersection) const
+    { return facetOnBarrier_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
+
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
@@ -532,18 +552,17 @@ public:
 
 private:
 
-    void updateFacetMapper_()
-    {
-        facetMapper_.update(this->gridView());
-    }
-
     // TODO: Remove bool template arg after deprecation period
     template< bool useNewUpdate, class FractureIntersections >
     void update_(const FractureIntersections& fractureIntersections)
     {
+        //! duplicate dofs around barriers
+        fractureIntersections.enrich(this->vertexMapper());
+
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
         facetOnFracture_.assign(this->gridView().size(1), false);
+        facetOnBarrier_.assign(this->gridView().size(1), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need this information?
@@ -568,9 +587,9 @@ private:
 
                 std::vector<GridIndexType> isVertexIndices(numCorners);
                 for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                    isVertexIndices[vIdxLocal] = this->vertexMapper().subIndex(element,
-                                                                               refElement.subEntity(idxInInside, 1, vIdxLocal, dim),
-                                                                               dim);
+                    isVertexIndices[vIdxLocal] = this->vertexMapper().vertexIndex(
+                        element, refElement.subEntity(idxInInside, 1, vIdxLocal, dim), dim
+                    );
 
                 if (intersection.boundary() && !intersection.neighbor())
                 {
@@ -610,14 +629,23 @@ private:
 
         // flag fracture facets
         if constexpr (useNewUpdate)
+        {
             fractureIntersections.visit([&] (const auto& is) {
                 facetOnFracture_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
-                for (auto vIdx : is.intersectionVertexIndices)
-                    fractureDofIndices_[vIdx] = true;
+                for (unsigned int vIdxLocal = 0; vIdxLocal < is.intersectionGeometry.corners(); ++vIdxLocal)
+                    fractureDofIndices_[this->vertexMapper().subIndex(
+                        is.element,
+                        is.referenceElement.subEntity(is.intersection.indexInInside(), 1, vIdxLocal, dim),
+                        dim
+                    )] = true;
 
                 numScv_ += is.intersectionGeometry.corners();
                 numScvf_ += dim == 3 ? referenceElement(is.intersectionGeometry).size(1) : 1;
             });
+            fractureIntersections.visitBarrierIntersections([&] (const auto& is) {
+                facetOnBarrier_[facetMapper_.subIndex(is.element, is.intersection.indexInInside(), 1)] = true;
+            });
+        }
     }
 
     const FeCache feCache_;
@@ -635,7 +663,59 @@ private:
     // facet mapper and markers which facets lie on interior boundaries
     typename Traits::FacetMapper facetMapper_;
     std::vector<bool> facetOnFracture_;
+    std::vector<bool> facetOnBarrier_;
 };
+
+/*!
+ * \ingroup Assembly
+ * \brief Specialization of the jacobian pattern function for the box-dfm grid geometry
+ */
+template<bool isImplicit, class Scalar, class GridView, bool cache, class Traits>
+Dune::MatrixIndexSet getJacobianPattern(const BoxDfmFVGridGeometry<Scalar, GridView, cache, Traits>& gridGeometry)
+{
+    // resize the jacobian and the residual
+    const auto numDofs = gridGeometry.numDofs();
+    Dune::MatrixIndexSet pattern(numDofs, numDofs);
+
+    if constexpr (isImplicit)
+    {
+        auto fvGeometry = localView(gridGeometry);
+        auto outsideFVGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+                for (const auto& scvJ : scvs(fvGeometry))
+                    pattern.add(scv.dofIndex(), scvJ.dofIndex());
+
+            // add "coupling" entries across barriers
+            const auto refElement = referenceElement(element);
+            for (const auto& is : intersections(gridGeometry.gridView(), element))
+                if (gridGeometry.isOnBarrier(element, is))
+                {
+                    const auto& outside = is.outside();
+                    outsideFVGeometry.bindElement(outside);
+                    for (int c = 0; c < is.geometry().corners(); ++c)
+                    {
+                        const auto insideDofIdx = gridGeometry.vertexMapper().subIndex(
+                            element,
+                            refElement.subEntity(is.indexInInside(), 1, c, GridView::dimension),
+                            GridView::dimension
+                        );
+                        for (const auto& outsideScv : scvs(outsideFVGeometry))
+                            pattern.add(insideDofIdx, outsideScv.dofIndex());
+                    }
+                }
+        }
+    }
+    else
+    {
+        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+            pattern.add(globalI, globalI);
+    }
+
+    return pattern;
+}
 
 } // end namespace Dumux
 

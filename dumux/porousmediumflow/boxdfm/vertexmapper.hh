@@ -58,7 +58,7 @@ class BoxDfmVertexMapper : public EnrichedVertexDofMapper<GV>
                                        const GridView& gridView,
                                        const VertexMapper& vertexMapper,
                                        const CodimOneGridView& codimOneGridView,
-                                       const CodimOneGridAdapter& codimOneGridAdapter)
+                                       const CodimOneGridAdapter& codimOneGridAdapter) const
         {
             // first, mark all vertices on the lower-dimensional grid
             EnrichmentIndicator::markVerticesForEnrichment(vertexMarkers, gridView, vertexMapper, codimOneGridView, codimOneGridAdapter);
