@@ -45,6 +45,8 @@ GMResRestart = 50
 Type = uzawa
 Verbosity = 1
 Iterations = 5
+DetermineRelaxationFactor = false
+Relaxation = 10.0
 
 [SpatialParams]
 Temperature = 298.0

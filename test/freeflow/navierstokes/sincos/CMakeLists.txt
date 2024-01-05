@@ -36,19 +36,33 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
                              -Problem.IsStationary false
                              -Component.LiquidKinematicViscosity 0.1")
 
-dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
+dumux_add_test(NAME test_ff_navierstokes_sincos_uzawa
               SOURCES main.cc
               LABELS freeflow
               TIMEOUT 5000
-              CMAKE_GUARD "( HAVE_UMFPACK AND ( ( DUNE_ISTL_VERSION VERSION_GREATER 2.7 ) OR ( DUNE_ISTL_VERSION VERSION_EQUAL 2.7 ) ) )"
-              COMPILE_DEFINITIONS LINEARSOLVER=IstlSolverFactoryBackend<LinearSolverTraits<MassGridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_sincos_instationary-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_uzawapreconditioner-00017.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_uzawapreconditioner_factory params.input
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_uzawa-00017.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_uzawa params.input
                              -Grid.UpperRight '1 1'
                              -Grid.Cells '50 50'
-                             -Problem.Name test_ff_navierstokes_sincos_uzawapreconditioner
+                             -Problem.Name test_ff_navierstokes_sincos_uzawa
+                             -Problem.IsStationary false
+                             -Component.LiquidKinematicViscosity 0.1")
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_uzawa_parallel
+              TARGET test_ff_navierstokes_sincos_uzawa
+              CMAKE_GUARD HAVE_MPI
+              LABELS freeflow
+              TIMEOUT 5000
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy --ignore "rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_sincos_instationary-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_navierstokes_sincos_uzawa-00017.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_uzawa params.input
+                             -Grid.UpperRight '1 1'
+                             -Grid.Cells '50 50'
+                             -Problem.Name test_ff_navierstokes_sincos_uzawa
                              -Problem.IsStationary false
                              -Component.LiquidKinematicViscosity 0.1")
