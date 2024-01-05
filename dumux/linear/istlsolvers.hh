@@ -1136,7 +1136,7 @@ public:
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
         using Prec = UzawaPreconditioner<LinearSolverTraitsTuple, Matrix, Vector>;
-        auto prec = std::make_shared<Prec>(A, b, comms_, parHelpers_);
+        auto prec = std::make_shared<Prec>(A, b, comms_, parHelpers_, params_.sub("preconditioner"));
 
         using LOP = TupleLinearOperator<Vector, Matrix, decltype(prec->linearOperators())>;
         auto op = std::make_shared<LOP>(prec->linearOperators(), A);

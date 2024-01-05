@@ -845,6 +845,14 @@ class UzawaPreconditioner : public Dune::Preconditioner<Vector, Vector>
                                                              std::make_index_sequence<numBlocks>
                                                             >::type;
 
+    //! \brief The field type of the preconditioner.
+    using field_type = typename Vector::field_type;
+    //! \brief Scalar type underlying the field_type.
+    using scalar_field_type = Dune::Simd::Scalar<field_type>;
+
+    using A = std::decay_t<decltype(std::declval<Matrix>()[Dune::Indices::_0][Dune::Indices::_0])>;
+    using U = std::decay_t<decltype(std::declval<Vector>()[Dune::Indices::_0])>;
+
 public:
     /*! \brief Construct the preconditioner
      *
@@ -854,7 +862,13 @@ public:
      *  \param parHelpers tuple of parallel helpers
      */
     template <class Comms, class ParHelpers>
-    UzawaPreconditioner(Matrix& m, Vector& b, const Comms& comms, const ParHelpers& parHelpers)
+    UzawaPreconditioner(Matrix& m, Vector& b, const Comms& comms,
+                        const ParHelpers& parHelpers, const Dune::ParameterTree& params)
+    : matrix_(m)
+    , numIterations_(params.get<std::size_t>("iterations"))
+    , relaxationFactor_(params.get<scalar_field_type>("relaxation"))
+    , verbosity_(params.get<int>("verbosity"))
+    , paramGroup_(params.get<std::string>("ParameterGroup"))
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(b)), [&](const auto i)
@@ -874,49 +888,87 @@ public:
             {
                 using PTraits = typename LSTraits::template ParallelNonoverlapping<DiagBlock, RHSBlock>;
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
-                                                   parHelper, std::get<i>(preconditioners_));
+                                                   parHelper, std::get<i>(preconditioners_), i);
             }
             else
             {
                 using PTraits = typename LSTraits::template ParallelOverlapping<DiagBlock, RHSBlock>;
                 prepareAlgebra_<LSTraits, PTraits>(diagBlock, rhsBlock, comm, linearOperator,
-                                                   parHelper, std::get<i>(preconditioners_));
+                                                   parHelper, std::get<i>(preconditioners_), i);
             }
         });
+
+        const bool determineRelaxationFactor = getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.DetermineRelaxationFactor", true);
+
+        if (determineRelaxationFactor)
+            relaxationFactor_ = estimateOmega_();
     }
 
     /*! \brief Prepare the preconditioner
      */
-    void pre (Vector& v, Vector& d) final
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
-        {
-            std::get<i>(preconditioners_)->pre(v[i], d[i]);
-        });
-    }
+    void pre (Vector& v, Vector& d) {}
 
-    /*! \brief Apply the preconditioner
+    /*!
+     * \brief Apply the preconditioner
+     *
+     * \param update The update to be computed.
+     * \param currentDefect The current defect.
      */
-    void apply (Vector& v, const Vector& d) final
+    void apply(Vector& update, const Vector& currentDefect)
     {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
+        using namespace Dune::Indices;
+
+        auto& A = matrix_[_0][_0];
+        auto& B = matrix_[_0][_1];
+        auto& C = matrix_[_1][_0];
+        auto& D = matrix_[_1][_1];
+
+        const auto& f = currentDefect[_0];
+        const auto& g = currentDefect[_1];
+        auto& u = update[_0];
+        auto& p = update[_1];
+
+        // incorporate Dirichlet cell values
+        // TODO: pass Dirichlet constraint handler from outside
+        for (std::size_t i = 0; i < D.N(); ++i)
         {
-            std::get<i>(preconditioners_)->apply(v[i], d[i]);
-        });
+            const auto& block = D[i][i];
+            for (auto rowIt = block.begin(); rowIt != block.end(); ++rowIt)
+                if (Dune::FloatCmp::eq<scalar_field_type>(rowIt->one_norm(), 1.0))
+                    p[i][rowIt.index()] = g[i][rowIt.index()];
+        }
+
+        // the actual Uzawa iteration
+        for (std::size_t k = 0; k < numIterations_; ++k)
+        {
+            // u_k+1 = u_k + Q_A^−1*(f − (A*u_k + B*p_k)),
+            auto uRhs = f;
+            A.mmv(u, uRhs);
+            B.mmv(p, uRhs);
+            auto uIncrement = u;
+            std::get<_0>(preconditioners_)->pre(uIncrement, uRhs);
+            std::get<_0>(preconditioners_)->apply(uIncrement, uRhs);
+            std::get<_0>(preconditioners_)->post(uIncrement);
+            u += uIncrement;
+
+            // p_k+1 = p_k + omega*(g - C*u_k+1 - D*p_k)
+            auto pIncrement = g;
+            C.mmv(u, pIncrement);
+            D.mmv(p, pIncrement);
+            pIncrement *= relaxationFactor_;
+            p += pIncrement;
+
+            if (verbosity_ > 1)
+            {
+                std::cout << "Uzawa iteration " << k
+                << ", residual: " << uRhs.two_norm() + pIncrement.two_norm()/relaxationFactor_ << std::endl;
+            }
+        }
     }
 
     /*! \brief Clean up
      */
-    void post (Vector& v) final
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(v)), [&](const auto i)
-        {
-            std::get<i>(preconditioners_)->post(v[i]);
-        });
-    }
+    void post (Vector& v) {}
 
     /*! \brief Category of the preconditioner
      *
@@ -947,7 +999,7 @@ private:
     template <class SolverTraits, class ParallelTraits,
               class MatrixBlock, class VectorBlock, class Comm, class LOP, class PH, class Prec>
     void prepareAlgebra_(MatrixBlock& diagBlock, VectorBlock& rhsBlock, const std::shared_ptr<Comm>& comm,
-                         LOP& linearOperator, const PH& parHelper, Prec& preconditioner)
+                         LOP& linearOperator, const PH& parHelper, Prec& preconditioner, std::size_t i)
     {
         if constexpr (ParallelTraits::isNonOverlapping)
         {
@@ -964,30 +1016,97 @@ private:
 
         linearOperator = std::make_shared<typename ParallelTraits::LinearOperator>(diagBlock, *comm);
 
-        using SeqSmoother = Dune::SeqSSOR<MatrixBlock, VectorBlock, VectorBlock>;
-        using Smoother = typename ParallelTraits::template Preconditioner<SeqSmoother>;
-        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-        SmootherArgs args;
-        args.iterations = 1;
-        args.relaxationFactor = 1;
+        if (i == 0)
+        {
+            using SeqSmoother = Dune::SeqSSOR<MatrixBlock, VectorBlock, VectorBlock>;
+            using Smoother = typename ParallelTraits::template Preconditioner<SeqSmoother>;
+            using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+            SmootherArgs args;
+            args.iterations = 1;
+            args.relaxationFactor = 1;
 
-        Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(SolverTraits::GridView::dimension);
+            Dune::Amg::Parameters params(15, 2000, 1.2, 1.6, Dune::Amg::atOnceAccu);
+            params.setDefaultValuesIsotropic(SolverTraits::GridView::dimension);
 
-        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixBlock, Dune::Amg::FirstDiagonal>>;
-        Criterion criterion(params);
+            using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixBlock, Dune::Amg::FirstDiagonal>>;
+            Criterion criterion(params);
 
-        // Cast the linear operator from a pointer to the base class
-        // to a pointer to the actually employed derived class.
-        using ParallelLinearOperator = typename ParallelTraits::LinearOperator;
-        auto lop = std::dynamic_pointer_cast<ParallelLinearOperator>(linearOperator);
+            // Cast the linear operator from a pointer to the base class
+            // to a pointer to the actually employed derived class.
+            using ParallelLinearOperator = typename ParallelTraits::LinearOperator;
+            auto lop = std::dynamic_pointer_cast<ParallelLinearOperator>(linearOperator);
 
-        using AMG = Dune::Amg::AMG<ParallelLinearOperator, VectorBlock, Smoother, Comm>;
-        preconditioner = std::make_shared<AMG>(*lop, criterion, args, *comm);
+            using AMG = Dune::Amg::AMG<ParallelLinearOperator, VectorBlock, Smoother, Comm>;
+            preconditioner = std::make_shared<AMG>(*lop, criterion, args, *comm);
+        }
+    }
+
+    scalar_field_type estimateOmega_() const
+    {
+        using namespace Dune::Indices;
+        auto& A = matrix_[_0][_0];
+        auto& B = matrix_[_0][_1];
+        auto& C = matrix_[_1][_0];
+
+        U x(A.M());
+        x = 1.0;
+
+        scalar_field_type omega = 0.0;
+        scalar_field_type lambdaMax = 0.0;
+
+        static const auto iterations = Dumux::getParamFromGroup<std::size_t>(paramGroup_, "LinearSolver.Preconditioner.PowerLawIterations", 5);
+
+        // apply power iteration x_k+1 = M*x_k/|M*x_k| for the matrix M = -C*Ainv*B
+        for (std::size_t i = 0; i < iterations; ++i)
+        {
+            // bx = B*x
+            U bx(x.size());
+            B.mv(x, bx);
+
+            // ainvbx = Ainv*(B*x)
+            auto ainvbx = x;
+            std::get<_0>(preconditioners_)->pre(ainvbx, bx);
+            std::get<_0>(preconditioners_)->apply(ainvbx, bx);
+            std::get<_0>(preconditioners_)->post(ainvbx);
+
+            // v = M*x = -C*(Ainv*B*x)
+            U v(x.size());
+            C.mv(ainvbx, v);
+            v *= -1.0;
+
+            // eigenvalue lambdaMax = xt*M*x/(xt*x) = xt*v/(xt*x);
+            lambdaMax = x.dot(v)/(x.dot(x));
+            Dune::MPIHelper::getCommunication().max(&lambdaMax, 1);
+
+            // relaxation factor omega = 1/lambda;
+            omega = 1.0/lambdaMax;
+
+            // new iterate x = M*x/|M*x| = v/|v|
+            x = v;
+            x /= v.two_norm();
+        }
+
+        if (verbosity_ > 0)
+        {
+            std::cout << "\n*** Uzawa Preconditioner ***" << std::endl;
+            std::cout << "Estimating relaxation factor based on Schur complement" << std::endl;
+            std::cout << "Largest estimated eigenvalue lambdaMax = " << lambdaMax << std::endl;
+            std::cout << "Relaxation factor omega = 1/lambdaMax = " << omega << std::endl;
+        }
+
+        return omega;
     }
 
     PreconditionerTuple preconditioners_;
     LinearOperatorTuple linearOperators_;
+    const Matrix& matrix_;
+    //! \brief The number of steps to do in apply
+    const std::size_t numIterations_;
+    //! \brief The relaxation factor to use
+    scalar_field_type relaxationFactor_;
+    //! \brief The verbosity level
+    const int verbosity_;
+    const std::string paramGroup_;
 };
 
 } // end namespace Dumux
