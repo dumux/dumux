@@ -240,7 +240,7 @@ private:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         // The scvf is on a boundary, hence there is no outer DOF.
         // We take the distance to the boundary instead.
-        if (scvf.boundary())
+        if (scvf.boundary() || scvf.processorBoundary())
             return getDistanceToBoundary_(insideScv, scvf);
 
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
@@ -291,7 +291,7 @@ private:
 
         // The orthogonal scvf is on a boundary, hence there is no outer DOF.
         // We take the distance to the boundary instead.
-        if (orthogonalScvf.boundary())
+        if (orthogonalScvf.boundary() || orthogonalScvf.processorBoundary())
             return getDistanceToBoundary_(orthogonalInsideScv, orthogonalScvf);
 
         const auto& orthogonalOutsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
