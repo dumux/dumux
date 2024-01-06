@@ -234,7 +234,7 @@ private:
         scvfs_.clear();
 
         scvs_.resize(this->gridView().size(0));
-        scvfs_.resize(this->gridView().size(2));
+        scvfs_.resize(this->gridView().size(0));
 
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(numDofs(), false);
