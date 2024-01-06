@@ -37,6 +37,15 @@
 
 #include "properties.hh"
 
+#ifndef CONSIDER_BARRIERS
+#define CONSIDER_BARRIERS 0
+#endif
+
+#if CONSIDER_BARRIERS
+#include <dumux/porousmediumflow/boxdfm/assembler.hh>
+#include <dumux/porousmediumflow/boxdfm/barrierfluxes.hh>
+#endif
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -71,7 +80,15 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(
         leafGridView,
+#if CONSIDER_BARRIERS
+        BoxDfmFractureIntersections{
+            Dune::Indices::_1, gridManager,
+            [] (const auto&, const auto&, std::optional<int> marker) {
+                return marker.value() == 2;
+        }}
+#else
         BoxDfmFractureIntersections{Dune::Indices::_1, gridManager}
+#endif
     );
 
     // the problem (initial and boundary conditions)
@@ -96,8 +113,18 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
+#if CONSIDER_BARRIERS
+    BoxDfmImmiscibleBarrierFluxes barrierFluxes{
+        *gridGeometry, *problem, [] (auto&&...) {
+            return BoxDfmBarrierProperties<double>{1e-3, 1e-16};
+        }
+    };
+    using Assembler = BoxDfmAssembler<TypeTag, decltype(barrierFluxes)>;
+    auto assembler = std::make_shared<Assembler>(std::move(barrierFluxes), problem, gridGeometry, gridVariables);
+#else
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+#endif
 
     // the linear solver
     using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;

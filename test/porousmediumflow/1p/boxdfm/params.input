@@ -1,5 +1,6 @@
 [Grid]
 File = grids/durlofsky.msh
+DomainMarkers = true
 
 [SpatialParams]
 MatrixPermeability = 1e-12

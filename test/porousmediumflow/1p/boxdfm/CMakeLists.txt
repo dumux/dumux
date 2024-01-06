@@ -13,3 +13,16 @@ dumux_add_test(NAME test_1p_boxdfm
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_boxdfm-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_boxdfm-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_boxdfm params.input -Problem.Name test_1p_boxdfm -Grid.File grids/durlofsky.msh")
+
+
+dumux_add_test(NAME test_1p_boxdfm_barriers
+              LABELS porousmediumflow 1p boxdfm
+              SOURCES main.cc
+              CMAKE_GUARD dune-alugrid_FOUND
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMPILE_DEFINITIONS CONSIDER_BARRIERS=1
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_boxdfm_barriers-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_1p_boxdfm_barriers-00001.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_boxdfm_barriers params.input -Problem.Name test_1p_boxdfm_barriers -Grid.File grids/durlofsky.msh")
