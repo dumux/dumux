@@ -1,0 +1,11 @@
+[Grid]
+File = grids/durlofsky.msh
+
+[SpatialParams]
+MatrixPermeability = 1e-12
+FracturePermeability = 1e-8
+FractureAperture = 1e-3
+
+[Problem]
+Name = 1pboxdfm
+EnableGravity = false
