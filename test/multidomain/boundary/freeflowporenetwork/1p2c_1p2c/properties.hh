@@ -31,7 +31,6 @@
 
 #include "problem_pnm.hh"
 #include "problem_freeflow.hh"
-#include "spatialparams_freeflow.hh"
 
 namespace Dumux::Properties {
 
@@ -113,15 +112,6 @@ struct Grid<TypeTag, TTag::FreeFlowOnePNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<Scalar, 2>>;
-};
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::FreeFlowOnePNC>
-{
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = ChannelSpatialParams<GridGeometry, Scalar>;
 };
 
 // Set the problem property
