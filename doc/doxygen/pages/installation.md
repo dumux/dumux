@@ -37,12 +37,16 @@ This installation method requires
 We provide you with a Python script that facilitates setting up a Dune/DuMux directory
 tree and configures all modules using CMake. Download [installdumux.py](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/bin/installdumux.py) and place it in a directory where you want to install Dune/DuMux, for example by running
 
-    wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/bin/installdumux.py
+```bash
+wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/bin/installdumux.py
+```
 
 Executing the script creates a folder "dumux" in which all dependencies will be downloaded and built.
 Run the script by typing:
 
-    python3 installdumux.py
+```bash
+python3 installdumux.py
+```
 
 Follow the instructions printed after the script has completed successfully to verify everything works as expected.
 
@@ -71,19 +75,25 @@ Alternatively and recommended and described below, you can use [git](https://www
 to download the source code and configure and build with the `dunecontrol` script.
 To clone the Dune core modules, run:
 
-    for module in common geometry grid localfunctions istl; do
-      git clone -b releases/2.9 https://gitlab.dune-project.org/core/dune-$module.git
-    done
+```bash
+for module in common geometry grid localfunctions istl; do
+    git clone -b releases/2.9 https://gitlab.dune-project.org/core/dune-$module.git
+done
+```
 
 ### 2.2 Obtaining the Dumux source code
 
 To clone the latest 3.8 release version, run
 
-    git clone -b releases/3.8 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+```bash
+git clone -b releases/3.8 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+```
 
 The master branch (developer version) can be cloned with
 
-    git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+```bash
+git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+```
 
 Alternatively, it is also possible to download release tarballs
 from [DaRUS](https://doi.org/10.18419/darus-3788) or
@@ -104,7 +114,9 @@ DuMux is built together with other Dune modules. Assuming that the Dune core mod
 
 you can configure and build the module stack with the `dunecontrol` helper script:
 
-    ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
+```bash
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
+```
 
 In case you have obtained the DUNE modules via a package manager,
 `dunecontrol` should be an available program in your path environment
@@ -114,7 +126,9 @@ Running `dunecontrol` will create a build folder called
 `build-cmake` in each of the module folders.
 In case you want to build the module stack in a separate build folder use
 
-    ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --builddir=$(pwd)/build all
+```bash
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --builddir=$(pwd)/build all
+```
 
 More details on the DUNE build system can be found in the [Dune installation notes](http://www.dune-project.org/doc/installation/).
 
@@ -142,21 +156,29 @@ DuMux contains the script `installexternal.py` which allows you to install exten
 
 If you run the script with the option \-\-help
 
-    python3 dumux/bin/installexternal.py --help
+```bash
+python3 dumux/bin/installexternal.py --help
+```
 
 it will show a list of installable packages. Dune modules can be installed by adding the name of the package.
 For example, running the script by typing:
 
-    python3 dumux/bin/installexternal.py alugrid
+```bash
+python3 dumux/bin/installexternal.py alugrid
+```
 
 downloads the ALUGrid module `dune-alugrid` in a separate folder in your installation directory. After the download
 you can run following command to clean the CMake cache:
 
-    ./dune-common/bin/dunecontrol bexec rm -r CMakeFiles CMakeCache.txt
+```bash
+./dune-common/bin/dunecontrol bexec rm -r CMakeFiles CMakeCache.txt
+```
 
 Afterwards you can reconfigure and build DuMux with the `dunecontrol` script:
 
-    ./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all
+```bash
+./dune-common/bin/dunecontrol --opts=./dumux/cmake.opts all
+```
 
 If you install an external library which is not a Dune module, the script will
 install the library in the directory `external`. If you install external libraries in an non-standard location you
