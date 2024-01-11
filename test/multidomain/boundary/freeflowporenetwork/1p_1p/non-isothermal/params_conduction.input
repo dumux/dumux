@@ -28,13 +28,23 @@ VerticalFlow = false
 [FreeFlow.Problem]
 Name = ff
 InitialPressure = 1e5 # [Pa]
+InletPressure = 1e5
+OutletPressure = 1e5
 InitialTemperature = 298.15 # [K]
+InletTemperature = 308.15
+OutletTemperature = 298.15
 EnableInertiaTerms = false
+VerticalFlow = true
 
 [PNM.Problem]
 Name = pnm
 InitialTemperature = 328.15 # [K]
+InletTemperature = 328.15
+OutletTemperature = 318.15
 InitialPressure = 1e5 # [Pa]
+InletPressure = 1e5
+OutletPressure = 1e5
+VerticalFlow = true
 
 [Vtk]
 OutputName = test_conduction
