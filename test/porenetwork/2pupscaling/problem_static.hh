@@ -314,8 +314,11 @@ private:
                 else
                     sw_[dofIdx] = 1.0;
 
-                const Scalar partialPoreVolume = scv.volume();
-                averageSaturation_ += partialPoreVolume*sw_[dofIdx];
+                if (poreLabel_[dofIdx] != inletPoreLabel_ && (poreLabel_[dofIdx] != outletPoreLabel_ || allowDraingeOfOutlet_))
+                {
+                    const Scalar partialPoreVolume = scv.volume();
+                    averageSaturation_ += partialPoreVolume*sw_[dofIdx];
+                }
             }
 
             calculateTransmissibility_(element, fvGeometry, pcElement);
