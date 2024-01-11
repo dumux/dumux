@@ -16,7 +16,7 @@
 #ParameterRandomNumberSeed = 22
 
 [Grid]
-File = ./grids/980_98.dgf
+File = ./grids/440_coarsened.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
