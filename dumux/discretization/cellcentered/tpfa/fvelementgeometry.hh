@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup CCTpfaDiscretization
- * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models.
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  */
@@ -42,7 +42,7 @@ auto findLocalIndex(const GridIndexType idx,
 
 /*!
  * \ingroup CCTpfaDiscretization
- * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models.
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  * \tparam GG the finite volume grid geometry type
@@ -54,7 +54,7 @@ class CCTpfaFVElementGeometry;
 
 /*!
  * \ingroup CCTpfaDiscretization
- * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models.
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        Specialization for grid caching enabled
  * \note The finite volume geometries are stored in the corresponding GridGeometry
  */
@@ -228,7 +228,7 @@ private:
 
 /*!
  * \ingroup CCTpfaDiscretization
- * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models.
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        Specialization for grid caching disabled
  */
 template<class GG>
