@@ -60,7 +60,7 @@ public:
     // #### Boundary conditions
     // With the following function we define the __type of boundary conditions__ depending on the location.
     // Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
-    // Dirichlet boundaries, the values of the primary variables need to be fixed. On a Neumann boundaries,
+    // Dirichlet boundaries, the values of the primary variables need to be fixed. On Neumann boundaries,
     // values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
     // for the respective primary variables (excluding pressure).
     // When Dirichlet conditions are set for the pressure, the velocity gradient
