@@ -61,9 +61,13 @@ public:
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1e5);
+        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
         verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
+        inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature", 273.15 + 20.0);
+        outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletTemperature", 273.15 + 20.0);
 #endif
     }
 
@@ -102,8 +106,8 @@ public:
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             }
-            else if (verticalFlow_ && onUpperBoundary_(globalPos))
-                values.setAllNeumann(); //outflow
+            else if (onInlet_(globalPos) || onOutlet_(globalPos))
+                values.setAllNeumann();
             else
                 values.setAllDirichlet(); //e.g. fixed velocities at walls
         }
@@ -111,6 +115,10 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
                 values.setAllCouplingNeumann(); //mass and energy coupling
+            else if (onInlet_(globalPos))
+                values.setAllDirichlet();
+            else if (onOutlet_(globalPos))
+                values.setAllNeumann();
             else
                 values.setAllNeumann(); //outflow or zero flux BCs for p,T
         }
@@ -124,7 +132,26 @@ public:
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        return initialAtPos(globalPos);
+        DirichletValues values(0.0); //velocity is 0.0
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            if (onInlet_(globalPos))
+            {
+                values[Indices::pressureIdx] = inletPressure_;
+#if !ISOTHERMAL
+                values[Indices::temperatureIdx] = inletTemperature_;
+#endif
+            }
+            else if (onOutlet_(globalPos))
+            {
+                values[Indices::pressureIdx] = outletPressure_;
+#if !ISOTHERMAL
+                values[Indices::temperatureIdx] = outletTemperature_;
+#endif
+            }
+        }
+        return values;
     }
 
     /*!
@@ -169,11 +196,18 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else if (verticalFlow_ && onUpperBoundary_(globalPos))
+            else if (onInlet_(globalPos))
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, inletPressure_, true /*zeroNormalVelocityGradient*/
+                );
+            }
+            else if (onOutlet_(globalPos))
+            {
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars,
+                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -189,7 +223,7 @@ public:
                     fvGeometry, scvf, elemVolVars);
 #endif
             }
-            else if (verticalFlow_ && onUpperBoundary_(globalPos))
+            else if (onOutlet_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
@@ -261,6 +295,22 @@ public:
 
 private:
 
+    bool onInlet_(const GlobalPosition &globalPos) const
+    {
+        if (verticalFlow_)
+            return 0;
+        else
+            return onLeftBoundary_(globalPos);
+    }
+
+    bool onOutlet_(const GlobalPosition &globalPos) const
+    {
+        if (verticalFlow_)
+            return onUpperBoundary_(globalPos);
+        else
+            return onRightBoundary_(globalPos);
+    }
+
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
@@ -273,9 +323,13 @@ private:
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
     Scalar initialPressure_;
+    Scalar inletPressure_;
+    Scalar outletPressure_;
     bool verticalFlow_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
+    Scalar inletTemperature_;
+    Scalar outletTemperature_;
 #endif
 
     std::shared_ptr<CouplingManager> couplingManager_;
