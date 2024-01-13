@@ -59,6 +59,9 @@ endif()
 # enforce C++-17
 target_compile_features(dumux PUBLIC cxx_std_17)
 
+# add optional 3rd party libraries
+add_subdirectory(deps)
+
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)
