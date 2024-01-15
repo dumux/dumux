@@ -50,7 +50,8 @@ class NavierStokesMassOnePFluxVariables
 public:
 
     /*!
-     * \brief Returns the advective mass flux in kg/s.
+     * \brief Returns the advective mass flux in kg/s
+     *        or the advective mole flux in mole/s.
      */
     NumEqVector advectiveFlux(int phaseIdx = 0) const
     {
@@ -62,8 +63,10 @@ public:
     }
 
     /*!
-     * \brief Returns all fluxes for the single-phase flow Navier-Stokes model: the
-     *        advective mass flux in kg/s and the energy flux in J/s (for nonisothermal models).
+     * \brief Returns all fluxes for the single-phase flow, multi-component
+     *        Navier-Stokes model: the advective mass flux in kg/s
+     *        or the advective mole flux in mole/s and the energy flux
+     *        in J/s (for nonisothermal models).
      */
     NumEqVector flux(int phaseIdx = 0) const
     {

@@ -128,7 +128,7 @@ struct NavierStokesScalarBoundaryFluxHelper
 
     /*!
      * \brief Return the area-specific outflow fluxes for all scalar balance equations.
-     *        This should only be used of flow reversal does never occur.
+     *        This should only be used if flow reversal never occurs.
      *        A (deactivable) warning is emitted otherwise.
      */
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables>
@@ -157,7 +157,7 @@ struct NavierStokesScalarBoundaryFluxHelper
                 std::cout << "\n ********** WARNING ********** \n\n"
                 "Outflow condition set at " << scvf.center() << " might be invalid due to flow reversal. "
                 "Consider using \n"
-                "outflowFlux(problem, element, fvGeometry, scvf, elemVolVars, outsideBoundaryPriVars, upwindWeight) \n"
+                "scalarOutflowFlux(problem, element, fvGeometry, scvf, elemVolVars, outsideBoundaryPriVars, upwindWeight) \n"
                 "instead where you can specify primary variables for inflow situations.\n"
                 "\n ***************************** \n" << std::endl;
             }

@@ -30,7 +30,7 @@ class FreeFlowScalarFluxVariablesCacheFillerImplementation;
  * \ingroup NavierStokesModel
  * \brief The flux variables cache filler class for free flow
  *
- * Helps filling the flux variables cache depending several policies
+ * Helps filling the flux variables cache depending on several policies
  */
 template<class Problem, class ModelTraits, bool diffusionIsSolDependent, bool heatConductionIsSolDependent>
 using FreeFlowScalarFluxVariablesCacheFiller = FreeFlowScalarFluxVariablesCacheFillerImplementation<Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent, typename ProblemTraits<Problem>::GridGeometry::DiscretizationMethod>;

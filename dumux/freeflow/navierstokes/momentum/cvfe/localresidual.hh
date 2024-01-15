@@ -27,7 +27,7 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Element-wise calculation of the Navier-Stokes residual for models using the CVFE discretizations
+ * \brief Element-wise calculation of the Navier-Stokes residual for models using CVFE discretizations
  */
 template<class TypeTag>
 class NavierStokesMomentumCVFELocalResidual
@@ -72,7 +72,7 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculate the storage term of the equation
      *
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
@@ -112,7 +112,7 @@ public:
         // add rho*g (note that gravity might be zero in case it's disabled in the problem)
         source +=  problem.density(element, fvGeometry, scv) * problem.gravity();
 
-        // Axisymmetric problems in 2D feature an extra source terms arising from the transformation to cylindrical coordinates.
+        // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for Fluid Dynamics (2020)
         // https://doi.org/10.1007/978-3-319-99693-6
         // Chapter 9.9 and Eq. (9.81) and comment on finite volume methods
@@ -122,7 +122,7 @@ public:
             const auto r = scv.center()[Extrusion::radialAxis] - fvGeometry.gridGeometry().bBoxMin()[Extrusion::radialAxis];
 
             // The velocity term is new with respect to Cartesian coordinates and handled below as a source term
-            // it only enters the balance of the momentum balance in radial direction
+            // It only enters the balance of the momentum balance in radial direction
             source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, fvGeometry, scv)
                 * elemVolVars[scv].velocity(Extrusion::radialAxis) / (r*r);
 

@@ -51,7 +51,10 @@ public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
-    //! evaluate flux residuals for one sub control volume face and add to residual
+    /*!
+    * \brief evaluate flux residuals for one sub control volume face and add to residual
+    *
+    */
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
