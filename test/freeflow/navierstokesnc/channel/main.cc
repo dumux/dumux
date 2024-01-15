@@ -35,11 +35,6 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
-
-#include <dumux/multidomain/fvassembler.hh>
-#include <dumux/multidomain/traits.hh>
-#include <dumux/multidomain/newtonsolver.hh>
-
 #include "properties.hh"
 
 int main(int argc, char** argv)
