@@ -61,7 +61,6 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes model
  *
- * \tparam dimension The dimension of the problem
  */
 template<int nComp, bool useMoles, int repCompEqIdx = nComp>
 struct NavierStokesMassOnePNCModelTraits
