@@ -73,7 +73,7 @@ struct NavierStokesMassOnePNCModelTraits
     //! The number of phases is 1
     static constexpr int numFluidPhases() { return 1; }
 
-    //! The number of components is 1
+    //! The number of components can be freely chosen
     static constexpr int numFluidComponents() { return nComp; }
 
     //! Use moles or not
