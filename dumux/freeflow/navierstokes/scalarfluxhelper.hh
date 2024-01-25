@@ -157,7 +157,7 @@ struct NavierStokesScalarBoundaryFluxHelper
                 std::cout << "\n ********** WARNING ********** \n\n"
                 "Outflow condition set at " << scvf.center() << " might be invalid due to flow reversal. "
                 "Consider using \n"
-                "outflowFlux(problem, element, fvGeometry, scvf, elemVolVars, outsideBoundaryPriVars, upwindWeight) \n"
+                "scalarOutflowFlux(problem, element, fvGeometry, scvf, elemVolVars, outsideBoundaryPriVars, upwindWeight) \n"
                 "instead where you can specify primary variables for inflow situations.\n"
                 "\n ***************************** \n" << std::endl;
             }
