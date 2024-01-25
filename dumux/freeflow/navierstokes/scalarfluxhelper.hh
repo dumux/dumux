@@ -128,7 +128,7 @@ struct NavierStokesScalarBoundaryFluxHelper
 
     /*!
      * \brief Return the area-specific outflow fluxes for all scalar balance equations.
-     *        This should only be used of flow reversal does never occur.
+     *        This should only be used if flow reversal does never occur.
      *        A (deactivable) warning is emitted otherwise.
      */
     template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables>
