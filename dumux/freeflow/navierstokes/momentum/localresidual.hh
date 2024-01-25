@@ -130,7 +130,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the mass flux over a face of a sub control volume.
+     * \brief Evaluates the momentum flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
