@@ -68,7 +68,7 @@ namespace Dumux {
  *
  * \tparam dimension The dimension of the problem
  * \tparam nComp The number of components to be considered
- * \tparam useM Use molar or mass balances
+ * \tparam useMoles Use molar or mass balances
  * \tparam repCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
  */
 template<int dimension, int nComp, bool useM, int repCompEqIdx = nComp>
