@@ -130,7 +130,7 @@ public:
         const auto& globalPos = scvf.ipGlobal();
         DirichletValues values = initialAtPos(globalPos);
 
-        if constexpr (!ParentType::isMomentumProblem())
+        if constexpr (!ParentType::isMomentumProblem()) // mass problem
         {
             // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
             if (isInlet_(globalPos))
