@@ -80,11 +80,6 @@ inline constexpr auto thirdOrder = Order<3>{};
 template<GridFormat::Concepts::Grid GridView, int order = 1>
 class GridWriter
 {
-#if HAVE_DUNE_LOCALFUNCTIONS
-    static constexpr bool have_dune_local_functions_ = true;
-#else
-    static constexpr bool have_dune_local_functions_ = false;
-#endif
     using Grid = std::conditional_t<
         (order > 1),
         GridFormat::Dune::LagrangePolynomialGrid<GridView>,
@@ -95,11 +90,6 @@ class GridWriter
     using Element = typename GridView::template Codim<0>::Entity;
     using Coordinate = typename Element::Geometry::GlobalCoordinate;
     using Writer = GridFormat::Writer<Grid>;
-
-    static_assert(
-        order == 1 || have_dune_local_functions_,
-        "dune-localfunctions required for higher-order output"
-    );
 
  public:
     //! Constructor for static grid file formats
