@@ -93,7 +93,7 @@ struct EnableGridFaceVariablesCache<TypeTag, TTag::ChannelNCTest> { static const
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::ChannelNCTest> { static constexpr bool value = USEMOLES; };
 
-// Set the problem property
+// Set the coupling manager
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::ChannelNCTest>
 {
