@@ -137,9 +137,6 @@ public:
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
-     * Note that we assume thermodynamic equilibrium, i.e. the
-     * temperatures of the rock matrix and of all fluid phases are
-     * identical.
      */
     Scalar temperature() const
     { return fluidState_.temperature(); }
