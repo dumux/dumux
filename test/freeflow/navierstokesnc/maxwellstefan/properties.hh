@@ -197,6 +197,7 @@ public:
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefanFluidSystem<TypeTag>; };
 
+// Set the coupling manager
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::MaxwellStefanNCTest>
 {
