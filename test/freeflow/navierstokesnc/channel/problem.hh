@@ -135,6 +135,8 @@ public:
             // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
             if (isInlet_(globalPos))
             {
+                // we have formally a dirichlet condition at the inlet for pressure,
+                // the pressure is obtained from the momentum problem via the coupling manager.
                 values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
 
                 if (time() >= 10.0 || inletVelocity_  < eps_)
