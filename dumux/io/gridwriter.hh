@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#if DUMUX_HAVE_GRIDFORMAT
+
 #include <type_traits>
 
 #include <gridformat/gridformat.hpp>
@@ -192,4 +194,26 @@ class GridWriter
 
 } // namespace Dumux::IO
 
+#else // DUMUX_HAVE_GRIDFORMAT
+
+namespace Dumux::IO {
+
+template<class... Args>
+class GridWriter
+{
+public:
+    template<class... _Args>
+    GridWriter(_Args&&...)
+    {
+        static_assert(
+            false,
+            "GridWriter only available when the GridFormat library is available. "
+            "Use `git submodule init && git submodule update` to pull it."
+        );
+    }
+};
+
+} // namespace Dumux::IO
+
+#endif // DUMUX_HAVE_GRIDFORMAT
 #endif // DUMUX_IO_GRID_HH

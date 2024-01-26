@@ -95,3 +95,15 @@ else()
 endif()
 
 message(STATUS "Dumux multithreading backend: ${DUMUX_MULTITHREADING_BACKEND}")
+
+# check for optional 3rd-party libraries as submodules
+set(DUMUX_HAVE_GRIDFORMAT false)
+set(DUMUX_HAVE_VTK_HDF false)
+if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+    message(STATUS "Including gridformat in the source tree")
+    add_subdirectory(${CMAKE_SOURCE_DIR}/deps/gridformat)
+
+    include(${CMAKE_SOURCE_DIR}/deps/gridformat/cmake/modules/GridFormatHaveFeature.cmake)
+    set(DUMUX_HAVE_GRIDFORMAT true)
+    gridformat_have_feature(VTK_HDF DUMUX_HAVE_VTK_HDF)
+endif ()

@@ -13,14 +13,13 @@ add_subdirectory(vtk)
 dumux_add_test(
     NAME test_grid_writer
     SOURCES test_grid_writer.cc
-    CMAKE_GUARD ${HAVE_GRIDFORMAT}
+    CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
 )
 
 dumux_add_test(
     NAME test_grid_writer_parallel
     SOURCES test_grid_writer_parallel.cc
-    CMAKE_GUARD ${HAVE_GRIDFORMAT}
-    CMAKE_GUARD ${HAVE_DUNE_ALUGRID}
+    CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
     MPI_RANKS 2
     TIMEOUT 100
 )
