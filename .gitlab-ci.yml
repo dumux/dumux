@@ -118,11 +118,12 @@ full-dune-latest-release-clang:
 full-dune-master-gcc-cpp-20:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-12-ubuntu-22.04
     CXX_MAX_STANDARD: "20"
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
+    GIT_SUBMODULE_STRATEGY: recursive
 
 ##################################
 # additional scheduled pipelines #
