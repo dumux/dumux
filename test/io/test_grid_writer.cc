@@ -34,7 +34,7 @@ void setFields(Writer& writer)
 template<typename GridView>
 auto writeFirstOrder(const GridView& gridView)
 {
-    GridWriter writer{Format::vtu, gridView, firstOrder};
+    GridWriter writer{Format::vtu, gridView, order<1>};
     setFields(writer);
     std::cout << "Wrote " << writer.write("test_grid_writer_first_order") << std::endl;
 }
@@ -43,7 +43,7 @@ template<typename GridView>
 auto writeSecondOrder(const GridView& gridView)
 {
 #if HAVE_DUNE_FUNCTIONS
-    GridWriter writer{Format::vtu, gridView, secondOrder};
+    GridWriter writer{Format::vtu, gridView, order<2>};
     auto f = Dune::Functions::makeAnalyticGridViewFunction([&] (const auto& x) {
         return x[0]*x[1];
     }, gridView);

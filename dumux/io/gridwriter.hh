@@ -77,9 +77,8 @@ namespace Precision {
 template<int order>
 struct Order { static_assert(order > 0, "order must be > 0"); };
 
-inline constexpr auto firstOrder = Order<1>{};
-inline constexpr auto secondOrder = Order<2>{};
-inline constexpr auto thirdOrder = Order<3>{};
+template<int o>
+inline constexpr auto order = Order<o>{};
 
 /*!
  * \ingroup InputOutput

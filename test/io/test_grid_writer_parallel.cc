@@ -56,7 +56,7 @@ template<class GridView>
 void testSecondOrder(const GridView& gridView)
 {
 #if HAVE_DUNE_FUNCTIONS
-    GridWriter writer{Format::vtu, gridView, secondOrder};
+    GridWriter writer{Format::vtu, gridView, order<2>};
     auto f = Dune::Functions::makeAnalyticGridViewFunction([] (const auto& x) {
         return testFunction(x);
     }, gridView);
