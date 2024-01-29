@@ -70,6 +70,10 @@ namespace Precision {
 } // namespace Precision
 
 
+/*!
+ * \ingroup InputOutput
+ * \brief Represents the interpolation order with which fields are written out.
+ */
 template<int order>
 struct Order { static_assert(order > 0, "order must be > 0"); };
 
@@ -77,6 +81,15 @@ inline constexpr auto firstOrder = Order<1>{};
 inline constexpr auto secondOrder = Order<2>{};
 inline constexpr auto thirdOrder = Order<3>{};
 
+/*!
+ * \ingroup InputOutput
+ * \brief Generic writer for a variety of grid file formats.
+ *        Supports higher-order output of fields provided as Dune::Function objects.
+ *        To create a writer for higher-order output, you may write
+ *        \code
+ *            GridWriter writer{gridView, order<2>};
+ *        \endcode
+ */
 template<GridFormat::Concepts::Grid GridView, int order = 1>
 class GridWriter
 {
@@ -92,7 +105,10 @@ class GridWriter
     using Writer = GridFormat::Writer<Grid>;
 
  public:
-    //! Constructor for static grid file formats
+    /*!
+     * \brief Constructor for non-transient file formats.
+     * \note This does not compile if the chosen format is a transient file format.
+     */
     template<typename Format>
     explicit GridWriter(const Format& fmt,
                         const GridView& gridView,
@@ -102,7 +118,10 @@ class GridWriter
     , writer_{Detail::makeWriter(grid_, fmt)}
     { writer_.set_meta_data("rank", gridView_.comm().rank()); }
 
-    //! Constructor for time series
+    /*!
+     * \brief Constructor for transient file formats, i.e. time series.
+     * \note This does not compile if the chosen format is not a transient file format.
+     */
     template<typename Format>
     explicit GridWriter(const Format& fmt,
                         const GridView& gridView,
@@ -113,11 +132,19 @@ class GridWriter
     , writer_{Detail::makeWriter(grid_, fmt, filename)}
     { writer_.set_meta_data("rank", gridView_.comm().rank()); }
 
-    //! Write a single grid file
+    /*!
+     * \ingroup InputOutput
+     * \brief Write the registered fields into the file with the given name.
+     * \note This function throws if the writer was constructed for time series output.
+     */
     std::string write(const std::string& name) const
     { return writer_.write(name); }
 
-    //! Write a step in a time series
+    /*!
+     * \ingroup InputOutput
+     * \brief Write a step in a time series.
+     * \note This function throws if the writer was not constructed for time series output.
+     */
     template<std::floating_point T>
     std::string write(T time) const
     { return writer_.write(time); }
