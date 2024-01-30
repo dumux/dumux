@@ -257,9 +257,11 @@ private:
             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
             {
                 this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), volVarVectorData[i],
-                                                            volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                            volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim,
+                                                            /*nonconforming*/this->dataMode(), this->precision()).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureVertexMapper_, volVarVectorDataFracture[i],
-                                                                      volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1).get() );
+                                                                      volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1,
+                                                                      /*nonconforming*/this->dataMode(), this->precision()).get() );
             }
 
             // the velocity field
@@ -268,13 +270,15 @@ private:
                 for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
-                                                                /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                                /*numComp*/dimWorld, /*codim*/dim,
+                                                                /*nonconforming*/this->dataMode(), this->precision()).get() );
             }
 
             // the process rank
             if (addProcessRank)
                 this->sequenceWriter().addCellData( Field(gridView, this->gridGeometry().elementMapper(), rank,
-                                                          "process rank", /*numComp*/1, /*codim*/0).get() );
+                                                          "process rank", /*numComp*/1, /*codim*/0,
+                                                          /*nonconforming*/this->dataMode(), this->precision()).get() );
 
             // also register additional (non-standardized) user fields if any (only on matrix grid)
             for (auto&& field : this->fields())
@@ -435,10 +439,10 @@ private:
             {
                 this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().elementMapper(), volVarScalarData[i],
                                                             volVarScalarDataInfo[i].name, /*numComp*/1, /*codim*/dim,
-                                                            /*nonconforming*/this->dataMode()).get() );
+                                                            /*nonconforming*/this->dataMode(), this->precision()).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarScalarDataFracture[i],
                                                                       volVarScalarDataInfo[i].name, /*numComp*/1, /*codim*/dim-1,
-                                                                      /*nonconforming*/this->dataMode()).get() );
+                                                                      /*nonconforming*/this->dataMode(), this->precision()).get() );
             }
 
             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
@@ -448,7 +452,7 @@ private:
                                                             /*nonconforming*/this->dataMode()).get() );
                 fractureSequenceWriter_->addVertexData( FractureField(fractureGridView, *fractureElementMapper_, volVarVectorDataFracture[i],
                                                                       volVarVectorDataInfo[i].name, /*numComp*/dimWorld, /*codim*/dim-1,
-                                                                      /*nonconforming*/this->dataMode()).get() );
+                                                                      /*nonconforming*/this->dataMode(), this->precision()).get() );
             }
 
             // the velocity field
@@ -457,13 +461,15 @@ private:
                 for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numFluidPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->gridGeometry().vertexMapper(), velocity[phaseIdx],
                                                                 "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
-                                                                /*numComp*/dimWorld, /*codim*/dim).get() );
+                                                                /*numComp*/dimWorld, /*codim*/dim,
+                                                                /*nonconforming*/this->dataMode(), this->precision()).get() );
             }
 
             // the process rank
             if (addProcessRank)
                 this->sequenceWriter().addCellData( Field(gridView, this->gridGeometry().elementMapper(), rank,
-                                                          "process rank", /*numComp*/1, /*codim*/0).get() );
+                                                          "process rank", /*numComp*/1, /*codim*/0,
+                                                          /*nonconforming*/this->dataMode(), this->precision()).get() );
 
             // also register additional (non-standardized) user fields if any (only on matrix grid)
             for (auto&& field : this->fields())
