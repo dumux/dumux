@@ -367,7 +367,7 @@ public:
     NumEqVector<lowDimId> evalSourcesFromBulk(const Element<lowDimId>& element,
                                               const FVElementGeometry<lowDimId>& fvGeometry,
                                               const ElementVolumeVariables<lowDimId>& elemVolVars,
-                                              const SubControlVolume<lowDimId>& scv)
+                                              const SubControlVolume<lowDimId>& scv) const
     {
         // make sure the this is called for the element of the context
         assert(this->problem(lowDimId).gridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
