@@ -93,7 +93,7 @@ public:
     }
 
     /*!
-     * \brief Evaluatex the mass or mole flux over a face of a sub control volume.
+     * \brief Evaluates the mass or mole flux over a face of a sub control volume.
      *
      * \param problem The problem
      * \param element The element
