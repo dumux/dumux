@@ -216,11 +216,6 @@ public:
     { return DirichletValues(1.1e5); }
 
 private:
-    bool isInlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] < eps_; }
-
-    bool isOutlet_(const GlobalPosition& globalPos) const
-    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     const Scalar eps_;
     bool useWholeLength_;
