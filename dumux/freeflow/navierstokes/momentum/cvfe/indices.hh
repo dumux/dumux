@@ -29,13 +29,13 @@ struct NavierStokesMomentumCVFEIndices
 
     static constexpr auto dim = dimension;
 
-    static constexpr int momentumXBalanceIdx = 0; //!< Index of the momentum balance equation
-    static constexpr int momentumYBalanceIdx = 1; //!< Index of the momentum balance equation
-    static constexpr int momentumZBalanceIdx = 2; //!< Index of the momentum balance equation
+    static constexpr int momentumXBalanceIdx = 0; //!< Index of the momentum balance equation x-component
+    static constexpr int momentumYBalanceIdx = 1; //!< Index of the momentum balance equation y-component
+    static constexpr int momentumZBalanceIdx = 2; //!< Index of the momentum balance equation z-component
 
-    static constexpr int velocityXIdx = 0; //!< Index of the velocity in a solution vector
-    static constexpr int velocityYIdx = 1; //!< Index of the velocity in a solution vector
-    static constexpr int velocityZIdx = 2; //!< Index of the velocity in a solution vector
+    static constexpr int velocityXIdx = 0; //!< Index of the velocity in a solution vector x-component
+    static constexpr int velocityYIdx = 1; //!< Index of the velocity in a solution vector y-component
+    static constexpr int velocityZIdx = 2; //!< Index of the velocity in a solution vector z-component
 
     /*!
      * \brief Index of the velocity in a solution vector given a certain direction.
