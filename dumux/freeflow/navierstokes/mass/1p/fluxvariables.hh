@@ -50,7 +50,7 @@ class NavierStokesMassOnePFluxVariables
 public:
 
     /*!
-     * \brief Returns the advective mass flux in kg/s.
+     * \brief Returns the advective mass flux in kg/s or mol/s.
      */
     NumEqVector advectiveFlux(int phaseIdx = 0) const
     {
