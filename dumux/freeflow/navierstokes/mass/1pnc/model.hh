@@ -98,7 +98,7 @@ struct NavierStokesMassOnePNCModelTraits
     { return TurbulenceModel::none; }
 
     //! the indices
-    using Indices = NavierStokesMassOnePIndices;
+    using Indices = NavierStokesMassOnePNCIndices;
 };
 
 /*!
