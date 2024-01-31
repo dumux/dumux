@@ -99,7 +99,7 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param elemFaceVars The face variables
      * \param scvf The sub control volume face
-     * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
+     * \param upwindTerm The upwind term (i.e. the advectively transported quantity)
      */
     template<class UpwindTerm>
     static Scalar advectiveFluxForCellCenter(const Problem& problem,
