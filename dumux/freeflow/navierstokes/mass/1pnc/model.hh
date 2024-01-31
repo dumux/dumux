@@ -62,7 +62,7 @@ namespace Dumux {
  * \brief Traits for the Navier-Stokes model
  *
  */
-template<int nComp, bool useMoles, int repCompEqIdx = nComp>
+template<int nComp, bool useM, int repCompEqIdx = nComp>
 struct NavierStokesMassOnePNCModelTraits
 {
     //! There are as many momentum balance equations as dimensions
@@ -76,7 +76,7 @@ struct NavierStokesMassOnePNCModelTraits
     static constexpr int numFluidComponents() { return nComp; }
 
     //! Use moles or not
-    static constexpr bool useMoles() { return useMoles; }
+    static constexpr bool useMoles() { return useM; }
 
     // Enable advection
     static constexpr bool enableAdvection() { return true; }
