@@ -20,7 +20,7 @@ namespace Dumux {
  */
 struct NavierStokesMassOnePIndices
 {
-    static constexpr int conti0EqIdx = 0; //!< Index of the first (total for pure-fluid systems) mass balance equation
+    static constexpr int conti0EqIdx = 0; //!< Index of the mass/mole balance equation
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
 };
 
