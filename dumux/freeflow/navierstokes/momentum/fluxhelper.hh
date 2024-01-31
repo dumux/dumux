@@ -252,7 +252,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     return tangentialVelocityGradient;
             }();
 
-            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()]; // TODO rename to slipVelocity
+            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
             const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
 
             flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
