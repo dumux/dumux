@@ -33,6 +33,7 @@ Discussion on the GPL-3.0 license terms and their implications.
 flowchart TB;
 (test) --> (test2);
 ```
+
 flowchart TB
         subgraph DuMux
             subgraph Grid ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Grid"]
