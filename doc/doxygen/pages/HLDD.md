@@ -37,54 +37,47 @@ flowchart TB
   C-->D
 ```
 
+```mermaid
 flowchart TB
-        subgraph DuMux
-            subgraph Grid ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Grid"]
+    subgraph DuMux
+        subgraph Grid 
             A(Grid) --> B(GridManager)
-
             B --> C(GridView)
             C --> D(GridGeometry)
-            end
-
-            subgraph Variables
+        end
+        subgraph Variables
             D --> F(GridVariables)
-            end
-
-            subgraph External
+        end
+        subgraph External
             D --> E(Problem)
             ETwo(TimeLoop) --> E
             D --> G(SolutionVector)
             style G fill:#f9f,stroke:#333,stroke-width:4px
             E --> F
             G -.-> F
-            end
-
-            subgraph Assembly ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assembly"]
+        end
+        subgraph Assembly
             D --> H{Assembler}
             H <-.-> G
             E --> H
-
             ITwo(LocalAssembler) --> I(LocalResidual)
             H --> ITwo
-            end
-
-            subgraph Solver ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Solver"]
+        end
+        subgraph Solver
             J(LinearSolver) --> K(Solver)
-
             K <-.-> H
-            end
-
-            subgraph Output
+        end
+        subgraph Output
             L(IOField) -.-> M(VTKOutputModule)
             G -.-> M
             F -.-> M
-            end
         end
-
-        subgraph Dune
-            Z((DUNE)) --> A
-            Z --> J
-        end
+    end
+    subgraph Dune
+        Z((DUNE)) --> A
+        Z --> J
+    end
+```
 
 ### Flowcharts
 - Workflow of simulations and model setups.
