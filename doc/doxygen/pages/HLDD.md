@@ -31,14 +31,6 @@ Discussion on the GPL-3.0 license terms and their implications.
 
 ```mermaid
 flowchart TB
-  A-->B
-  A-->C
-  B-->D
-  C-->D
-```
-
-```mermaid
-flowchart TB
     subgraph DuMux
         subgraph Grid 
             A(Grid) --> B(GridManager)
