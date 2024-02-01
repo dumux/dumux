@@ -30,11 +30,11 @@ Discussion on the GPL-3.0 license terms and their implications.
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
 ```mermaid
-flowchart TB;
-  A-->B;
-  A-->C;
-  B-->D;
-  C-->D;
+flowchart TB
+  A-->B
+  A-->C
+  B-->D
+  C-->D
 ```
 
 flowchart TB
