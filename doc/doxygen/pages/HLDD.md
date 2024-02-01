@@ -29,7 +29,10 @@ Discussion on the GPL-3.0 license terms and their implications.
 ### Architecture Diagrams
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
-@mermaid{
+```mermaid 
+flowchart TB;
+(test) --> (test2);
+```
 flowchart TB
         subgraph DuMux
             subgraph Grid ["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Grid"]
@@ -78,7 +81,6 @@ flowchart TB
             Z((DUNE)) --> A
             Z --> J
         end
-}
 
 ### Flowcharts
 - Workflow of simulations and model setups.
