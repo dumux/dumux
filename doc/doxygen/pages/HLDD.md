@@ -29,9 +29,12 @@ Discussion on the GPL-3.0 license terms and their implications.
 ### Architecture Diagrams
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
-```mermaid 
-flowchart TB
-    (test) --> (test2)
+```mermaid
+graph TD;
+  A-->B;
+  A-->C;
+  B-->D;
+  C-->D;
 ```
 
 flowchart TB
