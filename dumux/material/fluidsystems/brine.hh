@@ -184,10 +184,10 @@ public:
      *
      * \param tempMin The minimum temperature used for tabulation of water [K]
      * \param tempMax The maximum temperature used for tabulation of water [K]
-     * \param nTemp The number of ticks on the temperature axis of the  table of water
+     * \param nTemp The number of ticks on the temperature axis of the table of water
      * \param pressMin The minimum pressure used for tabulation of water [Pa]
      * \param pressMax The maximum pressure used for tabulation of water [Pa]
-     * \param nPress The number of ticks on the pressure axis of the  table of water
+     * \param nPress The number of ticks on the pressure axis of the table of water
      */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
@@ -255,7 +255,7 @@ public:
             // We could calculate the real fugacity coefficient of
             // the component in the fluid. Probably that's not worth
             // the effort, since the fugacity coefficient of the other
-            // component is infinite anyway...
+            // component is infinite anyway.
             return 1.0;
         return std::numeric_limits<Scalar>::infinity();
     }
