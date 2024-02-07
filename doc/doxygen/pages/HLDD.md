@@ -17,8 +17,9 @@ Discussion on the GPL-3.0 license terms and their implications.
 - list the main classes and only one section (2-3 sentences) what this class is about
 #### Grid
 #### GridManager
-The concept of the Grid Manager in the DuMuX framework is to abstract and centralize the creation, manipulation, and management of various grid types used in numerical simulations. It serves as an interface between the user and the underlying grid data structures.
+The concept of the GridManager in the DuMuX framework is to abstract and centralize the creation, manipulation, and management of various grid types used in numerical simulations. It serves as an interface between the user and the underlying grid data structures.
 #### GridView
+A GridView is a representation of the grid that allows for read-only access to certain parts of the Grid from which it is obtained. A leafGridView is a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a grid hierarchy) while a levelGridView is a view on all elements of a given level of a refinement hierarchy.
 #### GridGeometry
 #### GridVariables
 #### Problem
