@@ -29,6 +29,7 @@ These locations and also the type of variables can depend on the chosen discreti
 #### Problem
 The Problem class in DuMuX represents the conceptual framework where the scenario being simulated are characterized through the specification of initial and boundary conditions, as well as source terms.
 #### TimeLoop
+The TimeLoop class is instantiated to manage temporal aspects of transient PDEs, handling parameters such as time step size, current simulation time, and total simulation time, whereas stationary PDEs bypass the need for such temporal management.
 #### SolutionVector
 #### Assembler
 #### LocalAssembler
