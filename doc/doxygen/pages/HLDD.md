@@ -15,6 +15,23 @@ Discussion on the GPL-3.0 license terms and their implications.
 
 ### Main Design Features
 - list the main classes and only one section (2-3 sentences) what this class is about
+#### Grid
+#### GridManager
+The concept of the Grid Manager in the DuMuX framework is to abstract and centralize the creation, manipulation, and management of various grid types used in numerical simulations. It serves as an interface between the user and the underlying grid data structures.
+#### GridView
+#### GridGeometry
+#### GridVariables
+#### Problem
+#### TimeLoop
+#### SolutionVector
+#### Assembler
+#### LocalAssembler
+#### LocalResidual
+#### LinearSolver
+#### Solver
+#### IOField
+#### VTKOutputModule
+#### Coupling Manager
 
 ### Application and Technology Architecture
 - Software architecture focusing on modularity and integration with DUNE framework.
