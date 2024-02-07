@@ -27,6 +27,7 @@ GridVariables provide access to all variables needed to solve a particular (disc
 the primary and secondary variables at discrete locations.
 These locations and also the type of variables can depend on the chosen discretization scheme.
 #### Problem
+The Problem class in DuMuX represents the conceptual framework where the scenario being simulated are characterized through the specification of initial and boundary conditions, as well as source terms.
 #### TimeLoop
 #### SolutionVector
 #### Assembler
