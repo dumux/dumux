@@ -260,9 +260,23 @@ function(dumux_add_test)
     set(ADDTEST_TARGET ${ADDTEST_NAME})
   endif()
 
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
-  file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ADDTEST_NAME}.json"
-             "{\n  \"name\": \"${ADDTEST_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\",\n  \"source_dir\": \"${CMAKE_CURRENT_SOURCE_DIR}\"\n}\n")
+  if(NOT ADDTEST_MPI_RANKS)
+    set(ADDTEST_MPI_RANKS 1)
+  endif()
+
+  foreach(procnum ${ADDTEST_MPI_RANKS})
+    if((NOT "${procnum}" GREATER "${DUNE_MAX_TEST_CORES}") AND (NOT ADDTEST_COMPILE_ONLY))
+      set(ACTUAL_NAME ${ADDTEST_NAME})
+      # add suffix
+      if(NOT ${procnum} STREQUAL "1")
+        set(ACTUAL_NAME "${ACTUAL_NAME}-mpi-${procnum}")
+      endif()
+
+      file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
+      file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ACTUAL_NAME}.json"
+             "{\n  \"name\": \"${ACTUAL_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\",\n  \"source_dir\": \"${CMAKE_CURRENT_SOURCE_DIR}\"\n}\n")
+    endif()
+  endforeach()
 endfunction()
 
 # Evaluate test guards like dune_add_test internally does
