@@ -39,6 +39,7 @@ The LocalAssembler is responsible for calculating the local residual vector and 
 #### LocalResidual
 The LocalResidual is the implementation of a how a residual is evaluated on a element/scv. It relies on the concept that each PDE has a storage,flux and source term. Here the actually PDE is implemented using this concept.
 #### LinearSolver
+The LinearSolver class is a wrapper for the actual linear solver used to solve the linear system of equations. It provides a common interface for different linear solvers. In the concrete linearSolver the implementation of the actual solving algorithm is written.
 #### Solver
 #### IOField
 #### VTKOutputModule
