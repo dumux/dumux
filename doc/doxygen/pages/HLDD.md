@@ -31,6 +31,7 @@ The Problem class in DuMuX represents the conceptual framework where the scenari
 #### TimeLoop
 The TimeLoop class is instantiated to manage temporal aspects of transient PDEs, handling parameters such as time step size, current simulation time, and total simulation time, whereas stationary PDEs bypass the need for such temporal management.
 #### SolutionVector
+A SolutionVector class object is a container containing the primary variables for each degree of freedom (dof).In more detail, the SolutionVector object is a container class holding NumEqVector objects for each dof.
 #### Assembler
 #### LocalAssembler
 #### LocalResidual
