@@ -20,6 +20,6 @@ dumux_add_test(
     NAME test_grid_writer_parallel
     SOURCES test_grid_writer_parallel.cc
     CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
-    MPI_RANKS 2
+    MPI_RANKS 1 2
     TIMEOUT 100
 )
