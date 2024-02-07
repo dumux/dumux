@@ -21,6 +21,7 @@ The concept of the GridManager in the DuMuX framework is to abstract and central
 #### GridView
 A GridView is a representation of the grid that allows for read-only access to certain parts of the Grid from which it is obtained. A leafGridView is a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a grid hierarchy) while a levelGridView is a view on all elements of a given level of a refinement hierarchy.
 #### GridGeometry
+The grid geometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations.
 #### GridVariables
 #### Problem
 #### TimeLoop
