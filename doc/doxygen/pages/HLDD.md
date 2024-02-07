@@ -35,6 +35,7 @@ A SolutionVector class object is a container containing the primary variables fo
 #### Assembler
 The Assembler is responsible for calculating the global residual vector and the global Jacobian matrix. It relies on a discretization-specific local assembler engine. The Jacobian matrix is the partial derivative of the residual with respect to each entry of the solution vector. Dumux uses an element-wise assembly algorithm. For each element, a local assembler is instantiated.
 #### LocalAssembler
+The LocalAssembler is responsible for calculating the local residual vector and the local Jacobian matrix. The local residual vector is the vector of residuals for each element/scv. The local Jacobian matrix is the partial derivative of the local residual with respect to each entry of the solution vector. The local assembler is discretization-specific.
 #### LocalResidual
 #### LinearSolver
 #### Solver
