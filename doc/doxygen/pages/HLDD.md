@@ -37,6 +37,7 @@ The Assembler is responsible for calculating the global residual vector and the 
 #### LocalAssembler
 The LocalAssembler is responsible for calculating the local residual vector and the local Jacobian matrix. The local residual vector is the vector of residuals for each element/scv. The local Jacobian matrix is the partial derivative of the local residual with respect to each entry of the solution vector. The local assembler is discretization-specific.
 #### LocalResidual
+The LocalResidual is the implementation of a how a residual is evaluated on a element/scv. It relies on the concept that each PDE has a storage,flux and source term. Here the actually PDE is implemented using this concept.
 #### LinearSolver
 #### Solver
 #### IOField
