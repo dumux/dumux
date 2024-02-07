@@ -41,6 +41,7 @@ The LocalResidual is the implementation of a how a residual is evaluated on a el
 #### LinearSolver
 The LinearSolver class is a wrapper for the actual linear solver used to solve the linear system of equations. It provides a common interface for different linear solvers. In the concrete linearSolver the implementation of the actual solving algorithm is written.
 #### Solver
+The Solver class manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
 #### IOField
 #### VTKOutputModule
 #### Coupling Manager
