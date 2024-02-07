@@ -33,6 +33,7 @@ The TimeLoop class is instantiated to manage temporal aspects of transient PDEs,
 #### SolutionVector
 A SolutionVector class object is a container containing the primary variables for each degree of freedom (dof).In more detail, the SolutionVector object is a container class holding NumEqVector objects for each dof.
 #### Assembler
+The Assembler is responsible for calculating the global residual vector and the global Jacobian matrix. It relies on a discretization-specific local assembler engine. The Jacobian matrix is the partial derivative of the residual with respect to each entry of the solution vector. Dumux uses an element-wise assembly algorithm. For each element, a local assembler is instantiated.
 #### LocalAssembler
 #### LocalResidual
 #### LinearSolver
