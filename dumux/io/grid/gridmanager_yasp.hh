@@ -127,7 +127,7 @@ public:
             // construct using user defined partitioning
             const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
             Dune::Yasp::FixedSizePartitioning<dim> lb(partitioning);
-            ParentType::gridPtr() = std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunication(), &lb);
+            ParentType::gridPtr() = std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::Communication(), &lb);
         }
 
         postProcessing_(modelParamGroup);
@@ -157,7 +157,7 @@ public:
             // construct using user defined partitioning
             const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
             Dune::Yasp::FixedSizePartitioning<dim> lb(partitioning);
-            ParentType::gridPtr() = std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunication(), &lb);
+            ParentType::gridPtr() = std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::Communication(), &lb);
         }
 
         postProcessing_(modelParamGroup);
@@ -297,7 +297,7 @@ public:
             // construct using user defined partitioning
             const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
             Dune::Yasp::FixedSizePartitioning<dim> lb(partitioning);
-            ParentType::gridPtr() = std::make_shared<Grid>(globalPositions, periodic, overlap, typename Grid::CollectiveCommunication(), &lb);
+            ParentType::gridPtr() = std::make_shared<Grid>(globalPositions, periodic, overlap, typename Grid::Communication(), &lb);
         }
 
         postProcessing_(modelParamGroup);
