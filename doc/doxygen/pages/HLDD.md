@@ -23,6 +23,9 @@ A GridView is a representation of the grid that allows for read-only access to c
 #### GridGeometry
 The grid geometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations.
 #### GridVariables
+GridVariables provide access to all variables needed to solve a particular (discrete) PDE, that is,
+the primary and secondary variables at discrete locations.
+These locations and also the type of variables can depend on the chosen discretization scheme.
 #### Problem
 #### TimeLoop
 #### SolutionVector
