@@ -84,7 +84,7 @@ public:
      *        which depend on the mole fraction of a single component
      *
      * \b Only use this method if just a single component's
-     * concentration changed between two \p update*() calls. If more than
+     * concentration changed between two \p update() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!
 
