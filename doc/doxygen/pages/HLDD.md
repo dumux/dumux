@@ -59,46 +59,73 @@ The Solver class manages the iterative refinement of solutions by assembling the
 ### Architecture Diagrams
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
-```mermaid
-flowchart TB
-    subgraph DuMux
-        subgraph Grid 
-            A(Grid) --> B(GridManager)
-            B --> C(GridView)
-            C --> D(GridGeometry)
-        end
-        subgraph Variables
-            D --> F(GridVariables)
-        end
-        subgraph External
-            D --> E(Problem)
-            ETwo(TimeLoop) --> E
-            D --> G(SolutionVector)
-            style G fill:#f9f,stroke:#333,stroke-width:4px
-            E --> F
-            G -.-> F
-        end
-        subgraph Assembly
-            D --> H{Assembler}
-            H <-.-> G
-            E --> H
-            ITwo(LocalAssembler) --> I(LocalResidual)
-            H --> ITwo
-        end
-        subgraph Solver
-            J(LinearSolver) --> K(Solver)
-            K <-.-> H
-        end
-        subgraph Output
-            L(IOField) -.-> M(VTKOutputModule)
-            G -.-> M
-            F -.-> M
-        end
-    end
-    subgraph Dune
-        Z((DUNE)) --> A
-        Z --> J
-    end
+```plantuml
+top to bottom direction
+package "Dune" {
+    package "Dune_ISTL"{
+class ISTL_Solver
+class ISTL_Matrices
+class ISTL_Vectors
+}
+    package DUNE_Grid{
+class YASP
+}
+
+package "DuMux" {
+    package "Grid" {
+       interface GridManager{}
+       interface GridView{}
+       class GridGeometry{}
+
+    }
+    package "Variables" {
+       class GridVariables{}
+        
+    }
+    package "External" {
+        class Problem{}
+        class TimeLoop{}
+        class SolutionVector{}
+    }
+    package "Assembly" {
+        class Assembler{}
+        class LocalAssembler{}
+        class LocalResidual{}
+        
+    }
+    package "Solving" {
+        class Solver{}
+        interface LinearSolver{}
+    }
+    package "Output" {
+        class IOField{}
+        class VTKOutputModule
+
+    }
+}
+
+
+
+}
+
+LinearSolver <-- "Dune_ISTL"
+GridManager <-- "DUNE_Grid"
+GridManager --> GridView
+GridView --> GridGeometry
+GridGeometry --> Problem
+GridGeometry --> GridVariables
+GridGeometry --> Assembler
+GridGeometry --> SolutionVector
+TimeLoop --> Problem
+LinearSolver --> Solver 
+LocalResidual --> LocalAssembler
+LocalAssembler --> Assembler
+GridVariables --> VTKOutputModule
+GridVariables --> SolutionVector
+IOField --> VTKOutputModule
+Assembler --> Solver
+SolutionVector --> Assembler
+}
 ```
 
 ### Flowcharts
