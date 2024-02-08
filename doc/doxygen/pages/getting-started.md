@@ -103,6 +103,8 @@ To configure your new module run `dunecontrol`:
 ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --only=dumux-yourmodule all
 ```
 
+Note: This command only configures the new module (other modules must already be configured). If you need to configure the new module and (re)configure all dependencies, you can use `--module=dumux-yourmodule` instead of `--only=dumux-yourmodule` in the command above. This may also be necessary if the configuration with the `--only` option fails.
+
 Now you can create your own test case. Enter the `dumux-yourmodule` folder and create a new folder (e.g. `appl`), that will contain your first test case.
 
 ```bash
@@ -150,7 +152,7 @@ cd appl
 ./test_1p_compressible_stationary_tpfa params.input
 ```
 
-This result visualized in with ParaView should look something like this:
+This result visualized with ParaView should look something like this:
 ![1p pressure solution](https://dumux.org/images/gettingstarted/1p_pressure.png)
 
 ## Next steps
