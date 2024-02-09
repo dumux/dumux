@@ -15,9 +15,6 @@
 #ifndef NONISOTHERMAL
 #define NONISOTHERMAL 0
 #endif
-#ifndef ITERATIVE_SOLVER
-#define ITERATIVE_SOLVER 0
-#endif
 
 #include <ctime>
 #include <iostream>
@@ -203,84 +200,156 @@ int main(int argc, char** argv)
             timeLoop, xOld
         );
 
-    // the linear solver
-#if ITERATIVE_SOLVER
-    using Matrix = typename Assembler::JacobianMatrix;
-    using Vector = typename Assembler::ResidualType;
-    using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
-    auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
-    auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
-#else
-    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
-#endif
-
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-
-    if (isStationary)
+    if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
     {
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(x);
+        // the linear solver
+        using Matrix = typename Assembler::JacobianMatrix;
+        using Vector = typename Assembler::ResidualType;
+        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
 
-        // print discrete L2 and Linfity errors
-        if (momentumProblem->hasAnalyticalSolution())
+        // the non-linear solver
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+
+        if (isStationary)
         {
+            // solve the non-linear system with time step control
+            nonLinearSolver.solve(x);
+
             // print discrete L2 and Linfity errors
-            const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-            const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-
-            if (printErrors || printConvergenceTestFile)
+            if (momentumProblem->hasAnalyticalSolution())
             {
-                NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
-                NavierStokesTest::ErrorCSVWriter(
-                    momentumProblem, massProblem, std::to_string(x[massIdx].size())
-                ).printErrors(errors);
+                // print discrete L2 and Linfity errors
+                const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+                const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
 
-                if (printConvergenceTestFile)
-                    NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+                if (printErrors || printConvergenceTestFile)
+                {
+                    NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+                    NavierStokesTest::ErrorCSVWriter(
+                        momentumProblem, massProblem, std::to_string(x[massIdx].size())
+                    ).printErrors(errors);
+
+                    if (printConvergenceTestFile)
+                        NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+                }
+
             }
-
+            // write vtk output
+            vtkWriter.write(1.0);
         }
-        // write vtk output
-        vtkWriter.write(1.0);
+        else
+        {
+            if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
+                timeLoop->setCheckPoint({200.0, 210.0});
+
+            // time loop
+            timeLoop->start(); do
+            {
+                // solve the non-linear system with time step control
+                nonLinearSolver.solve(x, *timeLoop);
+
+                // make the new solution the old solution
+                xOld = x;
+                momentumGridVariables->advanceTimeStep();
+                massGridVariables->advanceTimeStep();
+
+                // advance to the time loop to the next step
+                timeLoop->advanceTimeStep();
+
+                // write vtk output
+                vtkWriter.write(timeLoop->time());
+
+                // report statistics of this time step
+                timeLoop->reportTimeStep();
+
+                // set new dt as suggested by newton solver
+                timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+                // update time
+                massProblem->setTime(timeLoop->time());
+                momentumProblem->setTime(timeLoop->time());
+
+            } while (!timeLoop->finished());
+
+            timeLoop->finalize(leafGridView.comm());
+        }
     }
     else
     {
-        if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
-            timeLoop->setCheckPoint({200.0, 210.0});
+        // the linear solver
+        using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
 
-        // time loop
-        timeLoop->start(); do
+        // the non-linear solver
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+
+        if (isStationary)
         {
             // solve the non-linear system with time step control
-            nonLinearSolver.solve(x, *timeLoop);
+            nonLinearSolver.solve(x);
 
-            // make the new solution the old solution
-            xOld = x;
-            momentumGridVariables->advanceTimeStep();
-            massGridVariables->advanceTimeStep();
+            // print discrete L2 and Linfity errors
+            if (momentumProblem->hasAnalyticalSolution())
+            {
+                // print discrete L2 and Linfity errors
+                const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+                const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
 
-            // advance to the time loop to the next step
-            timeLoop->advanceTimeStep();
+                if (printErrors || printConvergenceTestFile)
+                {
+                    NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+                    NavierStokesTest::ErrorCSVWriter(
+                        momentumProblem, massProblem, std::to_string(x[massIdx].size())
+                    ).printErrors(errors);
 
+                    if (printConvergenceTestFile)
+                        NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+                }
+
+            }
             // write vtk output
-            vtkWriter.write(timeLoop->time());
+            vtkWriter.write(1.0);
+        }
+        else
+        {
+            if (getParam<Scalar>("Problem.InletVelocity") > 1e-6)
+                timeLoop->setCheckPoint({200.0, 210.0});
 
-            // report statistics of this time step
-            timeLoop->reportTimeStep();
+            // time loop
+            timeLoop->start(); do
+            {
+                // solve the non-linear system with time step control
+                nonLinearSolver.solve(x, *timeLoop);
 
-            // set new dt as suggested by newton solver
-            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+                // make the new solution the old solution
+                xOld = x;
+                momentumGridVariables->advanceTimeStep();
+                massGridVariables->advanceTimeStep();
 
-            // update time
-            massProblem->setTime(timeLoop->time());
-            momentumProblem->setTime(timeLoop->time());
+                // advance to the time loop to the next step
+                timeLoop->advanceTimeStep();
 
-        } while (!timeLoop->finished());
+                // write vtk output
+                vtkWriter.write(timeLoop->time());
 
-        timeLoop->finalize(leafGridView.comm());
+                // report statistics of this time step
+                timeLoop->reportTimeStep();
+
+                // set new dt as suggested by newton solver
+                timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+                // update time
+                massProblem->setTime(timeLoop->time());
+                momentumProblem->setTime(timeLoop->time());
+
+            } while (!timeLoop->finished());
+
+            timeLoop->finalize(leafGridView.comm());
+        }
     }
 
     ////////////////////////////////////////////////////////////
