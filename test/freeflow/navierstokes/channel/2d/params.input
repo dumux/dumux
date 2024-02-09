@@ -22,6 +22,7 @@ MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [LinearSolver]
+UseIterativeSolver = false
 MaxIterations = 500
 ResidualReduction = 1e-10
 SymmetrizeDirichlet = true

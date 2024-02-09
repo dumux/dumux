@@ -15,9 +15,6 @@
 #ifndef NONISOTHERMAL
 #define NONISOTHERMAL 0
 #endif
-#ifndef ITERATIVE_SOLVER
-#define ITERATIVE_SOLVER 0
-#endif
 
 #include <ctime>
 #include <iostream>
@@ -203,26 +200,32 @@ int main(int argc, char** argv)
             timeLoop, xOld
         );
 
-    // the linear solver
-#if ITERATIVE_SOLVER
+    const bool useIterativeSolver = getParam<bool>("LinearSolver.UseIterativeSolver", false);
+
+#if !NONISOTHERMAL
     using Matrix = typename Assembler::JacobianMatrix;
     using Vector = typename Assembler::ResidualType;
-    using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+    using IterativeLinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
     auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
-    auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
-#else
-    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    auto iterativeLinearSolver = std::make_shared<IterativeLinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+    using NewtonSolverWithIterativeSolver = MultiDomainNewtonSolver<Assembler, IterativeLinearSolver, CouplingManager>;
+    NewtonSolverWithIterativeSolver nonLinearSolverWithIterativeSolver(assembler, iterativeLinearSolver, couplingManager);
 #endif
 
-    // the non-linear solver
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     if (isStationary)
     {
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x);
+#if !NONISOTHERMAL
+        if (useIterativeSolver)
+            nonLinearSolverWithIterativeSolver.solve(x);
+        else
+#endif
+            nonLinearSolver.solve(x);
 
         // print discrete L2 and Linfity errors
         if (momentumProblem->hasAnalyticalSolution())
@@ -255,7 +258,12 @@ int main(int argc, char** argv)
         timeLoop->start(); do
         {
             // solve the non-linear system with time step control
-            nonLinearSolver.solve(x, *timeLoop);
+#if !NONISOTHERMAL
+            if (useIterativeSolver)
+                nonLinearSolverWithIterativeSolver.solve(x, *timeLoop);
+            else
+#endif
+                nonLinearSolver.solve(x, *timeLoop);
 
             // make the new solution the old solution
             xOld = x;
@@ -272,7 +280,12 @@ int main(int argc, char** argv)
             timeLoop->reportTimeStep();
 
             // set new dt as suggested by newton solver
-            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+#if !NONISOTHERMAL
+            if (useIterativeSolver)
+                timeLoop->setTimeStepSize(nonLinearSolverWithIterativeSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            else
+#endif
+                timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
             // update time
             massProblem->setTime(timeLoop->time());
