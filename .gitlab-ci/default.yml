@@ -33,6 +33,11 @@ configure:
   stage: configure
   script:
     - |
+      # remove submodules (may be present due to caching done by gitlab, although this pipeline may not support the submodule)
+      rm -rf deps/*
+      if [ "${GIT_SUBMODULE_STRATEGY}" == "recursive" ]; then
+          git submodule update --init
+      fi
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current configure
