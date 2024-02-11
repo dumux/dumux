@@ -82,6 +82,7 @@ public:
     , bulkElementMap_{makeBulkElementMap_()}
     , gridData_{}
     , isBarrierFunction_{std::move(isBarrier)}
+    , barriersTakePrecendence_{getParam<bool>("BoxDFM.BarriersTakePrecedence", false)}
     {
         const auto& bulkGridView = gridManager_.template grid<bulkGridId>().leafGridView();
         bulkInsertionToElementIndex_.resize(bulkGridView.size(0));
@@ -233,6 +234,7 @@ private:
     std::vector<std::size_t> bulkInsertionToElementIndex_;
     std::optional<std::shared_ptr<const GridData>> gridData_;
     BarrierMarker isBarrierFunction_;
+    bool barriersTakePrecendence_;
 };
 
 } // namespace Dumux

@@ -34,6 +34,7 @@ class BoxDfmVertexMapper : public EnrichedVertexDofMapper<GV>
     public:
         BarrierIndicator(const IsBarrier& isBarrier)
         : isBarrier_{isBarrier}
+        , barriersTakePrecendence_(getParam<bool>("BoxDFM.BarriersTakePrecedence", false))
         {}
 
         /*!
@@ -63,16 +64,32 @@ class BoxDfmVertexMapper : public EnrichedVertexDofMapper<GV>
             // first, mark all vertices on the lower-dimensional grid
             EnrichmentIndicator::markVerticesForEnrichment(vertexMarkers, gridView, vertexMapper, codimOneGridView, codimOneGridAdapter);
 
-            // then, unmark all vertices that are not on barrier elements
             static constexpr int dim = GridView::dimension;
-            for (const auto& codimOneElement : elements(codimOneGridView))
-                if (!isBarrier_(codimOneElement))
-                    for (int i = 0; i < codimOneElement.subEntities(dim-1); ++i)
-                        vertexMarkers[ codimOneGridAdapter.bulkGridVertexIndex(codimOneElement.template subEntity<dim-1>(i)) ] = false;
+            if (barriersTakePrecendence_)
+            {
+                // find all vertices that are not connected to any barrier elements
+                std::vector<bool> touchesBarrier(gridView.size(dim), false);
+                for (const auto& codimOneElement : elements(codimOneGridView))
+                    if (isBarrier_(codimOneElement))
+                        for (int i = 0; i < codimOneElement.subEntities(dim-1); ++i)
+                            touchesBarrier[ codimOneGridAdapter.bulkGridVertexIndex(codimOneElement.template subEntity<dim-1>(i)) ] = true;
+                for (std::size_t i = 0; i < touchesBarrier.size(); ++i)
+                    if (!touchesBarrier[i])
+                        vertexMarkers[i] = false;
+            }
+            else
+            {
+                // unmark all vertices that are not on barrier elements
+                for (const auto& codimOneElement : elements(codimOneGridView))
+                    if (!isBarrier_(codimOneElement))
+                        for (int i = 0; i < codimOneElement.subEntities(dim-1); ++i)
+                            vertexMarkers[ codimOneGridAdapter.bulkGridVertexIndex(codimOneElement.template subEntity<dim-1>(i)) ] = false;
+            }
         }
 
     private:
         const IsBarrier& isBarrier_;
+        bool barriersTakePrecendence_;
     };
 
 public:

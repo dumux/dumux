@@ -512,7 +512,12 @@ private:
         dofToFractureVertexIdx_.assign(gridGeometry.numDofs(), undefinedIdx);
         fractureElementMap_.resize(gridView.size(0));
 
+        // also, keep track of mapping from bulk vertices to fracture dofs
+        // (at intersections between barriers/fractures, we may visit multiple times)
+        std::vector<GridIndexType> bulkVertexToFractureVertex(gridView.size(dim), undefinedIdx);
+
         std::vector<GridIndexType> isVertexIndices;
+        std::vector<GridIndexType> isDofIndices;
         std::vector<int> isElementCorners;
         for (const auto& element : elements(gridView))
         {
@@ -525,18 +530,23 @@ private:
                 fractureVertexIndexStorage.resize(isVertexIndices.size());
                 for (int c = 0; c < isVertexIndices.size(); ++c)
                 {
-                    const auto dofBulk = isVertexIndices[c];
+                    const auto dofBulk = isDofIndices[c];
+                    const auto vIdxBulk = isVertexIndices[c];
                     const auto elemLocalCorner = isElementCorners[c];
-                    const auto fractureVertexIdx = dofToFractureVertexIdx_[dofBulk];
+                    auto fractureVertexIdx = bulkVertexToFractureVertex[vIdxBulk];
                     if (fractureVertexIdx == undefinedIdx)
                     {
                         gridFactory.insertVertex(element.template subEntity<dim>(elemLocalCorner).geometry().center());
                         fractureVertexIndexStorage[c] = fracVertexCount;
                         dofToFractureVertexIdx_[dofBulk] = fracVertexCount;
+                        bulkVertexToFractureVertex[vIdxBulk] = fracVertexCount;
                         fracVertexCount++;
                     }
                     else
+                    {
+                        dofToFractureVertexIdx_[dofBulk] = fractureVertexIdx;
                         fractureVertexIndexStorage[c] = fractureVertexIdx;
+                    }
                 }
                 return fractureVertexIndexStorage;
             };
@@ -565,24 +575,36 @@ private:
                         }
                     }
 
-                    if (insertFacet)
-                    {
-                        const auto& isGeometry = is.geometry();
+                    const auto updateCorners = [&] (const auto& isGeometry) {
                         const auto numCorners = isGeometry.corners();
-
                         isVertexIndices.resize(numCorners);
+                        isDofIndices.resize(numCorners);
                         isElementCorners.resize(numCorners);
                         for (unsigned int i = 0; i < numCorners; ++i)
                         {
                             isElementCorners[i] = refElement.subEntity(indexInInside, 1, i, dim);
-                            isVertexIndices[i] = gridGeometry.vertexMapper().subIndex(element, isElementCorners[i], dim);
+                            isVertexIndices[i] = gridGeometry.vertexMapper().vertexIndex(element, isElementCorners[i], dim);
+                            isDofIndices[i] = gridGeometry.vertexMapper().subIndex(element, isElementCorners[i], dim);
                         }
+                    };
 
+                    if (insertFacet)
+                    {
+                        const auto& isGeometry = is.geometry();
+                        updateCorners(isGeometry);
                         const auto& fractureVertexIndices = getFractureGridVertexIndices();
                         gridFactory.insertElement(isGeometry.type(), fractureVertexIndices);
                         handledFacets.insert( std::make_pair(eIdxGlobal, indexInInside) );
                         fractureElementMap_[eIdxGlobal].push_back( std::make_pair(indexInInside, fractureElementCount) );
                         fractureElementCount++;
+                    }
+                    else
+                    {
+                        // make sure the dof indices are mapped
+                        const auto& isGeometry = is.geometry();
+                        updateCorners(isGeometry);
+                        for (unsigned int i = 0; i < isDofIndices.size(); ++i)
+                            dofToFractureVertexIdx_[isDofIndices[i]] = bulkVertexToFractureVertex[isVertexIndices[i]];
                     }
                 }
             }
@@ -605,7 +627,10 @@ private:
         // update vertex index map
         for (GridIndexType dofIdx = 0; dofIdx < gridGeometry.numDofs(); ++dofIdx)
             if (gridGeometry.dofOnFracture(dofIdx))
+            {
+                assert(dofToFractureVertexIdx_[dofIdx] != undefinedIdx);
                 dofToFractureVertexIdx_[dofIdx] = insToVertexIdx[ dofToFractureVertexIdx_[dofIdx] ];
+            }
 
         // update fracture element map
         for (auto& elemLocalMap : fractureElementMap_)
