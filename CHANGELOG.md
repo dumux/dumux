@@ -15,7 +15,7 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 - __Facet-Coupling__: Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
-
+- __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
 
 
