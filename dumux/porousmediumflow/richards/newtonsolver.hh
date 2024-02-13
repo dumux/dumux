@@ -15,6 +15,7 @@
 
 #include <algorithm>
 
+#include <dune/common/parallel/communication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/common/properties.hh>
