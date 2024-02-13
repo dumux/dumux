@@ -15,7 +15,10 @@
 
 #include <algorithm>
 
+#include <dune/common/parallel/mpihelper.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/assembly/partialreassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
