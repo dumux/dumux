@@ -15,7 +15,11 @@
 
 #include <algorithm>
 
+#include <dune/common/parallel/communication.hh>
+#include <dune/common/parallel/mpihelper.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/assembly/partialreassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
@@ -28,11 +32,13 @@ namespace Dumux {
  * and can thus do update smarter than the plain Newton solver.
  *
  */
-template <class Assembler, class LinearSolver>
-class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
+template <class Assembler, class LinearSolver,
+          class Reassembler = PartialReassembler<Assembler>,
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator> >
+class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>
 {
     using Scalar = typename Assembler::Scalar;
-    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
     using Indices = typename Assembler::GridVariables::VolumeVariables::Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
