@@ -220,26 +220,19 @@ public:
             // get porous medium values:
             const Scalar massFracH2OInside = volVars.massFraction(gasPhaseIdx, H2OIdx);
 
-
             // calculate fluxes
             // liquid phase
-            Scalar evaporationRateMole = 0;
-            if (massFracH2OInside - massFracRefH2O > 0)
-            {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (massFracH2OInside - massFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * volVars.molarDensity(gasPhaseIdx);
-            }
-            else
-            {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (massFracH2OInside - massFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * molarDensityRefAir;
-            }
+#if SalinizationCCTpfa //take harmonic mean
+            static const Scalar avgMolarDensity = (2*volVars.molarDensity(gasPhaseIdx)*molarDensityRefAir)
+                                                  / (volVars.molarDensity(gasPhaseIdx) + molarDensityRefAir);
+#else //box -> take arithmetic mean
+            static const Scalar avgMolarDensity = (volVars.molarDensity(gasPhaseIdx) + molarDensityRefAir) / 2;
+#endif
+            const Scalar evaporationRateMole = massTransferCoefficient
+                                               * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
+                                               * (massFracH2OInside - massFracRefH2O)
+                                               / boundaryLayerThickness
+                                               * avgMolarDensity;
 
             values[conti0EqIdx] = evaporationRateMole;
 
