@@ -210,6 +210,8 @@ public:
         if (globalPos[1] > hmax - eps_)
         {
             // get free-flow properties:
+            static const Scalar densityRefAir = getParam<Scalar>("FreeFlow.RefDensityAir");
+            static const Scalar molarDensityRefAir = densityRefAir / FluidSystem::molarMass(AirIdx);
             static const Scalar moleFracRefH2O = getParam<Scalar>("FreeFlow.RefMoleFracH2O");
             static const Scalar massFracRefH2O = refMoleToRefMassFrac_(moleFracRefH2O);
             static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
@@ -236,8 +238,7 @@ public:
                                         * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
                                         * (massFracH2OInside - massFracRefH2O)
                                         / boundaryLayerThickness
-                                        * 1.2;
-
+                                        * molarDensityRefAir;
             }
 
             values[conti0EqIdx] = evaporationRateMole;
