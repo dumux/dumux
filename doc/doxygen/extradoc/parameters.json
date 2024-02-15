@@ -1050,7 +1050,7 @@
     },
     "Grid.FixedCellsBetweenPores": {
         "explanation": [
-            "the number of cells between two throats"
+            "the number of cells between two pores"
         ]
     },
     "Grid.FixedPoreRadiusForLabel": {
