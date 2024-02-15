@@ -30,6 +30,7 @@ InitialSalinity         = 2.00e-2               # [-]=[kgNaCl/kgSolution] Initia
 
 [FreeFlow]
 RefMoleFracH2O          = 6.0e-3                # [-] mole fraction of water vapor in air above the container
+RefDensityAir           = 1.2                   # [kg/m³] density of air above the porous medium
 BoundaryLayerThickness  = 1e-2                  # [m] thickness of boundary layer over which the water vapor diffuses
 MassTransferCoefficient = 1
 RefTemperature          = 299                   # [K] temperature in the air above container
