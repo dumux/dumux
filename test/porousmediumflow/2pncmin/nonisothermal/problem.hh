@@ -243,7 +243,7 @@ public:
             values[conti0EqIdx] = evaporationRateMole;
 
             // gas phase
-            // gas flows in
+            // gas flows out of porous medium domain
             if (volVars.pressure(gasPhaseIdx) - 1e5 > 0) {
                 values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
@@ -252,13 +252,14 @@ public:
                                       *volVars.molarDensity(gasPhaseIdx)
                                       *volVars.moleFraction(gasPhaseIdx, AirIdx);
             }
-            //gas flows out
+            //gas flows into porous medium domain
             else {
                 values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
                                       *volVars.mobility(gasPhaseIdx)
                                       *volVars.permeability()
-                                      *volVars.molarDensity(gasPhaseIdx) * (1-moleFracRefH2O);
+                                      *volVars.molarDensity(gasPhaseIdx)
+                                      *(1-moleFracRefH2O);
             }
 
             // energy fluxes
