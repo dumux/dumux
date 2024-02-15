@@ -16,6 +16,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/math.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/gnuplotinterface.hh>
@@ -91,6 +92,7 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
 public:
     SalinizationProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -216,30 +218,48 @@ public:
             static const Scalar massFracRefH2O = refMoleToRefMassFrac_(moleFracRefH2O);
             static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
             static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
+            Scalar distancePmToInterface = 0.0;
 
-            // get porous medium values:
-            const Scalar massFracH2OInside = volVars.massFraction(gasPhaseIdx, H2OIdx);
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+            {
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                // distance from dof in pm to interface
+                distancePmToInterface = (globalPos - scv.dofPosition()).two_norm();
+            }
 
-
-            // calculate fluxes
+            // calculate mass fluxes
             // liquid phase
-            Scalar evaporationRateMole = 0;
-            if (massFracH2OInside - massFracRefH2O > 0)
+            // calculate transmissibilities for diffusive mass exchange of component water in gaseous phase
+            const Scalar massTransmissibilityFF = massTransferCoefficient
+                                           * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
+                                           * molarDensityRefAir
+                                           / boundaryLayerThickness;
+
+            const Scalar avgMassTransmissibility = [&]
             {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (massFracH2OInside - massFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * volVars.molarDensity(gasPhaseIdx);
-            }
-            else
-            {
-                evaporationRateMole = massTransferCoefficient
-                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
-                                        * (massFracH2OInside - massFracRefH2O)
-                                        / boundaryLayerThickness
-                                        * molarDensityRefAir;
-            }
+                if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+                {
+                    // take mean between porous medium and free-flow transmissibility
+                    const Scalar molarDensityPM = volVars.molarDensity(gasPhaseIdx);
+                    const Scalar massTransmissibilityPM = massTransferCoefficient
+                                                        * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
+                                                        * molarDensityPM
+                                                        / distancePmToInterface;
+                    // t_12=t1+t2/(t1*t2) results from equality of of fluxes on both sides of the interface
+                    // (j1=t1(x1-xi), j2=t2(xi-x2), j=j1=j2) and elimination of unknown xi at interface
+                    return 1.0/2.0 * Dumux::harmonicMean(massTransmissibilityPM,massTransmissibilityFF);
+                }
+                // box-scheme  -> no mean value needed as dof lies directly on the interface
+                else if (GridGeometry::discMethod == DiscretizationMethods::box)
+                    return massTransmissibilityFF;
+
+                DUNE_THROW(Dune::NotImplemented,
+                    "Average transmissibility for " << GridGeometry::discMethod.name());
+            }();
+
+            const Scalar massFracH2OInside = volVars.massFraction(gasPhaseIdx, H2OIdx);
+            const Scalar evaporationRateMole = avgMassTransmissibility
+                                               * (massFracH2OInside - massFracRefH2O);
 
             values[conti0EqIdx] = evaporationRateMole;
 
@@ -253,8 +273,9 @@ public:
                                       *volVars.molarDensity(gasPhaseIdx)
                                       *volVars.moleFraction(gasPhaseIdx, AirIdx);
             }
-            //gas flows into porous medium domain
-            else {
+            // gas flows into porous medium domain
+            else
+            {
                 values[conti1EqIdx] = (volVars.pressure(gasPhaseIdx) - 1e5)
                                       /(globalPos - fvGeometry.scv(scvf.insideScvIdx()).center()).two_norm()
                                       *volVars.mobility(gasPhaseIdx)
@@ -264,11 +285,35 @@ public:
             }
 
             // energy fluxes
+            // convective energy fluxes
             values[energyEqIdx] = FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, H2OIdx) * values[conti0EqIdx] * FluidSystem::molarMass(H2OIdx);
 
-            values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
+            values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx) * values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
 
-            values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
+            // conductive energy fluxes
+            // calculate transmissibilities for conductive energy exchange between porous medium and free-flow
+            const Scalar thermalConductivityFF = FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx);
+            const Scalar avgThermalTransmissibility = [&]
+            {
+                if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+                {
+                    // take mean between porous medium and free-flow transmissibility
+                    const Scalar thermalConductivityPM = ThermalConductivityModel::effectiveThermalConductivity(volVars);
+                    const Scalar thermalTransmissibilityPM = thermalConductivityPM/distancePmToInterface;
+                    const Scalar thermalTransmissibilityFF = thermalConductivityFF/boundaryLayerThickness;
+                    // t_12=t1+t2/(t1*t2) results from the equality of fluxes on both sides of the interface
+                    // (j1=t1(x1-xi), j2=t2(xi-x2), j=j1=j2) and elimination of unknown xi at interface
+                    return 1.0/2.0 * Dumux::harmonicMean(thermalTransmissibilityPM, thermalTransmissibilityFF);
+                }
+
+                // box-scheme  -> no mean value needed as dof lies directly on the interface
+                else if (GridGeometry::discMethod == DiscretizationMethods::box)
+                    return thermalConductivityFF/boundaryLayerThickness;
+                
+                DUNE_THROW(Dune::NotImplemented,
+                    "Average transmissibility for " << GridGeometry::discMethod.name());
+            }();
+            values[energyEqIdx] +=  avgThermalTransmissibility * (volVars.temperature() - temperatureRef);
         }
         return values;
     }
