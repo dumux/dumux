@@ -952,7 +952,7 @@
             "std::vector<int>"
         ]
     },
-    "Grid.CellsPerThroat": {
+    "Grid.CellsPerPore": {
         "explanation": [
             "the number of cells above the porous medium"
         ]
@@ -1048,7 +1048,7 @@
             "A DGF or gmsh file to load from"
         ]
     },
-    "Grid.FixedCellsBetweenThroats": {
+    "Grid.FixedCellsBetweenPores": {
         "explanation": [
             "the number of cells between two throats"
         ]
