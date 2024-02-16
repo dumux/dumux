@@ -91,6 +91,7 @@ class SalinizationProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
 
 public:
     SalinizationProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -261,7 +262,15 @@ public:
 
             values[energyEqIdx] += FluidSystem::componentEnthalpy(volVars.fluidState(), gasPhaseIdx, AirIdx)* values[conti1EqIdx] * FluidSystem::molarMass(AirIdx);
 
-            values[energyEqIdx] += FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx) * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
+            Scalar thermalConductivityFF = FluidSystem::thermalConductivity(elemVolVars[scvf.insideScvIdx()].fluidState(), gasPhaseIdx);
+            Scalar thermalConductivityPM = ThermalConductivityModel::effectiveThermalConductivity(volVars);
+#if SalinizationCCTpfa
+            Scalar avgThermalConductivity = (2*thermalConductivityFF*thermalConductivityPM)
+                                            / (thermalConductivityFF + thermalConductivityPM);
+#else //box -> take arithmetic mean
+            Scalar avgThermalConductivity = (thermalConductivityFF + thermalConductivityPM) / 2;
+#endif
+            values[energyEqIdx] +=  avgThermalConductivity * (volVars.temperature() - temperatureRef)/boundaryLayerThickness;
         }
         return values;
     }
