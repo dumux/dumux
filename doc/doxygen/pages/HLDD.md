@@ -2,14 +2,18 @@
 
 ## General Description
 
-### Product Perspective
-DuMux, built on the DUNE framework, offers functionalities like finite volume discretizations, physics and multi-domain framework for model coupling.
+DuMuX, "DUNE for Multi-{Phase, Component, Scale, Physics, …} flow and transport in porous media," extends beyond traditional porous media applications to encompass a wide array of environmental and engineering challenges. It is an open-source simulation software using modern C++ within the Distributed and Unified Numerics Environment (DUNE) framework. DuMuX's capabilities include not only the simulation of flow and transport in porous media but also specialized models for river dynamics, free flow, fractured porous media, and geomechanics. Furthermore, DuMuX allows for the coupling between these diverse models, enhancing its versatility. This integration enables DuMuX to support a variety of scientific and engineering applications, from environmental science to energy technology, offering customizable modules for specific research needs. Its capabilities extend across solving multi-phase multi-component flow, reactive transport models, and even coupled fluid flow and solid mechanics problems, ensuring a comprehensive tool for the simulation of complex porous media phenomena.Additionally, DuMuX supports various grids and discretization schemes, enabling it to adapt to a wide range of computational scenarios.
+
+
 
 ### Tools Used
-Key technologies include modern C++17 and MPI for parallel computing.
+- DUNE
+- C++17
+- CMake
+- MPI 
 
-### General Constraints and Assumptions
-Discussion on the GPL-3.0 license terms and their implications.
+### General Constraints
+GPL-3.0
 
 ## Design Details
 
@@ -46,14 +50,12 @@ The Solver class manages the iterative refinement of solutions by assembling the
 The IOFields is a class responsible for managing the input and output fields. It provides methods and member functions for reading input files, initializing VTK output module and managing the fields that are written to the output files.
 #### VtkOutputModule
 The VtkOutputModule is responsible for writing simulation results to VTK files for visualization in VTK format. It can customize the output by adding variables to the output files. It generates one file per print-out step and groups them into a PVD file containing time step information.
-### Application and Technology Architecture
-- Software architecture focusing on modularity and integration with DUNE framework.
 
-### User Interface and User Experience
-- Interaction through code for simulation setup and execution.
-- Main interfaces
-- vtu output?
-- properties
+
+### User Interface
+- Building your model is done using the Property system in Dumux
+- Concretization of your model is done using the problem and params file
+- Results can be exported to VTK
 
 ## Diagrams and Visual Aids
 
@@ -129,11 +131,5 @@ SolutionVector --> Assembler
 }
 ```
 
-### Flowcharts
-- Workflow of simulations and model setups.
-
-## Conclusion
-
-
 ### Future Work
-Planned future developments for DuMux.
+
