@@ -1,9 +1,9 @@
-# High-Level Documentation for DuMux
+# High-Level Design Documentation for DuMux
 
 ## General Description
 
 ### Product Perspective
-DuMux, built on the DUNE framework, offers functionalities like finite volume discretizations and multi-domain framework for model coupling.
+DuMux, built on the DUNE framework, offers functionalities like finite volume discretizations, physics and multi-domain framework for model coupling.
 
 ### Tools Used
 Key technologies include modern C++17 and MPI for parallel computing.
@@ -53,6 +53,7 @@ The Solver class manages the iterative refinement of solutions by assembling the
 - Interaction through code for simulation setup and execution.
 - Main interfaces
 - vtu output?
+- properties
 
 ## Diagrams and Visual Aids
 
