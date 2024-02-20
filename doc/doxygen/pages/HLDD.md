@@ -42,10 +42,10 @@ The LocalResidual is the implementation of a how a residual is evaluated on a el
 The LinearSolver class is a wrapper for the actual linear solver used to solve the linear system of equations. It provides a common interface for different linear solvers. In the concrete linearSolver the implementation of the actual solving algorithm is written.
 #### Solver
 The Solver class manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
-#### IOField
-#### VTKOutputModule
-#### Coupling Manager
-
+#### IOFields
+The IOFields is a class responsible for managing the input and output fields. It provides methods and member functions for reading input files, initializing VTK output module and managing the fields that are written to the output files.
+#### VtkOutputModule
+The VtkOutputModule is responsible for writing simulation results to VTK files for visualization in VTK format. It can customize the output by adding variables to the output files. It generates one file per print-out step and groups them into a PVD file containing time step information.
 ### Application and Technology Architecture
 - Software architecture focusing on modularity and integration with DUNE framework.
 
