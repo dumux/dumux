@@ -2,58 +2,83 @@
 
 ## General Description
 
-DuMuX, "DUNE for Multi-{Phase, Component, Scale, Physics, …} flow and transport in porous media," extends beyond traditional porous media applications to encompass a wide array of environmental and engineering challenges. It is an open-source simulation software using modern C++ within the Distributed and Unified Numerics Environment (DUNE) framework. DuMuX's capabilities include not only the simulation of flow and transport in porous media but also specialized models for river dynamics, free flow, fractured porous media, and geomechanics. Furthermore, DuMuX allows for the coupling between these diverse models, enhancing its versatility. This integration enables DuMuX to support a variety of scientific and engineering applications, from environmental science to energy technology, offering customizable modules for specific research needs. Its capabilities extend across solving multi-phase multi-component flow, reactive transport models, and even coupled fluid flow and solid mechanics problems, ensuring a comprehensive tool for the simulation of complex porous media phenomena.Additionally, DuMuX supports various grids and discretization schemes, enabling it to adapt to a wide range of computational scenarios.
+DuMux, "DUNE for Multi-{Phase, Component, Scale, Physics, …} flow and transport in porous media," extends beyond traditional porous-media simulators to encompass a wide array of environmental and engineering applications. It is an open-source simulation software using modern C++ within the Distributed and Unified Numerics Environment (DUNE) framework. DuMux's capabilities include not only the simulation of flow and transport in porous media but also specialized models for river dynamics, free flow, fractured porous media, and geomechanics. Furthermore, DuMux allows for the coupling between these diverse models, enhancing its versatility. This integration enables DuMux to support a variety of scientific and engineering applications, from environmental science to energy technology, offering customizable modules for specific research needs. Its capabilities extend across solving multi-phase multi-component flow, reactive transport models, and even coupled fluid flow and solid mechanics problems, ensuring a comprehensive tool for the simulation of complex porous media phenomena. Additionally, DuMux supports various grids and discretization schemes, enabling it to adapt to a wide range of computational scenarios.
 
 
-
-### Tools Used
+### Prerequisites
 - DUNE
 - C++17
 - CMake
-- MPI 
+- MPI (optional)
 
-### General Constraints
+### Licensing
 GPL-3.0
 
-## Design Details
+## Major Concepts and Components
 
-### Main Design Features
-- list the main classes and only one section (2-3 sentences) what this class is about
-#### Grid
+In the following, a very brief overview over the major concepts and components of DuMux is provided. The focus is on the common ones that a user is exposed to for running a typical simulation. They are grouped into six categories: Grid, Variables, Assembly, Solving, Output, and Scenario. The interplay of the components is visualized in the diagram of the next section.
+
+### Grid
+
 #### GridManager
-The concept of the GridManager in the DuMuX framework is to abstract and centralize the creation, manipulation, and management of various grid types used in numerical simulations. It serves as an interface between the user and the underlying grid data structures.
-#### GridView
-A GridView is a representation of the grid that allows for read-only access to certain parts of the Grid from which it is obtained. A leafGridView is a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a grid hierarchy) while a levelGridView is a view on all elements of a given level of a refinement hierarchy.
-#### GridGeometry
-The grid geometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations.
-#### GridVariables
-GridVariables provide access to all variables needed to solve a particular (discrete) PDE, that is,
-the primary and secondary variables at discrete locations.
-These locations and also the type of variables can depend on the chosen discretization scheme.
-#### Problem
-The Problem class in DuMuX represents the conceptual framework where the scenario being simulated are characterized through the specification of initial and boundary conditions, as well as source terms.
-#### TimeLoop
-The TimeLoop class is instantiated to manage temporal aspects of transient PDEs, handling parameters such as time step size, current simulation time, and total simulation time, whereas stationary PDEs bypass the need for such temporal management.
-#### SolutionVector
-A SolutionVector class object is a container containing the primary variables for each degree of freedom (dof).In more detail, the SolutionVector object is a container class holding NumEqVector objects for each dof.
-#### Assembler
-The Assembler is responsible for calculating the global residual vector and the global Jacobian matrix. It relies on a discretization-specific local assembler engine. The Jacobian matrix is the partial derivative of the residual with respect to each entry of the solution vector. Dumux uses an element-wise assembly algorithm. For each element, a local assembler is instantiated.
-#### LocalAssembler
-The LocalAssembler is responsible for calculating the local residual vector and the local Jacobian matrix. The local residual vector is the vector of residuals for each element/scv. The local Jacobian matrix is the partial derivative of the local residual with respect to each entry of the solution vector. The local assembler is discretization-specific.
-#### LocalResidual
-The LocalResidual is the implementation of a how a residual is evaluated on a element/scv. It relies on the concept that each PDE has a storage,flux and source term. Here the actually PDE is implemented using this concept.
-#### LinearSolver
-The LinearSolver class is a wrapper for the actual linear solver used to solve the linear system of equations. It provides a common interface for different linear solvers. In the concrete linearSolver the implementation of the actual solving algorithm is written.
-#### Solver
-The Solver class manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
-#### IOFields
-The IOFields is a class responsible for managing the input and output fields. It provides methods and member functions for reading input files, initializing VTK output module and managing the fields that are written to the output files.
-#### VtkOutputModule
-The VtkOutputModule is responsible for writing simulation results to VTK files for visualization in VTK format. It can customize the output by adding variables to the output files. It generates one file per print-out step and groups them into a PVD file containing time step information.
+A GridManager abstracts and centralizes the creation, manipulation, and management of the computational grid to be used in the simulation. It serves as an interface to the underlying grid data structure coming in form of a DUNE grid implementation.
 
+#### GridView
+A GridView allows for read-only access to a certain part of a possibly hierarchical DUNE grid from which it is obtained. Most commonly employed is the LeafGridView, namely, a view on all elements of the grid without descendants in the hierarchy (which would be the leaves of a grid hierarchy).
+
+#### GridGeometry
+The GridGeometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations. It is dependent on the selected spatial discretization method.
+
+
+### Variables
+
+#### GridVariables
+GridVariables provide access to all variables needed to solve a particular discretized PDE, that is, the primary and secondary variables at geometric locations. These locations and also the type of variables depend on the chosen discretization scheme.
+
+
+### Assembly
+
+#### Assembler
+The Assembler is responsible for calculating the global residual vector and the global Jacobian matrix. It relies on a discretization-specific local assembler engine. The Jacobian matrix is the partial derivative of the residual with respect to each entry of the solution vector. DuMux uses an element-wise assembly algorithm. For each element, a local assembler is instantiated.
+
+#### LocalAssembler
+The LocalAssembler is responsible for calculating the local residual vector and the local Jacobian matrix. The local residual vector is the vector of residuals for each element. The local Jacobian matrix is the partial derivative of the local residual with respect to each entry of the solution vector. The local assembler is discretization-specific.
+
+#### LocalResidual
+The LocalResidual is the implementation of a how a residual is evaluated on an element. It relies on the concept that each PDE has a storage, flux and source term. The storage and source terms are evaluated on the sub-control-volumes of an element and the flux term on the relevant faces of these sub-control-volumes.
+
+
+### Solving
+
+#### LinearSolver
+The LinearSolver is a wrapper for a DUNE-ISTL preconditioned linear solver and used to solve the linear system of equations. It provides a common interface for different linear solvers.
+
+#### Solver
+The Solver manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
+
+
+### Output
+
+#### IOFields
+The IOFields class is responsible for managing the input and output fields. It provides methods and member functions for reading input files, initializing VTKOutputModules and managing the fields that are written to the output files.
+
+#### VtkOutputModule
+The VtkOutputModule is responsible for writing simulation results to VTK files for visualization. It can customize the output by adding variables to the output files. It generates one file per print-out step, possibly agglomerating several files from individual processes, and groups them into a PVD file containing time-step information.
+
+
+### Scenario
+
+#### Problem
+A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms.
+
+#### TimeLoop
+The TimeLoop manages temporal aspects of transient PDEs, handling parameters such as time-step size, current simulation time, and total simulation time. Stationary PDEs bypass the need for such temporal management.
+
+#### SolutionVector
+A SolutionVector is a container for the primary variables at each geometrical degree of freedom (dof). In particular, it holdsg NumEqVectors for each dof.
 
 ### User Interface
-- Building your model is done using the Property system in Dumux
+- Building your model is done using the Property system in DuMux
 - Concretization of your model is done using the problem and params file
 - Results can be exported to VTK
 
@@ -130,6 +155,4 @@ Assembler --> Solver
 SolutionVector --> Assembler
 }
 ```
-
-### Future Work
 
