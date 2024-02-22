@@ -110,7 +110,7 @@ package "DuMux" {
        class GridVariables{}
         
     }
-    package "External" {
+    package "Scenario" {
         class Problem{}
         class TimeLoop{}
         class SolutionVector{}
@@ -153,6 +153,9 @@ GridVariables --> SolutionVector
 IOField --> VTKOutputModule
 Assembler --> Solver
 SolutionVector --> Assembler
+Problem --> GridVariables
+Problem --> Assembler
+GridVariables --> Assembler
 }
 ```
 
