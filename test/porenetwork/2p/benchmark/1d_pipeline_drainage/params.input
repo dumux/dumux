@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 0.1 # [s]
 TEnd = 500 # [s]
-NumCheckPoints = 1000
+#NumCheckPoints = 1
 
 [Grid]
 PoreGeometry = Cube
@@ -12,7 +12,7 @@ NumPores = 10
 MeanPoreInscribedRadius = 200e-6
 ThroatInscribedRadius = 100e-6
 StandardDeviationPoreInscribedRadius = 0
-BoundaryFaceMarker = 2 1
+BoundaryPoreLabels = xMin:2 xMax:1
 
 [Problem]
 Name = test_pnm_2p_1d_oilwater_drainage
@@ -25,9 +25,9 @@ NonWettingMassFlux = 5e-10
 AddVelocity = 1
 
 [Newton]
-MaxSteps = 10
-TargetSteps = 4
-#UseLineSearch = true
+MaxSteps = 1000
+TargetSteps = 1000
+UseLineSearch = true
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
 NewtonOutputFilename = NewtonLog.txt
