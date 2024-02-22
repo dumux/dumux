@@ -1,6 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
 TEnd = 1200 # [s]
+MaxTimeStepSize = 5
 
 [Grid]
 File = capillary_multiple_tubes.dgf # DGF file can be generated with pyhton script in this folder
@@ -21,8 +22,8 @@ AddVelocity = 1
 
 [Newton]
 UseLineSearch = true
-MaxSteps = 20
-TargetSteps = 10
+MaxSteps = 1000
+TargetSteps = 1000
 MaxRelativeShift = 1e-6
 MaxTimeStepDivisions = 10
 NewtonOutputFilename = NewtonLog.txt
