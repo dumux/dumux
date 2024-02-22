@@ -18,6 +18,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porenetwork/2p/spatialparams.hh>
+#include <dumux/porenetwork/2p/invasionstate.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
 
 #include <dumux/common/fvproblem.hh>
@@ -57,6 +58,26 @@ struct FluidSystem<TypeTag, TTag::DrainageProblem>
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
+
+#if USETHETAREGULARIZATION
+//! The grid flux variables cache vector class
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::DrainageProblem>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+    using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem,
+                                                            FluxVariablesCache,
+                                                            Dumux::PoreNetwork::TwoPInvasionState<Problem, Dumux::PoreNetwork::StateSwitchMethod::theta>>;
+public:
+    using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
+};
+#endif
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DrainageProblem>

@@ -24,7 +24,6 @@ NonWettingMassFlux = 5e-10
 [Pnm.Problem]
 Name = test_pnm_2p
 RegularizationDelta = 1e-4
-UseThetaRegularization = true
 
 [Newton]
 MaxSteps = 50
@@ -36,8 +35,10 @@ NewtonOutputFilename = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true
-#AccuracyCriterion = 0.99
+AccuracyCriterion = 0.99
 #BlockNonwettingPhaseAtThroatLabel = 1
+InvasionThetaThreshold = 0.001
+SnapoffThetaThreshold = 0.999
 
 [SpatialParams]
 RegularizationLowSw = 0.01

@@ -52,6 +52,10 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
+    static constexpr bool useThetaRegularization = InvasionState::stateMethod == Dumux::PoreNetwork::StateSwitchMethod::theta;
+
 public:
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -68,7 +72,6 @@ public:
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
         logfile_.open("time_steps_" + this->name() + ".txt");
         regDelta_ = getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8);
-        useThetaRegularization_ = getParamFromGroup<bool>(paramGroup, "Problem.UseThetaRegularization", true);
     }
 
     /*!
@@ -164,20 +167,35 @@ public:
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
-            if(useThetaRegularization_)
+            const auto invaded = fluxVarsCache.invaded();
+            if constexpr (useThetaRegularization)
             {
-                using std::max;
-                auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
-                auto dp = max(elemVolVars[0].capillaryPressure(),
-                                elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
-                // Use a regularized heavyside function (1+sign) for theta
-                auto theta = regHeaviside_(dp);
+                if(!invaded)
+                {
+                    using std::max;
+                    auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
+                    auto dp = max(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+                    // Use a regularized heavyside function for theta
+                    auto theta = regHeaviside_(dp,invaded);
 
-                return std::min(std::max(0.0,theta),1.0);
+                    return std::min(std::max(0.0,theta),1.0);
+                }
+                else
+                {
+                    using std::min;
+                    auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+                    auto dp = min(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / pcSnapoff;
+                    // Use a regularized heavyside function for theta
+                    auto theta = regHeaviside_(dp, invaded);
+
+                    return std::min(std::max(0.0,theta),1.0);
+                }
             }
             else
             {
-                return fluxVarsCache.invaded() ? 1.0 : 0.0;
+                return invaded ? 1.0 : 0.0;
             }
         }
         else
@@ -222,12 +240,21 @@ private:
         return v/(regAbs_(v) + regDelta_);
     }
 
-    Scalar regHeaviside_(Scalar v) const
+    Scalar regHeaviside_(Scalar v, bool invaded) const
     {
         //  0.5*(1 + regSign_(dp))
-        using std::sin; using std::min; using std::max;
-        v = max(0.0,min(v,2*regDelta_));
-        return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
+        if(!invaded)
+        {
+            using std::sin; using std::min; using std::max;
+            v = max(0.0,min(v,2*regDelta_));
+            return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
+        }
+        else
+        {
+            using std::sin; using std::min; using std::max;
+            v = max(-2*regDelta_,min(v,0.0));
+            return 0.5*(1+sin(M_PI*(v+regDelta_)/(2.0*regDelta_)));
+        }
     }
 
     int vtpOutputFrequency_;
@@ -237,7 +264,6 @@ private:
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
     Scalar regDelta_;
-    bool useThetaRegularization_;
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
