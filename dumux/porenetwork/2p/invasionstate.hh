@@ -20,12 +20,20 @@
 
 namespace Dumux::PoreNetwork {
 
+enum class StateSwitchMethod
+{
+    iteration, theta
+};
+
+template<class P, StateSwitchMethod stateMethod = StateSwitchMethod::iteration>
+class TwoPInvasionState;
+
 /*!
  * \ingroup PNMTwoPModel
  * \brief This class updates the invasion state for the two-phase PNM.
  */
 template<class P>
-class TwoPInvasionState
+class TwoPInvasionState<P, StateSwitchMethod::iteration>
 {
     using Problem = P;
 
@@ -39,6 +47,8 @@ class TwoPInvasionState
     enum class EventType {invasion, snapOff, none};
 
 public:
+    //! export the state method
+    static constexpr StateSwitchMethod stateMethod = StateSwitchMethod::iteration;
 
     TwoPInvasionState(const Problem& problem) : problem_(problem)
     {
@@ -172,6 +182,9 @@ public:
         }
     }
 
+    bool updateAfterTimeStep() const
+    { return false; }
+
 private:
 
     //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
@@ -286,6 +299,177 @@ private:
     std::size_t numThroatsInvaded_;
     bool verbose_;
     bool restrictToGlobalCapillaryPressure_;
+
+    const Problem& problem_;
+};
+
+/*!
+ * \ingroup PNMTwoPModel
+ * \brief This class updates the invasion state for the two-phase PNM after each time step.
+ */
+template<class P>
+class TwoPInvasionState<P, StateSwitchMethod::theta>
+{
+    using Problem = P;
+
+    enum class EventType {invasion, snapOff, none};
+
+public:
+    //! export the state method
+    static constexpr StateSwitchMethod stateMethod = StateSwitchMethod::theta;
+
+    TwoPInvasionState(const Problem& problem) : problem_(problem)
+    {
+        invasionThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionThetaThreshold", 1e-10);
+        snapoffThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffThetaThreshold", 1-1e-10);
+
+        // initialize the invasion state
+        invaded_.resize(problem.gridGeometry().gridView().size(0));
+
+        for (auto&& element : elements(problem.gridGeometry().gridView()))
+        {
+            const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+            invaded_[eIdx] = problem.initialInvasionState(element);
+        }
+
+        numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
+        verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
+    }
+
+    //! Return whether a given throat is invaded or not.
+    template<class Element>
+    bool invaded(const Element& element) const
+    {
+        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+        return invaded_[eIdx];
+    }
+
+    //! Return the number of currently invaded throats
+    std::size_t numThroatsInvaded() const
+    { return numThroatsInvaded_; }
+
+    //! Update the invasion state of all throats. This is done after each time step by a call from main.
+    template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
+    void update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
+    {
+        hasChanged_ = false;
+        auto fvGeometry = localView(problem_.gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
+        for (auto&& element : elements(problem_.gridGeometry().gridView()))
+        {
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // checks if invasion or snap-off occurred within time step
+                if (const auto invasionResult = invasionSwitch_(element, fvGeometry, elemVolVars, elemFluxVarsCache[scvf], scvf); invasionResult)
+                {
+                    hasChanged_ = true;
+                    if constexpr (GridFluxVariablesCache::cachingEnabled)
+                    {
+                        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, invaded_[eIdx]);
+                    }
+                }
+            }
+        }
+        numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
+    }
+
+    //! Return whether an invasion or snap-off occurred anywhere. Can be used, e.g., for output file writing control.
+    bool hasChanged() const
+    { return hasChanged_; }
+
+    bool updateAfterTimeStep() const
+    { return true; }
+
+private:
+
+    //! The switch for determining the invasion state of a pore throat. Called at the end of time step.
+    template<class Element, class FvGeometry, class ElementVolumeVariables, class FluxVariablesCache, class SubControlVolumeFace>
+    auto invasionSwitch_(const Element& element,
+                         const FvGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const FluxVariablesCache& fluxVarsCache,
+                         const SubControlVolumeFace& scvf)
+
+    {
+        using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+        const auto& gridGeometry = problem_.gridGeometry();
+        const auto& spatialParams = problem_.spatialParams();
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        bool invadedPrev = invaded_[eIdx];
+        bool invadedCur = invadedPrev;
+
+        // Result type, containing the local scv index of the pore from which the invasion/snap-off occurred
+        // Evaluates to 'false' if no invasion/snap-off occurred
+        struct Result
+        {
+            std::uint8_t localScvIdxWithCriticalPc;
+            Scalar criticalPc;
+            EventType event = EventType::none;
+
+            operator bool() const
+            { return event != EventType::none; }
+        };
+
+        // Determine whether throat gets invaded or snap-off occurs
+        const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+        const auto throatPc = fluxVarsCache.pc();
+        const auto theta = problem_.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
+
+        if(!fluxVarsCache.invaded())
+            invadedCur = theta > invasionThetaThreshold_;
+        else
+            invadedCur = theta > snapoffThetaThreshold_;
+
+        invaded_[eIdx] = invadedCur;
+
+        if (invadedPrev == invadedCur)
+            return Result{}; // nothing happened
+        else
+        {
+            Result result;
+            result.localScvIdxWithCriticalPc = std::abs(pc[0] - throatPc) < std::abs(pc[1] - throatPc) ? 0 : 1;
+            result.criticalPc = throatPc;
+            result.event = !invadedPrev && invadedCur ? EventType::invasion : EventType::snapOff;
+
+            if (verbose_)
+            {
+                const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
+                const std::array sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
+                const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, result.localScvIdxWithCriticalPc, 1);
+                if (result.event == EventType::invasion)
+                {
+                    std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
+                    std::cout << " pc: " << throatPc;
+                    std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc];
+                    std::cout << ", theta: " << theta << std::endl;
+                }
+                else
+                {
+                    std::cout << "Snap-off occurred at throat " << eIdx << " from pore "  << vIdx << " :";
+                    std::cout << " pc: " << throatPc;
+                    std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc];
+                    std::cout << ", theta: " << theta << std::endl;
+                }
+            }
+
+            return result;
+        }
+    }
+
+    double invasionThetaThreshold_;
+    double snapoffThetaThreshold_;
+    std::vector<bool> invaded_;
+    std::size_t numThroatsInvaded_;
+    bool verbose_;
+    bool hasChanged_ = false;
 
     const Problem& problem_;
 };
