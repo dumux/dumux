@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     Deltas = [1e-1, 1e-3, 1e-4]
     swNumerical = {}
-    testName = 'test_pnm_2p_reg'
+    testName = 'test_pnm_2p_1d_drainage_reg'
     poreid = np.linspace(1, 10, 10)
     for delta in Deltas:
         delete_all_vtp_files()
