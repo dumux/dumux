@@ -156,6 +156,7 @@ public:
     bool initialInvasionState(const Element& element) const
     { return false; }
 
+#if USETHETA
     template<class FluxVariablesCache>
     Scalar theta(const Element& element,
                  const FVElementGeometry& fvGeometry,
@@ -183,7 +184,7 @@ public:
         else
             return couplingManager_->theta(element);
     }
-
+#endif
     // \}
 
     /*!

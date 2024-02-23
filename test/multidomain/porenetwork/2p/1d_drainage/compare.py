@@ -50,6 +50,7 @@ def dPc_dSw(sw, sigma=0.0725, poreRadius=defaultPoreRadius, expFactor=6.83):
     dPc_dSw = -(2.0*expFactor*sigma*e) / (poreRadius*(1.0-e)*(1.0-e))
     return dPc_dSw
 
+
 def PcEntry(theta=0, sigma=0.0725, radius=defaultPoreRadius*0.5):
     cosTheta = np.cos(theta)
     sinTheta = np.sin(theta)
@@ -77,6 +78,7 @@ if __name__ == "__main__":
 
     for i in range(poreNumber-1):
         print("The " + str(i+1) + "-th throat is invaded at: ", timeToInvadeFirstPore*(i+1))
+
     print("At time", tEnd, "s, saturation is :", swAnalytical)
     print("Now check the analytical at time ", tEnd, "s:")
 
@@ -84,14 +86,10 @@ if __name__ == "__main__":
     pvpythonPath = homeDir + '/ParaView-5.6.0-osmesa-MPI-Linux-64bit/bin/pvpython'
     extractScript = 'extractresults.py'
 
-    Deltas = np.linspace(1e-5, 3e-2, 5)
-    newtonIterations = []
-    l2Error = []
-
+    Deltas = [1e-1, 1e-3, 1e-4]
+    swNumerical = {}
     testName = 'test_pnm_2p_reg'
-
-    fig, ax1 = plt.subplots(dpi=300, ncols=1, nrows=1, figsize=(6, 6))
-
+    poreid = np.linspace(1, 10, 10)
     for delta in Deltas:
         delete_all_vtp_files()
         subprocess.run(['./' + testName]
@@ -111,27 +109,42 @@ if __name__ == "__main__":
         extractedVtpFile = find_last_vtp_file(all_vtp)
         extractedCsvFile = os.path.splitext(extractedVtpFile)[0]+'.csv'
         subprocess.run([pvpythonPath, extractScript, '-f', extractedVtpFile, '-p1', '0.0', '0.0', '0.0', '-p2', '4.5e-3', '0', '0', "-r", '9'])
-        swNumerical = np.genfromtxt(extractedCsvFile, usecols=(0), delimiter=",", skip_header=True).T
-        print(swNumerical)
-        l2errorSw =  np.sum(np.power((swNumerical-swAnalytical),2))/10
-        l2Error.append(np.sqrt(l2errorSw))
+        swNumerical[delta] = np.genfromtxt(extractedCsvFile, names=True, usecols=("S_aq"), delimiter=",").T
+        plt.plot(poreid, swNumerical[delta], label = str(delta), markersize = 10, linewidth = 1, marker= ">", alpha = 0.8)
 
-        iterations = np.genfromtxt('NewtonLog.txt').T
-        newtonIterations.append(np.sum(iterations))
-        subprocess.run(['rm', 'NewtonLog.txt'])
+    # plt.axhline(y = PcValue, color = 'r', linestyle = '-')
+    swNumericalNoReg = {}
+    maxDts = [10, 1, 1e-1]
+    testNameNoReg = 'test_pnm_2p_no_reg'
+    for dt in maxDts:
+        delete_all_vtp_files()
+        subprocess.run(['./' + testNameNoReg]
+                       + ['-TimeLoop.DtInitial', str(0.1)]
+                       + ['-TimeLoop.MaxTimeStepSize', str(dt)]
+                       + ['-TimeLoop.TEnd', str(tEnd)]
+                       + ['-Grid.ThroatCrossSectionShape', 'Circle']
+                       + ['-Pnm.Problem.Name', str(testNameNoReg)]
+                       + ['-Problem.NonWettingMassFlux', str(5e-10)]
+                       + ['-Newton.NewtonOutputFilename', str("NewtonLog.txt")]
+                       + ['-Component.LiquidKinematicViscosity', str(1e-7)]
+                       + ['-Component.LiquidDensity', str(1000)]
+                       + ['-Newton.MaxSteps', str(10)]
+                       + ['-Newton.TargetSteps', str(4)]
+                       + ['-Newton.UseLineSearch', 'false']
+                       + ['-Pnm.Problem.RegularizationDelta', str(delta)])
+        all_vtp = find_all_vtp_files()
+        extractedVtpFile = find_last_vtp_file(all_vtp)
+        extractedCsvFile = os.path.splitext(extractedVtpFile)[0]+'.csv'
+        subprocess.run([pvpythonPath, extractScript, '-f', extractedVtpFile, '-p1', '0.0', '0.0', '0.0', '-p2', '4.5e-3', '0', '0', "-r", '9'])
+        swNumericalNoReg[dt] = np.genfromtxt(extractedCsvFile, names=True, usecols=("S_aq"), delimiter=",").T
+        plt.plot(poreid, swNumericalNoReg[dt], label = "No $\Theta$, dt = " + str(dt), markersize = 10, linewidth = 1, marker= "x", alpha = 0.8)
 
-    color = 'tab:red'
-    ax1.plot(Deltas, newtonIterations,  marker = '^', markersize = 6, color = color, linewidth = 2)
-    ax1.tick_params(axis ='y', labelcolor = color, labelsize = 14)
-    ax1.tick_params(axis ='x', labelsize = 14)
-    ax1.set_xlabel("$\Delta$", fontsize = 14)
-    ax1.set_ylabel("iterations [-]", fontsize = 14, color = color)
-    ax2 = ax1.twinx()
-    color = 'tab:green'
-    ax2.plot(Deltas, l2Error,  marker = 'o', markersize = 6, color = color, label = "$E_{s_w}$", linewidth = 2)
-    ax2.tick_params(axis ='y', labelcolor = color, labelsize = 14)
-    ax2.tick_params(axis ='x', labelsize = 14)
-    y2label = ax2.set_ylabel("$E_{S_w}$ [-]", color = color, fontsize = 14)
-    props = dict(boxstyle='round',  alpha=1, facecolor = "white")
-    plt.tight_layout(rect=[0.0, 0.0, 1, 1], pad=0.4, w_pad=2.0, h_pad=1.0)
+    plt.plot(poreid, swAnalytical, label = "$S_{w, ref}$", markersize = 10, linewidth = 1, color = "black", marker = "+")
+
+    plt.xticks(fontsize = 14)
+    plt.yticks(fontsize = 14)
+    plt.xlabel("n-th pore", fontsize = 14)
+    plt.ylabel("$S_{w,n}$", fontsize = 14)
+    plt.legend(fontsize = 14, loc="lower right")
     plt.show()
+    plt.savefig("Pore-by-pore-drainge.pdf", dpi=900)
