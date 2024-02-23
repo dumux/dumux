@@ -642,7 +642,10 @@ public:
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
      */
-    virtual void newtonEnd()  {}
+    virtual void newtonEnd()  {
+        std::ofstream logfile(getParam<std::string>("Newton.NewtonOutputFilename"), std::ios::app);
+        logfile << numSteps_ << "\n";
+    }
 
     /*!
      * \brief Returns true if the error of the solution is below the
