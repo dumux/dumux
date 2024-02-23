@@ -209,6 +209,7 @@ public:
         }
     }
 
+#if USETHETA
     template<class FluxVariablesCache>
     Scalar theta(const Element& element,
                  const FVElementGeometry& fvGeometry,
@@ -236,6 +237,7 @@ public:
         else
             return couplingManager_->theta(element);
     }
+#endif
 
     /*!
      * \brief Called at the end of each time step
