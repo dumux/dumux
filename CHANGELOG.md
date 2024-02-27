@@ -16,6 +16,8 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
+- __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
 
 
