@@ -455,7 +455,8 @@ public:
     [[deprecated("Needs to be implemented in test problem. Will be removed after release 3.9.")]]
     Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
-        const Scalar interfacePermeability = interfacePermeability_(fvGeometry, scvf, tangentialVector);
+        const auto& K = asImp_().permeability(fvGeometry, scvf);
+        const auto interfacePermeability = vtmv(tangentialVector, K, tangentialVector);
         using std::sqrt;
         return asImp_().alphaBJ(fvGeometry, scvf) / sqrt(interfacePermeability);
     }
@@ -516,19 +517,6 @@ public:
     }
 
 private:
-    //! Returns a scalar permeability value at the coupling interface
-    template<class Scvf>
-    Scalar interfacePermeability_(const FVElementGeometry& fvGeometry, const Scvf& scvf, const GlobalPosition& tangentialVector) const
-    {
-        const auto& K = asImp_().permeability(fvGeometry, scvf);
-
-        // use t*K*t for permeability tensors
-        if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
-            return K;
-        else
-            return vtmv(tangentialVector, K, tangentialVector);
-    }
-
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation& asImp_()
     { return *static_cast<Implementation *>(this); }
