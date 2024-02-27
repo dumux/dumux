@@ -17,6 +17,7 @@
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
+#include "dropsolver.hh"
 
 namespace Dumux {
 
@@ -38,6 +39,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using DropSolver = DropletSolverTwoP<TypeTag, false>;
     enum {
         waterPressureIdx = Indices::pressureIdx,
         airSaturationIdx = Indices::saturationIdx,
@@ -59,10 +61,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        // if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
-        //     values.setAllDirichlet();
-        // else
+        if (onUpperBoundary_(globalPos))
             values.setAllDirichlet();
+        if else (onLowerBoundary_(globalPos))
+            values.setAllNeumann();
+        else
+            values.setAllDirichlet();
+
         return values;
     }
 
@@ -140,6 +145,16 @@ public:
         return values;
     }
 
+    void setDropeltSolver(std::shared_ptr<DropletSolver> dropletSolver)
+    { dropletSolver_ = dropletSolver; }
+
+    bool onInlet(const GlobalPosition &globalPos) const
+    {
+        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+    }
+
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -162,14 +177,9 @@ private:
         return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
-    bool onInlet_(const GlobalPosition &globalPos) const
-    {
-        Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
-        Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
-    }
-
     static constexpr Scalar eps_ = 1e-6;
+
+    std::shared_ptr<DropletSolver> dropletSolver_;
 };
 
 } // end namespace Dumux

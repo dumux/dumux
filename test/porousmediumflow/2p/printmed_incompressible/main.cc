@@ -33,6 +33,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
+#include "dropsolver.hh"
 #include "properties.hh"
 
 #ifndef DIFFMETHOD
@@ -125,6 +126,10 @@ int main(int argc, char** argv)
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+
+    using DropSolver = DropletSolverTwoP<TypeTag, false>;
+    auto dropSolver = std::make_shared<DropSolver>(*problem, *gridVariables, x, timeLoop);
+    problem->setDropSolver(dropSolver);
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DIFFMETHOD>;
