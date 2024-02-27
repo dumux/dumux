@@ -378,26 +378,6 @@ public:
     }
 
     /*!
-     * \brief Set the relative humidity of a component in a phase \f$\mathrm{[-]}\f$
-     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
-     *        to the current composition of the phase
-     */
-    template <class FluidState>
-    void setRelativeHumidity(FluidState &fluidState, int phaseIdx, int compIdx, Scalar value)
-    {
-        // asserts for the assumption under which setting the relative humidity is possible
-        assert(phaseIdx == FluidSystem::nPhaseIdx);
-        assert(compIdx == FluidSystem::wCompIdx);
-        assert(numComponents == 2);
-        assert(FluidSystem::isGas(phaseIdx));
-
-        Scalar moleFraction = value * FluidSystem::vaporPressure(fluidState, FluidSystem::wCompIdx)
-                              / fluidState.pressure(phaseIdx);
-        fluidState.setMoleFraction(phaseIdx, FluidSystem::wCompIdx, moleFraction);
-        fluidState.setMoleFraction(phaseIdx, FluidSystem::nCompIdx, 1.0-moleFraction);
-    }
-
-    /*!
      * \brief Set the fugacity coefficient \f$\Phi^\kappa_\alpha\f$ of component \f$\kappa\f$
      * in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$
      */
