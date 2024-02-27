@@ -8,7 +8,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesMomentumBoundaryFluxHelper
+ * \copydoc Dumux::NavierStokesMomentumBoundaryFlux
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
@@ -17,14 +17,19 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocitygradients.hh>
+#include <dumux/freeflow/navierstokes/slipcondition.hh>
 
 namespace Dumux {
+
+template<class DiscretizationMethod, class SlipCondition>
+struct NavierStokesMomentumBoundaryFlux;
 
 /*!
  * \ingroup NavierStokesModel
  * \brief Struct containing flux helper functions to be used in the momentum problem's Neumann function.
  */
-struct NavierStokesMomentumBoundaryFluxHelper
+template<class SlipCondition>
+struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, SlipCondition>
 {
     /*!
      * \brief Returns the momentum flux a fixed-pressure boundary.
@@ -50,7 +55,6 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                           const bool zeroNormalVelocityGradient = true)
     {
         // TODO density upwinding?
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
         using MomentumFlux = typename Problem::MomentumFluxType;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(
@@ -203,7 +207,6 @@ struct NavierStokesMomentumBoundaryFluxHelper
                                          const ElementFluxVariablesCache& elemFluxVarsCache,
                                          const TangentialVelocityGradient& tangentialVelocityGradient = TangentialVelocityGradient(0.0))
     {
-        static_assert(FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::fcstaggered);
         using MomentumFlux = typename Problem::MomentumFluxType;
         constexpr std::size_t dim = static_cast<std::size_t>(FVElementGeometry::GridGeometry::GridView::dimension);
         static_assert(
@@ -239,6 +242,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
             *                                                   :: staggered half-control-volume (neighbor element)
             *
             */
+
+
+            using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
+
             const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
 
             // viscous terms
@@ -252,7 +259,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     return tangentialVelocityGradient;
             }();
 
-            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()]; // TODO rename to slipVelocity
+            const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
             const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
 
             flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
@@ -317,6 +324,9 @@ struct NavierStokesMomentumBoundaryFluxHelper
             *                            |   |   |
             *
             */
+
+            using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
+
             const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
 
             // viscous terms
@@ -331,7 +341,7 @@ struct NavierStokesMomentumBoundaryFluxHelper
                     return tangentialVelocityGradient;
             }();
 
-            const Scalar slipVelocity = problem.beaversJosephVelocity(fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()]; // TODO rename to slipVelocity
+            const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()];
             const Scalar velGradJI = (slipVelocity - velJ) / distance * orthogonalScvf.directionSign();
 
             flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
@@ -377,6 +387,10 @@ struct NavierStokesMomentumBoundaryFluxHelper
         return flux;
     }
 };
+
+using NavierStokesMomentumBoundaryFluxHelper
+    [[deprecated("Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `SlipCondition` and `DiscretizationMethod`. This will be removed after 3.9.")]]
+    = NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, SlipConditions::BJ>;
 
 } // end namespace Dumux
 
