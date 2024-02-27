@@ -180,7 +180,7 @@ public:
     {
         BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
-        using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+        using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod, SlipConditions::BJS>;
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -236,16 +236,16 @@ public:
     }
 
     /*!
-     * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
-    Scalar permeability(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
-    { return couplingManager_->darcyPermeability(fvGeometry, scvf); }
-
-    /*!
-     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
-     */
-    Scalar alphaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
-    { return couplingManager_->problem(CouplingManager::porousMediumIndex).spatialParams().beaversJosephCoeffAtPos(scvf.ipGlobal()); }
+    Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    {
+        const auto& K = couplingManager_->darcyPermeability(fvGeometry, scvf);
+        const auto alphaBJ = couplingManager_->problem(CouplingManager::porousMediumIndex).spatialParams().beaversJosephCoeffAtPos(scvf.ipGlobal());
+        const auto interfacePermeability = vtmv(tangentialVector, K, tangentialVector);
+        using std::sqrt;
+        return alphaBJ / sqrt(interfacePermeability);
+    }
 
     /*!
      * \brief Returns the pressure difference between inlet and outlet for the horizontal flow scenario
