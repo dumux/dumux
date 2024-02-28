@@ -18,7 +18,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
-
+#include <dumux/material/components/shomate.hh>
 namespace Dumux {
 namespace Components {
 
@@ -33,8 +33,10 @@ class CH4
 , public Components::Gas<Scalar, CH4<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
+     static const ShomateMethod shomateParams; // Declaration
     /*!
      * \brief A human readable name for methane.
      */
@@ -134,7 +136,8 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * temperature;
+        auto h = shomateParams.gasEnthalpy(temperature, pressure); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
@@ -149,18 +152,8 @@ public:
     static Scalar gasHeatCapacity(Scalar T,
                                   Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 19.25;
-        const Scalar cpVapB = 0.05213;
-        const Scalar cpVapC = 1.197e-5;
-        const Scalar cpVapD = -1.132e-8;
-
-        return
-            1/molarMass()* // conversion from [J/(mol*K)] to [J/(kg*K)]
-            (cpVapA + T*
-              (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                  (cpVapD/4))));
+        auto cp = shomateParams.heatCapacity(T, pressure); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
     /*!
@@ -226,6 +219,15 @@ public:
         // conversion from micro poise to Pa s
         return mu/1e6 / 10;
     }
+};
+
+template <class Scalar>
+const ShomateMethod<Scalar> CH4<Scalar>::shomateParams{
+        /*temperature*/{298.0, 1300.0, 6000.0},
+        {
+            {-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163, -74.87310},
+            {85.81217, 11.26467, -2.114146, 0.138190, -26.42221, -153.5327, 224.4143, -74.87310}
+        }
 };
 
 } // end namespace Components
