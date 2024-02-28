@@ -21,7 +21,7 @@
 
 namespace Dumux {
 
-template<class DiscretizationMethod, class SlipCondition>
+template<class DiscretizationMethod, class SlipCondition = void>
 struct NavierStokesMomentumBoundaryFlux;
 
 /*!
@@ -243,64 +243,68 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
             *
             */
 
-
-            using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
-
-            const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
-
-            // viscous terms
-            const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
-            const Scalar distance = (scv.dofPosition()- scvf.ipGlobal()).two_norm();
-            const Scalar velGradJI = [&]
+            if constexpr (!std::is_void_v<SlipCondition>)
             {
-                if (elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
-                    return StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
-                else
-                    return tangentialVelocityGradient;
-            }();
+                using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
 
-            const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
-            const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
+                const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
 
-            flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
-
-            // advective terms
-            if (problem.enableInertiaTerms())
-            {
-                // transporting velocity corresponds to velJ
-                const auto transportingVelocity = [&]()
+                // viscous terms
+                const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
+                const Scalar distance = (scv.dofPosition()- scvf.ipGlobal()).two_norm();
+                const Scalar velGradJI = [&]
                 {
-                    const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
-
-                    if (!elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
-                        return innerTransportingVelocity; // fallback
-
-                    const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
-
-                    // if the orthogonal scvf lies on a boundary and if there are outside volvars, we assume that these come from a Dirichlet condition
-                    if (orthogonalScvf.boundary())
-                        return outerTransportingVelocity;
-
-                    static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
-                    if (useOldScheme)
-                        return innerTransportingVelocity;
+                    if (elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
+                        return StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
                     else
-                    {
-                        // average the transporting velocity by weighting with the scv volumes
-                        const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
-                        const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
-                        const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
-                        return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
-                     }
+                        return tangentialVelocityGradient;
                 }();
 
-                // Do not use upwinding here but directly take the slip velocity located on the boundary. Upwinding with a weight of 0.5
-                // would actually prevent second order grid convergence.
-                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
-                const auto transportedMomentum = slipVelocity * rho.second;
+                const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
+                const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
 
-                flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
+
+                // advective terms
+                if (problem.enableInertiaTerms())
+                {
+                    // transporting velocity corresponds to velJ
+                    const auto transportingVelocity = [&]()
+                    {
+                        const auto innerTransportingVelocity = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
+
+                        if (!elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
+                            return innerTransportingVelocity; // fallback
+
+                        const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+
+                        // if the orthogonal scvf lies on a boundary and if there are outside volvars, we assume that these come from a Dirichlet condition
+                        if (orthogonalScvf.boundary())
+                            return outerTransportingVelocity;
+
+                        static const bool useOldScheme = getParam<bool>("FreeFlow.UseOldTransportingVelocity", true); // TODO how to deprecate?
+                        if (useOldScheme)
+                            return innerTransportingVelocity;
+                        else
+                        {
+                            // average the transporting velocity by weighting with the scv volumes
+                            const auto insideVolume = fvGeometry.scv(orthogonalScvf.insideScvIdx()).volume();
+                            const auto outsideVolume = fvGeometry.scv(orthogonalScvf.outsideScvIdx()).volume();
+                            const auto outerTransportingVelocity = elemVolVars[orthogonalScvf.outsideScvIdx()].velocity();
+                            return (insideVolume*innerTransportingVelocity + outsideVolume*outerTransportingVelocity) / (insideVolume + outsideVolume);
+                        }
+                    }();
+
+                    // Do not use upwinding here but directly take the slip velocity located on the boundary. Upwinding with a weight of 0.5
+                    // would actually prevent second order grid convergence.
+                    const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                    const auto transportedMomentum = slipVelocity * rho.second;
+
+                    flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                }
             }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "SlipCondition needs to be specified as template argument");
         }
         else if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
         {
@@ -325,63 +329,68 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
             *
             */
 
-            using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
-
-            const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
-
-            // viscous terms
-            const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
-            const Scalar distance = (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition()- scvf.ipGlobal()).two_norm();
-
-            const Scalar velGradIJ = [&]
+            if constexpr (!std::is_void_v<SlipCondition>)
             {
-                if (elemVolVars.hasVolVars(scvf.outsideScvIdx()))
-                    return StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
-                else
-                    return tangentialVelocityGradient;
-            }();
+                using SlipVelocityHelper = SlipVelocityHelper<typename FVElementGeometry::GridGeometry, SlipCondition>;
 
-            const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()];
-            const Scalar velGradJI = (slipVelocity - velJ) / distance * orthogonalScvf.directionSign();
+                const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
 
-            flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
+                // viscous terms
+                const Scalar mu = problem.effectiveViscosity(fvGeometry.element(), fvGeometry, scvf);
+                const Scalar distance = (fvGeometry.scv(orthogonalScvf.insideScvIdx()).dofPosition()- scvf.ipGlobal()).two_norm();
 
-            // advective terms
-            if (problem.enableInertiaTerms())
-            {
-                // transporting velocity corresponds to velJ
-                const auto transportingVelocity = slipVelocity;
-
-                // if the scvf lies on a boundary and if there are outside volvars, we assume that these come from a Dirichlet condition
-                if (scvf.boundary() && elemVolVars.hasVolVars(scvf.outsideScvIdx()))
+                const Scalar velGradIJ = [&]
                 {
-                    flux[scv.dofAxis()] += problem.density(fvGeometry.element(), scv)
-                                        * elemVolVars[scvf.outsideScvIdx()].velocity() * transportingVelocity * scvf.directionSign(); // TODO revise density
-                    return flux;
-                }
-
-                const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
-                const auto outerVelocity = [&]
-                {
-                    if (!elemVolVars.hasVolVars(scvf.outsideScvIdx()))
-                        return innerVelocity; // fallback
+                    if (elemVolVars.hasVolVars(scvf.outsideScvIdx()))
+                        return StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
                     else
-                        return elemVolVars[scvf.outsideScvIdx()].velocity();
+                        return tangentialVelocityGradient;
                 }();
 
-                const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
-                const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+                const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()];
+                const Scalar velGradJI = (slipVelocity - velJ) / distance * orthogonalScvf.directionSign();
 
-                const auto insideMomentum = innerVelocity * rho.first;
-                const auto outsideMomentum = outerVelocity * rho.second;
+                flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
 
-                static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+                // advective terms
+                if (problem.enableInertiaTerms())
+                {
+                    // transporting velocity corresponds to velJ
+                    const auto transportingVelocity = slipVelocity;
 
-                const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
-                                                                    : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+                    // if the scvf lies on a boundary and if there are outside volvars, we assume that these come from a Dirichlet condition
+                    if (scvf.boundary() && elemVolVars.hasVolVars(scvf.outsideScvIdx()))
+                    {
+                        flux[scv.dofAxis()] += problem.density(fvGeometry.element(), scv)
+                                            * elemVolVars[scvf.outsideScvIdx()].velocity() * transportingVelocity * scvf.directionSign(); // TODO revise density
+                        return flux;
+                    }
 
-                flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                    const auto innerVelocity = elemVolVars[scvf.insideScvIdx()].velocity();
+                    const auto outerVelocity = [&]
+                    {
+                        if (!elemVolVars.hasVolVars(scvf.outsideScvIdx()))
+                            return innerVelocity; // fallback
+                        else
+                            return elemVolVars[scvf.outsideScvIdx()].velocity();
+                    }();
+
+                    const auto rho = problem.insideAndOutsideDensity(fvGeometry.element(), fvGeometry, scvf);
+                    const bool selfIsUpstream = scvf.directionSign() == sign(transportingVelocity);
+
+                    const auto insideMomentum = innerVelocity * rho.first;
+                    const auto outsideMomentum = outerVelocity * rho.second;
+
+                    static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+
+                    const auto transportedMomentum =  selfIsUpstream ? (upwindWeight * insideMomentum + (1.0 - upwindWeight) * outsideMomentum)
+                                                                        : (upwindWeight * outsideMomentum + (1.0 - upwindWeight) * insideMomentum);
+
+                    flux[scv.dofAxis()] += transportingVelocity * transportedMomentum * scvf.directionSign();
+                }
             }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "SlipCondition needs to be specified as template argument");
         }
 
         return flux;
