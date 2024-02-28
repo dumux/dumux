@@ -34,16 +34,16 @@ namespace Dumux::FluidSystems::Detail {
 
     /*!
      * \brief Class that exports some indices that should
-     *        be provided by the BrineCO2 fluid system.
+     *        be provided by the <tt>BrineCO2<\tt> fluid system.
      *        The indices are chosen dependent on the policy,
-     *        i.e. if a simplified pseudo component Brine is
+     *        i.e. if a simplified pseudo component <tt>Brine<\tt> is
      *        used or salt is considered an individual component.
      */
     template<bool useConstantSalinity>
     struct BrineCO2Indices;
 
     /*!
-     * \brief Specialization for the case of brine being
+     * \brief Specialization for the case of <tt>Brine<\tt> being
      *        a pseudo component with a constant salinity.
      * \note This specialization exports brine as component
      */
@@ -54,7 +54,7 @@ namespace Dumux::FluidSystems::Detail {
     };
 
     /*!
-     * \brief Specialization for the case of brine being
+     * \brief Specialization for the case of <tt>Brine<\tt> being
      *        a fluid system with NaCl as individual component.
      * \note This specialization exports both water and NaCl as components
      */
@@ -73,7 +73,7 @@ namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
- * \brief Default policy for the Brine-CO2 fluid system
+ * \brief Default policy for the <tt>BrineCO2<\tt> fluid system
  */
 template<bool salinityIsConstant, bool fastButSimplifiedRelations = false>
 struct BrineCO2DefaultPolicy
