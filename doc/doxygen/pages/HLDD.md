@@ -1,18 +1,75 @@
 # High-Level Design Documentation for DuMux
 
-## General Description
+## Diagrams and Visual Aids
 
-DuMux, "DUNE for Multi-{Phase, Component, Scale, Physics, …} flow and transport in porous media," extends beyond traditional porous-media simulators to encompass a wide array of environmental and engineering applications. It is an open-source simulation software using modern C++ within the Distributed and Unified Numerics Environment (DUNE) framework. DuMux's capabilities include not only the simulation of flow and transport in porous media but also specialized models for river dynamics, free flow, fractured porous media, and geomechanics. Furthermore, DuMux allows for the coupling between these diverse models, enhancing its versatility. This integration enables DuMux to support a variety of scientific and engineering applications, from environmental science to energy technology, offering customizable modules for specific research needs. Its capabilities extend across solving multi-phase multi-component flow, reactive transport models, and even coupled fluid flow and solid mechanics problems, ensuring a comprehensive tool for the simulation of complex porous media phenomena. Additionally, DuMux supports various grids and discretization schemes, enabling it to adapt to a wide range of computational scenarios.
+### Architecture Diagrams
+- Diagrams representing the architecture and integration with DUNE and output possibilities.
 
 
-### Prerequisites
-- DUNE
-- C++17
-- CMake
-- MPI (optional)
+@startuml
+scale 0.8
+top to bottom direction
+package "Dune" {
+package "Dune_ISTL"{
+class ISTL_Solver
+class ISTL_Matrices
+class ISTL_Vectors
+}
+package DUNE_Grid{
+class YASP
+}
 
-### Licensing
-GPL-3.0
+package "DuMux" {
+package "Grid" {
+interface GridManager{}
+interface GridView{}
+class GridGeometry{}
+    }
+    package "Variables" {
+       class GridVariables{}
+    }
+    package "Scenario" {
+        class Problem{}
+        class TimeLoop{}
+        class SolutionVector{}
+    }
+    package "Assembly" {
+        class Assembler{}
+        class LocalAssembler{}
+        class LocalResidual{}
+    }
+    package "Solving" {
+        class Solver{}
+        interface LinearSolver{}
+    }
+    package "Output" {
+        class IOField{}
+        class VTKOutputModule
+    }
+}
+}
+LinearSolver <-- "Dune_ISTL"
+GridManager <-- "DUNE_Grid"
+GridManager --> GridView
+GridView --> GridGeometry
+GridGeometry --> Problem
+GridGeometry --> GridVariables
+GridGeometry --> Assembler
+GridGeometry --> SolutionVector
+TimeLoop --> Problem
+LinearSolver --> Solver
+LocalResidual --> LocalAssembler
+LocalAssembler --> Assembler
+GridVariables --> VTKOutputModule
+GridVariables --> SolutionVector
+IOField --> VTKOutputModule
+Assembler --> Solver
+SolutionVector --> Assembler
+Problem --> GridVariables
+Problem --> Assembler
+GridVariables --> Assembler
+}
+@enduml
 
 ## Major Concepts and Components
 
@@ -81,81 +138,3 @@ A SolutionVector is a container for the primary variables at each geometrical de
 - Building your model is done using the Property system in DuMux
 - Concretization of your model is done using the problem and params file
 - Results can be exported to VTK
-
-## Diagrams and Visual Aids
-
-### Architecture Diagrams
-- Diagrams representing the architecture and integration with DUNE and output possibilities.
-
-```plantuml
-top to bottom direction
-package "Dune" {
-    package "Dune_ISTL"{
-class ISTL_Solver
-class ISTL_Matrices
-class ISTL_Vectors
-}
-    package DUNE_Grid{
-class YASP
-}
-
-package "DuMux" {
-    package "Grid" {
-       interface GridManager{}
-       interface GridView{}
-       class GridGeometry{}
-
-    }
-    package "Variables" {
-       class GridVariables{}
-        
-    }
-    package "Scenario" {
-        class Problem{}
-        class TimeLoop{}
-        class SolutionVector{}
-    }
-    package "Assembly" {
-        class Assembler{}
-        class LocalAssembler{}
-        class LocalResidual{}
-        
-    }
-    package "Solving" {
-        class Solver{}
-        interface LinearSolver{}
-    }
-    package "Output" {
-        class IOField{}
-        class VTKOutputModule
-
-    }
-}
-
-
-
-}
-
-LinearSolver <-- "Dune_ISTL"
-GridManager <-- "DUNE_Grid"
-GridManager --> GridView
-GridView --> GridGeometry
-GridGeometry --> Problem
-GridGeometry --> GridVariables
-GridGeometry --> Assembler
-GridGeometry --> SolutionVector
-TimeLoop --> Problem
-LinearSolver --> Solver 
-LocalResidual --> LocalAssembler
-LocalAssembler --> Assembler
-GridVariables --> VTKOutputModule
-GridVariables --> SolutionVector
-IOField --> VTKOutputModule
-Assembler --> Solver
-SolutionVector --> Assembler
-Problem --> GridVariables
-Problem --> Assembler
-GridVariables --> Assembler
-}
-```
-
