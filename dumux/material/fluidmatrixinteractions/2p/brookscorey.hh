@@ -23,7 +23,7 @@
 namespace Dumux::FluidMatrix {
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup pcSwkrSwRelations
  *
  * \brief Implementation of the Brooks-Corey capillary pressure <->
  *        saturation relation. This class bundles the "raw" curves

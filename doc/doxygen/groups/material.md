@@ -82,6 +82,11 @@ The following laws are implemented:
 @details In porous media, the effective heat conductivity depends on the solid-fluid conductivity ratio, the volume fractions of the constituent phases, and the geometry of the solid-fluid interface \cite aichlmayr2006effective. The following laws are implemented:
 @ingroup Fluidmatrixinteractions
 
+@defgroup pcSwkrSwRelations pc-Sw and kr-Sw relations
+@brief Laws for calculating capillary pressures and relative permeabilities
+@details In porous media, if locally co-existing fluid phases are present, the phenomenon of capillary pressure and relative permeability will have to be accounted for.
+
+@ingroup Fluidmatrixinteractions
 <!-- FluidStates -->
 
 @defgroup FluidStates Fluid States
