@@ -99,4 +99,4 @@ BRIEF_MEMBER_DESC = YES
 ALWAYS_DETAILED_SEC = NO
 
 HAVE_DOT              = YES
-PLANTUML_JAR_PATH = /home/leon/PlantUML/plantuml.jar
+PLANTUML_JAR_PATH = ./plantuml.jar
