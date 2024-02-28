@@ -166,8 +166,8 @@ public:
     {
         BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
-        using SlipVelocityHelper = SlipVelocityHelper<typename GridGeometry::DiscretizationMethod, SlipConditions::BJ>;
-        using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod, SlipVelocityHelper>;
+        using SlipVelocityPolicy = NavierStokesSlipVelocity<typename GridGeometry::DiscretizationMethod,  NavierStokes::SlipConditions::BJ>;
+        using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod, SlipVelocityPolicy>;
 
         if constexpr (ParentType::isMomentumProblem())
         {

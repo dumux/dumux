@@ -10,8 +10,8 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesMomentumBoundaryFlux
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
+#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
+#define DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_BOUNDARY_FLUXHELPER_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
@@ -21,15 +21,32 @@
 
 namespace Dumux {
 
-template<class DiscretizationMethod, class SlipVelocityHelper = void>
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Class to compute the boundary flux for the momentum balance of the Navier-Stokes model
+ * This helper class is typically used in the Neumann function of the momentum problem.
+ *
+ * \tparam DiscretizationMethod The discretization method used for the momentum problem
+ * \tparam SlipVelocityPolicy The policy to compute the slip velocity at the boundary
+ *
+ * The slip velocity policy is a class with a static member function `velocity`
+ * that computes the slip velocity at the boundary.
+ */
+template<class DiscretizationMethod, class SlipVelocityPolicy = void>
 struct NavierStokesMomentumBoundaryFlux;
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Struct containing flux helper functions to be used in the momentum problem's Neumann function.
+ * \brief Class to compute the boundary flux for the momentum balance of the Navier-Stokes model
+ * This helper class is typically used in the Neumann function of the momentum problem.
+ *
+ * \tparam SlipVelocityPolicy The policy to compute the slip velocity at the boundary
+ *
+ * The slip velocity policy is a class with a static member function `velocity`
+ * that computes the slip velocity at the boundary.
  */
-template<class SlipVelocityHelper>
-struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, SlipVelocityHelper>
+template<class SlipVelocityPolicy>
+struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, SlipVelocityPolicy>
 {
     /*!
      * \brief Returns the momentum flux a fixed-pressure boundary.
@@ -243,7 +260,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
             *
             */
 
-            if constexpr (!std::is_void_v<SlipVelocityHelper>)
+            if constexpr (!std::is_void_v<SlipVelocityPolicy>)
             {
                 const Scalar velI = elemVolVars[scvf.insideScvIdx()].velocity();
 
@@ -258,7 +275,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                         return tangentialVelocityGradient;
                 }();
 
-                const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
+                const Scalar slipVelocity = SlipVelocityPolicy::velocity(problem, fvGeometry, scvf, elemVolVars, velGradJI)[scv.dofAxis()];
                 const Scalar velGradIJ = (slipVelocity - velI) / distance * scvf.directionSign();
 
                 flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
@@ -302,7 +319,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                 }
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "SlipVelocityHelper needs to be specified as template argument");
+                DUNE_THROW(Dune::InvalidStateException, "SlipVelocityPolicy needs to be specified as template argument");
         }
         else if (scv.boundary() && problem.onSlipBoundary(fvGeometry, fvGeometry.frontalScvfOnBoundary(scv)))
         {
@@ -327,7 +344,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
             *
             */
 
-            if constexpr (!std::is_void_v<SlipVelocityHelper>)
+            if constexpr (!std::is_void_v<SlipVelocityPolicy>)
             {
                 const Scalar velJ = elemVolVars[orthogonalScvf.insideScvIdx()].velocity();
 
@@ -343,7 +360,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                         return tangentialVelocityGradient;
                 }();
 
-                const Scalar slipVelocity = SlipVelocityHelper::velocity(problem, fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()];
+                const Scalar slipVelocity = SlipVelocityPolicy::velocity(problem, fvGeometry, orthogonalScvf, elemVolVars, velGradIJ)[scvf.normalAxis()];
                 const Scalar velGradJI = (slipVelocity - velJ) / distance * orthogonalScvf.directionSign();
 
                 flux[scv.dofAxis()] -= (mu * (velGradIJ + velGradJI))*scvf.directionSign();
@@ -386,7 +403,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                 }
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "SlipVelocityHelper needs to be specified as template argument");
+                DUNE_THROW(Dune::InvalidStateException, "SlipVelocityPolicy needs to be specified as template argument");
         }
 
         return flux;
@@ -394,9 +411,9 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
 };
 
 using NavierStokesMomentumBoundaryFluxHelper
-    [[deprecated("Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `DiscretizationMethod` and `SlipVelocityHelper`. This will be removed after 3.9.")]]
+    [[deprecated("Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `DiscretizationMethod` and `SlipVelocityPolicy`. This will be removed after 3.9.")]]
     = NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered,
-                                       SlipVelocityHelper<DiscretizationMethods::FCStaggered, SlipConditions::BJ>>;
+                                       NavierStokesSlipVelocity<DiscretizationMethods::FCStaggered, NavierStokes::SlipConditions::BJ>>;
 
 } // end namespace Dumux
 

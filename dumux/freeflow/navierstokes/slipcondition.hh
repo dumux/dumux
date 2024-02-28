@@ -9,37 +9,63 @@
  * \ingroup NavierStokesModel
  * \brief Navier Stokes slip condition
  */
-#ifndef DUMUX_NAVIERSTOKES_SLIPCONDITION_HH
-#define DUMUX_NAVIERSTOKES_SLIPCONDITION_HH
+#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
+#define DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
 
+#include <dumux/common/tag.hh>
 #include <dumux/discretization/method.hh>
 
-namespace Dumux {
+namespace Dumux::NavierStokes::SlipConditions {
 
-namespace SlipConditions {
-
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Tag for the Beavers-Joseph slip condition
+ */
 struct BJ : public Utility::Tag<BJ> {
     static std::string name() { return "Beavers-Joseph"; }
 };
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Tag for the Beavers-Joseph-Saffman slip condition
+ */
 struct BJS : public Utility::Tag<BJS> {
     static std::string name() { return "Beavers-Joseph-Saffman"; }
 };
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Tag for the Beavers-Joseph slip condition
+ */
 inline constexpr BJ bj{};
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Tag for the Beavers-Joseph-Saffman slip condition
+ */
 inline constexpr BJS bjs{};
 
-} // end namespace SlipModel
+} // end namespace Dumux::NavierStokes::SlipConditions
 
+namespace Dumux {
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Navier Stokes slip velocity policy
+ */
 template<class DiscretizationMethod, class SlipCondition>
-class SlipVelocityHelper;
+class NavierStokesSlipVelocity;
 
 /*!
  * \ingroup NavierStokesModel
  * \brief Navier Stokes slip velocity helper for fcstaggered discretization
+ *
+ * For now, this class implements the Beavers-Joseph or the Beavers-Joseph-Saffman condition
+ * which models the slip velocity at a porous boundary. The condition is chosen by passing
+ * the corresponding SlipCondition tag to the class.
  */
-template< class SlipCondition>
-struct SlipVelocityHelper<DiscretizationMethods::FCStaggered, SlipCondition>
+template<class SlipCondition>
+struct NavierStokesSlipVelocity<DiscretizationMethods::FCStaggered, SlipCondition>
 {
     static constexpr SlipCondition slipCondition{};
 
@@ -67,9 +93,9 @@ struct SlipVelocityHelper<DiscretizationMethods::FCStaggered, SlipCondition>
 
         Vector porousMediumVelocity(0.0);
 
-        if constexpr (slipCondition == SlipConditions::bj)
+        if constexpr (slipCondition == NavierStokes::SlipConditions::bj)
             porousMediumVelocity = problem.porousMediumVelocity(fvGeometry, scvf);
-        else if (!(slipCondition == SlipConditions::bjs))
+        else if (!(slipCondition == NavierStokes::SlipConditions::bjs))
             DUNE_THROW(Dune::NotImplemented, "Fcstaggered currently only implements BJ or BJS slip conditions");
 
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
