@@ -25,14 +25,14 @@ class GridGeometry{}
         class TimeLoop{}
         class SolutionVector{}
     }
-    package "Assembly" [[./group___assembly.html]] {
+    package "Assembly" [[./../html/group___assembly.html]] {
         class Assembler  {}
         class LocalAssembler{}
         class LocalResidual{}
     }
     package "Solving" {
-        class Solver [[./group___nonlinear.html]] {}
-        interface LinearSolver [[./group___linear.html]] {}
+        class Solver [[./../html/group___nonlinear.html]] {}
+        interface LinearSolver [[./../html/group___linear.html]] {}
     }
     package "Output" {
         class IOField{}
