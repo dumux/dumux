@@ -5,7 +5,12 @@
 ### Architecture Diagrams
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
-![Diagram Description](HLDD.svg){html: width=80%}
+\htmlonly
+<object data="./../PUML/HLDD.svg" type="image/svg+xml" width="400" height="300">
+<!-- Fallback content for browsers that don't support object elements -->
+Your browser does not support SVG
+</object>
+\endhtmlonly
 
 ## Major Concepts and Components
 
