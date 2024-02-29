@@ -38,7 +38,9 @@ EXAMPLE_PATH          += @srcdir@/extradoc \
                          @top_srcdir@/test/python \
                          @srcdir@/groups/details
 
-IMAGE_PATH             = @srcdir@/images
+IMAGE_PATH             += @srcdir@/images \
+                          @srcdir@/PUML
+
 
 EXTRA_PACKAGES        += amsmath,amssymb,units
 

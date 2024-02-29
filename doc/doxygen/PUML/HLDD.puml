@@ -1,0 +1,64 @@
+@startuml
+scale 0.8
+top to bottom direction
+package "Dune" {
+package "Dune_ISTL"{
+class ISTL_Solver
+class ISTL_Matrices
+class ISTL_Vectors
+}
+package DUNE_Grid{
+class YASP
+}
+
+package "DuMux" {
+package "Grid" {
+interface GridManager{}
+interface GridView{}
+class GridGeometry{}
+    }
+    package "Variables" {
+       class GridVariables{}
+    }
+    package "Scenario" {
+        class Problem{}
+        class TimeLoop{}
+        class SolutionVector{}
+    }
+    package "Assembly" [[./group___assembly.html]] {
+        class Assembler  {}
+        class LocalAssembler{}
+        class LocalResidual{}
+    }
+    package "Solving" {
+        class Solver [[./group___nonlinear.html]] {}
+        interface LinearSolver [[./group___linear.html]] {}
+    }
+    package "Output" {
+        class IOField{}
+        class VTKOutputModule
+    }
+}
+}
+LinearSolver <-- "Dune_ISTL"
+GridManager <-- "DUNE_Grid"
+GridManager --> GridView
+GridView --> GridGeometry
+GridGeometry --> Problem
+GridGeometry --> GridVariables
+GridGeometry --> Assembler
+GridGeometry --> SolutionVector
+TimeLoop --> Problem
+LinearSolver --> Solver
+LocalResidual --> LocalAssembler
+LocalAssembler --> Assembler
+GridVariables --> VTKOutputModule
+GridVariables --> SolutionVector
+IOField --> VTKOutputModule
+Assembler --> Solver
+SolutionVector --> Assembler
+Problem --> GridVariables
+Problem --> Assembler
+GridVariables --> Assembler
+}
+@enduml
