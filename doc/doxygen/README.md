@@ -114,3 +114,26 @@ If there are **function-arguments** that are not self-explanatory, they should b
 Template parameters are documented with `\tparam`.
 Additional Doxygen-commands that might be useful are `\note` for giving an important note/hint
 on what the function does as well as `\return` which specifies the return value (if applicable).
+
+## Instructions for PlantUML clickable diagrams
+
+Create your PlantUML diagram in a file with the extension `.puml` in the `doc/doxygen/PUML` directory.
+For the syntax of PlantUML see the [PlantUML documentation](https://plantuml.com/).
+For clickable elements it is important to use the relative path to the html file.
+If in doubt create the documentation locally and find the relative path.
+
+```plantuml
+package "Assembly" [[./../html/group___assembly.html]]
+```
+
+Create the svg file using docker:
+
+```bash
+docker run -v $(pwd):/data plantuml/plantuml -tsvg <diagram>.puml
+chown $(id -u):$(id -g) <diagram>.svg
+```
+If you want to inlcude the diagram in a markdown file, you can use the following syntax:
+
+```markdown
+\pumlsvg{<diagram>,<relative_width>}
+```
