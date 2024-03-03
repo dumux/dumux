@@ -164,7 +164,8 @@ public:
     {
         BoundaryFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
-        using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+        using SlipVelocityPolicy = NavierStokesSlipVelocity<typename GridGeometry::DiscretizationMethod, NavierStokes::SlipConditions::BJS>;
+        using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod, SlipVelocityPolicy>;
 
         // momentum boundary conditions
         if constexpr (ParentType::isMomentumProblem())
@@ -283,18 +284,16 @@ public:
     { return InitialValues(0.0); }
 
     /*!
-     * \brief Returns the intrinsic permeability of required as input parameter
-              for the Beavers-Joseph-Saffman boundary condition
+     * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
-    auto permeability(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
-    { return couplingManager().darcyPermeability(fvGeometry, scvf); }
-
-    /*!
-     * \brief Returns the alpha value required as input parameter for the
-              Beavers-Joseph-Saffman boundary condition.
-     */
-    Scalar alphaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
-    { return couplingManager().problem(CouplingManager::porousMediumIndex).spatialParams().beaversJosephCoeffAtPos(scvf.ipGlobal()); }
+    Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
+    {
+        const auto& K = couplingManager().darcyPermeability(fvGeometry, scvf);
+        const auto alphaBJ = couplingManager().problem(CouplingManager::porousMediumIndex).spatialParams().beaversJosephCoeffAtPos(scvf.ipGlobal());
+        const auto interfacePermeability = vtmv(tangentialVector, K, tangentialVector);
+        using std::sqrt;
+        return alphaBJ / sqrt(interfacePermeability);
+    }
 
     /*!
      * \brief Returns the analytical solution of the problem at a given position.

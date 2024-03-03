@@ -427,6 +427,7 @@ public:
      * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
+    [[deprecated("Will be removed after release 3.9.")]]
     Scalar permeability(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented,
@@ -439,6 +440,7 @@ public:
      * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
      * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
      */
+    [[deprecated("Will be removed after release 3.9. Implement betaBJ instead. ")]]
     Scalar alphaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         DUNE_THROW(Dune::NotImplemented,
@@ -450,9 +452,11 @@ public:
     /*!
      * \brief Returns the beta value which is the alpha value divided by the square root of the (scalar-valued) interface permeability.
      */
+    [[deprecated("Needs to be implemented in test problem. Will be removed after release 3.9.")]]
     Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
-        const Scalar interfacePermeability = interfacePermeability_(fvGeometry, scvf, tangentialVector);
+        const auto& K = asImp_().permeability(fvGeometry, scvf);
+        const auto interfacePermeability = vtmv(tangentialVector, K, tangentialVector);
         using std::sqrt;
         return asImp_().alphaBJ(fvGeometry, scvf) / sqrt(interfacePermeability);
     }
@@ -460,6 +464,7 @@ public:
     /*!
      * \brief Returns the velocity in the porous medium (which is 0 by default according to Saffmann).
      */
+    [[deprecated("Needs to be implemented in test problem. Will be removed after release 3.9.")]]
     VelocityVector porousMediumVelocity(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         return VelocityVector(0.0);
@@ -469,6 +474,7 @@ public:
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
      * \note This only returns a vector filled with one component of the slip velocity (corresponding to the dof axis of the scv the svf belongs to)
      */
+    [[deprecated("Will be removed after release 3.9.")]]
     const VelocityVector beaversJosephVelocity(const FVElementGeometry& fvGeometry,
                                                const SubControlVolumeFace& scvf,
                                                const ElementVolumeVariables& elemVolVars,
@@ -511,19 +517,6 @@ public:
     }
 
 private:
-    //! Returns a scalar permeability value at the coupling interface
-    template<class Scvf>
-    Scalar interfacePermeability_(const FVElementGeometry& fvGeometry, const Scvf& scvf, const GlobalPosition& tangentialVector) const
-    {
-        const auto& K = asImp_().permeability(fvGeometry, scvf);
-
-        // use t*K*t for permeability tensors
-        if constexpr (Dune::IsNumber<std::decay_t<decltype(K)>>::value)
-            return K;
-        else
-            return vtmv(tangentialVector, K, tangentialVector);
-    }
-
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation& asImp_()
     { return *static_cast<Implementation *>(this); }
