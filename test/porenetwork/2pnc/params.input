@@ -1,11 +1,12 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+DtInitial = 1e-1 # [s]
+TEnd = 1e5 # [s]
+MaxTimeStepSize = 1e0 # [s]
 
 [Grid]
-File = ./grids/1dGrid.dgf
+File = ./grids/pnm_converted.dgf
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
+ThroatCrossSectionShape = Circle
 
 [Problem]
 Name = test_pnm_2pnc
@@ -14,6 +15,8 @@ EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
 Source = 1e-5
+InletPressure = 1e5
+OutletPressure = 1e5
 
 [Vtk]
 AddVelocity = 1

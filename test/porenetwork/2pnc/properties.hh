@@ -72,6 +72,10 @@ public:
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
 
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::DrainageProblem>
+{ static constexpr auto value = TwoPFormulation::p0s1; };
+
 } //end namespace Dumux::Properties
 
 #endif
