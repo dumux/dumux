@@ -85,6 +85,8 @@ public:
         previousDropletsNew_ = {};
         droplets_ = {};
 
+        initDroplets_();
+
         interfaceElementIndex();
     }
 
@@ -107,27 +109,9 @@ public:
 
     void update()
     {
-        const auto& gridGeometry = problem_.gridGeometry();
-        auto fvGeometry = localView(gridGeometry);
-
-        for (const auto& elementIdx : interfaceElementsIndex_)
+        for (const auto& droplet : droplets_)
         {
-            const auto& element = gridGeometry.element(elementIdx);
-            fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                if (!isAtInterface(element, scv))
-                    continue;
-                const auto dofIdxGlobal = scv.dofIndex();
-
-                if (hasDroplet(element, scv))
-                {
-                    auto& drop = droplets_[dofIdxGlobal];
-                    updateDropGeometry_( drop, element,  fvGeometry);
-                }
-                else
-                    setDropGeometry_(scv, element, fvGeometry);
-            }
+            updateDropGeometry_(droplet);
         }
     }
 
@@ -235,12 +219,22 @@ private:
         Scalar contactAngle = 0.0;
         Scalar volume = 0.0;
         Scalar height = 0.0;
-        Scalar contactRadius = computeContactRadius_(initialVolume, initialContactAngle);
-        const auto dofIdxGlobal = droplet.dofIndex();
-
-        auto flux = asImp_().totalFlux(element, fvGeometry, droplet);
+        Scalar contactRadius = droplet.contactRadius();
         const Scalar dt = timeLoop_->timeStepSize();
-        volume = computeDropVolume_(droplet.intrinsicVolume(), dt, flux);
+        auto flux = 0.0;
+
+        const auto& gridGeometry = problem_.gridGeometry();
+        auto fvGeometry = localView(gridGeometry);
+
+        for (const auto& elementIdx : droplet.elementIndices())
+        {
+            const auto& element = gridGeometry.element(elementIdx);
+            fvGeometry.bindElement(element);
+
+            flux += asImp_().totalFlux(element, fvGeometry, droplet);
+        }
+
+        volume = computeDropVolume_(droplet.volume(), dt, flux);
 
         contactAngle = computeContactAngle_(volume, contactRadius);
 
@@ -255,12 +249,12 @@ private:
                        contactAngle);
     }
 
-    void setDropGeometry_()
+    void initDroplets_()
     {
 
-        Scalar initialContactAngle = 0.0;
-        Scalar initialVolume = 0.0;
-        GlobalPosition initialCenter = 0.0;
+        Scalar initialContactAngle = 0.0; //Todo
+        Scalar initialVolume = 0.0; //Todo
+        GlobalPosition initialCenter = 0.0; //Todo
         Scalar initialContactRadius = computeContactRadius_(initialVolume, initialContactAngle);
 
         Scalar initialRadius = initialContactRadius;
@@ -302,13 +296,14 @@ private:
             }
         }
 
-        Drop droplet(initialCenter,
-                     initialVolume,
+        Drop droplet(initialVolume,
                      initialRadius,
                      initialHeight,
+                     initialContactRadius,
                      initialContactAngle,
-                     dropletDoFs,
+                     initialCenter,
                      dropletElems,
+                     dropletDoFs,
                      dropletDoFPositions);
 
         droplets_.push_back(droplet);
@@ -322,10 +317,9 @@ private:
         return curDropVol;
     }
 
-    static Scalar computeContactAngle_(const Scalar dropVolume, const Scalar contactRadius)
+    static Scalar computeContactAngle_(const Scalar dropVolume, const Scalar contactRadius) //Todo
     {
-
-        auto evalResiduals = [&](Scalar contactAngle)
+        auto evalContactAngle = [&](Scalar contactAngle)
         {
             Scalar res = (sin(contactAngle) * sin(contactAngle) * sin(contactAngle)) * dropVolume;
             res -= M_PI / 3 * contactRadius * contactRadius * contactRadius * (1 - cos(contactAngle)) * (1 - cos(contactAngle)) * (2 + cos(contactAngle));
@@ -338,7 +332,7 @@ private:
             Scalar lowerLimit = 0;
             Scalar upperLimit = M_PI / 2;
 
-        Scalar Theta = findScalarRootBrent(lowerLimit, upperLimit, evalResiduals, 1e-6, 500);
+        Scalar Theta = findScalarRootBrent(lowerLimit, upperLimit, evalContactAngle, 1e-6, 500);
         return Theta;
     }
 

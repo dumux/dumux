@@ -76,129 +76,104 @@ public:
     //! The default constructor
     Droplet() = default;
 
-    // the contructor in the box case
-    void Droplet(const Scalar volume,
+    // the contructor
+    Droplet(const Scalar initialVolume,
+            const Scalar initialRadius,
+            const Scalar initialHeight,
+            const Scalar initialContactRadius,
+            const Scalar initialContactAngle,
+            const GlobalPosition initialCenter,
+            const std::vector<GridIndexType> dropletElems,
+            const std::vector<GridIndexType> dropletDoFs,
+            const std::vector<GlobalPosition> dropletDoFPositions)
+    : volume_(initialVolume)
+    , initialVolume_(initialVolume)
+    , radius_(initialRadius)
+    , initialRadius_(initialRadius)
+    , height_(initialHeight)
+    , initialHeight_(initialHeight)
+    , initialContactRadius_(initialContactRadius)
+    , contactAngle_(initialContactAngle)
+    , initialContactAngle_(initialContactAngle)
+    , initialCenter_(initialCenter)
+    , dropletElems_(dropletElems)
+    , dropletDoFs_(dropletDoFs)
+    , dropletDoFPositions_(dropletDoFPositions)
+    {}
+
+
+    void update(const Scalar volume,
                 const Scalar radius,
                 const Scalar height,
                 const Scalar contactAngle,)
     {
-        intrinsicVolume_ = volume;
-        intrinsicRadius_ = radius;
+        volume_ = volume;
+        radius_ = radius;
         height_ = height;
         contactAngle_ = contactAngle;
     }
 
-
-    update(const GridIndexType dofIndex,
-            const LocalIndexType scvLocalIdx,
-            const GridIndexType elementIndex,
-            const GlobalPosition& center,
-            Scalar contactRadius)
-    : dropDofIndex_(dofIndex)
-    , dropScvLocalIndex_(scvLocalIdx)
-    , dropElementIndex_(elementIndex)
-    , center_(center)
-    , initialCenter_(center)
-    , stickRadius_(contactRadius)
-    , volume_(0.0)
-    , intrinsicVolume_(0.0)
-    , radius_(0.0)
-    , intrinsicRadius_(0.0)
-    , height_(0.0)
-    , contactAngle_(0.0)
-    {}
-
-
-GridIndexType dofIndex() const
-    {
-        return dropDofIndex_;
-    }
-
     Scalar radius() const
-    {
-        if (!isMerged_)
-            return intrinsicRadius_;
+    {   return radius_; }
 
-        return radius_;
-    }
-
-    Scalar intrinsicRadius() const
-    {
-         return intrinsicRadius_;
-    }
+    Scalar initialRadius() const
+    {   return initialRadius_; }
 
     Scalar contactAngle() const
-    {
-        return contactAngle_;
-    }
+    {   return contactAngle_; }
+
+    Scalar initialContactAngle() const
+    {   return initialContactAngle_; }
 
     Scalar volume() const
-    {
-        if (!isMerged_)
-            return intrinsicVolume_;
+    {   return volume_; }
 
-         return volume_;
-    }
+    Scalar initialVolume() const
+    {   return initialVolume_; }
 
-    Scalar intrinsicVolume() const
-    {
-         return intrinsicVolume_;
-    }
-
-    Scalar stickRadius() const
-    {
-        return stickRadius_;
-    }
-
-    Scalar initialStickRadius() const
-    {
-        return poreRadius_;
-    }
+    Scalar contactRadius() const
+    {   return initialContactRadius_; }
 
     Scalar height() const
-    {
-        return height_;
-    }
+    {   return height_; }
+
+    Scalar initialHeight() const
+    {   return initialHeight_; }
 
     GlobalPosition center() const
+    {   return initialCenter_; }
+
+
+    std::vector<GridIndexType> elementIndices() const
     {
-        return center_;
-    }
-    GlobalPosition initialCenter() const
-    {
-        return initialCenter_;
+        return dropletElems_;
     }
 
-    bool isOnBoundary() const
+    std::vector<GridIndexType> dofIndices() const
     {
-        return isOnOutletBoundary_;
+        return dropletDoFs_;
     }
 
-    GridIndexType elementIdx() const
+    std::vector<GlobalPosition> dofpositions() const
     {
-        return dropElementIndex_;
-    }
-
-    GridIndexType LocalDofIdx() const
-    {
-        return dropScvLocalIndex_;
+        return dropletDoFPositions_;
     }
 
 private:
-    CornerStorage corners_;
-    GridIndexType dropDofIndex_;
-    GridIndexType dropElementIndex_;
-    GridIndexType dropScvLocalIndex_;
-    GlobalPosition initialCenter_;
-    GlobalPosition center_ ;
+    GlobalPosition initialCenter_ ;
     Scalar radius_ = 0.0;
-    Scalar intrinsicRadius_ = 0.0;
+    Scalar initialRadius_ = 0.0;
     Scalar volume_ = 0.0;
-    Scalar intrinsicVolume_ = 0.0;
+    Scalar initialVolume_ = 0.0;
     Scalar contactAngle_ = 0.0;
-    Scalar stickRadius_ = 0.0;
+    Scalar initialContactAngle_ = 0.0;
+    Scalar initialContactRadius_ = 0.0;
     Scalar height_ = 0.0;
-    bool isOnOutletBoundary_;
+    Scalar initialHeight_ = 0.0;
+    std::vector<GridIndexType> dropletElems_;
+    std::vector<GridIndexType> dropletDoFs_;
+    std::vector<GlobalPosition> dropletDoFPositions_;
+
 };
 
 } // end namespace Dumux::PoreNetwork
