@@ -113,7 +113,7 @@ public:
                 const CodimOneGridAdapter& codimOneGridAdapter,
                 const IsBarrier& isBarrier,
                 bool verbose = false)
-    { ParentType::enrich(codimOneGridView, codimOneGridAdapter, BarrierIndicator{isBarrier}, verbose); }
+    { ParentType::enrich(codimOneGridView, codimOneGridAdapter, BarrierIndicator<IsBarrier>{isBarrier}, verbose); }
 };
 
 } // end namespace Dumux
