@@ -46,11 +46,11 @@ class BoxDfmFractureIntersections
     using Embeddings = typename GridManager::Embeddings;
     using GridAdapter = CodimOneGridAdapter<Embeddings, bulkGridId, fractureGridId>;
 
-    using FractureGrid = typename GridManager::Grid<fractureGridId>;
+    using FractureGrid = typename GridManager::template Grid<fractureGridId>;
     using FractureGridElement = typename FractureGrid::template Codim<0>::Entity;
     using FractureGridVertex = typename FractureGrid::template Codim<FractureGrid::dimension>::Entity;
 
-    using BulkGrid = typename GridManager::Grid<bulkGridId>;
+    using BulkGrid = typename GridManager::template Grid<bulkGridId>;
     using BulkGridElement = typename BulkGrid::template Codim<0>::Entity;
     using BulkGridReferenceElement = std::decay_t<decltype(referenceElement(std::declval<const BulkGridElement&>()))>;
     using BulkGridIntersection = typename BulkGrid::LeafGridView::Intersection;
