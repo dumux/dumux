@@ -88,7 +88,7 @@ public:
         if (isInletPore_(scv))
             bcTypes.setAllDirichlet();
         else if (isOutletPore_(scv))
-            bcTypes.setAllDirichlet();
+            bcTypes.setAllNeumann();
 
         return bcTypes;
     }

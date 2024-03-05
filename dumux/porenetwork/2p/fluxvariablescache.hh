@@ -55,6 +55,11 @@ public:
         invaded_ = invaded;
         poreToPoreDistance_ = element.geometry().volume();
 
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
         // get the non-wetting phase index
         using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
         const auto& spatialParams = problem.spatialParams();
@@ -66,12 +71,20 @@ public:
         const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
         wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
         const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
-
+        const auto throatLabel = fvGeometry.gridGeometry().throatLabel(eIdx);
+        const Scalar delPWettingPhase = insideVolVars.pressure(wPhaseIdx()) - outsideVolVars.pressure(wPhaseIdx());
         if (invaded) // two-phase flow
         {
             const Scalar theta = spatialParams.contactAngle(element, elemVolVars);
-            for (int i = 0; i< cornerHalfAngles.size(); ++i)
-                wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+            if (throatLabel != 2 || (throatLabel == 2 && delPWettingPhase < 0.0))
+            {
+
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                {
+
+                    wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+                }
+            }
 
             // make sure the wetting phase area does not exceed the total cross-section area
             throatCrossSectionalArea_[wPhaseIdx()] = std::min(
