@@ -81,12 +81,10 @@ public:
         initialContactAngle_ = M_PI*initialContactAngle_/180;
         surfaceTension_ = getParamFromGroup<Scalar>(problem_.paramGroup(),"SpatialParameters.SurfaceTension", 0.0725);
 
-        previousDropletsNew_ = {};
-        droplets_ = {};
-
-        initDroplets_();
 
         interfaceElementIndex();
+
+        // initDroplets_(); // TODO
     }
 
     void interfaceElementIndex()
@@ -164,16 +162,6 @@ public:
     auto droplets() const
     {
         return droplets_;
-    }
-
-    auto prevDroplet(const Element& element, const SubControlVolume& scv) const
-    {
-        const auto dofIdxGlobal = scv.dofIndex();
-        if (previousDropletsNew_.count(dofIdxGlobal))
-            return previousDropletsNew_.at(dofIdxGlobal);
-
-            Drop drop;
-            return drop;
     }
 
     auto droplet(const Element& element, const SubControlVolume& scv) const
@@ -255,7 +243,7 @@ private:
 
         Scalar initialContactAngle = 0.0; //Todo
         Scalar initialVolume = 0.0; //Todo
-        GlobalPosition initialCenter = 0.0; //Todo
+        GlobalPosition initialCenter(0.0); //Todo
         Scalar initialContactRadius = computeContactRadius_(initialVolume, initialContactAngle);
 
         Scalar initialRadius = initialContactRadius;
@@ -268,9 +256,9 @@ private:
         auto fvGeometry = localView(gridGeometry);
 
 
-        std::vector<GridIndexType> dropletDoFs;
+        std::vector<GridIndex> dropletDoFs;
         std::vector<GlobalPosition> dropletDoFPositions;
-        std::vector<GridIndexType> dropletElems;
+        std::vector<GridIndex> dropletElems;
         for (const auto& elementIdx : interfaceElementsIndex_)
         {
             const auto& element = gridGeometry.element(elementIdx);
@@ -340,7 +328,7 @@ private:
     static Scalar computeContactRadius_(const Scalar initialDropVolume, const Scalar initialContactAngle)
     {
         Scalar contactRadius = 3 * initialDropVolume / (M_PI * (1 - cos(initialContactAngle)) * (1 - cos(initialContactAngle)) * (2 + cos(initialContactAngle)) / (sin(initialContactAngle) * sin(initialContactAngle) * sin(initialContactAngle)));
-        contactRadius = std::cbrt(stickRadius);
+        contactRadius = std::cbrt(contactRadius);
 
         return contactRadius;
     }
@@ -353,7 +341,7 @@ private:
     { return *static_cast<Implementation*>(this);}
 
     std::size_t numDofs_;
-    std::vector<Drop> droplets_;
+    std::vector<Drop> droplets_{};
     mutable Drop droplet_;
 
     Scalar initialContactAngle_;
@@ -386,7 +374,7 @@ class DropletSolverTwoP : public DropletSolverBase <DropletSolverTwoP <TypeTag, 
     using TimeLoopDrop = TimeLoop<GetPropType<TypeTag, Properties::Scalar>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Drop = Dumux::PoreNetwork::Droplet<GridView>;
+    using Drop = Dumux::Droplet<GridView>;
 
 
     using ThisType = DropletSolverTwoP<TypeTag, IsCoupled>;
@@ -423,7 +411,7 @@ private:
                     const SubControlVolume& scv) const
     {
         Scalar flux = 0.0;
-        auto phaseIdx = dropletPhaseIdx();
+        auto phaseIdx = 0; //dropletPhaseIdx();
 
         const auto dofIdxGlobal = scv.dofIndex();
 

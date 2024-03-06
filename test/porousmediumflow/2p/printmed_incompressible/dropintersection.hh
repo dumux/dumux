@@ -30,7 +30,6 @@
 #include <type_traits>
 
 #include <dune/geometry/axisalignedcubegeometry.hh>
-#include <dumux/mixeddimension/boundary/pnmstokes/geometry.hh>
 
 namespace Dumux {
 

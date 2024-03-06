@@ -105,7 +105,7 @@ public:
     void update(const Scalar volume,
                 const Scalar radius,
                 const Scalar height,
-                const Scalar contactAngle,)
+                const Scalar contactAngle)
     {
         volume_ = volume;
         radius_ = radius;

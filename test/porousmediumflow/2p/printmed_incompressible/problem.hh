@@ -63,7 +63,7 @@ public:
         BoundaryTypes values;
         if (onUpperBoundary_(globalPos))
             values.setAllDirichlet();
-        if else (onLowerBoundary_(globalPos))
+        else if (onLowerBoundary_(globalPos))
             values.setAllNeumann();
         else
             values.setAllDirichlet();
@@ -145,7 +145,7 @@ public:
         return values;
     }
 
-    void setDropeltSolver(std::shared_ptr<DropletSolver> dropletSolver)
+    void setDropSolver(std::shared_ptr<DropSolver> dropletSolver)
     { dropletSolver_ = dropletSolver; }
 
     bool onInlet(const GlobalPosition &globalPos) const
@@ -179,7 +179,7 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
 
-    std::shared_ptr<DropletSolver> dropletSolver_;
+    std::shared_ptr<DropSolver> dropletSolver_;
 };
 
 } // end namespace Dumux
