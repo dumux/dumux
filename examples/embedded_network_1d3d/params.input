@@ -38,6 +38,7 @@ Cells = 20 20 20
 
 [Network.Grid]
 File = network.dgf
+Refinement = 0
 
 ########################################################################
 # Time settings
