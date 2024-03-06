@@ -35,9 +35,8 @@
 #include <dumux/common/indextraits.hh>
 
 #include <dumux/porenetwork/common/poreproperties.hh>
-#include "dropcalculations.hh"
-#include "droplet.hh"
 #include "dropintersection.hh"
+#include "droplet.hh"
 
 namespace Dumux
 {
@@ -101,7 +100,7 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
 
-                if (isAtInterface(element, scv))
+                if (isAtInterface(element, scv)) //Todo
                     interfaceElementsIndex_.push_back(scv.elementIndex());
             }
         }
@@ -203,7 +202,7 @@ public:
         return false;
     }
 
-    bool isAtInterface(const Element& element, const SubControlVolume& scv) const
+    bool isAtInterface(const Element& element, const SubControlVolume& scv) const //Todo
     {
         auto position = scv.dofPosition();
 
@@ -230,8 +229,10 @@ private:
         {
             const auto& element = gridGeometry.element(elementIdx);
             fvGeometry.bindElement(element);
-
-            flux += asImp_().totalFlux(element, fvGeometry, droplet);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                flux += asImp_().totalFlux(element, fvGeometry, scv);
+            }
         }
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
@@ -276,8 +277,8 @@ private:
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
             {
-                if (!isAtInterface(element, scv))
-                    continue;
+                // if (!isAtInterface(element, scv))
+                //     continue;
 
                 const auto dofIdxGlobal = scv.dofIndex();
                 const auto dofPosition = scv.dofPosition();
@@ -399,68 +400,59 @@ public:
     , sol_{sol}
     {}
 
-    bool update()
-    {
-        return ParentType::update();
-    }
+    // bool update()
+    // {
+    //     return ParentType::update();
+    // }
 
     auto totalFlux(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
     {
-        using std::isnan;
         Scalar flux(0.0);
 
-        auto elemVolVars = localView(gridVariables_.curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, sol_);
-
-        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
-        const auto& scvf = fvGeometry.scvf(0);
-        flux += flux_(element, fvGeometry, elemVolVars, scv);
+        flux += flux_(element, fvGeometry, scv);
 
         return flux;
     }
 
-    auto totalFlux(const Element& element, const FVElementGeometry& fvGeometry, const Drop& droplet) const
-    {
-        Scalar flux(0.0);
-
-        const auto dofIdxGlobal = droplet.dofIndex();
-        auto&& scv = fvGeometry.scv(droplet.LocalDofIdx());
-
-        return totalFlux(element, fvGeometry, scv);
-    }
 
 private:
 
-        //! Evaluates the flux coming from the pore to the droplet
+    //! Evaluates the flux coming from the pore to the droplet  //TODO
     Scalar flux_(const Element& element,
                     const FVElementGeometry& fvGeometry,
-                    const ElementVolumeVariables& elemVolVars,
                     const SubControlVolume& scv) const
     {
         Scalar flux = 0.0;
         auto phaseIdx = dropletPhaseIdx();
+
         const auto dofIdxGlobal = scv.dofIndex();
-        auto elemFluxVarsCache = localView(this->couplingManager().gridVariables(dropIdx).gridFluxVarsCache());
+
+        auto elemVolVars = localView(gridVariables_.curGridVolVars());
+        elemVolVars.bind(element, fvGeometry, sol_);
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
 
-        ElementBoundaryTypes<dropIdx> elemBcTypes;
-        elemBcTypes.update(this->couplingManager().problem(dropIdx), element, fvGeometry);
-        FluxVariables<dropIdx> fluxVars;
+        ElementBoundaryTypes elemBcTypes;
+        elemBcTypes.update(this->problem(), element, fvGeometry);
+        FluxVariables fluxVars;
         // The flux must be substracted:
         // On an inlet boundary, the flux part of the local residual will be positive, since all fluxes will leave the SCV towards to interior domain.
         // For the domain itself, however, the sign has to be negative, since mass is entering the system.
-        const auto& scvf = fvGeometry.scvf(0);
-        fluxVars.init(this->couplingManager().problem(dropIdx), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary())
+                continue;
+            fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
-        if(dofIdxGlobal==insideScv.dofIndex())
-            flux -= (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
-        else if(dofIdxGlobal==outsideScv.dofIndex())
-            flux += (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+            if(dofIdxGlobal==insideScv.dofIndex()) // TODO
+                flux -= (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+            else if(dofIdxGlobal==outsideScv.dofIndex())
+                flux += (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+        }
 
         return flux;
 
