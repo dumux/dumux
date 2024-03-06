@@ -231,9 +231,7 @@ public:
 
     BloodFlowSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        referencePressure_ = getParam<Scalar>("Problem.ReferencePressure", 0.0);
-    }
+    {}
 
     template<class ElementSolution>
     Scalar extrusionFactor(const Element& element,
@@ -267,10 +265,6 @@ public:
     const std::vector<Scalar>& getViscosityFactors() const
     { return viscosityFactor_; }
 
-    //! Get the boundary pressure at each vertex
-    const std::vector<Scalar>& getBoundaryPressure() const
-    { return boundaryPressure_; }
-
     //! Read params from dgf
     template<class GridData>
     void readGridParams(const GridData& gridData)
@@ -299,21 +293,6 @@ public:
             permeability_[eIdx] = radius_[eIdx]*radius_[eIdx]
                 /(2.0*viscosityFactor_[eIdx]*(2.0+gamma));
         }
-
-        boundaryPressure_.resize(gg.gridView().size(dim));
-        for (const auto& vertex : vertices(gg.gridView()))
-        {
-            const auto vIdx = gg.vertexMapper().index(vertex);
-            boundaryPressure_[vIdx] = gridData.parameters(vertex)[0] - referencePressure_;
-        }
-
-        for (const auto& element : elements(gg.gridView()))
-            for (const auto& intersection : intersections(gg.gridView(), element))
-                if (!intersection.boundary())
-                    boundaryPressure_[
-                        gg.vertexMapper().subIndex(element, intersection.indexInInside(), dim)
-                    ] = 1e6;
-
     }
 
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
@@ -345,9 +324,6 @@ private:
     std::vector<Scalar> radius_;
     std::vector<Scalar> permeability_;
     std::vector<Scalar> viscosityFactor_;
-    std::vector<Scalar> boundaryPressure_;
-
-    Scalar referencePressure_;
 };
 
 } // end namespace Dumux
@@ -446,7 +422,6 @@ std::vector<double> computeBloodVolumeFluxes(const GridGeometry& gridGeometry, c
         );
         vtkWriter->addField(problem->spatialParams().getRadii(), "radius");
         vtkWriter->addField(problem->spatialParams().getViscosityFactors(), "vessel tortuosity factor");
-        vtkWriter->addField(problem->spatialParams().getBoundaryPressure(), "pBC");
         vtkWriter->write(0.0, Dune::VTK::OutputType::appendedraw);
     }
 
