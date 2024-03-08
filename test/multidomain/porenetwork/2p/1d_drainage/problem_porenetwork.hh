@@ -14,6 +14,7 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/math.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -216,10 +217,10 @@ public:
                 }
                 else
                 {
-                    using std::min;
+                    using std::min; using std::abs;
                     auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
                     auto dp = min(elemVolVars[0].capillaryPressure(),
-                                  elemVolVars[1].capillaryPressure()) / pcSnapoff;
+                                  elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
                     // Use a regularized heavyside function for theta
                     auto theta = regHeaviside_(dp, invaded);
 
