@@ -93,15 +93,9 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto dt = getParam<double>("TimeLoop.DtInitial");
     const auto checkPoints = getParam<std::vector<double>>("TimeLoop.CheckPoints");
     const auto tEnd = getParam<double>("TimeLoop.TEnd");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
