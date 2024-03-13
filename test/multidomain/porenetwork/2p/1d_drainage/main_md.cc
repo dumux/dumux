@@ -154,12 +154,24 @@ int main(int argc, char** argv)
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver newtonSolver(assembler, linearSolver, couplingManager);
 
+    // The following update is needed because the constraint is formualted for each time step and needs to be updated afterwards
+    // One could also change the constraint by accounting for previous time step data
+    auto updateState = [&]()
+    {
+        const auto& state = pnmGridVariables->gridFluxVarsCache().invasionState();
+        for (const auto& element : elements(pnmGridGeometry->gridView()))
+        {
+            const auto eIdx = constraintGridGeometry->elementMapper().index(element);
+            x[constraintId][eIdx] = (double) state.invaded(element);
+        }
+    };
+
     // time loop
     timeLoop->start(); do
     {
         if(pnmGridVariables->gridFluxVarsCache().invasionState().hasChanged())
         {
-            constraintProblem->updateState(x[constraintId]);
+            updateState();
             constraintGridVariables->update(x[constraintId]);
         }
 

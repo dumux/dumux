@@ -75,17 +75,6 @@ public:
         return (abs(1-theta)*max(0.0,dp) - abs(theta)*min(0.0,dp));
     }
 
-    // This needed because the constraint is formualted for each time step and needs to be updated afterwards
-    // One could also change the constraint by accounting for previous time step data
-    template<class Sol>
-    void updateState(Sol& sol)
-    {
-        static const Scalar invasionThetaThreshold = getParamFromGroup<Scalar>(this->paramGroup(), "InvasionState.InvasionThetaThreshold", 1e-10);
-        for(auto& v : sol)
-            if(v[0] >= invasionThetaThreshold)
-                v[0] = 1;
-    }
-
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
 
