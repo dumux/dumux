@@ -68,11 +68,24 @@ public:
         const auto& elemVolVarsPNM = couplingManager_->elemVolVars(element);
         using std::max; using std::min; using std::abs;
 
-        // ToDo: also implement snapoff
-        auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
-                      elemVolVarsPNM[1].capillaryPressure()) / couplingManager_->pcEntry(element) - 1.0;
+        const auto& state = couplingManager_->gridVariables(CouplingManager::poreNetworkIndex).gridFluxVarsCache().invasionState();
+        const auto prevInvaded = state.invaded(element);
 
-        return (abs(1-theta)*max(0.0,dp) - abs(theta)*min(0.0,dp));
+        if(!prevInvaded)
+        {
+            auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
+                          elemVolVarsPNM[1].capillaryPressure()) / couplingManager_->pcEntry(element) - 1.0;
+
+            return (abs(1-theta)*max(0.0,dp) - abs(theta)*min(0.0,dp));
+        }
+        else
+        {
+            auto pcSnapoff = couplingManager_->pcSnapoff(element);
+            auto dp = min(elemVolVarsPNM[0].capillaryPressure(),
+                          elemVolVarsPNM[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+
+            return (abs(1-theta)*max(0.0,dp) - abs(theta)*min(0.0,dp));
+        }
     }
 
 private:
