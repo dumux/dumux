@@ -32,7 +32,12 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
+#include <dumux/multidomain/porenetwork/constraint/model.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/porenetwork/constraint/couplingmanager.hh>
+
 #include "problem_porenetwork.hh"
+#include "problem_constraint.hh"
 #include "spatialparams_porenetwork.hh"
 
 //////////
@@ -101,11 +106,44 @@ public:
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 1>; };
 
+
+// Create new type tags
+namespace TTag {
+struct ConstraintProblem { using InheritsFrom = std::tuple<PNMConstraintModel, CCTpfaModel>; };
+} // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ConstraintProblem> { using type = PNMConstraintProblem<TypeTag>; };
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ConstraintProblem> { using type = Dune::FoamGrid<1, 1>; };
+
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DrainageProblem>
 {
+private:
+    using Traits = MultiDomainTraits<TTag::DrainageProblem, TTag::ConstraintProblem>;
 public:
+#if THROATCONSTRAINT
+    using type = PNMConstraintCouplingManager< Traits >;
+#else
     using type = void;
+#endif
+};
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::ConstraintProblem>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::DrainageProblem, TTag::ConstraintProblem>;
+public:
+#if THROATCONSTRAINT
+    using type = PNMConstraintCouplingManager< Traits >;
+#else
+    using type = void;
+#endif
 };
 
 } //end namespace Dumux::Properties
