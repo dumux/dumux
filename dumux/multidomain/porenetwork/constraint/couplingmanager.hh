@@ -182,6 +182,15 @@ public:
     }
 
     /*!
+     * \brief Returns the snapoff pressure at a given throat, i.e. element
+     */
+    Scalar pcSnapoff(const Element<constraintIndex>& element) const
+    {
+        assert(couplingContext_.size() == 1);
+        return this->problem(poreNetworkIndex).spatialParams().pcSnapoff(element, couplingContext_[0].elemVolVars);
+    }
+
+    /*!
      * \brief Returns the element volume variables for an element
      */
     const ElementVolumeVariables<poreNetworkIndex>& elemVolVars(const Element<constraintIndex>& element) const
