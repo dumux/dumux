@@ -3,7 +3,7 @@ DtInitial = 1e-5 # [s]
 TEnd = 0.01 # [s]
 
 [Grid]
-File = ./grids/1dGrid.dgf
+File = ./grids/1d_grid.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
@@ -12,7 +12,7 @@ Name = test_pnm2pnc_ni
 VtpOutputFrequency = 10 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred
 CapillaryPressure = 5000
 EnableGravity = false
-UseFixedPressureAndSaturationBoundary = true
+UseFixedPressureAndSaturationBoundary = false
 InletTemperature = 288.15
 OutletTemperature = 283.15
 Source = 1e-5

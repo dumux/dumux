@@ -79,6 +79,9 @@ public:
             componentFlux[compIdx] = density * (insideMoleFraction - outsideMoleFraction) / throatLength * diffCoeff * phaseCrossSectionalArea;
             componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
+
+        std::cout<<"   componentFlux[0]  "<<componentFlux[0]<<std::endl;
+        std::cout<<"   componentFlux[1]  "<<componentFlux[1]<<std::endl;
         return componentFlux;
     }
 private:
