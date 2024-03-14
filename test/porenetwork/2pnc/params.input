@@ -1,9 +1,9 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+TEnd = 1e2 # [s]
 
 [Grid]
-File = ./grids/1dGrid.dgf
+File = ./grids/1d_grid.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
@@ -11,9 +11,6 @@ ThroatCrossSectionShape = Square
 Name = test_pnm_2pnc
 VtpOutputFrequency = 10 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
 EnableGravity = false
-CapillaryPressure = 5000
-UseFixedPressureAndSaturationBoundary = false
-Source = 1e-5
 
 [Vtk]
 AddVelocity = 1

@@ -45,10 +45,7 @@ public:
     : ParentType(gridGeometry, spatialParams)
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
-        useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
-        pc_ = getParam<Scalar>("Problem.CapillaryPressure");
-        source_ = getParam<Scalar>("Problem.Source");
-        inletPressure_ = getParam<Scalar>("Problem.InletPressure", 1e5);
+        inletPressure_ = getParam<Scalar>("Problem.InletPressure", 1.1e5);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1e5);
 #if !ISOTHERMAL
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
@@ -84,14 +81,12 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        // Use Dirichlet BCs for both inlet and outlet
+        if (isInletPore_(scv) || isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-        else if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            bcTypes.setAllNeumann();
-        else if (isOutletPore_(scv))
-            bcTypes.setAllDirichlet();
-
+#if !ISOTHERMAL
+        bcTypes.setDirichlet(Indices::temperatureIdx);
+#endif
         return bcTypes;
     }
 
@@ -101,30 +96,26 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = 1e5;
-        values[Indices::switchIdx] = 0.0;
 
-        // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
-        // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        if (isInletPore_(scv))
         {
             values.setState(Indices::bothPhases);
             values[Indices::pressureIdx] = inletPressure_;
-            values[Indices::switchIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
-#if !ISOTHERMAL
-            values[Indices::temperatureIdx] = inletTemperature_;
-#endif
+            values[Indices::switchIdx] = 1.0;
         }
-        else if (isOutletPore_(scv))
+        else
         {
-            values.setState(Indices::firstPhaseOnly);
+            values.setState(Indices::bothPhases);
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::switchIdx] = 0.0;
-#if !ISOTHERMAL
-            values[Indices::temperatureIdx] = outletTemperature_;
-#endif
         }
 
+#if !ISOTHERMAL
+        if (isInletPore_(scv))
+            values[Indices::temperatureIdx] = inletTemperature_;
+        else
+            values[Indices::temperatureIdx] = outletTemperature_;
+#endif
         return values;
     }
 
@@ -142,19 +133,6 @@ public:
                             const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-
-        // for isothermal case, we fix injection rate of non-wetting phase at inlet
-        // for non-isothermal case, we fix injection of air enthalpy at inlet
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-        {
-            values[Indices::conti0EqIdx + 1] = source_/scv.volume();
-#if !ISOTHERMAL
-            const auto pressure = elemVolVars[scv].pressure(1);
-            const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, pressure);
-            values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
-#endif
-        }
-
         return values;
     }
     // \}
@@ -163,24 +141,25 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
-        values[Indices::pressureIdx] = outletPressure_;
 
-        // get global index of pore
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-        {
-            values.setState(Indices::firstPhaseOnly);
-            values[Indices::switchIdx] = 0.0;
-        }
-        else
-        {
-            values.setState(Indices::firstPhaseOnly);
-            values[Indices::switchIdx] = 0.0;
-        }
+        values.setState(Indices::bothPhases);
+        values[Indices::pressureIdx] = outletPressure_;
+        values[Indices::switchIdx] = 0.0;
 
 #if !ISOTHERMAL
         values[Indices::temperatureIdx] = outletTemperature_;
 #endif
+
+        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
+        if (isInletPore_(dofIdxGlobal))
+        {
+            values.setState(Indices::bothPhases);
+            values[Indices::pressureIdx] = inletPressure_;
+            values[Indices::switchIdx] = 1.0;
+#if !ISOTHERMAL
+            values[Indices::temperatureIdx] = inletTemperature_;
+#endif
+        }
 
         return values;
     }
@@ -209,9 +188,6 @@ private:
     }
 
     int vtpOutputFrequency_;
-    bool useFixedPressureAndSaturationBoundary_;
-    Scalar pc_;
-    Scalar source_;
     Scalar inletPressure_;
     Scalar outletPressure_;
 #if !ISOTHERMAL
