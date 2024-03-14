@@ -13,6 +13,7 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 The term is added as a source term in the problem using the new helper function `addBrinkmanTerm`.
 The function uses new spatial parameter interface implemented in the new `BrinkmanSpatialParams` class (`dumux/freeflow/spatialparams.hh`). The helper function can deal with isotropic and anisotropic permeabilites.
 - __Facet-Coupling__: Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
+- __Pore network__: Added a model and a test case for two-phase compositional fluid flow.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
