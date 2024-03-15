@@ -39,8 +39,8 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
-#include "problem.hh"
-#include "spatialparams.hh"
+#include "problem_network.hh"
+#include "spatialparams_network.hh"
 
 //////////
 // Specify the properties
