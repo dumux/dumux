@@ -25,6 +25,7 @@
 #define DUMUX_PNM2P_PROPERTIES_HH
 
 #include <dune/foamgrid/foamgrid.hh>
+#include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
@@ -39,7 +40,12 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
+#include <dumux/multidomain/porenetwork/constraint/model.hh>
+#include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/porenetwork/constraint/couplingmanager.hh>
+
 #include "problem_network.hh"
+#include "problem_constraint.hh"
 #include "spatialparams_network.hh"
 
 //////////
@@ -66,6 +72,23 @@ struct FluidSystem<TypeTag, TTag::DrainageProblem>
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
+//! The grid flux variables cache vector class
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::DrainageProblem>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+    using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem,
+                                                            FluxVariablesCache,
+                                                            Dumux::PoreNetwork::TwoPInvasionState<Problem, Dumux::PoreNetwork::StateSwitchMethod::theta>>;
+public:
+    using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
+};
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::DrainageProblem>
@@ -82,14 +105,45 @@ public:
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
 
+// Create new type tags
+namespace TTag {
+struct ConstraintProblem { using InheritsFrom = std::tuple<PNMConstraintModel, CCTpfaModel>; };
+} // end namespace TTag
+
+// Set the problem property
+template<class TypeTag>
+struct Problem<TypeTag, TTag::ConstraintProblem> { using type = PNMConstraintProblem<TypeTag>; };
+
+// Set the grid type
+template<class TypeTag>
+struct Grid<TypeTag, TTag::ConstraintProblem> { using type = Dune::FoamGrid<1, 3>; };
+
 // set the coupling manager type
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DrainageProblem>
 {
+private:
+    using Traits = MultiDomainTraits<TTag::DrainageProblem, TTag::ConstraintProblem>;
 public:
+#if THROATCONSTRAINT
+    using type = PNMConstraintCouplingManager< Traits >;
+#else
     using type = void;
+#endif
 };
 
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::ConstraintProblem>
+{
+private:
+    using Traits = MultiDomainTraits<TTag::DrainageProblem, TTag::ConstraintProblem>;
+public:
+#if THROATCONSTRAINT
+    using type = PNMConstraintCouplingManager< Traits >;
+#else
+    using type = void;
+#endif
+};
 
 } //end namespace Dumux::Properties
 

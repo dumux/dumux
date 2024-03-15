@@ -7,4 +7,14 @@ dumux_add_test(NAME validate_preferential_path
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                TIMEOUT "1000"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p  params.input")
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path  params.input")
+
+dumux_add_test(NAME validate_preferential_path_md
+               SOURCES main_md.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1
+               COMPILE_DEFINITIONS THROATCONSTRAINT=1
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               TIMEOUT "1000"
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md  params_md.input")
