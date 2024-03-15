@@ -1,0 +1,53 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 1200 # [s]
+CheckPoints =
+
+[Grid]
+File = capillary_multiple_tubes.dgf # generated with script
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+
+[Problem]
+VtpOutputFrequency = -1
+EnableGravity = false
+UseFixedPressureAndSaturationBoundary = false
+DistributeByVolume = false
+CapillaryPressure = 7000
+NonWettingMassFlux = 5e-10
+RegularizationDelta = 1e-4
+
+[Pnm.Problem]
+Name = validate_preferential_path_md
+
+[Constraint.Problem]
+Name = validate_preferential_path_md_constraint
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+MaxSteps = 20
+TargetSteps = 10
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+BlockNonwettingPhaseAtThroatLabel = 3
+#InvasionThetaThreshold = 1e-11
+
+[SpatialParams]
+RegularizationLowSw = 0.001
+RegularizationHighSw = 0.9
+HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 0.01
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3

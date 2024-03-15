@@ -63,6 +63,9 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
+    static constexpr bool useThetaRegularization = InvasionState::stateMethod == Dumux::PoreNetwork::StateSwitchMethod::theta;
 
 public:
     template<class SpatialParams>
@@ -80,7 +83,6 @@ public:
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
         logfile_.open("logfile_" + this->name() + ".txt");
         regDelta_ = getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8);
-        useThetaRegularization_ = getParamFromGroup<bool>(paramGroup, "Problem.UseThetaRegularization", true);
     }
 
     /*!
@@ -217,20 +219,35 @@ public:
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
-            if(useThetaRegularization_)
+            const auto invaded = fluxVarsCache.invaded();
+            if constexpr (useThetaRegularization)
             {
-                using std::max;
-                auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
-                auto dp = max(elemVolVars[0].capillaryPressure(),
-                                elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
-                // Use a regularized heavyside function (1+sign) for theta
-                auto theta = regHeaviside_(dp);
+                if(!invaded)
+                {
+                    using std::max;
+                    auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
+                    auto dp = max(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+                    // Use a regularized heavyside function for theta
+                    auto theta = regHeaviside_(dp,invaded);
 
-                return std::min(std::max(0.0,theta),1.0);
+                    return std::min(std::max(0.0,theta),1.0);
+                }
+                else
+                {
+                    using std::min; using std::abs;
+                    auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+                    auto dp = min(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+                    // Use a regularized heavyside function for theta
+                    auto theta = regHeaviside_(dp, invaded);
+
+                    return std::min(std::max(0.0,theta),1.0);
+                }
             }
             else
             {
-                return fluxVarsCache.invaded() ? 1.0 : 0.0;
+                return invaded ? 1.0 : 0.0;
             }
         }
         else
@@ -292,7 +309,6 @@ private:
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
     bool distributeByVolume_;
-    bool useThetaRegularization_;
     Scalar pc_;
     Scalar regDelta_;
     Scalar nonWettingMassFlux_;
