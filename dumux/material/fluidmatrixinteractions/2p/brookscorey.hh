@@ -497,14 +497,14 @@ private:
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief A default configuration for using the VanGenuchten material law
+ * \brief A default configuration for using the Brooks Corey material law
  */
 template<typename Scalar = double>
 using BrooksCoreyDefault = TwoPMaterialLaw<Scalar, BrooksCorey, BrooksCoreyRegularization<Scalar>, TwoPEffToAbsDefaultPolicy>;
 
 /*!
  * \ingroup Fluidmatrixinteractions
- * \brief A default configuration without regularization for using the VanGenuchten material law
+ * \brief A default configuration without regularization for using the Brooks Corey material law
  */
 template<typename Scalar = double>
 using BrooksCoreyNoReg = TwoPMaterialLaw<Scalar, BrooksCorey, NoRegularization, TwoPEffToAbsDefaultPolicy>;
