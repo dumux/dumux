@@ -153,6 +153,8 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
+        //dropSolver->update();
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 

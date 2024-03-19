@@ -82,10 +82,7 @@ public:
             const Scalar initialHeight,
             const Scalar initialContactRadius,
             const Scalar initialContactAngle,
-            const GlobalPosition initialCenter,
-            const std::vector<GridIndexType> dropletElems,
-            const std::vector<GridIndexType> dropletDoFs,
-            const std::vector<GlobalPosition> dropletDoFPositions)
+            const GlobalPosition initialCenter)
     : volume_(initialVolume)
     , initialVolume_(initialVolume)
     , radius_(initialRadius)
@@ -96,9 +93,6 @@ public:
     , contactAngle_(initialContactAngle)
     , initialContactAngle_(initialContactAngle)
     , initialCenter_(initialCenter)
-    , dropletElems_(dropletElems)
-    , dropletDoFs_(dropletDoFs)
-    , dropletDoFPositions_(dropletDoFPositions)
     {}
 
 
@@ -111,6 +105,15 @@ public:
         radius_ = radius;
         height_ = height;
         contactAngle_ = contactAngle;
+    }
+
+    void couplingData(const std::vector<GridIndexType> dropletElems,
+                 const std::vector<GridIndexType> dropletDoFs,
+                 const std::vector<GlobalPosition> dropletDoFPositions)
+    {
+        dropletElems_ = dropletElems;
+        dropletDoFs_ = dropletDoFs;
+        dropletDoFPositions_ = dropletDoFPositions;
     }
 
     Scalar radius() const

@@ -61,9 +61,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (onUpperBoundary_(globalPos))
+        if (onUpperBoundary(globalPos))
             values.setAllDirichlet();
-        else if (onLowerBoundary_(globalPos))
+        else if (onLowerBoundary(globalPos))
             values.setAllNeumann();
         else
             values.setAllDirichlet();
@@ -96,10 +96,22 @@ public:
         values[waterPressureIdx] = 1e5;
         values[airSaturationIdx] = 1.0;
 
-        if (onUpperBoundary_(globalPos))
+        if (onUpperBoundary(globalPos))
         {
-            values[waterPressureIdx] = 1e5;
-            values[airSaturationIdx] = 0.0;
+            if (dropletSolver_->isCoupledWithDroplet(globalPos))
+            {
+
+                const auto& droplet = dropletSolver_->droplet();
+                values[waterPressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+                values[airSaturationIdx] = 0.0;
+            }
+            else
+            {
+                values[waterPressureIdx] = 1e5;
+                values[airSaturationIdx] = 1.0;
+            }
+
+
         }
 
         return values;
@@ -152,31 +164,30 @@ public:
     {
         Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
         Scalar lambda = (this->gridGeometry().bBoxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+        return onUpperBoundary(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
 
-private:
-    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+   bool onLeftBoundary(const GlobalPosition &globalPos) const
     {
         return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
     }
 
-    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    bool onRightBoundary(const GlobalPosition &globalPos) const
     {
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    bool onLowerBoundary(const GlobalPosition &globalPos) const
     {
         return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_;
     }
 
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    bool onUpperBoundary(const GlobalPosition &globalPos) const
     {
         return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
-
+private:
     static constexpr Scalar eps_ = 1e-6;
 
     std::shared_ptr<DropSolver> dropletSolver_;

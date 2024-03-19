@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <unordered_map>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
@@ -84,7 +85,7 @@ public:
 
         interfaceElementIndex();
 
-        // initDroplets_(); // TODO
+        initDroplets_(); // TODO
     }
 
     void interfaceElementIndex()
@@ -97,9 +98,11 @@ public:
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
             {
-
                 if (isAtInterface(element, scv)) //Todo
+               {
+                    interfaceScvs_.push_back(scv);
                     interfaceElementsIndex_.push_back(scv.elementIndex());
+               }
             }
         }
     }
@@ -114,6 +117,15 @@ public:
 
 
     Scalar Pc(const Element& element, const Drop& droplet) const
+    {
+        const auto radius = droplet.radius();
+        if (radius == 0.0)
+            return 0.0;
+
+        return 2 * surfaceTension_ / radius;
+    }
+
+    Scalar Pc(const Drop& droplet) const
     {
         const auto radius = droplet.radius();
         if (radius == 0.0)
@@ -190,11 +202,31 @@ public:
         return false;
     }
 
+    bool isCoupledWithDroplet(const GlobalPosition &globalPos) const
+    {
+        for (const Drop& droplet : droplets_)
+        {
+            const auto& dropletCenter = droplet.center();
+            const auto& dropletContactRadius = droplet.contactRadius();
+
+            const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(globalPos, dropletCenter);
+            if (distance < dropletContactRadius)
+            {
+                droplet_ = droplet;
+                return true;
+            }
+
+            // const auto& dropletDoFs = droplet.dofIndices()
+            // if (std::any_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
+            //     return droplet;
+        }
+        return false;
+    }
+
     bool isAtInterface(const Element& element, const SubControlVolume& scv) const //Todo
     {
         auto position = scv.dofPosition();
-
-        return problem().onInlet(position);
+        return problem().onUpperBoundary(position);
     }
 
 private:
@@ -241,41 +273,48 @@ private:
     void initDroplets_()
     {
 
-        Scalar initialContactAngle = 0.0; //Todo
-        Scalar initialVolume = 0.0; //Todo
-        GlobalPosition initialCenter(0.0); //Todo
+        Scalar initialContactAngle = 40.0 * M_PI/180.0; //Todo
+        Scalar initialVolume = 1e-3; //Todo
+        GlobalPosition initialCenter{1.0, 2.0}; //Todo
         Scalar initialContactRadius = computeContactRadius_(initialVolume, initialContactAngle);
-
         Scalar initialRadius = initialContactRadius;
         initialRadius /= sin(M_PI - initialContactAngle);
 
         Scalar initialHeight = initialRadius - initialRadius * cos(initialContactAngle);
 
+        Drop droplet(initialVolume,
+                     initialRadius,
+                     initialHeight,
+                     initialContactRadius,
+                     initialContactAngle,
+                     initialCenter);
 
-        const auto& gridGeometry = problem_.gridGeometry();
-        auto fvGeometry = localView(gridGeometry);
+
+        // const auto& gridGeometry = problem_.gridGeometry();
+        // auto fvGeometry = localView(gridGeometry);
 
 
         std::vector<GridIndex> dropletDoFs;
         std::vector<GlobalPosition> dropletDoFPositions;
         std::vector<GridIndex> dropletElems;
-        for (const auto& elementIdx : interfaceElementsIndex_)
-        {
-            const auto& element = gridGeometry.element(elementIdx);
-            fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
+        // for (const auto& elementIdx : interfaceElementsIndex_)
+        // {
+        //     const auto& element = gridGeometry.element(elementIdx);
+        //     fvGeometry.bindElement(element);
+            for (const auto& scv : interfaceScvs_)
             {
                 // if (!isAtInterface(element, scv))
                 //     continue;
 
                 const auto dofIdxGlobal = scv.dofIndex();
                 const auto dofPosition = scv.dofPosition();
+                const auto elementIdx = scv.elementIndex();
                 const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, initialCenter);
 
                 if (distance > initialContactRadius)
                     continue;
 
-                if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), dofIdxGlobal))
+                if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
                 {
                     dropletDoFs.push_back(dofIdxGlobal);
                     dropletElems.push_back(elementIdx);
@@ -283,19 +322,15 @@ private:
                 }
 
             }
-        }
+        // }
+        for (const auto dropdof : dropletDoFs)
+        std::cout<<"   dropletDoFs  "<<dropdof<<std::endl;
 
-        Drop droplet(initialVolume,
-                     initialRadius,
-                     initialHeight,
-                     initialContactRadius,
-                     initialContactAngle,
-                     initialCenter,
-                     dropletElems,
-                     dropletDoFs,
-                     dropletDoFPositions);
+        droplet.couplingData( dropletElems,
+                              dropletDoFs,
+                              dropletDoFPositions);
 
-        droplets_.push_back(droplet);
+       droplets_.push_back(droplet);
     }
 
      static Scalar computeDropVolume_(Scalar prevDropVolume, Scalar dt, Scalar flux)
@@ -351,6 +386,7 @@ private:
     std::shared_ptr<TimeLoopDrop> timeLoop_;
     const SolutionVector& sol_;
     std::vector<int> interfaceElementsIndex_;
+    std::vector<SubControlVolume> interfaceScvs_;
 };
 
 
