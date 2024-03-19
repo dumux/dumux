@@ -7,7 +7,7 @@
 // ## The file `main.cc`
 // [[content]]
 //
-// This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
+// This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method.
 // ### Included header files
 // [[details]] includes
 // [[codeblock]]
