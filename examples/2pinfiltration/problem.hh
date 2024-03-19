@@ -90,7 +90,7 @@ public:
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        // To determine the density of water for a given state, we build a fluid state with the given conditions:
+        // To determine the density of water for a given state, we buil a fluid state with the given conditions:
         PrimaryVariables values;
         GetPropType<TypeTag, Properties::FluidState> fluidState;
         fluidState.setTemperature(this->spatialParams().temperatureAtPos({}));
@@ -154,7 +154,7 @@ public:
     // Point sources are added by pushing them into the vector `pointSources`.
     // The `PointSource` constructor takes two arguments.
     // The first argument is a coordinate array containing the position in space,
-    // the second argument is an array of source value for each equation (in units of $`kg/s`$).
+    // the second argument is an array of source value for each equation (in units of $`\mathrm{kg}/\mathrm{s}`$).
     // Recall that the first equation is the water phase mass balance
     // and the second equation is the DNAPL phase mass balance.
     void addPointSources(std::vector<PointSource>& pointSources) const
