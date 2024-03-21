@@ -78,8 +78,10 @@ public:
     , timeLoop_(timeLoop)
     , sol_(sol)
     {
-        initialContactAngle_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactAngle", 90); //shoudl be converted to radian
+        initialContactAngle_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactAngle", 89); //shoudl be converted to radian
         initialContactAngle_ = M_PI*initialContactAngle_/180;
+
+        initialVolume_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialVolume", 1e-3);
         surfaceTension_ = getParamFromGroup<Scalar>(problem_.paramGroup(),"SpatialParameters.SurfaceTension", 0.0725);
 
 
@@ -109,7 +111,7 @@ public:
 
     void update()
     {
-        for (const auto& droplet : droplets_)
+        for (auto& droplet : droplets_)
         {
             updateDropGeometry_(droplet);
         }
@@ -206,6 +208,9 @@ public:
     {
         for (const Drop& droplet : droplets_)
         {
+            const auto& dropletVolume = droplet.volume();
+            if (dropletVolume < 0.0)
+                continue;
             const auto& dropletCenter = droplet.center();
             const auto& dropletContactRadius = droplet.contactRadius();
 
@@ -256,11 +261,13 @@ private:
         }
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
-
+std::cout<<" ------------------------- "<<volume<<std::endl;
         contactAngle = computeContactAngle_(volume, contactRadius);
 
+        std::cout<<" -----------contactAngle-------------- "<<contactAngle * 180 /M_PI<<std::endl;
+
         radius = contactRadius;
-        radius /= sin(M_PI - contactAngle);
+        radius /= sin(contactAngle);
 
         height = radius - radius * cos(contactAngle);
 
@@ -272,21 +279,20 @@ private:
 
     void initDroplets_()
     {
-
-        Scalar initialContactAngle = 40.0 * M_PI/180.0; //Todo
-        Scalar initialVolume = 1e-3; //Todo
         GlobalPosition initialCenter{1.0, 2.0}; //Todo
-        Scalar initialContactRadius = computeContactRadius_(initialVolume, initialContactAngle);
+        Scalar initialContactRadius = computeContactRadius_(initialVolume_, initialContactAngle_);
+
+        std::cout<<"-----------initialContactRadius------------"<<initialContactRadius<<std::endl;
         Scalar initialRadius = initialContactRadius;
-        initialRadius /= sin(M_PI - initialContactAngle);
+        initialRadius /= sin(initialContactAngle_);
 
-        Scalar initialHeight = initialRadius - initialRadius * cos(initialContactAngle);
+        Scalar initialHeight = initialRadius - initialRadius * cos(initialContactAngle_);
 
-        Drop droplet(initialVolume,
+        Drop droplet(initialVolume_,
                      initialRadius,
                      initialHeight,
                      initialContactRadius,
-                     initialContactAngle,
+                     initialContactAngle_,
                      initialCenter);
 
 
@@ -354,7 +360,7 @@ private:
             return 0.0;
 
             Scalar lowerLimit = 0;
-            Scalar upperLimit = M_PI / 2;
+            Scalar upperLimit = M_PI / 2 + 1;
 
         Scalar Theta = findScalarRootBrent(lowerLimit, upperLimit, evalContactAngle, 1e-6, 500);
         return Theta;
@@ -380,6 +386,7 @@ private:
     mutable Drop droplet_;
 
     Scalar initialContactAngle_;
+    Scalar initialVolume_;
     Scalar surfaceTension_;
 
     const Problem& problem_;

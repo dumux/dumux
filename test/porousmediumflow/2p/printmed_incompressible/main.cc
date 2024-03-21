@@ -89,16 +89,6 @@ int main(int argc, char** argv)
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
-    if (restartTime > 0)
-    {
-        using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-        using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-        const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>(), *gridGeometry);
-    }
-    else
         problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -153,7 +143,7 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        //dropSolver->update();
+        dropSolver->update();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

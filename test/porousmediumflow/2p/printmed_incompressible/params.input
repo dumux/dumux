@@ -1,11 +1,16 @@
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 3000 # [s]
+MaxTimeStepSize = 1
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 2 2
-Cells = 48 32
+Cells = 100 100
+
+[Drop]
+InitialContactAngle = 90
+InitialVolume = 1e-1
 
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
@@ -24,6 +29,10 @@ VanGenuchtenN = 4.7
 [Problem]
 Name = 2p
 EnableGravity = true
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true
 
 [Newton]
 EnablePartialReassembly = true
