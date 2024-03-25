@@ -60,15 +60,23 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryTypes values;
-        if (onUpperBoundary(globalPos))
-            values.setAllDirichlet();
-        else if (onLowerBoundary(globalPos))
-            values.setAllNeumann();
-        else
-            values.setAllDirichlet();
+        // BoundaryTypes values;
+        // if (onUpperBoundary(globalPos))
+        //     values.setAllDirichlet();
+        // else if (onLowerBoundary(globalPos))
+        //     values.setAllNeumann();
+        // else
+        //     values.setAllDirichlet();
 
-        return values;
+
+        BoundaryTypes bcTypes;
+        if (onLeftBoundary(globalPos) || onRightBoundary(globalPos))
+            bcTypes.setAllDirichlet();
+        else
+            bcTypes.setAllNeumann();
+        return bcTypes;
+
+        // return values;
     }
 
     /*!
@@ -94,7 +102,7 @@ public:
 
         // hydrostatic pressure scaled by alpha
         values[waterPressureIdx] = 1e5;
-        values[airSaturationIdx] = 1.0;
+        values[airSaturationIdx] = 0.0;
 
         if (onUpperBoundary(globalPos))
         {
@@ -103,15 +111,13 @@ public:
 
                 const auto& droplet = dropletSolver_->droplet();
                 values[waterPressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
-                values[airSaturationIdx] = 0.0;
+                values[airSaturationIdx] = 1.0;
             }
             else
             {
                 values[waterPressureIdx] = 1e5;
-                values[airSaturationIdx] = 1.0;
+                values[airSaturationIdx] = 0.0;
             }
-
-
         }
 
         return values;
@@ -128,9 +134,13 @@ public:
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        // if (onInlet_(globalPos))
-        //     values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
-
+        if (onUpperBoundary(globalPos))
+        {
+            // if (dropletSolver_->isCoupledWithDroplet(globalPos))
+            // {
+                values[Indices::conti0EqIdx] = -0.04; // kg/(m*s)
+            // }
+        }
         return values;
     }
 
@@ -142,18 +152,26 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        // GetPropType<TypeTag, Properties::FluidState> fluidState;
-        // fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-        // fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
-        // fluidState.setPressure(airPhaseIdx, /*pressure=*/1e5);
-
-        // Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
-
-        // Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
-
-        // hydrostatic pressure
         values[waterPressureIdx] = 1e5;
-        values[airSaturationIdx] = 1.0;
+        values[airSaturationIdx] = 0.0;
+
+
+        // if (onUpperBoundary(globalPos))
+        // {
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+
+        //         const auto& droplet = dropletSolver_->droplet();
+        //         values[waterPressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+        //         values[airSaturationIdx] = 1.0;
+        //     }
+        //     else
+        //     {
+        //         values[waterPressureIdx] = 1e5;
+        //         values[airSaturationIdx] = 0.0;
+        //     }
+        // }
+
         return values;
     }
 

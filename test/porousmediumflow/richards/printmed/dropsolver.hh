@@ -366,8 +366,8 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
         if (dropVolume < 1e-30)
             return 0.0;
 
-            Scalar lowerLimit = 0;
-            Scalar upperLimit = M_PI / 2 + 1;
+        Scalar lowerLimit = 0;
+        Scalar upperLimit = M_PI / 2 + 1;
 
         Scalar Theta = findScalarRootBrent(lowerLimit, upperLimit, evalContactAngle, 1e-6, 500);
         return Theta;

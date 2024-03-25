@@ -6,49 +6,55 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
- * \brief Test for the two-phase porousmedium flow model.
+ * \ingroup RichardsTests
+ * \brief Test for the Richards model.
  */
+
 #include <config.h>
 
 #include <iostream>
-#include <sstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
-#include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
-
-#include <dumux/linear/istlsolvers.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
 
+#include <dumux/linear/istlsolverfactorybackend.hh>
+
+#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
-#include "dropsolver.hh"
 #include "properties.hh"
+#include "dropsolver.hh"
 
 #ifndef DIFFMETHOD
 #define DIFFMETHOD DiffMethod::numeric
 #endif
 
+////////////////////////
+// the main function
+////////////////////////
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::TYPETAG;
+    using TypeTag = Properties::TTag::RichardsLensBox;
 
-    // maybe initialize MPI and/or multithreading backend
+    // initialize Dumux (parallel helpers)
+    // always call this before any other code
     Dumux::initialize(argc, argv);
+
+    // get an instance of the MPI helper
     const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
@@ -77,16 +83,6 @@ int main(int argc, char** argv)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
-
-
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
@@ -98,9 +94,18 @@ int main(int argc, char** argv)
     problem->applyInitialSolution(x);
     auto xOld = x;
 
-    // maybe update the interface parameters
-    if (ENABLEINTERFACESOLVER)
-        problem->spatialParams().updateMaterialInterfaces(x);
+    // // maybe update the interface parameters
+    // if (ENABLEINTERFACESOLVER)
+    //     problem->spatialParams().updateMaterialInterfaces(x);
+
+    // get some time loop parameters
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
 
     // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -130,11 +135,13 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = ILURestartedGMResIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
+
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
@@ -158,15 +165,15 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by the Newton solver
+        // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
-    // output some Newton statistics
-    nonLinearSolver.report();
-
     timeLoop->finalize(leafGridView.comm());
+
+    // write Newton report
+    nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
@@ -180,4 +187,4 @@ int main(int argc, char** argv)
     }
 
     return 0;
-} // end main
+}

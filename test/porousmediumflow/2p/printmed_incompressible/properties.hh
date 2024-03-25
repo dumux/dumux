@@ -88,6 +88,10 @@ struct EnableGridGeometryCache<TypeTag, TTag::TwoPIncompressible> { static const
 template<class TypeTag>
 struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static constexpr bool value = ENABLEINTERFACESOLVER; };
 
+template<class TypeTag>
+struct Formulation<TypeTag, TTag::TwoPIncompressible>
+{ static constexpr auto value = TwoPFormulation::p0s1; };
+
 } // end namespace Dumux::Properties
 
 #endif

@@ -1,16 +1,18 @@
 [TimeLoop]
 DtInitial = 1 # [s]
-TEnd = 3000 # [s]
-MaxTimeStepSize = 1
+TEnd = 15000 # [s]
+MaxTimeStepSize = 100
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 2 2
-Cells = 100 100
+UpperRight = 5e-3 5e-3
+Cells = 50 50
 
 [Drop]
 InitialContactAngle = 90
 InitialVolume = 1e-1
+InitialContactRadius = 1e-3
+InitialCenter = 2.5e-3 5e-3
 
 [SpatialParams]
 LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
@@ -23,8 +25,9 @@ VanGenuchtenN = 7.3
 
 [SpatialParams.Outer]
 Swr = 0.05
-VanGenuchtenAlpha = 0.0037
+VanGenuchtenAlpha = 1e-3
 VanGenuchtenN = 4.7
+Permeability = 1e-18
 
 [Problem]
 Name = 2p
