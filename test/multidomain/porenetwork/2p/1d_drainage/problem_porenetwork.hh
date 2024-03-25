@@ -127,7 +127,7 @@ public:
         if (isOutletPore_(scv))
         {
             values[pwIdx] = 1.0e5;
-            values[snIdx] = 0.0;
+            values[snIdx] = 0.8;
         }
         else if (isInletPore_(scv))
         {
