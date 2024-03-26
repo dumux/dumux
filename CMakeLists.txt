@@ -59,6 +59,10 @@ endif()
 # enforce C++-17
 target_compile_features(dumux PUBLIC cxx_std_17)
 
+if (DUMUX_HAVE_GRIDFORMAT)
+    dune_register_package_flags(LIBRARIES gridformat::gridformat)
+endif()
+
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)

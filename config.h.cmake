@@ -92,6 +92,9 @@
 /* Set DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS if available */
 #cmakedefine DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS 1
 
+/* Set DUMUX_HAVE_GRIDFORMAT if available */
+#cmakedefine DUMUX_HAVE_GRIDFORMAT 1
+
 /* end dumux
    Everything below here will be overwritten
 */
