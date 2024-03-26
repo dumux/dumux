@@ -239,7 +239,7 @@ int main(int argc, char** argv)
     const auto& bBoxTree = gridGeometry.boundingBoxTree();
     // copy data from the subdomains to full domain data vectors
     std::vector<int> processRank(gridView.size(0), 0); // sequential simulation
-    std::vector<double> pressure(gridView.size(0));
+    std::vector<Scalar> pressure(gridView.size(0));
 
     for (const auto& element : elements(gridView0))
     {
