@@ -55,6 +55,8 @@ the same assembler. The old assemblers have been deleted (see below).
 
 - __Time loop__: Only insert duplicate check points once.
 
+- __Python bindings__: Python bindings are now disabled by default if DuMux is built without custom configuration (building without any *.opts file / passing variables to CMake). The default options in `cmake.opts` enable the Python bindings and thus ensure that all libraries are built when `cmake.opts` is passed to dunecontrol. (This applies also to upstream modules if `cmake.opts` is used to configure them.) If you follow the default installation instructions they are enabled). This update tries to avoid a problem that occurs when mixing static and shared libraries and tries to make it harder for users to get the wrong setup.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 - __Assembler/Newton/PDE/Solver__: We now distinguish between `SolutionVector` and `ResidualType`/`ResidualVector`. The former
