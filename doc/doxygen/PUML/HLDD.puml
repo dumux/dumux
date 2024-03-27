@@ -3,46 +3,9 @@ scale 0.8
 top to bottom direction
 hide empty members
 set separator none
-allowmixing
-
-package "Dune" {
-    package "dune-istl"{
-class "ISTL solvers"
-class "ISTL matrices"
-class "ISTL vectors"
-}
-    package dune-grid{
-class YaspGrid
-}
-}
-
-package "DuMux" {
-    package "Grid" {
-       interface GridManager{}
-       interface GridView{}
-       class GridGeometry{}
-    }
-    package "Variables" {
-       class GridVariables{}
-       class PrimaryVariables{}
-       class SolutionVector{}
-    }
-    package "Assembly" [[./../html/group___assembly.html]] {
-        class Assembler{}
-        class LocalAssembler{}
-        class LocalResidual{}
-        
-    }
-    package "Solving" {
-        class PDESolver [[./../html/group___nonlinear.html]] {}
-        interface LinearSolver [[./../html/group___linear.html]] {}
-        class TimeLoop{}
-    }
-    package "Output" {
-        class IOField{}
-        class VTKOutputModule
-    }
-}
+skinparam lineType ortho
+skinparam nodesep 30
+skinparam ranksep 30
 
 package "User Scenario" {
         class Problem{}
@@ -75,32 +38,104 @@ package "User Scenario" {
         package "TTag" {
             struct MyTypeTag{}
         }
-        struct "Problem<MyTypeTag>"{}
-        struct "SpatialParams<MyTypeTag>"{}
+    }
+}
+package "Dune" {
+    package "dune-istl" {
+class "ISTL solvers"
+class "ISTL matrices"
+class "ISTL vectors"
+}
+    package "dune-grid" {
+class "YaspGrid"
+}
+package "dune-common" {
+class "ParameterTree" {}
+}
+}
+package "DuMux" {
+    package "Grid" {
+       interface GridManager{}
+       interface GridView{}
+       class GridGeometry{}
+    }
+    package "Variables" {
+       class GridVariables{}
+       class PrimaryVariables{}
+       class SolutionVector{}
+    }
+    package "Assembly" [[./../html/group___assembly.html]] {
+        class Assembler{}
+        class LocalAssembler{}
+        class LocalResidual{}
+
+    }
+    package "Solving" {
+        class PDESolver [[./../html/group___nonlinear.html]] {}
+        interface LinearSolver [[./../html/group___linear.html]] {}
+        class TimeLoop{}
+    }
+    package "Output" {
+        class IOField{}
+        class VTKOutputModule
     }
 }
 
-
-LinearSolver <-- "dune-istl"
-GridManager <-- "dune-grid"
-GridManager o-- GridView
-GridView --o GridGeometry
-GridGeometry --o Problem
-GridGeometry --o SpatialParams
-GridGeometry --o GridVariables
-GridGeometry --o Assembler
-LinearSolver --> PDESolver
-LocalResidual --o LocalAssembler
-LocalAssembler <-- Assembler: uses
-GridVariables --> VTKOutputModule
-PrimaryVariables --o SolutionVector
+"Dune" -[hidden]u------ "DuMux"
+"DuMux" -[hidden]u----"User Scenario"
+"DuMux" -[hidden]u----- "User Scenario"
+"dune-grid" -[hidden]r---- "dune-istl"
+"ISTL solvers" -[hidden]r---- "ISTL matrices"
+"ISTL matrices" -[hidden]r---- "ISTL vectors"
+"ISTL vectors" -[hidden]r---- "ParameterTree"
+"YaspGrid" -[hidden]r---- "ISTL matrices"
+"Output" -[hidden]r---- "Solving"
+"Solving" -[hidden]r---- "Assembly"
+"Assembly" -[hidden]r---- "Variables"
+"Assembly" -[hidden]r---- "Variables"
+"Variables" -[hidden]r---- "Grid"
+"Variables" -[hidden]d---- "ISTL vectors"
+LinearSolver <-d- "ISTL solvers"
+Assembler <-d- "ISTL matrices"
+LinearSolver <-d- "ISTL vectors"
+ "dune-grid" -u--> GridManager
+GridManager o-u- GridView
+GridView -u-o GridGeometry
+GridGeometry -u-o Problem
+GridGeometry -u-o SpatialParams
+GridGeometry -l-o GridVariables
+GridGeometry -l-o Assembler
+LinearSolver -d-> PDESolver
+LocalResidual -d-o LocalAssembler
+LocalAssembler <-d- Assembler: uses
+GridVariables -l-> VTKOutputModule
+PrimaryVariables -d-o SolutionVector
 IOField --> VTKOutputModule
 Assembler --> PDESolver
 PDESolver --> TimeLoop
 SolutionVector --> Assembler
 GridVariables --> Assembler
-SpatialParams --o Problem
-"Problem<MyTypeTag>" -- Problem
-"SpatialParams<MyTypeTag>" -- SpatialParams
-main -- Properties
+SpatialParams -r-o Problem
+main -l- Properties
+"Output" -[hidden]r- "Solving"
+"Solving" -[hidden]r- "Assembly"
+"Assembly" -[hidden]r- "Variables"
+"Variables" -[hidden]r- "Grid"
+Properties -[#red]- GridGeometry
+Properties -[#red]d- GridVariables
+Properties -[#red]r- PrimaryVariables
+Properties -[#red]- SolutionVector
+Properties -[#red]- Assembler
+Properties -[#red]- LocalAssembler
+Properties -[#red]- LocalResidual
+Properties -[#red]- PDESolver
+Properties -[#red]- TimeLoop
+Properties -[#red]- IOField
+Properties -[#red]- VTKOutputModule
+Properties -[#red]- SpatialParams
+Properties -[#red] Problem
+params -[hidden]d- "Output"
+
+
+
 @enduml
