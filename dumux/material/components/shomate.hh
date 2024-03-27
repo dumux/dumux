@@ -8,7 +8,26 @@
  * \file
  * \ingroup Components
  * \brief Apply Shomate equations for enthalpy and heat capacity.
+ *
+ * The Shomate equations were inroduced in
+ * "A METHOD FOR EVALUATING AND CORRELATING THERMODYNAMIC DATA" by C. Howard Shomate in 1963.
+ * They offer analytical equations for computing the heat capacity as well as enthalpy.
+ * Both equations use a set of component-specific parameters \f$A,B,C,D,E,F,G,H\f$.
+ * For the heat capacity \f$C_p^0\f$, one obtains
+ \f[
+ C_p^0 = A + Bt + Ct^2 + Dt^3 + E/t^2,
+ \f]
+ * while for the enthalpy with a reference state at \f$T=298.15\text{K}\f$, one uses
+ \f[
+ H^0-H_{298.15}^0 = At + \frac{Bt^2}{2} + \frac{Ct^3}{3} + \frac{Dt^4}{4} -\frac{E}{t} + F - H
+ \f]
+ *where:
+ * * \f$ C_p \f$ is the heat capacity in [J/(mol*K)],
+ * * \f$ H^0 \f$ represents the standard enthalpy in [kJ/mol],
+ * * \f$ t \f$ is the temperature in [K] divided by 1000.
+ *
  */
+
 #ifndef DUMUX_SHOMATE_HH
 #define DUMUX_SHOMATE_HH
 #include <vector>
