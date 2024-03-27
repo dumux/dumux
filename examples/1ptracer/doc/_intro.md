@@ -39,7 +39,7 @@ are prescribed on a small strip close to the bottom boundary.
 
 As mentioned above, two models are solved sequentially in this example. A single-phase
 model (`OneP`) is used to solve for the stationary velocity distribution of a fluid phase
-in the domain. The tracer transport is solved with the `Tracer` model, which solves an advection-diffusion
+in the domain. The tracer transport is solved with the `TracerTest` model, which solves an advection-diffusion
 equation for a tracer component, which is assumed not to affect the density and viscosity
 of the fluid phase.
 
@@ -61,7 +61,7 @@ Darcy's law is inserted into the mass balance equation:
 where $`\phi`$ is the porosity. The primary variable used in this model is the pressure $`p`$.
 
 ### Tracer Model
-The tracer model solves the mass conservation equation of a tracer component $`\kappa`$,
+The `TracerTest` solves the mass conservation equation of a tracer component $`\kappa`$,
 in which both advective and diffusive transport mechanisms are considered:
 
 ```math
@@ -85,7 +85,7 @@ In this example, all equations are discretized using cell-centered finite volume
 approximation as spatial discretization scheme. For details on the discretization schemes available in
 DuMuX, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 We use the [implicit Euler method](https://dumux.org/docs/doxygen/master/basic-numerics.html) as
-time discretization scheme for the tracer component balance equation solved in the _tracer model_.
+time discretization scheme for the tracer component balance equation solved in the `TracerTest`.
 
 # Implementation
 
