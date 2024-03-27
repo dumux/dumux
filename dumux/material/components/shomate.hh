@@ -10,7 +10,7 @@
  * \brief Apply Shomate equations for enthalpy and heat capacity.
  *
  * The Shomate equations were inroduced in
- * "A METHOD FOR EVALUATING AND CORRELATING THERMODYNAMIC DATA" by C. Howard Shomate in 1963.
+ * "A METHOD FOR EVALUATING AND CORRELATING THERMODYNAMIC DATA" by C. Howard Shomate in 1953.
  * They offer analytical equations for computing the heat capacity as well as enthalpy.
  * Both equations use a set of component-specific parameters \f$A,B,C,D,E,F,G,H\f$.
  * For the heat capacity \f$C_p^0\f$, one obtains
