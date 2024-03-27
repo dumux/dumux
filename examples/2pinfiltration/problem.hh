@@ -118,7 +118,7 @@ public:
     // #### Neumann boundaries
     // In our case, we need to specify mass fluxes for our two liquid phases.
     // Negative sign means influx and the unit of the boundary flux is $`[\mathrm{kg}/mathrm{(m^2 s)}]`$.
-    // On the inlet area, we set a DNAPL influx of $`0.04\ [\mathrm{kg}/mathrm{(m^2 s)}]`$. On all other
+    // On the inlet area, we set a DNAPL influx of $`0.04 \, [\mathrm{kg}/mathrm{(m^2 s)}]`$. On all other
     // Neumann boundaries, the boundary flux is zero.
     // [[codeblock]]
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
