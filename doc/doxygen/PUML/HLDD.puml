@@ -34,7 +34,7 @@ package "DuMux" {
         
     }
     package "Solving" {
-        class Solver [[./../html/group___nonlinear.html]] {}
+        class PDESolver [[./../html/group___nonlinear.html]] {}
         interface LinearSolver [[./../html/group___linear.html]] {}
         class TimeLoop{}
     }
@@ -45,38 +45,62 @@ package "DuMux" {
 }
 
 package "User Scenario" {
-    package "Dumux::Properties" {
+        class Problem{}
+        class SpatialParams{}
+        file params as "
+            params.input
+            ----
+            <code>
+            [TimeLoop]
+            DtInitial = 250 # [s]
+            ...
+            </code>
+        "
+        file main as "
+            main.cc
+            ----
+            <code>
+            int main(int argc, char** argv)
+            {
+                ...
+                using TypeTag = Properties::TTag::...;
+                ...
+                using Problem = GetPropType<TypeTag, Properties::Problem>;
+                auto problem = std::make_shared<Problem>(gridGeometry);
+                ...
+            }
+            </code>
+        "
+    package "Properties" {
         package "TTag" {
             struct MyTypeTag{}
         }
         struct "Problem<MyTypeTag>"{}
         struct "SpatialParams<MyTypeTag>"{}
     }
-        class Problem{}
-        class SpatialParams{}
-        artifact "params<U+002E>input" as params
 }
 
 
 LinearSolver <-- "dune-istl"
 GridManager <-- "dune-grid"
-GridManager --> GridView
+GridManager o-- GridView
 GridView --o GridGeometry
 GridGeometry --o Problem
 GridGeometry --o SpatialParams
 GridGeometry --o GridVariables
 GridGeometry --o Assembler
-LinearSolver --> Solver 
-LocalResidual --> LocalAssembler
-LocalAssembler --> Assembler
+LinearSolver --> PDESolver
+LocalResidual --o LocalAssembler
+LocalAssembler <-- Assembler: uses
 GridVariables --> VTKOutputModule
 PrimaryVariables --o SolutionVector
 IOField --> VTKOutputModule
-Assembler --> Solver
-Solver --> TimeLoop
+Assembler --> PDESolver
+PDESolver --> TimeLoop
 SolutionVector --> Assembler
 GridVariables --> Assembler
 SpatialParams --o Problem
-"Problem<MyTypeTag>" --> Problem
-"SpatialParams<MyTypeTag>" --> SpatialParams
+"Problem<MyTypeTag>" -- Problem
+"SpatialParams<MyTypeTag>" -- SpatialParams
+main -- Properties
 @enduml
