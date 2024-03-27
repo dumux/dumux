@@ -38,7 +38,7 @@
 //
 // ### Type tag definition
 //
-// First, a so-called type tag is created. Properties are traits specialized for this type tag (a simple `struct`).
+// First, a so-called `TypeTag`  is created. Properties are traits specialized for this type tag (a simple `struct`).
 // The properties of two other type tags are inherited by adding the alias `InheritsFrom`.
 // Here, properties from the shallow water model (`TTag::ShallowWater`) and the
 // cell-centered finite volume scheme with two-point-flux approximation (`TTag::CCTpfaModel`)
@@ -80,7 +80,7 @@ struct SpatialParams<TypeTag, TTag::RoughChannel>
 };
 // [[/codeblock]]
 
-// Finally, we enable caching for the grid geometry. When this feature
+// Finally, we enable caching for the `gridGeometry`. When this feature
 // is enabled, the entire finite-volume grid is precomputed and stored
 // instead of preparing element-local geometries on the fly when assembling
 // the linear system. This speeds up the simulation at the cost of a larger

@@ -36,12 +36,12 @@
 
 // The following class provides a convenient way of writing of dumux simulation results to VTK format.
 #include <dumux/io/vtkoutputmodule.hh>
-// The gridmanager constructs a grid from the information in the input or grid file.
-// Many different Dune grid implementations are supported, of which a list can be found
+// The `gridManager` constructs a grid from the information in the input or grid file.
+// Many different `dune-grid` implementations are supported, of which a list can be found
 // in `gridmanager.hh`.
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
-// We include the header file specifying the properties of this example
+// We include the header file specifying the properties of this example.
 #include "properties.hh"
 // [[/details]]
 //
@@ -63,8 +63,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
     // [[/codeblock]]
 
-    // We define a convenience alias for the type tag of the problem. The type
-    // tag contains all the properties that are needed to define the model and the problem
+    // We define a convenience alias for the type tag of the problem. The `TypeTag` (`TTag::RoughChannel`)
+    // contains all the properties that are needed to define the model and the problem
     // setup. Throughout the main file, we will obtain types defined for these type tag
     // using the property system, i.e. with `GetPropType`.
     using TypeTag = Properties::TTag::RoughChannel;
@@ -83,18 +83,18 @@ int main(int argc, char** argv) try
 
     // #### Step 2: Solving the shallow water problem
     // First, a finite volume grid geometry is constructed from the grid that was created above.
-    // This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
+    // This builds the sub-control volumes (`scv`) and sub-control volume faces (`scvf`) for each element
     // of the grid partition.
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
-    // We now instantiate the problem, in which we define the boundary and initial conditions.
+    // We now instantiate the `problem`, in which we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // We initialize the solution vector. The shallow water problem is transient,
-    // therefore the initial solution defined in the problem is applied to the
-    // solution vector. On the basis of this solution, we initialize then the grid variables.
+    // We initialize the solution vector `x`. The shallow water problem is transient,
+    // therefore the initial solution defined in the `problem` is applied to the
+    // solution vector. On the basis of this solution, we initialize then the `gridVariables`.
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
@@ -104,9 +104,9 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // Let us now instantiate the time loop. Therefore, we read in some time loop parameters from the input file.
+    // Let us now instantiate the `timeLoop`. Therefore, we read in some time loop parameters from the input file.
     // The parameter `tEnd` defines the duration of the simulation, `dt` the initial time step size and `maxDt` the maximal time step size.
-    // Moreover, we define the end of the simulation `tEnd` as check point in the time loop at which we will write the solution to vtk files.
+    // Moreover, we define the end of the simulation `tEnd` as check point in the time loop at which we will write the solution to VTK files.
     // [[codeblock]]
     using Scalar = GetPropType<TypeTag, Properties::Scalar>; // type for scalar values
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -133,9 +133,9 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // The following lines of code initialize the vtk output module, add the velocity output facility
+    // The following lines of code initialize the VTK output module, add the velocity output facility
     // and write out the initial solution. At each checkpoint, we will use the output module to write
-    // the solution of a time step into a corresponding vtk file.
+    // the solution of a time step into a corresponding VTK file.
     // [[codeblock]]
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,x, problem->name());
 
@@ -157,7 +157,7 @@ int main(int argc, char** argv) try
     // ##### The time loop
     // We start the time loop and solve a new time step as long as `tEnd` is not reached. In every time step,
     // the problem is assembled and solved, the solution is updated, and when a checkpoint is reached the solution
-    // is written to a new vtk file. In addition, statistics related to CPU time, the current simulation time
+    // is written to a new VTK file. In addition, statistics related to CPU time, the current simulation time
     // and the time step sizes used is printed to the terminal.
     // [[codeblock]]
     timeLoop->start(); do
@@ -172,7 +172,7 @@ int main(int argc, char** argv) try
         // We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
 
-        // We write vtk output, if we reached the check point (end of time loop)
+        // We write VTK output, if we reached the check point (end of time loop)
         if (timeLoop->isCheckPoint())
             vtkWriter.write(timeLoop->time());
 

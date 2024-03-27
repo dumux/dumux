@@ -70,7 +70,7 @@ public:
     }
 
     // This function handles the initialization of the friction law based on the settings
-    // specified in `params.input`.
+    // specified in the input file.
     void initFrictionLaw()
     {
       if (frictionLawType_ == "Manning")

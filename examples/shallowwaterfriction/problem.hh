@@ -70,7 +70,7 @@ public:
     RoughChannelProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        // We read the parameters from the params.input file.
+        // We read the parameters from the input file.
         constManningN_ = getParam<Scalar>("Problem.ManningN");
         bedSlope_ = getParam<Scalar>("Problem.BedSlope");
         discharge_ = getParam<Scalar>("Problem.Discharge");
