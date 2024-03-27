@@ -165,7 +165,7 @@ public:
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
     {
-        auto h = shomateParams.gasEnthalpy(temperature, pressure); // KJ/mol
+        auto h = shomateParams.enthalpy(temperature, pressure); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
