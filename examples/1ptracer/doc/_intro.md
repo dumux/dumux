@@ -83,7 +83,7 @@ The primary variable used in this model is the tracer mass fraction $`X^\kappa`$
 
 In this example, all equations are discretized using cell-centered finite volumes with two-point flux
 approximation as spatial discretization scheme (`CCTpfaModel`). For details on the discretization schemes available in
-DuMuX, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
+DuMu<sup>x</sup>, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 We use the [implicit Euler method](https://dumux.org/docs/doxygen/master/basic-numerics.html) as
 time discretization scheme for the tracer component balance equation solved in the `TracerTest`.
 
@@ -104,8 +104,8 @@ In the following, we take a closer look at the source files for this example:
     └── spatialparams_tracer.hh -> parameter distributions for the tracer transport simulation
 ```
 
-In order to define a simulation setup in DuMuX, you need to implement compile-time settings,
-where you specify the classes and compile-time options that DuMuX should use for the simulation.
+In order to define a simulation setup in DuMu<sup>x</sup>, you need to implement compile-time settings,
+where you specify the classes and compile-time options that DuMu<sup>x</sup> should use for the simulation.
 Moreover, a `Problem` class needs to be implemented, in which the initial and boundary conditions
 are specified. Finally, spatially-distributed values for the parameters required by the used model
 are implemented in a `SpatialParams` class.
