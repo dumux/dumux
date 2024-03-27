@@ -81,7 +81,7 @@ int main(int argc, char** argv) try
 
     // The instationary non-linear problem is run on this grid.
     //
-    // we compute on the leaf grid view
+    // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
     // [[/codeblock]]
 
@@ -140,11 +140,11 @@ int main(int argc, char** argv) try
         // In case of any adapted elements, the gridvariables and the pointsourcemap are updated.
         if (wasAdapted)
         {
-            // We overwrite the old solution with the new (resized & interpolated) one
+            // We overwrite the old solution with the new (resized & interpolated) one.
             xOld = x;
-            // We initialize the secondary variables to the new (and "new old") solution
+            // We initialize the secondary variables to the new (and "new old") solution.
             gridVariables->updateAfterGridAdaption(x);
-            // we update the point source map after adaption
+            // We update the point source map after adaption.
             problem->computePointSourceMap();
         }
     };
@@ -167,13 +167,13 @@ int main(int argc, char** argv) try
 
     // #### Solving the problem
 
-    // We get some time loop parameters from the input file params.input
+    // We get some time loop parameters from the input file `params.input`
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // and initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
+    // and initialize the vtk-output. Each model has a predefined model specific output with relevant parameters for that model.
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
@@ -185,11 +185,11 @@ int main(int argc, char** argv) try
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // and set the assembler with the time loop because we have an instationary problem
+    // and set the assembler with the time loop because we have an instationary problem.
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    // We set the linear solver and the non-linear solver
+    // We set the linear solver and the non-linear solver.
     using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
@@ -202,7 +202,7 @@ int main(int argc, char** argv) try
     // [[codeblock]]
     timeLoop->start(); do
     {
-        // We only want to refine/coarsen after first time step is finished, not before.
+        // We only want to refine/coarsen after the first time step is finished, not before.
         // The initial refinement was already done before the start of the time loop.
         // This means we only refine when the time is greater than 0. Note that we now also
         // have to update the assembler, since the sizes of the residual vector and jacobian matrix change.
@@ -223,20 +223,20 @@ int main(int argc, char** argv) try
         // We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
 
-        // We write vtk output for each time step
+        // We write vtk output for each time step.
         vtkWriter.write(timeLoop->time());
 
-        // We report statistics of this time step
+        // We report statistics of this time step.
         timeLoop->reportTimeStep();
 
-        // We set a new dt as suggested by the newton solver for the next time step
+        // We set a new dt as suggested by the newton solver for the next time step.
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
     // [[/codeblock]]
 
     // The following piece of code prints a final status report of the time loop
-    //  before the program is terminated and we print he dumux end message
+    //  before the program is terminated and we print he dumux end message.
     // [[codeblock]]
     timeLoop->finalize(leafGridView.comm());
 
