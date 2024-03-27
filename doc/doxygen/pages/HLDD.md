@@ -13,20 +13,21 @@ In the following, a very brief overview over the major concepts and components o
 
 ### Dune
 
-#### dune-istl
-
-##### ISTL solvers
-
-
-##### ISTL matrices
-
-
-##### ISTL vectors 
-
-
 #### dune-grid
 
 ##### YaspGrid
+The YaspGrid class is a structured, n-dimensional, parallel tensor product grid. It provides a distributed structured cube mesh and is designed to implement the DUNE grid interface for structured grids.
+
+#### dune-istl
+
+##### ISTL vectors 
+ISTL vector classes are designed to represent mathematical vector spaces. They support a recursive block structure, which is used to efficiently implement block preconditioners for hp-finite elements.
+
+##### ISTL matrices
+ISTL matrices classes are designed to represent linear maps between vector spaces. They also support a recursive block structure, which allows for efficient representation and computation.
+
+##### ISTL solvers
+ISTL solvers are designed to implement iterative solvers for linear systems in a generic manner. These solvers are subclasses of the abstract base class InverseOperator, which represents the inverse of an operator.
 
 
 ### DuMux
