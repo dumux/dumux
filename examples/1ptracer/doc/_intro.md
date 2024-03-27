@@ -82,7 +82,7 @@ The primary variable used in this model is the tracer mass fraction $`X^\kappa`$
 ### Discretization
 
 In this example, all equations are discretized using cell-centered finite volumes with two-point flux
-approximation as spatial discretization scheme. For details on the discretization schemes available in
+approximation as spatial discretization scheme (`CCTpfaModel`). For details on the discretization schemes available in
 DuMuX, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 We use the [implicit Euler method](https://dumux.org/docs/doxygen/master/basic-numerics.html) as
 time discretization scheme for the tracer component balance equation solved in the `TracerTest`.
