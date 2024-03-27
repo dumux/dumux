@@ -20,6 +20,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/shomate.hh>
 
 namespace Dumux::Components {
 
@@ -36,8 +37,10 @@ class SimpleH2O
 , public Components::Gas<Scalar, SimpleH2O<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 public:
+    static const ShomateMethod liquidPhaseShomateParams;
+    static const ShomateMethod gasPhaseShomateParams;
     /*!
      * \brief A human readable name for the water.
      */
@@ -121,8 +124,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
-        return gasHeatCapacity(temperature, pressure)*(temperature - tRef) + vaporizationEnthalpy();
+        return gasPhaseShomateParams.enthalpy(temperature, pressure);
     }
 
     /*!
@@ -134,9 +136,7 @@ public:
     static const Scalar liquidEnthalpy(Scalar temperature,
                                        Scalar pressure)
     {
-        static const Scalar tRef = getParam<Scalar>("SimpleH2O.ReferenceTemperature", 293.15);
-        return liquidHeatCapacity(temperature, pressure)*(temperature - tRef)
-                + pressure/liquidDensity(temperature, pressure);
+        return liquidPhaseShomateParams.enthalpy(temperature, pressure);
     }
 
    /*!
@@ -320,7 +320,7 @@ public:
      */
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        return 4180.0;
+        return liquidPhaseShomateParams.heatCapacity(temperature, pressure);
     }
 
     /*!
@@ -356,11 +356,27 @@ public:
      */
     static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        return 2.08e3;
+        return gasPhaseShomateParams.heatCapacity(temperature, pressure);
     }
 
 };
 
+template <class Scalar>
+const ShomateMethod<Scalar> SimpleH2O<Scalar>::liquidPhaseShomateParams{
+        /*temperature*/{298.0,500.0},
+        {
+            {-203.606, 1523.29, -3196.413, 2474.455, 3.855326, -256.5478, -488.7163, -285.8304}
+        }
+};
+
+template <class Scalar>
+const ShomateMethod<Scalar> SimpleH2O<Scalar>::gasPhaseShomateParams{
+        /*temperature*/{500.0,1700.0,6000.0},
+        {
+            {30.092, 6.832514, 6.793435, -2.53448, 0.082139, -250.881, 223.3967, -241.8264},
+            {41.96426, 8.622053, -1.49978, 0.098119, -11.15764, -272.1797, 219.7809, -241.8264}
+        }
+};
 template <class Scalar>
 struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
 
