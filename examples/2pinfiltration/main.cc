@@ -86,8 +86,8 @@ int main(int argc, char** argv) try
     // [[/codeblock]]
 
     // #### Set-up of the problem
-    // We build the finite volume geometry, which allows us to iterate over subcontrolvolumes (scv) and
-    // subcontrolvolume faces (scvf) embedded in the elements of the grid partition.
+    // We build the finite volume geometry, which allows us to iterate over subcontrolvolumes (`scv`) and
+    // subcontrolvolume faces (`scvf`) embedded in the elements of the grid partition.
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
