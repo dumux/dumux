@@ -44,7 +44,7 @@ equation for a tracer component, which is assumed not to affect the density and 
 of the fluid phase.
 
 ### 1p Model
-The single phase model uses Darcy's law as the equation for the momentum conservation:
+The `OneP` model uses Darcy's law as the equation for the momentum conservation:
 
 ```math
 \textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right),
