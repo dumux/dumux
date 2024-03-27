@@ -22,6 +22,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/shomate.hh>
 
 namespace Dumux::Components {
 
@@ -37,8 +38,11 @@ class SimpleCO2
 , public Components::Gas<Scalar, SimpleCO2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
+     static const ShomateMethod shomateParams; // Declaration
+
     /*!
      * \brief A human readable name for the CO2.
      */
@@ -87,15 +91,8 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        const Scalar t = temperature/1000;
-        constexpr double a = 24.99735;
-        constexpr double b = 55.18696;
-        constexpr double c = -33.69137;
-        constexpr double d = 7.948387;
-        constexpr double e = -0.136638;
-        constexpr double f = -403.6075;
-        constexpr double h = -393.5224;
-        return (a*t + b*t*t/2 + c*t*t*t/3 + d*t*t*t*t/4 - e/t +f -h)*1000/molarMass(); //conversion from kJ/mol to J/kg
+        auto h = shomateParams.enthalpy(temperature, pressure); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
@@ -244,16 +241,22 @@ public:
      */
     static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        const Scalar t = temperature/1000;
-        constexpr double a = 24.99735;
-        constexpr double b = 55.18696;
-        constexpr double c = -33.69137;
-        constexpr double d = 7.948387;
-        constexpr double e = -0.136638;
-        return (a + b*t + c*t*t + d*t*t*t + e/(t*t))/molarMass();
+        auto cp = shomateParams.heatCapacity(temperature, pressure); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
 };
+
+
+template <class Scalar>
+const ShomateMethod<Scalar> SimpleCO2<Scalar>::shomateParams{
+    /*temperature*/{298.0, 1200.0, 6000.0},
+    {
+            {24.99735, 55.18696, -33.69137, 7.948387, -0.136638, -403.6075, 228.2431, -393.5224},
+            {58.16639, 2.720074, -0.492289, 0.038844, -6.447293, -425.9186, 263.6125, -393.5224}
+    }
+};
+
 
 } // end namespace Dumux::Components
 
