@@ -99,7 +99,7 @@ public:
 // These are all mandatory `properties`. However, we also want to specialize the
 // `LocalResidual` property, as we want to use analytic differentation (see `main.cc`).
 // The default for the `LocalResidual` property, specialized by the type tag `OneP`,
-// is the implementation of the local residual for compressible single-phase flow.
+// is the implementation of the `LocalResidual` for compressible single-phase flow.
 // Therein, the functionality required for analytic derivatives is not implemented
 // as for compressible fluids this would require the derivatives of the fluid properties
 // (eg density and viscosity) with respect to pressure. For the case of an incompressible
