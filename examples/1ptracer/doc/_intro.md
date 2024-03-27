@@ -38,8 +38,8 @@ are prescribed on a small strip close to the bottom boundary.
 ## Model description
 
 As mentioned above, two models are solved sequentially in this example. A single-phase
-model (_1p model_) is used to solve for the stationary velocity distribution of a fluid phase
-in the domain. The tracer transport is solved with the _tracer model_, which solves an advection-diffusion
+model (`OneP`) is used to solve for the stationary velocity distribution of a fluid phase
+in the domain. The tracer transport is solved with the `Tracer` model, which solves an advection-diffusion
 equation for a tracer component, which is assumed not to affect the density and viscosity
 of the fluid phase.
 
@@ -68,7 +68,7 @@ in which both advective and diffusive transport mechanisms are considered:
 \phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0.
 ```
 
-Here, $`\textbf v`$ is a velocity field, which in this example is computed using the _1p model_ (see above). Moreover, $`X^\kappa`$ is the tracer mass fraction and $` D^\kappa_\text{pm} `$ is the
+Here, $`\textbf v`$ is a velocity field, which in this example is computed using the `OneP` model (see above). Moreover, $`X^\kappa`$ is the tracer mass fraction and $` D^\kappa_\text{pm} `$ is the
 effective diffusivity. In this example, the effective diffusivity is a function of the diffusion
 coefficient of the tracer component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous
 medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
