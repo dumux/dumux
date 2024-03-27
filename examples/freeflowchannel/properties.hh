@@ -10,7 +10,7 @@
 
 // ## Compile-time settings (`properties.hh`)
 //
-// In this file, the type tag used for this simulation is defined,
+// In this file, the type tag used for this simulation (`TTag::ChannelExample`) is defined,
 // for which we then specialize properties (compile time options) to the needs of the desired setup.
 //
 // [[content]]
@@ -19,16 +19,16 @@
 // [[details]] includes
 //
 // The `NavierStokes` type tag specializes most of the properties required for Navier-
-// Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
+// Stokes single-phase flow simulations in DuMu<sup>x</sup>. We will use this in the following to inherit the
 // respective properties and subsequently specialize those properties for our
-// type tag, which we want to modify or for which no meaningful default can be set.
+// `TypeTag`, which we want to modify or for which no meaningful default can be set.
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/staggered/problem.hh>
 
-// We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
+// We want to use `YaspGrid`, an implementation of the `dune-grid` interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 // In this example, we want to discretize the equations with the staggered-grid
-// scheme which is so far the only available option for free-flow models in DuMux:
+// scheme which is so far the only available option for `freeflow` models in DuMux:
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 // The fluid properties are specified in the following headers (we use a liquid with constant properties as the fluid phase):
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -51,7 +51,7 @@
 // `Problem.EnableInertiaTerms = false`. Have a look at the input file `params.input`
 // to see how this is done in this example.
 // [[codeblock]]
-// We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
+// We enter the namespace `Dumux::Properties` in order to import the entire `Dumux` namespace for general use:
 namespace Dumux::Properties {
 
 // declaration of the `ChannelExample` type tag for the single-phase flow problem
@@ -69,11 +69,11 @@ struct ChannelExample { using InheritsFrom = std::tuple<NavierStokes, StaggeredF
 template<class TypeTag>
 struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
 
-// This sets our problem class (see problem.hh) containing initial and boundary conditions.
+// This sets our `Problem` class (see problem.hh) containing initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
 
-// This sets the fluid system to be used. Here, we use a liquid with constant properties as fluid phase.
+// This sets the `FluidSystem` to be used. Here, we use a liquid with constant properties as fluid phase.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ChannelExample>
 {
@@ -86,7 +86,7 @@ struct FluidSystem<TypeTag, TTag::ChannelExample>
 // throughout the simulation.
 // [[details]] caching properties
 //
-// In Dumux, one has the option to activate/deactivate the grid-wide caching of
+// In DuMu<sup>x</sup>, one has the option to activate/deactivate the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
 // as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 // caching is disabled to ensure minimal memory requirements, however, in this example we

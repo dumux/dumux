@@ -39,7 +39,7 @@ have a look at the DuMu<sup>x</sup> [documentation](https://dumux.org/docs/doxyg
 ## Problem set-up
 This example considers stationary flow of a fluid between two parallel solid plates in two dimensions.
 Flow is enforced from left to right by prescribing an inflow velocity of $` v = 1~\frac{\text{m}}{\text{s}} `$
-on the left boundary, while a fixed pressure of $`p = 1.1 \text{bar}`$ and a zero velocity gradient
+on the left boundary, while a fixed pressure of $`p = 1.1 \, \text{bar}`$ and a zero velocity gradient
 in x-direction are prescribed on the right boundary. On the top and bottom boundaries, no-slip
 conditions are applied, which cause a parabolic velocity profile to develop along the channel.
 Take a look at Figure 1 for an illustration of the domain and the boundary conditions.
