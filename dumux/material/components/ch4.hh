@@ -36,7 +36,7 @@ class CH4
     using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
-     static const ShomateMethod shomateParams; // Declaration
+    static const ShomateMethod shomateParams; // Declaration
     /*!
      * \brief A human readable name for methane.
      */
