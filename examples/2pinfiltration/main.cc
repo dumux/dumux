@@ -25,13 +25,13 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/initialize.hh>
 
-//We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
+//We include the linear solver to be used to solve the linear system and the nonlinear Newton's method.
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-// Further, we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation) and a file that defines the different differentiation methods used to compute the derivatives of the residual
+// Further, we include the assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation) and a header file that defines the different differentiation methods used to compute the derivatives of the residual.
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
@@ -40,14 +40,14 @@
 // The gridmanager constructs a grid from the information in the input or grid file.
 #include <dumux/io/grid/gridmanager_alu.hh>
 
-//We include several files which are needed for the adaptive grid
+//We include several files which are needed for the adaptive grid.
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/adaptive/initializationindicator.hh>
 #include <dumux/porousmediumflow/2p/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
-// Finally, we include the properties which configure the simulation
+// Finally, we include the properties which configure the simulation.
 #include "properties.hh"
 // [[/details]]
 //
@@ -74,7 +74,7 @@ int main(int argc, char** argv) try
 
     // #### Create the grid
     // The `gridManager` creates a grid from our parameter choices in the input file (which could be a grid
-    // file or specified domain dimensions and number of cells, as done in this example).
+    // file or like in this example specified domain dimensions and number of cells).
     // [[codeblock]]
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -153,6 +153,7 @@ int main(int argc, char** argv) try
     // We do initial refinements around sources/BCs, for which we use the `GridAdaptInitializationIndicator` defined in `dumux/adaptive/initializationindicator.hh`.
     // Afterwards, depending on the initial conditions, another grid adaptation using our `indicator` above might be necessary, which uses
     // `Adaptive.RefineTolerance` and `Adaptive.CoarsenTolerance` for this step.
+    // [[codeblock]]
     GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, gridGeometry, gridVariables);
     const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
     for (std::size_t i = 0; i < maxLevel; ++i)
