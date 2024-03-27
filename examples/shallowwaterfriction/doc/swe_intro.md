@@ -3,7 +3,7 @@
 The shallow water flow setup, including the bottom friction,
 is implemented in the files `properties.hh`,
 `problem.hh` and `spatialparams.hh`. In the first of these files, a new
-type tag is declared for this problem. This allows the specialization
+`TypeTag` is declared for this problem. This allows the specialization
 of DuMu<sup>x</sup> `properties` for this type tag, which can be used to customize compile-time
 settings for the simulation. Two exemplary `properties`, that are mandatory to be
 specialized, are `Problem` and `SpatialParams`. With the first, one sets the
