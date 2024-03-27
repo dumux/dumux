@@ -26,7 +26,7 @@
 
 // ### The problem class
 //
-// We enter the problem class where all necessary boundary conditions and initial
+// We enter the `Problem` class where all necessary boundary conditions and initial
 // conditions are set for our simulation. As we are solving a problem related to
 // flow in porous media, we inherit from the base class `PorousMediumFlowProblem`.
 // [[codeblock]]
@@ -53,9 +53,9 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    // We create a convenience bool stating whether mole or mass fractions are used
+    // We create a convenience bool stating whether mole or mass fractions are used.
     static constexpr bool useMoles = getPropValue<TypeTag, Properties::UseMoles>();
-    // We create additional convenience integers to make dimWorld and numComponents available in the problem
+    // We create additional convenience integers to make dimWorld and numComponents available in the problem.
     static constexpr int dimWorld = GridView::dimensionworld;
     static const int numComponents = FluidSystem::numComponents;
 
@@ -64,7 +64,7 @@ public:
     TracerTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        // We print to the terminal whether mole or mass fractions are used
+        // We print to the terminal whether mole or mass fractions are used.
         if(useMoles)
             std::cout<<"problem uses mole fractions" << '\n';
         else

@@ -17,21 +17,21 @@
 //
 // ### Includes
 // [[details]] includes
-// As for the single-phase problem, atype tag is defined also for this simulation.
+// As for the single-phase problem, a `TypeTag` is defined also for this simulation.
 // Here, we inherit all properties of the `Tracer` type tag, a convenience type tag
 // that specializes most of the required properties for tracer transport flow simulations in DuMuX.
 #include <dumux/porousmediumflow/tracer/model.hh>
 
-// We use YaspGrid, an implementation of the dune grid interface for structured grids.
+// We use YaspGrid, an implementation of the `dune-grid` interface for structured grids.
 #include <dune/grid/yaspgrid.hh>
 // We want to discretize the equations with the cell centered finite volume scheme using
-// two-point-flux approximation.
+// two-point-flux approximation (`CCTpfaModel`).
 #include <dumux/discretization/cctpfa.hh>
-// This includes the base class for fluid systems. We will define a custom fluid
+// This includes the base class for `FluidSystems`. We will define a custom fluid
 // system that inherits from that class.
 #include <dumux/material/fluidsystems/base.hh>
 
-// We include the problem and spatial parameter headers used for this simulation.
+// We include `problem.hh` and `spatialparams_tracer.hh` headers used for this simulation.
 #include "problem_tracer.hh"
 #include "spatialparams_tracer.hh"
 // [[/details]]
@@ -39,12 +39,12 @@
 // ### Definition of a custom fluid system
 //
 // In the following, we define a new tracer fluid system that contains a single component
-// with a molar mass of 0.3 kg/mol. This fluid system derives from the base class for
+// with a molar mass of $`0.3 \, \mathrm{kg}/\mathrm{mol}`$. This fluid system derives from the base class for
 // fluid systems `FluidSystems::Base`.
 // [[codeblock]]
 namespace Dumux {
 
-// In the following, we create a new tracer fluid system and derive from the base fluid system.
+// In the following, we create a new `TracerFluidSystem` and derive from the base fluid system.
 template<class TypeTag>
 class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Properties::Scalar>,
                                                                TracerFluidSystem<TypeTag>>
@@ -58,11 +58,11 @@ class TracerFluidSystem : public FluidSystems::Base<GetPropType<TypeTag, Propert
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
 public:
-    // We specify that the fluid system only contains tracer components,
+    // We specify that the fluid system only contains tracer components.
     static constexpr bool isTracerFluidSystem()
     { return true; }
 
-    // We define the number of components of this fluid system (one single tracer component)
+    // We define the number of components of this fluid system (one single tracer component).
     static constexpr int numComponents = 1;
 
     // This interface is designed to define the names of the components of the fluid system.
@@ -81,7 +81,7 @@ public:
     { return 0.300; }
 
     // We set the value for the binary diffusion coefficient. This
-    // might depend on spatial parameters like pressure / temperature.
+    // might depend on spatially varying parameters like pressure / temperature.
     // But, in this case we neglect diffusion and return 0.0.
     static Scalar binaryDiffusionCoefficient(unsigned int compIdx,
                                              const Problem& problem,
@@ -93,7 +93,7 @@ public:
 //
 // ### Type tag definition
 //
-// We define a type tag for our simulation with the name `TracerTest` and inherit
+// We define a `TypeTag` for our simulation with the name `TracerTest` and inherit
 // the properties specialized for the type tags `Tracer` and `CCTpfaModel`.
 // This way, most of the properties required for tracer transport simulations using
 // the cell centered finite volume scheme with two-point-flux approximation are
@@ -118,11 +118,11 @@ struct TracerTest { using InheritsFrom = std::tuple<Tracer, CCTpfaModel>; };
 template<class TypeTag>
 struct Grid<TypeTag, TTag::TracerTest> { using type = Dune::YaspGrid<2>; };
 
-// This sets our problem class (see problem_tracer.hh) that specifies initial and boundary conditions.
+// This sets our problem class (see `problem_tracer.hh`) that specifies initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TracerTest> { using type = TracerTestProblem<TypeTag>; };
 
-// This defines the spatial parameters class (spatialparams_tracer.hh) for our tracer simulation.
+// This defines the spatial parameters class (`spatialparams_tracer.hh`) for our tracer simulation.
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TracerTest>
 {
@@ -133,7 +133,7 @@ public:
     using type = TracerTestSpatialParams<GridGeometry, Scalar>;
 };
 
-// We set the tracer fluid system that we have defined above.
+// We set the `TracerFluidSystem` that we have defined above.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::TracerTest> { using type = TracerFluidSystem<TypeTag>; };
 // [[/codeblock]]
