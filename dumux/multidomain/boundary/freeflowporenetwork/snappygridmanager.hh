@@ -553,7 +553,7 @@ private:
             const auto right = point.pos + point.radius;
 
             if (left < positions[directionIndex].back())
-                DUNE_THROW(Dune::RangeError, "Throat radii are too large, they intersect!");
+                DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect!");
 
             if (left > gridLowerLeft[directionIndex])
                 positions[directionIndex].push_back(left);
@@ -573,21 +573,23 @@ private:
                            const PointsOnLine& points)
     {
         // set the number of cells above the porous medium
-        const int cellsPerThroat = getParamFromGroup<int>(modelParamGroup_, "Grid.CellsPerThroat");
-        const int fixedCellsBetweenThroats = getParamFromGroup<int>(modelParamGroup_, "Grid.FixedCellsBetweenThroats", -1);
+        const int cellsPerPore = getParamFromGroup<int>(modelParamGroup_, "Grid.CellsPerPore");
+        const int fixedCellsBetweenPores = getParamFromGroup<int>(modelParamGroup_, "Grid.FixedCellsBetweenPores", -1);
 
-        // set the cells between the throats
+        // set the number of cells between the pore bodies
         for (int i = 0; i < points.size(); ++i)
         {
-            cells[directionIndex].push_back(cellsPerThroat);
+            cells[directionIndex].push_back(cellsPerPore);
             if (i < points.size() -1)
             {
-                if (fixedCellsBetweenThroats > 0)
-                    cells[directionIndex].push_back(fixedCellsBetweenThroats);
+                if (fixedCellsBetweenPores > 0)
+                    cells[directionIndex].push_back(fixedCellsBetweenPores);
                 else
                 {
-                    const auto spacingLeft = points[i].radius*2.0 / cellsPerThroat;
-                    const auto spacingRight = points[i+1].radius*2.0 / cellsPerThroat;
+                    // set number of cells such that the spacing of the cells between the left and right pore body
+                    // is the average of the spacings for the cells coupled to those two pore bodies
+                    const auto spacingLeft = points[i].radius*2.0 / cellsPerPore;
+                    const auto spacingRight = points[i+1].radius*2.0 / cellsPerPore;
                     const auto avgSpacing = (spacingLeft + spacingRight) / 2;
                     const auto lengthBetween = (points[i+1].pos - (points[i+1].radius))
                                              - (points[i].pos + (points[i].radius));
