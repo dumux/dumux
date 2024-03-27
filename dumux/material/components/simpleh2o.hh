@@ -117,6 +117,7 @@ public:
 
     /*!
      * \brief Specific enthalpy of water steam \f$\mathrm{[J/kg]}\f$.
+     * Shomate Equation is used for a temperature range of 500K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -129,6 +130,7 @@ public:
 
     /*!
      * \brief Specific enthalpy of liquid water \f$\mathrm{[J/kg]}\f$.
+     * Shomate Equation is used for a temperature range of 298K to 500K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -313,8 +315,7 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
-     * source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     * @ T= 281.15K (8°C) , p=0.1MPa)
+     * Shomate Equation is used for a temperature range of 298K to 500K.
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
@@ -349,8 +350,7 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)]}\f$.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
+     * Shomate Equation is used for a temperature range of 500K to 6000K.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -361,6 +361,11 @@ public:
 
 };
 
+/*!
+* \brief Shomate parameters for water published by NIST  \cite NIST
+* https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Units=SI&Mask=2&Type=JANAFL&Table=on#JANAFL
+* First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+*/
 template <class Scalar>
 const ShomateMethod<Scalar> SimpleH2O<Scalar>::liquidPhaseShomateParams{
         /*temperature*/{298.0,500.0},
@@ -369,6 +374,11 @@ const ShomateMethod<Scalar> SimpleH2O<Scalar>::liquidPhaseShomateParams{
         }
 };
 
+/*!
+* \brief Shomate parameters for water published by NIST  \cite NIST
+* https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+* First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+*/
 template <class Scalar>
 const ShomateMethod<Scalar> SimpleH2O<Scalar>::gasPhaseShomateParams{
         /*temperature*/{500.0,1700.0,6000.0},
@@ -377,6 +387,7 @@ const ShomateMethod<Scalar> SimpleH2O<Scalar>::gasPhaseShomateParams{
             {41.96426, 8.622053, -1.49978, 0.098119, -11.15764, -272.1797, 219.7809, -241.8264}
         }
 };
+
 template <class Scalar>
 struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
 

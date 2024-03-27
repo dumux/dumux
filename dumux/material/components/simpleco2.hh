@@ -82,9 +82,8 @@ public:
 
     /*!
      * \brief Specific enthalpy of CO2 \f$\mathrm{[J/kg]}\f$.
-     *        source: Shomate Equation for a temperature range of 298. to 1200K.
-     *        with components published by NIST  \cite NIST
-     *        https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=1&Type=JANAFG&Table=on
+     * Shomate Equation is used for a temperature range of 298K to 6000K.
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -233,9 +232,8 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of CO2 \f$\mathrm{[J/(kg*K)]}\f$.
-     *        source: Shomate Equation for a temperature range of 298. to 1200K.
-     *        with components published by NIST  \cite NIST
-     *        https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=1&Type=JANAFG&Table=on
+     * Shomate Equation is used for a temperature range of 298K to 6000K.
+     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
@@ -247,7 +245,11 @@ public:
 
 };
 
-
+/*!
+* \brief Shomate parameters for carbon dioxide published by NIST  \cite NIST
+* https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+* First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+*/
 template <class Scalar>
 const ShomateMethod<Scalar> SimpleCO2<Scalar>::shomateParams{
     /*temperature*/{298.0, 1200.0, 6000.0},

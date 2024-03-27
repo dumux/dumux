@@ -159,6 +159,7 @@ public:
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure nitrogen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -193,13 +194,8 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
-     *        nitrogen gas.
-     *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
-     *
-     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure nitrogen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      */
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
@@ -265,6 +261,11 @@ public:
     }
 };
 
+    /*!
+    * \brief Shomate parameters for nitrogen published by NIST  \cite NIST
+    * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+    * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+    */
 template <class Scalar>
 const ShomateMethod<Scalar> N2<Scalar>::shomateParams{
         /*temperature*/{100.0,500.0,2000.0,6000.0},
