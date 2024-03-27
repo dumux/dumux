@@ -73,7 +73,7 @@ public:
      * @param pressure in Pa
      * @return Scalar
      */
-    Scalar gasEnthalpy(const Scalar& temperature,
+    Scalar enthalpy(const Scalar& temperature,
                        const Scalar& pressure) const
     {
         auto correctCoeffs = paramsAtTemperature(temperature);
