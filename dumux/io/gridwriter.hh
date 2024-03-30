@@ -16,6 +16,7 @@
 
 #if DUMUX_HAVE_GRIDFORMAT
 
+#include <ranges>
 #include <type_traits>
 
 #include <gridformat/gridformat.hpp>
@@ -288,11 +289,11 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
             }));
         else if constexpr (GridFormat::mdrange_dimension<ResultType> == 1)
             setVolVarField_<GridFormat::MDRangeScalar<ResultType>>(name, volVarFields_.registerVectorField(name, [_f=std::move(f)] (const auto& vv) {
-                return _f(vv); // cast?
+                return VolVarFieldStorage::toStorageVector(_f(vv));
             }));
         else if constexpr (GridFormat::mdrange_dimension<ResultType> == 2)
             setVolVarField_<GridFormat::MDRangeScalar<ResultType>>(name, volVarFields_.registerTensorField(name, [_f=std::move(f)] (const auto& vv) {
-                return _f(vv);  // cast?
+                return VolVarFieldStorage::toStorageTensor(_f(vv));
             }));
         else
         {
@@ -395,6 +396,24 @@ class OutputModule<GridVariables, SolutionVector>::VolVarFieldStorage
 public:
     template<FieldType ft>
     struct FieldId { std::size_t index; };
+
+    template<std::ranges::range R>
+    static constexpr auto toStorageVector(R&& in)
+    {
+        Vector result;
+        std::ranges::copy(in, result.begin());
+        return result;
+    }
+
+    template<GridFormat::Concepts::MDRange<2> R>
+    static constexpr auto toStorageTensor(R&& in)
+    {
+        Tensor result;
+        std::ranges::for_each(in, [&, i=0] (const auto& row) mutable {
+            std::ranges::copy(row, result[i++]);
+        });
+        return result;
+    }
 
     template<FieldType ft>
     const auto& getValue(const FieldId<ft>& id, std::size_t idx) const
