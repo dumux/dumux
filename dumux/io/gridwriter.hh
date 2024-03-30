@@ -222,7 +222,7 @@ public:
         static_assert(
             false,
             "GridWriter only available when the GridFormat library is available. "
-            "Use `git submodule init && git submodule update` to pull it."
+            "Use `git submodule update --init` to pull it."
         );
     }
 };
