@@ -132,7 +132,6 @@ class GridWriter
     { writer_.set_meta_data("rank", gridView_.comm().rank()); }
 
     /*!
-     * \ingroup InputOutput
      * \brief Write the registered fields into the file with the given name.
      * \note This function throws if the writer was constructed for time series output.
      */
@@ -140,7 +139,6 @@ class GridWriter
     { return writer_.write(name); }
 
     /*!
-     * \ingroup InputOutput
      * \brief Write a step in a time series.
      * \note This function throws if the writer was not constructed for time series output.
      */
