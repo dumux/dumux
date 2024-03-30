@@ -36,7 +36,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/gridwriter.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 // function to evaluate the element stresses
@@ -132,15 +132,14 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module and output fields
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
-    VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
+    IO::OutputModule vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter);
 
     // also, add exact solution to the output
     SolutionVector xExact(gridGeometry->numDofs());
     for (const auto& v : vertices(leafGridView))
         xExact[ gridGeometry->vertexMapper().index(v) ] = problem->exactDisplacement(v.geometry().center());
-    vtkWriter.addField(xExact, "u_exact");
+    vtkWriter.addField([&] (const auto& e) { return xExact[gridGeometry->dofMapper().index(e)]; }, "u_exact");
 
     // Furthermore, write out element stress tensors
     static constexpr int dim = GridGeometry::GridView::dimension;
@@ -158,8 +157,14 @@ int main(int argc, char** argv)
 
     for (int dir = 0; dir < dim; ++dir)
     {
-        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir), Vtk::FieldType::element);
-        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir), Vtk::FieldType::element);
+        vtkWriter.addCellField(
+            [&, d=dir] (const auto& e) { return sigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
+            "sigma_" + std::to_string(dir)
+        );
+        vtkWriter.addCellField(
+            [&, d=dir] (const auto& e) { return effSigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
+            "effSigma_" + std::to_string(dir)
+        );
     }
 
     // use convenience function to compute stresses
