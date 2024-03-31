@@ -16,7 +16,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 #include <dune/grid/io/file/vtk.hh>
 
 #include "properties.hh"
@@ -69,13 +69,9 @@ void assembleElementStresses(SigmaStorage& sigmaStorage,
         const auto effSigma = StressType::effectiveStressTensor(problem, element, fvGeometry, elemVolVars, fluxVarsCache);
 
         // pass values into storage container
-        using GridGeometry = typename GridVariables::GridGeometry;
-        for (int dir = 0; dir < GridGeometry::GridView::dimension; ++dir)
-        {
-            const auto eIdx = gridGeometry.elementMapper().index(element);
-            sigmaStorage[dir][eIdx] = sigma[dir];
-            effSigmaStorage[dir][eIdx] = effSigma[dir];
-        }
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        sigmaStorage[eIdx] = sigma;
+        effSigmaStorage[eIdx] = effSigma;
     }
 }
 
@@ -145,24 +141,24 @@ int main(int argc, char** argv)
     static constexpr int dim = GridGeometry::GridView::dimension;
     static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ForceVector = Dune::FieldVector< Scalar, dimWorld >;
+    using Tensor = Dune::FieldMatrix< Scalar, dimWorld, dimWorld >;
 
     // containers to store sigma/effective sigma
-    std::array< std::vector<ForceVector>, dim > sigmaStorage;
-    std::array< std::vector<ForceVector>, dim > effSigmaStorage;
+    std::vector<Tensor> sigmaStorage;
+    std::vector<Tensor> effSigmaStorage;
 
     const auto numCells = gridGeometry->gridView().size(0);
-    std::for_each(sigmaStorage.begin(), sigmaStorage.end(), [numCells] (auto& sigma) { sigma.resize(numCells); });
-    std::for_each(effSigmaStorage.begin(), effSigmaStorage.end(), [numCells] (auto& effSigma) { effSigma.resize(numCells); });
+    sigmaStorage.resize(numCells);
+    effSigmaStorage.resize(numCells);
 
     for (int dir = 0; dir < dim; ++dir)
     {
         vtkWriter.addCellField(
-            [&, d=dir] (const auto& e) { return sigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
+            [&, d=dir] (const auto& e) { return sigmaStorage[gridGeometry->elementMapper().index(e)][d]; },
             "sigma_" + std::to_string(dir)
         );
         vtkWriter.addCellField(
-            [&, d=dir] (const auto& e) { return effSigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
+            [&, d=dir] (const auto& e) { return effSigmaStorage[gridGeometry->elementMapper().index(e)][d]; },
             "effSigma_" + std::to_string(dir)
         );
     }
