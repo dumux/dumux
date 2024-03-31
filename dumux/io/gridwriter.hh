@@ -335,8 +335,10 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
      */
     std::string write(const std::string& name)
     {
-        volVarFields_.updateFields(gridVariables_, solutionVector_);
-        return ParentType::write(name);
+        volVarFields_.updateFieldData(gridVariables_, solutionVector_);
+        auto filename = ParentType::write(name);
+        volVarFields_.clearFieldData();
+        return filename;
     }
 
     /*!
@@ -345,8 +347,10 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<std::floating_point T>
     std::string write(T time)
     {
-        volVarFields_.updateFields(gridVariables_, solutionVector_);
-        return ParentType::write(time);
+        volVarFields_.updateFieldData(gridVariables_, solutionVector_);
+        auto filename = ParentType::write(time);
+        volVarFields_.clearFieldData();
+        return filename;
      }
 
     //! clear all registered data
@@ -436,7 +440,7 @@ public:
     auto registerTensorField(std::string name, std::function<Tensor(const VolVar&)> f)
     { return register_<FieldType::tensor>(std::move(name), tensorFieldStorage_, std::move(f)); }
 
-    void updateFields(const GridVariables& gridVars, const SolutionVector& x)
+    void updateFieldData(const GridVariables& gridVars, const SolutionVector& x)
     {
         resizeFields_(gridVars.gridGeometry().numDofs());
         for (const auto& element : elements(gridVars.gridGeometry().gridView()))
@@ -452,6 +456,13 @@ public:
                 for (auto& s : tensorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
             }
         }
+    }
+
+    void clearFieldData()
+    {
+        for (auto& s : scalarFieldStorage_) { s.data.clear(); }
+        for (auto& s : vectorFieldStorage_) { s.data.clear(); }
+        for (auto& s : tensorFieldStorage_) { s.data.clear(); }
     }
 
     void clear()
