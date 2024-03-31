@@ -415,7 +415,7 @@ public:
     {
         Tensor result;
         std::ranges::for_each(in, [&, i=0] (const auto& row) mutable {
-            std::ranges::copy(row, result[i++]);
+            std::ranges::copy(row, result[i++].begin());
         });
         return result;
     }
@@ -442,7 +442,7 @@ public:
 
     void updateFieldData(const GridVariables& gridVars, const SolutionVector& x)
     {
-        resizeFields_(gridVars.gridGeometry().numDofs());
+        resizeFieldData_(gridVars.gridGeometry().numDofs());
         for (const auto& element : elements(gridVars.gridGeometry().gridView()))
         {
             auto fvGeometry = localView(gridVars.gridGeometry()).bindElement(element);
@@ -496,7 +496,7 @@ private:
         });
     }
 
-    void resizeFields_(std::size_t size)
+    void resizeFieldData_(std::size_t size)
     {
         std::ranges::for_each(scalarFieldStorage_, [&] (auto& s) { s.data.resize(size); });
         std::ranges::for_each(vectorFieldStorage_, [&] (auto& s) { s.data.resize(size); });
