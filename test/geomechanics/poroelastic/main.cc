@@ -148,11 +148,8 @@ int main(int argc, char** argv)
     SolutionVector xExact(gridGeometry->numDofs());
     for (const auto& v : vertices(leafGridView))
         xExact[ gridGeometry->vertexMapper().index(v) ] = problem->exactDisplacement(v.geometry().center());
-#if USE_GRIDFORMAT
-    vtkWriter.addField([&] (const auto& e) { return xExact[gridGeometry->dofMapper().index(e)]; }, "u_exact");
-#else
     vtkWriter.addField(xExact, "u_exact");
-#endif
+
     // Furthermore, write out element stress tensors
     static constexpr int dim = GridGeometry::GridView::dimension;
     static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
@@ -169,19 +166,8 @@ int main(int argc, char** argv)
 
     for (int dir = 0; dir < dim; ++dir)
     {
-#if USE_GRIDFORMAT
-        vtkWriter.addCellField(
-            [&, d=dir] (const auto& e) { return sigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
-            "sigma_" + std::to_string(dir)
-        );
-        vtkWriter.addCellField(
-            [&, d=dir] (const auto& e) { return effSigmaStorage[d][gridGeometry->elementMapper().index(e)]; },
-            "effSigma_" + std::to_string(dir)
-        );
-#else
-        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir), Vtk::FieldType::element);
-        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir), Vtk::FieldType::element);
-#endif
+        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir));
+        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir));
     }
 
     // use convenience function to compute stresses

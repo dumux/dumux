@@ -21,6 +21,10 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
+#if USE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#endif
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -62,7 +66,11 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // initialize the vtk output module
+#if USE_GRIDFORMAT
+    IO::OutputModule vtkWriter(*gridVariables, x, problem->name());
+#else
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+#endif
     vtkWriter.addField(x, "d");
     vtkWriter.write(0.0);
 
