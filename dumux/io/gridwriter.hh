@@ -211,7 +211,7 @@ class GridWriter
 
 /*!
  * \ingroup InputOutput
- * \brief Generic output module for entity & volume variable fields into a variety of grid file formats.
+ * \brief Generic output module for entity & volume variable fields. Supports a variety of grid file formats.
  */
 template<typename GridVariables, typename SolutionVector>
 class OutputModule : private GridWriter<typename GridVariables::GridGeometry::GridView, 1> {
@@ -373,6 +373,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     VolVarFieldStorage volVarFields_;
 };
 
+// Class to store vol var fields; implementation detail of the OutputModule class
 template<typename GridVariables, typename SolutionVector>
 class OutputModule<GridVariables, SolutionVector>::VolVarFieldStorage
 {
