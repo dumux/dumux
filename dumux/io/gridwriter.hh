@@ -217,8 +217,7 @@ template<typename GridVariables, typename SolutionVector>
 class OutputModule : private GridWriter<typename GridVariables::GridGeometry::GridView, 1> {
     using ParentType = GridWriter<typename GridVariables::GridGeometry::GridView, 1>;
 
-    // TODO: generalize to isNodalScheme?
-    static constexpr bool isBox = GridVariables::GridGeometry::discMethod == DiscretizationMethods::box;
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridVariables::GridGeometry::DiscretizationMethod>;
     static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
     using Scalar = typename GridVariables::Scalar;
     using Vector = Dune::FieldVector<Scalar, dimWorld>;
@@ -310,7 +309,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<typename DofFunction>
     void addField(DofFunction&& f, const std::string& name)
     {
-        if constexpr (isBox)
+        if constexpr (isCVFE)
             addPointField(std::forward<DofFunction>(f), name);
         else
             addCellField(std::forward<DofFunction>(f), name);
@@ -366,7 +365,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         auto dofEntityField = [&, _id=std::move(volVarFieldId)] (const auto& entity) {
             return volVarFields_.getValue(_id, gridVariables_.gridGeometry().dofMapper().index(entity));
         };
-        if constexpr (isBox)
+        if constexpr (isCVFE)
             this->setPointField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
         else
             this->setCellField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
