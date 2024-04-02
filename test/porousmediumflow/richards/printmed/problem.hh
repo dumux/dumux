@@ -113,10 +113,21 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        // if (onLeftBoundary(globalPos) || onRightBoundary(globalPos))
-        //     bcTypes.setAllDirichlet();
+
+        bcTypes.setAllNeumann();
+
+        // if (onUpperBoundary(globalPos))
+        // {
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+        //         bcTypes.setDirichlet(pressureIdx);
+        //     }
+        //     // else
+        //     //     bcTypes.setAllNeumann();
+        // }
         // else
-            bcTypes.setAllNeumann();
+        //     bcTypes.setAllNeumann();
+
         return bcTypes;
     }
 
@@ -129,7 +140,23 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+        // PrimaryVariables values;
+        // const Scalar sw = 0.0;
+        // const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+        // values[pressureIdx] = nonwettingReferencePressure() - pc;
+
+        // if (onUpperBoundary(globalPos))
+        // {
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+        //         const Scalar sw = 1.0;
+        //         const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+        //         const auto& droplet = dropletSolver_->droplet();
+        //         values[pressureIdx] = nonwettingReferencePressure() - pc + dropletSolver_->Pc(droplet);
+        //     }
+
+        // }
+        return initialAtPos(globalPos);
     }
 
     /*!
@@ -215,9 +242,14 @@ private:
 
         // if (onUpperBoundary(globalPos))
         // {
-        //     const Scalar sw = 0.99;
-        //     const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
-        //     values[pressureIdx] = nonwettingReferencePressure() - pc;
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+        //         // const Scalar sw = 0.5;
+        //         const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(1.0);
+        //         const auto& droplet = dropletSolver_->droplet();
+        //         values[pressureIdx] = nonwettingReferencePressure() - pc + dropletSolver_->Pc(droplet);
+        //     }
+
         // }
 
         return values;

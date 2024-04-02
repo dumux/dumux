@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 10 # [s]
+DtInitial = 1 # [s]
 TEnd = 20000 # [s]
 
 [Grid]
@@ -43,5 +43,5 @@ VanGenuchtenN = 4.7
 Permeability = 1e-18
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true
 AddVelocity = true

@@ -261,10 +261,7 @@ private:
         {
             const auto& element = gridGeometry.element(elementIdx);
             fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                flux += asImp_().totalFlux(element, fvGeometry, scv);
-            }
+            flux += asImp_().totalFlux(element, fvGeometry);
         }
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
@@ -444,11 +441,11 @@ public:
     //     return ParentType::update();
     // }
 
-    auto totalFlux(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
+    auto totalFlux(const Element& element, const FVElementGeometry& fvGeometry) const
     {
         Scalar flux(0.0);
 
-        flux += 0.0;//flux_(element, fvGeometry, scv);
+        flux += flux_(element, fvGeometry);
 
         return flux;
     }
@@ -464,13 +461,10 @@ private:
 
     //! Evaluates the flux coming from the pore to the droplet  //TODO
     Scalar flux_(const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    const SubControlVolume& scv) const
+                    const FVElementGeometry& fvGeometry) const
     {
         Scalar flux = 0.0;
         auto phaseIdx = 0; //dropletPhaseIdx();
-
-        const auto dofIdxGlobal = scv.dofIndex();
 
         auto elemVolVars = localView(gridVariables_->curGridVolVars());
         elemVolVars.bind(element, fvGeometry, sol_);
@@ -487,16 +481,20 @@ private:
         {
             if (!scvf.boundary())
                 continue;
+
             fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
             auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            std::cout<<" ------- insideScv.dofIndex() ------"<<insideScv.dofIndex()<<std::endl;
+            std::cout<<" ------- outsideScv.dofIndex() ------"<<outsideScv.dofIndex()<<std::endl;
+            std::cout<<" ------- scvf.center() ------"<<scvf.center()<<std::endl;
+            std::cout<<" ------- scvf.area() ------"<<scvf.area()<<std::endl;
+            std::cout<<" ----------------- flux ---------"<<flux<<std::endl;
 
-            if(dofIdxGlobal==insideScv.dofIndex()) // TODO
-                flux += (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
-            else if(dofIdxGlobal==outsideScv.dofIndex())
-                flux -= (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+            flux += (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+            std::cout<<" ----------------- flux ---------"<<flux<<std::endl;
         }
 
         return flux;
