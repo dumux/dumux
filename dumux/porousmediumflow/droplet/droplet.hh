@@ -162,6 +162,11 @@ public:
         return dropletDoFPositions_;
     }
 
+    bool operator==(const Droplet &droplet) const
+    {
+        return droplet.initialCenter_ == initialCenter_;
+    }
+
 private:
     GlobalPosition initialCenter_ ;
     Scalar radius_ = 0.0;

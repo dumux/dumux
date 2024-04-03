@@ -20,8 +20,8 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
 
+#include "dumux/porousmediumflow/droplet/dropsolver.hh"
 #include <dumux/porousmediumflow/problem.hh>
-#include "dropsolver.hh"
 
 namespace Dumux {
 

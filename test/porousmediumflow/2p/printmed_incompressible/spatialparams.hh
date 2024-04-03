@@ -45,15 +45,8 @@ public:
 
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , lensPcKrSw_("SpatialParams.Lens")
     , outerPcKrSw_("SpatialParams.Outer")
     {
-        lensIsOilWet_ = getParam<bool>("SpatialParams.LensIsOilWet", false);
-
-        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
-        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
-
-        lensK_ = getParam<Scalar>("SpatialParams.Lens.Permeability", 9.05e-12);
         outerK_ = getParam<Scalar>("SpatialParams.Outer.Permeability", 4.6e-10);
     }
 
@@ -133,9 +126,6 @@ public:
     const MaterialInterfaces& materialInterfaces() const
     { return *materialInterfaces_; }
 
-    //! Returns whether or not the lens is oil wet
-    bool lensIsOilWet() const { return lensIsOilWet_; }
-
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
@@ -146,14 +136,8 @@ private:
         return false;
     }
 
-    bool lensIsOilWet_;
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
     Scalar outerK_;
 
-    const PcKrSw lensPcKrSw_;
     const PcKrSw outerPcKrSw_;
 
     std::unique_ptr<MaterialInterfaces> materialInterfaces_;

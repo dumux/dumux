@@ -33,8 +33,8 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
+#include "dumux/porousmediumflow/droplet/dropsolver.hh"
 #include "properties.hh"
-#include "dropsolver.hh"
 
 #ifndef DIFFMETHOD
 #define DIFFMETHOD DiffMethod::numeric

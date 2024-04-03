@@ -16,8 +16,8 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
 
+#include "dumux/porousmediumflow/droplet/dropsolver.hh"
 #include <dumux/porousmediumflow/problem.hh>
-#include "dropsolver.hh"
 
 namespace Dumux {
 
@@ -35,6 +35,9 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
@@ -60,49 +63,92 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        // BoundaryTypes values;
-        // if (onUpperBoundary(globalPos))
-        //     values.setAllDirichlet();
-        // else if (onLowerBoundary(globalPos))
-        //     values.setAllNeumann();
-        // else
-        //     values.setAllDirichlet();
-
-
         BoundaryTypes bcTypes;
         if (onLeftBoundary(globalPos) || onRightBoundary(globalPos))
+        {
             bcTypes.setAllDirichlet();
+        }
+        else if (onUpperBoundary(globalPos))
+        {
+            if (dropletSolver_->isCoupledWithDroplet(globalPos))
+            {
+                bcTypes.setAllDirichlet();
+            }
+            else
+            {
+                bcTypes.setAllNeumann();
+            }
+        }
         else
             bcTypes.setAllNeumann();
         return bcTypes;
-
-        // return values;
     }
+
+    // auto boundaryTypes(const Element &element,
+    //                    const SubControlVolume &scv) const
+    // {
+    //     BoundaryTypes bcTypes;
+    //     const auto& globalPos = scv.dofPosition();
+
+    //     if (onLeftBoundary(globalPos) || onRightBoundary(globalPos))
+    //     {
+    //         bcTypes.setAllDirichlet();
+    //     }
+    //     else if (onUpperBoundary(globalPos))
+    //     {
+    //         if (dropletSolver_->isCoupledWithDroplet(globalPos))
+    //         {
+    //             bcTypes.setAllDirichlet();
+    //         }
+    //         else
+    //         {
+    //             bcTypes.setAllNeumann();
+    //         }
+    //     }
+    //     else
+    //         bcTypes.setAllNeumann();
+    //     return bcTypes;
+    // }
 
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    // PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    // {
+    //     PrimaryVariables values;
+
+    //     values[Indices::pressureIdx] = 1e5;
+    //     values[Indices::saturationIdx] = 0.0;
+
+    //     if (onUpperBoundary(globalPos))
+    //     {
+    //         if (dropletSolver_->isCoupledWithDroplet(globalPos))
+    //         {
+
+    //             const auto& droplet = dropletSolver_->droplet();
+    //             values[Indices::pressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+    //             values[Indices::saturationIdx] = 1.0;
+    //         }
+    //         else
+    //         {
+    //             values[Indices::pressureIdx] = 1e5;
+    //             values[Indices::saturationIdx] = 0.0;
+    //         }
+    //     }
+
+    //     return values;
+    // }
+
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         PrimaryVariables values;
-        // GetPropType<TypeTag, Properties::FluidState> fluidState;
-        // fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-        // fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
-        // fluidState.setPressure(airPhaseIdx, /*pressure=*/1e5);
 
-        // Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
+        const auto& globalPos = scv.dofPosition();
 
-        // Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
-        // Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
-        // Scalar alpha = 1 + 1.5/height;
-        // Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
-        // Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
-
-        // hydrostatic pressure scaled by alpha
-        values[waterPressureIdx] = 1e5;
-        values[airSaturationIdx] = 0.0;
+        values[Indices::pressureIdx] = 1e5;
+        values[Indices::saturationIdx] = 0.0;
 
         if (onUpperBoundary(globalPos))
         {
@@ -110,13 +156,13 @@ public:
             {
 
                 const auto& droplet = dropletSolver_->droplet();
-                values[waterPressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
-                values[airSaturationIdx] = 1.0;
+                values[Indices::pressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+                values[Indices::saturationIdx] = 1.0;
             }
             else
             {
-                values[waterPressureIdx] = 1e5;
-                values[airSaturationIdx] = 0.0;
+                values[Indices::pressureIdx] = 1e5;
+                values[Indices::saturationIdx] = 0.0;
             }
         }
 
@@ -131,16 +177,39 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+    // NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+    // {
+    //     NumEqVector values(0.0);
+    //     if (onUpperBoundary(globalPos))
+    //     {
+    //         if (dropletSolver_->isCoupledWithDroplet(globalPos))
+    //         {
+    //             values[Indices::conti0EqIdx] = -0.002; // kg/(m*s)
+    //         }
+    //     }
+    //     return values;
+    // }
+
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
     {
+        // forward it to the interface with only the global position
+        // const auto& globalPos = scvf.ipGlobal();
         NumEqVector values(0.0);
-        if (onUpperBoundary(globalPos))
-        {
-            // if (dropletSolver_->isCoupledWithDroplet(globalPos))
-            // {
-                values[Indices::conti0EqIdx] = -0.04; // kg/(m*s)
-            // }
-        }
+        // if (onUpperBoundary(globalPos))
+        // {
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+        //         Scalar dropletInfiltrationRate = dropletSolver_->dropletMassFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache); //kg/s
+        //         dropletInfiltrationRate /= scvf.area();
+        //         values[Indices::conti0EqIdx] = dropletInfiltrationRate; // kg/(m*s) or kg/(m2*s)
+        //         // std::cout<<"------dropletInfiltrationRate-------"<<dropletInfiltrationRate<<std::endl;
+        //     }
+        // }
         return values;
     }
 
@@ -152,8 +221,8 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[waterPressureIdx] = 1e5;
-        values[airSaturationIdx] = 0.0;
+        values[Indices::pressureIdx] = 1e5;
+        values[Indices::saturationIdx] = 0.0;
 
 
         // if (onUpperBoundary(globalPos))
@@ -162,13 +231,8 @@ public:
         //     {
 
         //         const auto& droplet = dropletSolver_->droplet();
-        //         values[waterPressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
-        //         values[airSaturationIdx] = 1.0;
-        //     }
-        //     else
-        //     {
-        //         values[waterPressureIdx] = 1e5;
-        //         values[airSaturationIdx] = 0.0;
+        //         values[Indices::pressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+        //         values[Indices::saturationIdx] = 1.0;
         //     }
         // }
 
@@ -177,6 +241,9 @@ public:
 
     void setDropSolver(std::shared_ptr<DropSolver> dropletSolver)
     { dropletSolver_ = dropletSolver; }
+
+    auto dropSolver()
+    { return dropletSolver_; }
 
     bool onInlet(const GlobalPosition &globalPos) const
     {

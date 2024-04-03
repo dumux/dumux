@@ -35,8 +35,10 @@
 #include <dumux/nonlinear/findscalarroot.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/discretization/extrusion.hh>
+#include <dumux/flux/facetensoraverage.hh>
+#include <dumux/flux/upwindscheme.hh>
 
-#include <dumux/porenetwork/common/poreproperties.hh>
 #include "dropintersection.hh"
 #include "droplet.hh"
 
@@ -77,15 +79,13 @@ public:
     DropletSolverBase(const Problem& problem)
     : problem_(problem)
     {
-        initialContactAngle_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactAngle", 89); //shoudl be converted to radian
+        initialContactAngle_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactAngle", 90); //shoudl be converted to radian
         initialContactAngle_ = M_PI*initialContactAngle_/180;
         initialContactRadius_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactRadius", 1e-3); //TODO
 
         initialVolume_=  M_PI / 3 * initialContactRadius_ * initialContactRadius_ * initialContactRadius_ * (1 - cos(initialContactAngle_)) * (1 - cos(initialContactAngle_)) * (2 + cos(initialContactAngle_)) / (sin(initialContactAngle_) * sin(initialContactAngle_) * sin(initialContactAngle_));
         //initialVolume_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialVolume", 1e-3);
         initialCenter_ = getParamFromGroup<GlobalPosition>(problem_.paramGroup(), "Drop.InitialCenter", GlobalPosition(0.0));
-
-        std::cout<<"   ----------------- initialCenter_    "<<initialCenter_<<std::endl;
         surfaceTension_ = getParamFromGroup<Scalar>(problem_.paramGroup(),"SpatialParameters.SurfaceTension", 0.0725);
 
 
@@ -210,24 +210,23 @@ public:
 
     bool isCoupledWithDroplet(const GlobalPosition &globalPos) const
     {
-        for (const Drop& droplet : droplets_)
+        if (problem().onUpperBoundary(globalPos))
         {
-            const auto& dropletVolume = droplet.volume();
-            if (dropletVolume < 0.0)
-                continue;
-            const auto& dropletCenter = droplet.center();
-            const auto& dropletContactRadius = droplet.contactRadius();
-
-            const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(globalPos, dropletCenter);
-            if (distance < dropletContactRadius)
+            for (const Drop& droplet : droplets_)
             {
-                droplet_ = droplet;
-                return true;
-            }
+                const auto& dropletVolume = droplet.volume();
+                if (dropletVolume < 0.0)
+                    continue;
+                const auto& dropletCenter = droplet.center();
+                const auto& dropletContactRadius = droplet.contactRadius();
 
-            // const auto& dropletDoFs = droplet.dofIndices()
-            // if (std::any_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
-            //     return droplet;
+                const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(globalPos, dropletCenter);
+                if (distance < dropletContactRadius)
+                {
+                    droplet_ = droplet;
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -261,17 +260,18 @@ private:
         {
             const auto& element = gridGeometry.element(elementIdx);
             fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                flux += asImp_().totalFlux(element, fvGeometry, scv);
-            }
+            flux += asImp_().totalVolumeFlux(element, fvGeometry);
         }
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
 std::cout<<" ------------------------- "<<volume<<std::endl;
+        if (volume < 0.0)
+        {
+            auto it = std::find(droplets_.begin(), droplets_.end(), droplet);
+            droplets_.erase(it);
+            return;
+        }
         contactAngle = computeContactAngle_(volume, contactRadius);
-
-        std::cout<<" -----------contactAngle-------------- "<<contactAngle * 180 /M_PI<<std::endl;
 
         radius = contactRadius;
         radius /= sin(contactAngle);
@@ -290,6 +290,7 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
         Scalar initialContactRadius = computeContactRadius_(initialVolume_, initialContactAngle_);
 
         std::cout<<"-----------initialContactRadius------------"<<initialContactRadius<<std::endl;
+        std::cout<<"-----------initialContactAngle_------------"<<initialContactAngle_<<std::endl;
         Scalar initialRadius = initialContactRadius;
         initialRadius /= sin(initialContactAngle_);
 
@@ -324,7 +325,7 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
                 const auto elementIdx = scv.elementIndex();
                 const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, initialCenter_);
 
-                if (distance > initialContactRadius)
+                if ( !problem().onUpperBoundary(dofPosition) || distance > initialContactRadius)
                     continue;
 
                 if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
@@ -366,8 +367,8 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
         if (dropVolume < 1e-30)
             return 0.0;
 
-            Scalar lowerLimit = 0;
-            Scalar upperLimit = M_PI / 2 + 1;
+        Scalar lowerLimit = 0;
+        Scalar upperLimit = M_PI / 2 + 1;
 
         Scalar Theta = findScalarRootBrent(lowerLimit, upperLimit, evalContactAngle, 1e-6, 500);
         return Theta;
@@ -427,6 +428,9 @@ class DropletSolverTwoP : public DropletSolverBase <DropletSolverTwoP <TypeTag, 
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using Drop = Dumux::Droplet<GridView>;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    using UpScheme = UpwindScheme<GetPropType<TypeTag, Properties::GridGeometry>>;
 
 
     using ThisType = DropletSolverTwoP<TypeTag, IsCoupled>;
@@ -444,13 +448,32 @@ public:
     //     return ParentType::update();
     // }
 
-    auto totalFlux(const Element& element, const FVElementGeometry& fvGeometry, const SubControlVolume& scv) const
+    auto totalVolumeFlux(const Element& element, const FVElementGeometry& fvGeometry) const
     {
         Scalar flux(0.0);
 
-        flux += 0.0;//flux_(element, fvGeometry, scv);
+        flux += volumeFlux_(element, fvGeometry);
 
         return flux;
+    }
+
+    template<class ElementVolumeVariables, class ElementFluxVarsCache>
+    Scalar dropletMassFlux(const Element& element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars,
+                      const SubControlVolumeFace& scvf,
+                      const ElementFluxVarsCache& elemFluxVarCache) const
+    {
+        auto phaseIdx = 0; //dropletPhaseIdx();
+
+        Scalar fluxBeforeUpwinding = flux_(this->problem(), element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
+
+
+
+        return fluxBeforeUpwinding * 1e6;
+        // auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.density(phaseIdx) * volVars.mobility(phaseIdx); };
+
+        // return UpScheme::apply(elemVolVars, scvf, upwindTerm, fluxBeforeUpwinding, phaseIdx);
     }
 
     void setSolutionVector(const SolutionVector& sol)
@@ -463,14 +486,11 @@ public:
 private:
 
     //! Evaluates the flux coming from the pore to the droplet  //TODO
-    Scalar flux_(const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    const SubControlVolume& scv) const
+    Scalar volumeFlux_(const Element& element,
+                const FVElementGeometry& fvGeometry) const
     {
         Scalar flux = 0.0;
         auto phaseIdx = 0; //dropletPhaseIdx();
-
-        const auto dofIdxGlobal = scv.dofIndex();
 
         auto elemVolVars = localView(gridVariables_->curGridVolVars());
         elemVolVars.bind(element, fvGeometry, sol_);
@@ -487,20 +507,85 @@ private:
         {
             if (!scvf.boundary())
                 continue;
-            fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            Scalar fluxBeforeUpwinding = flux_(this->problem(), element, fvGeometry, elemVolVars, scvf, 0, elemFluxVarsCache);
+
+            // fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
             auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            // const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            // const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            // // std::cout<<" ------- insideScv.dofIndex() ------"<<insideScv.dofIndex()<<std::endl;
+            // // std::cout<<" ------- outsideScv.dofIndex() ------"<<outsideScv.dofIndex()<<std::endl;
+            // // std::cout<<" ------- scvf.center() ------"<<scvf.center()<<std::endl;
+            // // std::cout<<" ------- scvf.area() ------"<<scvf.area()<<std::endl;
+            // // std::cout<<" ----------------- flux ---------"<<flux<<std::endl;
 
-            if(dofIdxGlobal==insideScv.dofIndex()) // TODO
-                flux += (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
-            else if(dofIdxGlobal==outsideScv.dofIndex())
-                flux -= (fluxVars.advectiveFlux(phaseIdx, upwindTerm));
+            flux += UpScheme::apply(elemVolVars, scvf, upwindTerm, fluxBeforeUpwinding, phaseIdx);
+            // // std::cout<<" ----------------- flux ---------"<<flux<<std::endl;
         }
 
         return flux;
 
+    }
+
+    template<class ElementVolumeVariables, class ElementFluxVarsCache>
+    Scalar flux_(const Problem& problem,
+                 const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const ElementVolumeVariables& elemVolVars,
+                 const SubControlVolumeFace& scvf,
+                 const int phaseIdx,
+                 const ElementFluxVarsCache& elemFluxVarCache) const
+    {
+        const auto& fluxVarCache = elemFluxVarCache[scvf];
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
+        auto insideK = insideVolVars.permeability();
+        auto outsideK = outsideVolVars.permeability();
+
+        // scale with correct extrusion factor
+        insideK *= insideVolVars.extrusionFactor();
+        outsideK *= outsideVolVars.extrusionFactor();
+
+        const auto K = faceTensorAverage(insideK, outsideK, scvf.unitOuterNormal());
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+
+        const auto& shapeValues = fluxVarCache.shapeValues();
+
+        // evaluate gradP - rho*g at integration point
+        Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
+        Scalar rho(0.0);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+
+            if (enableGravity)
+                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+
+            Scalar pressure = volVars.pressure(phaseIdx);
+            if (this->isCoupledWithDroplet(scv.dofPosition()))
+            {
+                const auto& droplet = this->droplet();
+                pressure = 1e5 + this->Pc(droplet);
+            }
+            // the global shape function gradient
+            gradP.axpy(pressure, fluxVarCache.gradN(scv.indexInElement()));
+            // std::cout<<"-----scv.indexInElement()---"<<scv.indexInElement()<<"  ---------   "<<scv.dofIndex()<<"  ---  "<<scv.dofPosition()<<"  ---- "<<pressure<<std::endl;
+            // std::cout<<"-----fluxVarCache.gradN(scv.indexInElement())---"<<fluxVarCache.gradN(scv.indexInElement())<<std::endl;
+
+        }
+
+        // std::cout<<" ------------gradP------------- "<<gradP<<std::endl;
+        // std::cout<<" ***************************************************************************************** "<<gradP<<std::endl;
+
+        if (enableGravity)
+            gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
+
+        // apply the permeability and return the flux
+        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(fvGeometry, scvf);
     }
     const SolutionVector& sol_;
     std::shared_ptr<GridVariables> gridVariables_;

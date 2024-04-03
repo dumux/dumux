@@ -94,8 +94,6 @@ public:
 
             // the global shape function gradient
             gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
-            if(scvf.boundary())
-                std::cout<<"---- scvf ---"<<scv.dofIndex()<<"      ---      "<<volVars.pressure(phaseIdx)<<std::endl;
         }
 
         if (enableGravity)

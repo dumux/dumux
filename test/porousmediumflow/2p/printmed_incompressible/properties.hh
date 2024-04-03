@@ -90,7 +90,7 @@ struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static cons
 
 template<class TypeTag>
 struct Formulation<TypeTag, TTag::TwoPIncompressible>
-{ static constexpr auto value = TwoPFormulation::p0s1; };
+{ static constexpr auto value = TwoPFormulation::p1s0; };
 
 } // end namespace Dumux::Properties
 

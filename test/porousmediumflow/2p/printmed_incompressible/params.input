@@ -1,31 +1,22 @@
 [TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 15000 # [s]
-MaxTimeStepSize = 100
+DtInitial = 1e-5 # [s]
+TEnd = 10 # [s]
+MaxTimeStepSize = 1
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 5e-3 5e-3
-Cells = 50 50
+UpperRight = 1e-3 5e-4 #1e-3
+Cells = 50 50 #50
 
 [Drop]
 InitialContactAngle = 90
-InitialVolume = 1e-1
-InitialContactRadius = 1e-3
-InitialCenter = 2.5e-3 5e-3
-
-[SpatialParams]
-LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
-LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
-
-[SpatialParams.Lens]
-Swr = 0.18
-VanGenuchtenAlpha = 0.00045
-VanGenuchtenN = 7.3
+# InitialVolume = 1e-1
+InitialContactRadius = 2e-4
+InitialCenter = 5e-4 5e-4 #5e-4
 
 [SpatialParams.Outer]
 Swr = 0.05
-VanGenuchtenAlpha = 1e-3
+VanGenuchtenAlpha = 1e-6
 VanGenuchtenN = 4.7
 Permeability = 1e-18
 
@@ -38,4 +29,4 @@ WriteFaceData = false
 AddVelocity = true
 
 [Newton]
-EnablePartialReassembly = true
+EnablePartialReassembly = false
