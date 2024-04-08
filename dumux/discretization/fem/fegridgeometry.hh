@@ -98,6 +98,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
 
     //! Returns the map between dofs across periodic boundaries
+    [[deprecated("Will be removed after release 3.9. Implement periodicDofMap() if periodic bcs are supported.")]]
     const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
     { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
 

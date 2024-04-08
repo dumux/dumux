@@ -185,8 +185,13 @@ public:
     { return periodicVertexMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
     { return periodicVertexMap_; }
+
+    //! Returns the map between dofs across periodic boundaries
+    [[deprecated("Will be removed after release 3.9. Use periodicDofMap() instead.")]]
+    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
+    { return periodicDofMap(); }
 
     //! local view of this object (constructed with the internal cache)
     friend inline LocalView localView(const PQ1BubbleFVGridGeometry& gg)
