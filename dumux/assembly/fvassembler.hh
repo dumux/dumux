@@ -474,8 +474,27 @@ private:
 
                 // enforce constraint in second row
                 res[m.second] = curSol[m.second] - curSol[m.first];
+
+                // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
+                auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                {
+                    for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                        matrixBlock[eIdx][eIdx] = diagValue;
+                };
+
                 for (auto it = jac[m.second].begin(); it != end; ++it)
-                    (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
+                {
+                    auto& matrixBlock = *it;
+                    matrixBlock = 0.0;
+
+                    assert(matrixBlock.N() == matrixBlock.M());
+                    if(it.index() == m.second)
+                        setMatrixBlock(matrixBlock, 1.0);
+
+                    if(it.index() == m.first)
+                        setMatrixBlock(matrixBlock, -1.0);
+
+                }
             }
         }
     }
