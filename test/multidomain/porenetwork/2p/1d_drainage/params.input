@@ -19,10 +19,10 @@ VtpOutputFrequency = -1
 EnableGravity = false
 CapillaryPressure = 5000
 NonWettingMassFlux = 5e-10
+RegularizationDelta = 1e-8
 
 [Pnm.Problem]
 Name = test_pnm_2p
-RegularizationDelta = 1e-4
 
 [Newton]
 MaxSteps = 10
@@ -30,22 +30,17 @@ TargetSteps = 4
 #UseLineSearch = true
 MaxRelativeShift = 1e-5
 MaxTimeStepDivisions = 20
-NewtonOutputFilename = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true
-AccuracyCriterion = 0.99
 #BlockNonwettingPhaseAtThroatLabel = 1
-InvasionThetaThreshold = 0.001
+InvasionThetaThreshold = 1e-14
 SnapoffThetaThreshold = 0.999
 
 [SpatialParams]
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.9
 HighSwRegularizationMethod = Spline
-
-[Regularization]
-RegPercentage = 0.01
 
 [Component]
 LiquidKinematicViscosity = 1e-7
