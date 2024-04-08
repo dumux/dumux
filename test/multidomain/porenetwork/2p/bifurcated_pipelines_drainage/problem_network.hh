@@ -260,9 +260,6 @@ public:
     template<class AveragedValues>
     void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
     {
-        const Scalar avgSw = avgValues["avgSat"];
-
-
         logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
                  << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
                  << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
@@ -298,12 +295,21 @@ private:
         return v/(regAbs_(v) + regDelta_);
     }
 
-    Scalar regHeaviside_(Scalar v) const
+    Scalar regHeaviside_(Scalar v, bool invaded) const
     {
         //  0.5*(1 + regSign_(dp))
-        using std::sin; using std::min; using std::max;
-        v = max(0.0,min(v,2*regDelta_));
-        return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
+        if(!invaded)
+        {
+            using std::sin; using std::min; using std::max;
+            v = max(0.0,min(v,2*regDelta_));
+            return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
+        }
+        else
+        {
+            using std::sin; using std::min; using std::max;
+            v = max(-2*regDelta_,min(v,0.0));
+            return 0.5*(1+sin(M_PI*(v+regDelta_)/(2.0*regDelta_)));
+        }
     }
 
     int vtpOutputFrequency_;
