@@ -103,6 +103,7 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
     vtkWriter.write(0.0);
+    problem->writeTimeStep(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
@@ -141,8 +142,11 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
+        if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables), timeLoop->isCheckPoint())
             vtkWriter.write(timeLoop->time());
+
+        // write out time step
+        problem->writeTimeStep(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -151,6 +155,9 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
+
+    // ouput total newton iterations
+    nonLinearSolver.reportTotalIterations();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

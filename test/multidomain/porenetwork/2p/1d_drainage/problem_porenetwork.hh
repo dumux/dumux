@@ -241,7 +241,7 @@ public:
     /*!
      * \brief Called at the end of each time step
      */
-    void writeInvasionTimeStep(const Scalar time)
+    void writeTimeStep(const Scalar time)
     {
         logfile_ << std::fixed << std::left << std::setw(20)
                  << std::setfill(' ') << time << std::endl;

@@ -131,6 +131,7 @@ int main(int argc, char** argv)
 
     pnmVtkWriter.write(0.0);
     constraintVtkWriter.write(0.0);
+    pnmProblem->writeTimeStep(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
@@ -193,8 +194,10 @@ int main(int argc, char** argv)
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
-            pnmVtkWriter.write(timeLoop->time());
+            if (timeLoop->isCheckPoint())
+                pnmVtkWriter.write(timeLoop->time());
             constraintVtkWriter.write(timeLoop->time());
+            pnmProblem->writeTimeStep(timeLoop->time());
         }
 
         // report statistics of this time step
@@ -204,6 +207,12 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(newtonSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
+
+    // output some Newton statistics
+    newtonSolver.report();
+
+    // ouput total newton iterations
+    newtonSolver.reportTotalIterations();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
