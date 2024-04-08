@@ -108,7 +108,6 @@ public:
             return 0.0;
 
         Scalar dispenseTimeStepSize = min(dropletDispenseTimeInterval_, dropletDispenseTimeInterval_ - (this->time_ - std::trunc(this->time_ / dropletDispenseTimeInterval_) * dropletDispenseTimeInterval_));
-        // std::fmod(this->time_ - this->startTime_, dropletDispenseTimeInterval);
 
         return min(this->endTime_ - this->time_, dispenseTimeStepSize);
     }

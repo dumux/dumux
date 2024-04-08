@@ -33,7 +33,8 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
-#include "dumux/porousmediumflow/droplet/dropsolver.hh"
+#include <dumux/porousmediumflow/droplet/dropsolver.hh>
+#include <dumux/porousmediumflow/droplet/timeloopdroplet.hh>
 #include "properties.hh"
 
 #ifndef DIFFMETHOD
@@ -82,6 +83,7 @@ int main(int argc, char** argv)
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto inkjetPrintingFrequency = getParam<Scalar>("TimeLoop.InkJetFrequency");
 
     // check if we are about to restart a previously interrupted simulation
     Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
@@ -121,7 +123,7 @@ int main(int argc, char** argv)
     vtkWriter.write(restartTime);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoopDroplet<Scalar>>(restartTime, dt, tEnd, inkjetPrintingFrequency);
     timeLoop->setMaxTimeStepSize(maxDt);
     dropSolver->setTimeLoop(timeLoop);
 
@@ -147,11 +149,10 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        dropSolver->update();
-
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        dropSolver->update();
         // write vtk output
         vtkWriter.write(timeLoop->time());
 
@@ -159,7 +160,9 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by the Newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        Scalar suggestedTimeStepSize = std::min(dropSolver->suggestTimeStepSize(), nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(suggestedTimeStepSize);
+        dropSolver->dispenseDroplet();
 
     } while (!timeLoop->finished());
 

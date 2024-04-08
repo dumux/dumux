@@ -33,11 +33,11 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
-#include <dumux/common/timeloop.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/facetensoraverage.hh>
 #include <dumux/flux/upwindscheme.hh>
+#include <dumux/porousmediumflow/droplet/timeloopdroplet.hh>
 
 #include "dropintersection.hh"
 #include "droplet.hh"
@@ -69,7 +69,7 @@ private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using TimeLoopDrop = TimeLoop<GetPropType<TypeTag, Properties::Scalar>>;
+    using TimeLoop= TimeLoopDroplet<GetPropType<TypeTag, Properties::Scalar>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using ThisType = DropletSolverBase<Imp, TypeTag, IsCoupled>;
@@ -119,6 +119,13 @@ public:
         {
             updateDropGeometry_(droplet);
         }
+
+    }
+
+    void dispenseDroplet()
+    {
+        if (dispenseDroplet_())
+        initDroplets_();
     }
 
 
@@ -237,8 +244,21 @@ public:
         return problem().onUpperBoundary(position);
     }
 
-    void setTimeLoop(std::shared_ptr<TimeLoopDrop> timeLoop)
+    void setTimeLoop(std::shared_ptr<TimeLoop> timeLoop)
     { timeLoop_ = timeLoop; }
+
+    Scalar suggestTimeStepSize()
+    {
+        Scalar suggestedTimeStepSize = timeLoop_->maxTimeStepSize();
+        using std::min;
+        for (auto& droplet : droplets_)
+        {
+            Scalar flux = -volumeFlux_(droplet);
+            suggestedTimeStepSize = min(suggestedTimeStepSize, droplet.volume()/flux);
+        }
+
+        return suggestedTimeStepSize;
+    }
 
 private:
 
@@ -251,21 +271,11 @@ private:
         Scalar height = 0.0;
         Scalar contactRadius = droplet.contactRadius();
         const Scalar dt = timeLoop_->timeStepSize();
-        auto flux = 0.0;
-
-        const auto& gridGeometry = problem_.gridGeometry();
-        auto fvGeometry = localView(gridGeometry);
-
-        for (const auto& elementIdx : droplet.elementIndices())
-        {
-            const auto& element = gridGeometry.element(elementIdx);
-            fvGeometry.bindElement(element);
-            flux += asImp_().totalVolumeFlux(element, fvGeometry);
-        }
+        Scalar flux = volumeFlux_(droplet);
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
 std::cout<<" ------------------------- "<<volume<<std::endl;
-        if (volume < 0.0)
+        if (volume < 1e-6*droplet.initialVolume())
         {
             auto it = std::find(droplets_.begin(), droplets_.end(), droplet);
             droplets_.erase(it);
@@ -347,6 +357,22 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
        droplets_.push_back(droplet);
     }
 
+    Scalar volumeFlux_(const Drop& droplet)
+    {
+        Scalar flux = 0.0;
+        const auto& gridGeometry = problem_.gridGeometry();
+        auto fvGeometry = localView(gridGeometry);
+
+        for (const auto& elementIdx : droplet.elementIndices())
+        {
+            const auto& element = gridGeometry.element(elementIdx);
+            fvGeometry.bindElement(element);
+            flux += asImp_().totalVolumeFlux(element, fvGeometry);
+        }
+
+        return flux;
+    }
+
      static Scalar computeDropVolume_(Scalar prevDropVolume, Scalar dt, Scalar flux)
     {
         Scalar curDropVol = prevDropVolume;
@@ -382,6 +408,13 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
         return contactRadius;
     }
 
+    bool dispenseDroplet_()
+    {
+        Scalar temp = timeLoop_->time() / timeLoop_->dropletDispenseTimeInterval();
+
+        return (std::abs(std::trunc(temp) - temp) / temp < 1e-10);
+    }
+
 
     const Implementation& asImp_() const
     { return *static_cast<const Implementation*>(this);}
@@ -401,7 +434,7 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
     Scalar surfaceTension_;
 
     const Problem& problem_;
-    std::shared_ptr<TimeLoopDrop> timeLoop_;
+    std::shared_ptr<TimeLoop> timeLoop_;
     std::vector<int> interfaceElementsIndex_;
     std::vector<SubControlVolume> interfaceScvs_;
 };
@@ -424,7 +457,6 @@ class DropletSolverTwoP : public DropletSolverBase <DropletSolverTwoP <TypeTag, 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using TimeLoopDrop = TimeLoop<GetPropType<TypeTag, Properties::Scalar>>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using Drop = Dumux::Droplet<GridView>;
