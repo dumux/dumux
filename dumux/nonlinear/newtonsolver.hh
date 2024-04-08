@@ -723,6 +723,17 @@ public:
     }
 
     /*!
+     * \brief Called if the Newton method ended successfully
+     * This method is called _after_ newtonEnd()
+     */
+    void reportTotalIterations(std::string logfile = "NewtonLog.txt") const
+    {
+        logfile = getParam<std::string>("Newton.TotalIterations", "NewtonLog.txt");
+        std::ofstream lognewton(logfile);
+        lognewton << totalWastedIter_ + totalSucceededIter_ << '\n';
+    }
+
+    /*!
      * \brief reset the statistics
      */
     void resetReport()
