@@ -34,6 +34,7 @@
 #include <dumux/io/loadsolution.hh>
 
 #include <dumux/porousmediumflow/droplet/dropsolver.hh>
+#include <dumux/porousmediumflow/droplet/newtonsolverdroplet.hh>
 #include <dumux/porousmediumflow/droplet/timeloopdroplet.hh>
 #include "properties.hh"
 
@@ -136,7 +137,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = Dumux::NewtonSolverDroplet<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
@@ -159,10 +160,13 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
+        // Dispense a droplet at the new time
+        dropSolver->dispenseDroplet();
+
         // set new dt as suggested by the Newton solver
         Scalar suggestedTimeStepSize = std::min(dropSolver->suggestTimeStepSize(), nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
         timeLoop->setTimeStepSize(suggestedTimeStepSize);
-        dropSolver->dispenseDroplet();
 
     } while (!timeLoop->finished());
 

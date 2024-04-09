@@ -2,7 +2,7 @@
 DtInitial = 1e-5 # [s]
 TEnd = 10 # [s]
 MaxTimeStepSize = 10
-InkJetFrequency = 1000 #Hz
+InkJetFrequency = 10 #Hz
 
 [Grid]
 LowerLeft = 0 0
@@ -10,10 +10,11 @@ UpperRight = 1e-3 5e-4 #1e-3
 Cells = 50 50 #50
 
 [Drop]
-InitialContactAngle = 90
-# InitialVolume = 1e-1
-InitialContactRadius = 2e-4
+InitialContactAngle = 90      # °
+#InitialVolume = 1e-1         # m3
+InitialContactRadius = 2e-4   # m
 InitialCenter = 5e-4 5e-4 #5e-4
+DistanceBetweenDroplets = 0.0
 
 [SpatialParams.Outer]
 Swr = 0.05

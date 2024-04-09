@@ -245,6 +245,9 @@ public:
     auto dropSolver()
     { return dropletSolver_; }
 
+    auto dropSolver() const
+    { return dropletSolver_; }
+
     bool onInlet(const GlobalPosition &globalPos) const
     {
         Scalar width = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];

@@ -80,18 +80,33 @@ public:
     : problem_(problem)
     {
         initialContactAngle_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactAngle", 90); //shoudl be converted to radian
-        initialContactAngle_ = M_PI*initialContactAngle_/180;
-        initialContactRadius_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactRadius", 1e-3); //TODO
+        initialContactAngle_ = M_PI * initialContactAngle_ / 180;
 
-        initialVolume_=  M_PI / 3 * initialContactRadius_ * initialContactRadius_ * initialContactRadius_ * (1 - cos(initialContactAngle_)) * (1 - cos(initialContactAngle_)) * (2 + cos(initialContactAngle_)) / (sin(initialContactAngle_) * sin(initialContactAngle_) * sin(initialContactAngle_));
-        //initialVolume_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialVolume", 1e-3);
+        if (hasParamInGroup("", "Drop.InitialContactRadius"))
+        {
+            initialContactRadius_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialContactRadius", 1e-3); //TODO
+            initialVolume_=  M_PI / 3 * initialContactRadius_ * initialContactRadius_ * initialContactRadius_ * (1 - cos(initialContactAngle_)) * (1 - cos(initialContactAngle_)) * (2 + cos(initialContactAngle_)) / (sin(initialContactAngle_) * sin(initialContactAngle_) * sin(initialContactAngle_));
+        }
+        else if (hasParamInGroup("", "Drop.InitialVolume"))
+        {
+            initialVolume_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.InitialVolume", 1e-3);
+            initialContactRadius_ = computeContactRadius_(initialVolume_, initialContactAngle_);
+        }
+
         initialCenter_ = getParamFromGroup<GlobalPosition>(problem_.paramGroup(), "Drop.InitialCenter", GlobalPosition(0.0));
+        distanceBetweenDroplets_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.DistanceBetweenDroplets", 0.0);
+
         surfaceTension_ = getParamFromGroup<Scalar>(problem_.paramGroup(),"SpatialParameters.SurfaceTension", 0.0725);
+
+        initialRadius_ = initialContactRadius_;
+        initialRadius_ /= sin(initialContactAngle_);
+
+        initialHeight_ = initialRadius_ - initialRadius_ * cos(initialContactAngle_);
 
 
         interfaceElementIndex();
 
-        initDroplets_(); // TODO
+        initDroplet_(); // TODO
     }
 
     void interfaceElementIndex()
@@ -124,8 +139,19 @@ public:
 
     void dispenseDroplet()
     {
-        if (dispenseDroplet_())
-        initDroplets_();
+        if (ifDispenseDroplet_())
+            initDroplet_();
+    }
+
+    bool checkDropletsGeometry() const
+    {
+        for (const auto& droplet : droplets_)
+        {
+            if (!checkDropletGeometry_(droplet))
+                return false;
+        }
+
+        return true;
     }
 
 
@@ -250,11 +276,11 @@ public:
     Scalar suggestTimeStepSize()
     {
         Scalar suggestedTimeStepSize = timeLoop_->maxTimeStepSize();
-        using std::min;
+
         for (auto& droplet : droplets_)
         {
             Scalar flux = -volumeFlux_(droplet);
-            suggestedTimeStepSize = min(suggestedTimeStepSize, droplet.volume()/flux);
+            suggestedTimeStepSize = std::min(suggestedTimeStepSize, droplet.volume()/flux);
         }
 
         return suggestedTimeStepSize;
@@ -274,7 +300,7 @@ private:
         Scalar flux = volumeFlux_(droplet);
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
-std::cout<<" ------------------------- "<<volume<<std::endl;
+        std::cout<<" ------------volume------------- "<<volume<<std::endl;
         if (volume < 1e-6*droplet.initialVolume())
         {
             auto it = std::find(droplets_.begin(), droplets_.end(), droplet);
@@ -294,59 +320,63 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
                        contactAngle);
     }
 
-    void initDroplets_()
+    bool checkDropletGeometry_(const Drop& droplet) const
     {
 
-        Scalar initialContactRadius = computeContactRadius_(initialVolume_, initialContactAngle_);
+        Scalar contactRadius = droplet.contactRadius();
+        const Scalar dt = timeLoop_->timeStepSize();
+        Scalar flux = volumeFlux_(droplet);
 
-        std::cout<<"-----------initialContactRadius------------"<<initialContactRadius<<std::endl;
-        std::cout<<"-----------initialContactAngle_------------"<<initialContactAngle_<<std::endl;
-        Scalar initialRadius = initialContactRadius;
-        initialRadius /= sin(initialContactAngle_);
+        Scalar volume = computeDropVolume_(droplet.volume(), dt, flux);
 
-        Scalar initialHeight = initialRadius - initialRadius * cos(initialContactAngle_);
+        if (volume < - (1e-6 * droplet.initialVolume()))
+        {
+            std::cout<<" ------------Checkvolume------------- "<<volume<<std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    void initDroplet_()
+    {
+        dropletCounter_++;
+
+        auto dropletCenter = initialCenter_;
+        dropletCenter[0] += (dropletCounter_ - 1) * distanceBetweenDroplets_;  //TODO for now it just change the position in x-direction. Extend it!
 
         Drop droplet(initialVolume_,
-                     initialRadius,
-                     initialHeight,
-                     initialContactRadius,
+                     initialRadius_,
+                     initialHeight_,
+                     initialContactRadius_,
                      initialContactAngle_,
-                     initialCenter_);
+                     dropletCenter);
 
-
-        // const auto& gridGeometry = problem_.gridGeometry();
-        // auto fvGeometry = localView(gridGeometry);
-
-
+std::cout<<" ------------initialVolume------------- "<<initialVolume_<<std::endl;
         std::vector<GridIndex> dropletDoFs;
         std::vector<GlobalPosition> dropletDoFPositions;
         std::vector<GridIndex> dropletElems;
-        // for (const auto& elementIdx : interfaceElementsIndex_)
-        // {
-        //     const auto& element = gridGeometry.element(elementIdx);
-        //     fvGeometry.bindElement(element);
-            for (const auto& scv : interfaceScvs_)
+
+        for (const auto& scv : interfaceScvs_)
+        {
+
+            const auto dofIdxGlobal = scv.dofIndex();
+            const auto dofPosition = scv.dofPosition();
+            const auto elementIdx = scv.elementIndex();
+            const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, dropletCenter);
+
+            if ( !problem().onUpperBoundary(dofPosition) || distance > initialContactRadius_ )
+                continue;
+
+            if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
             {
-                // if (!isAtInterface(element, scv))
-                //     continue;
-
-                const auto dofIdxGlobal = scv.dofIndex();
-                const auto dofPosition = scv.dofPosition();
-                const auto elementIdx = scv.elementIndex();
-                const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, initialCenter_);
-
-                if ( !problem().onUpperBoundary(dofPosition) || distance > initialContactRadius)
-                    continue;
-
-                if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
-                {
-                    dropletDoFs.push_back(dofIdxGlobal);
-                    dropletElems.push_back(elementIdx);
-                    dropletDoFPositions.push_back(dofPosition);
-                }
-
+                dropletDoFs.push_back(dofIdxGlobal);
+                dropletElems.push_back(elementIdx);
+                dropletDoFPositions.push_back(dofPosition);
             }
-        // }
+
+        }
+
         for (const auto dropdof : dropletDoFs)
         std::cout<<"   dropletDoFs  "<<dropdof<<std::endl;
 
@@ -357,7 +387,7 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
        droplets_.push_back(droplet);
     }
 
-    Scalar volumeFlux_(const Drop& droplet)
+    Scalar volumeFlux_(const Drop& droplet) const
     {
         Scalar flux = 0.0;
         const auto& gridGeometry = problem_.gridGeometry();
@@ -408,11 +438,11 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
         return contactRadius;
     }
 
-    bool dispenseDroplet_()
+    bool ifDispenseDroplet_()
     {
         Scalar temp = timeLoop_->time() / timeLoop_->dropletDispenseTimeInterval();
 
-        return (std::abs(std::trunc(temp) - temp) / temp < 1e-10);
+        return (std::abs(std::round(temp) - temp) / temp < 1e-10);
     }
 
 
@@ -429,7 +459,10 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
     Scalar initialContactAngle_;
     Scalar initialVolume_;
     Scalar initialContactRadius_;
+    Scalar initialRadius_;
+    Scalar initialHeight_;
     GlobalPosition initialCenter_;
+    Scalar distanceBetweenDroplets_;
 
     Scalar surfaceTension_;
 
@@ -437,6 +470,7 @@ std::cout<<" ------------------------- "<<volume<<std::endl;
     std::shared_ptr<TimeLoop> timeLoop_;
     std::vector<int> interfaceElementsIndex_;
     std::vector<SubControlVolume> interfaceScvs_;
+    int dropletCounter_ = 0;
 };
 
 
@@ -475,10 +509,6 @@ public:
     , sol_(sol)
     {}
 
-    // bool update()
-    // {
-    //     return ParentType::update();
-    // }
 
     auto totalVolumeFlux(const Element& element, const FVElementGeometry& fvGeometry) const
     {
@@ -502,7 +532,7 @@ public:
 
 
 
-        return fluxBeforeUpwinding * 1e6;
+        return fluxBeforeUpwinding * 1e6; // todo replace 1e6 with mobility * density
         // auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.density(phaseIdx) * volVars.mobility(phaseIdx); };
 
         // return UpScheme::apply(elemVolVars, scvf, upwindTerm, fluxBeforeUpwinding, phaseIdx);
