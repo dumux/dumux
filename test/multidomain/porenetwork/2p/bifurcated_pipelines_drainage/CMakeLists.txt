@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES generate_network_tubes.py calculate_analytical_solution.py capillary_multiple_tubes.dgf)
+dune_symlink_to_source_files(FILES generate_network_analyze.py capillary_multiple_tubes.dgf)
 dumux_add_test(NAME validate_preferential_path
                SOURCES main.cc
                LABELS porenetwork
