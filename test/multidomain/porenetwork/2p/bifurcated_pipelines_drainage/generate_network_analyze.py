@@ -5,7 +5,7 @@ and then to calculate the analytical solution of the invading path.
 
 import sys
 sys.path.append('../1d_drainage/')
-from analyze import *
+from porebypore import *
 import numpy as np
 import random as rd
 
