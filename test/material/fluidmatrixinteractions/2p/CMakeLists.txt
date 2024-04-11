@@ -27,6 +27,14 @@ dumux_add_test(SOURCES test_material_2p_brookscorey.cc
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_pcsw_brookscorey.dat
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_material_2p_brookscorey")
 
+dumux_add_test(SOURCES test_material_2p_tabulated.cc
+               LABELS unit material
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzyData --delimiter " "
+                        --files  ${CMAKE_SOURCE_DIR}/test/references/test_pcsw_vangenuchten-reference.dat
+                                 ${CMAKE_CURRENT_BINARY_DIR}/test_pcsw_vangenuchten.dat
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_material_2p_vangenuchten")
+
 
 dumux_add_test(SOURCES test_material_2p_spline.cc
                LABELS unit material)
@@ -34,4 +42,5 @@ dumux_add_test(SOURCES test_material_2p_spline.cc
 dumux_add_test(SOURCES test_material_2p_dataspline.cc
                LABELS unit material)
 
-dune_symlink_to_source_files(FILES test_material_2p_spline.input test_material_2p_dataspline.input)
+dune_symlink_to_source_files(FILES test_material_2p_spline.input test_material_2p_dataspline.input
+        test_material_2p_tabulated.input)
