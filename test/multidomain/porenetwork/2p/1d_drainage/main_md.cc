@@ -98,12 +98,14 @@ int main(int argc, char** argv)
     static const auto constraintId = Traits::template SubDomain<1>::Index();
     x[pnmId].resize(pnmGridGeometry->numDofs());
     x[constraintId].resize(constraintGridGeometry->numDofs());
+
+    // initialize the coupling manager
+    couplingManager->init(pnmProblem, constraintProblem, x);
+
     pnmProblem->applyInitialSolution(x[pnmId]);
     constraintProblem->applyInitialSolution(x[constraintId]);
     auto xOld = x;
 
-    // initialize the coupling manager
-    couplingManager->init(pnmProblem, constraintProblem, x);
 
     // the grid variables
     using PNMGridVariables = GetPropType<PNMTypeTag, Properties::GridVariables>;
@@ -194,9 +196,16 @@ int main(int argc, char** argv)
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
-            if (timeLoop->isCheckPoint())
+            if (checkPoints.size() > 0 && timeLoop->isCheckPoint())
+            {
                 pnmVtkWriter.write(timeLoop->time());
-            constraintVtkWriter.write(timeLoop->time());
+                constraintVtkWriter.write(timeLoop->time());
+            }
+            else
+            {
+                pnmVtkWriter.write(timeLoop->time());
+                constraintVtkWriter.write(timeLoop->time());
+            }
             pnmProblem->writeTimeStep(timeLoop->time());
         }
 
