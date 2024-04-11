@@ -13,13 +13,14 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 The term is added as a source term in the problem using the new helper function `addBrinkmanTerm`.
 The function uses new spatial parameter interface implemented in the new `BrinkmanSpatialParams` class (`dumux/freeflow/spatialparams.hh`). The helper function can deal with isotropic and anisotropic permeabilites.
 - __Facet-Coupling__: Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
+- __Periodic Boundaries__: Fixed an issue for vector-valued unknowns. Other schemes that provide a periodic map at boundaries now also support periodicity.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
 - __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
-
+- __Periodic Map__: `periodicVertexMap()` has been deprecated. Use `periodicDofMap()` instead.
 
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================

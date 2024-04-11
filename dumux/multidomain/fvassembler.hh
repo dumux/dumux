@@ -24,6 +24,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/typetraits/utility.hh>
+#include <dumux/common/typetraits/periodic.hh>
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -600,9 +601,9 @@ private:
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
     void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
     {
-        if constexpr (GG::discMethod == DiscretizationMethods::box || GG::discMethod == DiscretizationMethods::fcstaggered)
+        if constexpr (Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicVertexMap())
+            for (const auto& m : gridGeometry.periodicDofMap())
             {
                 if (m.first < m.second)
                 {

@@ -219,6 +219,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
+    [[deprecated("Will be removed after release 3.9. Implement periodicDofMap() if periodic bcs are supported.")]]
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
     { return std::unordered_map<GridIndexType, GridIndexType>(); }
 
@@ -509,6 +510,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
 
     //! Returns the map between dofs across periodic boundaries
+    [[deprecated("Will be removed after release 3.9. Implement periodicDofMap() if periodic bcs are supported.")]]
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap() const
     { return std::unordered_map<GridIndexType, GridIndexType>(); }
 

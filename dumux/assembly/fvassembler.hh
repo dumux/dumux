@@ -23,6 +23,7 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/common/typetraits/vector.hh>
+#include <dumux/common/typetraits/periodic.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/parallelhelpers.hh>
@@ -459,48 +460,48 @@ private:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
+    template<class GG>
+    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
     {
-        for (const auto& m : gridGeometry.periodicVertexMap())
+        if constexpr (Detail::hasPeriodicDofMap<GG>())
         {
-            if (m.first < m.second)
+            for (const auto& m : gridGeometry.periodicDofMap())
             {
-                // add the second row to the first
-                res[m.first] += res[m.second];
-                const auto end = jac[m.second].end();
-                for (auto it = jac[m.second].begin(); it != end; ++it)
-                    jac[m.first][it.index()] += (*it);
-
-                // enforce constraint in second row
-                res[m.second] = curSol[m.second] - curSol[m.first];
-
-                // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
-                auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                if (m.first < m.second)
                 {
-                    for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                        matrixBlock[eIdx][eIdx] = diagValue;
-                };
+                    // add the second row to the first
+                    res[m.first] += res[m.second];
+                    const auto end = jac[m.second].end();
+                    for (auto it = jac[m.second].begin(); it != end; ++it)
+                        jac[m.first][it.index()] += (*it);
 
-                for (auto it = jac[m.second].begin(); it != end; ++it)
-                {
-                    auto& matrixBlock = *it;
-                    matrixBlock = 0.0;
+                    // enforce constraint in second row
+                    res[m.second] = curSol[m.second] - curSol[m.first];
 
-                    assert(matrixBlock.N() == matrixBlock.M());
-                    if(it.index() == m.second)
-                        setMatrixBlock(matrixBlock, 1.0);
+                    // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
+                    auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                    {
+                        for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                            matrixBlock[eIdx][eIdx] = diagValue;
+                    };
 
-                    if(it.index() == m.first)
-                        setMatrixBlock(matrixBlock, -1.0);
+                    for (auto it = jac[m.second].begin(); it != end; ++it)
+                    {
+                        auto& matrixBlock = *it;
+                        matrixBlock = 0.0;
 
+                        assert(matrixBlock.N() == matrixBlock.M());
+                        if(it.index() == m.second)
+                            setMatrixBlock(matrixBlock, 1.0);
+
+                        if(it.index() == m.first)
+                            setMatrixBlock(matrixBlock, -1.0);
+
+                    }
                 }
             }
         }
     }
-
-    template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethods::box, void>
-    enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
