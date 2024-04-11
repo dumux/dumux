@@ -82,7 +82,8 @@ public:
             const Scalar initialHeight,
             const Scalar initialContactRadius,
             const Scalar initialContactAngle,
-            const GlobalPosition initialCenter)
+            const GlobalPosition initialCenter,
+            const int dropletIndex)
     : volume_(initialVolume)
     , initialVolume_(initialVolume)
     , radius_(initialRadius)
@@ -93,6 +94,7 @@ public:
     , contactAngle_(initialContactAngle)
     , initialContactAngle_(initialContactAngle)
     , initialCenter_(initialCenter)
+    , dropletIndex_(dropletIndex)
     {}
 
 
@@ -162,9 +164,12 @@ public:
         return dropletDoFPositions_;
     }
 
+    int dropletIndex() const
+    { return dropletIndex_; }
+
     bool operator==(const Droplet &droplet) const
     {
-        return droplet.initialCenter_ == initialCenter_;
+        return droplet.dropletIndex_ == dropletIndex_;
     }
 
 private:
@@ -178,6 +183,7 @@ private:
     Scalar initialContactRadius_ = 0.0;
     Scalar height_ = 0.0;
     Scalar initialHeight_ = 0.0;
+    int dropletIndex_;
     std::vector<GridIndexType> dropletElems_;
     std::vector<GridIndexType> dropletDoFs_;
     std::vector<GlobalPosition> dropletDoFPositions_;

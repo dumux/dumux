@@ -108,7 +108,7 @@ public:
             return 0.0;
         Scalar temp = dropletDispenseTimeInterval_ - (this->time_ - std::round(this->time_ / dropletDispenseTimeInterval_) * dropletDispenseTimeInterval_);
         Scalar dispenseTimeStepSize = temp > dropletDispenseTimeInterval_ + 1e-10 ? (temp - dropletDispenseTimeInterval_):temp;
-std::cout<<"--------dispenseTimeStepSize--------"<<dispenseTimeStepSize<<std::endl;
+
         return min(this->endTime_ - this->time_, dispenseTimeStepSize);
     }
 

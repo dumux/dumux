@@ -131,16 +131,20 @@ public:
     void update()
     {
         for (auto& droplet : droplets_)
-        {
-            updateDropGeometry_(droplet);
-        }
+            updateDropletGeometry_(droplet);
 
     }
 
     void dispenseDroplet()
     {
         if (ifDispenseDroplet_())
-            initDroplet_();
+        {
+            if (distanceBetweenDroplets_ > 1e-10 || droplets_.empty())
+                initDroplet_();
+            else
+                updateDropletGeometry_(droplets_[0], initialVolume_);
+        }
+
     }
 
     bool checkDropletsGeometry() const
@@ -288,7 +292,7 @@ public:
 
 private:
 
-    void updateDropGeometry_(Drop& droplet)
+    void updateDropletGeometry_(Drop& droplet)
     {
 
         Scalar radius = 0.0;
@@ -300,13 +304,39 @@ private:
         Scalar flux = volumeFlux_(droplet);
 
         volume = computeDropVolume_(droplet.volume(), dt, flux);
-        std::cout<<" ------------volume------------- "<<volume<<std::endl;
+        std::cout<<" ------------updated volume------------- "<<volume<<std::endl;
         if (volume < 1e-6*droplet.initialVolume())
         {
             auto it = std::find(droplets_.begin(), droplets_.end(), droplet);
             droplets_.erase(it);
             return;
         }
+        contactAngle = computeContactAngle_(volume, contactRadius);
+
+        radius = contactRadius;
+        radius /= sin(contactAngle);
+
+        height = radius - radius * cos(contactAngle);
+
+        droplet.update(volume,
+                       radius,
+                       height,
+                       contactAngle);
+    }
+
+    void updateDropletGeometry_(Drop& droplet, Scalar dispensedVolume)
+    {
+
+        Scalar radius = 0.0;
+        Scalar contactAngle = 0.0;
+        Scalar volume = 0.0;
+        Scalar height = 0.0;
+        Scalar contactRadius = droplet.contactRadius();
+
+        volume = droplet.volume() + dispensedVolume;
+        std::cout<<" ------------a droplet falls on the tablet------------- "<<std::endl;
+        std::cout<<" ------------volume------------- "<<volume<<std::endl;
+
         contactAngle = computeContactAngle_(volume, contactRadius);
 
         radius = contactRadius;
@@ -350,9 +380,10 @@ private:
                      initialHeight_,
                      initialContactRadius_,
                      initialContactAngle_,
-                     dropletCenter);
-
-std::cout<<" ------------initialVolume------------- "<<initialVolume_<<std::endl;
+                     dropletCenter,
+                     dropletCounter_);
+        std::cout<<" ------------a droplet falls on the tablet------------- "<<std::endl;
+        std::cout<<" ------------initialVolume------------- "<<initialVolume_<<std::endl;
         std::vector<GridIndex> dropletDoFs;
         std::vector<GlobalPosition> dropletDoFPositions;
         std::vector<GridIndex> dropletElems;
