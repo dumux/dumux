@@ -12,7 +12,7 @@ dumux_add_test(NAME test_pnm_2pnc
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2pnc-reference.vtp
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc-00010.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc-00013.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc")
 
 dumux_add_test(NAME test_pnm_2pnc_ni
@@ -23,5 +23,5 @@ dumux_add_test(NAME test_pnm_2pnc_ni
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2pnc_ni-reference.vtp
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc_ni-00004.vtp
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc_ni params_ni.input -Problem.Name test_pnm_2pnc_ni")
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc_ni-00014.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2pnc_ni params_ni.input")
