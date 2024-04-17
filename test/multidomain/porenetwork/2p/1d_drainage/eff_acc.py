@@ -27,7 +27,7 @@ kinematicViscosity = 1e-7 # kinemaic viscosity in m²/s
 volumeFlux = massFlux/density # volume flux of injected flux in m³/kg
 tEnd = 500 # total injection time in s
 numTotalPores = 10 # total pore number
-maxTimeStep = [20, 100, 250] # We limit the maximum time step size from 0.05 to tEnd
+maxTimeStep = [10, 20, 50] # We limit the maximum time step size from 5s to 10s
 regularizationDelta = [0.4, 0.6] # we test few different regularization Delta
 
 
@@ -112,7 +112,7 @@ for maxdt in maxTimeStep:
                    + ['-Grid.ThroatCrossSectionShape', 'Circle']
                    + ['-Pnm.Problem.Name', str(testName[1])]
                    + ['-Problem.NonWettingMassFlux', str(massFlux)]
-                   + ['-Newton.UseLineSearch', str(True)]
+                   + ['-Newton.UseLineSearch', str(False)]
                    + ['-Newton.MaxSteps', str(500)]
                    + ['-Newton.TargetSteps', str(500)]
                    + ['-Newton.MaxTimeStepDivisions', str(1)])
