@@ -105,7 +105,7 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                // checks if invasion or snap-off occurred after Newton iteration step
+                // checks if invasion or snap-off occurred after each time step
                 if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
                 {
                     hasChangedInCurrentIteration_ = true;
@@ -187,7 +187,7 @@ public:
 
 private:
 
-    //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
+    //! The switch for determining the invasion state of a pore throat. Called at the end of each time step.
     template<class Element, class ElementVolumeVariables, class FluxVariablesCache>
     auto invasionSwitch_(const Element& element,
                          const ElementVolumeVariables& elemVolVars,
