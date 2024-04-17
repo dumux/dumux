@@ -261,7 +261,6 @@ public:
     template<class AveragedValues>
     void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
     {
-        const Scalar avgSw = avgValues["avgSat"];
 
 
         logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
