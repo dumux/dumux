@@ -66,14 +66,14 @@ public:
             if(!invaded)
             {
                 using std::sin; using std::min; using std::max;
-                v = max(0.0,min(v,2*delta_));
-                return 0.5*(1+sin(M_PI*(v-delta_)/(2.0*delta_)));
+                v = max(0.0,min(v,delta_));
+                return 0.5*(1+sin(M_PI*(v-0.5*delta_)/(delta_)));
             }
             else
             {
                 using std::sin; using std::min; using std::max;
-                v = max(-2*delta_,min(v,0.0));
-                return 0.5*(1+sin(M_PI*(v+delta_)/(2.0*delta_)));
+                v = max(-delta_,min(v,0.0));
+                return 0.5*(1+sin(M_PI*(v+0.5*delta_)/(delta_)));
             }
         }
         else if(mode_ == RegFunction::linear)
