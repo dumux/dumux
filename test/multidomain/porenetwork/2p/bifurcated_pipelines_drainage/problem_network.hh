@@ -29,6 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include "../regularization.hh"
 
 namespace Dumux {
 
@@ -74,7 +75,9 @@ public:
                     const std::string& paramGroup = "",
                     std::shared_ptr<CouplingManager> couplingManager = nullptr)
     : ParentType(gridGeometry, spatialParams, paramGroup),
-      couplingManager_(couplingManager)
+      couplingManager_(couplingManager),
+      reg_(getParamFromGroup<std::string>(paramGroup, "Problem.RegularizationFunction", "Sine"),
+           getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8))
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
@@ -82,7 +85,6 @@ public:
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
         logfile_.open("logfile_" + this->name() + ".txt");
-        regDelta_ = getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8);
     }
 
     /*!
@@ -229,7 +231,7 @@ public:
                     auto dp = max(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
                     // Use a regularized heavyside function for theta
-                    auto theta = regHeaviside_(dp,invaded);
+                    auto theta = reg_.eval(dp,invaded);
 
                     return std::min(std::max(0.0,theta),1.0);
                 }
@@ -240,7 +242,7 @@ public:
                     auto dp = min(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
                     // Use a regularized heavyside function for theta
-                    auto theta = regHeaviside_(dp, invaded);
+                    auto theta = reg_.eval(dp, invaded);
 
                     return std::min(std::max(0.0,theta),1.0);
                 }
@@ -285,42 +287,16 @@ private:
     {
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
     }
-    Scalar regAbs_(Scalar v) const
-    {
-        return v*v/(std::sqrt(v*v + regDelta_*regDelta_));
-    }
-
-    Scalar regSign_(Scalar v) const
-    {
-        return v/(regAbs_(v) + regDelta_);
-    }
-
-    Scalar regHeaviside_(Scalar v, bool invaded) const
-    {
-        //  0.5*(1 + regSign_(dp))
-        if(!invaded)
-        {
-            using std::sin; using std::min; using std::max;
-            v = max(0.0,min(v,2*regDelta_));
-            return 0.5*(1+sin(M_PI*(v-regDelta_)/(2.0*regDelta_)));
-        }
-        else
-        {
-            using std::sin; using std::min; using std::max;
-            v = max(-2*regDelta_,min(v,0.0));
-            return 0.5*(1+sin(M_PI*(v+regDelta_)/(2.0*regDelta_)));
-        }
-    }
 
     int vtpOutputFrequency_;
     bool useFixedPressureAndSaturationBoundary_;
     bool distributeByVolume_;
     Scalar pc_;
-    Scalar regDelta_;
     Scalar nonWettingMassFlux_;
     Scalar sumInletPoresVolume_;
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
+    Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
 };
 } //end namespace Dumux
 
