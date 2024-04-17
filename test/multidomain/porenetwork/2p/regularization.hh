@@ -58,21 +58,21 @@ public:
 
     Scalar eval(Scalar v, bool invaded) const
     {
-        using std::min; using std::max;
+        using std::clamp;
         if (mode_ == RegFunction::sine)
         {
             // TODO Also only use delta and not 2delta interval
             using std::sin;
             if(!invaded)
             {
-                using std::sin; using std::min; using std::max;
-                v = max(0.0,min(v,delta_));
+                using std::sin;
+                v = clamp(v, 0.0, delta_);
                 return 0.5*(1+sin(M_PI*(v-0.5*delta_)/(delta_)));
             }
             else
             {
-                using std::sin; using std::min; using std::max;
-                v = max(-delta_,min(v,0.0));
+                using std::sin;
+                v = clamp(v, -delta_, 0.0);
                 return 0.5*(1+sin(M_PI*(v+0.5*delta_)/(delta_)));
             }
         }
@@ -80,12 +80,12 @@ public:
         {
             if(!invaded)
             {
-                v = max(0.0,min(v,delta_));
+                v = clamp(v, 0.0, delta_);
                 return v/delta_;
             }
             else
             {
-                v = max(-delta_,min(v,0.0));
+                v = clamp(v, -delta_, 0.0);
                 return 1.0 + v/delta_;
             }
         }
@@ -97,7 +97,7 @@ public:
                 auto spline = Spline<Scalar>(0, delta_, // x0, x1
                                              0.0, 1.0, // y0, y1
                                              0.0, 0.0); // deriv0, deriv1
-                v = max(0.0,min(v,delta_));
+                v = clamp(v, 0.0, delta_);
                 return spline.eval(v);
             }
             else
@@ -105,7 +105,7 @@ public:
                 auto spline = Spline<Scalar>(-delta_, 0, // x0, x1
                                              0.0, 1.0, // y0, y1
                                              0.0, 0.0); // deriv0, deriv1
-                v = max(-delta_,min(v,0.0));
+                v = clamp(v, -delta_, 0.0);
                 return spline.eval(v);
             }
         }

@@ -231,10 +231,8 @@ public:
                     auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
                     auto dp = max(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
-                    // Use a regularized heavyside function for theta
-                    auto theta = reg_.eval(dp,invaded);
-
-                    return std::min(std::max(0.0,theta),1.0);
+                    // Use a regularization function for theta
+                    return reg_.eval(dp,invaded);
                 }
                 else
                 {
@@ -242,10 +240,8 @@ public:
                     auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
                     auto dp = min(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
-                    // Use a regularized heavyside function for theta
-                    auto theta = reg_.eval(dp, invaded);
-
-                    return std::min(std::max(0.0,theta),1.0);
+                    // Use a regularization function for theta
+                    return reg_.eval(dp,invaded);
                 }
             }
             else
