@@ -1,27 +1,23 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 200 # [s]
+TEnd = 2000 # [s]
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
-
+ThroatCrossSectionShape = Circle
 UpperRight = 2e-3 2e-3 2e-3
 NumPores = 20 20 20
-
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
-StandardDeviationPoreInscribedRadius = 3e-6
-
-MinThroatLength = 1e-5
-DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+StandardDeviationPoreInscribedRadius = 0.0
+DeletionProbability = 0 0 0 1 1 1 1 1 1 1 1 1 1
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
 PruningSeedIndices = 2 3
 Sanitize = true
 DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
-
 BoundaryPoreLabels = xMin:2 xMax:3
+SanitationMode = KeepLargestCluster
 
 [Problem]
 Name = pnm_3d
@@ -29,15 +25,13 @@ VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an
 EnableGravity = false
 CapillaryPressure = 7000
 UseFixedPressureAndSaturationBoundary = false
-DistributeByVolume = false
 NonWettingMassFlux = 5e-10
-RegularizationDelta = 1e-4
+RegularizationDelta = 1e-2
 
 [Vtk]
 AddVelocity = 1
 
 [Newton]
-UseLineSearch = true
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
@@ -49,6 +43,7 @@ NewtonOverview = NewtonOverview.txt
 Verbosity = true
 #AccuracyCriterion = 0.99
 #BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
 RegularizationLowSw = 0.01

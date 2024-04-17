@@ -6,16 +6,12 @@ CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
-
+ThroatCrossSectionShape = Circle
 UpperRight = 2e-3 2e-3 2e-3
 NumPores = 20 20 20
-
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
 StandardDeviationPoreInscribedRadius = 3e-6
-
-MinThroatLength = 1e-5
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
 PruningSeedIndices = 2 3
@@ -31,7 +27,6 @@ UseFixedPressureAndSaturationBoundary = false
 DistributeByVolume = false
 CapillaryPressure = 7000
 NonWettingMassFlux = 5e-10
-RegularizationDelta = 1e-4
 
 [Pnm.Problem]
 Name = pnm_3d_md
@@ -44,8 +39,8 @@ AddVelocity = 1
 
 [Newton]
 UseLineSearch = true
-MaxSteps = 20
-TargetSteps = 10
+MaxSteps = 10
+TargetSteps = 4
 MaxRelativeShift = 1e-6
 MaxTimeStepDivisions = 10
 NewtonOutputFilename = NewtonLog.txt
