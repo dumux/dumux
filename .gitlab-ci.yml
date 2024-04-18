@@ -9,7 +9,6 @@ variables:
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.9"
-#  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_CONCURRENT_PROJECT_ID/$CI_PROJECT_PATH
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -125,7 +124,6 @@ full-dune-master-gcc-cpp-20:
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
     GIT_SUBMODULE_STRATEGY: recursive
-#    GIT_CLONE_PATH: $CI_BUILDS_DIR/cpp20/$CI_CONCURRENT_ID/$CI_CONCURRENT_PROJECT_ID/$CI_PROJECT_PATH
 
 ##################################
 # additional scheduled pipelines #
