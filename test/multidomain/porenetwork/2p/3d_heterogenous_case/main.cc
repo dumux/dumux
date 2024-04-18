@@ -30,6 +30,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 #include "properties.hh"
 
@@ -127,6 +128,10 @@ int main(int argc, char** argv)
         if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
             dofsToNeglect.push_back(vIdx);
     }
+
+    // use zero pc gradient BC for this test case
+    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
+    problem->outletCapPressureGradient(outletCapPressureGradient);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);

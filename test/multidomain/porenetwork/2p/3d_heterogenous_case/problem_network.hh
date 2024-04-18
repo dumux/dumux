@@ -29,6 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 #include "../regularization.hh"
 
 namespace Dumux {
@@ -64,6 +65,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+    using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
     using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
     using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
@@ -142,8 +144,7 @@ public:
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
         else if (isOutletPore_(scv))
         {
-            values[pwIdx] = 1.0e5;
-            values[snIdx] = 0.0;
+            values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
         }
         return values;
     }
@@ -270,6 +271,9 @@ public:
                  << std::endl;
     }
 
+    void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
+    {  outletPcGradient_ = outletPcGradient;}
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
@@ -296,6 +300,7 @@ private:
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
     Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
+    std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
 };
 } //end namespace Dumux
 
