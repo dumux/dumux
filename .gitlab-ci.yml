@@ -96,7 +96,7 @@ check-pipeline-status:
 #############################################
 # pipelines to be created in merge requests #
 full-dune-latest-release-gcc:
-  extends: .base-trigger
+  extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
 
@@ -106,12 +106,12 @@ minimal-dune-latest-release-gcc:
     IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
 
 minimal-dune-master-release-clang:
-  extends: .base-trigger
+  extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-master-clang-ubuntu-22.04
 
 full-dune-latest-release-clang:
-  extends: .base-trigger
+  extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-22.04
 
@@ -146,6 +146,7 @@ trigger lecture:
   rules:
   - if: $CI_PIPELINE_SOURCE == "schedule"
   - if: $CI_PIPELINE_SOURCE == "pipeline"
+    when: manual
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     when: manual
   stage: trigger dumux pipelines

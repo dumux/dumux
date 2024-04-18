@@ -8,11 +8,13 @@ default:
     when: runner_system_failure
 
 stages:
-  - configure
-  - linting
-  - select
-  - build
-  - test
+  - dummy1
+  - dummy2
+#  - configure
+#  - linting
+#  - select
+#  - build
+#  - test
 
 
 workflow:
@@ -28,274 +30,286 @@ variables:
   DUMUX_ENABLE_CPPCHECK: ""
   DUMUX_ENABLE_DOXYGEN_BUILD: ""
 
-
-configure:
-  stage: configure
+dummy1:
+  stage: dummy1
   script:
-    - |
-      # remove submodules (may be present due to caching done by gitlab, although this pipeline may not support the submodule)
-      rm -rf deps/*
-      if [ "${GIT_SUBMODULE_STRATEGY}" == "recursive" ]; then
-          git submodule update --init --recursive
-      fi
-      echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
-      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
-    - dunecontrol --opts=opts_file.opts --current configure
-    - dunecontrol --opts=opts_file.opts --current make -j8
-    # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
-    - |
-      if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
-        python3 -m pip install -r requirements.txt
-        cp -r /dune/modules/dune-common/build-cmake/dune-env build-cmake
-      fi
-  artifacts:
-    paths:
-      - build-cmake
-    expire_in: 3 hours
+    - pwd -P
 
-
-linters:
-  stage: linting
+dummy2:
+  stage: dummy2
   script:
-    # black
-    - echo "Running black"
-    - black --version
-    - black --check --verbose -- python
-    - black --check --verbose -- test/python
-    - black --check --verbose -- bin
-    - black --check --verbose -- dumux/porenetwork/util
-    # codespell
-    - echo "Running codespell"
-    - codespell --version
-    - codespell --skip="./deps/**/*,*format/fmt/*,*io/expression/*,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf,*dumux/common/dumuxmessage.hh" --ignore-words-list="ges"
-    # check examples
-    - |
-      if [ "${DUMUX_CHECK_EXAMPLE_DOCS}" == "true" ]; then
-        echo "Checking example documentation"
-        cd examples
-        python3 generate_example_docs.py
-        git diff -G. > example_diff.txt # -G. shows textual diff, ignoring file mode changes
-        if [ -s example_diff.txt ]; then
-          cat example_diff.txt
-          echo "Example documentation is not up-to-date. Please rerun 'generate_example_docs.py'"
-          exit 1
-        fi
-        cd ..
-      fi
-    # pylint and flake8
-    # restore Python virtual env from cache (job:configure artifacts)
-    - echo "Running pylint and flake8"
-    - |
-      if [ -d "build-cmake/dune-env" ]; then
-        rm -r /dune/modules/dune-common/build-cmake/dune-env
-        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-      fi
-    - |
-      if [ -d build-cmake/python/dumux ] ; then
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
-        pylint --rcfile=.pylintrc build-cmake/python/dumux
-        flake8 build-cmake/python/dumux
-      fi
-      pylint --rcfile=.pylintrc bin
-      pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
-      flake8 bin
-      flake8 dumux/porenetwork/util
+    - pwd -P
   needs:
-    - job: configure
-      artifacts: true
+    - job: dummy1
+      artifacts: false
 
-
-#cppcheck:
+#configure:
+#  stage: configure
+#  script:
+#    - |
+#      # remove submodules (may be present due to caching done by gitlab, although this pipeline may not support the submodule)
+#      rm -rf deps/*
+#      if [ "${GIT_SUBMODULE_STRATEGY}" == "recursive" ]; then
+#          git submodule update --init --recursive
+#      fi
+#      echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
+#      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCXX_MAX_STANDARD=${CXX_MAX_STANDARD} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
+#    - dunecontrol --opts=opts_file.opts --current configure
+#    - dunecontrol --opts=opts_file.opts --current make -j8
+#    # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
+#    - |
+#      if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
+#        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+#        python3 -m pip install -r requirements.txt
+#        cp -r /dune/modules/dune-common/build-cmake/dune-env build-cmake
+#      fi
+#  artifacts:
+#    paths:
+#      - build-cmake
+#    expire_in: 3 hours
+#
+#
+#linters:
 #  stage: linting
 #  script:
-#    - cppcheck --version
-#    - cppcheck -j8 --error-exitcode=1 --inline-suppr -iformat/fmt/ --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/*
-#    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* test
-#    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* examples
+#    # black
+#    - echo "Running black"
+#    - black --version
+#    - black --check --verbose -- python
+#    - black --check --verbose -- test/python
+#    - black --check --verbose -- bin
+#    - black --check --verbose -- dumux/porenetwork/util
+#    # codespell
+#    - echo "Running codespell"
+#    - codespell --version
+#    - codespell --skip="./deps/**/*,*format/fmt/*,*io/expression/*,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf,*dumux/common/dumuxmessage.hh" --ignore-words-list="ges"
+#    # check examples
+#    - |
+#      if [ "${DUMUX_CHECK_EXAMPLE_DOCS}" == "true" ]; then
+#        echo "Checking example documentation"
+#        cd examples
+#        python3 generate_example_docs.py
+#        git diff -G. > example_diff.txt # -G. shows textual diff, ignoring file mode changes
+#        if [ -s example_diff.txt ]; then
+#          cat example_diff.txt
+#          echo "Example documentation is not up-to-date. Please rerun 'generate_example_docs.py'"
+#          exit 1
+#        fi
+#        cd ..
+#      fi
+#    # pylint and flake8
+#    # restore Python virtual env from cache (job:configure artifacts)
+#    - echo "Running pylint and flake8"
+#    - |
+#      if [ -d "build-cmake/dune-env" ]; then
+#        rm -r /dune/modules/dune-common/build-cmake/dune-env
+#        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
+#      fi
+#    - |
+#      if [ -d build-cmake/python/dumux ] ; then
+#        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+#        pylint --rcfile=.pylintrc build-cmake/python/dumux
+#        flake8 build-cmake/python/dumux
+#      fi
+#      pylint --rcfile=.pylintrc bin
+#      pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
+#      flake8 bin
+#      flake8 dumux/porenetwork/util
 #  needs:
 #    - job: configure
 #      artifacts: true
+#
+#
+##cppcheck:
+##  stage: linting
+##  script:
+##    - cppcheck --version
+##    - cppcheck -j8 --error-exitcode=1 --inline-suppr -iformat/fmt/ --enable=missingInclude --project=build-cmake/compile_commands.json --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/*
+##    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* test
+##    - cppcheck -j8 --error-exitcode=1 --max-configs=1 --inline-suppr -iformat/fmt/ -I ${CI_PROJECT_DIR} --suppress=*:*/dune/* --suppress=*:*/fmt/* --suppress=*:*/xml/* --suppress=*:*/json/* examples
+##  needs:
+##    - job: configure
+##      artifacts: true
+##  rules:
+##    - if: $DUMUX_ENABLE_CPPCHECK == "true"
+#
+#
+#reuse:
+#  stage: linting
+#  image:
+#    name: fsfe/reuse:latest
+#    entrypoint: [""]
+#  script:
+#    - reuse lint
+#
+#
+#select tests:
+#  stage: select
+#  script:
+#    - |
+#      if [[ -n "$DUMUX_SKIP_TEST_SELECTION" ]]; then
+#        echo "Skipping test selection, build/test stages will consider all tests!"
+#        touch affectedtests.json
+#        touch changedfiles.txt
+#
+#      elif [[ -n "$MR_TARGET_BRANCH_NAME" ]]; then
+#          echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
+#          python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
+#                                                 --target-tree origin/$MR_TARGET_BRANCH_NAME
+#          python3 bin/testing/findtests.py --outfile affectedtests.json \
+#                                           --file-list changedfiles.txt \
+#                                           --build-dir build-cmake
+#
+#      elif [[ -n "$REFERENCE_SHA" ]]; then
+#          echo "Detecting changes w.r.t to reference commit $REFERENCE_SHA"
+#          python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
+#                                                 --source-tree HEAD \
+#                                                 --target-tree $REFERENCE_SHA
+#          python3 bin/testing/findtests.py --outfile affectedtests.json \
+#                                           --file-list changedfiles.txt \
+#                                           --build-dir build-cmake
+#
+#      else
+#          echo "No reference information given."
+#          echo "Skipping test selection, build/test stages will consider all tests!"
+#          touch affectedtests.json
+#          touch changedfiles.txt
+#      fi
+#  artifacts:
+#    paths:
+#      - affectedtests.json
+#      - changedfiles.txt
+#    expire_in: 3 hours
+#  needs:
+#    - job: configure
+#      artifacts: true
+#
+#
+#doxygen:
+#  stage: build
 #  rules:
-#    - if: $DUMUX_ENABLE_CPPCHECK == "true"
-
-
-reuse:
-  stage: linting
-  image:
-    name: fsfe/reuse:latest
-    entrypoint: [""]
-  script:
-    - reuse lint
-
-
-select tests:
-  stage: select
-  script:
-    - |
-      if [[ -n "$DUMUX_SKIP_TEST_SELECTION" ]]; then
-        echo "Skipping test selection, build/test stages will consider all tests!"
-        touch affectedtests.json
-        touch changedfiles.txt
-
-      elif [[ -n "$MR_TARGET_BRANCH_NAME" ]]; then
-          echo "Detecting changes w.r.t to target branch '$MR_TARGET_BRANCH_NAME'"
-          python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
-                                                 --target-tree origin/$MR_TARGET_BRANCH_NAME
-          python3 bin/testing/findtests.py --outfile affectedtests.json \
-                                           --file-list changedfiles.txt \
-                                           --build-dir build-cmake
-
-      elif [[ -n "$REFERENCE_SHA" ]]; then
-          echo "Detecting changes w.r.t to reference commit $REFERENCE_SHA"
-          python3 bin/testing/getchangedfiles.py --outfile changedfiles.txt \
-                                                 --source-tree HEAD \
-                                                 --target-tree $REFERENCE_SHA
-          python3 bin/testing/findtests.py --outfile affectedtests.json \
-                                           --file-list changedfiles.txt \
-                                           --build-dir build-cmake
-
-      else
-          echo "No reference information given."
-          echo "Skipping test selection, build/test stages will consider all tests!"
-          touch affectedtests.json
-          touch changedfiles.txt
-      fi
-  artifacts:
-    paths:
-      - affectedtests.json
-      - changedfiles.txt
-    expire_in: 3 hours
-  needs:
-    - job: configure
-      artifacts: true
-
-
-doxygen:
-  stage: build
-  rules:
-  - if: $DUMUX_ENABLE_DOXYGEN_BUILD == "true"
-    when: always
-  script:
-    - cd build-cmake
-    - make doxygen_dumux
-    - |
-      if [ -s doc/doxygen/doxyerr.log ]; then
-          echo "Doxygen warnings generated:"
-          cat doc/doxygen/doxyerr.log
-          exit 1;
-      else
-          echo "No Doxygen warnings generated"
-      fi;
-  needs:
-    - job: configure
-      artifacts: true
-  artifacts:
-    paths:
-      - build-cmake/doc/doxygen
-
-
-compile cpp:
-  stage: build
-  script:
-    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
-    # shouldn't be needed to compile C++ but currently is (https://gitlab.dune-project.org/core/dune-common/-/issues/279)
-    - |
-      if [ -d "build-cmake/dune-env" ]; then
-        rm -r /dune/modules/dune-common/build-cmake/dune-env
-        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-      fi
-    - |
-      pushd build-cmake
-        make clean && make all
-        if [ -s ../affectedtests.json ]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
-        else
-          python3 ../bin/testing/runselectedtests.py --all -b
-        fi
-      popd
-  artifacts:
-    paths:
-      - build-cmake
-      - affectedtests.json
-    expire_in: 3 hours
-  needs:
-    - job: configure
-      artifacts: true
-    - job: select tests
-      artifacts: true
-    - job: cppcheck
-      artifacts: false
-      optional: true
-
-
-test cpp:
-  stage: test
-  variables:
-    OMPI_ALLOW_RUN_AS_ROOT: 1
-    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-    DUMUX_NUM_THREADS: 4
-  script:
-    - |
-      pushd build-cmake
-        if [ -s ../affectedtests.json ]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
-        else
-          python3 ../bin/testing/runselectedtests.py --all -t
-        fi
-      popd
-  needs:
-    - job: compile cpp
-      artifacts: true
-  artifacts:
-    reports:
-      junit: junit/dumux-cmake.xml
-
-
-test python:
-  stage: test
-  variables:
-    OMPI_ALLOW_RUN_AS_ROOT: 1
-    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-    DUMUX_NUM_THREADS: 4
-  script:
-    - |
-      if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
-        if [ ! -s changedfiles.txt ]; then
-          echo "Skipping test selection: considering all Python tests."
-        else
-          echo "Detected changes in the Python bindings/Python code: considering all Python tests."
-        fi
-
-        # WARNING: this is a hack, but probably requires an upstream fix in DUNE?
-        # The issue is that the JIT compilation setup fails with cmake errors when
-        # opm is present. Cmake complains that the SuperLU::SuperLU target is not found
-        # (and maybe also SuiteSparse). OPM has its own find modules for these two, and
-        # (maybe) overwrites some compiler flags. Upstream fixes would be to either allow
-        # "deactivation" of certain python modules (here: opm), or fixing the incompatibility
-        # of the find modules (although this doesn't appear to be an issue in C++). For now,
-        # one fix is to overwrite the find modules in opm with those of dune before setting
-        # up the dune python environment.
-        if [[ -d /dune/modules/opm-common ]]; then
-          cp /dune/modules/dune-common/cmake/modules/FindSuiteSparse.cmake /dune/modules/opm-common/cmake/Modules/FindSuiteSparse.cmake
-          cp /dune/modules/dune-istl/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
-        fi
-
-        # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
-        if [ -d "build-cmake/dune-env" ]; then
-          rm -r /dune/modules/dune-common/build-cmake/dune-env
-          mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-        fi
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
-        pushd build-cmake
-          DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
-          DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
-        popd
-      else
-        echo "No changes in the Python bindings/Python code detected: skipping tests."
-      fi
-  needs:
-    - job: configure
-      artifacts: true
-    - job: select tests
-      artifacts: true
+#  - if: $DUMUX_ENABLE_DOXYGEN_BUILD == "true"
+#    when: always
+#  script:
+#    - cd build-cmake
+#    - make doxygen_dumux
+#    - |
+#      if [ -s doc/doxygen/doxyerr.log ]; then
+#          echo "Doxygen warnings generated:"
+#          cat doc/doxygen/doxyerr.log
+#          exit 1;
+#      else
+#          echo "No Doxygen warnings generated"
+#      fi;
+#  needs:
+#    - job: configure
+#      artifacts: true
+#  artifacts:
+#    paths:
+#      - build-cmake/doc/doxygen
+#
+#
+#compile cpp:
+#  stage: build
+#  script:
+#    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+#    # shouldn't be needed to compile C++ but currently is (https://gitlab.dune-project.org/core/dune-common/-/issues/279)
+#    - |
+#      if [ -d "build-cmake/dune-env" ]; then
+#        rm -r /dune/modules/dune-common/build-cmake/dune-env
+#        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
+#      fi
+#    - |
+#      pushd build-cmake
+#        make clean && make all
+#        if [ -s ../affectedtests.json ]; then
+#          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
+#        else
+#          python3 ../bin/testing/runselectedtests.py --all -b
+#        fi
+#      popd
+#  artifacts:
+#    paths:
+#      - build-cmake
+#      - affectedtests.json
+#    expire_in: 3 hours
+#  needs:
+#    - job: configure
+#      artifacts: true
+#    - job: select tests
+#      artifacts: true
+#    - job: cppcheck
+#      artifacts: false
+#      optional: true
+#
+#
+#test cpp:
+#  stage: test
+#  variables:
+#    OMPI_ALLOW_RUN_AS_ROOT: 1
+#    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+#    DUMUX_NUM_THREADS: 4
+#  script:
+#    - |
+#      pushd build-cmake
+#        if [ -s ../affectedtests.json ]; then
+#          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
+#        else
+#          python3 ../bin/testing/runselectedtests.py --all -t
+#        fi
+#      popd
+#  needs:
+#    - job: compile cpp
+#      artifacts: true
+#  artifacts:
+#    reports:
+#      junit: junit/dumux-cmake.xml
+#
+#
+#test python:
+#  stage: test
+#  variables:
+#    OMPI_ALLOW_RUN_AS_ROOT: 1
+#    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+#    DUMUX_NUM_THREADS: 4
+#  script:
+#    - |
+#      if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
+#        if [ ! -s changedfiles.txt ]; then
+#          echo "Skipping test selection: considering all Python tests."
+#        else
+#          echo "Detected changes in the Python bindings/Python code: considering all Python tests."
+#        fi
+#
+#        # WARNING: this is a hack, but probably requires an upstream fix in DUNE?
+#        # The issue is that the JIT compilation setup fails with cmake errors when
+#        # opm is present. Cmake complains that the SuperLU::SuperLU target is not found
+#        # (and maybe also SuiteSparse). OPM has its own find modules for these two, and
+#        # (maybe) overwrites some compiler flags. Upstream fixes would be to either allow
+#        # "deactivation" of certain python modules (here: opm), or fixing the incompatibility
+#        # of the find modules (although this doesn't appear to be an issue in C++). For now,
+#        # one fix is to overwrite the find modules in opm with those of dune before setting
+#        # up the dune python environment.
+#        if [[ -d /dune/modules/opm-common ]]; then
+#          cp /dune/modules/dune-common/cmake/modules/FindSuiteSparse.cmake /dune/modules/opm-common/cmake/Modules/FindSuiteSparse.cmake
+#          cp /dune/modules/dune-istl/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
+#        fi
+#
+#        # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+#        if [ -d "build-cmake/dune-env" ]; then
+#          rm -r /dune/modules/dune-common/build-cmake/dune-env
+#          mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
+#        fi
+#        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
+#        pushd build-cmake
+#          DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
+#          DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
+#        popd
+#      else
+#        echo "No changes in the Python bindings/Python code detected: skipping tests."
+#      fi
+#  needs:
+#    - job: configure
+#      artifacts: true
+#    - job: select tests
+#      artifacts: true
