@@ -33,12 +33,17 @@ variables:
 dummy1:
   stage: dummy1
   script:
+    - echo "GIT_CLONE_PATH=${GIT_CLONE_PATH}"
+    - echo "CI_BUILDS_DIR=${CI_BUILDS_DIR}"
     - pwd -P
+    - ls
+    - touch "tmp-${CXX_MAX_STANDARD}"
 
 dummy2:
   stage: dummy2
   script:
     - pwd -P
+    - ls
   needs:
     - job: dummy1
       artifacts: false
