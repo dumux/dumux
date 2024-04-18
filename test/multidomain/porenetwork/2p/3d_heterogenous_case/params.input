@@ -1,23 +1,27 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 2000 # [s]
+TEnd = 10 # [s]
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Circle
+ThroatCrossSectionShape = Square
+
 UpperRight = 2e-3 2e-3 2e-3
 NumPores = 20 20 20
+
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
-StandardDeviationPoreInscribedRadius = 0.0
-DeletionProbability = 0 0 0 1 1 1 1 1 1 1 1 1 1
+StandardDeviationPoreInscribedRadius = 3e-6
+
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1 zMin:1 zMax:1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
 PruningSeedIndices = 2 3
 Sanitize = true
+SanitationMode = KeepLargestCluster
 DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
-BoundaryPoreLabels = xMin:2 xMax:3
-SanitationMode = KeepLargestCluster
 
 [Problem]
 Name = pnm_3d
@@ -26,12 +30,14 @@ EnableGravity = false
 CapillaryPressure = 7000
 UseFixedPressureAndSaturationBoundary = false
 NonWettingMassFlux = 5e-10
-RegularizationDelta = 1e-2
+RegularizationDelta = 1e-1
+RegularizationFunction = Spline
 
 [Vtk]
 AddVelocity = 1
 
 [Newton]
+UseLineSearch = true
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
@@ -49,10 +55,3 @@ InvasionThetaThreshold = 1e-14
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.99
 HighSwRegularizationMethod = Spline
-
-[Regularization]
-RegPercentage = 0.01
-
-[Component]
-LiquidDensity = 1000
-LiquidDynamicViscosity = 1e-3
