@@ -71,6 +71,15 @@ public:
         const auto& state = couplingManager_->gridVariables(CouplingManager::poreNetworkIndex).gridFluxVarsCache().invasionState();
         const auto prevInvaded = state.invaded(element);
 
+        static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(this->paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{});
+        if(!blockNonwettingPhase.empty())
+        {
+            const auto& pnmGridGeometry = couplingManager_->problem(CouplingManager::poreNetworkIndex).gridGeometry();
+            auto eIdx = pnmGridGeometry.elementMapper().index(element);
+            if(std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), pnmGridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
+                return theta;
+        }
+
         if(!prevInvaded)
         {
             auto dp = max(elemVolVarsPNM[0].capillaryPressure(),

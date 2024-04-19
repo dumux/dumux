@@ -234,7 +234,7 @@ public:
                     auto dp = max(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
                     // Use a regularization function for theta
-                    return reg_.eval(dp,invaded);
+                    return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
                 }
                 else
                 {
@@ -243,12 +243,13 @@ public:
                     auto dp = min(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
                     // Use a regularization function for theta
-                    return reg_.eval(dp,invaded);
+                    return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
                 }
             }
             else
             {
-                return invaded ? 1.0 : 0.0;
+                Scalar val = invaded ? 1.0 : 0.0;
+                return applyInternalThetaConstraint_(fvGeometry, val);
             }
         }
         else
@@ -290,6 +291,22 @@ private:
     bool isOutletPore_(const SubControlVolume& scv) const
     {
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+    }
+
+    Scalar applyInternalThetaConstraint_(const FVElementGeometry& fvGeometry,
+                                         Scalar thetaUnconstrained) const
+    {
+        static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(this->paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{});
+        auto theta = thetaUnconstrained;
+
+        if(!blockNonwettingPhase.empty())
+        {
+            auto eIdx = fvGeometry.gridGeometry().elementMapper().index(fvGeometry.element());
+            if(std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), fvGeometry.gridGeometry().throatLabel(eIdx)) != blockNonwettingPhase.end())
+                theta = 0.0;
+        }
+
+        return theta;
     }
 
     int vtpOutputFrequency_;
