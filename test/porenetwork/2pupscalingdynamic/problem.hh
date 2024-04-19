@@ -33,6 +33,8 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -47,7 +49,6 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
 public:
@@ -60,6 +61,7 @@ public:
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         const auto& leafGridView = gridGeometry->gridView();
         sw_.resize(leafGridView.size(1), 1.0);
+                // set a default name for the problem
     }
 
     /*!
@@ -108,13 +110,20 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1e5;
+        values[pwIdx] = 1.1e5;
         values[snIdx] = 0.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         //if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
         values[snIdx] = 1.0 - sw_[scv.dofIndex()];
+
+        if (isOutletPore_(scv))
+        {
+            values[pwIdx] = 1e5;
+            values[snIdx] = 0;
+        }
+
         return values;
     }
 
@@ -162,7 +171,63 @@ public:
     { return false; }
 
     void setSw(std::vector<Scalar> sw)
-    { sw_ = sw; }
+    {
+        sw_ = sw;
+    }
+
+
+    // #### Upscaling
+
+    // [[details]] auxiliary functions needed for the upscaling process
+    // [[codeblock]]
+
+    // Set the current direction (0:x, 1:y, 2:z) in which the pressure gradient is applied
+    void setDirection(int directionIdx)
+    { direction_ = directionIdx; }
+
+    // Get the current direction in which the pressure gradient is applied.
+    int direction() const
+    { return direction_; }
+
+    // Set the side lengths to consider for the upscaling process.
+    void setSideLengths(const GlobalPosition& sideLengths)
+    { length_ = sideLengths; }
+
+    // Return the side lengths to consider for the upscaling process.
+    const GlobalPosition& sideLengths() const
+    { return length_; }
+
+    // Return the liquid mass density.
+    Scalar density() const
+    {
+        return FluidSystem::density(0.0, 0.0); // dummy values for pressure and temperature
+    }
+
+    // Return the liquid dynamic viscosity.
+    Scalar dynamicViscosity() const
+    {
+        return FluidSystem::viscosity(0.0, 0.0); // dummy values for pressure and temperature
+    }
+
+    // Return the applied pressure gradient.
+    Scalar pressureGradient() const
+    { return pressureGradient_; }
+    // [[/codeblock]]
+    // [[/details]]
+    //
+    // Return the label of inlet pores assuming a previously set direction.
+    int inletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {1, 3, 5};
+        return label[direction_];
+    }
+
+    // Return the label of outlet pores assuming a previously set direction.
+    int outletPoreLabel() const
+    {
+        static constexpr std::array<int, 3> label = {2, 4, 6};
+        return label[direction_];
+    }
 
     // \}
 
@@ -187,6 +252,11 @@ private:
     bool useFixedPressureAndSaturationBoundary_;
     Scalar pc_;
     std::vector<Scalar> sw_;
+    Scalar eps_;
+    Scalar pressureGradient_;
+    int direction_;
+    GlobalPosition length_;
+    bool useLabels_;
 };
 } //end namespace Dumux
 

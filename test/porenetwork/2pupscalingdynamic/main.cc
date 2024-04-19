@@ -66,7 +66,7 @@
 namespace Dumux {
 
 template<class GridManager, class StaticSw>
-void runSinglePhaseUpscaling(GridManager& gridManager, const StaticSw sw)
+void runSinglePhaseUpscaling(GridManager& gridManager, const StaticSw sw, int step)
 {
     const auto& swStatic = sw;
     // ### Create the grid and the grid geometry
@@ -92,6 +92,7 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticSw sw)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry, spatialParams);
     problem->setSw(swStatic);
+    problem->setName(problem->name() + std::to_string(step));
 
     // the solution vector
     using GridView = typename GridGeometry::GridView;
@@ -345,7 +346,7 @@ int main(int argc, char** argv)
     for (int step = 0; step < numSteps + 1; ++step)
     {
         const auto sw = runStaticProblem(gridManager, step);
-        runSinglePhaseUpscaling(gridManager, sw);
+        runSinglePhaseUpscaling(gridManager, sw, step);
     }
 
     // UpscalingHelper<Scalar>::plot();

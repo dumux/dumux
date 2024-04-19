@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+TEnd = 1e-3 # [s]
 
 [Grid]
 UpperRight = 1e-3 1e-3 1e-3
@@ -28,7 +28,7 @@ SurfaceTension = 0.0725
 ContactAngle = 0.0
 InletPoreLabel = 2
 OutletPoreLabel = 3
-AllowDraingeOfOutlet = true
+AllowDraingeOfOutlet = false
 EnableGravity = 0 # disable gravity
 MaximumPressureGradient = 1e10 #Pa/m
 NumberOfPressureGradients = 10 # the number of sample points for regression process
@@ -56,6 +56,9 @@ GasDensity = 1.184
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+
+[InvasionState]
+BlockNonwettingPhaseAtThroatLabel = 3
 
 
 [Vtk]
