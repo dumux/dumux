@@ -213,11 +213,12 @@ public:
         }
     }
 
-    template<class FluxVariablesCache>
+    template<class FluxVariablesCache, class SubControlVolumeFace>
     Scalar theta(const Element& element,
                  const FVElementGeometry& fvGeometry,
                  const ElementVolumeVariables& elemVolVars,
-                 const FluxVariablesCache& fluxVarsCache) const
+                 const FluxVariablesCache& fluxVarsCache,
+                 const SubControlVolumeFace& scvf) const
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
