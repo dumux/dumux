@@ -72,7 +72,7 @@ public:
         snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
 
         const Scalar alpha = spatialParams.contactAngle(element, elemVolVars);
-        if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, ThisType>())
+        if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, ThisType, SubControlVolumeFace>())
         {
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
             {

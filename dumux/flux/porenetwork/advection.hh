@@ -111,10 +111,10 @@ public:
             const auto& spatialParams = problem.spatialParams();
             using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
-
-            if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache>())
+            using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+            if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
-                auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache);
+                auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
                 theta = std::clamp(theta, 0.0, 1.0);
                 if (phaseIdx == wPhaseIdx)
                 {

@@ -364,7 +364,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // checks if invasion or snap-off occurred after Newton iteration step
-                if (const auto invasionResult = invasionSwitch_(element, fvGeometry, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
+                if (const auto invasionResult = invasionSwitch_(element, fvGeometry, elemVolVars, elemFluxVarsCache[scvf], scvf); invasionResult)
                 {
                     hasChanged_ = true;
                     if constexpr (GridFluxVariablesCache::cachingEnabled)
@@ -388,11 +388,12 @@ public:
 private:
 
     //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
-    template<class Element, class FvGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+    template<class Element, class FvGeometry, class ElementVolumeVariables, class FluxVariablesCache, class SubControlVolumeFace>
     auto invasionSwitch_(const Element& element,
                          const FvGeometry& fvGeometry,
                          const ElementVolumeVariables& elemVolVars,
-                         const FluxVariablesCache& fluxVarsCache)
+                         const FluxVariablesCache& fluxVarsCache,
+                         const SubControlVolumeFace& scvf)
 
     {
         using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
@@ -417,7 +418,7 @@ private:
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
         const auto throatPc = fluxVarsCache.pc();
-        const auto theta = problem_.theta(element, fvGeometry, elemVolVars, fluxVarsCache);
+        const auto theta = problem_.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
 
         if(!fluxVarsCache.invaded())
             invadedAfterSwitch = theta > invasionThetaThreshold_;
