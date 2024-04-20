@@ -1,0 +1,21 @@
+[Problem]
+EnableGravity = false
+FractureAperture = 1e-3
+
+[Grid]
+File = ./grids/boundary_fracture.msh
+
+[Bulk]
+Problem.Name = bulk
+SpatialParams.Permeability = 1
+
+[LowDim]
+Problem.Name = lowdim
+SpatialParams.Permeability = 1e3
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e3
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
