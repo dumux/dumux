@@ -320,7 +320,6 @@ private:
                 if (boundary && intersection.neighbor())
                     DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme");
 
-                // if it is not, but it is on the boundary -> boundary scvf
                 if (isOnFacet || boundary)
                 {
                     // keep track of number of faces
@@ -344,7 +343,7 @@ private:
 
                         // Mark vertices to be on domain and/or interior boundary
                         const auto dofIndex = this->vertexMapper().subIndex(element, vIndicesLocal[isScvfLocalIdx], dim);
-                        if (boundary) boundaryDofIndices_[ dofIndex ] = boundary;
+                        if (boundary) boundaryDofIndices_[ dofIndex ] = boundary && !isOnFacet;
                         if (isOnFacet) interiorBoundaryDofIndices_[ dofIndex ] = isOnFacet;
 
                         // increment local counter
@@ -587,7 +586,7 @@ private:
                     for (int i = 0; i < numFaceCorners; ++i)
                     {
                         const auto dofIndex = this->vertexMapper().subIndex(element, vIndicesLocal[i], dim);
-                        if (boundary) boundaryDofIndices_[ dofIndex ] = true;
+                        if (boundary) boundaryDofIndices_[ dofIndex ] = boundary && !isOnFacet;
                         if (isOnFacet)
                         {
                             interiorBoundaryDofIndices_[ dofIndex ] = true;
