@@ -33,6 +33,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/traits.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 #include "properties.hh"
 
@@ -98,13 +99,13 @@ int main(int argc, char** argv)
     static const auto constraintId = Traits::template SubDomain<1>::Index();
     x[pnmId].resize(pnmGridGeometry->numDofs());
     x[constraintId].resize(constraintGridGeometry->numDofs());
+
+    // initialize the coupling manager
+    couplingManager->init(pnmProblem, constraintProblem, x);
     pnmProblem->applyInitialSolution(x[pnmId]);
     pnmProblem->calculateSumInletVolume();
     constraintProblem->applyInitialSolution(x[constraintId]);
     auto xOld = x;
-
-    // initialize the coupling manager
-    couplingManager->init(pnmProblem, constraintProblem, x);
 
     // the grid variables
     using PNMGridVariables = GetPropType<PNMTypeTag, Properties::GridVariables>;
@@ -132,6 +133,10 @@ int main(int argc, char** argv)
 
     pnmVtkWriter.write(0.0);
     constraintVtkWriter.write(0.0);
+
+    // use zero pc gradient BC for this test case
+    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<PNMGridVariables, GetPropType<PNMTypeTag, Properties::SolutionVector>>>(*pnmGridVariables, x[pnmId]);
+    pnmProblem->outletCapPressureGradient(outletCapPressureGradient);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
