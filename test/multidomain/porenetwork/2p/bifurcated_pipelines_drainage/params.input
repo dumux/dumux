@@ -21,7 +21,7 @@ RegularizationDelta = 1e-4
 AddVelocity = 1
 
 [Newton]
-UseLineSearch = true
+UseLineSearch = false
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6

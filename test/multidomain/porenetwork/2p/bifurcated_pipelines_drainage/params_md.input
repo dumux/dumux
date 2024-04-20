@@ -27,7 +27,7 @@ Name = validate_preferential_path_md_constraint
 AddVelocity = 1
 
 [Newton]
-UseLineSearch = true
+UseLineSearch = false
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
