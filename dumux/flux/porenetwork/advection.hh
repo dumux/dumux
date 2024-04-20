@@ -112,6 +112,7 @@ public:
             using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+            const bool invaded = fluxVarsCache.invaded();
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
@@ -119,7 +120,9 @@ public:
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
-                    const Scalar kw = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                              : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+
                     return theta*kw + (1-theta)*k1p;
                 }
                 else // non-wetting phase
@@ -130,7 +133,6 @@ public:
             }
             else
             {
-                const bool invaded = fluxVarsCache.invaded();
                 if (phaseIdx == wPhaseIdx)
                 {
                     return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
