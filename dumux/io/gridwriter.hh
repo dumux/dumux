@@ -23,6 +23,7 @@
 #include <gridformat/gridformat.hpp>
 #include <gridformat/traits/dune.hpp>
 
+#include <dune/common/exceptions.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux::IO {
@@ -49,6 +50,12 @@ auto makeWriter(const Grid& grid, const Format& fmt, Args&&... args)
     const auto& comm = GridFormat::Dune::Traits::GridView<Grid>::get(grid).comm();
     return makeParallelWriter(grid, fmt, comm, std::forward<Args>(args)...);
 }
+
+template<typename T>
+concept Container = requires(const T& t) {
+    { t.size() };
+    { t[std::size_t{}] };
+};
 
 } // namespace Detail
 #endif // DOXYGEN
@@ -217,6 +224,7 @@ class GridWriter
 template<typename GridVariables, typename SolutionVector>
 class OutputModule : private GridWriter<typename GridVariables::GridGeometry::GridView, 1> {
     using ParentType = GridWriter<typename GridVariables::GridGeometry::GridView, 1>;
+    using GridView = typename GridVariables::GridGeometry::GridView;
 
     static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridVariables::GridGeometry::DiscretizationMethod>;
     static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
@@ -305,30 +313,88 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     }
 
     /*!
-     * \brief Register a dof field (automatically selects point or cell field depending on the scheme).
+     * \brief Register a dof field, which draws its values from the given container.
+     *        Automatically selects point or cell field depending on the size of the container.
      */
-    template<typename DofFunction>
-    void addField(DofFunction&& f, const std::string& name)
+    template<Detail::Container C>
+    void addField(const C& values, const std::string& name)
+    { addField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a dof field with the given precision, which draws its values from the given container.
+     *        Automatically selects point or cell field depending on the size of the container.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
-        if constexpr (isCVFE)
-            addPointField(std::forward<DofFunction>(f), name);
+        const bool hasCellSize = values.size() == gridVariables_.gridGeometry().elementMapper().size();
+        const bool hasPointSize = values.size() == gridVariables_.gridGeometry().vertexMapper().size();
+        if (hasCellSize && hasPointSize)
+            DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of field type failed. Please use addCellField or addPointField instead.");
+        if (!hasCellSize && !hasPointSize)
+            DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of field type failed. Given container size does not match neither the number of points nor cells.");
+
+        if (hasCellSize)
+            addCellField(values, name, prec);
         else
-            addCellField(std::forward<DofFunction>(f), name);
+            addPointField(values, name, prec);
     }
 
     /*!
      * \brief Register a point field.
      */
-    template<typename DofFunction>
+    template<GridFormat::Concepts::PointFunction<GridView> DofFunction>
     void addPointField(DofFunction&& f, const std::string& name)
     { this->setPointField(name, std::forward<DofFunction>(f)); }
 
     /*!
+     * \brief Register a point field from a container holding its values.
+     */
+    template<Detail::Container C>
+    void addPointField(const C& values, const std::string& name)
+    { addPointField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a point field with the given precision from a container holding its values.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addPointField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        if (values.size() != gridVariables_.gridGeometry().vertexMapper().size())
+            DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of points in the grid");
+
+        this->setPointField(name, [&] (const auto& vertex) {
+            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
+        }, prec);
+    }
+
+    /*!
      * \brief Register a point field.
      */
-    template<typename DofFunction>
+    template<GridFormat::Concepts::CellFunction<GridView> DofFunction>
     void addCellField(DofFunction&& f, const std::string& name)
     { this->setCellField(name, std::forward<DofFunction>(f)); }
+
+    /*!
+     * \brief Register a cell field from a container holding its values.
+     */
+    template<Detail::Container C>
+    void addCellField(const C& values, const std::string& name)
+    { addCellField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a cell field with the given precision from a container holding its values.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addCellField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        if (values.size() != gridVariables_.gridGeometry().elementMapper().size())
+            DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of cells in the grid");
+
+        this->setCellField(name, [&] (const auto& element) {
+            return values[gridVariables_.gridGeometry().elementMapper().index(element)];
+        }, prec);
+    }
 
     /*!
      * \brief Write the registered fields into the file with the given name.
