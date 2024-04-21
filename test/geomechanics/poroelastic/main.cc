@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     SolutionVector xExact(gridGeometry->numDofs());
     for (const auto& v : vertices(leafGridView))
         xExact[ gridGeometry->vertexMapper().index(v) ] = problem->exactDisplacement(v.geometry().center());
-    vtkWriter.addField([&] (const auto& e) { return xExact[gridGeometry->dofMapper().index(e)]; }, "u_exact");
+    vtkWriter.addField(xExact, "u_exact");
 
     // Furthermore, write out element stress tensors
     static constexpr int dim = GridGeometry::GridView::dimension;
