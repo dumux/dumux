@@ -17,6 +17,7 @@
 #if DUMUX_HAVE_GRIDFORMAT
 
 #include <ranges>
+#include <execution>
 #include <type_traits>
 
 #include <gridformat/gridformat.hpp>
@@ -442,19 +443,22 @@ public:
     void updateFieldData(const GridVariables& gridVars, const SolutionVector& x)
     {
         resizeFieldData_(gridVars.gridGeometry().numDofs());
-        for (const auto& element : elements(gridVars.gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(gridVars.gridGeometry()).bindElement(element);
-            auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, x);
-
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
-                for (auto& s : scalarFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
-                for (auto& s : vectorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
-                for (auto& s : tensorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
-            }
-        }
+        const auto range = GridFormat::cells(gridVars.gridGeometry().gridView());
+        std::for_each(
+            std::execution::par_unseq,
+            std::ranges::begin(range),
+            std::ranges::end(range),
+            [&] (const auto& element) {
+                auto fvGeometry = localView(gridVars.gridGeometry()).bindElement(element);
+                auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, x);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    const auto& volVars = elemVolVars[scv];
+                    for (auto& s : scalarFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                    for (auto& s : vectorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                    for (auto& s : tensorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                }
+        });
     }
 
     void clearFieldData()
