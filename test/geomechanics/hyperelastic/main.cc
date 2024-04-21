@@ -18,7 +18,7 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/gridWriter.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include "properties.hh"
@@ -62,9 +62,9 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // initialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    vtkWriter.addField(x, "d");
-    vtkWriter.write(0.0);
+    IO::OutputModule writer(*gridVariables, x, problem->name());
+    writer.addField(x, "d", Dumux::IO::Precision::float64);
+    writer.write(0.0);
 
     // the assembler with time loop for a transient problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
     nonLinearSolver->solve(x);
-    vtkWriter.write(1.0);
+    writer.write(1.0);
 
     return 0;
 }
