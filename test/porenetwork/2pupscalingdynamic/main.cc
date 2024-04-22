@@ -51,6 +51,7 @@
 #include <dumux/porenetwork/common/boundaryflux.hh>
 
 #include <dumux/porenetwork/2p/newtonsolver.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 #include "upscalinghelper.hh"
 #include "properties.hh"
@@ -123,6 +124,9 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticSw sw, int st
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
     vtkWriter.write(0.0);
+
+    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
+    problem->outletCapPressureGradient(outletCapPressureGradient);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -343,11 +347,12 @@ int main(int argc, char** argv)
 
 
     auto numSteps = getParam<int>("Problem.NumSteps");
-    for (int step = 0; step < numSteps + 1; ++step)
-    {
+    // for (int step = 0; step < numSteps + 1; ++step)
+    // {
+        int step = 4;
         const auto sw = runStaticProblem(gridManager, step);
         runSinglePhaseUpscaling(gridManager, sw, step);
-    }
+    // }
 
     // UpscalingHelper<Scalar>::plot();
     ////////////////////////////////////////////////////////////

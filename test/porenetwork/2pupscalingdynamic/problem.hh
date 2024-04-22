@@ -16,6 +16,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 namespace Dumux {
 
@@ -38,6 +39,8 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using OutletCapPressureGradient = typename Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -99,6 +102,7 @@ public:
         // if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
         //     bcTypes.setAllDirichlet();
         // else if (isOutletPore_(scv))
+        if (isInletPore_(scv) || isOutletPore_(scv))
             bcTypes.setAllDirichlet();
 
         return bcTypes;
@@ -111,7 +115,7 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pwIdx] = 1.1e5;
-        values[snIdx] = 0.0;
+        // values[snIdx] = 0.0;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
@@ -120,9 +124,10 @@ public:
 
         if (isOutletPore_(scv))
         {
-            values[pwIdx] = 1e5;
-            values[snIdx] = 0;
+            // values[snIdx] = 1.0 - outletPcGradient_->zeroPcGradientSw(element, scv);
+            values[pwIdx] = 1.0e5;
         }
+
 
         return values;
     }
@@ -229,6 +234,9 @@ public:
         return label[direction_];
     }
 
+    void outletCapPressureGradient(std::shared_ptr<OutletCapPressureGradient> outletPcGradient)
+    {  outletPcGradient_ = outletPcGradient;}
+
     // \}
 
 private:
@@ -257,6 +265,8 @@ private:
     int direction_;
     GlobalPosition length_;
     bool useLabels_;
+
+    std::shared_ptr<OutletCapPressureGradient> outletPcGradient_;
 };
 } //end namespace Dumux
 
