@@ -26,7 +26,7 @@
 #include <tbb/parallel_for.h>
 #endif
 
-#if HAVE_KOKKOS
+#if DUMUX_HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
 #endif
 
@@ -100,7 +100,7 @@ private:
 };
 #endif // HAVE_TBB
 
-#if HAVE_KOKKOS
+#if DUMUX_HAVE_KOKKOS
 // Kokkos backend implementation
 template<class FunctorType>
 class ParallelFor<FunctorType, Multithreading::ExecutionBackends::Kokkos>
@@ -118,7 +118,7 @@ private:
     FunctorType functor_;
     std::size_t count_;
 };
-#endif // HAVE_KOKKOS
+#endif // DUMUX_HAVE_KOKKOS
 
 
 #if DUMUX_HAVE_OPENMP
