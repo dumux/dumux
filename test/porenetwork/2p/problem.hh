@@ -52,6 +52,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
 public:
@@ -96,10 +97,12 @@ public:
         BoundaryTypes bcTypes;
 
         // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            bcTypes.setAllDirichlet();
-        else if (isOutletPore_(scv))
-            bcTypes.setAllDirichlet();
+        // if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        //     bcTypes.setAllDirichlet();
+        // else if (isOutletPore_(scv))
+        //     bcTypes.setAllDirichlet();
+
+        bcTypes.setAllNeumann();
 
 #if !ISOTHERMAL
         bcTypes.setDirichlet(temperatureIdx);
@@ -149,8 +152,8 @@ public:
         // If we do not want to use global phase pressure difference with fixed saturations and pressures,
         // we can instead only fix the non-wetting phase pressure and allow the wetting phase saturation to changle freely
         // by applying a Nitsche-type boundary condition which tries to minimize the difference between the present pn and the given value
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-            values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
+        // if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        //     values[snIdx] = (elemVolVars[scv].pressure(nPhaseIdx) - (1e5 + pc_)) * 1e8;
 
         return values;
     }
@@ -164,8 +167,9 @@ public:
 
         // get global index of pore
         const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-            values[snIdx] = 0.5;
+        const auto globalPosition = vertex.geometry().center();
+        if (initiallyFilledWithGas_(globalPosition))
+            values[snIdx] = 1.0;
         else
             values[snIdx] = 0.0;
 
@@ -177,7 +181,12 @@ public:
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return false; }
+    {
+        const auto globalPosition = element.geometry().center();
+        if (initiallyFilledWithGas_(globalPosition))
+            return true;
+
+        return false; }
 
     // \}
 
@@ -196,6 +205,29 @@ private:
     bool isOutletPore_(const SubControlVolume& scv) const
     {
         return this->gridGeometry().poreLabel(scv.dofIndex()) == Labels::outlet;
+    }
+
+    bool initiallyFilledWithGas_(const GlobalPosition &globalPos) const
+    {
+        auto middelLine0 = this->gridGeometry().bBoxMin()[0] + this->gridGeometry().bBoxMax()[0];
+        middelLine0 /= 2.0;
+
+        if (globalPos[0] > middelLine0)
+            return true;
+
+        return false;
+    }
+
+    bool initiallyFilledWithWater_(const GlobalPosition &globalPos) const
+    {
+        auto middelLine0 = this->gridGeometry().bBoxMin()[0] + this->gridGeometry().bBoxMax()[0];
+        middelLine0 /= 2.0;
+
+        if (globalPos[0] < middelLine0)
+            return true;
+
+        return false;
+
     }
 
     int vtpOutputFrequency_;
