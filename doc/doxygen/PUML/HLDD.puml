@@ -121,19 +121,21 @@ main -l- Properties
 "Solving" -[hidden]r- "Assembly"
 "Assembly" -[hidden]r- "Variables"
 "Variables" -[hidden]r- "Grid"
-Properties -[#red]- GridGeometry
-Properties -[#red]d- GridVariables
-Properties -[#red]r- PrimaryVariables
-Properties -[#red]- SolutionVector
-Properties -[#red]- Assembler
-Properties -[#red]- LocalAssembler
-Properties -[#red]- LocalResidual
-Properties -[#red]- PDESolver
-Properties -[#red]- TimeLoop
-Properties -[#red]- IOField
-Properties -[#red]- VTKOutputModule
-Properties -[#red]- SpatialParams
-Properties -[#red] Problem
+Properties -[#red,hidden]- GridGeometry
+Properties -[#red,hidden]d- GridVariables
+Properties -[#red,hidden]r- PrimaryVariables
+Properties -[#red,hidden]- SolutionVector
+Properties -[#red,hidden]- Assembler
+Properties -[#red,hidden]- LocalAssembler
+Properties -[#red,hidden]- LocalResidual
+Properties -[#red,hidden]- PDESolver
+Properties -[#red,hidden]- TimeLoop
+Properties -[#red,hidden]- IOField
+Properties -[#red,hidden]- VTKOutputModule
+Properties -[#red,hidden]- SpatialParams
+Properties -[#red,hidden] Problem
+"DuMux" o-[#red]- Properties
+"Dune" o-[#red]- Properties
 params -[hidden]d- "Output"
 
 
