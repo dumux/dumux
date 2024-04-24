@@ -99,20 +99,22 @@ LinearSolver <-d- "ISTL solvers"
 Assembler <-d- "ISTL matrices"
 LinearSolver <-d- "ISTL vectors"
  "dune-grid" -u--> GridManager
-GridManager o-u- GridView
-GridView -u-o GridGeometry
-GridGeometry -u-o Problem
+GridManager -u- GridView
+GridView -u-> GridGeometry
+GridGeometry -u- Problem
 GridGeometry -u-o SpatialParams
-GridGeometry -l-o GridVariables
-GridGeometry -l-o Assembler
+GridGeometry -[hidden]- GridVariables
+GridGeometry -l-> Assembler
 LinearSolver -d-> PDESolver
-LocalResidual -d-o LocalAssembler
-LocalAssembler <-d- Assembler
+LocalResidual -d-> LocalAssembler
+LocalAssembler -d-> Assembler
 GridVariables -l-> VTKOutputModule
 PrimaryVariables -d-o SolutionVector
 IOField --> VTKOutputModule
-Assembler --> PDESolver
-PDESolver --> TimeLoop
+Assembler <-- PDESolver
+PDESolver <-- TimeLoop
+TimeLoop --> Assembler
+Problem --> Assembler
 SolutionVector --> Assembler
 GridVariables --> Assembler
 SpatialParams -r-o Problem
