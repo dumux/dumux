@@ -23,7 +23,7 @@ TOC_INCLUDE_HEADINGS   = 4
 # custom doxygen commands
 ALIASES                += mermaid{1}="@htmlonly <div class=\"mermaid\"> @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly </div> @endhtmlonly"
 ALIASES                += refdir{1}="@ref @top_srcdir@/\1"
-ALIASES                += pumlsvg{2}="\htmlonly <object data='./../PUML/\1.svg' type='image/svg+xml' width='\2%' height='auto'>\n<!-- Fallback content for browsers that don't support object elements -->\nYour browser does not support SVG\n</object> \endhtmlonly"
+ALIASES                += pumlsvg{2}="\htmlonly <object data='./../puml/\1.svg' type='image/svg+xml' width='\2%' height='auto'>\n<!-- Fallback content for browsers that don't support object elements -->\nYour browser does not support SVG\n</object> \endhtmlonly"
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
