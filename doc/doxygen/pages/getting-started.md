@@ -157,5 +157,5 @@ This result visualized with ParaView should look something like this:
 
 ## Next steps
 
-To learn more about DuMux's structure, we highly recommend the [High-Level-Design Documentation](HLDD.md). If you are interested in the application it is recommended to visit [DuMux course](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course). During the [exercises](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master/exercises) you get a deeper insight into the structure of DuMux and its different applications.
+To learn more about DuMux's structure, we highly recommend the [High-Level-Design Documentation](hldd). If you are interested in the application it is recommended to visit [DuMux course](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course). During the [exercises](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master/exercises) you get a deeper insight into the structure of DuMux and its different applications.
 Furthermore, DuMux contains several [documented example applications](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/README.md).

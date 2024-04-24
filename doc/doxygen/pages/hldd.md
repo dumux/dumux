@@ -5,7 +5,7 @@
 ### Architecture Diagrams
 - Diagrams representing the architecture and integration with DUNE and output possibilities.
 
-\pumlsvg{HLDD,90}
+\pumlsvg{hldd,90}
 
 ## Major Concepts and Components
 
@@ -20,7 +20,7 @@ The YaspGrid class is a structured, n-dimensional, parallel tensor product grid.
 
 #### dune-istl
 
-##### ISTL vectors 
+##### ISTL vectors
 ISTL vector classes are designed to represent mathematical vector spaces. They support a recursive block structure, which is used to efficiently implement block preconditioners for hp-finite elements.
 
 ##### ISTL matrices
