@@ -40,7 +40,7 @@ EXAMPLE_PATH          += @srcdir@/extradoc \
                          @srcdir@/groups/details
 
 IMAGE_PATH             += @srcdir@/images \
-                          @srcdir@/PUML
+                          @srcdir@/puml
 
 
 EXTRA_PACKAGES        += amsmath,amssymb,units
