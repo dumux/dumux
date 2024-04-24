@@ -107,7 +107,7 @@ GridGeometry -l-o GridVariables
 GridGeometry -l-o Assembler
 LinearSolver -d-> PDESolver
 LocalResidual -d-o LocalAssembler
-LocalAssembler <-d- Assembler: uses
+LocalAssembler <-d- Assembler
 GridVariables -l-> VTKOutputModule
 PrimaryVariables -d-o SolutionVector
 IOField --> VTKOutputModule
