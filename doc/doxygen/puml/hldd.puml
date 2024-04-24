@@ -9,7 +9,7 @@ skinparam ranksep 30
 
 package "User Scenario" {
         class Problem{}
-        class SpatialParams{}
+        class SpatialParams [[./../html/group___spatial_parameters.html]]{}
         file params as "
             params.input
             ----
@@ -34,7 +34,7 @@ package "User Scenario" {
             }
             </code>
         "
-    package "Properties" {
+    package "Properties"  [[./../html/group___properties.html]] {
         package "TTag" {
             struct MyTypeTag{}
         }
