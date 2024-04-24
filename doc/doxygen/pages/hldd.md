@@ -9,28 +9,28 @@
 
 ## Major Concepts and Components
 
-In the following, a very brief overview over the major concepts and components of DuMux is provided. The focus is on the common ones that a user is exposed to for running a typical simulation. They are grouped into six categories: Grid, Variables, Assembly, Solving, Output, and Scenario. The interplay of the components is visualized in the diagram of the next section.
+In the following, a brief overview over the major concepts and components of a DuMux simulation is provided. They are grouped hierarchically according to their code location and abstraction level, with the three main categories of User Scenario, DuMux and Dune. The interplay of the components is visualized in the diagram.
 
-### Dune
+### User Scenario
+On the top-most level, the user defines a scenario consisting of a problem and, often, associated spatial parameters. The physical model, the spatial discretization method and other compile-time choices are made by assigning respective properties. The `main` function is responsible for instantiating the necessary components, executing the simulation steps and writing the output files. Run-time parameters can be passed by a file like params.input.
 
-#### dune-grid
+#### Problem
+A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms.
 
-##### YaspGrid
-The YaspGrid class is a structured, n-dimensional, parallel tensor product grid. It provides a distributed structured cube mesh and is designed to implement the DUNE grid interface for structured grids.
+#### SpatialParams
+The SpatialParams define parameters which can be dependent on the location in space within the computational domain. For a Darcy-scale porous-medium simulation, these are typically porosity and permeability as well as parameters appearing in the constitutive relations, such as the capillary entry pressure.
 
-#### dune-istl
+#### Properties
+In DuMux, properties are classes containing type definitions, values or methods which are selected at compile time. The selection includes, typically, the physical model, spatial discretization method, fluid system and grid manager. Choices are assembled in a file properties.hh.
 
-##### ISTL vectors
-ISTL vector classes are designed to represent mathematical vector spaces. They support a recursive block structure, which is used to efficiently implement block preconditioners for hp-finite elements.
+#### main.cc
+The main file includes the properties, by which, in particular, the problem is specified. In the `main` function, all necessary components are initiated and the simulation steps are performed.
 
-##### ISTL matrices
-ISTL matrices classes are designed to represent linear maps between vector spaces. They also support a recursive block structure, which allows for efficient representation and computation.
-
-##### ISTL solvers
-ISTL solvers are designed to implement iterative solvers for linear systems in a generic manner. These solvers are subclasses of the abstract base class InverseOperator, which represents the inverse of an operator.
-
+#### params.input
+The user can specify a file containing values for runtime parameters such as the number of grid cells or the initial time step size. The filename defaults to params.input.
 
 ### DuMux
+The following lists the DuMux components that a user is exposed to for running a typical simulation. They are grouped into six categories: Grid, Variables, Assembly, Solving, Output, and Scenario.
 
 #### Grid
 
@@ -50,7 +50,7 @@ The GridGeometry constructs, from a GridView, all the geometrical and topologica
 GridVariables provide access to all variables needed to solve a particular discretized PDE, that is, the primary and secondary variables at geometric locations. These locations and also the type of variables depend on the chosen discretization scheme.
 
 ##### PrimaryVariables
-
+Vector type for storing the values of the independent variables at a geometric degree of freedom.
 
 ##### SolutionVector
 A SolutionVector is a container for the primary variables at each geometrical degree of freedom (dof). In particular, it holdsg NumEqVectors for each dof.
@@ -73,8 +73,8 @@ The Assembler is responsible for calculating the global residual vector and the 
 ##### LinearSolver
 The LinearSolver is a wrapper for a DUNE-ISTL preconditioned linear solver and used to solve the linear system of equations. It provides a common interface for different linear solvers.
 
-##### Solver
-The Solver manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
+##### PDESolver
+The PDESolver manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
 
 #### TimeLoop
 The TimeLoop manages temporal aspects of transient PDEs, handling parameters such as time-step size, current simulation time, and total simulation time. Stationary PDEs bypass the need for such temporal management.
@@ -88,33 +88,25 @@ The IOFields class is responsible for managing the input and output fields. It p
 ##### VtkOutputModule
 The VtkOutputModule is responsible for writing simulation results to VTK files for visualization. It can customize the output by adding variables to the output files. It generates one file per print-out step, possibly agglomerating several files from individual processes, and groups them into a PVD file containing time-step information.
 
+### Dune
 
-### User Scenario
+#### dune-common
 
-##### params.input
+##### ParameterTree
+Implements a hierarchical structure of string parameters. Being accessible from practically any location within DuMux, it enables obtaining parameters passed by the user via a parameter file or the command line.
 
-#### Dumux::Properties
+#### dune-grid
 
-##### SpatialParams<MyTypeTag>
+##### YaspGrid
+The YaspGrid class is a structured, n-dimensional, parallel tensor product grid. It provides a distributed structured cube mesh and is designed to implement the DUNE grid interface for structured grids.
 
+#### dune-istl
 
-##### Problem<MyTypeTag>
+##### ISTL vectors
+ISTL vector classes are designed to represent mathematical vector spaces. They support a recursive block structure, which is used to efficiently implement block preconditioners for hp-finite elements.
 
-##### TTag
+##### ISTL matrices
+ISTL matrices classes are designed to represent linear maps between vector spaces. They also support a recursive block structure, which allows for efficient representation and computation.
 
-###### MyTypeTag
-
-##### SpatialParams
-
-
-
-##### Problem
-A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms.
-
-
-
-
-### User Interface
-- Building your model is done using the Property system in DuMux
-- Concretization of your model is done using the problem and params file
-- Results can be exported to VTK
+##### ISTL solvers
+ISTL solvers are designed to implement iterative solvers for linear systems in a generic manner. These solvers are subclasses of the abstract base class InverseOperator, which represents the inverse of an operator.
