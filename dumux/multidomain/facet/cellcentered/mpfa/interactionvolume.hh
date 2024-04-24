@@ -120,7 +120,8 @@ public:
             if (problem.couplingManager().isOnInteriorBoundary(element, scvf))
             {
                 numFacetElems++;
-                numOutsideFaces += scvf.numOutsideScvs();
+                if (!scvf.boundary())
+                    numOutsideFaces += scvf.numOutsideScvs();
                 isOnInteriorBoundary[fIdx] = true;
                 interiorBoundaryData_.emplace_back( scvf.index() );
             }
@@ -176,39 +177,42 @@ public:
                     scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false, facetLocalDofIdx);
 
                 // create "outside" local scvfs
-                for (LocalIndexType i = 1; i < numNeighborScvs; ++i)
+                if (!scvf.boundary())
                 {
-                    const auto outsideGridScvfIdx = flipScvfIdxSet[i-1];
-                    const auto& flipScvf = fvGeometry.scvf(outsideGridScvfIdx);
-                    const auto& outsideFlipScvfIdxSet = fvGeometry.gridGeometry().flipScvfIndexSet()[outsideGridScvfIdx];
-
-                    // rearrange the neighbor scv index vector corresponding to this scvfs flip scvf index set
-                    using std::swap;
-                    auto outsideNeighborScvIdxSet = neighborScvIndicesLocal;
-                    outsideNeighborScvIdxSet[0] = outsideNeighborScvIdxSet[i];
-                    for (LocalIndexType j = 0; j < outsideFlipScvfIdxSet.size(); ++j)
+                    for (LocalIndexType i = 1; i < numNeighborScvs; ++i)
                     {
-                        const auto flipScvfIdx = outsideFlipScvfIdxSet[j];
-                        auto it = std::find(flipScvfIdxSet.begin(), flipScvfIdxSet.end(), flipScvfIdx);
+                        const auto outsideGridScvfIdx = flipScvfIdxSet[i-1];
+                        const auto& flipScvf = fvGeometry.scvf(outsideGridScvfIdx);
+                        const auto& outsideFlipScvfIdxSet = fvGeometry.gridGeometry().flipScvfIndexSet()[outsideGridScvfIdx];
 
-                        // if we found the index, use corresponding local scv index
-                        if (it != flipScvfIdxSet.end())
-                            outsideNeighborScvIdxSet[j+1] = neighborScvIndicesLocal[std::distance(flipScvfIdxSet.begin(), it)+1];
-
-                        // otherwise this must be the "inside" scvf again
-                        else
+                        // rearrange the neighbor scv index vector corresponding to this scvfs flip scvf index set
+                        using std::swap;
+                        auto outsideNeighborScvIdxSet = neighborScvIndicesLocal;
+                        outsideNeighborScvIdxSet[0] = outsideNeighborScvIdxSet[i];
+                        for (LocalIndexType j = 0; j < outsideFlipScvfIdxSet.size(); ++j)
                         {
-                            assert(flipScvfIdx == gridScvfIdx);
-                            outsideNeighborScvIdxSet[j+1] = neighborScvIndicesLocal[0];
-                        }
-                    }
+                            const auto flipScvfIdx = outsideFlipScvfIdxSet[j];
+                            auto it = std::find(flipScvfIdxSet.begin(), flipScvfIdxSet.end(), flipScvfIdx);
 
-                    scvfIndexMap[outsideGridScvfIdx] = curLocalScvfIdx+i;
-                    localFaceData_.emplace_back(curLocalScvfIdx+i, outsideNeighborScvIdxSet[0], flipScvf.index());
-                    if (isDirichlet)
-                        scvfs_.emplace_back(flipScvf, outsideNeighborScvIdxSet, facetLocalDofIdx, /*isDirichlet*/true, facetLocalDofIdx);
-                    else
-                        scvfs_.emplace_back(flipScvf, outsideNeighborScvIdxSet, numUnknowns_++, /*isDirichlet*/false, facetLocalDofIdx);
+                            // if we found the index, use corresponding local scv index
+                            if (it != flipScvfIdxSet.end())
+                                outsideNeighborScvIdxSet[j+1] = neighborScvIndicesLocal[std::distance(flipScvfIdxSet.begin(), it)+1];
+
+                            // otherwise this must be the "inside" scvf again
+                            else
+                            {
+                                assert(flipScvfIdx == gridScvfIdx);
+                                outsideNeighborScvIdxSet[j+1] = neighborScvIndicesLocal[0];
+                            }
+                        }
+
+                        scvfIndexMap[outsideGridScvfIdx] = curLocalScvfIdx+i;
+                        localFaceData_.emplace_back(curLocalScvfIdx+i, outsideNeighborScvIdxSet[0], flipScvf.index());
+                        if (isDirichlet)
+                            scvfs_.emplace_back(flipScvf, outsideNeighborScvIdxSet, facetLocalDofIdx, /*isDirichlet*/true, facetLocalDofIdx);
+                        else
+                            scvfs_.emplace_back(flipScvf, outsideNeighborScvIdxSet, numUnknowns_++, /*isDirichlet*/false, facetLocalDofIdx);
+                    }
                 }
             }
 

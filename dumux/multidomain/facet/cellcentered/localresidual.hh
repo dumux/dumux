@@ -15,6 +15,8 @@
 #ifndef DUMUX_FACETCOUPLING_CC_LOCAL_RESIDUAL_HH
 #define DUMUX_FACETCOUPLING_CC_LOCAL_RESIDUAL_HH
 
+#include <utility>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/cclocalresidual.hh>
@@ -50,8 +52,12 @@ public:
     //! export the type used for element residuals
     using ElementResidualVector = typename ParentType::ElementResidualVector;
 
+    //! evaluate the flux residual for a sub control volume face and add to residual
+    template<class... Args>
+    void evalFlux(ElementResidualVector& residual, Args&&... args) const
+    { ParentType::evalFlux(residual, std::forward<Args>(args)...); }
+
     //! evaluate the flux residual for a sub control volume face
-    using ParentType::evalFlux;
     template< class Problem >
     NumEqVector evalFlux(const Problem& problem,
                          const Element& element,
