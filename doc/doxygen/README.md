@@ -132,7 +132,7 @@ Create the svg file using docker:
 docker run -v $(pwd):/data plantuml/plantuml -tsvg <diagram>.puml
 chown $(id -u):$(id -g) <diagram>.svg
 ```
-If you want to inlcude the diagram in a markdown file, you can use the following syntax:
+If you want to include the diagram in a markdown file, you can use the following syntax:
 
 ```markdown
 \pumlsvg{<diagram>,<relative_width>}

@@ -53,7 +53,7 @@ GridVariables provide access to all variables needed to solve a particular discr
 Vector type for storing the values of the independent variables at a geometric degree of freedom.
 
 ##### SolutionVector
-A SolutionVector is a container for the primary variables at each geometrical degree of freedom (dof). In particular, it holdsg NumEqVectors for each dof.
+A SolutionVector is a container for the primary variables at each geometrical degree of freedom (dof). In particular, it holds NumEqVectors for each dof.
 
 #### Assembly
 
