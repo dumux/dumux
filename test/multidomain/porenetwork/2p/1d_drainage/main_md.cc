@@ -196,12 +196,12 @@ int main(int argc, char** argv)
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
-            if (checkPoints.size() > 0 && timeLoop->isCheckPoint())
+            if (checkPoints.size() == 0)
             {
                 pnmVtkWriter.write(timeLoop->time());
                 constraintVtkWriter.write(timeLoop->time());
             }
-            else
+            else if(timeLoop->isCheckPoint())
             {
                 pnmVtkWriter.write(timeLoop->time());
                 constraintVtkWriter.write(timeLoop->time());

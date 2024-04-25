@@ -144,9 +144,9 @@ int main(int argc, char** argv)
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
         {
-            if (checkPoints.size() > 0 && timeLoop->isCheckPoint())
+            if (checkPoints.size() == 0)
                 vtkWriter.write(timeLoop->time());
-            else
+            else if(timeLoop->isCheckPoint())
                 vtkWriter.write(timeLoop->time());
         }
 
