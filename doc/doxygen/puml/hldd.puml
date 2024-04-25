@@ -102,25 +102,28 @@ LinearSolver <-d- "ISTL solvers"
 Assembler <-d- "ISTL matrices"
 LinearSolver <-d- "ISTL vectors"
  "dune-grid" -u--> GridManager
-GridManager -u- GridView
+GridManager o-u- GridView
 GridView -u-> GridGeometry
-GridGeometry -u- Problem
-GridGeometry -u-o SpatialParams
-GridGeometry -[hidden]- GridVariables
+GridGeometry -u-> Problem
+GridGeometry -u-> SpatialParams
+GridGeometry --> GridVariables
 GridGeometry -l-> Assembler
 LinearSolver -d-> PDESolver
-LocalResidual -d-> LocalAssembler
-LocalAssembler -d-> Assembler
+LocalResidual -d- LocalAssembler
+LocalResidual ---o Assembler
+LocalAssembler -d-o Assembler
 GridVariables -l-> VTKOutputModule
+GridVariables --- SolutionVector
 PrimaryVariables -d-o SolutionVector
 IOField --> VTKOutputModule
-Assembler <-- PDESolver
+VTKOutputModule <-- SolutionVector
+Assembler --> PDESolver
 PDESolver <-- TimeLoop
 TimeLoop --> Assembler
 Problem --> Assembler
 SolutionVector --> Assembler
 GridVariables --> Assembler
-SpatialParams -r-o Problem
+SpatialParams -r-> Problem
 main -l- Properties
 "Output" -[hidden]r- "Solving"
 "Solving" -[hidden]r- "Assembly"
@@ -139,8 +142,8 @@ Properties -[#red,hidden]- IOField
 Properties -[#red,hidden]- VTKOutputModule
 Properties -[#red,hidden]- SpatialParams
 Properties -[#red,hidden] Problem
-"DuMux" o-[#red]- Properties
-"Dune" o-[#red]- Properties
+"DuMux" -[#red]- Properties
+"Dune" -[#red]- Properties
 params -[hidden]d- "Output"
 
 
