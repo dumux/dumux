@@ -5,15 +5,18 @@ MaxTimeStepSize = 10
 InkJetFrequency = 100 #Hz
 
 [Grid]
-LowerLeft = 0 0
-UpperRight = 4e-4 2e-4 #5e-4
-Cells = 100 100 #50
+LowerLeft = 0 0 0
+UpperRight = 5e-3 1e-3 5e-3
+Cells = 100 100 50
+
+[Tablet]
+Radius = 2.5e-3
 
 [Drop]
 InitialContactAngle = 90      # °
 #InitialVolume = 1e-1         # m3
-InitialContactRadius = 1e-4   # m
-InitialCenter = 2e-4 1e-4 #5e-4
+InitialContactRadius = 5e-4   # m
+InitialCenter = 2.5e-3 1e-3 2.5e-3
 DistanceBetweenDroplets = 0.0
 
 [SpatialParams.Outer]

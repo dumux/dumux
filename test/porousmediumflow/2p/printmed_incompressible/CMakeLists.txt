@@ -9,6 +9,7 @@ dumux_add_test(NAME test_2p_incompressible_box_printmed
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
+              CMAKE_GUARD dune-subgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box-reference.vtu

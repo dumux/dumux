@@ -52,8 +52,11 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
 public:
-    TwoPTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry) {}
+    TwoPTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, GlobalPosition tabletCenter, Scalar tabletRadius)
+    : ParentType(gridGeometry)
+    , tabletCenter_(tabletCenter)
+    , tabletRadius_{tabletRadius}
+    {}
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -64,7 +67,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if (onLeftBoundary(globalPos) || onRightBoundary(globalPos))
+        if (onCircleBoundary(globalPos))
         {
             bcTypes.setAllDirichlet();
         }
@@ -275,8 +278,16 @@ public:
     {
         return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
+
+    bool onCircleBoundary(const GlobalPosition &globalPos) const
+    {
+        return std::hypot(globalPos[0]-tabletCenter_[0], globalPos[2]-tabletCenter_[2]) > tabletRadius_ - eps_;
+    }
 private:
     static constexpr Scalar eps_ = 1e-6;
+    const GlobalPosition tabletCenter_;
+    const Scalar tabletRadius_;
+
 
     std::shared_ptr<DropSolver> dropletSolver_;
 };

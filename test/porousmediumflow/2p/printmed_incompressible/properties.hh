@@ -45,7 +45,7 @@ struct TwoPIncompressibleBox { using InheritsFrom = std::tuple<TwoPIncompressibl
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPIncompressible> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::TwoPIncompressible> { using type = Dune::SubGrid<3, Dune::YaspGrid<3>>; };
 
 // Set the problem type
 template<class TypeTag>
