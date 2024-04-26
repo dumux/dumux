@@ -78,40 +78,45 @@ public:
 
     // the contructor
     Droplet(const Scalar initialVolume,
-            const Scalar initialRadius,
-            const Scalar initialHeight,
             const Scalar initialContactRadius,
             const Scalar initialContactAngle,
             const GlobalPosition initialCenter,
             const int dropletIndex)
     : volume_(initialVolume)
     , initialVolume_(initialVolume)
-    , radius_(initialRadius)
-    , initialRadius_(initialRadius)
-    , height_(initialHeight)
-    , initialHeight_(initialHeight)
+    , contactRadius_(initialContactRadius)
     , initialContactRadius_(initialContactRadius)
     , contactAngle_(initialContactAngle)
     , initialContactAngle_(initialContactAngle)
     , initialCenter_(initialCenter)
     , dropletIndex_(dropletIndex)
-    {}
+    {
+        initialRadius_ = initialContactRadius_;
+        initialRadius_ /= sin(initialContactAngle_);
+        radius_ = initialRadius_;
+
+        initialHeight_ = initialRadius_ - initialRadius_ * cos(initialContactAngle_);
+        height_ = initialHeight_;
+    }
 
 
     void update(const Scalar volume,
-                const Scalar radius,
-                const Scalar height,
+                const Scalar contactRadius,
                 const Scalar contactAngle)
     {
         volume_ = volume;
-        radius_ = radius;
-        height_ = height;
+        contactRadius_ = contactRadius;
         contactAngle_ = contactAngle;
+
+        radius_ = contactRadius_;
+        radius_ /= sin(contactAngle_);
+
+        height_= radius_ - radius_ * cos(contactAngle_);
     }
 
-    void couplingData(const std::vector<GridIndexType> dropletElems,
-                 const std::vector<GridIndexType> dropletDoFs,
-                 const std::vector<GlobalPosition> dropletDoFPositions)
+    void updateCouplingData(const std::vector<GridIndexType> dropletElems,
+                            const std::vector<GridIndexType> dropletDoFs,
+                            const std::vector<GlobalPosition> dropletDoFPositions)
     {
         dropletElems_ = dropletElems;
         dropletDoFs_ = dropletDoFs;
@@ -137,7 +142,7 @@ public:
     {   return initialVolume_; }
 
     Scalar contactRadius() const
-    {   return initialContactRadius_; }
+    {   return contactRadius_; }
 
     Scalar height() const
     {   return height_; }
@@ -180,6 +185,7 @@ private:
     Scalar initialVolume_ = 0.0;
     Scalar contactAngle_ = 0.0;
     Scalar initialContactAngle_ = 0.0;
+    Scalar contactRadius_;
     Scalar initialContactRadius_ = 0.0;
     Scalar height_ = 0.0;
     Scalar initialHeight_ = 0.0;

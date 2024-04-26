@@ -93,15 +93,18 @@ public:
             initialContactRadius_ = computeContactRadius_(initialVolume_, initialContactAngle_);
         }
 
-        initialCenter_ = getParamFromGroup<GlobalPosition>(problem_.paramGroup(), "Drop.InitialCenter", GlobalPosition(0.0));
+        initialCenter_ = getParamFromGroup<GlobalPosition>(problem_.paramGroup(), "Drop.InitialCenter", problem_.tabletCenterUpperBoundary());
+
+
+        std::cout<<"  initialCenter_  "<<initialCenter_<<std::endl;
         distanceBetweenDroplets_ = getParamFromGroup<Scalar>(problem_.paramGroup(), "Drop.DistanceBetweenDroplets", 0.0);
 
+        // make sure that not just parts of droplets overlap with each other
+        if (distanceBetweenDroplets_ > 0.0 && distanceBetweenDroplets_ < 2 * initialContactRadius_)
+            distanceBetweenDroplets_ = 2 * initialContactRadius_;
+
+
         surfaceTension_ = getParamFromGroup<Scalar>(problem_.paramGroup(),"SpatialParameters.SurfaceTension", 0.0725);
-
-        initialRadius_ = initialContactRadius_;
-        initialRadius_ /= sin(initialContactAngle_);
-
-        initialHeight_ = initialRadius_ - initialRadius_ * cos(initialContactAngle_);
 
 
         interfaceElementIndex();
@@ -137,14 +140,10 @@ public:
 
     void dispenseDroplet()
     {
-        if (ifDispenseDroplet_())
-        {
-            if (distanceBetweenDroplets_ > 1e-10 || droplets_.empty())
-                initDroplet_();
-            else
-                updateDropletGeometry_(droplets_[0], initialVolume_);
-        }
-
+        if (distanceBetweenDroplets_ > 1e-10 || droplets_.empty())
+            initDroplet_();
+        else
+            updateDropletGeometry_(droplets_[0], initialVolume_);
     }
 
     bool checkDropletsGeometry() const
@@ -290,6 +289,13 @@ public:
         return suggestedTimeStepSize;
     }
 
+    bool ifDispenseDroplet()
+    {
+        Scalar temp = timeLoop_->time() / timeLoop_->dropletDispenseTimeInterval();
+
+        return (std::abs(std::round(temp) - temp) / temp < 1e-10);
+    }
+
 private:
 
     void updateDropletGeometry_(Drop& droplet)
@@ -312,43 +318,40 @@ private:
             return;
         }
         contactAngle = computeContactAngle_(volume, contactRadius);
-
-        radius = contactRadius;
-        radius /= sin(contactAngle);
-
-        height = radius - radius * cos(contactAngle);
+        std::cout<<" ------------contactAngle------------- "<<contactAngle * 180 / M_PI<<std::endl;
+        std::cout<<" ------------contactRadius------------- "<<contactRadius<<std::endl;
 
         droplet.update(volume,
-                       radius,
-                       height,
+                       contactRadius,
                        contactAngle);
     }
 
     void updateDropletGeometry_(Drop& droplet, Scalar dispensedVolume)
     {
 
-        Scalar radius = 0.0;
         Scalar contactAngle = 0.0;
         Scalar volume = 0.0;
-        Scalar height = 0.0;
         Scalar contactRadius = droplet.contactRadius();
 
         volume = droplet.volume() + dispensedVolume;
         std::cout<<" ------------a droplet falls on the tablet------------- "<<std::endl;
-        std::cout<<" ------------volume------------- "<<volume<<std::endl;
 
         contactAngle = computeContactAngle_(volume, contactRadius);
+        contactRadius = computeContactRadius_(volume , contactAngle);
 
-        radius = contactRadius;
-        radius /= sin(contactAngle);
+        std::cout<<" ------------volume------------- "<<volume<<std::endl;
+        std::cout<<" ------------contactAngle------------- "<<contactAngle * 180 / M_PI<<std::endl;
+        std::cout<<" ------------contactRadius------------- "<<contactRadius<<std::endl;
 
-        height = radius - radius * cos(contactAngle);
 
         droplet.update(volume,
-                       radius,
-                       height,
+                       contactRadius,
                        contactAngle);
+
+        dropletCouplingData_(droplet);
     }
+
+
 
     bool checkDropletGeometry_(const Drop& droplet) const
     {
@@ -374,16 +377,28 @@ private:
 
         auto dropletCenter = initialCenter_;
         dropletCenter[0] += (dropletCounter_ - 1) * distanceBetweenDroplets_;  //TODO for now it just change the position in x-direction. Extend it!
-
+        const auto tabletCenter = problem_.tabletCenterUpperBoundary();
+        auto distanceToTabletCenter = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(tabletCenter, dropletCenter);
+        if (distanceToTabletCenter + initialContactRadius_ > problem_.tabletRadius())
+        {
+            std::cout<<"  droplet can not be dispensed outside of the tablet"<<std::endl;
+            return;
+        }
+std::cout<<"   dropletCenter   "<<dropletCenter<<std::endl;
         Drop droplet(initialVolume_,
-                     initialRadius_,
-                     initialHeight_,
                      initialContactRadius_,
                      initialContactAngle_,
                      dropletCenter,
                      dropletCounter_);
         std::cout<<" ------------a droplet falls on the tablet------------- "<<std::endl;
         std::cout<<" ------------initialVolume------------- "<<initialVolume_<<std::endl;
+
+        dropletCouplingData_(droplet);
+        droplets_.push_back(droplet);
+    }
+
+    void dropletCouplingData_(Drop& droplet)
+    {
         std::vector<GridIndex> dropletDoFs;
         std::vector<GlobalPosition> dropletDoFPositions;
         std::vector<GridIndex> dropletElems;
@@ -394,9 +409,9 @@ private:
             const auto dofIdxGlobal = scv.dofIndex();
             const auto dofPosition = scv.dofPosition();
             const auto elementIdx = scv.elementIndex();
-            const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, dropletCenter);
+            const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(dofPosition, droplet.center());
 
-            if ( !problem().onUpperBoundary(dofPosition) || distance > initialContactRadius_ )
+            if ( !problem().onUpperBoundary(dofPosition) || distance > initialContactRadius_ - 1e-6 )
                 continue;
 
             if (std::none_of(dropletDoFs.cbegin(), dropletDoFs.cend(), [&](GridIndex i){return i == dofIdxGlobal;}))
@@ -411,11 +426,9 @@ private:
         for (const auto dropdof : dropletDoFs)
         std::cout<<"   dropletDoFs  "<<dropdof<<std::endl;
 
-        droplet.couplingData( dropletElems,
-                              dropletDoFs,
-                              dropletDoFPositions);
-
-       droplets_.push_back(droplet);
+        droplet.updateCouplingData( dropletElems,
+                                    dropletDoFs,
+                                    dropletDoFPositions);
     }
 
     Scalar volumeFlux_(const Drop& droplet) const
@@ -434,7 +447,7 @@ private:
         return flux;
     }
 
-     static Scalar computeDropVolume_(Scalar prevDropVolume, Scalar dt, Scalar flux)
+    static Scalar computeDropVolume_(Scalar prevDropVolume, Scalar dt, Scalar flux)
     {
         Scalar curDropVol = prevDropVolume;
         curDropVol += (dt * flux);
@@ -451,8 +464,12 @@ private:
             return res;
         };
 
+        Scalar volumeHalfSphere=  M_PI / 3 * contactRadius * contactRadius * contactRadius * (1 - cos(M_PI / 2)) * (1 - cos(M_PI / 2)) * (2 + cos(M_PI / 2)) / (sin(M_PI / 2) * sin(M_PI / 2) * sin(M_PI / 2));
+
         if (dropVolume < 1e-30)
             return 0.0;
+        else if (dropVolume > volumeHalfSphere)
+            return M_PI / 2;
 
         Scalar lowerLimit = 0;
         Scalar upperLimit = M_PI / 2 + 1;
@@ -461,19 +478,15 @@ private:
         return Theta;
     }
 
-    static Scalar computeContactRadius_(const Scalar initialDropVolume, const Scalar initialContactAngle)
+    static Scalar computeContactRadius_(const Scalar dropVolume, const Scalar contactAngle)
     {
-        Scalar contactRadius = 3 * initialDropVolume / (M_PI * (1 - cos(initialContactAngle)) * (1 - cos(initialContactAngle)) * (2 + cos(initialContactAngle)) / (sin(initialContactAngle) * sin(initialContactAngle) * sin(initialContactAngle)));
+        if (dropVolume < 1e-30)
+            return 0.0;
+
+        Scalar contactRadius = 3 * dropVolume / (M_PI * (1 - cos(contactAngle)) * (1 - cos(contactAngle)) * (2 + cos(contactAngle)) / (sin(contactAngle) * sin(contactAngle) * sin(contactAngle)));
         contactRadius = std::cbrt(contactRadius);
 
         return contactRadius;
-    }
-
-    bool ifDispenseDroplet_()
-    {
-        Scalar temp = timeLoop_->time() / timeLoop_->dropletDispenseTimeInterval();
-
-        return (std::abs(std::round(temp) - temp) / temp < 1e-10);
     }
 
 

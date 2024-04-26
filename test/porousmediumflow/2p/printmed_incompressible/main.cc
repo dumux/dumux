@@ -63,11 +63,12 @@ public:
         const auto x = element.geometry().center()[0];
         const auto z = element.geometry().center()[2];
         // const double radius = 0.3;
-        return std::hypot(x-center_[0], z-center_[2]) < radius_;
+        return std::hypot(x-center_[0], z-center_[2]) < radius_ + eps_;
     }
 private:
     const GlobalPosition center_;
     const Scalar radius_;
+    static constexpr Scalar eps_ = 1e-6;
 };
 
 int main(int argc, char** argv)
@@ -220,7 +221,8 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // Dispense a droplet at the new time
-        dropSolver->dispenseDroplet();
+        if (dropSolver->ifDispenseDroplet())
+            dropSolver->dispenseDroplet();
 
         // set new dt as suggested by the Newton solver
         Scalar suggestedTimeStepSize = std::min(dropSolver->suggestTimeStepSize(), nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));

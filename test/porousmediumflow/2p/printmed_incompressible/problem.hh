@@ -283,6 +283,19 @@ public:
     {
         return std::hypot(globalPos[0]-tabletCenter_[0], globalPos[2]-tabletCenter_[2]) > tabletRadius_ - eps_;
     }
+
+    GlobalPosition tabletCenter() const
+    { return tabletCenter_; }
+
+    GlobalPosition tabletCenterUpperBoundary() const
+    {
+        auto center = tabletCenter_;
+        center[1] = this->gridGeometry().bBoxMax()[1];
+        return center;
+    }
+
+    Scalar tabletRadius() const
+    { return tabletRadius_; }
 private:
     static constexpr Scalar eps_ = 1e-6;
     const GlobalPosition tabletCenter_;
