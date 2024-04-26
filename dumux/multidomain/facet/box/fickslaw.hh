@@ -108,8 +108,9 @@ public:
 
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
-                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                    continue;
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                        continue;
 
                 // interpolate mole fraction to scvf integration point
                 Scalar x = 0.0;
@@ -126,8 +127,9 @@ public:
                                                    facetVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
                                                    gradX);
 
-                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                        componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
             }
 
             return componentFlux;
@@ -138,8 +140,9 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
-                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
-                    continue;
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                        continue;
 
                 // create vector with nodal mole/mass fractions
                 std::vector<Scalar> xFractions(element.subEntities(dim));
@@ -164,8 +167,9 @@ public:
                                                    insideVolVars.effectiveDiffusionCoefficient(phaseIdx, phaseIdx, compIdx),
                                                    gradX);
 
-                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+                if constexpr (!FluidSystem::isTracerFluidSystem())
+                    if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                        componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
             }
 
             return componentFlux;
