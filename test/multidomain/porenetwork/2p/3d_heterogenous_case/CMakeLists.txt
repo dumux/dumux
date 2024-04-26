@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES "params.input" "params_md.input")
+dune_symlink_to_source_files(FILES "params.input" "params_md.input" "generate_lattice_grid.py")
 dumux_add_test(NAME pnm_3d
                SOURCES main.cc
                LABELS porenetwork
