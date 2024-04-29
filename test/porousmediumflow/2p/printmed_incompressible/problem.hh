@@ -207,8 +207,8 @@ public:
         // {
         //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
         //     {
-        //         Scalar dropletInfiltrationRate = dropletSolver_->dropletMassFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache); //kg/s
-        //         dropletInfiltrationRate /= scvf.area();
+        //         // Scalar dropletInfiltrationRate = dropletSolver_->dropletMassFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache); //kg/s
+        //         // dropletInfiltrationRate /= scvf.area();
         //         values[Indices::conti0EqIdx] = dropletInfiltrationRate; // kg/(m*s) or kg/(m2*s)
         //         // std::cout<<"------dropletInfiltrationRate-------"<<dropletInfiltrationRate<<std::endl;
         //     }

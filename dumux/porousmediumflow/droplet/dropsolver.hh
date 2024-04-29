@@ -224,9 +224,13 @@ public:
         return droplets_.at(dofIdxGlobal);
     }
 
-    auto droplet() const
+    const auto& droplet() const
     {
-        return droplet_;
+        for (const Drop& droplet : droplets_)
+        {
+            if (dropletIndex_ == droplet.dropletIndex())
+                return droplet;
+        }
     }
 
     auto timeLoop()
@@ -244,6 +248,7 @@ public:
         return false;
     }
 
+
     bool isCoupledWithDroplet(const GlobalPosition &globalPos) const
     {
         if (problem().onUpperBoundary(globalPos))
@@ -259,7 +264,8 @@ public:
                 const auto distance = DropIntersection<Scalar, GlobalPosition>::distancePointToPoint(globalPos, dropletCenter);
                 if (distance < dropletContactRadius)
                 {
-                    droplet_ = droplet;
+                    bindDroplet_(droplet);
+                    // droplet_ = droplet;
                     return true;
                 }
             }
@@ -283,7 +289,8 @@ public:
         for (auto& droplet : droplets_)
         {
             Scalar flux = -volumeFlux_(droplet);
-            suggestedTimeStepSize = std::min(suggestedTimeStepSize, droplet.volume()/flux);
+            if (flux > 0.0)
+                suggestedTimeStepSize = std::min(suggestedTimeStepSize, droplet.volume()/flux);
         }
 
         return suggestedTimeStepSize;
@@ -489,6 +496,8 @@ std::cout<<"   dropletCenter   "<<dropletCenter<<std::endl;
         return contactRadius;
     }
 
+    void bindDroplet_(const Drop& droplet) const
+    { dropletIndex_ = droplet.dropletIndex(); }
 
     const Implementation& asImp_() const
     { return *static_cast<const Implementation*>(this);}
@@ -499,6 +508,7 @@ std::cout<<"   dropletCenter   "<<dropletCenter<<std::endl;
     std::size_t numDofs_;
     std::vector<Drop> droplets_{};
     mutable Drop droplet_;
+    mutable int dropletIndex_;
 
     Scalar initialContactAngle_;
     Scalar initialVolume_;

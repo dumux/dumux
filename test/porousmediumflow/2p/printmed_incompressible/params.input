@@ -6,17 +6,17 @@ InkJetFrequency = 1000 #Hz
 
 [Grid]
 LowerLeft = 0 0 0
-UpperRight = 5e-3 1e-3 5e-3
-Cells = 40 10 40
+UpperRight = 1e-2 1e-3 1e-2
+Cells = 100 5 100
 
 [Tablet]
-Radius = 2.5e-3
+Radius = 5e-3
 
 [Drop]
 InitialContactAngle = 90      # °
 #InitialVolume = 1e-1         # m3
 InitialContactRadius = 4e-4   # m
-InitialCenter = 5e-4 1e-3 2.5e-3
+InitialCenter = 2e-3 1e-3 5e-3
 DistanceBetweenDroplets = 2e-3
 
 [SpatialParams.Outer]
