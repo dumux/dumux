@@ -61,7 +61,7 @@ def find_path(startingThroat, swEntry):
     neighbor[0] = [15, 1, 12]
     neighbor[1] = [0, 2]
     neighbor[2] = [1]
-    neighbor[3] = [12, 3, 14]
+    neighbor[3] = [12, 3, 4]
     neighbor[4] = [3, 5]
     neighbor[5] = [4]
     neighbor[6] = [13, 7, 14]
