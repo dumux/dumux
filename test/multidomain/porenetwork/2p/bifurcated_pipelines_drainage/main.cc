@@ -161,6 +161,8 @@ int main(int argc, char** argv)
         problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
 
         gridVariables->advanceTimeStep();
+        if (gridVariables->gridFluxVarsCache().invasionState().updateAfterTimeStep())
+            gridVariables->gridFluxVarsCache().invasionState().update(x, gridVariables->curGridVolVars(), gridVariables->gridFluxVarsCache());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
