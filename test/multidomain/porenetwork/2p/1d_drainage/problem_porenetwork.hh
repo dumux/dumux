@@ -44,11 +44,6 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
         pwIdx = Indices::pressureIdx,
         snIdx = Indices::saturationIdx,
         nPhaseIdx = FluidSystem::phase1Idx,
-
-#if !ISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-#endif
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
