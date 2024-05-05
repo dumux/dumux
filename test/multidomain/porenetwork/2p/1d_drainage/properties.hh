@@ -18,17 +18,14 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porenetwork/2p/spatialparams.hh>
-#include <dumux/porenetwork/2p/invasionstate.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
 
 #include <dumux/common/fvproblem.hh>
-
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/porenetwork/common/utilities.hh>
 
