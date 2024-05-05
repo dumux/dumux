@@ -98,13 +98,14 @@ int main(int argc, char** argv)
     static const auto constraintId = Traits::template SubDomain<1>::Index();
     x[pnmId].resize(pnmGridGeometry->numDofs());
     x[constraintId].resize(constraintGridGeometry->numDofs());
-    pnmProblem->applyInitialSolution(x[pnmId]);
-    pnmProblem->calculateSumInletVolume();
-    constraintProblem->applyInitialSolution(x[constraintId]);
-    auto xOld = x;
 
     // initialize the coupling manager
     couplingManager->init(pnmProblem, constraintProblem, x);
+
+    pnmProblem->applyInitialSolution(x[pnmId]);
+    constraintProblem->applyInitialSolution(x[constraintId]);
+    auto xOld = x;
+
 
     // the grid variables
     using PNMGridVariables = GetPropType<PNMTypeTag, Properties::GridVariables>;
@@ -194,8 +195,16 @@ int main(int argc, char** argv)
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
-            pnmVtkWriter.write(timeLoop->time());
-            constraintVtkWriter.write(timeLoop->time());
+            if (checkPoints.size() == 0)
+            {
+                pnmVtkWriter.write(timeLoop->time());
+                constraintVtkWriter.write(timeLoop->time());
+            }
+            else if(timeLoop->isCheckPoint())
+            {
+                pnmVtkWriter.write(timeLoop->time());
+                constraintVtkWriter.write(timeLoop->time());
+            }
         }
 
         // report statistics of this time step
@@ -206,6 +215,7 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    // output some Newton statistics
     newtonSolver.report();
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
