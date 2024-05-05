@@ -50,13 +50,6 @@ namespace TTag {
 struct DrainageProblem { using InheritsFrom = std::tuple<PNMTwoP>; };
 } // end namespace TTag
 
-// set primary variables
-#if !DRAINAGE
-template<class TypeTag>
-struct Formulation<TypeTag, TTag::DrainageProblem>
-{ static constexpr auto value = TwoPFormulation::p1s0; };
-#endif
-
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DrainageProblem> { using type = DrainageProblem<TypeTag>; };
