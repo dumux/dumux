@@ -25,8 +25,6 @@ class TwoPDrainageSpatialParams
 
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
     using PermeabilityType = Scalar;

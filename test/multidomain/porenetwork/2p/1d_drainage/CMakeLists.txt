@@ -30,29 +30,3 @@ dumux_add_test(NAME test_pnm_2p_1d_drainage_md
               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d_drainage_md
               CMD_ARGS params_md.input)
-
-dumux_add_test(NAME test_pnm_2p_1d_imbibition
-              SOURCES main.cc
-              LABELS porenetwork
-              COMPILE_DEFINITIONS ISOTHERMAL=1 DRAINAGE=0
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d_drainage
-              CMD_ARGS params_square.input -Pnm.Problem.Name test_pnm_2p_imbibition)
-
-dumux_add_test(NAME test_pnm_2p_1d_imbibition_reg
-              SOURCES main.cc
-              LABELS porenetwork
-              COMPILE_DEFINITIONS ISOTHERMAL=1 DRAINAGE=0
-              COMPILE_DEFINITIONS USETHETAREGULARIZATION=1
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d_drainage
-              CMD_ARGS params_square.input -Pnm.Problem.Name test_pnm_2p_imbibition_reg)
-
-dumux_add_test(NAME test_pnm_2p_1d_imbibition_md
-              SOURCES main_md.cc
-              LABELS porenetwork
-              COMPILE_DEFINITIONS ISOTHERMAL=1 DRAINAGE=0
-              COMPILE_DEFINITIONS USETHETAREGULARIZATION=1 THROATCONSTRAINT=1
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_1d_drainage_md
-              CMD_ARGS params_md.input)

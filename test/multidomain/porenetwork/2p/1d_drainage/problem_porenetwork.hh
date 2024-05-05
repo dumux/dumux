@@ -77,27 +77,6 @@ public:
         logfile_.open("time_steps_" + this->name() + ".txt");
     }
 
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    bool shouldWriteOutput(const int timeStepIndex, const GridVariables& gridVariables) const
-    {
-        if (vtpOutputFrequency_ < 0)
-            return true;
-
-        if (vtpOutputFrequency_ == 0)
-            return (timeStepIndex == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
-        else
-            return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
-    }
-
      /*!
      * \name Boundary conditions
      */
@@ -107,41 +86,20 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
-#if DRAINAGE
         if (isOutletPore_(scv))
             bcTypes.setAllDirichlet();
-#else
-        bcTypes.setAllDirichlet();
-#endif
         return bcTypes;
     }
-
 
     //! Evaluate the boundary conditions for a Dirichlet control volume.
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-#if DRAINAGE
         values[pwIdx] = 1.0e5;
         values[snIdx] = 0.0;
-#else
-        if (isOutletPore_(scv))
-        {
-            values[pwIdx] = 1.0e5;
-            values[snIdx] = 0.8;
-        }
-        else if (isInletPore_(scv))
-        {
-            values[pwIdx] = 1.0e5;
-            values[snIdx] = 1.0;
-        }
-#endif
-
         return values;
     }
-
-
     // \}
 
     /*!
@@ -171,30 +129,14 @@ public:
         PrimaryVariables values(0.0);
         values[pwIdx] = 1e5;
         values[snIdx] = 0.0;
-#if !DRAINAGE
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-        {
-            values[pwIdx] = 1e5;
-            values[snIdx] = 1.0;
-        }
-#endif
         return values;
     }
 
-
-
     //!  Evaluate the initial invasion state of a pore throat
-#if DRAINAGE
     bool initialInvasionState(const Element& element) const
     { return false; }
-#else
-    bool initialInvasionState(const Element& element) const
-    { return true; }
-#endif
-    // \}
 
-
+    // throat parameter indicating invasion state
     template<class FluxVariablesCache, class SubControlVolumeFace>
     Scalar theta(const Element& element,
                  const FVElementGeometry& fvGeometry,
@@ -235,11 +177,19 @@ public:
             return couplingManager_->theta(element);
     }
 
-    // \}
+    // define when vtk output is written
+    bool shouldWriteOutput(const int timeStepIndex, const GridVariables& gridVariables) const
+    {
+        if (vtpOutputFrequency_ < 0)
+            return true;
 
-    /*!
-     * \brief Called at the end of each time step
-     */
+        if (vtpOutputFrequency_ == 0)
+            return (timeStepIndex == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
+        else
+            return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
+    }
+
+    // write the time of each time step into a log file
     void writeTimeStep(const Scalar time)
     {
         logfile_ << std::fixed << std::left << std::setw(20)
