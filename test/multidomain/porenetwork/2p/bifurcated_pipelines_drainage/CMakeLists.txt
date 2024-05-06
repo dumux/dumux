@@ -7,6 +7,7 @@ dune_symlink_to_source_files(FILES generate_network_analyze.py capillary_multipl
 dumux_add_test(NAME validate_preferential_path
                SOURCES main.cc
                LABELS porenetwork
+               COMPILE_DEFINITIONS BLOCKWETTINGOUTLETBACKFLOW=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path  params.input")
@@ -14,7 +15,7 @@ dumux_add_test(NAME validate_preferential_path
 dumux_add_test(NAME validate_preferential_path_reg
                SOURCES main.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS USETHETAREGULARIZATION=1
+               COMPILE_DEFINITIONS USETHETAREGULARIZATION=1 BLOCKWETTINGOUTLETBACKFLOW=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_reg  params.input")
@@ -22,7 +23,7 @@ dumux_add_test(NAME validate_preferential_path_reg
 dumux_add_test(NAME validate_preferential_path_md
                SOURCES main_md.cc
                LABELS porenetwork
-               COMPILE_DEFINITIONS USETHETAREGULARIZATION=1 THROATCONSTRAINT=1
+               COMPILE_DEFINITIONS USETHETAREGULARIZATION=1 THROATCONSTRAINT=1 BLOCKWETTINGOUTLETBACKFLOW=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md  params_md.input")

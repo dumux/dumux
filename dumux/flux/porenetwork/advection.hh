@@ -65,14 +65,17 @@ public:
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[outsideScv];
-
         // calculate the pressure difference
         const Scalar deltaP = insideVolVars.pressure(phaseIdx) - outsideVolVars.pressure(phaseIdx);
         const Scalar transmissibility = fluxVarsCache.transmissibility(phaseIdx);
         using std::isfinite;
         assert(isfinite(transmissibility));
-
         Scalar volumeFlow = transmissibility*deltaP;
+
+#if BLOCKWETTINGOUTLETBACKFLOW
+        if (fvGeometry.gridGeometry().throatLabel(fvGeometry.gridGeometry().elementMapper().index(element)) == 3 && deltaP < 0 && phaseIdx == 0)
+            return 0;
+#endif
 
         // add gravity term
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
