@@ -1,6 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
 TEnd = 10 # [s]
+CheckPoints =
 
 [Grid]
 PoreGeometry = Cube

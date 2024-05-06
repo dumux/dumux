@@ -20,17 +20,18 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/linear/istlsolvers.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/porenetwork/2p/newtonsolver.hh>
+
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
-#include <dumux/porenetwork/common/outletpcgradient.hh>
 
 #include "properties.hh"
 
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams);
+    auto problem = std::make_shared<Problem>(gridGeometry, spatialParams, "Pnm");
 
     // the solution vector
     using GridView = typename GridGeometry::GridView;
@@ -93,17 +94,11 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto dt = getParam<double>("TimeLoop.DtInitial");
+    const auto checkPoints = getParam<std::vector<double>>("TimeLoop.CheckPoints");
+    const auto tEnd = getParam<double>("TimeLoop.TEnd");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
-    // intialize the vtk output module
+    // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
@@ -113,29 +108,10 @@ int main(int argc, char** argv)
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
     vtkWriter.write(0.0);
 
-
-    Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
-    using FS = typename GridVariables::VolumeVariables::FluidSystem;
-    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
-    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
-    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
-    std::vector<std::size_t> dofsToNeglect;
-
-    for (const auto& vertex : vertices(leafGridView))
-    {
-        using Labels = GetPropType<TypeTag, Properties::Labels>;
-        const auto vIdx = gridGeometry->vertexMapper().index(vertex);
-        if (gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet)
-            dofsToNeglect.push_back(vIdx);
-    }
-
-    // use zero pc gradient BC for this test case
-    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<GridVariables, SolutionVector>>(*gridVariables, x);
-    problem->outletCapPressureGradient(outletCapPressureGradient);
-
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
+    timeLoop->setCheckPoint(checkPoints.begin(), checkPoints.end());
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -146,37 +122,39 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
+#if !USETHETAREGULARIZATION
+    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
+#else
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+#endif
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
     {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
         // try solving the non-linear system
         nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
 
-        // calculate the averaged values
-        avgValues.eval();
-        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
-
         gridVariables->advanceTimeStep();
         if (gridVariables->gridFluxVarsCache().invasionState().updateAfterTimeStep())
-        {
-            std::cout << "Update" << std::endl;
             gridVariables->gridFluxVarsCache().invasionState().update(x, gridVariables->curGridVolVars(), gridVariables->gridFluxVarsCache());
-        }
+
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
-            vtkWriter.write(timeLoop->time());
+        {
+            if (checkPoints.size() == 0)
+                vtkWriter.write(timeLoop->time());
+            else if(timeLoop->isCheckPoint())
+                vtkWriter.write(timeLoop->time());
+        }
+
+
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -185,8 +163,6 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
-
-    problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
 
     nonLinearSolver.report();
 

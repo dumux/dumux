@@ -134,10 +134,6 @@ int main(int argc, char** argv)
     pnmVtkWriter.write(0.0);
     constraintVtkWriter.write(0.0);
 
-    // use zero pc gradient BC for this test case
-    const auto outletCapPressureGradient = std::make_shared<Dumux::PoreNetwork::OutletCapPressureGradient<PNMGridVariables, GetPropType<PNMTypeTag, Properties::SolutionVector>>>(*pnmGridVariables, x[pnmId]);
-    pnmProblem->outletCapPressureGradient(outletCapPressureGradient);
-
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
