@@ -1,6 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
 TEnd = 1200 # [s]
+CheckPoints =
 
 [Grid]
 File = capillary_multiple_tubes.dgf # DGF file can be generated with pyhton script in this folder
@@ -33,6 +34,7 @@ NewtonOverview = NewtonOverview.txt
 Verbosity = true
 #AccuracyCriterion = 0.99
 BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
 RegularizationLowSw = 0.001
