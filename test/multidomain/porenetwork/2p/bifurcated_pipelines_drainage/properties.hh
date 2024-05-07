@@ -36,6 +36,7 @@
 #include "problem_porenetwork.hh"
 #include "problem_constraint.hh"
 #include "spatialparams_porenetwork.hh"
+#include "advection.hh"
 
 //////////
 // Specify the properties
