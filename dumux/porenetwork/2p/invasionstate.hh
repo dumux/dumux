@@ -352,6 +352,7 @@ public:
     template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
     void update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
     {
+        hasChanged_ = false;
         auto fvGeometry = localView(problem_.gridGeometry());
         auto elemVolVars = localView(gridVolVars);
         auto elemFluxVarsCache = localView(gridFluxVarsCache);
