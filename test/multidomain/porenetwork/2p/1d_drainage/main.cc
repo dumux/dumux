@@ -35,6 +35,37 @@
 
 #include "properties.hh"
 
+template<class Problem, class SolutionVector, class TimeLoop>
+double addNewL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x, const TimeLoop &timeloop)
+{
+    using namespace Dumux;
+    using Scalar = double;
+
+    Scalar l2error = 0.0;
+    for (const auto& element : elements(problem->gridGeometry().gridView()))
+    {
+        auto fvGeometry = localView(problem->gridGeometry());
+        fvGeometry.bindElement(element);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto dofIdx = scv.dofIndex();
+            const Scalar delta = x[dofIdx][1] - problem->analyticalSolution(dofIdx, timeloop->time());
+            l2error += delta*delta;
+        }
+    }
+    const auto numDofs = problem->gridGeometry().numDofs();
+
+    using std::sqrt;
+    l2error += timeloop->timeStepSize() * ( l2error / numDofs ); // homogenous grid
+
+    std::cout << Fmt::format("** L2 error (abs) at {}s ", timeloop->time())
+              << Fmt::format("L2 error = {:.8e}", sqrt(l2error/numDofs))
+              << std::endl;
+
+    return l2error;
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -126,6 +157,9 @@ int main(int argc, char** argv)
 #endif
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    // give an intial value of l2 error
+    double l2error = 0.0;
+
     // time loop
     timeLoop->start(); do
     {
@@ -156,6 +190,9 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
+        // print out current l2 error
+        l2error += addNewL2Error(problem, x, timeLoop);
+
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
@@ -163,6 +200,11 @@ int main(int argc, char** argv)
 
     // ouput total newton iterations
     nonLinearSolver.reportTotalIterations();
+
+    // write the norm into a log file
+    std::ofstream logFile(problem->name() + ".log");
+    using std::sqrt;
+    logFile << sqrt(l2error) << std::endl;
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

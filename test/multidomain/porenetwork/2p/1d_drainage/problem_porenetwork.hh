@@ -191,6 +191,25 @@ public:
                  << std::setfill(' ') << time << std::endl;
     }
 
+    Scalar analyticalSolution(const int dofIdx, const Scalar time) const
+    {
+        static const double density = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDensity");
+        const auto volumeFlux = nonWettingMassFlux_/density;
+        const auto snEntry = 1.0 - 0.101485677973638; // sn calculated from pc,entry
+        const auto singlePoreVolume = 6.4e-11; // in m^3, single pore volume
+        const auto timeToInvadeOnePore = snEntry * singlePoreVolume / volumeFlux;
+        int numberInvPores =  std::floor(time/timeToInvadeOnePore);
+        const auto totalInjection = volumeFlux * time;
+        const auto previousTotalInvPoreVolume = singlePoreVolume * numberInvPores * snEntry;
+        const auto snLastPore = (totalInjection - previousTotalInvPoreVolume)/singlePoreVolume;
+        if (dofIdx < numberInvPores)
+            return snEntry;
+        if (dofIdx == numberInvPores)
+            return snLastPore;
+        if (dofIdx > numberInvPores)
+            return 0.0;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
