@@ -1,0 +1,54 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 4 # [s]
+#MaxTimeStepSize = 1
+CheckPoints =
+
+[Grid]
+File = ./lattice_network.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+
+
+[Problem]
+VtpOutputFrequency = -1
+EnableGravity = false
+UseFixedPressureAndSaturationBoundary = false
+DistributeByVolume = false
+CapillaryPressure = 7000
+NonWettingMassFlux = 5e-10
+
+[Pnm.Problem]
+Name = pnm_3d_md
+
+[Constraint.Problem]
+Name = pnm_3d_md_constraint
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = false
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-10
+
+[SpatialParams]
+RegularizationLowSw = 0.01
+RegularizationHighSw = 0.99
+HighSwRegularizationMethod = Spline
+
+[Regularization]
+RegPercentage = 0.01
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3
