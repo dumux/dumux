@@ -91,7 +91,8 @@ for i in range(rowNumber - 1):
 
 throat_number = len(throat_indices_0)
 throatLength = np.ones(throat_number) * tL
-throatRadius = np.ones(throat_number) * pR * 0.5
+throatRadius   = np.random.normal(pR*0.5, pR*0.1, throat_number)
+#throatRadius = np.ones(throat_number) * pR * 0.5
 throatLabel = np.ones(throat_number) * -1
 eData = np.array([throat_indices_0, throat_indices_1, throatRadius, throatLength, throatLabel]).T
 
