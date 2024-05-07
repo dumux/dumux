@@ -61,6 +61,20 @@ struct FluidSystem<TypeTag, TTag::DrainageProblem>
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
+//! Use the advection type which blocks wetting phase back flow at outlet
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::DrainageProblem>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using S = PoreNetwork::TransmissibilityPatzekSilin<Scalar>;
+    using W = PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>;
+    using N = PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
+
+public:
+    using type = PoreNetwork::CreepingFlowBlockingWPhaseOutletBack<Scalar, S, W, N>;
+};
+
 #if USETHETAREGULARIZATION
 //! The grid flux variables cache vector class
 template<class TypeTag>
