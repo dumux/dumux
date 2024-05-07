@@ -250,7 +250,6 @@ public:
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
-                theta = std::clamp(theta, 0.0, 1.0);
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
