@@ -60,6 +60,8 @@ In brief, the script performs the following steps:
 
 Note that this process can take several minutes. The next section will guide
 you through the same process providing the necessary commands for executing each step.
+The installation is fully contained in the created folder "dumux".
+The script does not modify your system or local environment.
 
 ## 2. Manually installing DUNE and Dumux from source
 
