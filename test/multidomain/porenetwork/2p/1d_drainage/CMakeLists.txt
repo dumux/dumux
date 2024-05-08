@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES extractresults.py porebypore.py eff_acc.py l2error.py plotL2OverTime.py)
+dune_symlink_to_source_files(FILES extractresults.py porebypore.py eff_acc.py l2error.py)
 
 dumux_add_test(NAME test_pnm_2p_1d_drainage
               SOURCES main.cc
