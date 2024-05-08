@@ -96,4 +96,4 @@ throatRadius   = np.random.normal(pR*0.5, pR*0.1, throat_number)
 throatLabel = np.ones(throat_number) * -1
 eData = np.array([throat_indices_0, throat_indices_1, throatRadius, throatLength, throatLabel]).T
 
-writeDGF("lattic_network.dgf", vData, eData)
+writeDGF("lattice_network.dgf", vData, eData)
