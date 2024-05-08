@@ -102,6 +102,8 @@ int main(int argc, char** argv)
     PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
+    std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
+    vtkWriter.addField(elementIsInvaded, "Invaded", Vtk::FieldType::element);
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
     vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
@@ -143,6 +145,12 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        for (const auto& element : elements(gridGeometry->gridView()))
+        {
+            const auto eIdx = gridGeometry->elementMapper().index(element);
+            elementIsInvaded[eIdx] = gridVariables->gridFluxVarsCache().invasionState().invaded(element);
+        }
 
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
