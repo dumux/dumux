@@ -63,7 +63,7 @@ kinematicViscosity = 1e-7 # kinemaic viscosity in m²/s
 volumeFlux = massFlux/density # volume flux of injected flux in m³/kg
 tEnd = 400 # total injection time in s
 numTotalPores = 10 # total pore number
-maxTimeStep =  [2, 1, 0.5, 0.25] # We limit the maximum time step size from 5s to 10s
+maxTimeStep =  [4, 2, 1, 0.5, 0.25] # We limit the maximum time step size from 5s to 10s
 regularizationDelta = [0.1, 0.01] # we test few different regularization Delta
 
 
@@ -192,30 +192,31 @@ for itime, maxdt in enumerate(maxTimeStep):
 ############        Plot        ##############
 ##############################################
 
-fig, ax = plt.subplots(dpi=300, ncols=2, nrows=1, figsize=(6, 3)) # two subplots, acc & eff
+fig, ax = plt.subplots(dpi=300, ncols=2, nrows=1, figsize=(8, 4)) # two subplots, acc & eff
 
 # 1st subplot about accuracy
 for idx, interval in enumerate(regularizationDelta):
-    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI, $\\tilde{\Theta} = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[0].plot(averageTimeStepRegNonReduce[idx], l2ErrorRegNonReduce[idx], marker="^", label = 'FI-R, $\Theta = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[0].plot(averageTimeStepRegReduce[idx], l2ErrorRegReduce[idx], marker=">", label = 'FI-R, decreased $\Theta$', linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepRegNonReduce[idx], l2ErrorRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepRegReduce[idx], l2ErrorRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
 ax[0].set_xlabel("Average time step size")
 ax[0].set_ylabel("$E_{S_{w}}$ [-]")
 ax[0].set_yscale('log')
-ax[0].set_xticks(maxTimeStep, label = map(str, maxTimeStep), fontsize = 13)
-ax[0].legend()
+ax[0].set_xticks([0.5, 1, 2, 4])
+ax[0].legend(loc='upper center', bbox_to_anchor=(0.47, 1.32), ncol=2, prop={'size': 8})
 
 # 2nd subplot about efficiency
 for idx, interval in enumerate(regularizationDelta):
-    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI, $\\tilde{\Theta} = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\Theta = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[1].plot(averageTimeStepRegReduce[idx], totalNewtonIterationsRegReduce[idx], marker=">", label = 'FI-R, decreased $\Theta$', linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepRegReduce[idx], totalNewtonIterationsRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
 ax[1].set_xlabel("Average time step size")
 ax[1].set_ylabel("total newton iterations [-]")
 ax[1].set_yscale('log')
-ax[1].set_xticks(maxTimeStep, label = map(str, maxTimeStep), fontsize = 13)
-ax[1].legend()
+ax[1].set_xticks([0.5, 1, 2, 4])
+ax[1].legend(loc='upper center', bbox_to_anchor=(0.5, 1.32), ncol=2, prop={'size': 8})
+
+
 plt.subplots_adjust(wspace=0, hspace=0)
 fig.tight_layout(rect=[0.03, 0.07, 1, 0.9], pad=0.4, w_pad=2.0, h_pad=1.0)
-plt.show()
 plt.savefig("1D_drainage_accuracy_efficency.pdf", dpi=900)
