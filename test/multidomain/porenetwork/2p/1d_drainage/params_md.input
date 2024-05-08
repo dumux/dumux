@@ -31,7 +31,7 @@ Name = test_pnm_2p_md_constraint
 MaxSteps = 10
 TargetSteps = 4
 #UseLineSearch = true
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-10
 MaxTimeStepDivisions = 20
 
 [InvasionState]
