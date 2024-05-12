@@ -12,3 +12,4 @@ dumux_add_test(
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box-00001.vtu
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box params.input"
 )
+target_link_libraries(test_hyperelastic_box PRIVATE adpp::adpp)

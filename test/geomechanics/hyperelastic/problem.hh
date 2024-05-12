@@ -7,6 +7,9 @@
 #ifndef DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 #define DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 
+#include <adpp/backward.hpp>
+#include <adpp/backward/tensor.hpp>
+
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
@@ -83,35 +86,48 @@ public:
     // from Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
     // ψ = K(0.5(J*J - 1) - ln J) + 0.5µ (J^(-2/3) tr(C) - 3)
     // P = 2F∂ψ/∂C = µ J^(-2/3) (F - 1/3*tr(C)*F^-T) + K*(J*J - 1)F^-T
-    Tensor firstPiolaKirchhoffStressTensor(Tensor F) const
+    Tensor firstPiolaKirchhoffStressTensor(Tensor FIn) const
     {
-        // invariants
-        const auto J = F.determinant();
-        const auto Jm23 = std::pow(J, -2.0/3.0);
-        auto trC = 0.0;
-        for (int i = 0; i < dimWorld; ++i)
-            for (int j = 0; j < dimWorld; ++j)
-                trC += F[i][j]*F[i][j];
+        static_assert(dimWorld == 3, "1st Piola-Kirchhoff stress tensor only implemented in 3d");
 
-        // inverse transpose of deformation gradient
-        const auto invFT = [&](){
-            auto invFT = F;
-            if (J != 0.0)
-                invFT.invert();
-            return transpose(invFT);
-        }();
+        using namespace adpp;
+        using namespace adpp::backward;
 
-        // material parameters
-        const auto mu = this->spatialParams().shearModulus();
-        const auto K = this->spatialParams().bulkModulus();
+        static constexpr var K;
+        static constexpr var mu;
+        static constexpr tensor F{adpp::shape<3, 3>};
 
-        // assemble 1st Piola Kirchhoff stress tensor
-        Tensor P(0.0);
-        P.axpy(K*(J*J - 1), invFT);
-        auto& FTerm = F;
-        FTerm.axpy(-1.0/3.0*trC, invFT);
-        P.axpy(mu*Jm23, FTerm);
-        return P;
+        static constexpr auto trC = F.dot(F);
+        static constexpr auto J = F.det();
+        static constexpr auto psi
+            = K*(cval<0.5>*(J*J - cval<1.0>) - log(J))
+            + cval<0.5>*mu*(pow(J, cval<-2.0/3.0>)*trC - cval<3.0>);
+
+        // TODO: bindings from tensors...
+        const auto P = derivatives_of(psi, wrt(F.vars()), at(
+            F = {
+                FIn[0][0], FIn[0][1], FIn[0][2],
+                FIn[1][0], FIn[1][1], FIn[1][2],
+                FIn[2][0], FIn[2][1], FIn[2][2]
+            },
+            mu = this->spatialParams().shearModulus(),
+            K = this->spatialParams().bulkModulus())
+        );
+
+        // TODO: add export_to function? Or allow for substitution of underlying array type?
+        Tensor result;
+        result[0][0] = P[F[md_index<0, 0>]];
+        result[0][1] = P[F[md_index<0, 1>]];
+        result[0][2] = P[F[md_index<0, 2>]];
+
+        result[1][0] = P[F[md_index<1, 0>]];
+        result[1][1] = P[F[md_index<1, 1>]];
+        result[1][2] = P[F[md_index<1, 2>]];
+
+        result[2][0] = P[F[md_index<2, 0>]];
+        result[2][1] = P[F[md_index<2, 1>]];
+        result[2][2] = P[F[md_index<2, 2>]];
+        return result;
     }
 
 private:
