@@ -4,3 +4,7 @@
 [submodule "deps/gridformat"]
 	path = deps/gridformat
 	url = https://github.com/dglaeser/gridformat.git
+[submodule "deps/adpp"]
+	path = deps/adpp
+	url = https://github.com/dglaeser/adpp.git
+	branch = feature/vectors
