@@ -61,7 +61,7 @@ def find_path(startingThroat, swEntry):
     neighbor[0] = [15, 1, 12]
     neighbor[1] = [0, 2]
     neighbor[2] = [1]
-    neighbor[3] = [12, 3, 4]
+    neighbor[3] = [12, 13, 4]
     neighbor[4] = [3, 5]
     neighbor[5] = [4]
     neighbor[6] = [13, 7, 14]
@@ -79,19 +79,15 @@ def find_path(startingThroat, swEntry):
     endThroats = [2, 5, 8, 11]
     throatsInvaded = []
     throatNotInvaded = np.setdiff1d(allthroats, throatsInvaded)
-    # print(throatNotInvaded)
 
     ongoingthroat = startingThroat
     throatsInvaded.append(ongoingthroat)
     while (ongoingthroat not in endThroats):
         allneighbors = [neighbor[i][j] for i in throatsInvaded for j in range(len(neighbor[i]))]
         neighborNotInvaded = np.setdiff1d(allneighbors, throatsInvaded)
-        # print("neighbors not invaded yet: ", neighborNotInvaded)
         neighborNotInvadedSw = [ swEntry[i] for i in neighborNotInvaded ]
         ongoingthroat =  list(swEntry).index(max(neighborNotInvadedSw))
-        # print("throat currently invaded: ", ongoingthroat)
         throatsInvaded.append(ongoingthroat)
-        # print("throat has been invaded: ", throatsInvaded)
     return throatsInvaded
 
 def calculate_invasion_time(path, swEntry, poreVolume, volumeFlux):
@@ -156,6 +152,10 @@ if __name__ == "__main__":
     volumeFlux = 5e-10/1000
     swEntry = Sw(pcEntry)
     # print(swEntry)
-    path = find_path(15, swEntry)
-    print(path)
-    time = calculate_invasion_time(path, swEntry, poreVolume, volumeFlux)
+    analytical_path = find_path(15, swEntry)
+    analytical_pcEntry = []
+    for invaded_throat_index in analytical_path:
+        analytical_pcEntry.append(pcEntry[invaded_throat_index])
+    print(analytical_path)
+    print(analytical_pcEntry)
+    np.savez("analytical_solution", analytical_path = analytical_path, analytical_pcEntry = analytical_pcEntry)
