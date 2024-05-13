@@ -103,7 +103,9 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); //! Add model specific output fields
 
     std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
+    std::vector<double> pcij(leafGridView.size(0), 0.0);
     vtkWriter.addField(elementIsInvaded, "Invaded", Vtk::FieldType::element);
+    vtkWriter.addField(pcij, "pcij", Vtk::FieldType::element);
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
     vtkWriter.addField(gridGeometry->throatShapeFactor(), "throatShapeFactor", Vtk::FieldType::element);
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
@@ -130,6 +132,12 @@ int main(int argc, char** argv)
 #endif
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    using FluxVarsCache = typename GridVariables::GridFluxVariablesCache::FluxVariablesCache;
+    FluxVarsCache fluxVarsCache;
+    auto fvGeometry = localView(problem->gridGeometry());
+    auto elemVolVars = localView(gridVariables->curGridVolVars());
+    auto elemFluxVarsCache = localView(gridVariables->gridFluxVarsCache());
+
     // time loop
     timeLoop->start(); do
     {
@@ -150,6 +158,11 @@ int main(int argc, char** argv)
         {
             const auto eIdx = gridGeometry->elementMapper().index(element);
             elementIsInvaded[eIdx] = gridVariables->gridFluxVarsCache().invasionState().invaded(element);
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, x);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+            for (const auto& scvf : scvfs(fvGeometry))
+                pcij[eIdx] = elemFluxVarsCache[scvf].pc();
         }
 
         // write vtk output
