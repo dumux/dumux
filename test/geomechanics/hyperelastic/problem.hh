@@ -103,30 +103,30 @@ public:
             = K*(cval<0.5>*(J*J - cval<1.0>) - log(J))
             + cval<0.5>*mu*(pow(J, cval<-2.0/3.0>)*trC - cval<3.0>);
 
-        // TODO: bindings from tensors...
-        const auto P = derivatives_of(psi, wrt(F.vars()), at(
+        // TODO: bindings of from mdranges...
+        const auto bindings = at(
             F = {
                 FIn[0][0], FIn[0][1], FIn[0][2],
                 FIn[1][0], FIn[1][1], FIn[1][2],
                 FIn[2][0], FIn[2][1], FIn[2][2]
             },
             mu = this->spatialParams().shearModulus(),
-            K = this->spatialParams().bulkModulus())
+            K = this->spatialParams().bulkModulus()
         );
 
-        // TODO: add export_to function? Or allow for substitution of underlying array type?
+        // TODO: implement function to differentiate w.r.t. multiple variables and export result to tensor
         Tensor result;
-        result[0][0] = P[F[md_index<0, 0>]];
-        result[0][1] = P[F[md_index<0, 1>]];
-        result[0][2] = P[F[md_index<0, 2>]];
+        result[0][0] = differentiate(psi, wrt(F[md_index<0, 0>])).evaluate(bindings);
+        result[0][1] = differentiate(psi, wrt(F[md_index<0, 1>])).evaluate(bindings);
+        result[0][2] = differentiate(psi, wrt(F[md_index<0, 2>])).evaluate(bindings);
 
-        result[1][0] = P[F[md_index<1, 0>]];
-        result[1][1] = P[F[md_index<1, 1>]];
-        result[1][2] = P[F[md_index<1, 2>]];
+        result[1][0] = differentiate(psi, wrt(F[md_index<1, 0>])).evaluate(bindings);
+        result[1][1] = differentiate(psi, wrt(F[md_index<1, 1>])).evaluate(bindings);
+        result[1][2] = differentiate(psi, wrt(F[md_index<1, 2>])).evaluate(bindings);
 
-        result[2][0] = P[F[md_index<2, 0>]];
-        result[2][1] = P[F[md_index<2, 1>]];
-        result[2][2] = P[F[md_index<2, 2>]];
+        result[2][0] = differentiate(psi, wrt(F[md_index<2, 0>])).evaluate(bindings);
+        result[2][1] = differentiate(psi, wrt(F[md_index<2, 1>])).evaluate(bindings);
+        result[2][2] = differentiate(psi, wrt(F[md_index<2, 2>])).evaluate(bindings);
         return result;
     }
 
