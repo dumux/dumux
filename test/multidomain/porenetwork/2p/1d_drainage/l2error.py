@@ -196,7 +196,7 @@ fig, ax = plt.subplots(dpi=300, ncols=2, nrows=1, figsize=(8, 4)) # two subplots
 
 # 1st subplot about accuracy
 for idx, interval in enumerate(regularizationDelta):
-    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI-N, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
     ax[0].plot(averageTimeStepRegNonReduce[idx], l2ErrorRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
     ax[0].plot(averageTimeStepRegReduce[idx], l2ErrorRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
 ax[0].set_xlabel("Average time step size")
@@ -207,7 +207,7 @@ ax[0].legend(loc='upper center', bbox_to_anchor=(0.47, 1.32), ncol=2, prop={'siz
 
 # 2nd subplot about efficiency
 for idx, interval in enumerate(regularizationDelta):
-    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI-N, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
     ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
     ax[1].plot(averageTimeStepRegReduce[idx], totalNewtonIterationsRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
 ax[1].set_xlabel("Average time step size")
