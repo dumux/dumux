@@ -37,7 +37,6 @@ NewtonOutputFilename = NewtonLog.txt
 [InvasionState]
 Verbosity = true
 #AccuracyCriterion = 0.99
-BlockNonwettingPhaseAtThroatLabel = 3
 InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
