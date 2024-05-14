@@ -100,8 +100,7 @@ def calculate_invasion_time(path, swEntry, poreVolume, volumeFlux):
     # print("time used for each inv: ", t)
     print("invasion time point: ", t_inv)
 
-if __name__ == "__main__":
-
+def generate_network_with_random_throat_radii(seed):
     poreNumberX = 4
     poreNumberY = 4
 
@@ -136,6 +135,7 @@ if __name__ == "__main__":
         throatLabel[(poreNumberY - 2) + (poreNumberY - 1)* i] = 3
 
     throatRadius = []
+    rd.seed(seed)
     for i in range(numberOfThroats):
         throatRadius.append(1e-3 * rd.uniform(0.1, 0.15))
     throat1.append(numberOfPores)
@@ -151,11 +151,8 @@ if __name__ == "__main__":
     poreVolume = 8*defaultPoreRadius*defaultPoreRadius*defaultPoreRadius
     volumeFlux = 5e-10/1000
     swEntry = Sw(pcEntry)
-    # print(swEntry)
     analytical_path = find_path(15, swEntry)
     analytical_pcEntry = []
     for invaded_throat_index in analytical_path:
         analytical_pcEntry.append(pcEntry[invaded_throat_index])
-    print(analytical_path)
-    print(analytical_pcEntry)
     np.savez("analytical_solution", analytical_path = analytical_path, analytical_pcEntry = analytical_pcEntry)
