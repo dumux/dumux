@@ -131,6 +131,11 @@ int main(int argc, char** argv)
     Dumux::VtkOutputModule<ConstraintGridVariables, GetPropType<ConstraintTypeTag, Properties::SolutionVector>> constraintVtkWriter(*constraintGridVariables, x[constraintId], constraintProblem->name());
     IOFieldsConstraint::initOutputModule(constraintVtkWriter); //! Add model specific output fields
 
+    std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
+    std::vector<double> pcij(leafGridView.size(0), 0.0);
+    pnmVtkWriter.addField(elementIsInvaded, "Invaded", Vtk::FieldType::element);
+    pnmVtkWriter.addField(pcij, "pcij", Vtk::FieldType::element);
+
     pnmVtkWriter.write(0.0);
     constraintVtkWriter.write(0.0);
 
@@ -155,6 +160,12 @@ int main(int argc, char** argv)
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver newtonSolver(assembler, linearSolver, couplingManager);
+
+    using PNMFluxVarsCache = typename PNMGridVariables::GridFluxVariablesCache::FluxVariablesCache;
+    PNMFluxVarsCache pnmFluxVarsCache;
+    auto pnmFvGeometry = localView(pnmProblem->gridGeometry());
+    auto pnmElemVolVars = localView(pnmGridVariables->curGridVolVars());
+    auto pnmElemFluxVarsCache = localView(pnmGridVariables->gridFluxVarsCache());
 
     // The following update is needed because the constraint is formualted for each time step and needs to be updated afterwards
     // One could also change the constraint by accounting for previous time step data
@@ -192,6 +203,16 @@ int main(int argc, char** argv)
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        for (const auto& element : elements(pnmGridGeometry->gridView()))
+        {
+            const auto eIdx = pnmGridGeometry->elementMapper().index(element);
+            elementIsInvaded[eIdx] = pnmGridVariables->gridFluxVarsCache().invasionState().invaded(element);
+            pnmFvGeometry.bindElement(element);
+            pnmElemVolVars.bind(element, pnmFvGeometry, x[pnmId]);
+            pnmElemFluxVarsCache.bind(element, pnmFvGeometry, pnmElemVolVars);
+            for (const auto& scvf : scvfs(pnmFvGeometry))
+                pcij[eIdx] = pnmElemFluxVarsCache[scvf].pc();
+        }
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
