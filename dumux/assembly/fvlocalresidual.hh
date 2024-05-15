@@ -250,7 +250,7 @@ public:
 
     /*!
      * \name Discretization specific interface
-     * \note The following method are the discretization specific wrapper methods
+     * \note The following methods are the discretization specific wrapper methods
      */
     // \{
 
