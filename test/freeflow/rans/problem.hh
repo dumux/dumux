@@ -135,7 +135,7 @@ public:
     }
 
     /*!
-     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     * \brief Returns whether a fixed Dirichlet value shall be used inside a given cell.
      *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
@@ -150,7 +150,7 @@ public:
     { return isDirichletCell_(element, fvGeometry, scv, pvIdx); }
 
      /*!
-      * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
+      * \brief Evaluate the boundary conditions for dirichlet values at the given boundary.
       *
       * \param element The finite element
       * \param scvf the sub control volume face
@@ -190,7 +190,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value at the given global position.
      *
      * \param globalPos The global position
      */

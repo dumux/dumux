@@ -65,7 +65,7 @@ struct AdvectiveFlux<NavierStokesMassOnePNCModelTraits<nComp, useM, repCompEqIdx
             flux[eqIdx] += upwind(upwindTerm);
         }
 
-        // in case one balance is substituted by the total mole balance
+        // in case one balance is substituted by the total mass balance
         if constexpr(useTotalMassBalance)
         {
             auto upwindTerm = [&]()

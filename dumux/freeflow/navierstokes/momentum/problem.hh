@@ -365,7 +365,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value at an sub control volume
+     * \brief Evaluate the initial value at a sub control volume
      */
     InitialValues initial(const SubControlVolume& scv) const
     {
@@ -395,7 +395,7 @@ public:
      *  Here, \f$h\f$ corresponds to the extruded height that is
      *  bounded by the imaginary walls. See Flekkoy et al. (1995) \cite flekkoy1995a<BR>
      *  A value of 8.0 is used as a default factor, corresponding
-     *  to the velocity profile at  the center plane
+     *  to the velocity profile at the center plane
      *  of the virtual height (maximum velocity). Setting this value to 12.0 corresponds
      *  to an depth-averaged velocity (Venturoli and Boek, 2006) \cite venturoli2006a.
      */
@@ -472,7 +472,7 @@ public:
 
     /*!
      * \brief Returns the slip velocity at a porous boundary based on the Beavers-Joseph(-Saffman) condition.
-     * \note This only returns a vector filled with one component of the slip velocity (corresponding to the dof axis of the scv the svf belongs to)
+     * \note This only returns a vector filled with one component of the slip velocity (corresponding to the dof axis of the scv the scvf belongs to)
      */
     [[deprecated("Will be removed after release 3.9.")]]
     const VelocityVector beaversJosephVelocity(const FVElementGeometry& fvGeometry,
@@ -640,8 +640,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Evaluate the source term for all phases at a given position
      *
      * \param globalPos The position of the center of the finite volume
      *            for which the source term ought to be

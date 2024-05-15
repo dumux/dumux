@@ -27,7 +27,7 @@ namespace Dumux {
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \brief A helper function to add Brinkman term to the momentum balance
+ * \brief A helper function to add the Brinkman term to the momentum balance
  * \addtogroup NavierStokesModel
  * @{
  * The Navier-Stokes model can be extended to a Darcy-Brinkman model by adding
@@ -36,7 +36,7 @@ namespace Dumux {
       + \epsilon_B \mu \mathbf{K}^{-1} \mathbf{v}
  * \f]
  * to the momentum balance. This can be achieved with the helper function \ref addBrinkmanTerm.
- * The function relies on the spatial parameters class being based on <code>BrinkmanSpatialParams</code>
+ * This function relies on the spatial parameters class being based on <code>BrinkmanSpatialParams</code>
  * or providing the `brinkmanEpsilon` and `inversePermeability` interfaces.
  * These interface functions provide the
  * weighting factor \f$ \epsilon_B \f$ and the permeability tensor \f$ \mathbf{K} \f$.

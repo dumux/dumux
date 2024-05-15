@@ -61,7 +61,6 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes model
  *
- * \tparam dimension The dimension of the problem
  */
 template<int nComp, bool useM, int repCompEqIdx = nComp>
 struct NavierStokesMassOnePNCModelTraits
@@ -73,7 +72,7 @@ struct NavierStokesMassOnePNCModelTraits
     //! The number of phases is 1
     static constexpr int numFluidPhases() { return 1; }
 
-    //! The number of components is 1
+    //! The number of components can be freely chosen
     static constexpr int numFluidComponents() { return nComp; }
 
     //! Use moles or not
@@ -99,7 +98,7 @@ struct NavierStokesMassOnePNCModelTraits
     { return TurbulenceModel::none; }
 
     //! the indices
-    using Indices = NavierStokesMassOnePIndices;
+    using Indices = NavierStokesMassOnePNCIndices;
 };
 
 /*!

@@ -9,8 +9,8 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
-#define DUMUX_NAVIERSTOKES_MASS_1P_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_MASS_1PNC_INDICES_HH
+#define DUMUX_NAVIERSTOKES_MASS_1PNC_INDICES_HH
 
 namespace Dumux {
 
@@ -18,9 +18,9 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief The common indices for the isothermal Navier-Stokes mass conservation model.
  */
-struct NavierStokesMassOnePIndices
+struct NavierStokesMassOnePNCIndices
 {
-    static constexpr int conti0EqIdx = 0; //!< Index of the first (total for pure-fluid systems) mass balance equation
+    static constexpr int conti0EqIdx = 0; //!< Index of the first component mass/mole balance equation
     static constexpr int pressureIdx = conti0EqIdx; //!< Index of the pressure
 };
 

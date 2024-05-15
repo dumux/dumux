@@ -29,8 +29,8 @@ struct ShallowWaterIndices
     static constexpr int momentumYBalanceIdx = 2; //!< Index of the y momentum balance equation
 
     static constexpr int waterdepthIdx = massBalanceIdx; //!< Index of the velocity in a solution vector
-    static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the velocity in a solution vector
-    static constexpr int velocityYIdx = momentumYBalanceIdx; //!< Index of the velocity in a solution vector
+    static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the x velocity in a solution vector
+    static constexpr int velocityYIdx = momentumYBalanceIdx; //!< Index of the y velocity in a solution vector
     static constexpr int velocityOffset = velocityXIdx; //!< Offset for the velocity index
 };
 

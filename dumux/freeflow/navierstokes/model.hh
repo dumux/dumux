@@ -77,7 +77,7 @@ struct NavierStokesModelTraits
     //! Enable advection
     static constexpr bool enableAdvection() { return true; }
 
-    //! The one-phase model has no molecular diffusion
+    //! The one-phase one-component model has no molecular diffusion
     static constexpr bool enableMolecularDiffusion() { return false; }
 
     //! The model is isothermal
