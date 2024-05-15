@@ -66,9 +66,9 @@ computeConnectedElements(const GridGeometry& gg)
         || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
     )
     {
-        // for MPFA-O schemes the assembly of each element residual touches all vertex neighbors
-        // for face-centered staggered it is all codim-2 neighbors (vertex neighbors in 2D, edge neighbors in 3D)
-        // but we use vertex neighbors also in 3D for simplicity
+        // For MPFA-O schemes the assembly of each element residual touches all vertex neighbors.
+        // For face-centered staggered schemes it is all codim-2 neighbors (vertex neighbors in 2D, edge neighbors in 3D)
+        // but we use vertex neighbors also in 3D for simplicity.
         std::vector<std::vector<std::size_t>> vToElements;
         static constexpr int dim = GridGeometry::GridView::dimension;
         vToElements.resize(gg.gridView().size(dim));
