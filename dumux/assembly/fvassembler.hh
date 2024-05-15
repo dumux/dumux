@@ -422,10 +422,10 @@ private:
             {
                 assert(elementSets_.size() > 0);
 
-                // make this element loop run in parallel
-                // for this we have to color the elements so that we don't get
-                // race conditions when writing into the global matrix
-                // each color can be assembled using multiple threads
+                // Use this element loop run in parallel.
+                // For this we have to color the elements so that we don't get
+                // race conditions when writing into the global matrix.
+                // Each color can be assembled using multiple threads.
                 for (const auto& elements : elementSets_)
                 {
                     Dumux::parallelFor(elements.size(), [&](const std::size_t i)
