@@ -87,7 +87,7 @@ namespace Dumux {
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
- * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam isImplicit Specifies whether the time discretization is implicit or not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
