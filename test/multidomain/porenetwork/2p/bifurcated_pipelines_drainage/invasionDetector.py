@@ -7,6 +7,7 @@ import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 from generate_network_analyze import generate_network_with_random_throat_radii
+from generate_network_analyze import pcEntry_invasion_path
 
 def find_all_vtp_files_withPrefix(prefix):
     vtp_file_lists = []
@@ -49,11 +50,13 @@ def get_invasion_status_from_vtp(vtp_file_name):
 def get_new_invaded_throat_indices(previous, current):
     diff = (~np.equal(previous, current)).astype(int)
     invaded_throat_indices = np.flatnonzero(diff)
+    invaded_throat_indices = sorted(invaded_throat_indices, key=lambda x: pcEntry_invasion_path(x))
     return invaded_throat_indices
 
 def get_pc_for_invading_pores(invading_path, number_invaded, vtp_files):
     invasion_sequence = np.array_split(invading_path, np.cumsum(number_invaded))
     invasion_pc_ij = []
+    reference_pc_ij = []
     reader = vtk.vtkXMLPolyDataReader()
     for invaded_throats, vtp in zip(invasion_sequence, vtp_files[1:]):
         reader.SetFileName(vtp)
@@ -62,16 +65,18 @@ def get_pc_for_invading_pores(invading_path, number_invaded, vtp_files):
         pc_ij_array = polydata.GetCellData().GetArray('pcij')
         pc_ij = vtk_to_numpy(pc_ij_array)
         for idx in invaded_throats:
-            invasion_pc_ij.append(pc_ij[idx])
-    return invasion_pc_ij
+            if (idx == invaded_throats[-1]):
+                invasion_pc_ij.append(pc_ij[idx])
+                reference_pc_ij.append(pcEntry_invasion_path(idx))
+    return [reference_pc_ij, invasion_pc_ij]
 
 if __name__ == "__main__":
     generate_network_and_analyze = 'python3 generate_network_analyze.py' #cmd to generate network
-    simulation_runs_for_each_time_step_size = 3
+    simulation_runs_for_each_time_step_size = 500
 
     testName = ['validate_preferential_path', 'validate_preferential_path_reg', 'validate_preferential_path_md']
-    maxTimeStep =  [4, 2, 1, 0.5, 0.25] # time steps which are going to be used
-    regularizationDelta = [0.1, 0.01] # we test few different regularization Delta
+    maxTimeStep =  [16, 8, 4, 2, 1] # time steps which are going to be used
+    regularizationDelta = [0.4, 0.1, 1e-3] # we test few different regularization Delta
 
     prediction_rate = {}
     avg_l2error_pcentry = {}
@@ -140,11 +145,11 @@ if __name__ == "__main__":
                     print(numerical_invasion_order)
                     if (correctpredition):
                         counter_correct_prediction[test] = counter_correct_prediction[test] + 1
-                    numerical_pcEntry = get_pc_for_invading_pores(numerical_invasion_order, number_invaded_throats, vtp_file_lists)
+                    [reference_pcEntry, numerical_pcEntry] = get_pc_for_invading_pores(numerical_invasion_order, number_invaded_throats, vtp_file_lists)
                     print(numerical_pcEntry)
                     print(correctpredition)
                     if (correctpredition):
-                        l2errorPc = np.sum(np.power((numerical_pcEntry-analytical_pcEntry),2))/len(analytical_pcEntry)
+                        l2errorPc = np.sum(np.power((np.array(numerical_pcEntry)-np.array(reference_pcEntry)),2))/len(reference_pcEntry)
                         l2errorPc = np.sqrt(l2errorPc)
                         l2errorPcCollector[test].append(l2errorPc)
                     # Write all important info of a simulation run into a txt file
@@ -155,8 +160,10 @@ if __name__ == "__main__":
                         f.write(str(analytical_pcEntry) + '\n')
                         f.write("** The throat invasion order numerically calculated is: **\n")
                         f.write(str(numerical_invasion_order) + '\n')
-                        f.write("** The pc_ij at throat for the time step where invasion happens: **\n")
+                        f.write("** The pc_ij at throat for the time step where invasion really captured: **\n")
                         f.write(str(numerical_pcEntry) + '\n')
+                        f.write("** The reference pc_ij at throat compared to the numerical pc_ij: **\n")
+                        f.write(str(reference_pcEntry) + '\n')
                         if (np.array_equal(numerical_invasion_order, analytical_path)):
                             f.write("The invasion order prediction for this simulation run is correct.\n")
                             f.write("The L2 error of pc_ij and pc_entry is : " + str(l2errorPc))
@@ -189,9 +196,9 @@ if __name__ == "__main__":
                         correctpredition = np.array_equal(numerical_invasion_order, analytical_path)
                         if (correctpredition):
                             counter_correct_prediction[test + str(regDelta)] = counter_correct_prediction[test + str(regDelta)] + 1
-                        numerical_pcEntry = get_pc_for_invading_pores(numerical_invasion_order, number_invaded_throats, vtp_file_lists)
+                        [reference_pcEntry, numerical_pcEntry] = get_pc_for_invading_pores(numerical_invasion_order, number_invaded_throats, vtp_file_lists)
                         if (correctpredition):
-                            l2errorPc = np.sum(np.power((numerical_pcEntry-analytical_pcEntry),2))/len(analytical_pcEntry)
+                            l2errorPc = np.sum(np.power((np.array(numerical_pcEntry)-np.array(reference_pcEntry)),2))/len(reference_pcEntry)
                             l2errorPc = np.sqrt(l2errorPc)
                             l2errorPcCollector[test + str(regDelta)].append(l2errorPc)
                         # Write all important info of a simulation run into a txt file
@@ -202,8 +209,11 @@ if __name__ == "__main__":
                             f.write(str(analytical_pcEntry) + '\n')
                             f.write("** The throat invasion order numerically calculated is: **\n")
                             f.write(str(numerical_invasion_order) + '\n')
-                            f.write("** The pc_ij at throat for the time step where invasion happens: **\n")
+                            f.write("** The pc_ij at throat for the time step where invasion really captured: **\n")
                             f.write(str(numerical_pcEntry) + '\n')
+                            f.write("** The reference pc_ij at throat compared to the numerical pc_ij: **\n")
+                            f.write(str(reference_pcEntry) + '\n')
+
                             if (np.array_equal(numerical_invasion_order, analytical_path)):
                                 f.write("The invasion order prediction for this simulation run is correct.\n")
                                 f.write("The L2 error of pc_ij and pc_entry is : " + str(l2errorPc))
@@ -216,6 +226,7 @@ if __name__ == "__main__":
                 avg_l2error_pcentry[test].append(np.average(l2errorPcCollector[test]))
             else:
                 for delta in regularizationDelta:
+                    print("counter correct prediction for", delta, "is", counter_correct_prediction[test + str(delta)])
                     prediction_rate[test + str(delta)].append(counter_correct_prediction[test + str(delta)] / simulation_runs_for_each_time_step_size)
                     avg_l2error_pcentry[test + str(delta)].append(np.average(l2errorPcCollector[test + str(delta)]))
 
@@ -232,9 +243,9 @@ for method, test in zip(methods, testName):
         for delta in regularizationDelta:
             ax[0].plot(maxTimeStep, prediction_rate[test + str(delta)], label = method + ' $\delta$ = ' + str(delta))
             ax[1].plot(maxTimeStep, avg_l2error_pcentry[test + str(delta)], label = method + ' $\delta$ = ' + str(delta))
-ax[0].set_xlabel("Average time step size")
+ax[0].set_xlabel("Maximum time step size")
 ax[0].set_ylabel("Accuracy of prediction [-]")
-ax[1].set_xlabel("Average time step size")
+ax[1].set_xlabel("Maximum time step size")
 ax[1].set_ylabel("$E_{p_{c,e}}$ [-]")
 ax[1].set_yscale('log')
 ax[0].legend()

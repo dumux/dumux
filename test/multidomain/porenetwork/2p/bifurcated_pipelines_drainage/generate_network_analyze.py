@@ -147,6 +147,7 @@ def generate_network_with_random_throat_radii(seed):
 
     writeDGF("capillary_multiple_tubes.dgf", vData, eData)
 
+    global pcEntry
     pcEntry = PcEntry(radius=np.array(throatRadius))
     poreVolume = 8*defaultPoreRadius*defaultPoreRadius*defaultPoreRadius
     volumeFlux = 5e-10/1000
@@ -156,3 +157,6 @@ def generate_network_with_random_throat_radii(seed):
     for invaded_throat_index in analytical_path:
         analytical_pcEntry.append(pcEntry[invaded_throat_index])
     np.savez("analytical_solution", analytical_path = analytical_path, analytical_pcEntry = analytical_pcEntry)
+
+def pcEntry_invasion_path(index):
+    return pcEntry[index]
