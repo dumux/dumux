@@ -2,7 +2,7 @@
 
 [TOC]
 
-## Installation
+## Getting the code
 
 With all basic requirements installed, DuMux can be setup with via a Python script:
 
