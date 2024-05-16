@@ -2,9 +2,22 @@
 
 [TOC]
 
+## Getting the code
+
+With all basic requirements installed, DuMux can be setup with via a Python script:
+
+```bash
+wget https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/bin/installdumux.py
+python3 installdumux.py
+```
+
+This script creates a local folder in which it operates and does not install or modify anything system-wide.
+In case you are unsure about your setup and need more information,
+first read and follow the [installation instructions](installation.md).
+
 ## Running an example
 
-For this example it is assumed that you followed the [installation instructions](installation.md) and have a folder with a similar structure:
+For this example it is assumed that you have a folder with a similar structure:
 
     installation folder
     |- dune-common
@@ -26,6 +39,8 @@ For this example it is assumed that you followed the [installation instructions]
         |...
       |- dumux
       |...
+
+You will automatically have such a folder structure if you followed the [installation instructions](installation.md) or used the Python installation script.
 
 We want to run an example, in which we first compute a single phase fluid flow field with heterogeneous permeability field, and then run a tracer transport simulation with the computed velocity field. A detailed example description can be found [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/tree/master/examples).
 First, we change to the example's directory:
