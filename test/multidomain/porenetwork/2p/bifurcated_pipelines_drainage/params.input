@@ -1,7 +1,8 @@
 [TimeLoop]
-DtInitial = 1e-3 # [s]
-TEnd = 1200 # [s]
+DtInitial = 8 # [s]
+TEnd = 1500 # [s]
 CheckPoints =
+MaxTimeStepSize = 8
 
 [Grid]
 File = capillary_multiple_tubes.dgf # DGF file can be generated with pyhton script in this folder
@@ -16,7 +17,7 @@ CapillaryPressure = 7000
 UseFixedPressureAndSaturationBoundary = false
 DistributeByVolume = false
 NonWettingMassFlux = 5e-10
-RegularizationDelta = 1e-4
+RegularizationDelta = 1e-3
 
 [Vtk]
 AddVelocity = 1
@@ -26,7 +27,7 @@ UseLineSearch = false
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
-MaxTimeStepDivisions = 10
+MaxTimeStepDivisions = 20
 NewtonOutputFilename = NewtonLog.txt
 NewtonOverview = NewtonOverview.txt
 
