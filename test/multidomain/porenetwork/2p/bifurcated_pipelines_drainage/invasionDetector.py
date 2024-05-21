@@ -72,7 +72,7 @@ def get_pc_for_invading_pores(invading_path, number_invaded, vtp_files):
 
 if __name__ == "__main__":
     generate_network_and_analyze = 'python3 generate_network_analyze.py' #cmd to generate network
-    simulation_runs_for_each_time_step_size = 500
+    simulation_runs_for_each_time_step_size = 100
 
     testName = ['validate_preferential_path', 'validate_preferential_path_reg', 'validate_preferential_path_md']
     maxTimeStep =  [16, 8, 4, 2, 1] # time steps which are going to be used
@@ -235,14 +235,15 @@ if __name__ == "__main__":
 fig, ax = plt.subplots(dpi=300, ncols=2, nrows=1, figsize=(6, 3))
 
 methods = ['FI-N', 'FI-R', 'FI-$\Theta$']
-for method, test in zip(methods, testName):
+markers = ['o', '^', '>']
+for marker, method, test in zip(markers, methods, testName):
     if (test is not testName[1]):
-        ax[0].plot(maxTimeStep, prediction_rate[test], label=method)
-        ax[1].plot(maxTimeStep, avg_l2error_pcentry[test], label = method)
+        ax[0].plot(maxTimeStep, prediction_rate[test], label=method, marker = marker, lw = "1")
+        ax[1].plot(maxTimeStep, avg_l2error_pcentry[test], label = method, marker = marker, lw = "1")
     elif (test is testName[1]):
         for delta in regularizationDelta:
-            ax[0].plot(maxTimeStep, prediction_rate[test + str(delta)], label = method + ' $\delta$ = ' + str(delta))
-            ax[1].plot(maxTimeStep, avg_l2error_pcentry[test + str(delta)], label = method + ' $\delta$ = ' + str(delta))
+            ax[0].plot(maxTimeStep, prediction_rate[test + str(delta)], label = method + ' $\delta$ = ' + str(delta), marker = marker, lw = "1")
+            ax[1].plot(maxTimeStep, avg_l2error_pcentry[test + str(delta)], label = method + ' $\delta$ = ' + str(delta), marker = marker, lw = "1")
 ax[0].set_xlabel("Maximum time step size")
 ax[0].set_ylabel("Accuracy of prediction [-]")
 ax[1].set_xlabel("Maximum time step size")
