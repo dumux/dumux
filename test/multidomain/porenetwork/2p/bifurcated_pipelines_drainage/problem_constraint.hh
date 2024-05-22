@@ -71,12 +71,15 @@ public:
         const auto& state = couplingManager_->gridVariables(CouplingManager::poreNetworkIndex).gridFluxVarsCache().invasionState();
         const auto prevInvaded = state.invaded(element);
 
+        static const bool regularizeThetaBounds = getParamFromGroup<bool>(this->paramGroup(), "Problem.RegularizeThetaBounds", false);
+        auto regBounds = regularizeThetaBounds ? min(theta,0.0)*min(theta,0.0) + max(theta-1.0,0.0)*max(theta-1.0,0.0) : 0.0;
+
         if(!prevInvaded)
         {
             auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
                           elemVolVarsPNM[1].capillaryPressure()) / couplingManager_->pcEntry(element) - 1.0;
 
-            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp));
+            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp)) + regBounds;
         }
         else
         {
@@ -84,7 +87,7 @@ public:
             auto dp = min(elemVolVarsPNM[0].capillaryPressure(),
                           elemVolVarsPNM[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
 
-            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp));
+            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp)) + regBounds;
         }
     }
 
