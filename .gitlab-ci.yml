@@ -23,7 +23,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-20.04
+  image: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
