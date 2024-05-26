@@ -36,7 +36,7 @@ class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typ
     template<std::size_t id>
     using SubDomainGridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
 
-    using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<SubDomainGridGeometry>;
+    using GridGeometryPtrTuple = typename MDTraits::template TupleOfSharedPtrConst<SubDomainGridGeometry>;
 
     using SolutionVector = typename MDTraits::SolutionVector;
     using ResidualVector = typename MDTraits::ResidualVector;
@@ -54,18 +54,18 @@ class MultiDomainNewtonConvergenceWriter : public ConvergenceWriterInterface<typ
 public:
     /*!
      * \brief Constructor
-     * \param gridGeometryTuple A tuple of grid geometries
+     * \param gridGeometryPtrTuple A tuple of shared pointers to const grid geometries
      * \param name Base name of the vtk output
      */
-    MultiDomainNewtonConvergenceWriter(GridGeometryTuple gridGeometryTuple,
+    MultiDomainNewtonConvergenceWriter(GridGeometryPtrTuple gridGeometryPtrTuple,
                                        const std::string& name = "newton_convergence")
-    : gridGeometryTuple_(std::move(gridGeometryTuple))
+    : gridGeometryPtrTuple_(std::move(gridGeometryPtrTuple))
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<MDTraits::numSubDomains>{}, [&](auto&& id)
         {
             using ConvWriter = SubDomainNewtonConvergenceWriter<std::decay_t<decltype(id)>::value>;
-            elementAt(convergenceWriterPtrTuple_, id) = std::make_shared<ConvWriter>(*elementAt(gridGeometryTuple, id), name + "_domain_" + std::to_string(id));
+            elementAt(convergenceWriterPtrTuple_, id) = std::make_shared<ConvWriter>(*elementAt(gridGeometryPtrTuple_, id), name + "_domain_" + std::to_string(id));
         });
     }
 
@@ -103,7 +103,7 @@ public:
     }
 
 private:
-    GridGeometryTuple gridGeometryTuple_;
+    GridGeometryPtrTuple gridGeometryPtrTuple_;
     ConvergenceWriterPtrTuple convergenceWriterPtrTuple_;
 };
 
