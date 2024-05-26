@@ -485,7 +485,7 @@ public:
                 return defaultParams_.template get<T>(key);
             }
 
-            DUNE_THROW(Dumux::ParameterException, "Key " << key << " not found in the parameter tree");
+            DUNE_THROW(Dumux::ParameterException, "Key " << key << " not found in the parameter tree with group prefix " << groupPrefix);
         }
     }
 
