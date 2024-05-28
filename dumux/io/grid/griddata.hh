@@ -273,6 +273,9 @@ public:
         return pointData_.at(fieldName)[gridFactory_->insertionIndex(vertex)];
     }
 
+    const Dune::GridFactory<Grid>& gridFactory() const
+    { return *gridFactory_; }
+
     // \}
 
 private:
