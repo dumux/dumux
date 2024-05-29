@@ -185,7 +185,7 @@ struct ThermalConductivityModel<TypeTag, TTag::ThreePNI>
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = ThermalConductivitySomerton<Scalar>;
+    using type = ThermalConductivitySomertonThreeP<Scalar>;
 };
 
 //! Set non-isothermal output fields

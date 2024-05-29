@@ -210,7 +210,7 @@ struct IOFields<TypeTag, TTag::PNMTwoPNI> { using type = EnergyIOFields<PoreNetw
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::PNMTwoPNI>
 {
-    using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>;
+    using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>;
 }; //!< Use the average for effective conductivities
 
 } // end namespace Dumux::Properties

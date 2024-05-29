@@ -263,7 +263,7 @@ struct IOFields<TypeTag, TTag::ThreePThreeCNI> { using type = EnergyIOFields<Thr
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::ThreePThreeCNI> { using type = ThermalConductivitySomertonThreeP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux

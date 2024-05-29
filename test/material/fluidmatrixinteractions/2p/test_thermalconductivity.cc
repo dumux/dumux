@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     const std::string fileNameJohansen = "johansen_lambda_eff.dat";
     plotJohansenThermalConductivityModel.addlambdaeffcurve(gnuplot, porosity, rhoSolid, lambdaSolid, 0.0, 1.0, fileNameJohansen);
 
-    using SomertonThermCondModel = ThermalConductivitySomerton<Scalar>;
+    using SomertonThermCondModel = ThermalConductivitySomertonTwoP<Scalar>;
     PlotThermalConductivityModel<Scalar, SomertonThermCondModel, FluidSystem> plotSomertonThermalConductivityModel(293.15, 1e5);
     const std::string fileNameSomerton = "somerton_lambda_eff.dat";
     plotSomertonThermalConductivityModel.addlambdaeffcurve(gnuplot, porosity, rhoSolid, lambdaSolid, 0.0, 1.0, fileNameSomerton);

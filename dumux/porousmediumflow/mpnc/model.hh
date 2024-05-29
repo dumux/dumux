@@ -330,7 +330,7 @@ public:
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::MPNCNI>
-{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+{ using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 /////////////////////////////////////////////////
 // Properties for the non-equilibrium mpnc model

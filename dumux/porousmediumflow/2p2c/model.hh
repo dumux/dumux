@@ -213,7 +213,7 @@ struct IOFields<TypeTag, TTag::TwoPTwoCNI> { using type = EnergyIOFields<TwoPNCI
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNI> { using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 
@@ -384,7 +384,7 @@ public:
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNINonEquil>
-{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+{ using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
