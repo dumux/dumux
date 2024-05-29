@@ -18,7 +18,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
-
+#include <dumux/material/components/shomate.hh>
 namespace Dumux {
 namespace Components {
 
@@ -34,8 +34,10 @@ class N2
 , public Components::Gas<Scalar, N2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
+    static const ShomateMethod shomateMethod; // Declaration
     /*!
      * \brief A human readable name for nitrogen.
      */
@@ -157,6 +159,7 @@ public:
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure nitrogen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -164,7 +167,8 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * temperature;
+        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
@@ -190,29 +194,14 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
-     *        nitrogen gas.
-     *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
-     *
-     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure nitrogen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      */
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 31.15;
-        const Scalar cpVapB = -0.01357;
-        const Scalar cpVapC = 2.680e-5;
-        const Scalar cpVapD = -1.168e-8;
-
-        return
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-            (cpVapA + T*
-              (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                  (cpVapD/4))));
+        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
     /*!
@@ -270,6 +259,21 @@ public:
     {
         return 6.525e-5 * (temperature - 273.15) + 0.024031;
     }
+};
+
+    /*!
+    * \brief Shomate parameters for nitrogen published by NIST  \cite NIST
+    * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+    * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+    */
+template <class Scalar>
+const ShomateMethod<Scalar> N2<Scalar>::shomateMethod{
+        /*temperature*/{100.0,500.0,2000.0,6000.0},
+        {
+            {28.98641, 1.853978, -9.647459, 16.63537, 0.000117, -8.671914, 226.4168, 0.0},
+            {19.50583, 19.88705, -8.598535, 1.369784, 0.527601, -4.935202, 212.39, 0.0},
+            {35.51872, 1.128728, -0.196103, 0.014662, -4.55376, -18.97091, 224.981, 0.0}
+        }
 };
 
 } // end namespace Components

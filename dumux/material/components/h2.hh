@@ -18,6 +18,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/shomate.hh>
 
 namespace Dumux {
 namespace Components {
@@ -34,8 +35,11 @@ class H2
 , public Components::Gas<Scalar, H2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
+     static const ShomateMethod shomateMethod; // Declaration
+
     /*!
      * \brief A human readable name for the \f$H_2\f$.
      */
@@ -142,6 +146,7 @@ public:
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure hydrogen gas.
+     *        Shomate Equation is used for a temperature range of 298K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -149,15 +154,15 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * temperature;
+        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
      * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
      *        hydrogen gas.
+     *        Shomate Equation is used for a temperature range of 298K to 6000K.
      *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
@@ -166,18 +171,8 @@ public:
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 27.14;
-        const Scalar cpVapB = 9.273e-3;
-        const Scalar cpVapC = -1.381e-5;
-        const Scalar cpVapD = 7.645e-9;
-
-        return
-            1/molarMass()* // conversion from [J/(mol*K)] to [J/(kg*K)]
-            (cpVapA + T*
-              (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                 (cpVapD/4))));
+        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
     /*!
@@ -219,6 +214,23 @@ public:
         return mu/1e6 / 10;
     }
 };
+
+    /*!
+     * \brief Shomate parameters for hydrogen published by NIST  \cite NIST
+     * https://webbook.nist.gov/cgi/cbook.cgi?ID=C1333740&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+     * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+     */
+    template <class Scalar>
+    const ShomateMethod<Scalar> H2<Scalar>::shomateMethod{
+        /*temperature*/{298.0, 1000.0, 2500.0, 6000.0},
+        {
+                {33.066178, -11.363417, 11.432816, -2.772874, -0.158558, -9.980797, 172.707974, 0.0},
+                {18.563083, 12.257357, -2.859786, 0.268238, 1.97799, -1.147438, 156.288133, 0.0},
+                {43.41356, -4.293079, 1.272428, -0.096876, -20.533862, -38.515158, 162.081354, 0.0}
+        }
+    };
+
+
 
 } // end namespace Components
 

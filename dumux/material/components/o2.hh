@@ -18,6 +18,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/shomate.hh>
 
 namespace Dumux {
 namespace Components {
@@ -34,8 +35,11 @@ class O2
 , public Components::Gas<Scalar, O2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
 
 public:
+    static const ShomateMethod shomateMethod; // Declaration
+
     /*!
      * \brief A human readable name for the \f$O_2\f$.
      */
@@ -154,6 +158,7 @@ public:
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure oxygen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -161,15 +166,14 @@ public:
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * temperature;
+        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
-     *        oxygen gas.
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure oxygen gas.
+     * Shomate Equation is used for a temperature range of 100K to 6000K.
      *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
      * \param T absolute temperature in \f$\mathrm{[K]}\f$
      * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      *
@@ -178,18 +182,8 @@ public:
     static Scalar gasHeatCapacity(Scalar T,
                                   Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 28.11;
-        const Scalar cpVapB = -3.680e-6;
-        const Scalar cpVapC = 1.746e-5;
-        const Scalar cpVapD = -1.065e-8;
-
-        return
-            1/molarMass()* // conversion from [J/(mol*K)] to [J/(kg*K)]
-            (cpVapA + T*
-              (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                  (cpVapD/4))));
+        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
     /*!
@@ -245,6 +239,22 @@ public:
     {
         return 8.044e-5 * (temperature - 273.15) + 0.024486;
     }
+};
+
+/*!
+    * \brief Shomate parameters for oxygen published by NIST  \cite NIST
+    * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782447&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+    * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+    */
+template <class Scalar>
+const ShomateMethod<Scalar> O2<Scalar>::shomateMethod{
+        /*temperature*/{100.0, 700.0, 2000.0, 6000.0},
+        {
+            {31.32234, -20.23531, 57.86644, -36.50624, -0.007374, -8.903471, 246.7945, 0.0},
+            {30.03235, 8.772972, -3.988133, 0.788313, -0.741599, -11.32468, 236.1663, 0.0},
+            {20.91111, 10.72071, -2.020498, 0.146449, 9.245722, 5.337651, 237.6185, 0.0}
+        }
+
 };
 
 } // end namespace Components
