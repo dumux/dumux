@@ -44,6 +44,12 @@ configure:
         python3 -m pip install -r requirements.txt
         cp -r /dune/modules/dune-common/build-cmake/dune-env build-cmake
       fi
+    # create Python venv with ci dependencies
+    - |
+      mkdir build-cmake/ci-env
+      python3 -m venv build-cmake/ci-env
+      source build-cmake/ci-env/bin/activate
+      python3 -m pip install -r requirements.txt
   artifacts:
     paths:
       - build-cmake
@@ -53,6 +59,7 @@ configure:
 linters:
   stage: linting
   script:
+    - source build-cmake/ci-env/bin/activate
     # black
     - echo "Running black"
     - black --version
@@ -87,15 +94,15 @@ linters:
         mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
       fi
     - |
+      pylint --rcfile=.pylintrc bin
+      pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
+      flake8 bin
+      flake8 dumux/porenetwork/util
       if [ -d build-cmake/python/dumux ] ; then
         source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         flake8 build-cmake/python/dumux
       fi
-      pylint --rcfile=.pylintrc bin
-      pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
-      flake8 bin
-      flake8 dumux/porenetwork/util
   needs:
     - job: configure
       artifacts: true
@@ -232,6 +239,7 @@ test cpp:
     DUMUX_NUM_THREADS: 4
   script:
     - |
+      source build-cmake/ci-env/bin/activate
       pushd build-cmake
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
@@ -255,6 +263,7 @@ test python:
     DUMUX_NUM_THREADS: 4
   script:
     - |
+      source build-cmake/ci-env/bin/activate
       if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
         if [ ! -s changedfiles.txt ]; then
           echo "Skipping test selection: considering all Python tests."
