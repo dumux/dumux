@@ -35,10 +35,10 @@ class H2
 , public Components::Gas<Scalar, H2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 3>; // three regions
 
 public:
-     static const ShomateMethod shomateMethod; // Declaration
+    static const ShomateMethod shomateMethod;
 
     /*!
      * \brief A human readable name for the \f$H_2\f$.
@@ -154,7 +154,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
@@ -171,7 +171,7 @@ public:
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
     {
-        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        const auto cp = shomateMethod.heatCapacity(T); // J/(mol K)
         return cp / molarMass(); // J/(kg K)
     }
 
@@ -215,25 +215,22 @@ public:
     }
 };
 
-    /*!
-     * \brief Shomate parameters for hydrogen published by NIST  \cite NIST
-     * https://webbook.nist.gov/cgi/cbook.cgi?ID=C1333740&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
-     * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
-     */
-    template <class Scalar>
-    const ShomateMethod<Scalar> H2<Scalar>::shomateMethod{
-        /*temperature*/{298.0, 1000.0, 2500.0, 6000.0},
-        {
-                {33.066178, -11.363417, 11.432816, -2.772874, -0.158558, -9.980797, 172.707974, 0.0},
-                {18.563083, 12.257357, -2.859786, 0.268238, 1.97799, -1.147438, 156.288133, 0.0},
-                {43.41356, -4.293079, 1.272428, -0.096876, -20.533862, -38.515158, 162.081354, 0.0}
-        }
-    };
-
-
+/*!
+ * \brief Shomate parameters for hydrogen published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C1333740&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
+template <class Scalar>
+const typename H2<Scalar>::ShomateMethod H2<Scalar>::shomateMethod{
+    /*temperature*/{298.0, 1000.0, 2500.0, 6000.0},
+    typename H2<Scalar>::ShomateMethod::Coefficients{{
+        {33.066178, -11.363417, 11.432816, -2.772874, -0.158558, -9.980797, 172.707974, 0.0},
+        {18.563083, 12.257357, -2.859786, 0.268238, 1.97799, -1.147438, 156.288133, 0.0},
+        {43.41356, -4.293079, 1.272428, -0.096876, -20.533862, -38.515158, 162.081354, 0.0}
+    }}
+};
 
 } // end namespace Components
-
 } // end namespace Dumux
 
 #endif

@@ -7,10 +7,9 @@
 /*!
  * \file
  * \ingroup Components
- * \brief Apply Shomate equations for enthalpy and heat capacity.
+ * \brief Shomate equations for enthalpy and heat capacity.
  *
- * The Shomate equations were inroduced in
- * "A method for evaluating and correlating thermodynamic data" by C. Howard Shomate in 1954, \cite Shomate1954.
+ * The Shomate equations were inroduced in \cite Shomate1954.
  * They offer analytical equations for computing the heat capacity as well as enthalpy.
  * Both equations use a set of component-specific parameters \f$A,B,C,D,E,F,G,H\f$.
  * For the heat capacity \f$C_p^0\f$, one obtains
@@ -27,126 +26,122 @@
  * * \f$ t \f$ is the temperature in K divided by 1000.
  *
  */
-
 #ifndef DUMUX_MATERIAL_COMPONENTS_SHOMATE_HH
 #define DUMUX_MATERIAL_COMPONENTS_SHOMATE_HH
-#include <vector>
-#include <stdexcept>
+
+#include <algorithm>
+#include <array>
 #include <iostream>
+#include <type_traits>
+#include <vector>
+
+#include <dune/common/exceptions.hh>
 
 namespace Dumux {
-template<class Scalar>
+
+/*!
+ * \brief The Shomate method to compute enthalpy and heat capacity
+ * \tparam Scalar the type of the scalar values
+ * \tparam intervals the static number of intervals for the temperature range, each interval has its own set of coefficients.
+ *         If -1 the number of intervals is dynamic.
+ */
+template<class Scalar, int intervals = -1>
 class ShomateMethod
 {
+    static_assert(intervals == -1 || intervals > 0, "Number of intervals must be -1 (dynamic) or greater than 0 (static).");
+
 public:
+    using CoefficientSet = struct { Scalar A, B, C, D, E, F, G, H; };
+    using Temperatures = std::conditional_t<intervals == -1, std::vector<Scalar>, std::array<Scalar, std::size_t(intervals+1)>>;
+    using Coefficients = std::conditional_t<intervals == -1, std::vector<CoefficientSet>, std::array<CoefficientSet, std::size_t(intervals)>>;
+
     /*!
-     *  \brief Constructor for Shomate method class
-     *
-     * \param tempRange contains the temperature boundaries of the intervals defined by the Shomate method, the number of intervals can vary
-     * \param coeffs contains the sets of coefficients for each temperature interval bounded by the entries of tempRange
-     *
+     * \brief Constructor for Shomate method class
+     * \param temperatures lower bound of the temperature intervals plus the upper bound of the last interval
+     * \param coeffs contains the sets of coefficients for each temperature interval bounded by the entries of temperatures
      */
-    ShomateMethod(std::vector<Scalar> tempRange, std::vector<std::array<Scalar,8>> coeffs)
-    : tempRange_(tempRange)
+    constexpr ShomateMethod(const Temperatures& temperatures, const Coefficients& coeffs)
+    : temperatures_(temperatures)
     , coeffs_(coeffs)
     {
-        if (tempRange_.size()-1 != coeffs_.size())
-        {
-            DUNE_THROW(Dune::InvalidStateException,"Temperature range and coefficients must have the same size.");
-        }
-        for(size_t i=0; i<coeffs_.size(); i++)
-        {
-            if (coeffs_[i].size() != 8)
-            {
-                DUNE_THROW(Dune::InvalidStateException,"Shomate coeffs must have 8 elements.");
-            }
-        }
+        checkInput_();
     }
 
-    std::array<Scalar,8> paramsAtTemperature(const Scalar& T) const
-    {
-        // check if T is smaller or higher than allowed min/max T
-        if (T < tempRange_[0])
-        {
-            if (!warningPrinted_)
-            {
-                std::cerr << "Temperature "<< T << " [K] is out of range. Enthalpy values are extrapolated." << std::endl;
-                warningPrinted_ = true;
-            }
-            return coeffs_[0];
-        }
-
-        for (size_t i = 0; i < tempRange_.size()-1; i++)
-        {
-            if (T >= tempRange_[i] && T < tempRange_[i+1])
-            {
-                return coeffs_[i];
-            }
-        }
-
-        if (!warningPrinted_)
-        {
-            std::cerr << "Temperature "<< T << " [K] is out of range. Enthalpy values are extrapolated." << std::endl;
-            warningPrinted_ = true;
-        }
-        return coeffs_[tempRange_.size()-1];
-    }
-
-    /**
-     * @brief return enthalpy in kJ/mol
-     *
-     * @param temperature in K
-     * @param pressure in Pa
-     * @return Scalar
+    /*!
+     * \brief Return enthalpy in kJ/mol
+     * \param temperature in K
+     * \return Scalar
      */
-    Scalar enthalpy(const Scalar& temperature,
-                       const Scalar& pressure) const
+    Scalar enthalpy(const Scalar temperature) const
     {
-        const auto& correctCoeffs = paramsAtTemperature(temperature);
-
-        Scalar A = correctCoeffs[0];
-        Scalar B = correctCoeffs[1];
-        Scalar C = correctCoeffs[2];
-        Scalar D = correctCoeffs[3];
-        Scalar E = correctCoeffs[4];
-        Scalar F = correctCoeffs[5];
-        Scalar H = correctCoeffs[7];
-        //convert temperature to correct format
-        Scalar t = temperature/1000.0;
-        //calculate standard enthalpy difference according to Shomate
-        Scalar standardEnthalpyDiff = A*t + B*t*t/2.0 + C*t*t*t/3.0 + D*t*t*t*t/4.0 - E/t + F - H;
-        //unit is kJ/mol
+        const auto& p = paramsAtTemperature_(temperature);
+        const Scalar t = temperature/1000.0;
+        const Scalar standardEnthalpyDiff = p.A*t + p.B*t*t/2.0 + p.C*t*t*t/3.0 + p.D*t*t*t*t/4.0 - p.E/t + p.F - p.H;
         return standardEnthalpyDiff;
     }
 
-    /**
-     * @brief return heat capacity in J/(mol*K)
-     *
-     * @param temperature in K
-     * @param pressure in Pa
-     * @return Scalar
+    /*!
+     * \brief Return heat capacity in J/(mol*K)
+     * \param temperature in K
+     * \return Scalar
      */
-    Scalar heatCapacity(const Scalar& temperature,
-                        const Scalar& pressure) const
+    Scalar heatCapacity(const Scalar temperature) const
     {
-        auto correctCoeffs = paramsAtTemperature(temperature);
-        Scalar A = correctCoeffs[0];
-        Scalar B = correctCoeffs[1];
-        Scalar C = correctCoeffs[2];
-        Scalar D = correctCoeffs[3];
-        Scalar E = correctCoeffs[4];
-        Scalar t = temperature/1000.0;
-        Scalar heatCapacity = A + B*t + C*t*t + D*t*t*t + E/(t*t);
+        const auto& p = paramsAtTemperature_(temperature);
+        const Scalar t = temperature/1000.0;
+        const Scalar heatCapacity = p.A + p.B*t + p.C*t*t + p.D*t*t*t + p.E/(t*t);
         return heatCapacity;
     }
 
 private:
-    std::vector<Scalar> tempRange_;
-    std::vector<std::array<Scalar,8>> coeffs_;
+    const CoefficientSet& paramsAtTemperature_(const Scalar T) const
+    {
+        // check if T is smaller or higher than allowed min/max T
+        if (T < temperatures_.front() || T > temperatures_.back())
+        {
+            if (!warningPrinted_)
+            {
+                std::cout << "Temperature "<< T << " [K] is out of range. Enthalpy values are extrapolated." << std::endl;
+                warningPrinted_ = true;
+            }
+        }
+
+        // find the interval for the given temperature
+        const auto index = std::min<std::size_t>(
+            coeffs_.size()-1,
+            std::distance(
+                temperatures_.begin(),
+                std::lower_bound(temperatures_.begin(), temperatures_.end(), T)
+            )
+        );
+
+        return coeffs_[index];
+    }
+
+    void checkInput_() const
+    {
+        if constexpr (intervals == -1)
+        {
+            if (temperatures_.size() < 2)
+                DUNE_THROW(Dune::InvalidStateException, "Temperature range must have at least two entries.");
+
+            for (size_t i = 0; i < temperatures_.size()-1; i++)
+                if (temperatures_[i] >= temperatures_[i+1])
+                    DUNE_THROW(Dune::InvalidStateException, "Temperature range must be strictly increasing.");
+
+            if (temperatures_.size()-1 != coeffs_.size())
+                DUNE_THROW(Dune::InvalidStateException, "If temperature vector is size n+1, there must be n coefficient sets.");
+        }
+    }
+
+    Temperatures temperatures_;
+    Coefficients coeffs_;
     static bool warningPrinted_;
 };
 
-template<class Scalar>
-bool ShomateMethod<Scalar>::warningPrinted_ = false;
+template<class Scalar, int intervals>
+bool ShomateMethod<Scalar, intervals>::warningPrinted_ = false;
+
 } // namespace Dumux
-#endif // DUMUX_SHOMATE_HH
+
+#endif

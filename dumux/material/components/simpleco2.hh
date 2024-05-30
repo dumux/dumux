@@ -38,10 +38,10 @@ class SimpleCO2
 , public Components::Gas<Scalar, SimpleCO2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 2>; // two regions
 
 public:
-     static const ShomateMethod shomateMethod; // Declaration
+     static const ShomateMethod shomateMethod;
 
     /*!
      * \brief A human readable name for the CO2.
@@ -90,7 +90,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
@@ -239,24 +239,24 @@ public:
      */
     static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
     {
-        auto cp = shomateMethod.heatCapacity(temperature, pressure); // J/(mol K)
+        const auto cp = shomateMethod.heatCapacity(temperature); // J/(mol K)
         return cp / molarMass(); // J/(kg K)
     }
 
 };
 
 /*!
-* \brief Shomate parameters for carbon dioxide published by NIST  \cite NIST
-* https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
-* First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
-*/
+ * \brief Shomate parameters for carbon dioxide published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
 template <class Scalar>
-const ShomateMethod<Scalar> SimpleCO2<Scalar>::shomateMethod{
+const typename SimpleCO2<Scalar>::ShomateMethod SimpleCO2<Scalar>::shomateMethod{
     /*temperature*/{298.0, 1200.0, 6000.0},
-    {
-            {24.99735, 55.18696, -33.69137, 7.948387, -0.136638, -403.6075, 228.2431, -393.5224},
-            {58.16639, 2.720074, -0.492289, 0.038844, -6.447293, -425.9186, 263.6125, -393.5224}
-    }
+    typename SimpleCO2<Scalar>::ShomateMethod::Coefficients{{
+        {24.99735, 55.18696, -33.69137, 7.948387, -0.136638, -403.6075, 228.2431, -393.5224},
+        {58.16639, 2.720074, -0.492289, 0.038844, -6.447293, -425.9186, 263.6125, -393.5224}
+    }}
 };
 
 

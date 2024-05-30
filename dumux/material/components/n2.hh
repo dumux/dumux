@@ -19,6 +19,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
 #include <dumux/material/components/shomate.hh>
+
 namespace Dumux {
 namespace Components {
 
@@ -34,10 +35,10 @@ class N2
 , public Components::Gas<Scalar, N2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 3>; // 3 regions
 
 public:
-    static const ShomateMethod shomateMethod; // Declaration
+    static const ShomateMethod shomateMethod;
     /*!
      * \brief A human readable name for nitrogen.
      */
@@ -167,7 +168,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
@@ -200,7 +201,7 @@ public:
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
     {
-        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        const auto cp = shomateMethod.heatCapacity(T); // J/(mol K)
         return cp / molarMass(); // J/(kg K)
     }
 
@@ -261,23 +262,22 @@ public:
     }
 };
 
-    /*!
-    * \brief Shomate parameters for nitrogen published by NIST  \cite NIST
-    * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
-    * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
-    */
+/*!
+ * \brief Shomate parameters for nitrogen published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
 template <class Scalar>
-const ShomateMethod<Scalar> N2<Scalar>::shomateMethod{
-        /*temperature*/{100.0,500.0,2000.0,6000.0},
-        {
-            {28.98641, 1.853978, -9.647459, 16.63537, 0.000117, -8.671914, 226.4168, 0.0},
-            {19.50583, 19.88705, -8.598535, 1.369784, 0.527601, -4.935202, 212.39, 0.0},
-            {35.51872, 1.128728, -0.196103, 0.014662, -4.55376, -18.97091, 224.981, 0.0}
-        }
+const typename N2<Scalar>::ShomateMethod N2<Scalar>::shomateMethod{
+    /*temperature*/{100.0,500.0,2000.0,6000.0},
+    typename N2<Scalar>::ShomateMethod::Coefficients{{
+        {28.98641, 1.853978, -9.647459, 16.63537, 0.000117, -8.671914, 226.4168, 0.0},
+        {19.50583, 19.88705, -8.598535, 1.369784, 0.527601, -4.935202, 212.39, 0.0},
+        {35.51872, 1.128728, -0.196103, 0.014662, -4.55376, -18.97091, 224.981, 0.0}
+    }}
 };
 
 } // end namespace Components
-
 } // end namespace Dumux
 
 #endif

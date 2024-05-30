@@ -19,6 +19,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
 #include <dumux/material/components/shomate.hh>
+
 namespace Dumux {
 namespace Components {
 
@@ -33,10 +34,11 @@ class CH4
 , public Components::Gas<Scalar, CH4<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 3>; // three regions
 
 public:
-    static const ShomateMethod shomateMethod; // Declaration
+    static const ShomateMethod shomateMethod;
+
     /*!
      * \brief A human readable name for methane.
      */
@@ -137,7 +139,7 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
@@ -148,7 +150,7 @@ public:
     static Scalar gasHeatCapacity(Scalar T,
                                   Scalar pressure)
     {
-        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        const auto cp = shomateMethod.heatCapacity(T); // J/(mol K)
         return cp / molarMass(); // J/(kg K)
     }
 
@@ -218,21 +220,20 @@ public:
 };
 
 /*!
-* \brief Shomate parameters for methane published by NIST  \cite NIST
-* https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
-* First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
-*/
+ * \brief Shomate parameters for methane published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
 template <class Scalar>
-const ShomateMethod<Scalar> CH4<Scalar>::shomateMethod{
-        /*temperature*/{298.0, 1300.0, 6000.0},
-        {
-            {-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163, -74.87310},
-            {85.81217, 11.26467, -2.114146, 0.138190, -26.42221, -153.5327, 224.4143, -74.87310}
-        }
+const typename CH4<Scalar>::ShomateMethod CH4<Scalar>::shomateMethod{
+    /*temperature*/{298.0, 1300.0, 6000.0},
+    typename CH4<Scalar>::ShomateMethod::Coefficients{{
+        {-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163, -74.87310},
+        {85.81217, 11.26467, -2.114146, 0.138190, -26.42221, -153.5327, 224.4143, -74.87310}
+    }}
 };
 
 } // end namespace Components
-
 } // end namespace Dumux
 
 #endif

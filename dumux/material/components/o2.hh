@@ -35,10 +35,10 @@ class O2
 , public Components::Gas<Scalar, O2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using ShomateMethod = Dumux::ShomateMethod<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 3>; // three regions
 
 public:
-    static const ShomateMethod shomateMethod; // Declaration
+    static const ShomateMethod shomateMethod;
 
     /*!
      * \brief A human readable name for the \f$O_2\f$.
@@ -166,7 +166,7 @@ public:
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
     {
-        const auto h = shomateMethod.enthalpy(temperature, pressure); // KJ/mol
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
         return h * 1e3 / molarMass(); // J/kg
     }
 
@@ -182,7 +182,7 @@ public:
     static Scalar gasHeatCapacity(Scalar T,
                                   Scalar pressure)
     {
-        auto cp = shomateMethod.heatCapacity(T, pressure); // J/(mol K)
+        const auto cp = shomateMethod.heatCapacity(T); // J/(mol K)
         return cp / molarMass(); // J/(kg K)
     }
 
@@ -242,23 +242,21 @@ public:
 };
 
 /*!
-    * \brief Shomate parameters for oxygen published by NIST  \cite NIST
-    * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782447&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
-    * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
-    */
+ * \brief Shomate parameters for oxygen published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782447&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
 template <class Scalar>
-const ShomateMethod<Scalar> O2<Scalar>::shomateMethod{
-        /*temperature*/{100.0, 700.0, 2000.0, 6000.0},
-        {
-            {31.32234, -20.23531, 57.86644, -36.50624, -0.007374, -8.903471, 246.7945, 0.0},
-            {30.03235, 8.772972, -3.988133, 0.788313, -0.741599, -11.32468, 236.1663, 0.0},
-            {20.91111, 10.72071, -2.020498, 0.146449, 9.245722, 5.337651, 237.6185, 0.0}
-        }
-
+const typename O2<Scalar>::ShomateMethod O2<Scalar>::shomateMethod{
+    /*temperature*/{100.0, 700.0, 2000.0, 6000.0},
+    typename O2<Scalar>::ShomateMethod::Coefficients{{
+        {31.32234, -20.23531, 57.86644, -36.50624, -0.007374, -8.903471, 246.7945, 0.0},
+        {30.03235, 8.772972, -3.988133, 0.788313, -0.741599, -11.32468, 236.1663, 0.0},
+        {20.91111, 10.72071, -2.020498, 0.146449, 9.245722, 5.337651, 237.6185, 0.0}
+    }}
 };
 
 } // end namespace Components
-
 } // end namespace Dumux
 
 #endif
