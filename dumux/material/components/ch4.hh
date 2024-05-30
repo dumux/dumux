@@ -18,6 +18,7 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/shomate.hh>
 
 namespace Dumux {
 namespace Components {
@@ -33,8 +34,11 @@ class CH4
 , public Components::Gas<Scalar, CH4<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
+    using ShomateMethod = Dumux::ShomateMethod<Scalar, 3>; // three regions
 
 public:
+    static const ShomateMethod shomateMethod;
+
     /*!
      * \brief A human readable name for methane.
      */
@@ -127,6 +131,7 @@ public:
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure methane gas.
+     * Shomate Equation is used for a temperature range of 298K to 6000K.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -134,33 +139,19 @@ public:
     static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * temperature;
+        const auto h = shomateMethod.enthalpy(temperature); // KJ/mol
+        return h * 1e3 / molarMass(); // J/kg
     }
 
     /*!
-     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
-     *        methane gas.
-     *
-     * This is equivalent to the partial derivative of the specific
-     * enthalpy to the temperature.
-     *
-     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure methane gas.
+     *Shomate Equation is used for a temperature range of 298K to 6000K.
      */
     static Scalar gasHeatCapacity(Scalar T,
                                   Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 19.25;
-        const Scalar cpVapB = 0.05213;
-        const Scalar cpVapC = 1.197e-5;
-        const Scalar cpVapD = -1.132e-8;
-
-        return
-            1/molarMass()* // conversion from [J/(mol*K)] to [J/(kg*K)]
-            (cpVapA + T*
-              (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                  (cpVapD/4))));
+        const auto cp = shomateMethod.heatCapacity(T); // J/(mol K)
+        return cp / molarMass(); // J/(kg K)
     }
 
     /*!
@@ -228,8 +219,21 @@ public:
     }
 };
 
-} // end namespace Components
+/*!
+ * \brief Shomate parameters for methane published by NIST  \cite NIST
+ * https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Units=SI&Mask=1&Type=JANAFG&Table=on#JANAFG
+ * First row defines the temperature ranges, further rows give the parameters (A,B,C,D,E,F,G,H) for the respective temperature ranges.
+ */
+template <class Scalar>
+const typename CH4<Scalar>::ShomateMethod CH4<Scalar>::shomateMethod{
+    /*temperature*/{298.0, 1300.0, 6000.0},
+    typename CH4<Scalar>::ShomateMethod::Coefficients{{
+        {-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163, -74.87310},
+        {85.81217, 11.26467, -2.114146, 0.138190, -26.42221, -153.5327, 224.4143, -74.87310}
+    }}
+};
 
+} // end namespace Components
 } // end namespace Dumux
 
 #endif
