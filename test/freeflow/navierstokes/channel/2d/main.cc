@@ -30,6 +30,7 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -42,6 +43,39 @@
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
+
+template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
+auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
+                   std::shared_ptr<MassGG> massGridGeometry,
+                   std::shared_ptr<MomP> momentumProblem,
+                   MomIdx momentumIdx, MassIdx massIdx)
+{
+    Vector dirichletDofs;
+    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+    dirichletDofs = 0.0;
+
+    auto fvGeometry = localView(*momentumGridGeometry);
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        fvGeometry.bind(element);
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary() || !scvf.isFrontal())
+                continue;
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+            if (scv.boundary())
+            {
+                const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
+                for (int i = 0; i < bcTypes.size(); ++i)
+                    if (bcTypes.isDirichlet(i))
+                        dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+            }
+        }
+    }
+
+    return dirichletDofs;
+}
 
 int main(int argc, char** argv)
 {
@@ -166,18 +200,32 @@ int main(int argc, char** argv)
             timeLoop, xOld
         );
 
-    // the linear solver
+    const bool useIterativeSolver = getParam<bool>("LinearSolver.UseIterativeSolver", false);
+
+#if !NONISOTHERMAL
+    using Matrix = typename Assembler::JacobianMatrix;
+    using Vector = typename Assembler::ResidualType;
+    using IterativeLinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+    auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+    auto iterativeLinearSolver = std::make_shared<IterativeLinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+    using NewtonSolverWithIterativeSolver = MultiDomainNewtonSolver<Assembler, IterativeLinearSolver, CouplingManager>;
+    NewtonSolverWithIterativeSolver nonLinearSolverWithIterativeSolver(assembler, iterativeLinearSolver, couplingManager);
+#endif
+
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
-
-    // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     if (isStationary)
     {
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(x);
+#if !NONISOTHERMAL
+        if (useIterativeSolver)
+            nonLinearSolverWithIterativeSolver.solve(x);
+        else
+#endif
+            nonLinearSolver.solve(x);
 
         // print discrete L2 and Linfity errors
         if (momentumProblem->hasAnalyticalSolution())
@@ -197,9 +245,9 @@ int main(int argc, char** argv)
                     NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
             }
 
-            // write vtk output
-            vtkWriter.write(1.0);
         }
+        // write vtk output
+        vtkWriter.write(1.0);
     }
     else
     {
@@ -210,7 +258,12 @@ int main(int argc, char** argv)
         timeLoop->start(); do
         {
             // solve the non-linear system with time step control
-            nonLinearSolver.solve(x, *timeLoop);
+#if !NONISOTHERMAL
+            if (useIterativeSolver)
+                nonLinearSolverWithIterativeSolver.solve(x, *timeLoop);
+            else
+#endif
+                nonLinearSolver.solve(x, *timeLoop);
 
             // make the new solution the old solution
             xOld = x;
@@ -227,7 +280,12 @@ int main(int argc, char** argv)
             timeLoop->reportTimeStep();
 
             // set new dt as suggested by newton solver
-            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+#if !NONISOTHERMAL
+            if (useIterativeSolver)
+                timeLoop->setTimeStepSize(nonLinearSolverWithIterativeSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            else
+#endif
+                timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
             // update time
             massProblem->setTime(timeLoop->time());

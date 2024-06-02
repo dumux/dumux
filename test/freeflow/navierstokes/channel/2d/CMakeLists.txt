@@ -62,6 +62,17 @@ dumux_add_test(NAME test_ff_navierstokes_channel
                              -Vtk.WriteFaceData 1
                              -Problem.Name test_ff_navierstokes_channel")
 
+dumux_add_test(NAME test_ff_stokes_channel_iterative
+              TARGET test_ff_channel
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_iterative-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
+                             -LinearSolver.UseIterativeSolver true -Problem.Name test_ff_stokes_channel_iterative")
+
 add_executable(test_ff_stokesni_channel EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
 

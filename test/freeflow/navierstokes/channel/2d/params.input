@@ -15,11 +15,21 @@ OutletCondition = Outflow
 
 [Component]
 LiquidDensity = 1.0
-LiquidKinematicViscosity = 1.0
+LiquidDynamicViscosity = 1.0
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
+
+[LinearSolver]
+UseIterativeSolver = false
+MaxIterations = 500
+ResidualReduction = 1e-10
+SymmetrizeDirichlet = true
+DirectSolverForVelocity = false
+GMResRestart = 500
+Type = gmres
+Verbosity = 1
 
 [Vtk]
 WriteFaceData = false
