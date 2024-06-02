@@ -196,7 +196,7 @@ public:
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::TwoPOneCNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::TwoPOneCNI> { using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

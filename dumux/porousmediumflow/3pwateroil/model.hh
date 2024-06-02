@@ -205,7 +205,7 @@ struct UseMoles<TypeTag, TTag::ThreePWaterOilNI> { static constexpr bool value =
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 template<class TypeTag>
-struct ThermalConductivityModel<TypeTag, TTag::ThreePWaterOilNI> { using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+struct ThermalConductivityModel<TypeTag, TTag::ThreePWaterOilNI> { using type = ThermalConductivitySomertonThreeP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Set the non-isothermal vkt output fields
 template<class TypeTag>

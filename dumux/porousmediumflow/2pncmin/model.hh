@@ -241,7 +241,7 @@ struct IOFields<TypeTag, TTag::TwoPNCMinNI>
 //! Use the effective thermal conductivities calculated using the Somerton method
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPNCMinNI>
-{ using type = ThermalConductivitySomerton<GetPropType<TypeTag, Properties::Scalar>>; };
+{ using type = ThermalConductivitySomertonTwoP<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Properties
 } // end namespace Dumux
