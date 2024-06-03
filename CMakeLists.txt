@@ -75,4 +75,8 @@ if(DUMUX_ENABLE_PYTHONBINDINGS)
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
-finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
+if(DUNE_COMMON_VERSION VERSION_LESS "2.10")
+  finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
+else()
+  finalize_dune_project()
+endif()
