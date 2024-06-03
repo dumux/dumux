@@ -43,7 +43,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>

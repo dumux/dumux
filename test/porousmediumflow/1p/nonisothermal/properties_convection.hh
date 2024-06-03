@@ -27,7 +27,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 
 #include "problem_convection.hh"
 #include "spatialparams.hh"

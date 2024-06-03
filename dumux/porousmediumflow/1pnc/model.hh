@@ -50,7 +50,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
