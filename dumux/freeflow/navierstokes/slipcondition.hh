@@ -65,8 +65,9 @@ class NavierStokesSlipVelocity;
  * the corresponding SlipCondition tag to the class.
  */
 template<class SlipCondition>
-struct NavierStokesSlipVelocity<DiscretizationMethods::FCStaggered, SlipCondition>
+class NavierStokesSlipVelocity<DiscretizationMethods::FCStaggered, SlipCondition>
 {
+public:
     static constexpr SlipCondition slipCondition{};
 
     /*!
