@@ -85,7 +85,7 @@
 
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 
 namespace Dumux {
 namespace Properties {

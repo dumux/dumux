@@ -95,7 +95,7 @@
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
