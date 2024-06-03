@@ -80,7 +80,7 @@
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
 #include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "volumevariables.hh"
 
@@ -274,7 +274,7 @@ public:
 //! one needs a law for calculating the thermal conductivity of the fluid mixture
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::TwoPTwoCNonEquil>
-{ using type = ThermalConductivitySimpleFluidLumping<GetPropType<TypeTag, Properties::Scalar>>; };
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! Use the nonequilibrium volume variables together with the 2p2c vol vars
 template<class TypeTag>

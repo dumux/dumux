@@ -95,7 +95,7 @@
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
@@ -379,7 +379,7 @@ public:
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
 template<class TypeTag>
 struct ThermalConductivityModel<TypeTag, TTag::MPNCNonequil>
-{ using type = ThermalConductivitySimpleFluidLumping<GetPropType<TypeTag, Properties::Scalar>>; };
+{ using type = ThermalConductivityAverage<GetPropType<TypeTag, Properties::Scalar>>; };
 
 //! use the mineralization volume variables together with the 2pnc vol vars
 template<class TypeTag>
