@@ -70,35 +70,17 @@ dumux_add_test(NAME test_vtk_staggeredfreeflowpvnames
               SOURCES test_vtk_staggeredfreeflowpvnames.cc
               LABELS unit io)
 
-# VTKOutputModule precision tests (before dune 2.7 everything was Float32)
-if(${DUNE_GRID_VERSION} VERSION_LESS 2.7)
-    dumux_add_test(NAME test_vtkoutputmodule
-                   SOURCES test_vtkoutputmodule.cc
-                   LABELS unit io
-                   COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                   CMD_ARGS --script fuzzy
-                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule"
-                            --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_allfloat-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_float-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_double-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_doublecoord-00000.vtu)
-else()
-    dumux_add_test(NAME test_vtkoutputmodule
-                   SOURCES test_vtkoutputmodule.cc
-                   LABELS unit io
-                   COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                   CMD_ARGS --script fuzzy
-                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule"
-                            --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_allfloat-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_float-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_float-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_double-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_double-00000.vtu
-                                    ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_doublecoord-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_doublecoord-00000.vtu)
-endif()
+dumux_add_test(NAME test_vtkoutputmodule
+               SOURCES test_vtkoutputmodule.cc
+               LABELS unit io
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_allfloat-00000.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_float-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_float-00000.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_double-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_double-00000.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_doublecoord-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule_doublecoord-00000.vtu)
