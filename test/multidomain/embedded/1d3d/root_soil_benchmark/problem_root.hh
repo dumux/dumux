@@ -12,6 +12,7 @@
 #ifndef DUMUX_TEST_ROOT_SOIL_BENCHMARK_ROOT_PROBLEM_HH
 #define DUMUX_TEST_ROOT_SOIL_BENCHMARK_ROOT_PROBLEM_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundarytypes.hh>
@@ -123,14 +124,6 @@ public:
         }
 
         return values;
-    }
-
-    //! Smooth minimum function
-    Scalar smoothMin(const Scalar a, const Scalar b, const Scalar k) const
-    {
-        using std::max; using std::min; using std::abs;
-        const auto h = max(k-abs(a-b), 0.0 )/k;
-        return min(a, b) - h*h*h*k*(1.0/6.0);
     }
 
     //! Compute potential transpiration rate in kg/s
