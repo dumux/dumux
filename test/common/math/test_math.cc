@@ -377,5 +377,25 @@ int main()
     if (!Dune::FloatCmp::eq(roots[0], -3.863448718244389e-02, 1e-14))
         DUNE_THROW(Dune::Exception, "Root of cubic equation does not match reference");
 
+    // Test smoothMin and smoothMax
+    {
+        const double a = 1.0;
+        const double b = 2.0;
+        const double k = 0.5;
+        if (!Dune::FloatCmp::eq(Dumux::smoothMin(a, b, k), a))
+            DUNE_THROW(Dune::Exception, "smoothMin does not work as expected");
+        if (!Dune::FloatCmp::eq(Dumux::smoothMax(a, b, k), b))
+            DUNE_THROW(Dune::Exception, "smoothMax does not work as expected");
+    }
+    {
+        const double a = 1.0;
+        const double b = 2.0;
+        const double k = 2.0;
+        if (Dumux::smoothMin(a, b, k) >= a)
+            DUNE_THROW(Dune::Exception, "smoothMin does not work as expected");
+        if (Dumux::smoothMax(a, b, k) <= b)
+            DUNE_THROW(Dune::Exception, "smoothMax does not work as expected");
+    }
+
     return 0;
 }

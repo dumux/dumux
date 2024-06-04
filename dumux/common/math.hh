@@ -113,6 +113,35 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 
 /*!
  * \ingroup Core
+ * \brief A smoothed minimum function (using cubic interpolation)
+ * \note The returned value is guaranteed to be smaller or equal to the minimum of the two input values.
+ * \note The smoothing kicks in if the difference between the two input values is smaller than the smoothing parameter.
+ * \param a The first input value
+ * \param b The second input value
+ * \param k The smoothing parameter (k > 0)
+ */
+template<class Scalar>
+Scalar smoothMin(const Scalar a, const Scalar b, const Scalar k)
+{
+    using std::max; using std::min; using std::abs;
+    const auto h = max(k-abs(a-b), 0.0 )/k;
+    return min(a, b) - h*h*h*k*(1.0/6.0);
+}
+
+/*!
+ * \ingroup Core
+ * \brief A smoothed maximum function (using cubic interpolation)
+ *
+ * \param a The first input value
+ * \param b The second input value
+ * \param k The smoothing parameter (k > 0)
+ */
+template<class Scalar>
+Scalar smoothMax(const Scalar a, const Scalar b, const Scalar k)
+{ return -smoothMin(-a, -b, k); }
+
+/*!
+ * \ingroup Core
  * \brief Invert a linear polynomial analytically
  *
  * The polynomial is defined as
