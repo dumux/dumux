@@ -57,14 +57,14 @@ class H2ON2
 {
     using ThisType = H2ON2<Scalar, Policy>;
 
-    // convenience using declarations
+    // convenience aliases using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
     using TabulatedH2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
     using SimpleN2 = Dumux::Components::N2<Scalar>;
 
 public:
-    using H2O = TabulatedH2O; //!< The components for pure water
-    using N2 = SimpleN2; //!< The components for pure nitrogen
+    using H2O = TabulatedH2O; //!< The component for pure water
+    using N2 = SimpleN2; //!< The component for pure nitrogen
 
     static constexpr int numPhases = 2; //!< Number of phases in the fluid system
     static constexpr int numComponents = 2; //!< Number of components in the fluid system
