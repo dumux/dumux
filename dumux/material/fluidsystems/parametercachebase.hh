@@ -80,7 +80,7 @@ public:
      *        which depend on temperature
      *
      * \b Only use this method if only the temperature of a phase
-     * changed between two update*() calls. If more changed, call
+     * changed between two update() calls. If more changed, call
      * updatePhase()!
      */
     template <class FluidState>
@@ -94,7 +94,7 @@ public:
      *        which depend on pressure
      *
      * \b Only use this method if only the pressure of a phase changed
-     * between two update*() calls. If more changed, call
+     * between two update() calls. If more changed, call
      * updatePhase()!
      */
     template <class FluidState>
@@ -108,7 +108,7 @@ public:
      *        which depend on composition
      *
      * \b Only use this method if neither the pressure nor the
-     * temperature of the phase changed between two update*()
+     * temperature of the phase changed between two update()
      * calls. If more changed, call updatePhase()!
      */
     template <class FluidState>
@@ -122,7 +122,7 @@ public:
      *        which depend on the mole fraction of a single component
      *
      * \b Only use this method if just a single component's
-     * concentration changed between two update*() calls. If more than
+     * concentration changed between two update() calls. If more than
      * one concentration changed, call updatePhaseComposition() of
      * updatePhase()!
      */
