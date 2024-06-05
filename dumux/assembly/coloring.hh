@@ -227,10 +227,10 @@ namespace Dumux {
  * For each node (element), assign the smallest available color
  * not used by any of the neighboring nodes (element with conflicting memory access)
  * The greedy algorithm doesn't necessarily return the smallest
- * possible number of colors (that's a hard problem) but is fast
+ * possible number of colors (that's a hard problem) but is fast.
  *
  * Returns a struct with access to the colors of each element (member colors)
- * and vector of element seed sets of the same color (member sets)
+ * and vector of element seed sets of the same color (member sets).
  *
  * \param gg the grid geometry
  * \param verbosity the verbosity level
