@@ -638,7 +638,11 @@ public:
             if (enableShiftCriterion_)
                 std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
+            {
+                if(enableTotalMassOrMolesResidualNormalization_)
+                    std::cout << Fmt::format(", residual mass/mole normalized = {:.4e}", residualNorm_/totalMolesOrMass_);
                 std::cout << Fmt::format(", residual = {:.4e}", residualNorm_);
+            }
             else if (enableResidualCriterion_)
                 std::cout << Fmt::format(", residual reduction = {:.4e}", reduction_);
 
@@ -675,6 +679,9 @@ public:
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
+            if(enableTotalMassOrMolesResidualNormalization_)
+                return residualNorm_/totalMolesOrMass_ <= residualTolerance_;
+            else
                 return residualNorm_ <= residualTolerance_;
             else
                 return reduction_ <= reductionTolerance_;
@@ -690,7 +697,10 @@ public:
         }
         else if(enableShiftCriterion_ && enableResidualCriterion_)
         {
-            if(enableAbsoluteResidualCriterion_)
+            if(enableAbsoluteResidualCriterion_)		    if(enableTotalMassOrMolesResidualNormalization_)
+                return shift_ <= shiftTolerance_
+                        || residualNorm_/totalMolesOrMass_ <= residualTolerance_;
+            else
                 return shift_ <= shiftTolerance_
                         || residualNorm_ <= residualTolerance_;
             else
