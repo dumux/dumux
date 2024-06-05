@@ -544,6 +544,9 @@ public:
         // residual, then this here seems to be the right place for it
         // TODO: instead of using preprocessor macro deduce whether the problem associated with the
         // assebmler contains a proper getTotalMassOrMoles() function.
+#ifndef TEST_TOTAL_MASS_NORMALIZATION
+#define TEST_TOTAL_MASS_NORMALIZATION false
+#endif
         if constexpr(TEST_TOTAL_MASS_NORMALIZATION)
         {
             const auto& problem = this->assembler().problem();
