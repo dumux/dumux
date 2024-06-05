@@ -256,6 +256,14 @@ public:
     { residualTolerance_ = tolerance; }
 
     /*!
+     * \brief Set the maximum acceptable absolute relative residual for declaring convergence.
+     *
+     * \param tolerance The maximum relative residual at which
+     *                  the scheme is considered finished
+     */
+    void setMaxRelativeResidual(Scalar tolerance)
+    { relativeResidualTolerance_ = tolerance;}
+    /*!
      * \brief Set the maximum acceptable residual norm reduction.
      *
      * \param tolerance The maximum reduction of the residual norm
@@ -697,9 +705,10 @@ public:
         }
         else if(enableShiftCriterion_ && enableResidualCriterion_)
         {
-            if(enableAbsoluteResidualCriterion_)		    if(enableTotalMassOrMolesResidualNormalization_)
+            if(enableAbsoluteResidualCriterion_)
+            if(enableTotalMassOrMolesResidualNormalization_)
                 return shift_ <= shiftTolerance_
-                        || residualNorm_/totalMolesOrMass_ <= residualTolerance_;
+                                || residualNorm_/totalMolesOrMass_ <= relativeResidualTolerance_;
             else
                 return shift_ <= shiftTolerance_
                         || residualNorm_ <= residualTolerance_;
@@ -711,7 +720,8 @@ public:
         {
             return shift_ <= shiftTolerance_
                     || reduction_ <= reductionTolerance_
-                    || residualNorm_ <= residualTolerance_;
+                    || residualNorm_ <= residualTolerance_
+            || residualNorm_/totalMolesOrMass_ <= relativeResidualTolerance_;
         }
 
         return false;
@@ -774,6 +784,7 @@ public:
         // parameters
         if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
         if (enableAbsoluteResidualCriterion_) sout << " -- Newton.MaxAbsoluteResidual = " << residualTolerance_ << '\n';
+        if (enableTotalMassOrMolesResidualNormalization_) sout << " -- Newon.MaxRelativeResidual = " << relativeResidualTolerance_ << '\n';
         if (enableResidualCriterion_) sout << " -- Newton.ResidualReduction = " << reductionTolerance_ << '\n';
         sout << " -- Newton.MinSteps = " << minSteps_ << '\n';
         sout << " -- Newton.MaxSteps = " << maxSteps_ << '\n';
@@ -1157,6 +1168,7 @@ private:
 
         setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift", 1e-8));
         setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual", 1e-5));
+        setMaxRelativeResidual(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeResidual",1e-5));
         setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction", 1e-5));
         setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps", 10));
         setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps", 2));
@@ -1234,6 +1246,7 @@ private:
     Scalar shiftTolerance_;
     Scalar reductionTolerance_;
     Scalar residualTolerance_;
+    Scalar relativeResidualTolerance_;
 
     // time step control
     std::size_t maxTimeStepDivisions_;
