@@ -540,6 +540,16 @@ public:
                       const SolutionVector& uLastIter,
                       const ResidualVector& deltaU)
     {
+        // if we want to test a criterion that uses total mass to normalize the
+        // residual, then this here seems to be the right place for it
+        // TODO: instead of using preprocessor macro deduce whether the problem associated with the
+        // assebmler contains a proper getTotalMassOrMoles() function.
+        if constexpr(TEST_TOTAL_MASS_NORMALIZATION)
+        {
+            const auto& problem = this->assembler().problem();
+            totalMolesOrMass_ = problem.getTotalMassOrMoles(this->assembler().gridVariables(),vars);
+        }
+
         if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonUpdateShift_(uLastIter, deltaU);
 
@@ -1246,6 +1256,9 @@ private:
 
     //! convergence writer
     std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
+
+    // TEST: a private member variable that stores the total Mass or Moles for residual normalization
+    Scalar totalMolesOrMass_;
 };
 
 } // end namespace Dumux
