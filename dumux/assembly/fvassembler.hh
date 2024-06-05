@@ -342,7 +342,7 @@ public:
 
 private:
     /*!
-     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
+     * \brief Resizes the jacobian and sets the jacobians' sparsity pattern.
      */
     void setJacobianPattern_()
     {
