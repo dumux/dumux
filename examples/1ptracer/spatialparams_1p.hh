@@ -12,7 +12,7 @@
 //
 // This file contains the __spatial parameters class__ which defines the
 // distributions for the porous medium parameters permeability and porosity
-// over the computational grid
+// over the computational grid.
 //
 // [[content]]
 //
@@ -20,7 +20,7 @@
 // In this example, we use a randomly generated and element-wise distributed
 // permeability field. For this, we use the random number generation facilities
 // provided by the C++ standard library.
-// Dumux additionally implements some simpler but
+// DuMu<sup>x</sup> additionally implements some simpler but
 // standard-library-implementation-independent random distributions
 // that are accurate enough for our purposes
 // but allow to generate reproducible and portable random fields (when using a constant seed)
@@ -36,7 +36,7 @@
 // ### The spatial parameters class
 //
 // In the `OnePTestSpatialParams` class, we define all functions needed to describe
-// the porous medium, e.g. porosity and permeability, for the single-phase problem.
+// the porous medium, e.g. porosity and permeability, for the simulated single-phase flow scenario.
 // We inherit from the `FVPorousMediumFlowSpatialParamsOneP` class here, which is the base class
 // for spatial parameters in the context of single-phase porous medium flow
 // applications using finite volume discretization schemes.
@@ -48,7 +48,7 @@ class OnePTestSpatialParams
 : public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
                              OnePTestSpatialParams<GridGeometry, Scalar>>
 {
-    // The following convenience aliases will be used throughout this class
+    // The following convenience aliases will be used throughout this class.
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -70,7 +70,7 @@ public:
     // using lognormal distributions. The mean values for the permeability inside and outside of a
     // low-permeable lens (given by the coordinates `lensLowerLeft_` and `lensUpperRight_`) are defined
     // in the variables  `permeabilityLens_` and `permeability_`. The respective values are obtained
-    // from the input file making use of the free function `getParam`. We use a standard deviarion
+    // from the input file (`params.input`) making use of the free function `getParam`. We use a standard deviarion
     // of 10% here and compute permeabily values for all elements of the computational grid.
     // [[codeblock]]
     OnePTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)

@@ -1,5 +1,5 @@
 # Part 2: Post processing
-In this part we first visualize our simulation result and then a verification and validation of the Navier-Stokes model implemented in DuMu<sup>x</sup> is conducted.
+In this part we first visualize our simulation result. Then a verification and validation of the Navier-Stokes model implemented in DuMu<sup>x</sup> is conducted.
 
 ## Step 1. Visualize results with Paraview
 
@@ -21,7 +21,7 @@ For Re = 1 and Re = 1000, the result should look like this:
 ## Step 2. Compare our data with reference
 
 The verification and validation are essential to guarantee the accuracy and credibility of the numerical models.
-The velocity components for the velocity components at x = 0.5m and y = 0.5m are obtained as we run the test cases. 
+The velocity components for the velocity components at x = 0.5~m and y = 0.5~m are obtained as we run the test cases. 
 
 We compare our results with the reference data reconstructed from [Ghia et al.](https://doi.org/10.1016/0021-9991(82)90058-4) and [Jurjević](https://doi.org/10.1002/(SICI)1097-0363(19991015)31:3<601::AID-FLD892>3.0.CO;2-Z).
 For convenience, we placed the reference data in the folder named `reference_data`. For instance, the files `ghia_x.csv` and `ghia_y.csv` represent the reference vertical velocity component $`v_x`$ at x = 0.5 m and $`v_y`$ at y = 0.5 m for the scenario Re = 1000, respectively.

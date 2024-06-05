@@ -19,7 +19,7 @@
 // [[details]] includes
 //
 // The `OneP` type tag specializes most of the `properties` required for single-
-// phase flow simulations in DuMuX. We will use this in the following to inherit the
+// phase flow simulations in DuMu<sup>x</sup>. We will use this in the following to inherit the
 // respective properties and subsequently specialize those `properties` for our
 // type tag, which we want to modify or for which no meaningful default can be set.
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -97,7 +97,7 @@ public:
 // [[/codeblock]]
 //
 // These are all mandatory `properties`. However, we also want to specialize the
-// `LocalResidual` property, as we want to use analytic differentation (see `main.cc`).
+// `LocalResidual` property, as we want to use analytic differentiation (see `main.cc`).
 // The default for the `LocalResidual` property, specialized by the type tag `OneP`,
 // is the implementation of the local residual for compressible single-phase flow.
 // Therein, the functionality required for analytic derivatives is not implemented
@@ -112,7 +112,7 @@ struct LocalResidual<TypeTag, TTag::IncompressibleTest> { using type = OnePIncom
 // throughout the simulation.
 // [[details]] caching properties
 //
-// In Dumux, one has the option to activate/deactivate the grid-wide caching of
+// In DuMu<sup>x<\sup>, one has the option to activate/deactivate the grid-wide caching of
 // geometries and variables. If active, the CPU time can be significantly reduced
 // as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 // caching is disabled to ensure minimal memory requirements, however, in this example we

@@ -72,7 +72,7 @@ struct SpatialParams<TypeTag, TTag::PointSourceExample>
 // The `Grid` property tells the
 // simulator to use ALUGrid - an unstructured grid manager - here
 // configured for grid and coordinate dimensions `2`,
-// hexahedral element types (`Dune::cube`) and non-conforming refinement mode.
+// hexahedral element types (`Dune::cube`) and non-conforming refinement mode (`Dune::nonconforming`).
 // `Dune::ALUGrid` is declared in the included header `dune/alugrid/grid.hh`
 // from the Dune module `dune-alugrid`.
 template<class TypeTag>

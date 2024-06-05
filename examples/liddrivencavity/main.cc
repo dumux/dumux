@@ -206,7 +206,7 @@ int main(int argc, char** argv)
 
     // ##### The time loop
     // In each time step, we solve the non-linear system of equations, write
-    // the current solution into .vtk files and prepare for the next time step.
+    // the current solution into VTK files and prepare for the next time step.
     // [[codeblock]]
     timeLoop->start(); do
     {
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
     // [[/codeblock]]
 
-    // We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file
+    // We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file.
     writeSteadyVelocityAndCoordinates(*momentumProblem, x[momentumIdx]);
 
     // The following piece of code prints a final status report of the time loop

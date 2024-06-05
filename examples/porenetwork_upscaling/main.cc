@@ -86,9 +86,9 @@ void runExample()
 
     // ### Instantiate the solver
     // We use the `NewtonSolver` class, which is instantiated on the basis
-    // of an assembler and a linear solver. When the `solve` function of the
-    // `NewtonSolver` is called, it uses the assembler and linear
-    // solver classes to assemble and solve the non-linear system.
+    // of an assembler and a linear solver. When the `solve()` function of the
+    // Newton solver instance is called, it uses the assembler and
+    // linear solver to assemble and solve the linear systems in each Newton step.
     // [[codeblock]]
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);

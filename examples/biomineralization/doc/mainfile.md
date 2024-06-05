@@ -6,7 +6,7 @@
 
 # Main file
 
-The main file features a time loo with check points to assure the correct timing of the injections matching an experimental setup (see [@Hommel2016], Section 4.2 under the name _column experiment D1_)
+The main file features a time loop with check points to assure the correct timing of the injections matching an experimental setup (see [@Hommel2016], Section 4.2 under the name _column experiment D1_).
 The timing of the injections is stored in an additional input file `injections_checkpoints.dat`,
 which is read by `main.cc` to set the check points in the time loop.
 The number of check points reached is counted and passed on to `problem.hh`, so that `problem.hh` can determine the appropriate injection type.
@@ -167,9 +167,9 @@ We initialize the vtk output module. Each model has a predefined model specific 
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     GetPropType<TypeTag, Properties::IOFields>::initOutputModule(vtkWriter); //!< Add model specific output fields
-    //we add permeability as a specific output
+    // We add permeability as a specific output
     vtkWriter.addField(problem->getPermeability(), "Permeability");
-    //We update the output fields before write
+    // We update the output fields before write
     problem->updateVtkOutput(x);
     vtkWriter.write(0.0);
 ```
@@ -178,24 +178,24 @@ We instantiate the time loop and define an episode index to keep track of the th
 
 ```cpp
     int episodeIdx = 0;
-    //We  set the initial episodeIdx in the problem to zero
+    // We set the initial episodeIdx in the problem to zero
     problem->setEpisodeIdx(episodeIdx);
-    //We  set the time loop with episodes (check points)
+    // We set the time loop with episodes (check points)
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 ```
 
 ### Step 3 Setting episodes specified from file
 In this example we want to specify the injected reactant solutions at certain times.
-This is specified in an external file injections_checkpoints.dat.
+This is specified in an external file `injections_checkpoints.dat`.
 Within the following code block, the parameter file read and the time for the injection are extracted.
 Based on that, the checkpoints for the simulation are set.
 
 ```cpp
-    //We use a time loop with episodes if an injection parameter file is specified in the input
+    // We use a time loop with episodes if an injection parameter file is specified in the input
     if (hasParam("Injection.NumInjections"))
     {
-        //We first read the times of the checkpoints from the injection file
+        // We first read the times of the checkpoints from the injection file
         const auto injectionCheckPoints = readFileToContainer<std::vector<double>>("injection_checkpoints.dat");
 
         // We set the time loop with episodes of various lengths as specified in the injection file
@@ -214,7 +214,7 @@ Based on that, the checkpoints for the simulation are set.
     }
 ```
 
-### Step 4 solving the instationary problem
+### Step 4 Solving the instationary problem
 We create and initialize the assembler with a time loop for the transient problem.
 Within the time loop, we will use this assembler in each time step to assemble the linear system.
 Additionally the linear and non-linear solvers are set
@@ -223,13 +223,13 @@ Additionally the linear and non-linear solvers are set
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    //We set the linear solver
+    // We set the linear solver
     using LinearSolver = ILUBiCGSTABIstlSolver<
         LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>
     >;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    //We set the non-linear solver
+    // We set the non-linear solver
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 ```
@@ -270,7 +270,7 @@ and the time step sizes used is printed to the terminal.
         // We report statistics of this time step
         timeLoop->reportTimeStep();
 
-        //If episodes/check points are used, we count episodes and update the episode indices in the main file and the problem.
+        // If episodes/check points are used, we count episodes and update the episode indices in the main file and the problem.
         if (hasParam("Injection.NumInjections") || hasParam("TimeLoop.EpisodeLength"))
         {
             if (timeLoop->isCheckPoint())

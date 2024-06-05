@@ -117,8 +117,8 @@ public:
 
     // #### Neumann boundaries
     // In our case, we need to specify mass fluxes for our two liquid phases.
-    // Negative sign means influx and the unit of the boundary flux is $`kg/(m^2 s)`$.
-    // On the inlet area, we set a DNAPL influx of $`0.04 kg/(m^2 s)`$. On all other
+    // Negative sign means influx and the unit of the boundary flux is $\mathrm{kg}/\mathrm{(m^2 s)}$.
+    // On the inlet area, we set a DNAPL influx of $0.04 \, \mathrm{kg}/\mathrm{(m^2 s)}$. On all other
     // Neumann boundaries, the boundary flux is zero.
     // [[codeblock]]
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
@@ -154,7 +154,7 @@ public:
     // Point sources are added by pushing them into the vector `pointSources`.
     // The `PointSource` constructor takes two arguments.
     // The first argument is a coordinate array containing the position in space,
-    // the second argument is an array of source value for each equation (in units of $`kg/s`$).
+    // the second argument is an array of source values for each equation (in units of $`\mathrm{kg}/\mathrm{s}`$).
     // Recall that the first equation is the water phase mass balance
     // and the second equation is the DNAPL phase mass balance.
     void addPointSources(std::vector<PointSource>& pointSources) const

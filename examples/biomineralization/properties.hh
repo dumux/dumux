@@ -19,7 +19,7 @@
 // <details>
 //
 // This type tag specializes most of the `properties` required for two phase flow with
-// multiple components including mineralisation simulations (2pncmin) in DuMuX
+// multiple components including mineralisation simulations (2pncmin) in DuMu<sup>x</sup>
 // We will use this in the following to inherit the respective properties and
 // subsequently specialize those `properties` for our `TypeTag`, which we want to
 // modify or for which no meaningful default can be set.

@@ -41,7 +41,7 @@ have a look at the DuMu<sup>x</sup> [documentation](https://dumux.org/docs/doxyg
 ## Problem set-up
 This example considers stationary flow of a fluid between two parallel solid plates in two dimensions.
 Flow is enforced from left to right by prescribing an inflow velocity of $` v = 1~\frac{\text{m}}{\text{s}} `$
-on the left boundary, while a fixed pressure of $`p = 1.1 \text{bar}`$ and a zero velocity gradient
+on the left boundary, while a fixed pressure of $`p = 1.1 \, \text{bar}`$ and a zero velocity gradient
 in x-direction are prescribed on the right boundary. On the top and bottom boundaries, no-slip
 conditions are applied, which cause a parabolic velocity profile to develop along the channel.
 Take a look at Figure 1 for an illustration of the domain and the boundary conditions.
@@ -69,7 +69,7 @@ Take a look at Figure 1 for an illustration of the domain and the boundary condi
 
 ## Compile-time settings (`properties.hh`)
 
-In this file, the type tag used for this simulation is defined,
+In this file, the type tag used for this simulation (`TTag::ChannelExample`) is defined,
 for which we then specialize properties (compile time options) to the needs of the desired setup.
 
 
@@ -81,7 +81,7 @@ for which we then specialize properties (compile time options) to the needs of t
 <details><summary> Click to show includes</summary>
 
 The `NavierStokes` type tag specializes most of the properties required for Navier-
-Stokes single-phase flow simulations in DuMuX. We will use this in the following to inherit the
+Stokes single-phase flow simulations in DuMu<sup>x</sup>. We will use this in the following to inherit the
 respective properties and subsequently specialize those properties for our
 type tag, which we want to modify or for which no meaningful default can be set.
 
@@ -132,7 +132,7 @@ Navier-Stokes equations. This can be achieved at runtime by setting the paramete
 to see how this is done in this example.
 
 ```cpp
-// We enter the namespace Dumux::Properties in order to import the entire Dumux namespace for general use:
+// We enter the namespace `Dumux::Properties` in order to import the entire `Dumux` namespace for general use:
 namespace Dumux::Properties {
 
 // declaration of the `ChannelExample` type tag for the single-phase flow problem
@@ -151,11 +151,11 @@ default can be set, are specialized for our type tag `ChannelExample`.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::ChannelExample> { using type = Dune::YaspGrid<2>; };
 
-// This sets our problem class (see problem.hh) containing initial and boundary conditions.
+// This sets our problem type (see `problem.hh`) containing the initial and boundary conditions.
 template<class TypeTag>
 struct Problem<TypeTag, TTag::ChannelExample> { using type = Dumux::ChannelExampleProblem<TypeTag> ; };
 
-// This sets the fluid system to be used. Here, we use a liquid with constant properties as fluid phase.
+// This sets the fluid system type to be used. Here, we use a liquid with constant properties as the fluid phase.
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::ChannelExample>
 {
@@ -168,7 +168,7 @@ We also set some properties related to memory management
 throughout the simulation.
 <details><summary> Click to show caching properties</summary>
 
-In Dumux, one has the option to activate/deactivate the grid-wide caching of
+In DuMu<sup>x</sup>, one has the option to activate/deactivate the grid-wide caching of
 geometries and variables. If active, the CPU time can be significantly reduced
 as less dynamic memory allocation procedures are necessary. Per default, grid-wide
 caching is disabled to ensure minimal memory requirements, however, in this example we
@@ -221,7 +221,7 @@ Include the `NavierStokesBoundaryTypes` class which specifies the boundary types
 ```
 
 ### The problem class
-We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+We enter the problem class `ChannelExampleProblem` where all necessary boundary conditions and initial conditions are set for our simulation.
 As we are solving a problem related to free flow, we inherit from the base class `NavierStokesStaggeredProblem`.
 
 ```cpp
@@ -363,7 +363,7 @@ Finally, private variables are declared:
 
 ### Included header files
 <details><summary> Click to show includes</summary>
-These are DUNE helper classes related to parallel computations and file I/O
+These are DUNE helper classes related to parallel computations and file I/O.
 
 ```cpp
 #include <dune/common/parallel/mpihelper.hh>
@@ -442,7 +442,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 ```
 
-We define a convenience alias for the type tag of the problem. The type
+We define a convenience alias for the type tag of the problem (`Properties::TTag::ChannelExample`). The type
 tag contains all the properties that are needed to define the model and the problem
 setup. Throughout the main file, we will obtain types defined for this type tag
 using the property system, i.e. with `GetPropType`.
@@ -466,7 +466,7 @@ of the corners of the grid and the number of cells to be used to discretize each
 
 #### Step 2: Setting up and solving the problem
 First, a finite volume grid geometry is constructed from the grid that was created above.
-This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
+This builds the sub-control volumes (`scv`) and sub-control volume faces (`scvf`) for each element
 of the grid partition.
 
 ```cpp
@@ -474,14 +474,14 @@ of the grid partition.
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 ```
 
-We now instantiate the problem, in which we define the boundary and initial conditions.
+We now instantiate the `problem`, in which we define the boundary and initial conditions.
 
 ```cpp
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 ```
 
-We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+We set a solution vector `x` which consist of two parts: one part (indexed by `cellCenterIdx`)
 is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
 (indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
 We initialize the solution vector by what was defined as the initial solution of the the problem.
@@ -497,12 +497,12 @@ We initialize the solution vector by what was defined as the initial solution of
 The grid variables are used store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
 
 ```cpp
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVariables =GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 ```
 
-We then initialize the predefined model-specific output vtk output.
+We then initialize the predefined model-specific output VTK output.
 
 ```cpp
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -513,13 +513,13 @@ We then initialize the predefined model-specific output vtk output.
 
 <details><summary> Click to show calculation of surface fluxes</summary>
 We set up two surfaces over which fluxes are calculated.
-We determine the extensions [xMin,xMax]x[yMin,yMax] of the physical domain.
-The first surface (added by the first call of addSurface) shall be placed at the middle of the channel.
+We determine the extend $`[xMin,xMax] \times [yMin,yMax]`$ of the physical domain.
+The first surface (added by the first call of `addSurface`) shall be placed at the middle of the channel.
 If we have an odd number of cells in x-direction, there would not be any cell faces
 at the position of the surface (which is required for the flux calculation).
 In this case, we add half a cell-width to the x-position in order to make sure that
 the cell faces lie on the surface. This assumes a regular cartesian grid.
-The second surface (second call of addSurface) is placed at the outlet of the channel.
+The second surface (second call of `addSurface`) is placed at the outlet of the channel.
 
 ```cpp
     FluxOverSurface<GridVariables,
@@ -556,7 +556,7 @@ The second surface (second call of addSurface) is placed at the outlet of the ch
 ```
 
 </details>
-We create and initialize the assembler for the stationary problem.
+We create and initialize the `assembler` for the stationary problem.
 This is where the Jacobian matrix for the Newton solver is assembled.
 
 ```cpp

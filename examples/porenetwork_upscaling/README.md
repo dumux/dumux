@@ -6,12 +6,10 @@ __In this example, you will learn how to__
 
 * simulate creeping/non-creeping flow on a pore network by applying a pressure gradient in a given direction
 * perform an upscaling in order to determine the flow properties of the porous medium such as:
-the Darcy (intrinsic) single-phase permeability $`\mathbf{K}`$ [m$`^2`$] using the creeping flow simulation, the Forchheimer permeability $`\mathbf{K}`$ [m$`^2`$] and the Forchheimer coefficient $`\mathbf{\beta}`$ [m$`^{-1}`$] using the non-creeping flow simulation.
-
+the Darcy (intrinsic) single-phase permeability $`\mathbf{K}`$ [m$`^2`$] using a creeping flow simulation, the Forchheimer permeability $`\mathbf{K}`$ [m$`^2`$] and the Forchheimer coefficient $`\mathbf{\beta}`$ [m$`^{-1}`$] using a non-creeping flow simulation.
 
 __Result__.
-As a result of the creeping flow simulation of this example, you will get the Darcy (intrinsic) single-phase permeabilities for each spatial direction requested by the user $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$ [m$`^2`$] as a direct output on your terminal as the following example for the x-direction:
-
+As a result of the creeping flow simulation in this example, you will get the Darcy (intrinsic) single-phase permeabilities for each spatial direction requested by the user $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$ [m$`^2`$] as a direct output on your terminal as the following example for the x-direction:
 ```
 X-direction:
 -- Darcy (intrinsic) permeability = 3.326e-12 m^2
@@ -28,7 +26,7 @@ Figure 1 shows the pressure distribution within the pore network for the case of
     </center>
 </figure>
 
-The non-creeping flow simulation additionally gives you the Forchheimer permeability and coefficient for each spatial direction as in the example below for the x-direction:
+The non-creeping flow simulation additionally gives you the Forchheimer permeabilities and coefficients for each spatial direction as in the example below for the x-direction:
 
 ```
 X-direction:

@@ -25,7 +25,7 @@
 
 // ### The problem class
 // As we are solving a problem related to free flow, we create a new class called `LidDrivenCavityExampleProblem`
-// and let it inherit from a base class for the momentum and mass subproblems (selected in properties.hh).
+// and let it inherit from a base class for the momentum and mass subproblems (selected in `properties.hh`).
 // [[codeblock]]
 namespace Dumux {
 template <class TypeTag, class BaseProblem>
@@ -172,7 +172,7 @@ public:
         return values;
     }
     // [[/codeblock]]
-    // the data members of the problem class
+    // Finally, the (private) data members of the problem class.
     // [[codeblock]]
 private:
     static constexpr Scalar eps_ = 1e-6;

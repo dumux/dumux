@@ -179,7 +179,7 @@ Include the `NavierStokesBoundaryTypes` class which specifies the boundary types
 
 ### The problem class
 As we are solving a problem related to free flow, we create a new class called `LidDrivenCavityExampleProblem`
-and let it inherit from a base class for the momentum and mass subproblems (selected in properties.hh).
+and let it inherit from a base class for the momentum and mass subproblems (selected in `properties.hh`).
 
 ```cpp
 namespace Dumux {
@@ -334,7 +334,7 @@ The following function defines the initial conditions.
     }
 ```
 
-the data members of the problem class
+Finally, the (private) data members of the problem class.
 
 ```cpp
 private:
@@ -604,7 +604,7 @@ the non-linear solver
 
 ##### The time loop
 In each time step, we solve the non-linear system of equations, write
-the current solution into .vtk files and prepare for the next time step.
+the current solution into VTK files and prepare for the next time step.
 
 ```cpp
     timeLoop->start(); do
@@ -632,7 +632,7 @@ the current solution into .vtk files and prepare for the next time step.
     } while (!timeLoop->finished());
 ```
 
-We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file
+We write the velocities and coordinates at x = 0.5 and y = 0.5 into a file.
 
 ```cpp
     writeSteadyVelocityAndCoordinates(*momentumProblem, x[momentumIdx]);

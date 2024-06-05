@@ -45,7 +45,7 @@ Van Genuchten-Mualem relationships (see
 [Van Genuchten (1980)](https://doi.org/10.2136/sssaj1980.03615995004400050002x)
 and
 [Mualem (1976)](https://doi.org/10.1029/WR012i003p00513))
-for the capillary pressure $`pc = p_n - p_w`$ and the relative permeabilities $`k_r\alpha`$.
+for the capillary pressure $`p_c = p_n - p_w`$ and the relative permeabilities $`k_r\alpha`$.
 The parameters for these relationships are specified in the `spatialparams.hh` file.
 
 With the additional constraint that $`S_w + S_n = 1`$, the number of unknowns is reduced to two.

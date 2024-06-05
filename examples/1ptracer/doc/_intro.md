@@ -38,13 +38,13 @@ are prescribed on a small strip close to the bottom boundary.
 ## Model description
 
 As mentioned above, two models are solved sequentially in this example. A single-phase
-model (_1p model_) is used to solve for the stationary velocity distribution of a fluid phase
-in the domain. The tracer transport is solved with the _tracer model_, which solves an advection-diffusion
+model _1p model_ ( [model documentation](https://dumux.org/docs/doxygen/master/group___one_p_model.html) ) is used to solve for the stationary velocity distribution of a fluid phase
+in the domain. The tracer transport is solved with the _tracer model_ ( [model documentation](https://dumux.org/docs/doxygen/master/group___tracer_model.html) ), which solves an advection-diffusion
 equation for a tracer component, which is assumed not to affect the density and viscosity
 of the fluid phase.
 
 ### 1p Model
-The single phase model uses Darcy's law as the equation for the momentum conservation:
+The single-phase flow model (model type tag `OneP`) uses Darcy's law as the equation for the momentum conservation:
 
 ```math
 \textbf v = - \frac{\textbf K}{\mu} \left(\textbf{grad}\, p - \varrho {\textbf g} \right),
@@ -68,7 +68,7 @@ in which both advective and diffusive transport mechanisms are considered:
 \phi \frac{ \partial \varrho X^\kappa}{\partial t} - \text{div} \left\lbrace \varrho X^\kappa {\textbf v} + \varrho D^\kappa_\text{pm} \textbf{grad} X^\kappa \right\rbrace = 0.
 ```
 
-Here, $`\textbf v`$ is a velocity field, which in this example is computed using the _1p model_ (see above). Moreover, $`X^\kappa`$ is the tracer mass fraction and $` D^\kappa_\text{pm} `$ is the
+Here, $`\textbf v`$ is the velocity field computed by the _1p model_ (see above). Moreover, $`X^\kappa`$ is the tracer mass fraction and $` D^\kappa_\text{pm} `$ is the
 effective diffusivity. In this example, the effective diffusivity is a function of the diffusion
 coefficient of the tracer component $`D^\kappa`$ and the porosity and tortuosity $`\tau`$ of the porous
 medium (see [dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh)):
@@ -82,8 +82,8 @@ The primary variable used in this model is the tracer mass fraction $`X^\kappa`$
 ### Discretization
 
 In this example, all equations are discretized using cell-centered finite volumes with two-point flux
-approximation as spatial discretization scheme. For details on the discretization schemes available in
-DuMuX, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
+approximation as spatial discretization scheme (`CCTpfaModel`). For details on the discretization schemes available in
+DuMu<sup>x</sup>, have a look at the [code documentation](https://dumux.org/docs/doxygen/master/group___discretization.html).
 We use the [implicit Euler method](https://dumux.org/docs/doxygen/master/basic-numerics.html) as
 time discretization scheme for the tracer component balance equation solved in the _tracer model_.
 
@@ -96,7 +96,7 @@ In the following, we take a closer look at the source files for this example:
     ├── CMakeLists.txt          -> build system file
     ├── main.cc                 -> main program flow
     ├── params.input            -> runtime parameters
-    ├── properties._1p.hh       -> compile time settings for the single-phase flow simulation
+    ├── properties_1p.hh       -> compile time settings for the single-phase flow simulation
     ├── problem_1p.hh           -> boundary & initial conditions for the single-phase flow simulation
     ├── spatialparams_1p.hh     -> parameter distributions for the single-phase flow simulation
     ├── properties_tracer.hh    -> compile time settings for the tracer transport simulation
@@ -104,8 +104,8 @@ In the following, we take a closer look at the source files for this example:
     └── spatialparams_tracer.hh -> parameter distributions for the tracer transport simulation
 ```
 
-In order to define a simulation setup in DuMuX, you need to implement compile-time settings,
-where you specify the classes and compile-time options that DuMuX should use for the simulation.
+In order to define a simulation setup in DuMu<sup>x</sup>, you need to implement compile-time settings,
+where you specify the classes and compile-time options that DuMu<sup>x</sup> should use for the simulation.
 Moreover, a `Problem` class needs to be implemented, in which the initial and boundary conditions
 are specified. Finally, spatially-distributed values for the parameters required by the used model
 are implemented in a `SpatialParams` class.
