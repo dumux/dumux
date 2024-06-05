@@ -28,7 +28,7 @@ namespace Dumux {
  * \ingroup Assembly
  * \brief The element-wise residual for finite volume schemes
  * \note This class defines the interface used by the assembler using
- *       static polymorphism. Implementations are specialized for a certain discretization scheme
+ *       static polymorphism. Implementations are specialized for a certain discretization scheme.
  */
 template<class TypeTag>
 class FVLocalResidual
@@ -65,7 +65,7 @@ public:
 
     /*!
      * \name User interface
-     * \note The following methods are usually expensive to evaluate
+     * \note The following methods are usually expensive to evaluate.
      *       They are useful for outputting / postprocessing residual information.
      */
     // \{
@@ -112,7 +112,7 @@ public:
 
     /*!
      * \name Main interface
-     * \note Methods used by the assembler to compute derivatives and residual
+     * \note Methods used by the assembler to compute derivatives and the residual
      */
     // \{
 
@@ -126,7 +126,7 @@ public:
      * \param prevElemVolVars The volume averaged variables for all
      *                        sub-control volumes of the element at the previous time level
      * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
+     *                       sub-control volumes of the element at the current time level
      */
     ElementResidualVector evalStorage(const Element& element,
                                       const FVElementGeometry& fvGeometry,
@@ -172,7 +172,7 @@ public:
 
     /*!
      * \name Model specific interface
-     * \note The following method are the model specific implementations of the local residual
+     * \note The following methods are the model specific implementations of the local residual
      */
     // \{
 
@@ -250,7 +250,7 @@ public:
 
     /*!
      * \name Discretization specific interface
-     * \note The following method are the discretization specific wrapper methods
+     * \note The following methods are the discretization specific wrapper methods
      */
     // \{
 
@@ -266,7 +266,7 @@ public:
      * \param prevElemVolVars The volume averaged variables for all
      *                        sub-control volumes of the element at the previous time level
      * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
+     *                       sub-control volumes of the element at the current time level
      * \param scv The sub control volume the storage term is integrated over
      */
     void evalStorage(ElementResidualVector& residual,
@@ -311,7 +311,7 @@ public:
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
      * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
+     *                       sub-control volumes of the element at the current time level
      * \param scv The sub control volume the source term is integrated over
      */
     void evalSource(ElementResidualVector& residual,
@@ -339,7 +339,7 @@ public:
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVolVars The volume averaged variables for all
-     *                    sub-control volumes of the element at the current  time level
+     *                    sub-control volumes of the element at the current time level
      * \param elemBcTypes the boundary types for the boundary entities of an elements
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      * \param scvf The sub control volume face the flux term is integrated over
@@ -362,7 +362,7 @@ public:
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
+     *                       sub-control volumes of the element at the current time level
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      * \param scvf The sub control volume face the flux term is integrated over
      */
