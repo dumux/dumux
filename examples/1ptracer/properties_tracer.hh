@@ -19,7 +19,7 @@
 // [[details]] includes
 // As for the single-phase problem, atype tag is defined also for this simulation.
 // Here, we inherit all properties of the `Tracer` type tag, a convenience type tag
-// that specializes most of the required properties for tracer transport flow simulations in DuMuX.
+// that specializes most of the required properties for tracer transport flow simulations in DuMu<sup>x</sup>.
 #include <dumux/porousmediumflow/tracer/model.hh>
 
 // We use YaspGrid, an implementation of the dune grid interface for structured grids.

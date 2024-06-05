@@ -4,7 +4,7 @@
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 2](main.md) |
 |---|---:|
 
-The upscaling helper evaluates the pore-network simulation results for each direction $`i`$ and calculates the upscaled properties in this direction. Firstly, it evaluates the apparent velocity as:
+The upscaling helper evaluates the pore-network simulation results for each direction $`i`$ and calculates the upscaled properties in a chosen direction. Firstly, it evaluates the apparent velocity as:
 
 ```math
      v_{\mathrm{Apparent},i} = \frac{q_{\mathrm{mass,tot},i} / \varrho}{A_{\mathrm{tot},i}}
@@ -32,7 +32,7 @@ To calculate upscaled properties, we rearrange Forchehimer's equation as:
 ```math
  \frac{\nabla p_i v_{\mathrm{Apparent},i}}{\mu} = \frac{1}{K_f} + \frac{\varrho v_{\mathrm{Apparent},i}}{\mu} \beta .
 ```
-Finding the linear regression line of $`\nabla p_i v_{\mathrm{Apparent},i}/\mu `$ versus $`\varrho v_{\mathrm{Apparent},i}/\mu `$ and using the intercept and the slope of the regression line, we can respectively calculate the Forchheimer permeability and coefficient. It should be noted that the calculation of the Forchheimer permeability can be affected by the pressure range applied to the porous medium as well as the number of sample points that are used in the regression process. We compute the Darcy (intrinsic) permeability as the maximum permeability of the sample of data of the system which happens when the pressure gradient is small enough such that inertial effects are negligible. To ensure such a small pressure gradient, we set the first pressure gradient to be applied as $'10 Pa/m'$. However, this value can be adapted using the keyword `Problem.MinimumPressureGradient` in params.input. it is recommended to use more than 10 pressure sample points which can be set in the input file. As mentioned before, considering a slight difference between Darcy (intrinsic) permeability and Forchheimer permeability, in many applications they can be used interchangeabely. Here, however, we distinguish between them, calculate and report them separately.
+Finding the linear regression line of $`\nabla p_i v_{\mathrm{Apparent},i}/\mu `$ versus $`\varrho v_{\mathrm{Apparent},i}/\mu `$ and using the intercept and the slope of the regression line, we can respectively calculate the Forchheimer permeability and coefficient. It should be noted that the calculation of the Forchheimer permeability can be affected by the pressure range applied to the porous medium as well as the number of sample points that are used in the regression process. We compute the Darcy (intrinsic) permeability as the maximum permeability of the sample of data of the system which happens when the pressure gradient is small enough such that inertial effects are negligible. To ensure such a small pressure gradient, we set the first pressure gradient to be applied as $'10 Pa/m'$. However, this value can be adapted using the keyword `Problem.MinimumPressureGradient` in `params.input`. It is recommended to use more than 10 pressure sample points which can be set in the input file using `Problem.NumberOfPressureGradients`. As mentioned before, considering a slight difference between Darcy (intrinsic) permeability and Forchheimer permeability, in many applications they can be used interchangeabely. Here, however, we distinguish between them, calculate and report them separately.
 
 The code documentation is structured as follows:
 

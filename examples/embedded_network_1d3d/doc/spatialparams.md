@@ -178,7 +178,7 @@ public:
 
 
 Some interface functions that can be used, for example, in the problem class, to
-access spatial parameter. The interface `radius` is required by the 1D-3D coupling
+access spatial parameters. The interface `radius` is required by the 1D-3D coupling
 manager and is used to create the integration points for the coupling term
 
 

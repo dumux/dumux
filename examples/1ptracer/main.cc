@@ -33,7 +33,7 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 
-// The following class provides a convenient way of writing of dumux simulation results to VTK format.
+// The following class provides a convenient way of writing DuMu<sup>x</sup> simulation results to VTK format.
 #include <dumux/io/vtkoutputmodule.hh>
 // The gridmanager constructs a grid from the information in the input or grid file.
 // Many different Dune grid implementations are supported, of which a list can be found

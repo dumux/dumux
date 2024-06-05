@@ -24,7 +24,7 @@
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
 
 // ### The problem class
-// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// We enter the problem class `ChannelExampleProblem` where all necessary boundary conditions and initial conditions are set for our simulation.
 // As we are solving a problem related to free flow, we inherit from the base class `NavierStokesStaggeredProblem`.
 // [[codeblock]]
 namespace Dumux {

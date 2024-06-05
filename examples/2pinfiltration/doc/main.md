@@ -20,7 +20,7 @@ The code documentation is structured as follows:
 <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../main.cc))</summary>
 
 
-This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method
+This is the main file for the 2pinfiltration example. Here we can see the programme sequence and how the system is solved using Newton's method.
 ### Included header files
 <details><summary> Click to show includes</summary>
 
@@ -45,7 +45,7 @@ In Dumux, a property system is used to specify the model. For this, different pr
 #include <dumux/common/initialize.hh>
 ```
 
-We include the linear solver to be used to solve the linear system and the nonlinear  Newton's method
+We include the linear solver to be used to solve the linear system and the nonlinear Newton's method.
 
 ```cpp
 #include <dumux/linear/istlsolvers.hh>
@@ -54,7 +54,7 @@ We include the linear solver to be used to solve the linear system and the nonli
 #include <dumux/nonlinear/newtonsolver.hh>
 ```
 
-Further, we include assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation) and a file that defines the different differentiation methods used to compute the derivatives of the residual
+Further, we include the assembler, which assembles the linear systems for finite volume schemes (box-scheme, tpfa-approximation, mpfa-approximation) and a header file that defines the different differentiation methods used to compute the derivatives of the residual.
 
 ```cpp
 #include <dumux/assembly/fvassembler.hh>
@@ -73,7 +73,7 @@ The gridmanager constructs a grid from the information in the input or grid file
 #include <dumux/io/grid/gridmanager_alu.hh>
 ```
 
-We include several files which are needed for the adaptive grid
+We include several files which are needed for the adaptive grid.
 
 ```cpp
 #include <dumux/adaptive/adapt.hh>
@@ -83,7 +83,7 @@ We include several files which are needed for the adaptive grid
 #include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 ```
 
-Finally, we include the properties which configure the simulation
+Finally, we include the properties which configure the simulation.
 
 ```cpp
 #include "properties.hh"
@@ -122,13 +122,13 @@ file or specified domain dimensions and number of cells, as done in this example
 
     // The instationary non-linear problem is run on this grid.
     //
-    // we compute on the leaf grid view
+    // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
 ```
 
 #### Set-up of the problem
-We build the finite volume geometry, which allows us to iterate over subcontrolvolumes (scv) and
-subcontrolvolume faces (scvf) embedded in the elements of the grid partition.
+We build the finite volume geometry, which allows us to iterate over subcontrolvolumes (`scv`) and
+subcontrolvolume faces (`scvf`) embedded in the elements of the grid partition.
 
 ```cpp
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -190,11 +190,11 @@ Convenience functions to perform a grid adaptation given a pre-calculated indica
         // In case of any adapted elements, the gridvariables and the pointsourcemap are updated.
         if (wasAdapted)
         {
-            // We overwrite the old solution with the new (resized & interpolated) one
+            // We overwrite the old solution with the new (resized & interpolated) one.
             xOld = x;
-            // We initialize the secondary variables to the new (and "new old") solution
+            // We initialize the secondary variables to the new (and "new old") solution.
             gridVariables->updateAfterGridAdaption(x);
-            // we update the point source map after adaption
+            // We update the point source map after adaption.
             problem->computePointSourceMap();
         }
     };
@@ -216,9 +216,8 @@ Afterwards, depending on the initial conditions, another grid adaptation using o
     adaptGridAndVariables(indicator);
 ```
 
-[[/codeblock]]
 #### Solving the problem
-We get some time loop parameters from the input file params.input
+We get some time loop parameters from the input file `params.input`
 
 ```cpp
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -227,7 +226,7 @@ We get some time loop parameters from the input file params.input
     const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 ```
 
-and initialize the vtkoutput. Each model has a predefined model specific output with relevant parameters for that model.
+and initialize the VTK output. Each model has a predefined model-specific output with relevant parameters for that model.
 
 ```cpp
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
@@ -245,14 +244,14 @@ We instantiate the time loop
     timeLoop->setMaxTimeStepSize(maxDt);
 ```
 
-and set the assembler with the time loop because we have an instationary problem
+and set the assembler with the time loop because we have an instationary problem.
 
 ```cpp
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 ```
 
-We set the linear solver and the non-linear solver
+We set the linear solver and the non-linear solver.
 
 ```cpp
     using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
@@ -269,7 +268,7 @@ We start the time loop. In each time step before we start calculating a new solu
 ```cpp
     timeLoop->start(); do
     {
-        // We only want to refine/coarsen after first time step is finished, not before.
+        // We only want to refine/coarsen after the first time step is finished, not before.
         // The initial refinement was already done before the start of the time loop.
         // This means we only refine when the time is greater than 0. Note that we now also
         // have to update the assembler, since the sizes of the residual vector and jacobian matrix change.
@@ -290,20 +289,20 @@ We start the time loop. In each time step before we start calculating a new solu
         // We advance to the time loop to the next step.
         timeLoop->advanceTimeStep();
 
-        // We write vtk output for each time step
+        // We write vtk output for each time step.
         vtkWriter.write(timeLoop->time());
 
-        // We report statistics of this time step
+        // We report statistics of this time step.
         timeLoop->reportTimeStep();
 
-        // We set a new dt as suggested by the newton solver for the next time step
+        // We set a new dt as suggested by the newton solver for the next time step.
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 ```
 
 The following piece of code prints a final status report of the time loop
-before the program is terminated and we print he dumux end message
+before the program is terminated and we print he dumux end message.
 
 ```cpp
     timeLoop->finalize(leafGridView.comm());

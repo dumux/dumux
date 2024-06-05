@@ -17,7 +17,7 @@
 #include <iostream>
 // [[/exclude]]
 
-// These are DUNE helper classes related to parallel computations and file I/O
+// These are DUNE helper classes related to parallel computations and file I/O.
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 
@@ -74,7 +74,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
     // [[/codeblock]]
 
-    // We define a convenience alias for the type tag of the problem. The type
+    // We define a convenience alias for the type tag of the problem (`Properties::TTag::ChannelExample`). The type
     // tag contains all the properties that are needed to define the model and the problem
     // setup. Throughout the main file, we will obtain types defined for this type tag
     // using the property system, i.e. with `GetPropType`.
@@ -94,16 +94,16 @@ int main(int argc, char** argv) try
 
     // #### Step 2: Setting up and solving the problem
     // First, a finite volume grid geometry is constructed from the grid that was created above.
-    // This builds the sub-control volumes (scv) and sub-control volume faces (scvf) for each element
+    // This builds the sub-control volumes (`scv`) and sub-control volume faces (`scvf`) for each element
     // of the grid partition.
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
-    // We now instantiate the problem, in which we define the boundary and initial conditions.
+    // We now instantiate the `problem`, in which we define the boundary and initial conditions.
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // We set a solution vector which consist of two parts: one part (indexed by `cellCenterIdx`)
+    // We set a solution vector `x` which consist of two parts: one part (indexed by `cellCenterIdx`)
     // is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
     // (indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
     // We initialize the solution vector by what was defined as the initial solution of the the problem.
@@ -114,11 +114,11 @@ int main(int argc, char** argv) try
     problem->applyInitialSolution(x);
 
     // The grid variables are used store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVariables =GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // We then initialize the predefined model-specific output vtk output.
+    // We then initialize the predefined model-specific output VTK output.
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
@@ -126,13 +126,13 @@ int main(int argc, char** argv) try
 
     // [[details]] calculation of surface fluxes
     // We set up two surfaces over which fluxes are calculated.
-    // We determine the extensions [xMin,xMax]x[yMin,yMax] of the physical domain.
-    // The first surface (added by the first call of addSurface) shall be placed at the middle of the channel.
+    // We determine the extend $`[xMin,xMax] \times [yMin,yMax]`$ of the physical domain.
+    // The first surface (added by the first call of `addSurface`) shall be placed at the middle of the channel.
     // If we have an odd number of cells in x-direction, there would not be any cell faces
     // at the position of the surface (which is required for the flux calculation).
     // In this case, we add half a cell-width to the x-position in order to make sure that
     // the cell faces lie on the surface. This assumes a regular cartesian grid.
-    // The second surface (second call of addSurface) is placed at the outlet of the channel.
+    // The second surface (second call of `addSurface`) is placed at the outlet of the channel.
     FluxOverSurface<GridVariables,
                     SolutionVector,
                     GetPropType<TypeTag, Properties::ModelTraits>,
@@ -166,7 +166,7 @@ int main(int argc, char** argv) try
     flux.addSurface("outlet", p0outlet, p1outlet);
     // [[/details]]
 
-    // We create and initialize the assembler for the stationary problem.
+    // We create and initialize the `assembler` for the stationary problem.
     // This is where the Jacobian matrix for the Newton solver is assembled.
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);

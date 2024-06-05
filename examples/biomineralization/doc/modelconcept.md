@@ -13,7 +13,7 @@ A mass transfer may occur between both fluid phases by the mutual dissolution of
 the aqueous phase and the two *solid* phases, biofilm and calcite, denoted by subscripts (f) and (c) respectively, by attachment or
 detachment of biomass and precipitation or dissolution of calcite.
 
-The mobile components, denoted by superscripts k, are water (w), dissolved inorganic carbon (C<sub>tot</sub>),
+The mobile components, denoted by superscripts $`\kappa`$, are water (w), dissolved inorganic carbon (C<sub>tot</sub>),
 sodium (Na), chloride (Cl), calcium (Ca), urea (u), substrate (s), oxygen (O<sub>2</sub>), and suspended biomass (b).
 A substrate is the carbon and energy source of the bacteria and O<sub>2</sub> is the electron acceptor.
 
@@ -52,8 +52,8 @@ only a storage and source term since they are immobile:
 ```
 
 Here, $`\phi_\lambda`$ and $`\rho_\lambda`$ are volume fraction and mass density of
-the solid phase $`\lambda`$, and $`q^\lambda`$ is the source term of phase $`\lambda`$ due to biochemical reactions.
-The sources and sinks due to reactions $`q^\kappa$ and $q^\lambda`$ are specific to the components and are discussed in details in the subsequent section.
+the solid phase $`\lambda`$, and $`q^{\lambda}`$ is the source term of phase $`\lambda`$ due to biochemical reactions.
+The sources and sinks due to reactions $`q^{\kappa}$ and $q^{\lambda}`$ are specific to the components and are discussed in details in the subsequent section.
 
 ## Component-specific reactive source and sink terms
 

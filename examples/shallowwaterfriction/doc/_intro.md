@@ -23,8 +23,8 @@ __Table of contents__. This description is structured as follows:
 ## Problem set-up
 ### Model domain
 The model domain is given by a rough channel with a slope of 0.001.
-The domain is 500 meters long and 5 meters wide.
-The bottom altitude is 10 m at the inflow and hence 9.5 m at the outflow.
+The domain is $`500 \, \mathrm{m}`$ long and $`5 mathrm{m}`$ wide.
+The bottom altitude is $`10 mathrm{m}`$ at the inflow and hence $`9.5 mathrm{m}`$ at the outflow.
 Bottom friction is considered by applying
 [Manning's law](#mannings-law) ($`n`$ = 0.025).
 
@@ -33,15 +33,15 @@ At the lateral sides a no-flow boundary condition is applied. Also, no friction 
 considered there and therefore a no slip boundary
 condition is applied. These are the default boundary conditions for the shallow
 water model. At the left border, a discharge boundary condition
-is applied as inflow boundary condition with $`q = -1.0 m^2 s^{-1}`$.
+is applied as inflow boundary condition with $`q = -1.0 mathrm{m}^2 \mathrm{s}^{-1}`$.
 At the right border, a fixed water depth boundary condition
 is applied for the outflow. Normal flow is assumed, therefore the water
 depth at the right border is calculated using the equation
 of [Gauckler, Manning and Strickler](#analytical-solution).
 
 ### Initial conditions
-The initial water depth is set to 1 m, which is slightly higher than the normal flow
-water depth (0.87 m). Therefore, we expect a decreasing
+The initial water depth is set to 1~m, which is slightly higher than the normal flow
+water depth (0.87~m). Therefore, we expect a decreasing
 water level during the simulation until the normal flow condition is reached in
 the entire model domain. The initial velocity is set to zero.
 

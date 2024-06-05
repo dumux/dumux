@@ -116,34 +116,34 @@ int main(int argc, char** argv) try
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     GetPropType<TypeTag, Properties::IOFields>::initOutputModule(vtkWriter); //!< Add model specific output fields
-    //we add permeability as a specific output
+    // We add permeability as a specific output
     vtkWriter.addField(problem->getPermeability(), "Permeability");
-    //We update the output fields before write
+    // We update the output fields before write
     problem->updateVtkOutput(x);
     vtkWriter.write(0.0);
     // [[/codeblock]]
 
-    //We instantiate the time loop and define an episode index to keep track of the the actual episode number
+    // We instantiate the time loop and define an episode index to keep track of the the actual episode number
     // [[codeblock]]
     int episodeIdx = 0;
-    //We  set the initial episodeIdx in the problem to zero
+    // We set the initial episodeIdx in the problem to zero
     problem->setEpisodeIdx(episodeIdx);
-    //We  set the time loop with episodes (check points)
+    // We set the time loop with episodes (check points)
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     // [[/codeblock]]
 
     // ### Step 3 Setting episodes specified from file
     // In this example we want to specify the injected reactant solutions at certain times.
-    // This is specified in an external file injections_checkpoints.dat.
+    // This is specified in an external file `injections_checkpoints.dat`.
     // Within the following code block, the parameter file read and the time for the injection are extracted.
     // Based on that, the checkpoints for the simulation are set.
 
     // [[codeblock]]
-    //We use a time loop with episodes if an injection parameter file is specified in the input
+    // We use a time loop with episodes if an injection parameter file is specified in the input
     if (hasParam("Injection.NumInjections"))
     {
-        //We first read the times of the checkpoints from the injection file
+        // We first read the times of the checkpoints from the injection file
         const auto injectionCheckPoints = readFileToContainer<std::vector<double>>("injection_checkpoints.dat");
 
         // We set the time loop with episodes of various lengths as specified in the injection file
@@ -162,7 +162,7 @@ int main(int argc, char** argv) try
     }
     // [[/codeblock]]
 
-    // ### Step 4 solving the instationary problem
+    // ### Step 4 Solving the instationary problem
 
     // We create and initialize the assembler with a time loop for the transient problem.
     // Within the time loop, we will use this assembler in each time step to assemble the linear system.
@@ -171,13 +171,13 @@ int main(int argc, char** argv) try
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    //We set the linear solver
+    // We set the linear solver
     using LinearSolver = ILUBiCGSTABIstlSolver<
         LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>
     >;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    //We set the non-linear solver
+    // We set the non-linear solver
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
     // [[/codeblock]]
@@ -218,7 +218,7 @@ int main(int argc, char** argv) try
         // We report statistics of this time step
         timeLoop->reportTimeStep();
 
-        //If episodes/check points are used, we count episodes and update the episode indices in the main file and the problem.
+        // If episodes/check points are used, we count episodes and update the episode indices in the main file and the problem.
         if (hasParam("Injection.NumInjections") || hasParam("TimeLoop.EpisodeLength"))
         {
             if (timeLoop->isCheckPoint())

@@ -11,7 +11,7 @@
 This file contains the `main` function and implements the main program
 flow. We initialize the simulation framework, initialize parameters,
 create the grids (using parameters from the configuration file `params.input`),
-create vector to store the primary and secondary variables, construct an
+create vectors to store the primary and secondary variables, construct an
 assembler that can assembly the the residual (discrete equations) and
 the system matrix (Jacobian of the residual), and create a linear solver
 that solves the linear system arising in each time step. The time loop

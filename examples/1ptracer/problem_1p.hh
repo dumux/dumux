@@ -24,7 +24,7 @@
 #include <dumux/common/boundarytypes.hh>
 
 // ### The problem class
-// We enter the problem class where all necessary boundary conditions and initial conditions are set for our simulation.
+// We enter the problem class where all necessary boundary and initial conditions are set for our simulation.
 // As we are solving a problem related to flow in porous media, we inherit from the base class `PorousMediumFlowProblem`.
 // [[codeblock]]
 namespace Dumux {
@@ -65,7 +65,7 @@ public:
         // we define a small epsilon value
         Scalar eps = 1.0e-6;
 
-        // Initially, set Neumann boundary conditions for all equations
+        // Initially, set Neumann boundary conditions for all equations.
         BoundaryTypes values;
         values.setAllNeumann();
 
@@ -84,7 +84,7 @@ public:
     // [[codeblock]]
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        // instantiate a primary variables object
+        // Instantiate a primary variables object
         PrimaryVariables values;
 
         // and assign a pressure value in [Pa] such that at the bottom boundary
@@ -92,7 +92,6 @@ public:
         values[0] = 1.0e5*(1.1 - globalPos[dimWorld-1]*0.1);
         return values;
     }
-    // [[/codeblock]]
 
 }; // end class definition of OnePTestProblem
 } // end namespace Dumux

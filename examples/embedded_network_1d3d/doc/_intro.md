@@ -1,6 +1,6 @@
 # Embedded network 1D-3D model (tissue perfusion)
 
-We solve a tracer transport problem in a domain that consist of a porous medium block
+We solve a tracer transport problem in a domain that consists of a porous medium block
 that has an embedded transport network. In this example the porous medium is brain tissue
 and the embedded network is the vasculature (blood vessels).
 
@@ -10,8 +10,8 @@ __Table of contents__. This description is structured as follows:
 
 ## Problem set-up
 In this example we simulate clearance of a substance present in the tissue through the blood. The tissue
-cube is assigned no-flux/symmetry boundary conditions assuming that identical cubes are mirrored on all sides.
-Therefore, the tracer has to cross the vessel wall into the network (vessel lumen). It then gets transported
+cube is assigned no-flux/symmetry boundary conditions, assuming that identical cubes are mirrored on all sides.
+Therefore, the tracer has to cross the vessel wall into the network (vessel lumen). It is then transported
 in the blood stream by advection and diffusion. In the network, the tracer mole fraction is zero at the inlet
 and at the outlet the mole fraction gradient is zero. Thus, the tracer is transported out of the domain by advection only.
 VTK output is written in every time step, and the total tracer concentration in the tissue is written into a text file
@@ -21,7 +21,7 @@ along the simulation.
 The domain consists of a small blood vessel network embedded
 in a porous tissue (pore space is the pore space of the extra-cellular matrix).
 The network is extracted based on the mouse cortical brain data from [Blinder (2013)](https://doi.org/10.1038/nn.3426).
-With the boundary condition estimated by [Schmid (2017a)](https://doi.org/10.1371/journal.pcbi.1005392)
+With the boundary conditions estimated by [Schmid (2017a)](https://doi.org/10.1371/journal.pcbi.1005392)
 and the pressure and network data available from [Schmid (2017b)](https://doi.org/10.5281/zenodo.269650), blood flow
 simulations in DuMu<sup>x</sup> give a pressure field in the entire network. A small part (200µm)³ has been extracted
 for this example. The example also contains a blood flow solver which uses the pressure boundary data to compute
@@ -54,7 +54,7 @@ $`Q_\mathrm{B} := A_\mathrm{B}v_\mathrm{B}`$ is a given blood flow field transpo
 Furthermore, isothermal conditions with a homogeneous temperature distribution of constant $`T=37^\circ C`$ are assumed.
 The 1D network PDE is formulated in terms of the local axial coordinate $`s`$.
 
-For the coupling, we use a formulation with line source and a perimeter integral operator, that is $`\Phi_\Lambda`$ is chosen to be a delta distribution centered on vessel centerline, and $`x_\mathrm{B}`$, which is assumed to be constant on each cross-section (well-mixed),
+For the coupling, we use a formulation with line source and a perimeter integral operator, denoted  $`\Phi_\Lambda`$, which is chosen to be a delta distribution centered on vessel centerline, and $`x_\mathrm{B}`$, which is assumed to be constant on each cross-section (well-mixed),
 and every point on the surface is assumed to be uniquely identified with a position $`s`$ in the network such that we can extend
 $`x_\mathrm{B}`$ with $`\Pi`$ to the surface. The integral is evaluated numerically. Each integration point is represented in
 the code as a point source. The point source values (the integrand) are implemented in the problem class function `pointSource(...)`.
