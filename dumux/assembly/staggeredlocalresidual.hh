@@ -146,7 +146,7 @@ public:
         const auto& prevVolVars = prevElemVolVars[scv];
 
         // mass balance within the element. this is the
-        // \f$\frac{m}{\partial t}\f$ term if using implicit
+        // \f$\frac{\partial m}{\partial t}\f$ term if using implicit
         // euler as time discretization.
 
         // We might need a more explicit way for
