@@ -756,6 +756,7 @@ public:
         if (enableAbsoluteResidualCriterion_) sout << " -- Newton.EnableAbsoluteResidualCriterion = true\n";
         if (enableShiftCriterion_) sout << " -- Newton.EnableShiftCriterion = true (relative shift convergence criterion)\n";
         if (enableResidualCriterion_) sout << " -- Newton.EnableResidualCriterion = true\n";
+        if (enableTotalMassOrMolesResidualNormalization_) sout << " -- Newont.EnableTotalMassOrMolesResidualNormalization = true"\n;
         if (satisfyResidualAndShiftCriterion_) sout << " -- Newton.SatisfyResidualAndShiftCriterion = true\n";
         // parameters
         if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
@@ -1130,6 +1131,7 @@ private:
         enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion", false);
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion", true);
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion", false) || enableAbsoluteResidualCriterion_;
+        enableTotalMassOrMolesResidualNormalization_ = getParamFromGroup<bool>(group, "Newton.EnableTotalMassOrMolesResidualNormalization", false);
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion", false);
         enableDynamicOutput_ = getParamFromGroup<bool>(group, "Newton.EnableDynamicOutput", true);
 
@@ -1233,6 +1235,8 @@ private:
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
     bool enableDynamicOutput_;
+    // TEST: May also be worth using a run-time parameter
+    bool enableTotalMassOrMolesResidualNormalization_;
 
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
@@ -1258,7 +1262,8 @@ private:
     std::shared_ptr<ConvergenceWriter> convergenceWriter_ = nullptr;
 
     // TEST: a private member variable that stores the total Mass or Moles for residual normalization
-    Scalar totalMolesOrMass_;
+    // To avoid division by zero it is initialized with 1.0.
+    Scalar totalMolesOrMass_{1.0};
 };
 
 } // end namespace Dumux
