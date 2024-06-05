@@ -756,7 +756,7 @@ public:
         if (enableAbsoluteResidualCriterion_) sout << " -- Newton.EnableAbsoluteResidualCriterion = true\n";
         if (enableShiftCriterion_) sout << " -- Newton.EnableShiftCriterion = true (relative shift convergence criterion)\n";
         if (enableResidualCriterion_) sout << " -- Newton.EnableResidualCriterion = true\n";
-        if (enableTotalMassOrMolesResidualNormalization_) sout << " -- Newont.EnableTotalMassOrMolesResidualNormalization = true"\n;
+        if (enableTotalMassOrMolesResidualNormalization_) sout << " -- Newont.EnableTotalMassOrMolesResidualNormalization = true\n";
         if (satisfyResidualAndShiftCriterion_) sout << " -- Newton.SatisfyResidualAndShiftCriterion = true\n";
         // parameters
         if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
