@@ -25,7 +25,6 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
-
 #include <dumux/porenetwork/common/utilities.hh>
 
 #include <dumux/multidomain/porenetwork/constraint/model.hh>
@@ -35,6 +34,7 @@
 #include "problem_porenetwork.hh"
 #include "problem_constraint.hh"
 #include "spatialparams_porenetwork.hh"
+#include "../advection.hh"
 
 //////////
 // Specify the properties
@@ -56,7 +56,20 @@ struct FluidSystem<TypeTag, TTag::DrainageProblem>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = Dumux::FluidSystems::H2OAir<Scalar, Dumux::Components::SimpleH2O<Scalar>>;
- };
+};
+
+//! Use the advection type which blocks wetting phase back flow at outlet
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::DrainageProblem>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using S = PoreNetwork::TransmissibilityPatzekSilin<Scalar>;
+    using W = PoreNetwork::WettingLayerTransmissibility::RansohoffRadke<Scalar>;
+    using N = PoreNetwork::NonWettingPhaseTransmissibility::BakkeOren<Scalar>;
+public:
+    using type = PoreNetwork::CreepingFlowBlockingWPhaseOutletBack<Scalar, S, W, N>;
+};
 
 #if USETHETAREGULARIZATION
 //! The grid flux variables cache vector class
