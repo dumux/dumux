@@ -687,10 +687,13 @@ public:
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
-            if(enableTotalMassOrMolesResidualNormalization_)
-                return residualNorm_/totalMolesOrMass_ <= residualTolerance_;
-            else
-                return residualNorm_ <= residualTolerance_;
+            {
+                if(enableTotalMassOrMolesResidualNormalization_)
+                    return residualNorm_/totalMolesOrMass_ <= residualTolerance_;
+                else
+                    return residualNorm_ <= residualTolerance_;
+            }
+
             else
                 return reduction_ <= reductionTolerance_;
         }
@@ -706,12 +709,14 @@ public:
         else if(enableShiftCriterion_ && enableResidualCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
-            if(enableTotalMassOrMolesResidualNormalization_)
-                return shift_ <= shiftTolerance_
+            {
+                if(enableTotalMassOrMolesResidualNormalization_)
+                    return shift_ <= shiftTolerance_
                                 || residualNorm_/totalMolesOrMass_ <= relativeResidualTolerance_;
-            else
-                return shift_ <= shiftTolerance_
+                else
+                    return shift_ <= shiftTolerance_
                         || residualNorm_ <= residualTolerance_;
+            }
             else
                 return shift_ <= shiftTolerance_
                         || reduction_ <= reductionTolerance_;
@@ -721,7 +726,7 @@ public:
             return shift_ <= shiftTolerance_
                     || reduction_ <= reductionTolerance_
                     || residualNorm_ <= residualTolerance_
-            || residualNorm_/totalMolesOrMass_ <= relativeResidualTolerance_;
+                    || residualNorm_/totalMolesOrMass_ <= relativeResidualTolerance_;
         }
 
         return false;
