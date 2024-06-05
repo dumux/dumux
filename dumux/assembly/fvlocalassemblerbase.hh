@@ -253,7 +253,7 @@ public:
     ElementVolumeVariables& curElemVolVars()
     { return curElemVolVars_; }
 
-    //! The element volume variables of the provious time step
+    //! The element volume variables of the previous time step
     ElementVolumeVariables& prevElemVolVars()
     { return prevElemVolVars_; }
 
@@ -277,7 +277,7 @@ public:
     const ElementVolumeVariables& curElemVolVars() const
     { return curElemVolVars_; }
 
-    //! The element volume variables of the provious time step
+    //! The element volume variables of the previous time step
     const ElementVolumeVariables& prevElemVolVars() const
     { return prevElemVolVars_; }
 
