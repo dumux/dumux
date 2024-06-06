@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
         const std::string funcStr = "foo*sin(bar)*bla";
         bool error = false;
         try { FunctionFromStringExpression<2> func(funcStr, std::array<std::string, 2>{{"foo" "bar"}}); }
-        catch (Dune::IOError& e) { error = true; }
+        catch (const Dune::IOError& e) { error = true; }
         if (!error)
             DUNE_THROW(Dune::Exception, "Faulty expression did not throw: " << funcStr);
     }

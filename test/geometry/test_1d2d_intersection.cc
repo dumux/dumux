@@ -26,7 +26,7 @@ Dune::MultiLinearGeometry<double, 1, 3>
 makeLine(std::initializer_list<Dune::FieldVector<double, 2>>&& c, std::integral_constant<int, 3>)
 {
     std::vector<Dune::FieldVector<double, 3>> corners;
-    for (auto& corner : c)
+    for (const auto& corner : c)
     {
         Dune::FieldVector<double, 3> coord;
         coord[0] = corner[0];
