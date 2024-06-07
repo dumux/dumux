@@ -64,8 +64,13 @@ public:
         assert(isfinite(transmissibility));
         Scalar volumeFlow = transmissibility*deltaP;
 
-        if (fvGeometry.gridGeometry().throatLabel(fvGeometry.gridGeometry().elementMapper().index(element)) == 3 && deltaP < 0 && phaseIdx == 0)
-            return 0;
+        static const bool blockWOutlet = getParam<bool>("Problem.DisWReflow", false);
+        if (blockWOutlet && fvGeometry.gridGeometry().throatLabel(fvGeometry.gridGeometry().elementMapper().index(element)) == 3 && deltaP <= -1e-20 && phaseIdx == 0)
+            return 0.0*deltaP;
+
+        static const bool blockNinlet = getParam<bool>("Problem.DisNOutflow", false);
+        if (blockNinlet && fvGeometry.gridGeometry().throatLabel(fvGeometry.gridGeometry().elementMapper().index(element)) == 2 && deltaP > 1e-20 && phaseIdx == 1)
+            return 0.0*deltaP;
 
         // add gravity term
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
@@ -106,6 +111,7 @@ public:
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
             const bool invaded = fluxVarsCache.invaded();
+            static const bool scalingKFactor = getParam<double>("Newton.scalingKFactor", 1);
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
@@ -116,12 +122,12 @@ public:
                     const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
                                               : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
 
-                    return theta*kw + (1-theta)*k1p;
+                    return (theta*kw + (1-theta)*k1p)*scalingKFactor;
                 }
                 else // non-wetting phase
                 {
                     // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    return  theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return  (theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache))*scalingKFactor;
                 }
             }
             else
