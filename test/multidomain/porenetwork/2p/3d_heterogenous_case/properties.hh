@@ -37,6 +37,7 @@
 #include "problem_constraint.hh"
 #include "spatialparams_porenetwork.hh"
 #include "../advection.hh"
+#include "cvfelocalresidual.hh"
 
 //////////
 // Specify the properties
@@ -74,6 +75,11 @@ private:
 public:
     using type = PoreNetwork::CreepingFlowBlockingWPhaseOutletBack<Scalar, S, W, N>;
 };
+
+//! Set the BaseLocalResidual to MYCVFELocalResidual
+template<class TypeTag>
+struct BaseLocalResidual<TypeTag, TTag::DrainageProblem>
+{ using type = MYCVFELocalResidual<TypeTag>; };
 
 #if USETHETAREGULARIZATION
 //! The grid flux variables cache vector class
