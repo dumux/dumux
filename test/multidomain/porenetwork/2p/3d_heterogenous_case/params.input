@@ -56,3 +56,7 @@ InvasionThetaThreshold = 1e-14
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.99
 HighSwRegularizationMethod = Spline
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3
