@@ -89,8 +89,8 @@ def analyticalSolution(time):
 ##############################################
 #######    Simulation Preparation  ###########
 ##############################################
-testName         = ['test_pnm_2p_1d_drainage', 'test_pnm_2p_1d_drainage_reg']
-pvdFileName      = ['test_pnm_2p_1d_drainage.pvd', 'test_pnm_2p_1d_drainage_reg.pvd']
+testName         = ['test_pnm_2p_1d_drainage', 'test_pnm_2p_1d_drainage_reg', 'test_pnm_2p_1d_drainage_md']
+pvdFileName      = ['test_pnm_2p_1d_drainage.pvd', 'test_pnm_2p_1d_drainage_reg.pvd', 'test_pnm_2p_1d_drainage_md.pvd']
 homeDir = os.path.expanduser('~')
 pvpythonPath = homeDir + '/ParaView-5.6.0-osmesa-MPI-Linux-64bit/bin/pvpython' # path of pvpython
 extractScript = 'extractresults.py'
@@ -107,6 +107,9 @@ l2ErrorRegReduce = [[], []]
 averageTimeStepRegReduce = [[], []]
 totalNewtonIterationsRegReduce =  [[], []]
 
+l2ErrorMd = [ [] ]
+averageTimeStepMd =  [ [] ]
+totalNewtonIterationsMd =   [ [] ]
 
 ##############################################
 ############   Run & Get Data  ###############
@@ -188,6 +191,30 @@ for itime, maxdt in enumerate(maxTimeStep):
         averageTimeStepRegReduce[idx].append(timestep_avg)
 
 
+    # run regularization test case with reduced delta
+    delete_all_vtp_files()
+    subprocess.run(['./' + testName[2]]
+                    + ['params_md.input ']
+                    + ['-TimeLoop.DtInitial', str(maxdt)]
+                    + ['-TimeLoop.TEnd', str(tEnd)]
+                    + ['-TimeLoop.MaxTimeStepSize', str(maxdt)]
+                    + ['-Grid.ThroatCrossSectionShape', 'Circle']
+                    + ['-Pnm.Problem.Name', str(testName[2])]
+                    + ['-Problem.NonWettingMassFlux', str(massFlux)]
+                    + ['-Newton.UseLineSearch', str(False)]
+                    + ['-Newton.MaxSteps', str(500)]
+                    + ['-Newton.TargetSteps', str(500)])
+    iterations = np.genfromtxt('NewtonLog.txt')
+    totalNewtonIterationsMd[0].append(iterations)
+    subprocess.run(['rm', 'NewtonLog.txt'])
+    pvd_file = pvdFileName[1]
+    times = get_time_steps_from_pvd(pvd_file)
+    timesteps = np.diff(times)
+    l2error = np.genfromtxt( str(testName[2]) + '.log' )
+    l2ErrorMd[0].append(l2error)
+    timestep_avg = np.average(timesteps)
+    averageTimeStepMd[0].append(timestep_avg)
+
 ##############################################
 ############        Plot        ##############
 ##############################################
@@ -196,9 +223,12 @@ fig, ax = plt.subplots(dpi=300, ncols=2, nrows=1, figsize=(8, 4)) # two subplots
 
 # 1st subplot about accuracy
 for idx, interval in enumerate(regularizationDelta):
-    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI-N, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[0].plot(averageTimeStepRegNonReduce[idx], l2ErrorRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[0].plot(averageTimeStepRegReduce[idx], l2ErrorRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepFI[idx], l2ErrorFI[idx], marker="o", label = 'FI-N, $\\tilde{\delta} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepRegNonReduce[idx], l2ErrorRegNonReduce[idx], marker="^", label = 'FI-R, $\delta = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[0].plot(averageTimeStepRegReduce[idx], l2ErrorRegReduce[idx], marker=">", label = 'FI-R, decreased $\delta$', linewidth = 1, markersize = 6)
+
+ax[0].plot(averageTimeStepMd[0], l2ErrorMd[0], marker="*", label = 'FI-$\Theta$', linewidth = 1, markersize = 6)
+
 ax[0].set_xlabel("Average time step size")
 ax[0].set_ylabel("$E_{S_{w}}$ [-]")
 ax[0].set_yscale('log')
@@ -207,9 +237,12 @@ ax[0].legend(loc='upper center', bbox_to_anchor=(0.47, 1.32), ncol=2, prop={'siz
 
 # 2nd subplot about efficiency
 for idx, interval in enumerate(regularizationDelta):
-    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI-N, $\\tilde{\epsilon} = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\epsilon = $' + str(interval), linewidth = 1, markersize = 6)
-    ax[1].plot(averageTimeStepRegReduce[idx], totalNewtonIterationsRegReduce[idx], marker=">", label = 'FI-R, decreased $\epsilon$', linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI-N, $\\tilde{\delta} = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\delta = $' + str(interval), linewidth = 1, markersize = 6)
+    ax[1].plot(averageTimeStepRegReduce[idx], totalNewtonIterationsRegReduce[idx], marker=">", label = 'FI-R, decreased $\delta$', linewidth = 1, markersize = 6)
+
+ax[1].plot(averageTimeStepMd[0], totalNewtonIterationsMd[0], marker="*", label = 'FI-$\Theta$', linewidth = 1, markersize = 6)
+
 ax[1].set_xlabel("Average time step size")
 ax[1].set_ylabel("total newton iterations [-]")
 ax[1].set_yscale('log')
