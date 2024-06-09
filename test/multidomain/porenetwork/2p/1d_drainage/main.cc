@@ -41,23 +41,16 @@ double addNewL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x, 
     using namespace Dumux;
     using Scalar = double;
 
+    const auto numDofs = x.size();
     Scalar l2error = 0.0;
-    for (const auto& element : elements(problem->gridGeometry().gridView()))
+    for (int dofIdx = 0; dofIdx < x.size(); dofIdx++)
     {
-        auto fvGeometry = localView(problem->gridGeometry());
-        fvGeometry.bindElement(element);
-
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx][1] - problem->analyticalSolution(dofIdx, timeloop->time());
-            l2error += delta*delta;
-        }
+        const Scalar delta = x[dofIdx][1] - problem->analyticalSolution(dofIdx, timeloop->time());
+        l2error += delta*delta;
     }
-    const auto numDofs = problem->gridGeometry().numDofs();
 
     using std::sqrt;
-    l2error += timeloop->timeStepSize() * ( l2error / numDofs ); // homogenous grid
+    l2error = timeloop->timeStepSize() * ( l2error / numDofs ); // homogenous grid
 
     std::cout << Fmt::format("** L2 error (abs) at {}s ", timeloop->time())
               << Fmt::format("L2 error = {:.8e}", sqrt(l2error/numDofs))
