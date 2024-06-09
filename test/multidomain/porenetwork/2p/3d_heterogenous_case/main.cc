@@ -92,6 +92,7 @@ int main(int argc, char** argv)
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
+    problem->setGridVariables(gridVariables);
 
     // get some time loop parameters
     const auto dt = getParam<double>("TimeLoop.DtInitial");

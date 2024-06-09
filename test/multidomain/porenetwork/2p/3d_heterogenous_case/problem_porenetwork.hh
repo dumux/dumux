@@ -53,6 +53,9 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
     using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
     static constexpr bool useThetaRegularization = InvasionState::stateMethod == Dumux::PoreNetwork::StateSwitchMethod::theta;
+    enum class BC {
+        dirichlet, robin, outflowQwfixSn
+    };
 
 public:
     template<class SpatialParams>
@@ -71,7 +74,23 @@ public:
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
         logfile_.open("logfile_" + this->name() + ".txt");
+        dirichletPressure_ = getParam<Scalar>("Problem.DirichletPressure", 1.0e5);
+        auto bc = getParamFromGroup<std::string>(this->paramGroup(), "Problem.BoundaryConditions", "Dirichlet");
+        if (bc == "Dirichlet")
+            boundaryConditions_ = BC::dirichlet;
+        else if (bc == "Robin")
+            boundaryConditions_ = BC::robin;
+        else if (bc == "OutflowQwFixSn")
+            boundaryConditions_ = BC::outflowQwfixSn;
+        else
+            DUNE_THROW(Dune::Exception, "Wrong BC type choose: Dirichlet, Robin or OutflowQwFixSn");
     }
+
+    void setGridVariables(std::shared_ptr<GridVariables> gridVariables)
+    { gridVariables_ = gridVariables; }
+
+     const GridVariables& gridVariables() const
+    { return *gridVariables_; }
 
      /*!
      * \name Boundary conditions
@@ -82,8 +101,13 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
-        if (isOutletPore_(scv))
+        if (boundaryConditions_ == BC::dirichlet && isOutletPore_(scv))
             bcTypes.setAllDirichlet();
+        else if (boundaryConditions_ == BC::robin)
+            bcTypes.setAllNeumann();
+        else
+            bcTypes.setDirichlet(pwIdx); // Why here Pw must be fixed instead of Sn?
+
         return bcTypes;
     }
 
@@ -92,8 +116,13 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1.0e5;
-        values[snIdx] = 0.0;
+        if (boundaryConditions_ == BC::dirichlet  && isOutletPore_(scv))
+        {
+            values[pwIdx] = dirichletPressure_;
+            values[snIdx] = 0.0;
+        }
+        else if (boundaryConditions_ == BC::outflowQwfixSn && isOutletPore_(scv))
+            values[pwIdx] = 1e5;
         return values;
     }
     // \}
@@ -113,7 +142,7 @@ public:
 
         // We fix the mass flux of non-wetting injection at inlet of pore-network
         // The total inlet mass flux is distributed according to the ratio
-        // of pore volume at inlet to the total volumess
+        // of pore volume at inlet to the total volume
         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
         {
             // values[pwIdx] = 1e8*(elemVolVars[scv].pressure(0) - 1e5);
@@ -122,6 +151,19 @@ public:
             else
                 values[snIdx] = nonWettingMassFlux_ * std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
         }
+        if ( boundaryConditions_ == BC::robin && isOutletPore_(scv))
+        {
+            const auto deltaP = elemVolVars[scv].pressure(0) - dirichletPressure_;
+            auto elemFluxVarsCache = localView(gridVariables_->gridFluxVarsCache());
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                const auto transmissibility = elemFluxVarsCache[scvf].transmissibility(0);
+                Scalar volumeFlow = transmissibility*deltaP;
+                values[0] = volumeFlow;
+            }
+        }
+
         return values / scv.volume();
     }
     // \}
@@ -134,6 +176,7 @@ public:
         values[snIdx] = 0.0;
         return values;
     }
+
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
@@ -171,6 +214,7 @@ public:
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
+
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const auto invaded = fluxVarsCache.invaded();
@@ -262,7 +306,10 @@ private:
     Scalar sumInletPoresVolume_;
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
+    std::shared_ptr<GridVariables> gridVariables_;
     Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
+    Scalar dirichletPressure_;
+    BC boundaryConditions_;
 };
 } //end namespace Dumux
 

@@ -68,7 +68,8 @@ public:
                   const SubControlVolumeFace& scvf) const
     {
         auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
-        if (!scvf.boundary())
+        static const auto bc = getParam<std::string>("Problem.BoundaryConditions", "Dirichlet");
+        if (bc == "OutflowQwFixSn")
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
@@ -101,7 +102,17 @@ public:
         else
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
             residual[insideScv.localDofIndex()] += flux;
+
+            // for control-volume finite element schemes with overlapping control volumes
+            if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
+            {
+                if (!scvf.isOverlapping())
+                    residual[outsideScv.localDofIndex()] -= flux;
+            }
+            else
+                residual[outsideScv.localDofIndex()] -= flux;
         }
     }
 
