@@ -109,6 +109,12 @@ int main(int argc, char** argv)
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
     vtkWriter.write(0.0);
 
+    Dumux::PoreNetwork::AveragedValues<GridVariables, SolutionVector> avgValues(*gridVariables, x);
+    using FS = typename GridVariables::VolumeVariables::FluidSystem;
+    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
@@ -133,6 +139,11 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
+        // calculate the averaged values
+        avgValues.eval();
+        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+
+
         // try solving the non-linear system
         nonLinearSolver.solve(x, *timeLoop);
 
@@ -165,6 +176,9 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    // calculate the averaged values
+    avgValues.eval();
+    problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
     nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////

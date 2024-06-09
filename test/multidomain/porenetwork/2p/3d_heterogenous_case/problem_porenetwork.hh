@@ -265,6 +265,21 @@ public:
             return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
     }
 
+    /*!
+     * \brief Called at the end of each time step
+     */
+    template<class AveragedValues>
+    void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
+    {
+        logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                 << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                 << std::endl;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
