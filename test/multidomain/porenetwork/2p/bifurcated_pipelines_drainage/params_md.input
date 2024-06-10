@@ -25,6 +25,7 @@ Name = validate_preferential_path_md_constraint
 
 [Vtk]
 AddVelocity = 1
+Precision = Float64
 
 [Newton]
 UseLineSearch = false

@@ -21,6 +21,7 @@ RegularizationDelta = 1e-3
 
 [Vtk]
 AddVelocity = 1
+Precision = Float64
 
 [Newton]
 UseLineSearch = false
