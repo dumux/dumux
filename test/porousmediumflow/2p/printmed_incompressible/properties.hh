@@ -24,6 +24,8 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/porousmediumflow/droplet/volumevariables.hh>
+#include <dumux/porousmediumflow/droplet/iofields.hh>
 #include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
 #include "problem.hh"
@@ -50,6 +52,28 @@ struct Grid<TypeTag, TTag::TwoPIncompressible> { using type = Dune::SubGrid<3, D
 // Set the problem type
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TwoPIncompressible> { using type = TwoPTestProblem<TypeTag>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TwoPIncompressible>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using DM = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
+    static constexpr bool enableIS = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
+    // class used for scv-wise reconstruction of nonwetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+
+    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
+public:
+    using type = TwoPVolumeVariablesDroplet<Traits>;
+};
 
 // the local residual containing the analytic derivative methods
 template<class TypeTag>
@@ -91,6 +115,10 @@ struct EnableBoxInterfaceSolver<TypeTag, TTag::TwoPIncompressible> { static cons
 template<class TypeTag>
 struct Formulation<TypeTag, TTag::TwoPIncompressible>
 { static constexpr auto value = TwoPFormulation::p1s0; };
+
+//! Set the vtk output fields specific to the twop model
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::TwoPIncompressible> { using type = TwoPIOFieldsDroplet; };
 
 } // end namespace Dumux::Properties
 
