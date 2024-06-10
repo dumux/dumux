@@ -177,6 +177,9 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    // ouput total newton iterations
+    nonLinearSolver.reportTotalIterations();
+
     nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////

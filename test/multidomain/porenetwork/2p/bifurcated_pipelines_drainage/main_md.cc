@@ -236,6 +236,9 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
+    // ouput total newton iterations
+    newtonSolver.reportTotalIterations();
+
     // output some Newton statistics
     newtonSolver.report();
     ////////////////////////////////////////////////////////////
