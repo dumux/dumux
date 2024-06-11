@@ -126,7 +126,8 @@ if __name__ == "__main__":
                                    + ['-Grid.ThroatCrossSectionShape', 'Circle']
                                    + ['-Problem.Name', str(test) + '_run_' + str(i)]
                                    + ['-Pnm.Problem.Name', str(test) + '_run_' + str(i)]
-                                   + ['-Problem.VtpOutputFrequency', str(0)])
+                                   + ['-Problem.VtpOutputFrequency', str(0)]
+                                   + ['-Problem.DisWReflow', str(True)])
                     numerical_invasion_order = np.array([])
                     vtp_file_lists = find_all_vtp_files_withPrefix(test + '_run_' + str(i))
                     vtp_file_lists.sort(key=lambda x: extract_number(x))
@@ -180,7 +181,8 @@ if __name__ == "__main__":
                                        + ['-Grid.ThroatCrossSectionShape', 'Circle']
                                        + ['-Pnm.Problem.Name', str(test) + '_regdelta_' + str(regDelta) + '_run_' + str(i)]
                                        + ['-Problem.RegularizationDelta', str(regDelta/(2**maxDtIdx))]
-                                       + ['-Problem.VtpOutputFrequency', str(0)])
+                                       + ['-Problem.VtpOutputFrequency', str(0)]
+                                       + ['-Problem.DisWReflow', str(True)])
                         numerical_invasion_order = np.array([])
                         vtp_file_lists = find_all_vtp_files_withPrefix(str(test) + '_regdelta_' + str(regDelta) + '_run_' + str(i))
                         vtp_file_lists.sort(key=lambda x: extract_number(x))
