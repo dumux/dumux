@@ -65,10 +65,7 @@ public:
            getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8))
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
-        useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
-        distributeByVolume_ = getParam<bool>("Problem.DistributeByVolume", true);
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
-        nonWettingMassFlux_ = getParam<Scalar>("Problem.NonWettingMassFlux", 5e-8);
         logfile_.open("logfile_" + this->name() + ".txt");
     }
 
@@ -94,37 +91,9 @@ public:
         values[snIdx] = 0.0;
         // A global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
-        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+        if (isInletPore_(scv))
             values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
         return values;
-    }
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
-
-    //! Evaluate the source term for all phases within a given sub-control-volume.
-    PrimaryVariables source(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume& scv) const
-    {
-        PrimaryVariables values(0.0);
-
-        // We fix the mass flux of non-wetting injection at inlet of pore-network
-        // The total inlet mass flux is distributed according to the ratio
-        // of pore volume at inlet to the total volumess
-        if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
-        {
-            // values[pwIdx] = 1e8*(elemVolVars[scv].pressure(0) - 1e5);
-            if (distributeByVolume_)
-                values[snIdx] = nonWettingMassFlux_ * ( scv.volume()/sumInletPoresVolume_ );
-            else
-                values[snIdx] = nonWettingMassFlux_ * std::pow((this->gridGeometry().poreInscribedRadius(scv.dofIndex())), 4.0)/sumInletPoresVolume_;
-        }
-        return values / scv.volume();
     }
     // \}
 
@@ -141,27 +110,6 @@ public:
     bool initialInvasionState(const Element& element) const
     { return false; }
     // \}
-
-    //! Loop over the scv in the domain to calculate the sum volume of inner inlet pores
-    void calculateSumInletVolume()
-    {
-        sumInletPoresVolume_ = 0.0;
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bind(element);
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                if (isInletPore_(scv))
-                {
-                    if (distributeByVolume_)
-                        sumInletPoresVolume_ += this->gridGeometry().poreVolume(scv.dofIndex())/this->gridGeometry().coordinationNumber(scv.dofIndex());
-                    else
-                        sumInletPoresVolume_ += std::pow(this->gridGeometry().poreInscribedRadius(scv.dofIndex()), 4.0);
-                }
-            }
-        }
-    }
 
     // throat parameter indicating invasion state
     template<class FluxVariablesCache, class SubControlVolumeFace>
@@ -268,11 +216,7 @@ private:
     }
 
     int vtpOutputFrequency_;
-    bool useFixedPressureAndSaturationBoundary_;
-    bool distributeByVolume_;
     Scalar pc_;
-    Scalar nonWettingMassFlux_;
-    Scalar sumInletPoresVolume_;
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
     Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
