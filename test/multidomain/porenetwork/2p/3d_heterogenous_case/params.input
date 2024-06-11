@@ -1,20 +1,20 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 100 # [s]
+TEnd = 10 # [s]
 CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Circle
+ThroatCrossSectionShape = Square
 
-UpperRight = 1e-3 1e-3 1e-3
-NumPores = 10 10 10
+UpperRight = 2e-3 2e-3 2e-3
+NumPores = 20 20 20
 
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
 StandardDeviationPoreInscribedRadius = 3e-6
 
-BoundaryPoreLabels = xMin:2 xMax:3 yMin:-1 yMax:-1 zMin:-1 zMax:-1
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1 zMin:1 zMax:1
 MinThroatLength = 1e-9
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
@@ -33,22 +33,21 @@ UseFixedPressureAndSaturationBoundary = false
 NonWettingMassFlux = 5e-10
 RegularizationDelta = 1e-1
 RegularizationFunction = Spline
-DirichletPressure = 1e5
-BoundaryConditions = Robin
 
 [Vtk]
 AddVelocity = 1
 
 [Newton]
+UseLineSearch = true
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
-MaxTimeStepDivisions = 20
+MaxTimeStepDivisions = 10
 NewtonOutputFilename = NewtonLog.txt
 NewtonOverview = NewtonOverview.txt
 
 [InvasionState]
-Verbosity = false
+Verbosity = true
 #AccuracyCriterion = 0.99
 #BlockNonwettingPhaseAtThroatLabel = 3
 InvasionThetaThreshold = 1e-14
