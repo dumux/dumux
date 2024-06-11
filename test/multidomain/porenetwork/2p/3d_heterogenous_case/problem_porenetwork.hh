@@ -43,7 +43,6 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     enum {
         pwIdx = Indices::pressureIdx,
         snIdx = Indices::saturationIdx,
-        wPhaseIdx = FluidSystem::phase0Idx,
         nPhaseIdx = FluidSystem::phase1Idx,
     };
 
@@ -214,9 +213,6 @@ public:
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
-
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const auto invaded = fluxVarsCache.invaded();
             if constexpr (useThetaRegularization)
             {
@@ -224,21 +220,17 @@ public:
                 {
                     using std::max;
                     auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
-                    auto upwindVolVars = insideVolVars;
-                    if (insideVolVars.pressure(nPhaseIdx) < outsideVolVars.pressure(nPhaseIdx))
-                        upwindVolVars = outsideVolVars;
-                    auto dp = upwindVolVars.capillaryPressure() / pcEntry - 1.0;
+                    auto dp = max(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
                     // Use a regularization function for theta
                     return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
                 }
                 else
                 {
-                    auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
-                    auto upwindVolVars = insideVolVars;
-                    if (insideVolVars.pressure(wPhaseIdx) < outsideVolVars.pressure(wPhaseIdx))
-                        upwindVolVars = outsideVolVars;
                     using std::min; using std::abs;
-                    auto dp = upwindVolVars.capillaryPressure() / abs(pcSnapoff) - sign(pcSnapoff);
+                    auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+                    auto dp = min(elemVolVars[0].capillaryPressure(),
+                                  elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
                     // Use a regularization function for theta
                     return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
                 }
