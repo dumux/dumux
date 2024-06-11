@@ -85,7 +85,6 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);
-    problem->calculateSumInletVolume();
     auto xOld = x;
 
     // the grid variables

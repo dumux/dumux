@@ -27,10 +27,7 @@ ParameterRandomNumberSeed = 22
 [Problem]
 Name = pnm_3d
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
-EnableGravity = false
 CapillaryPressure = 7000
-UseFixedPressureAndSaturationBoundary = true
-NonWettingMassFlux = 5e-10
 RegularizationDelta = 1e-1
 RegularizationFunction = Spline
 
@@ -43,13 +40,9 @@ MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
 MaxTimeStepDivisions = 10
-NewtonOutputFilename = NewtonLog.txt
-NewtonOverview = NewtonOverview.txt
 
 [InvasionState]
 Verbosity = true
-#AccuracyCriterion = 0.99
-#BlockNonwettingPhaseAtThroatLabel = 3
 InvasionThetaThreshold = 1e-14
 
 [SpatialParams]

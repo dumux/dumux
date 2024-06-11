@@ -103,7 +103,6 @@ int main(int argc, char** argv)
     // initialize the coupling manager
     couplingManager->init(pnmProblem, constraintProblem, x);
     pnmProblem->applyInitialSolution(x[pnmId]);
-    pnmProblem->calculateSumInletVolume();
     constraintProblem->applyInitialSolution(x[constraintId]);
     auto xOld = x;
 
