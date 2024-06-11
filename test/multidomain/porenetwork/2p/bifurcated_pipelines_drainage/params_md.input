@@ -16,6 +16,7 @@ DistributeByVolume = false
 CapillaryPressure = 7000
 NonWettingMassFlux = 5e-10
 RegularizationDelta = 1e-4
+DisWReflow = true
 
 [Pnm.Problem]
 Name = validate_preferential_path_md

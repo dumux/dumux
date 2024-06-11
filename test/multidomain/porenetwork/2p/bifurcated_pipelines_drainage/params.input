@@ -18,6 +18,7 @@ UseFixedPressureAndSaturationBoundary = false
 DistributeByVolume = false
 NonWettingMassFlux = 5e-10
 RegularizationDelta = 1e-3
+DisWReflow = true
 
 [Vtk]
 AddVelocity = 1
