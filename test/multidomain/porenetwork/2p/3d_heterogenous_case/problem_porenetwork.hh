@@ -81,8 +81,7 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
-        if (isOutletPore_(scv))
-            bcTypes.setAllDirichlet();
+        bcTypes.setAllDirichlet();
         return bcTypes;
     }
 
@@ -91,8 +90,12 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
-        values[pwIdx] = 1.0e5;
+        values[pwIdx] = 1e5;
         values[snIdx] = 0.0;
+        // A global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
+        // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
+        if (useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
         return values;
     }
     // \}
