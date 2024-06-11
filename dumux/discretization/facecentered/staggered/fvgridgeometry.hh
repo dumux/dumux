@@ -148,7 +148,7 @@ public:
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
-            DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
+            DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs overlap of exactly 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
         update_();
