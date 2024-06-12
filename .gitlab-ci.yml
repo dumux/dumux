@@ -6,6 +6,7 @@ stages:
   - trigger dumux pipelines
 
 variables:
+  DUMUX_DOCKER_CI_BRANCH: master
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.9"
@@ -24,7 +25,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
+  image: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -99,27 +100,27 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-22.04
 
 minimal-dune-master-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/minimal:dune-master-clang-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-22.04
 
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-22.04
 
 full-dune-master-gcc-cpp-20:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-12-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-12-ubuntu-22.04
     CXX_MAX_STANDARD: "20"
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
@@ -130,12 +131,12 @@ full-dune-master-gcc-cpp-20:
 full-dune-master-clang:
   extends: .non-mr-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-clang-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-22.04
 
 full-dune-master-gcc:
   extends: .non-mr-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/full:dune-master-gcc-ubuntu-22.04
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-22.04
 
 ################################################
 # trigger test pipelines of downstream modules #
