@@ -67,46 +67,46 @@ class CCTpfaFVElementGeometry<GG, true>
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
 public:
-    //! export type of the element
+    //! Export type of the element
     using Element = typename GridView::template Codim<0>::Entity;
-    //! export type of subcontrol volume
+    //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
-    //! export type of subcontrol volume face
+    //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
+    //! Export type of finite volume grid geometry
     using GridGeometry = GG;
 
-    //! the maximum number of scvs per element
+    //! The maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
-    //! the maximum number of scvfs per element (use cubes for maximum)
+    //! The maximum number of scvfs per element (use cubes for maximum)
     static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
 
     //! Constructor
     CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometryPtr_(&gridGeometry) {}
 
-    //! Get an element sub control volume with a global scv index
+    //! Get an element sub control volume with a global scv index.
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         return gridGeometry().scv(scvIdx);
     }
 
-    //! Get an element sub control volume face with a global scvf index
+    //! Get an element sub control volume face with a global scvf index.
     //! We separate element and neighbor scvfs to speed up mapping
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         return gridGeometry().scvf(scvfIdx);
     }
 
-    //! Get the scvf on the same face but from the other side
+    //! Get the scvf on the same face but from the other side.
     //! Note that e.g. the normals might be different in the case of surface grids
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         return gridGeometry().flipScvf(scvfIdx, outsideScvIdx);
     }
 
-    //! iterator range for sub control volumes. Iterates over
+    //! Iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
@@ -119,7 +119,7 @@ public:
                                                 ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
     }
 
-    //! iterator range for sub control volumes faces. Iterates over
+    //! Iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element (not including neighbor scvfs)
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volume faces of this FVElementGeometry use
@@ -134,22 +134,22 @@ public:
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
 
-    //! number of sub control volumes in this fv element geometry
+    //! Number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {
         return scvIndices_.size();
     }
 
-    //! number of sub control volumes in this fv element geometry
+    //! Number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
     {
         return gridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
     }
 
     /*!
-     * \brief bind the local view (r-value overload)
-     * This overload is called when an instance of this class is a temporary in the usage context
-     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     * \brief Bind the local view (r-value overload)
+     * \note This overload is called when an instance of this class is a temporary in the usage context.
+     * It allows a usage like this: `const auto view = localView(...).bind(element);`
      */
     CCTpfaFVElementGeometry bind(const Element& element) &&
     {
@@ -163,9 +163,9 @@ public:
     }
 
     /*!
-     * \brief bind the local view (r-value overload)
-     * This overload is called when an instance of this class is a temporary in the usage context
-     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     * \brief Bind the local view (r-value overload)
+     * \note This overload is called when an instance of this class is a temporary in the usage context.
+     * It allows a usage like this: `const auto view = localView(...).bind(element);`
      */
     CCTpfaFVElementGeometry bindElement(const Element& element) &&
     {
@@ -243,25 +243,25 @@ class CCTpfaFVElementGeometry<GG, false>
     static const int dimWorld = GridView::dimensionworld;
 
 public:
-    //! export type of the element
+    //! Export type of the element
     using Element = typename GridView::template Codim<0>::Entity;
-    //! export type of subcontrol volume
+    //! Export type of subcontrol volume
     using SubControlVolume = typename GG::SubControlVolume;
-    //! export type of subcontrol volume face
+    //! Export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
+    //! Export type of finite volume grid geometry
     using GridGeometry = GG;
-    //! the maximum number of scvs per element
+    //! The maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
-    //! the maximum number of scvfs per element (use cubes for maximum)
+    //! The maximum number of scvfs per element (use cubes for maximum)
     static constexpr std::size_t maxNumElementScvfs = 2*dim;
 
     //! Constructor
     CCTpfaFVElementGeometry(const GridGeometry& gridGeometry)
     : gridGeometryPtr_(&gridGeometry) {}
 
-    //! Get an element sub control volume with a global scv index
-    //! We separate element and neighbor scvs to speed up mapping
+    //! Get an element sub control volume with a global scv index.
+    //! We separate element and neighbor scvs to speed up mapping.
     const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         if (scvIdx == scvIndices_[0])
@@ -270,8 +270,8 @@ public:
             return neighborScvs_[Detail::Tpfa::findLocalIndex(scvIdx, neighborScvIndices_)];
     }
 
-    //! Get an element sub control volume face with a global scvf index
-    //! We separate element and neighbor scvfs to speed up mapping
+    //! Get an element sub control volume face with a global scvf index.
+    //! We separate element and neighbor scvfs to speed up mapping.
     const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
@@ -281,8 +281,8 @@ public:
             return neighborScvfs_[Detail::Tpfa::findLocalIndex(scvfIdx, neighborScvfIndices_)];
     }
 
-    //! Get the scvf on the same face but from the other side
-    //! Note that e.g. the normals might be different in the case of surface grids
+    //! Get the scvf on the same face but from the other side.
+    //! Note that e.g. the normals might be different in the case of surface grids.
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
@@ -302,7 +302,7 @@ public:
         }
     }
 
-    //! iterator range for sub control volumes. Iterates over
+    //! Iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
@@ -314,7 +314,7 @@ public:
         return Dune::IteratorRange<IteratorType>(g.scvs_.begin(), g.scvs_.end());
     }
 
-    //! iterator range for sub control volumes faces. Iterates over
+    //! Iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element (not including neighbor scvfs)
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volume faces of this FVElementGeometry use
@@ -326,18 +326,18 @@ public:
         return Dune::IteratorRange<IteratorType>(g.scvfs_.begin(), g.scvfs_.end());
     }
 
-    //! number of sub control volumes in this fv element geometry
+    //! Number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     { return scvs_.size(); }
 
-    //! number of sub control volumes in this fv element geometry
+    //! Number of sub control volumes in this fv element geometry
     std::size_t numScvf() const
     { return scvfs_.size(); }
 
     /*!
-     * \brief bind the local view (r-value overload)
-     * This overload is called when an instance of this class is a temporary in the usage context
-     * This allows a usage like this: `const auto view = localView(...).bind(element);`
+     * \brief Bind the local view (r-value overload)
+     * \note This overload is called when an instance of this class is a temporary in the usage context.
+     * It allows a usage like this: `const auto view = localView(...).bind(element);`
      */
     CCTpfaFVElementGeometry bind(const Element& element) &&
     {
@@ -351,9 +351,9 @@ public:
     }
 
     /*!
-     * \brief bind the local view (r-value overload)
-     * This overload is called when an instance of this class is a temporary in the usage context
-     * This allows a usage like this: `const auto view = localView(...).bindElement(element);`
+     * \brief Bind the local view (r-value overload)
+     * \note This overload is called when an instance of this class is a temporary in the usage context.
+     * It allows a usage like this: `const auto view = localView(...).bind(element);`
      */
     CCTpfaFVElementGeometry bindElement(const Element& element) &&
     {
@@ -522,7 +522,7 @@ private:
         const auto& scvFaceIndices = gridGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = gridGeometry().neighborVolVarIndices(eIdx);
 
-        // for network grids there might be multiple intersection with the same geometryInInside
+        // for network grids there might be multiple intersections with the same geometryInInside
         // we identify those by the indexInInside for now (assumes conforming grids at branching facets)
         // here we keep track of them
         std::vector<bool> handledScvf;
@@ -562,7 +562,7 @@ private:
         }
     }
 
-    //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
+    //! Create the necessary scvs and scvfs of the neighbor elements to the bound elements
     void makeNeighborGeometries(const Element& element, const GridIndexType eIdx)
     {
         using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
