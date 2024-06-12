@@ -161,6 +161,7 @@ trigger lecture:
     DUMUX_MERGE_REQUEST_TARGET_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     DUMUX_COMMIT_SHA: $CI_COMMIT_SHA
     DUMUX_REFERENCE_SHA: $CI_REFERENCE_SHA
+    DUMUX_DOCKER_CI_BRANCH: $DUMUX_DOCKER_CI_BRANCH
 
 ################################################
 # enable secrets security check                #
