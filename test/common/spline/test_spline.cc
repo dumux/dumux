@@ -240,8 +240,8 @@ void plot()
     double y_[] = { 10, 0, 10, 0, 10 };
     double m1 = 10;
     double m2 = -10;
-    FV &xs = *reinterpret_cast<FV*>(x_);
-    FV &ys = *reinterpret_cast<FV*>(y_);
+    const FV &xs = *reinterpret_cast<FV*>(x_);
+    const FV &ys = *reinterpret_cast<FV*>(y_);
 
     Dumux::Spline<double, numSamples> spFull(xs, ys, m1, m2);
     Dumux::Spline<double, numSamples> spNatural(xs, ys);

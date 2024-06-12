@@ -85,7 +85,6 @@ public:
         const int n = numSamples_() - 1;
         for (int i = 0; i <= k; ++i) {
             double x = i*(x1 - x0)/k + x0;
-            double x_p1 = x + (x1 - x0)/k;
             double y;
             double dy_dx;
             double mono = 1;
@@ -108,6 +107,7 @@ public:
             else {
                 y = eval(x);
                 dy_dx = evalDerivative(x);
+                double x_p1 = x + (x1 - x0)/k;
                 mono = monotonic(max<Scalar>(x_(0), x), min<Scalar>(x_(n), x_p1));
             }
 

@@ -119,9 +119,9 @@ std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vec
 
         // the points do not conform with the dune ordering, re-order
         using GlobalPosition = Dune::FieldVector<CoordScalar, 3>;
-        if(!diagonalsIntersect && orientations[0] == 1)
+        if(orientations[0] == 1)
             return std::vector<GlobalPosition>{p1, p0, p2, p3};
-        else if(!diagonalsIntersect && orientations[0] == -1)
+        else if(orientations[0] == -1)
             return std::vector<GlobalPosition>{p3, p1, p0, p2};
         else
             DUNE_THROW(Dune::InvalidStateException, "Could not reorder points");

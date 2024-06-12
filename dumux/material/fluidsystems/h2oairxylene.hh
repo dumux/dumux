@@ -372,8 +372,6 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        Scalar diffCont;
-
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx==gPhaseIdx) {
@@ -401,6 +399,8 @@ public:
             Scalar xwa = fluidState.moleFraction(wPhaseIdx, AirIdx);
             Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
             Scalar xwc = fluidState.moleFraction(wPhaseIdx, NAPLIdx);
+
+            Scalar diffCont;
 
             switch (compIdx) {
             case NAPLIdx:
