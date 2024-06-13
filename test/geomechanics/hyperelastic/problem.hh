@@ -17,6 +17,20 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 
+
+// add compatibility traits for Dune::FieldMatrix
+#ifndef DOXYGEN
+namespace adpp {
+
+template<typename T, int rows, int cols>
+struct shape_of<Dune::FieldMatrix<T, rows, cols>> { using type = adpp::md_shape<rows, cols>; };
+
+template<typename T, int rows, int cols>
+struct size_of<Dune::FieldMatrix<T, rows, cols>> { static constexpr std::size_t value = rows; };
+
+}  // namespace adpp
+#endif  // DOXYGEN
+
 namespace Dumux {
 
 // This test case is adapted from
@@ -103,13 +117,8 @@ public:
             = K*(cval<0.5>*(J*J - cval<1.0>) - log(J))
             + cval<0.5>*mu*(pow(J, cval<-2.0/3.0>)*trC - cval<3.0>);
 
-        // TODO: bindings of from mdranges...
         const auto bindings = at(
-            F = {
-                FIn[0][0], FIn[0][1], FIn[0][2],
-                FIn[1][0], FIn[1][1], FIn[1][2],
-                FIn[2][0], FIn[2][1], FIn[2][2]
-            },
+            F = FIn,
             mu = this->spatialParams().shearModulus(),
             K = this->spatialParams().bulkModulus()
         );
