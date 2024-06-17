@@ -43,6 +43,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     enum {
         pwIdx = Indices::pressureIdx,
         snIdx = Indices::saturationIdx,
+        wPhaseIdx = FluidSystem::phase0Idx,
         nPhaseIdx = FluidSystem::phase1Idx,
     };
 
@@ -67,6 +68,9 @@ public:
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
         pc_ = getParam<Scalar>("Problem.CapillaryPressure");
         logfile_.open("logfile_" + this->name() + ".txt");
+        boundConductiviy_ = getParam<bool>("Problem.BoundConductivity", true);
+        useUpwindPc_ = getParam<bool>("Problem.UseUpwindPc", true);
+        switchConductivityCurve_ = getParam<bool>("Problem.switchConductivityCurve", true);
     }
 
      /*!
@@ -78,7 +82,10 @@ public:
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes bcTypes;
-        bcTypes.setAllDirichlet();
+        if (isInletPore_(scv) || isOutletPore_(scv))
+           bcTypes.setAllDirichlet();
+        else
+           bcTypes.setAllNeumann();
         return bcTypes;
     }
 
@@ -121,28 +128,50 @@ public:
     {
         if constexpr (std::is_void_v<CouplingManager>)
         {
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+            auto upwindW = (elemVolVars[0].pressure(wPhaseIdx) > elemVolVars[1].pressure(wPhaseIdx)) ?
+                            elemVolVars[0] : elemVolVars[1];
+            auto upwindN = (elemVolVars[0].pressure(nPhaseIdx) > elemVolVars[1].pressure(nPhaseIdx)) ?
+                            elemVolVars[0] : elemVolVars[1];
             const auto invaded = fluxVarsCache.invaded();
             if constexpr (useThetaRegularization)
             {
-                if(!invaded)
+                if (switchConductivityCurve_)
+                {
+                    if(!invaded)
+                    {
+                        using std::max;
+                        auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
+                        auto dp = max(elemVolVars[0].capillaryPressure(),
+                                      elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+                        if (useUpwindPc_)
+                            dp = upwindN.capillaryPressure()/pcEntry - 1.0;
+                        // Use a regularization function for theta
+                        return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
+                    }
+                    else
+                    {
+                        using std::min; using std::abs;
+                        auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+                        auto dp = min(elemVolVars[0].capillaryPressure(),
+                                      elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+                        if (useUpwindPc_)
+                            dp = upwindW.capillaryPressure() / abs(pcSnapoff) - sign(pcSnapoff);
+                        if (boundConductiviy_ && upwindN.saturation(nPhaseIdx) < 1e-3)
+                            return M_PI + upwindN.saturation(nPhaseIdx);
+                        // Use a regularization function for theta
+                        return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
+                    }
+                }
+                else
                 {
                     using std::max;
                     auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
                     auto dp = max(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+                    if (useUpwindPc_)
+                        dp = upwindN.capillaryPressure()/pcEntry - 1.0;
                     // Use a regularization function for theta
-                    return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
-                }
-                else
-                {
-                    using std::min; using std::abs;
-                    auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
-                    auto dp = min(elemVolVars[0].capillaryPressure(),
-                                  elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
-                    // Use a regularization function for theta
-                    return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp,invaded));
+                    return applyInternalThetaConstraint_(fvGeometry, reg_.eval(dp, false));
                 }
             }
             else
@@ -220,6 +249,9 @@ private:
     std::ofstream logfile_;
     std::shared_ptr<CouplingManager> couplingManager_;
     Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
+    bool useUpwindPc_;
+    bool boundConductiviy_;
+    bool switchConductivityCurve_;
 };
 } //end namespace Dumux
 
