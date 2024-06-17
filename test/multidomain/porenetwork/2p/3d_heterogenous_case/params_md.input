@@ -1,14 +1,13 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 200 # [s]
-#MaxTimeStepSize = 1
+TEnd = 10 # [s]
 CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
 ThroatCrossSectionShape = Circle
-UpperRight = 2e-3 2e-3 2e-3
-NumPores = 20 20 20
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
 StandardDeviationPoreInscribedRadius = 3e-6
@@ -23,10 +22,7 @@ BoundaryPoreLabels = xMin:2 xMax:3
 [Problem]
 VtpOutputFrequency = -1
 EnableGravity = false
-UseFixedPressureAndSaturationBoundary = false
-DistributeByVolume = false
-CapillaryPressure = 7000
-NonWettingMassFlux = 5e-10
+CapillaryPressure = 4840
 
 [Pnm.Problem]
 Name = pnm_3d_md
@@ -47,17 +43,13 @@ NewtonOutputFilename = NewtonLog.txt
 
 [InvasionState]
 Verbosity = true
-#AccuracyCriterion = 0.99
-#BlockNonwettingPhaseAtThroatLabel = 3
-#InvasionThetaThreshold = 1e-11
+BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.99
 HighSwRegularizationMethod = Spline
-
-[Regularization]
-RegPercentage = 0.01
 
 [Component]
 LiquidDensity = 1000

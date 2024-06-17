@@ -5,15 +5,12 @@ CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
-
-UpperRight = 2e-3 2e-3 2e-3
-NumPores = 20 20 20
-
+ThroatCrossSectionShape =  Circle
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
 ParameterType = lognormal
 MeanPoreInscribedRadius = 4.5e-5
 StandardDeviationPoreInscribedRadius = 3e-6
-
 BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1 zMin:1 zMax:1
 MinThroatLength = 1e-9
 DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
@@ -27,25 +24,33 @@ ParameterRandomNumberSeed = 22
 [Problem]
 Name = pnm_3d
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
-CapillaryPressure = 7000
+CapillaryPressure = 4840
 RegularizationDelta = 1e-1
 RegularizationFunction = Spline
+DisWReflow = false
+DisNOutflow = false
+BoundConductivity = true
+UseUpwindPc = true
+switchConductivityCurve = true
+neglectInletOutlet = true
 
 [Vtk]
 AddVelocity = 1
 
 [Newton]
-UseLineSearch = true
+#UseLineSearch = true
 MaxSteps = 20
 TargetSteps = 10
 MaxRelativeShift = 1e-6
-MaxTimeStepDivisions = 10
+MaxTimeStepDivisions = 20
 
 [InvasionState]
 Verbosity = true
 InvasionThetaThreshold = 1e-14
+BlockNonwettingPhaseAtThroatLabel = 3
 
 [SpatialParams]
+SurfaceTension = 0.0725
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.99
 HighSwRegularizationMethod = Spline
