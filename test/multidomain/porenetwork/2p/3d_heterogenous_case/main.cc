@@ -113,6 +113,16 @@ int main(int argc, char** argv)
     avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
     avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
 
+    std::vector<std::size_t> dofsToNeglect;
+    const auto neglectInletOutlet = getParam<bool>("Problem.neglectInletOutlet", false);
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        using Labels = GetPropType<TypeTag, Properties::Labels>;
+        const auto vIdx = gridGeometry->vertexMapper().index(vertex);
+        if ((gridGeometry->poreLabel(vIdx) == Labels::inlet || gridGeometry->poreLabel(vIdx) == Labels::outlet) && neglectInletOutlet)
+            dofsToNeglect.push_back(vIdx);
+    }
+
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
@@ -138,7 +148,7 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         // calculate the averaged values
-        avgValues.eval();
+        avgValues.eval(dofsToNeglect);
         problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
 
 
@@ -175,7 +185,7 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     // calculate the averaged values
-    avgValues.eval();
+    avgValues.eval(dofsToNeglect);
     problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
     nonLinearSolver.report();
 
