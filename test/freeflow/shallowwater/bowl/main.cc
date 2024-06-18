@@ -213,7 +213,7 @@ int main(int argc, char** argv)
         exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
         computeAndPrintL2Error(timeLoop->time(), exactSolution, x, *gridGeometry);
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output every 10 time steps

@@ -180,7 +180,7 @@ int main(int argc, char** argv)
         // update the analytical solution
         analyticalSolVectors.update(timeLoop->time() + timeLoop->timeStepSize());
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
         analyticalSolVectors.update(timeLoop->time());
 

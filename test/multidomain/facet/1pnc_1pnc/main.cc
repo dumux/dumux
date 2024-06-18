@@ -195,7 +195,7 @@ int main(int argc, char** argv)
         facetGridVariables->advanceTimeStep();
         xOld = x;
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // report statistics of this time step
