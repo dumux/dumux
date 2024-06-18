@@ -69,7 +69,7 @@ public:
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
-     * \param globalPos The center of the finite volume which ought to be set.
+     * \param globalPos The spatial position where the Dirichlet constraint will be enforced.
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -83,7 +83,8 @@ public:
     /*!
      * \brief Evaluates the initial conditions
      *
-     * \param globalPos The center of the finite volume which ought to be set.
+     *
+     * \param globalPos The spatial position of the dof entity, in case of cellcentered schemes it is the cell center.
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
