@@ -53,7 +53,8 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param globalPos The position of the center of the finite volume
+     * \param globalPos The spatial position of the dof entity, in case of cellcentered schemes it is the cell center.
+
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
@@ -71,7 +72,7 @@ public:
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet control volume.
      *
-     * \param globalPos The center of the finite volume which ought to be set.
+     * \param globalPos The spatial position of the dof entity, in case of cellcentered schemes it is the cell center.
      *
      * For this method, the \a values parameter stores primary variables.
      */
