@@ -74,6 +74,7 @@ public:
         const Scalar alpha = spatialParams.contactAngle(element, elemVolVars);
         if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, ThisType, SubControlVolumeFace>())
         {
+            auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
             for (int i = 0; i< cornerHalfAngles.size(); ++i)
             {
                 wettingLayerArea_[i] = std::min(
@@ -85,10 +86,14 @@ public:
             }
 
             // make sure the wetting phase area does not exceed the total cross-section area
-            throatCrossSectionalArea_[wPhaseIdx()] = std::min(
-                std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
-                totalThroatCrossSectionalArea
-            );
+            if (theta < 1e-14)
+                throatCrossSectionalArea_[wPhaseIdx()] = totalThroatCrossSectionalArea;
+            else
+            {
+                throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+                    std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+                    totalThroatCrossSectionalArea);
+            }
             throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
         }
         else
