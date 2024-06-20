@@ -84,6 +84,9 @@ public:
                 snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
             }
 
+                auto wettingAreaEntry = std::min(std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
+                nonWettingAreaEntry_ = totalThroatCrossSectionalArea - wettingAreaEntry;
+
             // make sure the wetting phase area does not exceed the total cross-section area
             throatCrossSectionalArea_[wPhaseIdx()] = std::min(
                 std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
@@ -277,6 +280,13 @@ public:
     Scalar snapoffWettingLayerArea(const int cornerIdx) const
     { return snapoffWettingLayerArea_[cornerIdx]; }
 
+    /*!
+     * \brief Returns non wetting phase cross section area
+     * of a throat for invasion
+     */
+    Scalar nonWettingAreaEntry() const
+    { return nonWettingAreaEntry_; }
+
 private:
     Throat::Shape throatCrossSectionShape_;
     Scalar throatShapeFactor_;
@@ -292,6 +302,7 @@ private:
     NumCornerVector wettingLayerArea_;
     std::size_t nPhaseIdx_;
     Scalar poreToPoreDistance_;
+    Scalar nonWettingAreaEntry_;
 
     typename AdvectionType::Transmissibility::SinglePhaseCache singlePhaseCache_;
     typename AdvectionType::Transmissibility::NonWettingPhaseCache nonWettingPhaseCache_;

@@ -124,8 +124,8 @@ public:
                 }
                 else // non-wetting phase
                 {
-                    // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    return  theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return  theta*entryKn;
                 }
             }
             else
