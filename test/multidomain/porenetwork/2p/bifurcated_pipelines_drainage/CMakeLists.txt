@@ -9,7 +9,10 @@ dumux_add_test(NAME validate_preferential_path
                LABELS porenetwork
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path  params.input")
+               CMD_ARGS      --script fuzzy
+                             --files  ${CMAKE_SOURCE_DIR}/test/references/referece_pnm_validate_preferential_path_fin.vtp
+                                      ${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path-00188.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path params.input")
 
 dumux_add_test(NAME validate_preferential_path_reg
                SOURCES main.cc
@@ -17,7 +20,10 @@ dumux_add_test(NAME validate_preferential_path_reg
                COMPILE_DEFINITIONS USETHETAREGULARIZATION=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_reg  params.input")
+               CMD_ARGS      --script fuzzy
+                             --files  ${CMAKE_SOURCE_DIR}/test/references/referece_pnm_validate_preferential_path_fir.vtp
+                                      ${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_reg-00188.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_reg params.input -Pnm.Problem.Name validate_preferential_path_reg")
 
 dumux_add_test(NAME validate_preferential_path_md
                SOURCES main_md.cc
@@ -25,4 +31,9 @@ dumux_add_test(NAME validate_preferential_path_md
                COMPILE_DEFINITIONS USETHETAREGULARIZATION=1 THROATCONSTRAINT=1
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md  params_md.input")
+               CMD_ARGS      --script fuzzy
+                             --files  ${CMAKE_SOURCE_DIR}/test/references/referece_pnm_validate_preferential_path_md.vtp
+                                      ${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md-00043.vtp
+                                      ${CMAKE_SOURCE_DIR}/test/references/referece_pnm_validate_preferential_path_md_constraint.vtp
+                                      ${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md_constraint-00043.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/validate_preferential_path_md params_md.input")
