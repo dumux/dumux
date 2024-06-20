@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfLines="9" NumberOfPoints="10">
+      <CellData Scalars="Theta">
+        <DataArray type="Float32" Name="Theta" NumberOfComponents="1" format="ascii">
+          1 1 1 1 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
+          0 0 0 0 0 0 0 0 0
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
+          0 0 0 0.0005 0 0 0.001 0 0 0.0015 0 0
+          0.002 0 0 0.0025 0 0 0.003 0 0 0.0035 0 0
+          0.004 0 0 0.0045 0 0
+        </DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
+          0 1 1 2 2 3 3 4 4 5 5 6
+          6 7 7 8 8 9
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
+          2 4 6 8 10 12 14 16 18
+        </DataArray>
+      </Lines>
+    </Piece>
+  </PolyData>
+</VTKFile>
