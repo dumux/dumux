@@ -247,7 +247,7 @@ struct BakkeOren
         // Tora et al. (2012), quite close for single-phase value of square
         using std::sqrt;
         const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar aNwCrit = fluxVarsCache.regBoundaryNonwettingThroatAreaInvasion(0);
+        const Scalar aNwCrit = fluxVarsCache.nonWettingAreaEntry();
         const Scalar rEff = 0.5 * (sqrt(aNwCrit / M_PI) + fluxVarsCache.throatInscribedRadius());
         const Scalar result = rEff * rEff * aNwCrit / (8.0 * throatLength);
         return result;
