@@ -111,12 +111,15 @@ public:
                 ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
                                                                                          elemVolVars, elemFluxVarsCache,
                                                                                          phaseIdx, compIdx);
-            const auto dij = computeTpfaTransmissibility(fvGeometry, scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
+
+            // Here we assume that the Dispersion tensor is given at the scvfs such that Di = Dj
+            // This means that we don't have to distinguish between inside and outside tensors
+            const auto tij = calculateTransmissibility_(fvGeometry, elemVolVars, scvf, dispersionTensor);
 
             const auto xInside = massOrMoleFraction(insideVolVars, referenceSystem, phaseIdx, compIdx);
             const auto xOutide = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
-            componentFlux[compIdx] = (rho * (xInside-xOutide) * dij) * scvf.area();
+            componentFlux[compIdx] = (rho * tij * (xInside-xOutide));
         }
         return componentFlux;
     }
@@ -145,14 +148,63 @@ public:
             ModelTraits::ThermalDispersionModel::thermalDispersionTensor(problem, scvf, fvGeometry,
                                                                          elemVolVars, elemFluxVarsCache,
                                                                          phaseIdx);
-        const auto dij = computeTpfaTransmissibility(scvf, fvGeometry.scv(scvf.insideScvIdx()), dispersionTensor, insideVolVars.extrusionFactor());
+
+        // Here we assume that the Dispersion tensor is given at the scvfs such that Di = Dj
+        // This means that we don't have to distinguish between inside and outside tensors
+        const auto tij = calculateTransmissibility_(fvGeometry, elemVolVars, scvf, dispersionTensor);
 
         // get the inside/outside temperatures
         const auto tInside = insideVolVars.temperature();
         const auto tOutside = outsideVolVars.temperature();
 
         // compute the heat conduction flux
-        return (tInside-tOutside) * dij * scvf.area();
+        return tij * (tInside-tOutside);
+    }
+
+private:
+
+    //! Compute transmissibilities
+    template<class Tensor>
+    static Scalar calculateTransmissibility_(const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const SubControlVolumeFace& scvf,
+                                             const Tensor& D)
+    {
+        Scalar tij;
+
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+
+        const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, D, insideVolVars.extrusionFactor());
+
+        // for the boundary (dirichlet) we only need ti
+        if (scvf.boundary())
+        {
+            tij = Extrusion::area(fvGeometry, scvf)*ti;
+        }
+        // otherwise we compute a tpfa harmonic mean
+        else
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx();
+            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+
+            Scalar tj;
+            if constexpr (dim == dimWorld)
+                // assume the normal vector from outside is anti parallel so we save flipping a vector
+                tj = -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, D, outsideVolVars.extrusionFactor());
+            else
+                tj = computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, D, outsideVolVars.extrusionFactor());
+
+            // check for division by zero!
+            if (ti*tj <= 0.0)
+                tij = 0;
+            else
+                tij = Extrusion::area(fvGeometry, scvf)*(ti * tj)/(ti + tj);
+        }
+
+        return tij;
     }
 
 };
