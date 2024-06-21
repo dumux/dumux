@@ -119,7 +119,7 @@ public:
             }
 
             // compute the dispersion flux
-            componentFlux[compIdx] = -1.0 * rhoMassOrMole * vtmv(scvf.unitOuterNormal(), dispersionTensor, gradX) * scvf.area();
+            componentFlux[compIdx] = -1.0 * rhoMassOrMole * vtmv(scvf.unitOuterNormal(), dispersionTensor, gradX)*Extrusion::area(fvGeometry, scvf);
             if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
