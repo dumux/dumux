@@ -93,6 +93,7 @@ public:
     , elemLocalScvIdx_(scvIdx)
     , dofIndex_(dofIndex)
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
         auto corners = geometryHelper.getScvCorners(scvIdx);
         dofPosition_ = corners[0];
@@ -132,6 +133,7 @@ public:
     , elemLocalScvIdx_(elemLocalScvIdx)
     , dofIndex_(dofIndex)
     , facetIdx_(elemLocalFacetIdx)
+    , indexInIntersection_(indexInIntersection)
     {
         auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
         dofPosition_ = corners[0];
@@ -166,6 +168,10 @@ public:
     LocalIndexType facetIndexInElement() const
     { assert(isFractureScv_); return facetIdx_; }
 
+    //! The local vertex index in the intersection
+    LocalIndexType indexInsideIntersection() const
+    { assert(isFractureScv_); return indexInIntersection_; }
+
     //! The index of the dof this scv is embedded in
     GridIndexType dofIndex() const
     { return dofIndex_; }
@@ -194,6 +200,7 @@ private:
 
     // for fracture scvs only!
     LocalIndexType facetIdx_;
+    LocalIndexType indexInIntersection_;
 };
 
 } // end namespace

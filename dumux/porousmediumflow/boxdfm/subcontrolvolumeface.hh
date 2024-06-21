@@ -95,6 +95,7 @@ public:
     , isFractureScvf_(false)
     , boundaryFlag_{}
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
         auto corners = geometryHelper.getScvfCorners(scvfIndex);
         unitOuterNormal_ = geometryHelper.normal(corners, scvIndices_);
@@ -123,6 +124,7 @@ public:
     , isFractureScvf_(false)
     , boundaryFlag_{intersection}
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
         auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
         area_ = Dumux::convexPolytopeVolume<T::dim-1>(
@@ -149,6 +151,7 @@ public:
     , isFractureScvf_(true)
     , boundaryFlag_{intersection}
     , facetIdx_(intersection.indexInInside())
+    , indexInIntersection_(indexInIntersection)
     {
         auto corners = geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection);
         // The area here is given in meters. In order to
@@ -200,6 +203,10 @@ public:
     LocalIndexType facetIndexInElement() const
     { assert(isFractureScvf_); return facetIdx_; }
 
+    //! The local edge index inside the intersection
+    LocalIndexType indexInIntersection() const
+    { assert(isFractureScvf_); return indexInIntersection_; }
+
     //! Returns the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
@@ -232,6 +239,7 @@ private:
     bool isFractureScvf_;
     BoundaryFlag boundaryFlag_;
     LocalIndexType facetIdx_;
+    LocalIndexType indexInIntersection_;
 };
 
 } // end namespace Dumux
