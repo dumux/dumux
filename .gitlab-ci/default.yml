@@ -50,6 +50,7 @@ configure:
       python3 -m venv build-cmake/ci-env
       source build-cmake/ci-env/bin/activate
       python3 -m pip install -r requirements.txt
+      pip list
   artifacts:
     paths:
       - build-cmake
