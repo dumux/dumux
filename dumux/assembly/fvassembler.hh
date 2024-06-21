@@ -87,7 +87,7 @@ namespace Dumux {
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
- * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam isImplicit Specifies whether the time discretization is implicit or not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
@@ -422,10 +422,10 @@ private:
             {
                 assert(elementSets_.size() > 0);
 
-                // make this element loop run in parallel
-                // for this we have to color the elements so that we don't get
-                // race conditions when writing into the global matrix
-                // each color can be assembled using multiple threads
+                // Use this element loop run in parallel.
+                // For this we have to color the elements so that we don't get
+                // race conditions when writing into the global matrix.
+                // Each color can be assembled using multiple threads.
                 for (const auto& elements : elementSets_)
                 {
                     Dumux::parallelFor(elements.size(), [&](const std::size_t i)
