@@ -57,13 +57,11 @@ class DispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, referenc
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum
-    {
-        numPhases = ModelTraits::numFluidPhases(),
-        numComponents = ModelTraits::numFluidComponents()
-    };
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
