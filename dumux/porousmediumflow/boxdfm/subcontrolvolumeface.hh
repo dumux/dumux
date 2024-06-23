@@ -97,7 +97,7 @@ public:
     , facetIdx_(0)
     , indexInIntersection_(0)
     {
-        auto corners = geometryHelper.getScvfCorners(scvfIndex);
+        const auto corners = geometryHelper.getScvfCorners(scvfIndex);
         unitOuterNormal_ = geometryHelper.normal(corners, scvIndices_);
         area_ = Dumux::convexPolytopeVolume<T::dim-1>(
                     Dune::GeometryTypes::cube(T::dim-1),
@@ -126,7 +126,7 @@ public:
     , facetIdx_(0)
     , indexInIntersection_(0)
     {
-        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
+        const auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
         area_ = Dumux::convexPolytopeVolume<T::dim-1>(
                     Dune::GeometryTypes::cube(T::dim-1),
                     [&](unsigned int i){ return corners[i]; });
@@ -153,7 +153,7 @@ public:
     , facetIdx_(intersection.indexInInside())
     , indexInIntersection_(indexInIntersection)
     {
-        auto corners = geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection);
+        const auto corners = geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection);
         // The area here is given in meters. In order to
         // get the right dimensions, the user has to provide
         // the appropriate aperture in the problem (via an extrusion factor)

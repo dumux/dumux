@@ -95,7 +95,7 @@ public:
     , facetIdx_(0)
     , indexInIntersection_(0)
     {
-        auto corners = geometryHelper.getScvCorners(scvIdx);
+        const auto corners = geometryHelper.getScvCorners(scvIdx);
         dofPosition_ = corners[0];
         volume_ = Dumux::convexPolytopeVolume<T::dim>(
             Dune::GeometryTypes::cube(T::dim),
@@ -135,7 +135,7 @@ public:
     , facetIdx_(elemLocalFacetIdx)
     , indexInIntersection_(indexInIntersection)
     {
-        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
+        const auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
         dofPosition_ = corners[0];
 
         // compute volume and scv center

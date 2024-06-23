@@ -71,7 +71,7 @@ public:
     , interiorBoundary_(false)
     , boundaryFlag_{}
     {
-        auto corners = geometryHelper.getScvfCorners(scvfIndex);
+        const auto corners = geometryHelper.getScvfCorners(scvfIndex);
         unitOuterNormal_ = geometryHelper.normal(corners, scvIndices_);
         area_ = Dumux::convexPolytopeVolume<T::dim-1>(
             Dune::GeometryTypes::cube(T::dim-1),
