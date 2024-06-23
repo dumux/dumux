@@ -174,7 +174,6 @@ public:
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
-        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
         if (scv.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
@@ -183,13 +182,13 @@ public:
 
         const typename GG::GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvCorners(scv.index());
-        return ScvGeometry(Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners);
+        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners };
     }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
-        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
         if (scvf.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
@@ -197,7 +196,8 @@ public:
                                                     "and extruding them by the corresponding aperture. ");
         const typename GG::GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvfCorners(scvf.indexInElement());
-        return ScvfGeometry(Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners);
+        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
     }
 
 private:
@@ -344,7 +344,6 @@ public:
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
-        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
         if (scv.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
@@ -353,13 +352,13 @@ public:
 
         const GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvCorners(scv.index());
-        return ScvGeometry(Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners);
+        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners };
     }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
-        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
         if (scvf.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
@@ -367,7 +366,8 @@ public:
                                                     "and extruding them by the corresponding aperture. ");
         const GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvfCorners(scvf.indexInElement());
-        return ScvfGeometry(Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners);
+        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
     }
 
 private:
