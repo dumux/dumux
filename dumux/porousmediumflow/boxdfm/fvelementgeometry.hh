@@ -177,8 +177,8 @@ public:
         if (scv.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
-                                                    "You can do this manually by extract the corners from this scv "
-                                                    "and extrude them by the corresponding aperture. ");
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
 
         const typename GG::GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvCorners(scv.index());
@@ -347,8 +347,8 @@ public:
         if (scv.isOnFracture())
             DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
                                                     "because the number of known corners is insufficient. "
-                                                    "You can do this manually by extract the corners from this scv "
-                                                    "and extrude them by the corresponding aperture. ");
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
 
         const GeometryHelper geometryHelper(element().geometry());
         const auto corners = geometryHelper.getScvCorners(scv.index());
