@@ -174,18 +174,19 @@ public:
         assert(isBound());
         using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
         const GeometryHelper geometryHelper(element().geometry());
-        typename SubControlVolumeFace::Traits::CornerStorage corners;
         if (scvf.boundary() || scvf.interiorBoundary())
-        {
-            corners = geometryHelper.getBoundaryScvfCorners(scvf.facetIndexInElement(),
-                                                            scvf.indexInElementFacet());
-            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
-        }
-        else
-        {
-            corners = geometryHelper.getScvfCorners(scvf.index());
-            return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
-        }
+            return {
+                Dune::GeometryTypes::cube(ScvfGeometry::mydimension),
+                geometryHelper.getBoundaryScvfCorners(
+                    scvf.facetIndexInElement(),
+                    scvf.indexInElementFacet()
+                )
+            };
+        
+        return { 
+            Dune::GeometryTypes::cube(ScvfGeometry::mydimension), 
+            geometryHelper.getScvfCorners(scvf.index())
+        };
     }
 
 private:
@@ -345,11 +346,10 @@ public:
                 )
             };
 
-        else
-            return {
-                Dune::GeometryTypes::cube(ScvfGeometry::mydimension),
-                geometryHelper.getScvfCorners(scvf.index())
-            };
+        return {
+            Dune::GeometryTypes::cube(ScvfGeometry::mydimension),
+            geometryHelper.getScvfCorners(scvf.index())
+        };
     }
 
 private:
