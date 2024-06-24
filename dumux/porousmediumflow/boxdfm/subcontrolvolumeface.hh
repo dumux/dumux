@@ -69,7 +69,6 @@ class BoxDfmSubControlVolumeFace
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
     using GlobalPosition = typename T::GlobalPosition;
-    using CornerStorage = typename T::CornerStorage;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
 
@@ -89,23 +88,24 @@ public:
                                const typename Element::Geometry& elemGeometry,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices)
-    : corners_(geometryHelper.getScvfCorners(scvfIndex))
-    , center_(0.0)
-    , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
-    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-        Dune::GeometryTypes::cube(T::dim-1),
-        [&](unsigned int i){ return corners_[i]; })
-    )
+    : center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(false)
     , isFractureScvf_(false)
     , boundaryFlag_{}
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
-        for (const auto& corner : corners_)
+        const auto corners = geometryHelper.getScvfCorners(scvfIndex);
+        unitOuterNormal_ = geometryHelper.normal(corners, scvIndices_);
+        area_ = Dumux::convexPolytopeVolume<T::dim-1>(
+                    Dune::GeometryTypes::cube(T::dim-1),
+                    [&](unsigned int i){ return corners[i]; });
+
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! Constructor for boundary scvfs
@@ -116,23 +116,23 @@ public:
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices)
-    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
-    , center_(0.0)
+    : center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
-    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-        Dune::GeometryTypes::cube(T::dim-1),
-        [&](unsigned int i){ return corners_[i]; })
-    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(true)
     , isFractureScvf_(false)
     , boundaryFlag_{intersection}
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
-        for (const auto& corner : corners_)
+        const auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
+        area_ = Dumux::convexPolytopeVolume<T::dim-1>(
+                    Dune::GeometryTypes::cube(T::dim-1),
+                    [&](unsigned int i){ return corners[i]; });
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! Constructor for inner fracture scvfs
@@ -144,30 +144,31 @@ public:
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices,
                                bool boundary)
-    : corners_(geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection))
-    , center_(0.0)
+    : center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , boundary_(boundary)
     , isFractureScvf_(true)
     , boundaryFlag_{intersection}
     , facetIdx_(intersection.indexInInside())
+    , indexInIntersection_(indexInIntersection)
     {
+        const auto corners = geometryHelper.getFractureScvfCorners(intersection.indexInInside(), indexInIntersection);
         // The area here is given in meters. In order to
         // get the right dimensions, the user has to provide
         // the appropriate aperture in the problem (via an extrusion factor)
         if (T::dim == 3)
-            area_ = (corners_[1]-corners_[0]).two_norm();
+            area_ = (corners[1]-corners[0]).two_norm();
         else if (T::dim == 2)
             area_ = 1.0;
 
         // obtain the unit normal vector
-        unitOuterNormal_ = geometryHelper.fractureNormal(corners_, intersection, indexInIntersection);
+        unitOuterNormal_ = geometryHelper.fractureNormal(corners, intersection, indexInIntersection);
 
         // compute the scvf center
-        for (const auto& corner : corners_)
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! The center of the sub control volume face
@@ -202,6 +203,10 @@ public:
     LocalIndexType facetIndexInElement() const
     { assert(isFractureScvf_); return facetIdx_; }
 
+    //! The local edge index inside the intersection
+    LocalIndexType indexInIntersection() const
+    { assert(isFractureScvf_); return indexInIntersection_; }
+
     //! Returns the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
@@ -224,21 +229,7 @@ public:
         return static_cast<std::size_t>(!boundary());
     }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    Geometry geometry() const
-    {
-        if (isFractureScvf_)
-            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
-                                                    "because the number of known corners is insufficient. "
-                                                    "You can do this manually by extract the corners from this scv "
-                                                    "and extrude them by the corresponding aperture. ");
-
-        return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
-    }
-
 private:
-    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;
@@ -248,6 +239,7 @@ private:
     bool isFractureScvf_;
     BoundaryFlag boundaryFlag_;
     LocalIndexType facetIdx_;
+    LocalIndexType indexInIntersection_;
 };
 
 } // end namespace Dumux

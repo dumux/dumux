@@ -171,20 +171,34 @@ public:
     const Element& element() const
     { return *element_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        if (scv.isOnFracture())
+            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
+                                                    "because the number of known corners is insufficient. "
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
+
+        const typename GG::GeometryHelper geometryHelper(element().geometry());
+        const auto corners = geometryHelper.getScvCorners(scv.index());
+        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners };
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        if (scvf.isOnFracture())
+            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
+                                                    "because the number of known corners is insufficient. "
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
+        const typename GG::GeometryHelper geometryHelper(element().geometry());
+        const auto corners = geometryHelper.getScvfCorners(scvf.indexInElement());
+        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+    }
 
 private:
     const GridGeometry* gridGeometryPtr_;
@@ -327,20 +341,34 @@ public:
     const Element& element() const
     { return *element_; }
 
-    // suppress warnings due to current implementation
-    // these interfaces should be used!
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
-    { return scv.geometry(); }
+    {
+        if (scv.isOnFracture())
+            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
+                                                    "because the number of known corners is insufficient. "
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
+
+        const GeometryHelper geometryHelper(element().geometry());
+        const auto corners = geometryHelper.getScvCorners(scv.index());
+        using ScvGeometry = typename SubControlVolume::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvGeometry::mydimension), corners };
+    }
 
     //! Create the geometry of a given sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
-    { return scvf.geometry(); }
-
-    #pragma GCC diagnostic pop
+    {
+        if (scvf.isOnFracture())
+            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
+                                                    "because the number of known corners is insufficient. "
+                                                    "You can do this manually by extracting the corners from this scv "
+                                                    "and extruding them by the corresponding aperture. ");
+        const GeometryHelper geometryHelper(element().geometry());
+        const auto corners = geometryHelper.getScvfCorners(scvf.indexInElement());
+        using ScvfGeometry = typename SubControlVolumeFace::Traits::Geometry;
+        return { Dune::GeometryTypes::cube(ScvfGeometry::mydimension), corners };
+    }
 
 private:
 

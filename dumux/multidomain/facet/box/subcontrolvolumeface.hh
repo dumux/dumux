@@ -62,13 +62,7 @@ public:
                                          const typename Element::Geometry& elemGeometry,
                                          unsigned int scvfIndex,
                                          std::vector<LocalIndexType>&& scvIndices)
-    : corners_(geometryHelper.getScvfCorners(scvfIndex))
-    , center_(0.0)
-    , unitOuterNormal_(geometryHelper.normal(corners_, scvIndices))
-    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-        Dune::GeometryTypes::cube(T::dim-1),
-        [&](unsigned int i){ return corners_[i]; })
-    )
+    : center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(/*undefined*/)
@@ -77,9 +71,14 @@ public:
     , interiorBoundary_(false)
     , boundaryFlag_{}
     {
-        for (const auto& corner : corners_)
+        const auto corners = geometryHelper.getScvfCorners(scvfIndex);
+        unitOuterNormal_ = geometryHelper.normal(corners, scvIndices_);
+        area_ = Dumux::convexPolytopeVolume<T::dim-1>(
+            Dune::GeometryTypes::cube(T::dim-1),
+            [&](unsigned int i){ return corners[i]; });
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! Constructor for domain or interior boundary scvfs
@@ -92,13 +91,8 @@ public:
                                          std::vector<LocalIndexType>&& scvIndices,
                                          bool boundary,
                                          bool interiorBoundary)
-    : corners_(geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection))
-    , center_(0.0)
+    : center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
-    , area_(Dumux::convexPolytopeVolume<T::dim-1>(
-        Dune::GeometryTypes::cube(T::dim-1),
-        [&](unsigned int i){ return corners_[i]; })
-    )
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
     , facetIndex_(intersection.indexInInside())
@@ -107,9 +101,13 @@ public:
     , interiorBoundary_(interiorBoundary)
     , boundaryFlag_{intersection}
     {
-        for (const auto& corner : corners_)
+        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
+        area_ = Dumux::convexPolytopeVolume<T::dim-1>(
+            Dune::GeometryTypes::cube(T::dim-1),
+            [&](unsigned int i){ return corners[i]; });
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! The center of the sub control volume face
@@ -175,18 +173,12 @@ public:
         return indexInFacet_;
     }
 
-    //! The geometry of the sub control volume face
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scvf).")]]
-    Geometry geometry() const
-    { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
-
     //! Return the boundary flag
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
 
 private:
     // geometrical information
-    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;

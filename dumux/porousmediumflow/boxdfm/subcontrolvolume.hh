@@ -69,7 +69,6 @@ class BoxDfmSubControlVolume
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
     using GlobalPosition = typename T::GlobalPosition;
-    using CornerStorage = typename T::CornerStorage;
     enum { dim = Geometry::mydimension };
 
     static_assert(dim == 2 || dim == 3, "Box-Dfm sub-control volume only implemented in 2d or 3d");
@@ -88,22 +87,23 @@ public:
                            GridIndexType elementIndex,
                            GridIndexType dofIndex)
     : isFractureScv_(false)
-    , corners_(geometryHelper.getScvCorners(scvIdx))
     , center_(0.0)
-    , volume_(Dumux::convexPolytopeVolume<T::dim>(
-        Dune::GeometryTypes::cube(T::dim),
-        [&](unsigned int i){ return corners_[i]; })
-    )
     , elementIndex_(elementIndex)
     , vIdxLocal_(scvIdx)
     , elemLocalScvIdx_(scvIdx)
     , dofIndex_(dofIndex)
     , facetIdx_(0)
+    , indexInIntersection_(0)
     {
+        const auto corners = geometryHelper.getScvCorners(scvIdx);
+        dofPosition_ = corners[0];
+        volume_ = Dumux::convexPolytopeVolume<T::dim>(
+            Dune::GeometryTypes::cube(T::dim),
+            [&](unsigned int i){ return corners[i]; });
         // compute center point
-        for (const auto& corner : corners_)
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     /*!
@@ -126,7 +126,6 @@ public:
                            GridIndexType elementIndex,
                            GridIndexType dofIndex)
     : isFractureScv_(true)
-    , corners_()
     , center_(0.0)
     , volume_(0.0)
     , elementIndex_(elementIndex)
@@ -134,22 +133,19 @@ public:
     , elemLocalScvIdx_(elemLocalScvIdx)
     , dofIndex_(dofIndex)
     , facetIdx_(elemLocalFacetIdx)
+    , indexInIntersection_(indexInIntersection)
     {
-        // copy corners
-        auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
-        const auto numCorners = corners.size();
-        corners_.resize(numCorners);
-        for (unsigned int i = 0; i < numCorners; ++i)
-            corners_[i] = corners[i];
+        const auto corners = geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), indexInIntersection);
+        dofPosition_ = corners[0];
 
         // compute volume and scv center
         volume_ = Dumux::convexPolytopeVolume<T::dim-1>(
             Dune::GeometryTypes::cube(T::dim-1),
-            [&](unsigned int i){ return corners_[i]; }
+            [&](unsigned int i){ return corners[i]; }
         );
-        for (const auto& corner : corners_)
+        for (const auto& corner : corners)
             center_ += corner;
-        center_ /= corners_.size();
+        center_ /= corners.size();
     }
 
     //! The center of the sub control volume
@@ -172,13 +168,17 @@ public:
     LocalIndexType facetIndexInElement() const
     { assert(isFractureScv_); return facetIdx_; }
 
+    //! The local vertex index in the intersection
+    LocalIndexType indexInsideIntersection() const
+    { assert(isFractureScv_); return indexInIntersection_; }
+
     //! The index of the dof this scv is embedded in
     GridIndexType dofIndex() const
     { return dofIndex_; }
 
     // The position of the dof this scv is embedded in (list is defined such that first entry is vertex itself)
     const GlobalPosition& dofPosition() const
-    { return corners_[0]; }
+    { return dofPosition_; }
 
     //! The global index of the element this scv is embedded in
     GridIndexType elementIndex() const
@@ -188,23 +188,9 @@ public:
     bool isOnFracture() const
     { return isFractureScv_; }
 
-    //! The geometry of the sub control volume
-    // e.g. for integration
-    [[deprecated("Will be removed after 3.7. Use fvGeometry.geometry(scv).")]]
-    Geometry geometry() const
-    {
-        if (isFractureScv_)
-            DUNE_THROW(Dune::InvalidStateException, "The geometry object cannot be defined for fracture scvs "
-                                                    "because the number of known corners is insufficient. "
-                                                    "You can do this manually by extract the corners from this scv "
-                                                    "and extrude them by the corresponding aperture. ");
-
-        return Geometry(Dune::GeometryTypes::cube(dim), corners_);
-    }
-
 private:
     bool isFractureScv_;
-    CornerStorage corners_;
+    GlobalPosition dofPosition_;
     GlobalPosition center_;
     Scalar volume_;
     GridIndexType elementIndex_;
@@ -214,6 +200,7 @@ private:
 
     // for fracture scvs only!
     LocalIndexType facetIdx_;
+    LocalIndexType indexInIntersection_;
 };
 
 } // end namespace
