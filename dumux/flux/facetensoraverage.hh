@@ -33,8 +33,8 @@ Scalar faceTensorAverage(const Scalar T1,
 
 /*!
  * \brief Average of a discontinuous tensorial field at discontinuity interface
- * \note We do a harmonic average of the part normal to the interface (alpha*I) and
- *       an arithmetic average of the tangential part (T - alpha*I).
+ * \note We do a harmonic average of the part normal to the interface (alpha nn^T) and
+ *       an arithmetic average of the tangential part (T - alpha nn^T).
  * \return the averaged tensor
  * \param T1 first tensor
  * \param T2 second tensor
@@ -46,26 +46,13 @@ Dune::FieldMatrix<Scalar, dim> faceTensorAverage(const Dune::FieldMatrix<Scalar,
                                                  const Dune::FieldVector<Scalar, dim>& normal)
 {
     // determine nT*k*n
-    Dune::FieldVector<Scalar, dim> tmp;
-    Dune::FieldVector<Scalar, dim> tmp2;
-    T1.mv(normal, tmp);
-    T2.mv(normal, tmp2);
-    const Scalar alpha1 = tmp*normal;
-    const Scalar alpha2 = tmp2*normal;
+    const Scalar alpha1 = vtmv(normal, T1, normal);
+    const Scalar alpha2 = vtmv(normal, T2, normal);
 
-    const Scalar alphaHarmonic = Dumux::harmonicMean(alpha1, alpha2);
-    const Scalar alphaAverage = 0.5*(alpha1 + alpha2);
+    const auto normalProjection = dyadicProduct(normal, normal);
 
-    Dune::FieldMatrix<Scalar, dim> T(0.0);
-    for (int i = 0; i < dim; ++i)
-    {
-        for (int j = 0; j < dim; ++j)
-        {
-            T[i][j] += 0.5*(T1[i][j] + T2[i][j]);
-            if (i == j)
-                T[i][j] += alphaHarmonic - alphaAverage;
-        }
-    }
+    auto T = (Dumux::harmonicMean(alpha1, alpha2) - 0.5*(alpha1+alpha2))*normalProjection
+           + 0.5*(T1 + T2);
 
     return T;
 }
