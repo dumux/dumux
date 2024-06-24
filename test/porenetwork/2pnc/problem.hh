@@ -12,8 +12,8 @@
 #ifndef DUMUX_PNM_2P_NC_PROBLEM_HH
 #define DUMUX_PNM_2P_NC_PROBLEM_HH
 
-#include <dumux/common/boundarytypes.hh>
 #include <dumux/porenetwork/2pnc/model.hh>
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/air.hh>
