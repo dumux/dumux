@@ -742,6 +742,22 @@ Dune::DynamicMatrix<Scalar> getTransposed(const Dune::DynamicMatrix<Scalar>& M)
 
 /*!
  * \ingroup Core
+ * \brief Dyadic product of two vectors
+ */
+template <class Scalar, int m, int n>
+Dune::FieldMatrix<Scalar, m, n> dyadicProduct(const Dune::FieldVector<Scalar, m>& v1,
+                                              const Dune::FieldVector<Scalar, n>& v2)
+{
+    Dune::FieldMatrix<Scalar, m, n> D;
+    for (std::size_t i = 0; i < m; ++i)
+        for (std::size_t j = 0; j < n; ++j)
+            D[i][j] = v1[i]*v2[j];
+
+    return D;
+}
+
+/*!
+ * \ingroup Core
  * \brief Multiply two dynamic matrices
  *
  * \param M1 The first dynamic matrix
