@@ -71,6 +71,7 @@ public:
         boundConductiviy_ = getParam<bool>("Problem.BoundConductivity", true);
         useUpwindPc_ = getParam<bool>("Problem.UseUpwindPc", true);
         switchConductivityCurve_ = getParam<bool>("Problem.switchConductivityCurve", true);
+        preventImmediateSnapOff_ = getParam<bool>("Problem.preventImmediateSnapOff", true);
     }
 
      /*!
@@ -152,8 +153,11 @@ public:
                     {
                         using std::min; using std::abs;
                         auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
-                        auto dp = min(elemVolVars[0].capillaryPressure(),
+                        auto dp = std::min(elemVolVars[0].capillaryPressure(),
                                       elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+                        auto snMin = std::min(elemVolVars[0].saturation(1), elemVolVars[1].saturation(1));
+                        if (preventImmediateSnapOff_ && snMin < 0.1)
+                            return 1.0;
                         if (useUpwindPc_)
                             dp = upwindW.capillaryPressure() / abs(pcSnapoff) - sign(pcSnapoff);
                         if (boundConductiviy_ && upwindN.saturation(nPhaseIdx) < 1e-3)
@@ -252,6 +256,7 @@ private:
     bool useUpwindPc_;
     bool boundConductiviy_;
     bool switchConductivityCurve_;
+    bool preventImmediateSnapOff_;
 };
 } //end namespace Dumux
 
