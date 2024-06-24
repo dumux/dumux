@@ -12,7 +12,9 @@
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
 
+#include <dune/common/fvector.hh>
 #include <dumux/common/tag.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux::NavierStokes::SlipConditions {
