@@ -10,16 +10,18 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
 
+namespace Dumux {
 /*!
- * \ingroup DispersionTensors
+ * \addtogroup DispersionTensors
  * \copydetails Dumux::FullDispersionTensor
  */
-
-namespace Dumux {
 
 /*!
  * \ingroup DispersionTensors
  * \brief Full dispersion tensor
+ *
+ * ### Full dispersion tensor
+ * The full dispersion tensor is given by the spatial parameters.
  */
 template<class TypeTag>
 class FullDispersionTensor
