@@ -15,6 +15,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
@@ -22,6 +23,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/traits.hh>
 #include <dumux/flux/referencesystemformulation.hh>
+#include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
 
@@ -57,13 +59,11 @@ class DispersionFluxImplementation<TypeTag, DiscretizationMethods::Box, referenc
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { dim = GridView::dimension} ;
-    enum { dimWorld = GridView::dimensionworld} ;
-    enum
-    {
-        numPhases = ModelTraits::numFluidPhases(),
-        numComponents = ModelTraits::numFluidComponents()
-    };
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    static constexpr int numPhases = ModelTraits::numFluidPhases();
+    static constexpr int numComponents = ModelTraits::numFluidComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
@@ -104,13 +104,30 @@ public:
             rhoMassOrMole += rho * shapeValues[scv.indexInElement()][0];
         }
 
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             // collect the dispersion tensor, the fluxVarsCache and the shape values
-            const auto& dispersionTensor =
-                ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
-                                                                                         elemVolVars, elemFluxVarsCache,
-                                                                                         phaseIdx, compIdx);
+            const auto& dispersionTensor = [&]()
+            {
+                const auto& tensor =
+                    ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
+                                                                                             elemVolVars, elemFluxVarsCache,
+                                                                                             phaseIdx, compIdx);
+
+                if (Dune::FloatCmp::eq(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor(), 1e-6))
+                    return insideVolVars.extrusionFactor()*tensor;
+                else
+                {
+                    const auto insideTensor = insideVolVars.extrusionFactor() * tensor;
+                    const auto outsideTensor = outsideVolVars.extrusionFactor() * tensor;
+
+                    // the resulting averaged dispersion tensor
+                    return faceTensorAverage(insideTensor, outsideTensor, scvf.unitOuterNormal());
+                }
+            }();
 
             // the mole/mass fraction gradient
             Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
@@ -121,7 +138,7 @@ public:
             }
 
             // compute the dispersion flux
-            componentFlux[compIdx] = -1.0 * rhoMassOrMole * vtmv(scvf.unitOuterNormal(), dispersionTensor, gradX) * scvf.area();
+            componentFlux[compIdx] = -1.0 * rhoMassOrMole * vtmv(scvf.unitOuterNormal(), dispersionTensor, gradX)*Extrusion::area(fvGeometry, scvf);
             if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
@@ -140,11 +157,29 @@ public:
                                                 const int phaseIdx,
                                                 const ElementFluxVariablesCache& elemFluxVarsCache)
     {
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
         // collect the dispersion tensor
-        const auto& dispersionTensor =
-            ModelTraits::ThermalDispersionModel::thermalDispersionTensor(problem, scvf, fvGeometry,
-                                                                         elemVolVars, elemFluxVarsCache,
-                                                                         phaseIdx);
+        const auto& dispersionTensor = [&]()
+        {
+            const auto& tensor =
+                ModelTraits::ThermalDispersionModel::thermalDispersionTensor(problem, scvf, fvGeometry,
+                                                                             elemVolVars, elemFluxVarsCache,
+                                                                             phaseIdx);
+
+            if (Dune::FloatCmp::eq(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor(), 1e-6))
+                return insideVolVars.extrusionFactor()*tensor;
+            else
+            {
+                const auto insideTensor = insideVolVars.extrusionFactor() * tensor;
+                const auto outsideTensor = outsideVolVars.extrusionFactor() * tensor;
+
+                // the resulting averaged dispersion tensor
+                return faceTensorAverage(insideTensor, outsideTensor, scvf.unitOuterNormal());
+            }
+        }();
+
         // compute the temperature gradient with the shape functions
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, GridView::dimensionworld> gradTemp(0.0);
