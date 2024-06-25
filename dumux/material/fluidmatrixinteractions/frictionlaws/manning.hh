@@ -14,6 +14,11 @@
 
 namespace Dumux {
 /*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawManning
+ */
+
+/*!
  * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Manning.
  *
