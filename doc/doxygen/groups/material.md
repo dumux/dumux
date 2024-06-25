@@ -93,7 +93,7 @@ The following laws can be implemented by deriving from the abstract base class, 
 
 @defgroup DispersionTensors Dispersion Tensors
 @brief Dispersion tensor models characterising mechanical dispersion in porous media
-@details Mechanical dispersion is caused by particles traveling at different velocities through the porous medium \cite Fried1971. A particle in the middle of a pore has a higher velocity than a particle close to a grain. Due to the tortuosity of the porous medium, particles take different paths through it. Given the existence of an REV, mechanical dispersion typically leads to increased Fickian diffusion on the Darcy scale \cite Bear1986. The magnitude and directionality of the increase diffusive transport depends on the size of the averaging volumes and characteristics of the flow such as average velocity magnitude and direction.
+@details Mechanical dispersion is caused by particles traveling at different velocities through the porous medium \cite Fried1971. A particle in the middle of a pore has a higher velocity than a particle close to a grain. Due to the tortuosity of the porous medium, particles take different paths through it. Given the existence of an REV, mechanical dispersion typically leads to increased Fickian diffusion on the Darcy scale \cite Bear1986. The magnitude and directionality of the increase diffusive transport depends on the size of the averaging volumes and characteristics of the flow such as average velocity magnitude and direction. The following classes can be implemented.
 @ingroup Fluidmatrixinteractions
 
 @defgroup PoreNetwork Pore Network
