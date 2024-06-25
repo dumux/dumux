@@ -14,6 +14,10 @@
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 
 namespace Dumux {
+/*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawViscousNoSlip
+ */
 
 /*!
  * \ingroup FrictionLaws

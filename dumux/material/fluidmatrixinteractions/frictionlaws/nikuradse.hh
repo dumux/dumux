@@ -14,6 +14,11 @@
 
 namespace Dumux {
 /*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawNikuradse
+ */
+
+/*!
  * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Nikuradse.
  *

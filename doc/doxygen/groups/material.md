@@ -88,6 +88,7 @@ The following laws are implemented:
 which is called bottom shear stress. The bottom shear stress is
 needed to calculate on the one hand the loss of momentum due to
 bottom friction and on the other hand the bedload transport rate.
+The following laws can be implemented by deriving from the abstract base class, where the LET mobility model by Lomeland et al. \cite Lomeland2005 can be employed to introduce an artificial water depth, which helps to limit friction in scenarios with small water depths.
 @ingroup Fluidmatrixinteractions
 
 @defgroup DispersionTensors Dispersion Tensors
