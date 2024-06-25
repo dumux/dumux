@@ -10,6 +10,11 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
 
+/*!
+ * \ingroup DispersionTensors
+ * \copydetails Dumux::FullDispersionTensor
+ */
+
 namespace Dumux {
 
 /*!

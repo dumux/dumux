@@ -10,6 +10,10 @@
 #include "frictionlaw.hh"
 
 namespace Dumux {
+/*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawNoFriction
+ */
 
 /*!
  * \ingroup FrictionLaws
