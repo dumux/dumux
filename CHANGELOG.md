@@ -18,6 +18,7 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 - __Facet-Coupling__: The facet-coupling framework has been modified such that lower-dimensional domains coinciding with the bulk domain boundary are supported.
 - __Components__: Added the new class `ShomateMethod` for calculating the heat capacity and enthalpy of components at specified temperatures. An example implementation can be found for methane (CH4).
 - __TPFA Dispersion__: Fixed the transmissibility calculation for tpfa dispersion fluxes.
+- __Energy Balance Implementation__: modify the energy balance implementation to correctly include the contribution of gravity.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
 - __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
