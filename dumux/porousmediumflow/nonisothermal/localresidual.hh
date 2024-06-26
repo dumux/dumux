@@ -8,7 +8,7 @@
  * \file
  * \ingroup NIModel
  * \brief Element-wise calculation of the local residual for non-isothermal
- *        fully implicit models.
+ *        fully implicit models. See NIModel for the detailed description.
  */
 
 #ifndef DUMUX_ENERGY_LOCAL_RESIDUAL_HH
@@ -28,28 +28,33 @@ using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GetPropTy
 
 /*!
  * \ingroup NIModel
- * \brief Element-wise calculation of the energy residual for non-isothermal problems.
+ * \brief Element-wise calculation of the energy residual for isothermal problems.
  */
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, false>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
+    static void fluidPhaseStorage(NumEqVector& storage,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars,
+                                  int phaseIdx)
+    {
+        static_assert("Deprecated interface that has been removed!");
+    }
+
     /*!
      * \brief The energy storage in the fluid phase with index phaseIdx.
-     *
-     * \param storage The mass of the component within the sub-control volume
-     * \param scv The sub-control volume
-     * \param volVars The volume variables
-     * \param phaseIdx The phase index
      */
     static void fluidPhaseStorage(NumEqVector& storage,
+                                  const Problem& problem,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -102,13 +107,14 @@ public:
 
 /*!
  * \ingroup NIModel
- * \brief TODO docme!
+ * \brief Element-wise calculation of the energy residual for non-isothermal problems.
  */
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, true>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -125,22 +131,31 @@ class EnergyLocalResidualImplementation<TypeTag, true>
 public:
 
     /*!
-     * \brief The energy storage in the fluid phase with index phaseIdx
-     *
-     * \param storage The mass of the component within the sub-control volume
-     * \param scv The sub-control volume
-     * \param volVars The volume variables
-     * \param phaseIdx The phase index
+     * \brief The energy storage in the fluid phase with index phaseIdx.
      */
+    static void fluidPhaseStorage(NumEqVector& storage,
+                                  const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars,
+                                  int phaseIdx)
+    {
+        // this implementation of the potential energy contribution is only correct
+        // if gravity vector is constant in space and time
+        const auto& x = scv.dofPosition();
+        const auto gravityPotential = x*problem.spatialParams().gravity(x);
+
+        storage[energyEqIdx] += volVars.porosity()
+                                * volVars.density(phaseIdx)
+                                * volVars.saturation(phaseIdx)
+                                * (volVars.internalEnergy(phaseIdx) - gravityPotential);
+    }
+
     static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        storage[energyEqIdx] += volVars.porosity()
-                                * volVars.density(phaseIdx)
-                                * volVars.internalEnergy(phaseIdx)
-                                * volVars.saturation(phaseIdx);
+        static_assert("Deprecated interface that has been removed!");
     }
 
     /*!
@@ -171,8 +186,15 @@ public:
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
-        auto upwindTerm = [phaseIdx](const auto& volVars)
-        { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)*volVars.enthalpy(phaseIdx); };
+        // this implementation of the potential energy contribution is only correct
+        // if gravity vector is constant in space and time
+        const auto& x = fluxVars.scvFace().ipGlobal();
+        const auto gravityPotential = x*fluxVars.problem().spatialParams().gravity(x);
+
+        auto upwindTerm = [=](const auto& volVars){
+            return volVars.density(phaseIdx)*volVars.mobility(phaseIdx)
+                * (volVars.enthalpy(phaseIdx) - gravityPotential);
+        };
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }

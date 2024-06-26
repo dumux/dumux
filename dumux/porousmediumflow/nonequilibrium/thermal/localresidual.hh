@@ -37,6 +37,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -59,13 +60,23 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     static constexpr auto numComponents = ModelTraits::numFluidComponents();
 
 public:
-    //! The energy storage in the fluid phase with index phaseIdx
     static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        //in case we have one energy equation for more than one fluid phase, add up  parts on the             one energy equation
+        static_assert("Deprecated interface that has been removed!");
+    }
+
+    //! The energy storage in the fluid phase with index phaseIdx
+    static void fluidPhaseStorage(NumEqVector& storage,
+                                  const Problem&,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars,
+                                  int phaseIdx)
+    {
+        // in case we have one energy equation for more than one fluid phase,
+        // add up parts on the one energy equation
         storage[energyEq0Idx] += volVars.porosity()
                                  * volVars.density(phaseIdx)
                                  * volVars.internalEnergy(phaseIdx)
@@ -213,6 +224,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -242,9 +254,17 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
     static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
 
 public:
+    static void fluidPhaseStorage(NumEqVector& storage,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars,
+                                  int phaseIdx)
+    {
+        static_assert("Deprecated interface that has been removed!");
+    }
 
     //! The energy storage in the fluid phase with index phaseIdx
     static void fluidPhaseStorage(NumEqVector& storage,
+                                  const Problem&,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -253,6 +273,7 @@ public:
                                           * volVars.density(phaseIdx)
                                           * volVars.internalEnergy(phaseIdx)
                                           * volVars.saturation(phaseIdx);
+
     }
 
     //! The advective phase energy fluxes
