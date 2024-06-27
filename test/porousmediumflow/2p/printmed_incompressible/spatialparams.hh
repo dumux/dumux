@@ -14,6 +14,7 @@
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/tabulated.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
 
@@ -37,7 +38,9 @@ class TwoPTestSpatialParams
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    using PcKrSw = FluidMatrix::TabulatedPropertiesDefault<61, Scalar>;
+    //using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
+
     using MaterialInterfaces = BoxMaterialInterfaces<GridGeometry, PcKrSw>;
 
 public:
@@ -45,9 +48,9 @@ public:
 
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , outerPcKrSw_("SpatialParams.Outer")
+    , outerPcKrSw_("SpatialParams")
     {
-        outerK_ = getParam<Scalar>("SpatialParams.Outer.Permeability", 4.6e-10);
+        outerK_ = getParam<Scalar>("SpatialParams.Permeability", 4.6e-10);
     }
 
     /*!

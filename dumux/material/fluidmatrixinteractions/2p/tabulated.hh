@@ -3,6 +3,11 @@
 #include <string>
 #include <algorithm>
 
+
+#include <dumux/common/parameters.hh>
+#include <dumux/common/spline.hh>
+#include <dumux/common/optionalscalar.hh>
+
 #include <dumux/material/fluidmatrixinteractions/2p/materiallaw.hh>
 
 namespace Dumux::FluidMatrix {
@@ -15,7 +20,8 @@ public:
     template<class Scalar>
     struct Params
     {
-        Params (std::string basename)
+        Params (std::string basename, Scalar alpha, Scalar n, Scalar l = 0.5)
+        : alpha_(alpha), n_(n), m_(1.0 - 1.0/n), l_(l)
         {
             init(basename);
         }
@@ -43,13 +49,31 @@ public:
 
         Scalar pcEntry() const
         {
-            return tables_[1][steps-1]/factor_;
+            return 4025;
+            //return tables_[1][steps-1];///factor_;
         }
 
         bool operator== (const Params& p) const
         {
-            return p.basename_ == basename_;
+            return Dune::FloatCmp::eq(alpha_, p.alpha_, 1e-6)
+                   && Dune::FloatCmp::eq(n_, p.n_, 1e-6)
+                   && Dune::FloatCmp::eq(m_, p.m_, 1e-6)
+                   && Dune::FloatCmp::eq(l_, p.l_, 1e-6)
+                   && p.basename_ == basename_;
         }
+
+        Scalar alpha() const { return alpha_; }
+        void setAlpha(Scalar alpha) { alpha_ = alpha; }
+
+        Scalar m() const { return m_; }
+        void setM(Scalar m) { m_ = m; n_ = 1.0/(1.0 - m); }
+
+        Scalar n() const{ return n_; }
+        void setN(Scalar n){ n_ = n; m_ = 1.0 - 1.0/n; }
+
+        Scalar l() const { return l_; }
+        void setL(Scalar l) { l_ = l; }
+
 
     private:
         std::array<Scalar, steps> readTable_(std::string filename, int column)
@@ -78,13 +102,18 @@ public:
             "Wetting-EffPermeabilityVsAverageSaturation", "Non-wetting-EffPermeabilityVsAverageSaturation"};
         // sw, pc, krw, krn
         std::array<std::array<Scalar, steps>, 4> tables_;
+        Scalar alpha_, n_, m_, l_;
     };
 
     template<class Scalar = double>
     static Params<Scalar> makeParams(const std::string& paramGroup)
     {
         std::string basename = getParamFromGroup<std::string>(paramGroup, "TabulatedPropertiesName");
-        return Params<Scalar>(basename);
+                const auto n = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenN");
+        const auto alpha = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenAlpha");
+        // l is usually chosen to be 0.5 (according to Mualem (1976), WRR)
+        const auto l = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenL", 0.5);
+        return Params<Scalar>(basename,alpha, n, l);
     }
 
     template<class Scalar>
@@ -97,11 +126,16 @@ public:
         return interpolate_ (0, 1, sw, basicParams);
     }
 
+
+
+
     template<class Scalar>
     static Scalar swe (Scalar pc, const Params<Scalar>& basicParams)
     {
         return interpolate_ (1, 0, pc, basicParams, -1);
     }
+
+
 
     template<class Scalar>
     static Scalar krw (Scalar sw, const Params<Scalar>& basicParams)
@@ -109,10 +143,213 @@ public:
         return interpolate_ (0, 2, sw, basicParams);
     }
 
+
+
     template<class Scalar>
     static Scalar krn (Scalar sw, const Params<Scalar>& basicParams)
     {
         return interpolate_ (0, 3, sw, basicParams);
+    }
+
+    /*!
+
+    /*!
+     * \brief The capillary pressure-saturation curve according to van Genuchten.
+     *
+     * Van Genuchten's empirical capillary pressure <-> saturation
+     * function is given by
+     * \f$\mathrm{
+     p_c = (\overline{S}_w^{-1/m} - 1)^{1/n}/\alpha
+     }\f$
+     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
+     *       by clamping the input. Note that pc(swe = 0.0) = inf, have a look at RegularizedVanGenuchten if this is a problem.
+     */
+    // template<class Scalar>
+    // static Scalar pc(Scalar swe, const Params<Scalar>& params)
+    // {
+    //     using std::pow;
+    //     using std::clamp;
+
+    //     swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+    //     const Scalar pc = pow(pow(swe, -1.0/params.m()) - 1, 1.0/params.n())/params.alpha();
+    //     return pc;
+    // }
+
+    /*!
+     * \brief The saturation-capillary pressure curve according to van Genuchten.
+     *
+     * This is the inverse of the capillary pressure-saturation curve:
+     * \f$\mathrm{
+     \overline{S}_w = {p_c}^{-1} = ((\alpha p_c)^n + 1)^{-m}
+     }\f$
+     *
+     * \param pc Capillary pressure \f$\mathrm{p_c}\f$ in \f$\mathrm{[Pa]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \return The effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       i.e. sw(pc < 0.0) = 0.0, by clamping the input to the physical bounds.
+     */
+    // template<class Scalar>
+    // static Scalar swe(Scalar pc, const Params<Scalar>& params)
+    // {
+    //     using std::pow;
+    //     using std::max;
+
+    //     pc = max(pc, 0.0); // the equation below is undefined for negative pcs
+
+    //     const Scalar sw = pow(pow(params.alpha()*pc, params.n()) + 1, -params.m());
+    //     return sw;
+    // }
+
+    /*!
+     * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     */
+    // template<class Scalar>
+    // static Scalar endPointPc(const Params<Scalar>& params)
+    // { return 0.0; }
+
+    /*!
+     * \brief The partial derivative of the capillary
+     *        pressure w.r.t. the effective saturation according to van Genuchten.
+     *
+     * This is equivalent to
+     * \f$\mathrm{
+     \frac{\partial p_c}{\partial \overline{S}_w} =
+     -\frac{1}{\alpha} (\overline{S}_w^{-1/m} - 1)^{1/n - }
+     \overline{S}_w^{-1/m} / \overline{S}_w / m
+     }\f$
+     *
+     * \param swe Effective saturation of the wetting phase \f$\mathrm{\overline{S}_w}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if swe is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    template<class Scalar>
+    static Scalar dpc_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        using std::pow;
+        using std::clamp;
+
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar powSwe = pow(swe, -1/params.m());
+        return - 1.0/params.alpha() * pow(powSwe - 1, 1.0/params.n() - 1)/params.n()
+                                  * powSwe/swe/params.m();
+    }
+
+    /*!
+     * \brief The partial derivative of the effective
+     *        saturation to the capillary pressure according to van Genuchten.
+     *
+     * \param pc Capillary pressure \f$\mathrm{p_C}\f$ in \f$\mathrm{[Pa]}\f$
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    template<class Scalar>
+    static Scalar dswe_dpc(Scalar pc, const Params<Scalar>& params)
+    {
+        using std::pow;
+        using std::max;
+
+        pc = max(pc, 0.0); // the equation below is undefined for negative pcs
+
+        const Scalar powAlphaPc = pow(params.alpha()*pc, params.n());
+        return -pow(powAlphaPc + 1, -params.m()-1)*params.m()*powAlphaPc/pc*params.n();
+    }
+
+    /*!
+     * \brief The relative permeability for the wetting phase of
+     *        the medium implied by van Genuchten / Mualem
+     *        parameterization.
+     *
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    // template<class Scalar>
+    // static Scalar krw(Scalar swe, const Params<Scalar>& params)
+    // {
+    //     using std::pow;
+    //     using std::clamp;
+
+    //     swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+    //     const Scalar r = 1.0 - pow(1.0 - pow(swe, 1.0/params.m()), params.m());
+    //     return pow(swe, params.l())*r*r;
+    // }
+
+    /*!
+     * \brief The derivative of the relative permeability for the
+     *        wetting phase in regard to the wetting saturation of the
+     *        medium implied by the van Genuchten parameterization.
+     *
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    template<class Scalar>
+    static Scalar dkrw_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        using std::pow;
+        using std::clamp;
+
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const Scalar x = 1.0 - pow(swe, 1.0/params.m());
+        const Scalar xToM = pow(x, params.m());
+        return (1.0 - xToM)*pow(swe, params.l()-1) * ( (1.0 - xToM)*params.l() + 2*xToM*(1.0-x)/x );
+    }
+
+    /*!
+     * \brief The relative permeability for the non-wetting phase
+     *        of the medium implied by van Genuchten's
+     *        parameterization.
+     *
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    // template<class Scalar>
+    // static Scalar krn(Scalar swe, const Params<Scalar>& params)
+    // {
+    //     using std::pow;
+    //     using std::clamp;
+
+    //     swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+    //     return pow(1 - swe, params.l()) * pow(1 - pow(swe, 1.0/params.m()), 2*params.m());
+    // }
+
+    /*!
+     * \brief The derivative of the relative permeability for the
+     *        non-wetting phase in regard to the wetting saturation of
+     *        the medium as implied by the van Genuchten
+     *        parameterization.
+     *
+     * \param swe The mobile saturation of the wetting phase.
+     * \param params A container object that is populated with the appropriate coefficients for the respective law.
+     * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
+     *       by clamping the input.
+     */
+    template<class Scalar>
+    static Scalar dkrn_dswe(Scalar swe, const Params<Scalar>& params)
+    {
+        using std::pow;
+        using std::clamp;
+
+        swe = clamp(swe, 0.0, 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        const auto sne = 1.0 - swe;
+        const auto x = 1.0 - pow(swe, 1.0/params.m());
+        return -pow(sne, params.l()-1.0) * pow(x, 2*params.m() - 1.0) * ( params.l()*x + 2.0*sne/swe*(1.0 - x) );
     }
 
 private:
@@ -136,8 +373,336 @@ private:
     }
 };
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief A regularization for the VanGenuchten material law
+ * \note Regularization can be turned of by setting the threshold parameters
+ *       out of range (runtime) or by replacing
+ *       this class by NoRegularization (compile time).
+ */
+template <class Scalar>
+class VanGenuchtenRegularizationTabulated
+{
+public:
+    //! Regularization parameters
+    template<class S>
+    struct Params
+    {
+        /*!
+         * \brief Set the threshold saturation below which the capillary pressure is regularized.
+         *
+         * Most problems are very sensitive to this value (e.g. making it smaller might
+         * result in very high capillary pressures)
+         */
+        void setPcLowSwe(Scalar pcLowSwe)
+        { pcLowSwe_ = pcLowSwe; }
+
+        /*!
+         * \brief Threshold saturation below which the capillary pressure is regularized.
+         */
+        Scalar pcLowSwe() const
+        { return pcLowSwe_; }
+
+        /*!
+         * \brief Set the threshold saturation above which the capillary pressure is regularized.
+         */
+        void setPcHighSwe(Scalar pcHighSwe)
+        { pcHighSwe_ = pcHighSwe; }
+
+        /*!
+         * \brief Threshold saturation above which the capillary pressure is regularized.
+         *
+         * Most problems are very sensitive to this value (e.g. making it smaller might
+         * result in negative capillary pressures).
+         */
+        Scalar pcHighSwe() const
+        { return pcHighSwe_; }
+
+        /*!
+         * \brief Set the threshold saturation below which the relative
+         *        permeability of the non-wetting phase gets regularized.
+         */
+        void setKrnLowSwe(Scalar krnLowSwe)
+        { krnLowSwe_ = krnLowSwe; }
+
+        /*!
+         * \brief Threshold saturation below which the relative
+         *        permeability of the non-wetting phase gets regularized.
+         */
+        Scalar krnLowSwe() const
+        { return krnLowSwe_; }
+
+        /*!
+         * \brief Set the threshold saturation above which the relative
+         *        permeability of the wetting phase gets regularized.
+         */
+        void setKrwHighSwe(Scalar krwHighSwe)
+        { krwHighSwe_ = krwHighSwe; }
+
+        /*!
+         * \brief Threshold saturation above which the relative
+         *        permeability of the wetting phase gets regularized.
+         */
+        Scalar krwHighSwe() const
+        { return krwHighSwe_; }
+
+private:
+        S pcLowSwe_ = 0.01;
+        S pcHighSwe_ = 0.99;
+        S krnLowSwe_ = 0.1;
+        S krwHighSwe_ = 0.9;
+    };
+
+    //! Initialize the spline
+    template<class MaterialLaw>
+    void init(const MaterialLaw* m, const std::string& paramGroup)
+    {
+        pcLowSwe_ = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenPcLowSweThreshold", 0.01);
+        pcHighSwe_ = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenPcHighSweThreshold", 0.99);
+        krwHighSwe_ = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenKrwHighSweThreshold", 0.9);
+        krnLowSwe_ = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenKrnLowSweThreshold", 0.1);
+
+        initPcParameters_(m, pcLowSwe_, pcHighSwe_);
+        initKrParameters_(m, krnLowSwe_, krwHighSwe_);
+    }
+
+    template<class MaterialLaw, class BaseParams, class EffToAbsParams>
+    void init(const MaterialLaw* m, const BaseParams& bp, const EffToAbsParams& etap, const Params<Scalar>& p)
+    {
+        pcLowSwe_ = p.pcLowSwe();
+        pcHighSwe_ = p.pcHighSwe();
+        krwHighSwe_ = p.krwHighSwe();
+        krnLowSwe_ = p.krnLowSwe();
+
+        initPcParameters_(m, pcLowSwe_, pcHighSwe_);
+        initKrParameters_(m, krnLowSwe_, krwHighSwe_);
+    }
+
+    /*!
+     * \brief Equality comparison with another instance
+     */
+    bool operator== (const VanGenuchtenRegularizationTabulated& o) const
+    {
+        return Dune::FloatCmp::eq(pcLowSwe_, o.pcLowSwe_, 1e-6)
+               && Dune::FloatCmp::eq(pcHighSwe_, o.pcHighSwe_, 1e-6)
+               && Dune::FloatCmp::eq(krwHighSwe_, o.krwHighSwe_, 1e-6)
+               && Dune::FloatCmp::eq(krnLowSwe_, o.krnLowSwe_, 1e-6);
+    }
+
+    /*!
+     * \brief The regularized capillary pressure-saturation curve
+     * regularized part:
+     *  - low saturation:  extend the \f$\mathrm{p_c(S_w)}\f$ curve with the slope at the regularization point (i.e. no kink).
+     *  - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
+     *                     with a spline and continue linearly for \f$\mathrm{\overline{S}_w > 1}\f$
+     */
+    OptionalScalar<Scalar> pc(const Scalar swe) const
+    {
+        // make sure that the capillary pressure observes a derivative
+        // != 0 for 'illegal' saturations. This is favourable for the
+        // newton solver (if the derivative is calculated numerically)
+        // in order to get the saturation moving to the right
+        // direction if it temporarily is in an 'illegal' range.
+        if (swe <= pcLowSwe_)
+            return pcLowSwePcValue_ + pcDerivativeLowSw_*(swe - pcLowSwe_);
+
+        else if (swe >= 1.0)
+            return pcDerivativeHighSweEnd_*(swe - 1.0);
+
+        else if (swe > pcHighSwe_)
+            return pcSpline_.eval(swe);
+
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized partial derivative of the capillary pressure w.r.t. the saturation
+     */
+    OptionalScalar<Scalar> dpc_dswe(const Scalar swe) const
+    {
+        if (swe <= pcLowSwe_)
+            return pcDerivativeLowSw_;
+
+        else if (swe >= 1.0)
+            return pcDerivativeHighSweEnd_;
+
+        else if (swe > pcHighSwe_)
+            return pcSpline_.evalDerivative(swe);
+
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized saturation-capillary pressure curve
+     */
+    OptionalScalar<Scalar> swe(const Scalar pc) const
+    {
+        if (pc <= 0.0)
+        {
+            if (pcHighSwe_ >= 1.0)
+                return 1.0;
+            else
+                return pc/pcDerivativeHighSweEnd_ + 1.0;
+        }
+
+        // invert spline
+        else if (pc <= pcHighSwePcValue_)
+            return pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc);
+
+        else if (pc >= pcLowSwePcValue_)
+            return (pc - pcLowSwePcValue_)/pcDerivativeLowSw_ + pcLowSwe_;
+
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized partial derivative of the saturation to the capillary pressure
+     */
+    OptionalScalar<Scalar> dswe_dpc(const Scalar pc) const
+    {
+        if (pc <= 0.0)
+        {
+            if (pcHighSwe_ >= 1.0)
+                return 0.0;
+            else
+                return 1.0/pcDerivativeHighSweEnd_;
+        }
+
+        // derivative of the inverse of the function is one over derivative of the function
+        else if (pc <= pcHighSwePcValue_)
+            return 1.0/pcSpline_.evalDerivative(pcSpline_.intersectInterval(pcHighSwe_, 1.0, 0.0, 0.0, 0.0, pc));
+
+        else if (pc >= pcLowSwePcValue_)
+            return 1.0/pcDerivativeLowSw_;
+
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized relative permeability for the wetting phase
+     */
+    OptionalScalar<Scalar> krw(const Scalar swe) const
+    {
+        if (swe <= 0.0)
+            return 0.0;
+        else if (swe >= 1.0)
+            return 1.0;
+        else if (swe >= krwHighSwe_)
+            return krwSpline_.eval(swe);
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized derivative of the relative permeability for the wetting phase w.r.t. saturation
+     */
+    OptionalScalar<Scalar> dkrw_dswe(const Scalar swe) const
+    {
+        if (swe <= 0.0)
+            return 0.0;
+        else if (swe >= 1.0)
+            return 0.0;
+        else if (swe >= krwHighSwe_)
+            return krwSpline_.evalDerivative(swe);
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized relative permeability for the non-wetting phase
+     */
+    OptionalScalar<Scalar> krn(const Scalar swe) const
+    {
+        if (swe <= 0.0)
+            return 1.0;
+        else if (swe >= 1.0)
+            return 0.0;
+        else if (swe <= krnLowSwe_)
+            return krnSpline_.eval(swe);
+        else
+            return {}; // no regularization
+    }
+
+    /*!
+     * \brief The regularized derivative of the relative permeability for the non-wetting phase w.r.t. saturation
+     */
+    OptionalScalar<Scalar> dkrn_dswe(const Scalar swe) const
+    {
+        if (swe <= 0.0)
+            return 0.0;
+        else if (swe >= 1.0)
+            return 0.0;
+        else if (swe <= krnLowSwe_)
+            return krnSpline_.evalDerivative(swe);
+        else
+            return {}; // no regularization
+    }
+
+private:
+    template<class MaterialLaw>
+    void initPcParameters_(const MaterialLaw* m, const Scalar lowSwe, const Scalar highSwe)
+    {
+        const auto lowSw = MaterialLaw::EffToAbs::sweToSw(lowSwe, m->effToAbsParams());
+        const auto highSw = MaterialLaw::EffToAbs::sweToSw(highSwe, m->effToAbsParams());
+        const auto dsw_dswe = MaterialLaw::EffToAbs::dsw_dswe(m->effToAbsParams());
+
+        pcDerivativeLowSw_ = m->template dpc_dsw<false>(lowSw)*dsw_dswe;
+
+        pcDerivativeHighSweThreshold_ = m->template dpc_dsw<false>(highSw)*dsw_dswe;
+        pcDerivativeHighSweEnd_ = 2.0*(0.0 - m->template pc<false>(highSw))/(1.0 - highSwe);
+
+        pcLowSwePcValue_ = m->template pc<false>(lowSw);
+        pcHighSwePcValue_ = m->template pc<false>(highSw);
+
+        // Only initialize regularization spline if given parameters are in
+        // the admissible range. When constructing with non-sensible parameters
+        // the spline construction might fail (e.g. highSwe == 1.0)
+        if (highSwe < 1.0)
+            pcSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                       pcHighSwePcValue_, 0, // y0, y1
+                                       pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_); // m0, m1
+    }
+
+    template<class MaterialLaw>
+    void initKrParameters_(const MaterialLaw* m, const Scalar lowSwe, const Scalar highSwe)
+    {
+        const auto lowSw = MaterialLaw::EffToAbs::sweToSw(lowSwe, m->effToAbsParams());
+        const auto highSw = MaterialLaw::EffToAbs::sweToSw(highSwe, m->effToAbsParams());
+        const auto dsw_dswe = MaterialLaw::EffToAbs::dsw_dswe(m->effToAbsParams());
+
+        const auto krwHighSw = m->template krw<false>(highSw);
+        const auto dkrwHighSw = m->template dkrw_dsw<false>(highSw)*dsw_dswe;
+
+        const auto krnLowSw = m->template krn<false>(lowSw);
+        const auto dkrnLowSw = m->template dkrn_dsw<false>(lowSw)*dsw_dswe;
+
+        if (highSwe < 1.0)
+            krwSpline_ = Spline<Scalar>(highSwe, 1.0, // x0, x1
+                                        krwHighSw, 1.0, // y0, y1
+                                        dkrwHighSw, 0.0); // m0, m1
+
+        if (lowSwe > 0.0)
+            krnSpline_ = Spline<Scalar>(0.0, lowSwe, // x0, x1
+                                        1.0, krnLowSw, // y0, y1
+                                        0.0, dkrnLowSw); // m0, m1
+    }
+
+    Scalar pcLowSwe_, pcHighSwe_;
+    Scalar pcLowSwePcValue_, pcHighSwePcValue_;
+    Scalar krwHighSwe_, krnLowSwe_;
+    Scalar pcDerivativeLowSw_;
+    Scalar pcDerivativeHighSweThreshold_, pcDerivativeHighSweEnd_;
+
+    Spline<Scalar> pcSpline_;
+    Spline<Scalar> krwSpline_;
+    Spline<Scalar> krnSpline_;
+};
+
 template<int steps, class Scalar = double>
-using TabulatedPropertiesDefault = TwoPMaterialLaw<Scalar, TabulatedProperties<steps>,
-      NoRegularization, TwoPEffToAbsDefaultPolicy>;
+using TabulatedPropertiesDefault = TwoPMaterialLaw<Scalar, TabulatedProperties<steps>, VanGenuchtenRegularizationTabulated<Scalar>, TwoPEffToAbsDefaultPolicy>;
 
 } // end namespace Dumux::FluidMatrix

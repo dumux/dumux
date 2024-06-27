@@ -1,8 +1,8 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
+DtInitial = 1e-8 # [s]
 TEnd = 10 # [s]
 MaxTimeStepSize = 10
-InkJetFrequency = 500 #Hz
+InkJetFrequency = 1e-3 #Hz
 
 [Grid]
 LowerLeft = 0 0 0
@@ -16,17 +16,19 @@ Radius = 5e-3
 InitialContactAngle = 90      # °
 #InitialVolume = 1e-1         # m3
 InitialContactRadius = 5e-4   # m
-InitialCenter = 1.5e-3 1e-3 5e-3
+InitialCenter = 5e-3 1e-3 5e-3
 DistanceBetweenDroplets = 1.5e-3
 
-[SpatialParams.Outer]
+[SpatialParams]
+Permeability = 8.17083e-11
+TabulatedPropertiesName = "X-dir"
 Swr = 0.05
-VanGenuchtenAlpha = 1e-5
+VanGenuchtenAlpha = 2e-4
 VanGenuchtenN = 4.7
-Permeability = 1e-15
+#Permeability = 1e-15
 
 [Problem]
-Name = 2p
+Name = 2p_VanGenuchten
 EnableGravity = true
 
 [Vtk]
