@@ -1724,6 +1724,11 @@
             "Whether dynamic output should be enabled."
         ]
     },
+    "LinearPDESolver.Verbosity": {
+        "explanation": [
+            "The verbosity of the linear PDE solver."
+        ]
+    },
     "LinearSolver.DirectSolverForVelocity": {
         "mode": "ignore"
     },
@@ -2593,6 +2598,16 @@
     "TimeLoop.Restart": {
         "explanation": [
             "The restart time stamp for a previously interrupted simulation"
+        ]
+    },
+    "TimeStepper.MaxTimeStepDivisions": {
+        "explanation": [
+            "The maximum number of time-step divisions"
+        ]
+    },
+    "TimeStepper.RetryTimeStepReductionFactor": {
+        "explanation": [
+            "Factor for reducing the current time-step"
         ]
     },
     "Transmissibility.ConsiderPoreResistance": {
