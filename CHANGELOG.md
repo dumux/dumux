@@ -7,7 +7,7 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 
 ### Improvements and Enhancements
 
-- __SimpleH2O__: Fixed an issue where the function vaporizationEnthalpy returned the result in the wrong unit
+- __SimpleH2O__: Fixed an issue where the function vaporizationEnthalpy returned the result in the wrong unit, added new nonisothermal test.
 - __Face Centered Velocity Reconstrution__: For freeflow evaluation using the FC Staggered discretization, a reconstrution method has been implemented to collect the full velocity vector at the face center.
 - __Darcy-Brinkman Freeflow__: There is no a convenience function to add a Brinkman term to turn the Navier-Stokes model into the Darcy-Brinkman model. With this, a single domain can contain both free flow and flow through a porous medium.
 The term is added as a source term in the problem using the new helper function `addBrinkmanTerm`.
@@ -24,7 +24,7 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
 - __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
-- __Porous Medium Flow for 2pncmin__ Fixed a bug for the non-isothermal 2pncmin test to use the permeability of the current time and not the reference one as permeability can change over time
+- __Porous Medium Flow for 2pncmin__ Fixed a bug for the non-isothermal 2pncmin test to use the permeability of the current time and not the reference one as permeability can change over time.
 - __porousmedium/nonisothermal/localresidual__: fluidPhaseStorage() now requires problem.
 - __porousmedium/nonequilibrium/thermal/localresidual__: fluidPhaseStorage() now requires problem.
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
