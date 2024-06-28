@@ -102,6 +102,9 @@ public:
      */
     Scalar maxTimeStepSize() const override
     {
+        if (this->time_ > (10 * dropletDispenseTimeInterval_)) // TODO do not limit the time step size when the tablet has no space for more droplets
+            return (this->endTime_ - this->time_);
+
         using std::min; using std::max;
 
         if (this->finished())
