@@ -21,24 +21,55 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/initialize.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/istlsolverfactorybackend.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
-#include <dumux/linear/istlsolverfactorybackend.hh>
-
-#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/loadsolution.hh>
 
-#include "dumux/porousmediumflow/droplet/dropsolver.hh"
+#include <dumux/porousmediumflow/droplet/dropsolver.hh>
+#include <dumux/porousmediumflow/droplet/newtonsolver.hh>
+#include <dumux/porousmediumflow/droplet/timeloop.hh>
 #include "properties.hh"
 
 #ifndef DIFFMETHOD
 #define DIFFMETHOD DiffMethod::numeric
 #endif
+
+/*!
+ * \brief A method providing an () operator in order to select elements for a subgrid.
+ */
+template<class GlobalPosition, class Scalar>
+class CircleSelector
+{
+public:
+    CircleSelector(const GlobalPosition center, Scalar radius)
+    : center_(center)
+    , radius_(radius)
+    {}
+
+    //! Select all elements within a circle around a center point.
+    template<class Element>
+    bool operator() (const Element& element) const
+    {
+        const auto x = element.geometry().center()[0];
+        const auto z = element.geometry().center()[2];
+        // const double radius = 0.3;
+        return std::hypot(x-center_[0], z-center_[2]) < radius_ + eps_;
+    }
+private:
+    const GlobalPosition center_;
+    const Scalar radius_;
+    static constexpr Scalar eps_ = 1e-6;
+};
 
 ////////////////////////
 // the main function
@@ -48,7 +79,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::RichardsLensBox;
+    using TypeTag = Properties::TTag::RichardsBoxDroplet;
 
     // initialize Dumux (parallel helpers)
     // always call this before any other code
@@ -64,9 +95,40 @@ int main(int argc, char** argv)
     // parse command line arguments and input file
     Parameters::init(argc, argv);
 
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
     // try to create a grid (from the given grid file or the input file)
+    constexpr int dim = 3;
+    using HostGrid = Dune::YaspGrid<dim>;
+    GridManager<HostGrid> hostGridManager;
+    hostGridManager.init();
+    auto& hostGrid = hostGridManager.grid();
+
+    const auto& hostGridLeafGridView = hostGridManager.grid().leafGridView();
+
+    // Calculate the bounding box of the host grid view.
+    using GlobalPosition = Dune::FieldVector<double, dim>;
+    GlobalPosition bBoxMin(std::numeric_limits<double>::max());
+    GlobalPosition bBoxMax(std::numeric_limits<double>::min());
+    for (const auto& vertex : vertices(hostGrid.leafGridView()))
+    {
+        for (int i=0; i<dim; i++)
+        {
+            using std::min;
+            using std::max;
+            bBoxMin[i] = min(bBoxMin[i], vertex.geometry().corner(0)[i]);
+            bBoxMax[i] = max(bBoxMax[i], vertex.geometry().corner(0)[i]);
+        }
+    }
+    GlobalPosition tabletCenter{0.0};
+    for (int i=0; i<dim; i++)
+        tabletCenter[i] = bBoxMin[i]+0.5*bBoxMax[i];
+
+    Scalar tabletRadius = getParam<Scalar>("Tablet.Radius", 1e-3);
+    CircleSelector<GlobalPosition, Scalar> elementSelector(tabletCenter, tabletRadius);
+    //using SubGrid = Dune::SubGrid<3, HostGrid>;
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
-    gridManager.init();
+    gridManager.init(hostGrid, elementSelector);
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -81,7 +143,7 @@ int main(int argc, char** argv)
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    auto problem = std::make_shared<Problem>(gridGeometry, tabletCenter, tabletRadius);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -99,10 +161,11 @@ int main(int argc, char** argv)
     //     problem->spatialParams().updateMaterialInterfaces(x);
 
     // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto inkjetPrintingFrequency = getParam<Scalar>("TimeLoop.InkJetFrequency");
+
 
     // check if we are about to restart a previously interrupted simulation
     Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
@@ -126,7 +189,7 @@ int main(int argc, char** argv)
     vtkWriter.write(restartTime);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoopDroplet<Scalar>>(restartTime, dt, tEnd, inkjetPrintingFrequency);
     timeLoop->setMaxTimeStepSize(maxDt);
     dropSolver->setTimeLoop(timeLoop);
 
@@ -135,13 +198,17 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
-                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = ILURestartedGMResIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 
+    // // the linear solver
+    // using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+    //                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
+
+    // auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
     // the non-linear solver
-    using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = Dumux::RichardsNewtonSolverDroplet<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
@@ -154,19 +221,24 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        dropSolver->update();
-
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        dropSolver->update();
         // write vtk output
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by the newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        // Dispense a droplet at the new time
+        if (dropSolver->ifDispenseDroplet())
+            dropSolver->dispenseDroplet();
+
+        // set new dt as suggested by the Newton solver
+        Scalar suggestedTimeStepSize = std::min(dropSolver->suggestTimeStepSize(), nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        timeLoop->setTimeStepSize(suggestedTimeStepSize);
 
     } while (!timeLoop->finished());
 

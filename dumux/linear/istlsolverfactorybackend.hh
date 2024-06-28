@@ -36,7 +36,6 @@
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/istlsolverregistry.hh>
 #include <dumux/linear/solvercategory.hh>
-
 namespace Dumux {
 
 // initSolverFactoriesForMultiTypeBlockMatrix differs in different compilation units,

@@ -6,131 +6,153 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
- * \brief Spatial parameters for the RichardsLensProblem.
+ * \ingroup TwoPTests
+ * \brief The spatial params for the incompressible 2p test.
  */
 
-#ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
-#define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/tabulated.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
-
-#include <dumux/porousmediumflow/richards/model.hh>
+#include <dumux/porousmediumflow/2p/boxmaterialinterfaces.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
- * \brief The spatial parameters for the RichardsLensProblem.
+ * \ingroup TwoPTests
+ * \brief The spatial params for the incompressible 2p test.
  */
 template<class GridGeometry, class Scalar>
-class RichardsLensSpatialParams
-: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, RichardsLensSpatialParams<GridGeometry, Scalar>>
+class RichardsTestSpatialParams
+: public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, RichardsTestSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = RichardsLensSpatialParams<GridGeometry, Scalar>;
-    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
     using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = RichardsTestSpatialParams<GridGeometry, Scalar>;
+    using ParentType = FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, ThisType>;
+
+    static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum { dimWorld = GridView::dimensionworld };
+    using PcKrSw = FluidMatrix::TabulatedPropertiesDefault<61, Scalar>;
+    //using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
-    using PcKrSwCurve = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    using MaterialInterfaces = BoxMaterialInterfaces<GridGeometry, PcKrSw>;
 
 public:
-    // export permeability type
     using PermeabilityType = Scalar;
 
-    RichardsLensSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    RichardsTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , pcKrSwCurveLens_("SpatialParams.Lens")
-    , pcKrSwCurveOuterDomain_("SpatialParams.OuterDomain")
+    , outerPcKrSw_("SpatialParams")
     {
-        lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.0, 3.0};
-        lensK_ = 1e-12;
-        outerK_ = getParam<Scalar>("SpatialParams.Outer.Permeability", 4.6e-10);
+        outerK_ = getParam<Scalar>("SpatialParams.Permeability", 4.6e-10);
     }
 
     /*!
-     * \brief Returns the intrinsic permeability tensor [m^2] at a given location
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     *        In this test, we use element-wise distributed permeabilities.
      *
-     * \param globalPos The global position where we evaluate
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return The permeability
      */
-    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    template<class ElementSolution>
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
     {
-        if (isInLens_(globalPos))
-            return lensK_;
+
+        // // do not use a less permeable lens in the test with inverted wettability
+        // if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
+        //     return lensK_;
         return outerK_;
     }
 
     /*!
-     * \brief Returns the porosity [] at a given location
+     * \brief Returns the porosity \f$[-]\f$
      *
-     * \param globalPos The global position where we evaluate
+     * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
-     * \brief Returns the fluid-matrix interaction law for the sub-control volume
+     * \brief Returns the parameter object for the Brooks-Corey material law.
      *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
+     * In this test, we use element-wise distributed material parameters.
      *
-     * \param element The current finite element
-     * \param scv The sub-control volume
-     * \param elemSol The current element solution
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return The material parameters object
      */
     template<class ElementSolution>
     auto fluidMatrixInteraction(const Element& element,
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
+        // // do not use different parameters in the test with inverted wettability
+        // if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
+        //     return makeFluidMatrixInteraction(lensPcKrSw_);
+
         const auto& globalPos = scv.dofPosition();
         return fluidMatrixInteractionAtPos(globalPos);
     }
 
-    /*!
-     * \brief Returns the fluid-matrix interaction law at a given location
-     * \param globalPos The global coordinates for the given location
-     */
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     {
-        if (isInLens_(globalPos))
-            return makeFluidMatrixInteraction(pcKrSwCurveLens_);
-        return makeFluidMatrixInteraction(pcKrSwCurveOuterDomain_);
+        return makeFluidMatrixInteraction(outerPcKrSw_);
     }
 
     /*!
-     * \brief Returns the temperature [K] at a given location
-     * \param globalPos The global coordinates for the given location
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \param globalPos The global position
+     * \return The wetting phase index
      */
-    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-    { return 273.15 + 10.0; }; // -> 10°C
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        // if (isInLens_(globalPos) && lensIsOilWet_)
+        //     return FluidSystem::phase1Idx;
+        return FluidSystem::phase0Idx;
+    }
+
+    //! Updates the map of which material parameters are associated with a nodal dof.
+    template<class SolutionVector>
+    void updateMaterialInterfaces(const SolutionVector& x)
+    {
+        if (GridGeometry::discMethod == DiscretizationMethods::box)
+            materialInterfaces_ = std::make_unique<MaterialInterfaces>(this->gridGeometry(), *this, x);
+    }
+
+    //! Returns the material parameters associated with a nodal dof
+    const MaterialInterfaces& materialInterfaces() const
+    { return *materialInterfaces_; }
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
-        for (int i = 0; i < dimWorld; ++i)
-            if (globalPos[i] < lensLowerLeft_[i] - eps_ || globalPos[i] > lensUpperRight_[i] + eps_)
-                return false;
-
-        return true;
+        // for (int i = 0; i < dimWorld; ++i) {
+        //     if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
+        //         return false;
+        // }
+        return false;
     }
 
-    static constexpr Scalar eps_ = 1e-6;
-
-    GlobalPosition lensLowerLeft_;
-    GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
     Scalar outerK_;
-    const PcKrSwCurve pcKrSwCurveLens_;
-    const PcKrSwCurve pcKrSwCurveOuterDomain_;
+
+    const PcKrSw outerPcKrSw_;
+
+    std::unique_ptr<MaterialInterfaces> materialInterfaces_;
+
+    static constexpr Scalar eps_ = 1.5e-7;
 };
 
 } // end namespace Dumux

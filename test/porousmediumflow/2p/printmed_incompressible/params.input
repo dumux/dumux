@@ -37,3 +37,5 @@ AddVelocity = true
 
 [Newton]
 EnablePartialReassembly = false
+TargetSteps = 10 # set the "desirable" number of Newton iterations of a time step
+EnableChop = true # chop for better convergence

@@ -37,7 +37,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/facetensoraverage.hh>
 #include <dumux/flux/upwindscheme.hh>
-#include <dumux/porousmediumflow/droplet/timeloopdroplet.hh>
+#include <dumux/porousmediumflow/droplet/timeloop.hh>
 
 #include "dropintersection.hh"
 #include "droplet.hh"

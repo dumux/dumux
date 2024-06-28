@@ -95,6 +95,9 @@ public:
             fluidMatrixInteraction.krn(fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(nPhaseIdx);
 
+        kr_[wPhaseIdx] = fluidMatrixInteraction.krw(fluidState_.saturation(wPhaseIdx));
+        kr_[nPhaseIdx] = fluidMatrixInteraction.krn(fluidState_.saturation(wPhaseIdx));
+
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
@@ -265,6 +268,10 @@ public:
     Scalar mobility(int phaseIdx) const
     { return mobility_[phaseIdx]; }
 
+    Scalar relativePermeability(int phaseIdx) const
+    { return kr_[phaseIdx]; }
+
+
     /*!
      * \brief Returns the average porosity within the control volume in \f$[-]\f$.
      */
@@ -292,6 +299,7 @@ private:
     Scalar porosity_;
     PermeabilityType permeability_;
     Scalar mobility_[ModelTraits::numFluidPhases()];
+    Scalar kr_[ModelTraits::numFluidPhases()];
 };
 
 } // end namespace Dumux

@@ -45,7 +45,7 @@ namespace Dumux {
  * This problem uses the \ref RichardsModel
  */
 template <class TypeTag>
-class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
+class RichardsProblemDroplet : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
@@ -55,6 +55,8 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using DropSolver = DropletSolverTwoP<TypeTag, false>;
     enum {
         // copy some indices for convenience
@@ -69,8 +71,10 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
-    RichardsLensProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    RichardsProblemDroplet(std::shared_ptr<const GridGeometry> gridGeometry, GlobalPosition tabletCenter, Scalar tabletRadius)
     : ParentType(gridGeometry)
+    , tabletCenter_(tabletCenter)
+    , tabletRadius_{tabletRadius}
     {
         name_ = getParam<std::string>("Problem.Name");
     }
@@ -116,15 +120,15 @@ public:
 
         bcTypes.setAllNeumann();
 
-        // if (onUpperBoundary(globalPos))
-        // {
-        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
-        //     {
-        //         bcTypes.setDirichlet(pressureIdx);
-        //     }
-        //     // else
-        //     //     bcTypes.setAllNeumann();
-        // }
+        if (onUpperBoundary(globalPos))
+        {
+            if (dropletSolver_->isCoupledWithDroplet(globalPos))
+            {
+                bcTypes.setDirichlet(pressureIdx);
+            }
+            // else
+            //     bcTypes.setAllNeumann();
+        }
         // else
         //     bcTypes.setAllNeumann();
 
@@ -138,25 +142,50 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    // PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    // {
+    //     // PrimaryVariables values;
+    //     // const Scalar sw = 0.0;
+    //     // const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+    //     // values[pressureIdx] = nonwettingReferencePressure() - pc;
+
+    //     // if (onUpperBoundary(globalPos))
+    //     // {
+    //     //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+    //     //     {
+    //     //         const Scalar sw = 1.0;
+    //     //         const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+    //     //         const auto& droplet = dropletSolver_->droplet();
+    //     //         values[pressureIdx] = nonwettingReferencePressure() - pc + dropletSolver_->Pc(droplet);
+    //     //     }
+
+    //     // }
+    //     return initialAtPos(globalPos);
+    // }
+
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
-        // PrimaryVariables values;
-        // const Scalar sw = 0.0;
-        // const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
-        // values[pressureIdx] = nonwettingReferencePressure() - pc;
+        PrimaryVariables values;
 
-        // if (onUpperBoundary(globalPos))
-        // {
-        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
-        //     {
-        //         const Scalar sw = 1.0;
-        //         const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
-        //         const auto& droplet = dropletSolver_->droplet();
-        //         values[pressureIdx] = nonwettingReferencePressure() - pc + dropletSolver_->Pc(droplet);
-        //     }
+        const auto& globalPos = scv.dofPosition();
 
-        // }
-        return initialAtPos(globalPos);
+        const Scalar sw = 0.0;
+        const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+        values[pressureIdx] = nonwettingReferencePressure() - pc;
+
+        if (onUpperBoundary(globalPos))
+        {
+            if (dropletSolver_->isCoupledWithDroplet(globalPos))
+            {
+                const Scalar sw = 1.0;
+                const Scalar pc = this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pc(sw);
+                //std::cout<<"   pc  "<<pc<<std::endl;
+                const auto& droplet = dropletSolver_->droplet();
+                values[pressureIdx] = nonwettingReferencePressure() - pc;// + dropletSolver_->Pc(droplet);
+            }
+        }
+
+        return values;
     }
 
     /*!
@@ -173,13 +202,13 @@ public:
         // if (onInlet(globalPos))
         //     values[conti0EqIdx] = -0.004; // kg/(m*s)
 
-        if (onUpperBoundary(globalPos))
-        {
-            if (dropletSolver_->isCoupledWithDroplet(globalPos))
-            {
-                values[Indices::conti0EqIdx] = -0.0004; // kg/(m*s)
-            }
-        }
+        // if (onUpperBoundary(globalPos))
+        // {
+        //     if (dropletSolver_->isCoupledWithDroplet(globalPos))
+        //     {
+        //         values[Indices::conti0EqIdx] = -0.0004; // kg/(m*s)
+        //     }
+        // }
         return values;
     }
 
@@ -203,6 +232,12 @@ public:
 
     void setDropSolver(std::shared_ptr<DropSolver> dropletSolver)
     { dropletSolver_ = dropletSolver; }
+
+    auto dropSolver()
+    { return dropletSolver_; }
+
+    auto dropSolver() const
+    { return dropletSolver_; }
 
     bool onInlet(const GlobalPosition &globalPos) const
     {
@@ -232,6 +267,19 @@ public:
         return globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_;
     }
 
+    GlobalPosition tabletCenter() const
+    { return tabletCenter_; }
+
+    GlobalPosition tabletCenterUpperBoundary() const
+    {
+        auto center = tabletCenter_;
+        center[1] = this->gridGeometry().bBoxMax()[1];
+        return center;
+    }
+
+    Scalar tabletRadius() const
+    { return tabletRadius_; }
+
 private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
@@ -255,7 +303,9 @@ private:
         return values;
     }
 
-    static constexpr Scalar eps_ = 1.5e-7;
+    static constexpr Scalar eps_ = 1e-6;
+    const GlobalPosition tabletCenter_;
+    const Scalar tabletRadius_;
 
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;

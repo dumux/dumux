@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dune_symlink_to_source_files(FILES "params.input")
-
+dune_symlink_to_source_files(FILES "X-dir-CapillaryPressureVsAverageSaturation.dat")
+dune_symlink_to_source_files(FILES "X-dir-Non-wetting-EffPermeabilityVsAverageSaturation.dat")
+dune_symlink_to_source_files(FILES "X-dir-Wetting-EffPermeabilityVsAverageSaturation.dat")
 
 # using box
 dumux_add_test(NAME test_2p_incompressible_box_printmed

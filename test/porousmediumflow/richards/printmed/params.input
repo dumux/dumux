@@ -1,21 +1,39 @@
 [TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 20000 # [s]
+DtInitial = 1e-6 # [s]
+TEnd = 10 # [s]
+MaxTimeStepSize = 10
+InkJetFrequency = 1e-3 #Hz
 
 [Grid]
-LowerLeft = 0 0
-UpperRight = 5e-3 5e-3
-Cells = 50 50
+LowerLeft = 0 0 0
+UpperRight = 1e-2 1e-3 1e-2
+Cells = 100 5 100
+
+[Tablet]
+Radius = 5e-3
 
 [Drop]
-InitialContactAngle = 90
-InitialVolume = 1e-1
-InitialContactRadius = 1e-3
-InitialCenter = 2.5e-3 5e-3
+InitialContactAngle = 90      # °
+#InitialVolume = 1e-1         # m3
+InitialContactRadius = 5e-4   # m
+InitialCenter = 5e-3 1e-3 5e-3
+DistanceBetweenDroplets = 1.5e-3
+
+[SpatialParams]
+Permeability = 8.17083e-11
+TabulatedPropertiesName = "X-dir"
+Swr = 0.05
+VanGenuchtenAlpha = 2e-4
+VanGenuchtenN = 4.7
+#Permeability = 1e-15
 
 [Problem]
-Name = richardslens
-EnableGravity = true # enable gravity
+Name = 2p_VanGenuchten
+EnableGravity = true
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true
 
 [Newton]
 TargetSteps = 18 # set the "desirable" number of Newton iterations of a time step
@@ -28,20 +46,3 @@ Type = bicgstabsolver
 Type = amg
 AmgMaxLevel = 2
 AmgAccumulationMode = atOnce
-
-[SpatialParams.Lens]
-Swr = 0.05
-Snr = 0.0
-VanGenuchtenAlpha = 0.0037
-VanGenuchtenN = 4.7
-
-[SpatialParams.OuterDomain]
-Swr = 0.05
-Snr = 0.0
-VanGenuchtenAlpha = 1e-6
-VanGenuchtenN = 4.7
-Permeability = 1e-18
-
-[Vtk]
-WriteFaceData = true
-AddVelocity = true

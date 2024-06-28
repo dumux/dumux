@@ -39,7 +39,7 @@ class TwoPTestSpatialParams
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using PcKrSw = FluidMatrix::TabulatedPropertiesDefault<61, Scalar>;
-    //using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
+    // using PcKrSw = FluidMatrix::VanGenuchtenDefault<Scalar>;
 
     using MaterialInterfaces = BoxMaterialInterfaces<GridGeometry, PcKrSw>;
 

@@ -21,6 +21,8 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/porousmediumflow/droplet/volumevariables.hh>
+#include <dumux/porousmediumflow/droplet/iofields.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
@@ -30,32 +32,53 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct RichardsLens { using InheritsFrom = std::tuple<Richards>; };
-struct RichardsLensBox { using InheritsFrom = std::tuple<Richards, BoxModel>; };
+struct RichardsBoxDroplet { using InheritsFrom = std::tuple<Richards, BoxModel>; };
 } // end namespace TTag
 
+// Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::RichardsLensBox> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::RichardsBoxDroplet> { using type = Dune::SubGrid<3, Dune::YaspGrid<3>>; };
 
 
 // Set the physical problem to be solved
 template<class TypeTag>
-struct Problem<TypeTag, TTag::RichardsLensBox> { using type = RichardsLensProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::RichardsBoxDroplet> { using type = RichardsProblemDroplet<TypeTag>; };
+
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::RichardsBoxDroplet>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = RichardsVolumeVariablesDroplet<Traits>;
+};
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::RichardsLensBox>
+struct SpatialParams<TypeTag, TTag::RichardsBoxDroplet>
 {
-    using type = RichardsLensSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
+    using type = RichardsTestSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
                                            GetPropType<TypeTag, Properties::Scalar>>;
 };
 
 // TODO: remove after release (3.6)
 // Set the primary variables type
 template<class TypeTag>
-struct PrimaryVariables<TypeTag, TTag::RichardsLensBox>
+struct PrimaryVariables<TypeTag, TTag::RichardsBoxDroplet>
 { using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
+//! Set the vtk output fields specific to the twop model
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::RichardsBoxDroplet> { using type = TwoPIOFieldsDroplet; };
 } // end namespace Dumux::Properties
 
 #endif

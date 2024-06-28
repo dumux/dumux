@@ -44,6 +44,7 @@
 #include <dumux/assembly/partialreassembler.hh>
 
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/porousmediumflow/richards/newtonsolver.hh>
 
 namespace Dumux {
 
@@ -92,6 +93,63 @@ public:
      * \brief The Constructor
      */
     NewtonSolverDroplet(std::shared_ptr<Assembler> assembler,
+                 std::shared_ptr<LinearSolver> linearSolver,
+                 const Communication& comm = Dune::MPIHelper::getCommunication(),
+                 const std::string& paramGroup = "")
+    : ParentType(assembler, linearSolver, comm, paramGroup)
+    {}
+
+    /*!
+     * \brief Returns true if the error of the solution is below the
+     *        tolerance.
+     */
+    bool newtonConverged() const override
+    {
+        const auto dropSolver = this->assembler().problem().dropSolver();
+
+        if (!(dropSolver->checkDropletsGeometry()))
+            return false;
+
+        return ParentType::newtonConverged();
+    }
+
+};
+
+template <class Assembler, class LinearSolver,
+          class Reassembler = PartialReassembler<Assembler>,
+          class Comm = Dune::Communication<Dune::MPIHelper::MPICommunicator> >
+class RichardsNewtonSolverDroplet : public RichardsNewtonSolver<Assembler, LinearSolver>
+{
+    using ParentType = RichardsNewtonSolver<Assembler, LinearSolver>;
+
+protected:
+    using Backend = VariablesBackend<typename ParentType::Variables>;
+    using SolutionVector = typename Backend::DofVector;
+    using ResidualVector = typename Assembler::ResidualType;
+    using LinearAlgebraNativeBackend = VariablesBackend<ResidualVector>;
+private:
+    using Scalar = typename Assembler::Scalar;
+    using JacobianMatrix = typename Assembler::JacobianMatrix;
+    using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector, ResidualVector>;
+    using TimeLoop = TimeLoopBase<Scalar>;
+
+    // enable models with primary variable switch
+    // TODO: Always use ParentType::Variables once we require assemblers to export variables
+    static constexpr bool assemblerExportsVariables = Detail::PDESolver::assemblerExportsVariables<Assembler>;
+    using PriVarSwitchVariables
+        = std::conditional_t<assemblerExportsVariables,
+                             typename ParentType::Variables,
+                             Detail::Newton::PriVarSwitchVariables<Assembler>>;
+    using PrimaryVariableSwitchAdapter = Dumux::PrimaryVariableSwitchAdapter<PriVarSwitchVariables>;
+
+public:
+    using typename ParentType::Variables;
+    using Communication = Comm;
+
+    /*!
+     * \brief The Constructor
+     */
+    RichardsNewtonSolverDroplet(std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCommunication(),
                  const std::string& paramGroup = "")

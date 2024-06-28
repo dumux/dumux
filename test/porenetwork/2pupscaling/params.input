@@ -1,0 +1,47 @@
+[Grid]
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 3e-6
+BoundaryPoreLabels = xMin:2 xMax:3 yMin:1 yMax:1 zMin:1 zMax:1
+MinThroatLength = 1e-9
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+
+[Problem]
+Name = test_pnm_2p_upscaling
+InitialPc = 3500 # [Pa]
+FinalPc = 7000 # [Pa]
+NumSteps = 60 # the number of episodes to run
+PlotPcS = true
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 2
+OutletPoreLabel = 3
+AllowDraingeOfOutlet = true
+EnableGravity = 0 # disable gravity
+MaximumPressureGradient = 1e10 #Pa/m
+NumberOfPressureGradients = 10 # the number of sample points for regression process
+Directions = 0 # the directions to be plotted 0 1 2
+Epsilon = 1e-13
+AssumeCreepingFlow = true
+ReferencePermeability = 3.326e-12 1.394e-12 7.449e-13
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3
+
+GasKinematicViscosity = 1.561e-5
+GasDensity = 1.184
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5

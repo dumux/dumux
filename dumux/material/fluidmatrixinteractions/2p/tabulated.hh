@@ -20,8 +20,8 @@ public:
     template<class Scalar>
     struct Params
     {
-        Params (std::string basename, Scalar alpha, Scalar n, Scalar l = 0.5)
-        : alpha_(alpha), n_(n), m_(1.0 - 1.0/n), l_(l)
+        Params (std::string basename, Scalar absPermeability, Scalar alpha, Scalar n, Scalar l = 0.5)
+        : absPermeability_(absPermeability), alpha_(alpha), n_(n), m_(1.0 - 1.0/n), l_(l)
         {
             init(basename);
         }
@@ -49,7 +49,13 @@ public:
 
         Scalar pcEntry() const
         {
-            return 4025;
+            return 0.0;
+            //return tables_[1][steps-1];///factor_;
+        }
+
+        Scalar absPermeability() const
+        {
+            return absPermeability_;
             //return tables_[1][steps-1];///factor_;
         }
 
@@ -103,17 +109,19 @@ public:
         // sw, pc, krw, krn
         std::array<std::array<Scalar, steps>, 4> tables_;
         Scalar alpha_, n_, m_, l_;
+        Scalar absPermeability_;
     };
 
     template<class Scalar = double>
     static Params<Scalar> makeParams(const std::string& paramGroup)
     {
         std::string basename = getParamFromGroup<std::string>(paramGroup, "TabulatedPropertiesName");
-                const auto n = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenN");
-        const auto alpha = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenAlpha");
+                const auto n = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenN", 3.652);
+        const auto alpha = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenAlpha", 6.66e-5);
         // l is usually chosen to be 0.5 (according to Mualem (1976), WRR)
         const auto l = getParamFromGroup<Scalar>(paramGroup, "VanGenuchtenL", 0.5);
-        return Params<Scalar>(basename,alpha, n, l);
+        const Scalar absPermeability = getParamFromGroup<Scalar>(paramGroup, "Permeability");
+        return Params<Scalar>(basename,absPermeability, alpha, n, l);
     }
 
     template<class Scalar>
@@ -121,34 +129,35 @@ public:
     { return params.pcEntry(); }
 
     template<class Scalar>
-    static Scalar pc (Scalar sw, const Params<Scalar>& basicParams)
+    static Scalar pc (Scalar sw, const Params<Scalar>& params)
     {
-        return interpolate_ (0, 1, sw, basicParams);
+        // std::cout<<" pc-sw "<<sw<<"  "<<interpolate_ (0, 1, sw, basicParams)<<std::endl;
+        return interpolate_ (0, 1, sw, params);
     }
 
 
 
 
     template<class Scalar>
-    static Scalar swe (Scalar pc, const Params<Scalar>& basicParams)
+    static Scalar swe (Scalar pc, const Params<Scalar>& params)
     {
-        return interpolate_ (1, 0, pc, basicParams, -1);
+        return interpolate_ (1, 0, pc, params, -1);
     }
 
 
 
     template<class Scalar>
-    static Scalar krw (Scalar sw, const Params<Scalar>& basicParams)
+    static Scalar krw (Scalar sw, const Params<Scalar>& params)
     {
-        return interpolate_ (0, 2, sw, basicParams);
+        return interpolate_ (0, 2, sw, params) / params.absPermeability(); // TODO the data from upscaling are eff permeability!
     }
 
 
 
     template<class Scalar>
-    static Scalar krn (Scalar sw, const Params<Scalar>& basicParams)
+    static Scalar krn (Scalar sw, const Params<Scalar>& params)
     {
-        return interpolate_ (0, 3, sw, basicParams);
+        return interpolate_ (0, 3, sw, params) / params.absPermeability(); // TODO the data from upscaling are eff permeability!
     }
 
     /*!

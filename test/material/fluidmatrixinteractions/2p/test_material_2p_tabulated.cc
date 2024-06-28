@@ -48,7 +48,11 @@ int main(int argc, char** argv)
 //    Test::runEffToAbsTest("vangenuchten-reg-efftoabs", vgRegLaw, sw);
 
     using Tab = FluidMatrix::TabulatedPropertiesDefault<61, Scalar>;
-    Tab::BasicParams params("X-dir");
+    // set some parameters
+    const double alpha = 6.66e-5;
+    const double n = 3.652;
+    const double l = 0.5;
+    Tab::BasicParams params("X-dir",alpha, n, l);
     Tab::EffToAbsParams eaParams;
     eaParams.setSwr(0.0);
     eaParams.setSnr(0.0);

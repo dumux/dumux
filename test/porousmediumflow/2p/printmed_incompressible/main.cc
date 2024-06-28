@@ -35,8 +35,8 @@
 #include <dumux/io/loadsolution.hh>
 
 #include <dumux/porousmediumflow/droplet/dropsolver.hh>
-#include <dumux/porousmediumflow/droplet/newtonsolverdroplet.hh>
-#include <dumux/porousmediumflow/droplet/timeloopdroplet.hh>
+#include <dumux/porousmediumflow/droplet/newtonsolver.hh>
+#include <dumux/porousmediumflow/droplet/timeloop.hh>
 #include "properties.hh"
 
 #ifndef DIFFMETHOD

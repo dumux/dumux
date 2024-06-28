@@ -6,7 +6,7 @@ add_input_file_links(FILES params.input)
 # isothermal tests
 
 add_executable(test_richards_lens_box_printmed EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
+target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsBoxDroplet PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
 dumux_add_test(TARGET test_richards_lens_box_printmed
               LABELS porousmediumflow richards

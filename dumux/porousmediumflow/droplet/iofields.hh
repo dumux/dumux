@@ -42,6 +42,8 @@ public:
                                   IOName::density<FS>(phaseIdx));
             out.addVolumeVariable([phaseIdx](const auto& v){ return v.mobility(phaseIdx); },
                                   IOName::mobility<FS>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.relativePermeability(phaseIdx); },
+                                  IOName::relativePermeability<FS>(phaseIdx));
         }
 
         out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
