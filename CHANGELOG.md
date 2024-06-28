@@ -1,7 +1,7 @@
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
 
-- __Requirements__:
+- __Requirements__: DuMux requires Dune >=2.9 and CMake >= 3.16. It was successfully tested with dune-mmesh 1.4 and OPM 2023.10.
 
 ### General changes / structure
 
@@ -24,6 +24,8 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 - __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
 - __Periodic Map__: `periodicVertexMap()` has been deprecated. Use `periodicDofMap()` instead.
+- __Pipeline__: Variable docker image testing is now possible directly out of dumux. A weekly Ubuntu 24.04 pipeline is introduced for a smooth transition to 24.04 in the future.
+- __Dependencies__: Fieldcompare and Pylint have been upgraded to newer versions.
 
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================
