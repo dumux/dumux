@@ -40,6 +40,40 @@ struct NoExtrusion
 
 /*!
  * \ingroup Discretization
+ * \brief Extrusion by a constant factor
+ * \tparam extrusionFactor the factor
+ *
+ * The units of the extrusion factor are the spatial units to the power of the codimension
+ * of the grid with respect to embedding dimension. For example, meter, for plane extrusion from 2D to 3D,
+ * or square meter for isotropic extrusion in radial direction from 1D to 3D.
+ */
+template<Scalar extrusionFactor = 1.0>
+struct ConstantExtrusion
+{
+    /*!
+     * \brief Transformed sub-control-volume face area
+     */
+    template<class FVGeo, class SCVF>
+    static constexpr auto area(const FVGeo&, const SCVF& scvf)
+    { return scvf.area()*extrusionFactor; }
+
+    /*!
+     * \brief Transformed sub-control-volume volume
+     */
+    template<class FVGeo, class SCV>
+    static constexpr auto volume(const FVGeo&, const SCV& scv)
+    { return scv.volume()*extrusionFactor; }
+
+    /*!
+     * \brief Integration element for quadrature rules on the reference element
+     */
+    template<class Geometry>
+    static constexpr auto integrationElement(const Geometry& geo, const typename Geometry::LocalCoordinate& x)
+    { return geo.integrationElement(x)*extrusionFactor; }
+};
+
+/*!
+ * \ingroup Discretization
  * \brief Rotation symmetric extrusion policy for rotating about an external axis
  * \tparam radAx The radial axis perpendicular to the symmetry axis (0 = x, 1 = y)
  */
