@@ -163,7 +163,7 @@ trigger lecture:
     DUMUX_COMMIT_SHA: $CI_COMMIT_SHA
     DUMUX_REFERENCE_SHA: $CI_REFERENCE_SHA
     DUMUX_DOCKER_BRANCH: $DUMUX_DOCKER_CI_BRANCH
-    UBUNTU_VERSION: $UBUNTU_VERSION
+    DUMUX_UBUNTU_VERSION: $UBUNTU_VERSION
 
 ################################################
 # enable secrets security check                #
