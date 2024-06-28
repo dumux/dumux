@@ -19,14 +19,14 @@ The function uses new spatial parameter interface implemented in the new `Brinkm
 - __Components__: Added the new class `ShomateMethod` for calculating the heat capacity and enthalpy of components at specified temperatures. An example implementation can be found for methane (CH4).
 - __TPFA Dispersion__: Fixed the transmissibility calculation for tpfa dispersion fluxes.
 - __Energy Balance Implementation__: modify the energy balance implementation to correctly include the contribution of gravity.
+- __Pipeline__: Variable docker image testing is now possible directly out of dumux. A weekly Ubuntu 24.04 pipeline is introduced for a smooth transition to 24.04 in the future.
+- __Dependencies__: Fieldcompare and Pylint have been upgraded to newer versions.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
 - __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
 - __Porous Medium Flow for 2pncmin__ Fixed a bug for the non-isothermal 2pncmin test to use the permeability of the current time and not the reference one as permeability can change over time
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
 - __Periodic Map__: `periodicVertexMap()` has been deprecated. Use `periodicDofMap()` instead.
-- __Pipeline__: Variable docker image testing is now possible directly out of dumux. A weekly Ubuntu 24.04 pipeline is introduced for a smooth transition to 24.04 in the future.
-- __Dependencies__: Fieldcompare and Pylint have been upgraded to newer versions.
 
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================
