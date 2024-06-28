@@ -134,7 +134,7 @@ int main(int argc, char** argv)
         // make the new solution the old solution
         xOld = gridVariables->dofs();
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output

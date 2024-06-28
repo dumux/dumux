@@ -129,7 +129,7 @@ int main(int argc, char** argv)
         gridVariables->advanceTimeStep();
         problem->writeOutput(x);
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output only on last time step

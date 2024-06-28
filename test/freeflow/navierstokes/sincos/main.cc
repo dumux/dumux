@@ -247,7 +247,7 @@ int main(int argc, char** argv)
                 errorCSVWriter.printErrors(errors);
             }
 
-            // advance to the time loop to the next step
+            // advance the time loop to the next step
             timeLoop->advanceTimeStep();
             analyticalSolVectors.update(timeLoop->time());
 

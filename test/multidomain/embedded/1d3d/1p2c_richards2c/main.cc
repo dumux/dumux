@@ -363,7 +363,7 @@ int main(int argc, char** argv)
         bulkGridVariables->advanceTimeStep();
         lowDimGridVariables->advanceTimeStep();
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);

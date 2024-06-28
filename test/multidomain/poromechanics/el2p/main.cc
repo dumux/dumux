@@ -185,7 +185,7 @@ int main(int argc, char** argv)
         // make the new solution the old solution
         xOld = x;
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
         twoPGridVariables->advanceTimeStep();
         poroMechGridVariables->advanceTimeStep();

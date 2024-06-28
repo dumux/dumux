@@ -154,7 +154,7 @@ int main(int argc, char** argv)
         problem->updateDynamicWallProperties(x);
         assembler->updateGridVariables(x);
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output
