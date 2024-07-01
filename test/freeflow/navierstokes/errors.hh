@@ -196,7 +196,7 @@ public:
 
         // write header
         logFile << "time";
-        for (const std::string& e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
+        for (const std::string e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
             printError_(logFile, errorNames_(e), "{:s}");
         logFile << "\n";
     }
@@ -639,7 +639,7 @@ public:
         // write header
         logFile << "time";
         using ErrorNames = std::vector<std::string>;
-        for (const std::string& e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
+        for (const std::string e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
             printError_(logFile, ErrorNames({ e + "(p)", e + "(u)", e + "(v)", e + "(w)" }), "{:s}");
         logFile << "\n";
     }
