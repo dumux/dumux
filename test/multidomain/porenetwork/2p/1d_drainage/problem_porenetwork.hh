@@ -202,12 +202,14 @@ public:
         const auto totalInjection = volumeFlux * time;
         const auto previousTotalInvPoreVolume = singlePoreVolume * numberInvPores * snEntry;
         const auto snLastPore = (totalInjection - previousTotalInvPoreVolume)/singlePoreVolume;
+        auto snAtPos = 0.0;
         if (dofIdx < numberInvPores)
-            return snEntry;
+            snAtPos  = snEntry;
         if (dofIdx == numberInvPores)
-            return snLastPore;
+            snAtPos = snLastPore;
         if (dofIdx > numberInvPores)
-            return 0.0;
+            snAtPos = 0.0;
+        return snAtPos;
     }
 
 private:
