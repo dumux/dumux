@@ -85,10 +85,10 @@ done
 
 ### 2.2 Obtaining the Dumux source code
 
-To clone the latest 3.8 release version, run
+To clone the latest 3.9 release version, run
 
 ```bash
-git clone -b releases/3.8 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+git clone -b releases/3.9 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 ```
 
 The master branch (developer version) can be cloned with
@@ -198,7 +198,7 @@ Only the following Dune and DuMux versions are compatible:
 | DuMux version     | Dune version              |
 |-------------------|---------------------------|
 | master            | 2.9, master               |
-| 3.7, 3.8          | 2.9                       |
+| 3.7, 3.8, 3.9          | 2.9                       |
 | 3.5, 3.6          | 2.8, 2.9                  |
 | 3.3, 3.4          | 2.7, 2.8                  |
 | 3.1, 3.2          | 2.6<sup>*</sup>, 2.7      |
