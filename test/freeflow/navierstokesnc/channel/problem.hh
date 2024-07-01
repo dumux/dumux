@@ -183,7 +183,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+            using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
             values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf,
                                                            elemVolVars, elemFluxVarsCache,
                                                            referencePressure(element, fvGeometry, scvf), true /*zeroNormalVelocityGradient*/);

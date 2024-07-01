@@ -168,7 +168,7 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             const auto p = isInlet_(globalPos) ? 1e5 + deltaP_ : 1e5;
-            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+            values = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>::fixedPressureMomentumFlux(
                 *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
             );
         }
