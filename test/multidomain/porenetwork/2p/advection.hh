@@ -106,7 +106,6 @@ public:
         {
             static_assert(ElementVolumeVariables::VolumeVariables::numFluidPhases() == 2);
 
-            static const bool boundConductiviy = getParam<bool>("Problem.BoundConductivity", true);
             const auto& spatialParams = problem.spatialParams();
             using FluidSystem = typename ElementVolumeVariables::VolumeVariables::FluidSystem;
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
@@ -116,8 +115,7 @@ public:
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
-                if (!boundConductiviy)
-                    theta = std::clamp(theta, 0.0, 1.0);
+                theta = std::clamp(theta, 0.0, 1.0);
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
@@ -128,8 +126,6 @@ public:
                 }
                 else // non-wetting phase
                 {
-                    if (boundConductiviy && ((theta - M_PI) < (1e-3 + 1e-12)))
-                        return ((theta-M_PI)*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache))*scalingKFactor;
                     // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                     return  (theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache))*scalingKFactor;
                 }
