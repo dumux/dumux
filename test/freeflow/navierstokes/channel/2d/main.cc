@@ -200,9 +200,8 @@ int main(int argc, char** argv)
             timeLoop, xOld
         );
 
-    const bool useIterativeSolver = getParam<bool>("LinearSolver.UseIterativeSolver", false);
-
 #if !NONISOTHERMAL
+    const bool useIterativeSolver = getParam<bool>("LinearSolver.UseIterativeSolver", false);
     using Matrix = typename Assembler::JacobianMatrix;
     using Vector = typename Assembler::ResidualType;
     using IterativeLinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
