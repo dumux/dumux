@@ -23,8 +23,6 @@
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 #include <dumux/material/components/constant.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/simplefluidlumping.hh>
-
 #include "spatialparams.hh"
 #include "combustionfluidsystem.hh"
 #include "combustionlocalresidual.hh"

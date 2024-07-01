@@ -189,7 +189,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            using FluxHelper = NavierStokesMomentumBoundaryFluxHelper;
+            using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
 
             if (outletCondition_ == OutletCondition::unconstrainedOutflow)
                 values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
