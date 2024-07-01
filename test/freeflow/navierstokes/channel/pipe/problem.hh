@@ -117,7 +117,9 @@ public:
             if (onInnerBoundary_(globalPos))
                 return values; // zero shear stress at symmetry axis
             if (onUpperBoundary_(globalPos))
-                values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, analyticalPressure(globalPos), true /*zeroNormalVelocityGradient*/);
+                values = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>::fixedPressureMomentumFlux(
+                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, analyticalPressure(globalPos), true /*zeroNormalVelocityGradient*/
+                );
         }
         else
         {
