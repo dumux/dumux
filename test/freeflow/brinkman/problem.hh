@@ -151,7 +151,7 @@ public:
                 values.axpy(p, scvf.unitOuterNormal()); // + p n
             }
             else
-                values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+                values = NavierStokesMomentumBoundaryFlux<DM>::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
                 );
         }

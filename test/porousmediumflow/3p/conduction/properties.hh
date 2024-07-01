@@ -23,8 +23,6 @@
 #include <dumux/porousmediumflow/3p/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
-#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-
 #include "spatialparams.hh"
 #include "problem.hh"
 

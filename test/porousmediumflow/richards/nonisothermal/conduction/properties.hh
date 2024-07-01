@@ -19,7 +19,6 @@
 #include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
 #include "../spatialparams.hh"
