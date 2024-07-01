@@ -217,7 +217,7 @@ parser.add_argument("--dune-branch", default="releases/2.9", help="Dune branch t
 parser.add_argument(
     "--dumux-branch", default="releases/3.9", help="Dumux branch to be checked out."
 )
-parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
+parser.add_argument("--opm-branch", default="release/2023.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
 
 cmdArgs = vars(parser.parse_args())
