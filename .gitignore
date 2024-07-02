@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 # build system clutter
-build-*
+build*
 Testing
 !bin/testing
 

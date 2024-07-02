@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set(CMAKE_BUILD_TYPE Debug)
 add_input_file_links()
+dune_symlink_to_source_files(FILES grids)
 
 dumux_add_test(NAME test_pnm_2p_static_upscaling
                SOURCES main.cc
