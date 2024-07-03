@@ -22,6 +22,22 @@ using MortarGridFactory = Dune::StructuredGridFactory<MortarGrid>;
 template<typename GGT1, typename GGT2>
 void testDecomposition(const Dumux::Mortar::Decomposition<GGT1, GGT2>& decomposition)
 {
+    if (decomposition.numSubDomains() != 4) DUNE_THROW(Dune::InvalidStateException, "Unexpected number of subdomains");
+    if (decomposition.numMortars() != 4) DUNE_THROW(Dune::InvalidStateException, "Unexpected number of mortars");
+
+    for (std::size_t i = 0; i < decomposition.numSubDomains(); ++i)
+    {
+        int count = 0;
+        decomposition.visitInterfacesOfSubdomain(i, [&] (const auto&) { ++count; });
+        if (count != 2) DUNE_THROW(Dune::InvalidStateException, "Unexpected number of subdomain->mortar visits");
+    }
+
+    for (std::size_t i = 0; i < decomposition.numMortars(); ++i)
+    {
+        int count = 0;
+        decomposition.visitInterfacesOfMortar(i, [&] (const auto&) { ++count; });
+        if (count != 2) DUNE_THROW(Dune::InvalidStateException, "Unexpected number of mortar->subdomain visits");
+    }
 }
 
 auto makeMortarGrid(const Dune::FieldVector<double, 2>& lowerLeft,

@@ -14,8 +14,8 @@
 #define DUMUX_MULTIDOMAIN_MORTAR_DECOMPOSITION_HH
 
 #include <vector>
-#include <type_traits>
 #include <memory>
+#include <algorithm>
 
 #include <dune/common/exceptions.hh>
 #include <dumux/multidomain/glue.hh>
@@ -37,6 +37,8 @@ class Decomposition
         typename SDGG::ElementMapper, typename MGG::ElementMapper
     >;
 
+public:
+
     struct Interface
     {
         std::size_t subDomainId;
@@ -44,7 +46,6 @@ class Decomposition
         MDGlue glue;
     };
 
-public:
     template<typename T>
     using Ptr = std::shared_ptr<T>;
     using SubDomainGridGeometry = SDGG;
@@ -82,6 +83,25 @@ public:
 
     const MortarGridGeometry& mortarGridGeometry(std::size_t id) const { return *mortarGridGeometries_.at(id); }
     MortarGridGeometry& mortarGridGeometry(std::size_t id) { return *mortarGridGeometries_.at(id); }
+
+    std::size_t numSubDomains() const { return subDomainGridGeometries_.size(); }
+    std::size_t numMortars() const { return mortarGridGeometries_.size(); }
+
+    template<std::invocable<const Interface&> Visitor>
+    void visitInterfacesOfSubdomain(std::size_t id, Visitor&& visitor) const
+    {
+        std::ranges::for_each(subDomainToInterfaceIds_.at(id), [&] (auto interfaceId) {
+            visitor(interfaces_[id]);
+        });
+    }
+
+    template<std::invocable<const Interface&> Visitor>
+    void visitInterfacesOfMortar(std::size_t id, Visitor&& visitor) const
+    {
+        std::ranges::for_each(mortarToInterfaceIds_.at(id), [&] (auto interfaceId) {
+            visitor(interfaces_[id]);
+        });
+    }
 
 private:
     std::vector<Ptr<SubDomainGridGeometry>> subDomainGridGeometries_;
