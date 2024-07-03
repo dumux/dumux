@@ -99,5 +99,20 @@ int main() {
         });
     }
 
+    std::cout << "Testing construction with interface callback" << std::endl;
+    Dumux::Mortar::Decomposition{
+        Dumux::MultiDomainFVGridGeometry<SubDomainMDTraits>{
+            sd1.leafGridView(), sd2.leafGridView(), sd3.leafGridView(), sd4.leafGridView()
+        },
+        Dumux::MultiDomainFVGridGeometry<MortarMDTraits>{
+            mg1->leafGridView(), mg2->leafGridView(), mg3->leafGridView(), mg4->leafGridView()
+        },
+        [] <std::size_t sd, std::size_t m> (const Dune::index_constant<sd>&,
+                                            const Dune::index_constant<m>&,
+                                            const auto& glue) {
+            if (glue.size() == 0)
+                DUNE_THROW(Dune::InvalidStateException, "Interfaces should have non-empty intersections");
+        }
+    };
     return 0;
 }

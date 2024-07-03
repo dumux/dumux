@@ -81,9 +81,14 @@ public:
     using MortarGridGeometry = typename MortarStorage::Type::template Type<i>;
 
     template<typename SDGG, typename MGG>
+    explicit Decomposition(SDGG&& subdomainGGs, MGG&& mortarGGs)
+    : Decomposition(std::forward<SDGG>(subdomainGGs), std::forward<MGG>(mortarGGs), [] (auto&&...) {})
+    {}
+
+    template<typename SDGG, typename MGG, typename InterfaceCallback>
         requires(std::is_same_v<std::remove_cvref_t<SDGG>, typename SubDomainStorage::Type> and
                  std::is_same_v<std::remove_cvref_t<MGG>, typename MortarStorage::Type>)
-    explicit Decomposition(SDGG&& subdomainGGs, MGG&& mortarGGs)
+    explicit Decomposition(SDGG&& subdomainGGs, MGG&& mortarGGs, InterfaceCallback&& interfaceCallBack)
     : subdomainGridGeometries_{std::forward<SDGG>(subdomainGGs)}
     , mortarGridGeometries_{std::forward<MGG>(mortarGGs)} {
         Dune::Hybrid::forEach(Dune::Hybrid::integralRange(Dune::index_constant<numSubDomains>{}), [&] (auto&& sdId) {
@@ -97,6 +102,7 @@ public:
                     mortarToSubDomainIds_[mId].push_back({sdId});
                     if (mortarToSubDomainIds_[mId].size() > 2)
                         DUNE_THROW(Dune::InvalidStateException, "Each mortar domain must only be between two subdomains");
+                    interfaceCallBack(sdId, mId, glue);
                 }
             });
         });
@@ -131,6 +137,9 @@ private:
 
 template<typename SDGG, typename MGG>
 Decomposition(SDGG&&, MGG&&) -> Decomposition<SDGG, MGG>;
+
+template<typename SDGG, typename MGG, typename ICB>
+Decomposition(SDGG&&, MGG&&, ICB&&) -> Decomposition<SDGG, MGG>;
 
 } // end namespace Dumux::Mortar
 
