@@ -4,3 +4,6 @@
 dumux_add_test(SOURCES test_decomposition.cc
                LABELS unit mortar
                CMAKE_GUARD "dune-foamgrid_FOUND")
+
+dumux_add_test(SOURCES test_projectors.cc
+               LABELS unit)
