@@ -66,7 +66,7 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
+struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 2>; };
 
 } //end namespace Dumux::Properties
 
