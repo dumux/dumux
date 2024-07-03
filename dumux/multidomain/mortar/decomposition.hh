@@ -13,133 +13,84 @@
 #ifndef DUMUX_MULTIDOMAIN_MORTAR_DECOMPOSITION_HH
 #define DUMUX_MULTIDOMAIN_MORTAR_DECOMPOSITION_HH
 
-#include <tuple>
-#include <array>
 #include <vector>
-#include <variant>
-#include <utility>
 #include <type_traits>
+#include <memory>
 
-#include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/hybridutilities.hh>
-
 #include <dumux/multidomain/glue.hh>
-#include <dumux/multidomain/fvgridgeometry.hh>
 
 namespace Dumux::Mortar {
 
 /*!
  * \file
  * \ingroup MultiDomain
- * \brief Class that represents the decomposition of a domain.
- * \tparam SubDomainGridGeometries A `MultiDomainFVGridGeometry` containing the subdomain grid geometries.
- ' \tparam MortarGridGeometries A `MultiDomainFVGridGeometry` containing the mortar grid geometries.
+ * \brief Class that represents a decomposition of a domain.
+ * \tparam SubDomainGridGeometry The type used to represent subdomain grid geometries.
+ ' \tparam MortarGridGeometries The type used to represent mortar grid geometries.
  */
-template<typename SubDomainGridGeometries, typename MortarGridGeometries>
+template<typename SDGG, typename MGG>
 class Decomposition
 {
-    template<typename T>
-    struct DomainIndexVariant;
+    using MDGlue = MultiDomainGlue<
+        typename SDGG::GridView, typename MGG::GridView,
+        typename SDGG::ElementMapper, typename MGG::ElementMapper
+    >;
 
-    template<std::size_t... i>
-    struct DomainIndexVariant<std::index_sequence<i...>>
-    : std::type_identity<std::variant<Dune::index_constant<i>...>>
-    {};
-
-    // class to store either a reference or an instance of std::remove_reference_t<T>
-    template<typename T>
-    class Storage
+    struct Interface
     {
-        static constexpr bool isConst = std::is_const_v<std::remove_reference_t<T>>;
-        static constexpr bool isReference = std::is_lvalue_reference_v<T>;
-
-    public:
-        using Type = std::remove_cvref_t<T>;
-
-        Storage(T& t) requires(isReference) : stored_{t} {}
-        Storage(Type&& t) requires(!isReference) : stored_{std::move(t)} {}
-
-        const Type& get() const { return stored_; }
-        Type& get() requires(!isConst) { return stored_; }
-
-    private:
-        std::conditional_t<isReference, T, std::remove_cvref_t<T>> stored_;
+        std::size_t subDomainId;
+        std::size_t mortarId;
+        MDGlue glue;
     };
 
-    using SubDomainStorage = Storage<SubDomainGridGeometries>;
-    using MortarStorage = Storage<MortarGridGeometries>;
-
 public:
-    static constexpr std::size_t numSubDomains = SubDomainStorage::Type::size;
-    static constexpr std::size_t numMortars = MortarStorage::Type::size;
+    template<typename T>
+    using Ptr = std::shared_ptr<T>;
+    using SubDomainGridGeometry = SDGG;
+    using MortarGridGeometry = MGG;
+    using Glue = MDGlue;
 
-    template<std::size_t i>
-    using SubDomainGridGeometry = typename SubDomainStorage::Type::template Type<i>;
-
-    template<std::size_t i>
-    using MortarGridGeometry = typename MortarStorage::Type::template Type<i>;
-
-    template<typename SDGG, typename MGG>
-    explicit Decomposition(SDGG&& subdomainGGs, MGG&& mortarGGs)
-    : Decomposition(std::forward<SDGG>(subdomainGGs), std::forward<MGG>(mortarGGs), [] (auto&&...) {})
-    {}
-
-    template<typename SDGG, typename MGG, typename InterfaceCallback>
-        requires(std::is_same_v<std::remove_cvref_t<SDGG>, typename SubDomainStorage::Type> and
-                 std::is_same_v<std::remove_cvref_t<MGG>, typename MortarStorage::Type>)
-    explicit Decomposition(SDGG&& subdomainGGs, MGG&& mortarGGs, InterfaceCallback&& interfaceCallBack)
-    : subdomainGridGeometries_{std::forward<SDGG>(subdomainGGs)}
-    , mortarGridGeometries_{std::forward<MGG>(mortarGGs)} {
-        Dune::Hybrid::forEach(Dune::Hybrid::integralRange(Dune::index_constant<numSubDomains>{}), [&] (auto&& sdId) {
-            Dune::Hybrid::forEach(Dune::Hybrid::integralRange(Dune::index_constant<numMortars>{}), [&] (auto&& mId) {
-                const auto glue = makeGlue(subDomainGridGeometry(sdId), mortarGridGeometry(mId));
+    explicit Decomposition(std::vector<Ptr<SubDomainGridGeometry>>&& subDomainGGs,
+                           std::vector<Ptr<MortarGridGeometry>>&& mortarGGs)
+    : subDomainGridGeometries_{std::move(subDomainGGs)}
+    , mortarGridGeometries_{std::move(mortarGGs)}
+    {
+        subDomainToInterfaceIds_.resize(subDomainGridGeometries_.size());
+        mortarToInterfaceIds_.resize(mortarGridGeometries_.size());
+        for (std::size_t sdId = 0; sdId < subDomainGridGeometries_.size(); ++sdId)
+        {
+            for (std::size_t mId = 0; mId < mortarGridGeometries_.size(); ++mId)
+            {
+                auto glue = makeGlue(subDomainGridGeometry(sdId), mortarGridGeometry(mId));
 
                 if (glue.size() > 0)
                 {
                     std::cout << "Found intersections between subdomain " << sdId << " and mortar " << mId << std::endl;
-                    subDomainToMortarIds_[sdId].push_back({mId});
-                    mortarToSubDomainIds_[mId].push_back({sdId});
-                    if (mortarToSubDomainIds_[mId].size() > 2)
+                    subDomainToInterfaceIds_[sdId].push_back(interfaces_.size());
+                    mortarToInterfaceIds_[mId].push_back(interfaces_.size());
+                    if (mortarToInterfaceIds_[mId].size() > 2)
                         DUNE_THROW(Dune::InvalidStateException, "Each mortar domain must only be between two subdomains");
-                    interfaceCallBack(sdId, mId, glue);
+                    interfaces_.emplace_back(Interface{sdId, mId, std::move(glue)});
                 }
-            });
-        });
+            }
+        }
     }
 
-    template<std::size_t i>
-    const SubDomainGridGeometry<i>& subDomainGridGeometry(const Dune::index_constant<i>& id) const
-    { return subdomainGridGeometries_.get()[id]; }
+    const SubDomainGridGeometry& subDomainGridGeometry(std::size_t id) const { return *subDomainGridGeometries_.at(id); }
+    SubDomainGridGeometry& subDomainGridGeometry(std::size_t id) { return *subDomainGridGeometries_.at(id); }
 
-    template<std::size_t i>
-    SubDomainGridGeometry<i>& subDomainGridGeometry(const Dune::index_constant<i>& id)
-    { return subdomainGridGeometries_.get()[id]; }
-
-    template<std::size_t i>
-    const MortarGridGeometry<i>& mortarGridGeometry(const Dune::index_constant<i>& id) const
-    { return mortarGridGeometries_.get()[id]; }
-
-    template<std::size_t i>
-    MortarGridGeometry<i>& mortarGridGeometry(const Dune::index_constant<i>& id)
-    { return mortarGridGeometries_.get()[id]; }
+    const MortarGridGeometry& mortarGridGeometry(std::size_t id) const { return *mortarGridGeometries_.at(id); }
+    MortarGridGeometry& mortarGridGeometry(std::size_t id) { return *mortarGridGeometries_.at(id); }
 
 private:
-    using SubDomainIndexVariant = typename DomainIndexVariant<std::make_index_sequence<numSubDomains>>::type;
-    using MortarIndexVariant = typename DomainIndexVariant<std::make_index_sequence<numMortars>>::type;
+    std::vector<Ptr<SubDomainGridGeometry>> subDomainGridGeometries_;
+    std::vector<Ptr<MortarGridGeometry>> mortarGridGeometries_;
+    std::vector<Interface> interfaces_;
 
-    Storage<SubDomainGridGeometries> subdomainGridGeometries_;
-    Storage<MortarGridGeometries> mortarGridGeometries_;
-
-    std::array<std::vector<SubDomainIndexVariant>, numSubDomains> subDomainToMortarIds_;
-    std::array<std::vector<MortarIndexVariant>, numMortars> mortarToSubDomainIds_;
+    std::vector<std::vector<std::size_t>> subDomainToInterfaceIds_;
+    std::vector<std::vector<std::size_t>> mortarToInterfaceIds_;
 };
-
-template<typename SDGG, typename MGG>
-Decomposition(SDGG&&, MGG&&) -> Decomposition<SDGG, MGG>;
-
-template<typename SDGG, typename MGG, typename ICB>
-Decomposition(SDGG&&, MGG&&, ICB&&) -> Decomposition<SDGG, MGG>;
 
 } // end namespace Dumux::Mortar
 

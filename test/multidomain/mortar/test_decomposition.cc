@@ -19,40 +19,13 @@ using MortarGrid = Dune::FoamGrid<1, 2>;
 using MortarGG = Dumux::CCTpfaFVGridGeometry<typename MortarGrid::LeafGridView>;
 using MortarGridFactory = Dune::StructuredGridFactory<MortarGrid>;
 
-
 template<typename GGT1, typename GGT2>
 void testDecomposition(const Dumux::Mortar::Decomposition<GGT1, GGT2>& decomposition)
 {
-    static_assert(Dumux::Mortar::Decomposition<GGT1, GGT2>::numSubDomains == 4);
-    static_assert(Dumux::Mortar::Decomposition<GGT1, GGT2>::numMortars == 4);
 }
 
-template<typename... GGs>
-struct MultiDomainTraits
-{
-private:
-    template<template<std::size_t> typename T, typename Indices>
-    struct TupleImpl;
-
-    template<template<std::size_t> typename T, std::size_t... i>
-    struct TupleImpl<T, std::index_sequence<i...>>
-    : public std::type_identity<std::tuple<T<i>...>> {};
-
-public:
-    template<std::size_t i>
-    struct SubDomain {
-        using GridGeometry = std::tuple_element_t<i, std::tuple<GGs...>>;
-        using PtrType = std::shared_ptr<GridGeometry>;
-    };
-
-    static constexpr std::size_t numSubDomains = sizeof...(GGs);
-
-    template<template<std::size_t> typename T>
-    using Tuple = typename TupleImpl<T, std::make_index_sequence<numSubDomains>>::type;
-};
-
 auto makeMortarGrid(const Dune::FieldVector<double, 2>& lowerLeft,
-                          const Dune::FieldVector<double, 2>& upperRight)
+                    const Dune::FieldVector<double, 2>& upperRight)
 {
     Dune::GridFactory<MortarGrid> factory;
     factory.insertVertex(lowerLeft);
@@ -60,7 +33,6 @@ auto makeMortarGrid(const Dune::FieldVector<double, 2>& lowerLeft,
     factory.insertElement(Dune::GeometryTypes::simplex(1), {0, 1});
     return factory.createGrid();
 }
-
 
 int main() {
     SubDomainGrid sd1{{0.0, 0.0}, {1.0, 1.0}, {10, 10}};
@@ -73,46 +45,13 @@ int main() {
     auto mg3 = makeMortarGrid({1.0, 0.0}, {1.0, 1.0});
     auto mg4 = makeMortarGrid({1.0, 1.0}, {1.0, 2.0});
 
-    using SubDomainMDTraits = MultiDomainTraits<SubDomainGG, SubDomainGG, SubDomainGG, SubDomainGG>;
-    using MortarMDTraits = MultiDomainTraits<MortarGG, MortarGG, MortarGG, MortarGG>;
+    const auto makeSDGG = [] (const auto& grid) { return std::make_shared<SubDomainGG>(grid.leafGridView()); };
+    const auto makeMGG = [] (const auto& grid) { return std::make_shared<MortarGG>(grid->leafGridView()); };
 
-    {
-        std::cout << "Test from lvalues to MDGridGeometries" << std::endl;
-        Dumux::MultiDomainFVGridGeometry<SubDomainMDTraits> subDomainGGs{
-            sd1.leafGridView(), sd2.leafGridView(), sd3.leafGridView(), sd4.leafGridView()
-        };
-        Dumux::MultiDomainFVGridGeometry<MortarMDTraits> mortarGGs{
-            mg1->leafGridView(), mg2->leafGridView(), mg3->leafGridView(), mg4->leafGridView()
-        };
-        testDecomposition(Dumux::Mortar::Decomposition{subDomainGGs, mortarGGs});
-    }
+    testDecomposition(Dumux::Mortar::Decomposition<SubDomainGG, MortarGG>{
+        {makeSDGG(sd1), makeSDGG(sd2), makeSDGG(sd3), makeSDGG(sd4)},
+        {makeMGG(mg1), makeMGG(mg2), makeMGG(mg3), makeMGG(mg4)}
+    });
 
-    {
-        std::cout << "Test from rvalues to MDGridGeometries" << std::endl;
-        testDecomposition(Dumux::Mortar::Decomposition{
-            Dumux::MultiDomainFVGridGeometry<SubDomainMDTraits>{
-                sd1.leafGridView(), sd2.leafGridView(), sd3.leafGridView(), sd4.leafGridView()
-            },
-            Dumux::MultiDomainFVGridGeometry<MortarMDTraits>{
-                mg1->leafGridView(), mg2->leafGridView(), mg3->leafGridView(), mg4->leafGridView()
-            }
-        });
-    }
-
-    std::cout << "Testing construction with interface callback" << std::endl;
-    Dumux::Mortar::Decomposition{
-        Dumux::MultiDomainFVGridGeometry<SubDomainMDTraits>{
-            sd1.leafGridView(), sd2.leafGridView(), sd3.leafGridView(), sd4.leafGridView()
-        },
-        Dumux::MultiDomainFVGridGeometry<MortarMDTraits>{
-            mg1->leafGridView(), mg2->leafGridView(), mg3->leafGridView(), mg4->leafGridView()
-        },
-        [] <std::size_t sd, std::size_t m> (const Dune::index_constant<sd>&,
-                                            const Dune::index_constant<m>&,
-                                            const auto& glue) {
-            if (glue.size() == 0)
-                DUNE_THROW(Dune::InvalidStateException, "Interfaces should have non-empty intersections");
-        }
-    };
     return 0;
 }
