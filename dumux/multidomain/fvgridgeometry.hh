@@ -85,6 +85,9 @@ class MultiDomainFVGridGeometry
     }
 
 public:
+    //! export the number of grid geometries
+    static constexpr std::size_t size = numSubDomains;
+
     //! export base types of the stored type
     template<std::size_t i>
     using Type = typename MDTraits::template SubDomain<i>::GridGeometry;
