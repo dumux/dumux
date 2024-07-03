@@ -1,0 +1,27 @@
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 0.01 # [s]
+
+[Grid]
+File = ../1p/grids/pnm_converted.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[Problem]
+Name = test_pnm2pni
+VtpOutputFrequency = 1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred
+CapillaryPressure = 5000
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+
+[Component]
+SolidHeatCapacity = 1.0 # for compatibility
+SolidDensity = 1.0 # for compatibility
+SolidThermalConductivity = 1.0 # for compatibility
