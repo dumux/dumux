@@ -47,6 +47,7 @@ class Decomposition
     : std::type_identity<std::variant<Dune::index_constant<i>...>>
     {};
 
+    // class to store either a reference or an instance of std::remove_reference_t<T>
     template<typename T>
     class Storage
     {
@@ -63,7 +64,7 @@ class Decomposition
         Type& get() requires(!isConst) { return stored_; }
 
     private:
-        std::conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_reference_t<T>> stored_;
+        std::conditional_t<isReference, T, std::remove_cvref_t<T>> stored_;
     };
 
     using SubDomainStorage = Storage<SubDomainGridGeometries>;
