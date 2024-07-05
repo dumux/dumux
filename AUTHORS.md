@@ -22,13 +22,13 @@ The DuMux Project contributors are
 | 2007-2024  | Bernd Flemisch             |
 | 2007-2010  | Jochen Fritz               |
 | 2015-2016  | Georg Futter               |
-| 2022-2023  | Tufan Ghosh                |
+| 2022-2024  | Tufan Ghosh                |
 | 2024       | Mona Giraud                |
 | 2015-2024  | Dennis Gläser              |
 | 2012-2024  | Christoph Grüninger        |
 | 2016-2022  | Katharina Heck             |
 | 2017       | Rainer Helmig              |
-| 2015-2023  | Johannes Hommel            |
+| 2015-2024  | Johannes Hommel            |
 | 2012-2015  | Vishal Jambhekar           |
 | 2020-2021,2023  | Tim Jupe              |
 | 2013-2014  | Muhammad Adil Javed        |
@@ -47,7 +47,7 @@ The DuMux Project contributors are
 | 2018-2022  | Farid Mohammadi            |
 | 2008-2014  | Klaus Mosthaf              |
 | 2009-2014  | Philipp Nuske              |
-| 2022-2023  | Hamza Oukili               |
+| 2022-2024  | Hamza Oukili               |
 | 2023       | Harsha Vardhan Pallam      |
 | 2014       | Mirka Papenheim            |
 | 2021-2022  | Dmitry Pavlov              |
@@ -56,7 +56,7 @@ The DuMux Project contributors are
 | 2008       | Irina Rybak                |
 | 2019-2020  | Samuel Scherrer            |
 | 2013-2024  | Martin Schneider           |
-| 2018-2022  | Theresa Schollenberger     |
+| 2018-2022,2024  | Theresa Schollenberger     |
 | 2009       | Anneli Schöniger           |
 | 2015-2016  | Natalie Schröder           |
 | 2010-2016  | Nicolas Schwenck           |
@@ -68,7 +68,7 @@ The DuMux Project contributors are
 | 2013       | Katharina Türk             |
 | 2018-2023  | Martin Utz                 |
 | 2019       | Andrea Vescovini           |
-| 2020-2022,2024  | Maziar Veyskarami          |
+| 2020-2024  | Maziar Veyskarami          |
 | 2015-2017,2021-2022  | Larissa Brencher |
 | 2010-2014  | Lena Walter                |
 | 2020-2024  | Yue Wang                   |
