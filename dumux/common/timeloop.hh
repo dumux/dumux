@@ -572,7 +572,7 @@ public:
     Scalar maxTimeStepSize() const override
     {
         using std::min;
-        const auto maxCheckPointDt = computeStepSizeRespectingCheckPoints_();
+        const auto maxCheckPointDt = timeStepSizeToNextCheckPoint();
         const auto maxDtParent = TimeLoop<Scalar>::maxTimeStepSize();
         return min(maxDtParent, maxCheckPointDt);
     }
@@ -736,12 +736,6 @@ private:
             .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
             .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
     }
-
-    /*!
-     * \brief Aligns dt to the next check point
-     */
-    Scalar computeStepSizeRespectingCheckPoints_() const
-    { return maxDtToCheckPoint_(this->time()); }
 
     /*!
      * \brief Compute a time step size respecting upcoming checkpoints, starting from the given time t.
