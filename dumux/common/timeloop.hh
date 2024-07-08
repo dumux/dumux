@@ -664,6 +664,13 @@ public:
         this->setTimeStepSize(this->timeStepSize());
     }
 
+    /*!
+     * \brief Return the time step size to exactly reach the next check point
+     * In case there is no check point in the future, the largest representable scalar is returned
+     */
+    Scalar timeStepSizeToNextCheckPoint() const
+    { return maxDtToCheckPoint_(this->time()); }
+
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
     { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
