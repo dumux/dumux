@@ -275,6 +275,8 @@ public:
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
         { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
+
+        this->clearStages();
     }
 
     //! the number of dof locations of domain i
