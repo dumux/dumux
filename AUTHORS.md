@@ -75,7 +75,7 @@ The DuMux Project contributors are
 | 2018-2022  | Felix Weinhardt            |
 | 2015-2022  | Kilian Weishaupt           |
 | 2022-2024  | Kai Wendel                 |
-| 2010-2011,2022  | David Werner          |
+| 2010-2011,2022-2024  | David Werner          |
 | 2019-2023  | Roman Winter               |
 | 2008-2013  | Markus Wolff               |
 | 2015       | Hao Wu                     |
