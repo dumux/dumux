@@ -260,7 +260,10 @@ public:
      * \brief Reset the gridVariables
      */
     void resetTimeStep(const SolutionVector &cursol)
-    { gridVariables().resetTimeStep(cursol); }
+    {
+        gridVariables().resetTimeStep(cursol);
+        this->clearStages();
+    }
 
     void clearStages()
     {

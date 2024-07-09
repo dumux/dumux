@@ -572,7 +572,7 @@ public:
     Scalar maxTimeStepSize() const override
     {
         using std::min;
-        const auto maxCheckPointDt = computeStepSizeRespectingCheckPoints_();
+        const auto maxCheckPointDt = timeStepSizeToNextCheckPoint();
         const auto maxDtParent = TimeLoop<Scalar>::maxTimeStepSize();
         return min(maxDtParent, maxCheckPointDt);
     }
@@ -664,6 +664,13 @@ public:
         this->setTimeStepSize(this->timeStepSize());
     }
 
+    /*!
+     * \brief Return the time step size to exactly reach the next check point
+     * In case there is no check point in the future, the largest representable scalar is returned
+     */
+    Scalar timeStepSizeToNextCheckPoint() const
+    { return maxDtToCheckPoint_(this->time()); }
+
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
     { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
@@ -729,12 +736,6 @@ private:
             .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
             .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
     }
-
-    /*!
-     * \brief Aligns dt to the next check point
-     */
-    Scalar computeStepSizeRespectingCheckPoints_() const
-    { return maxDtToCheckPoint_(this->time()); }
 
     /*!
      * \brief Compute a time step size respecting upcoming checkpoints, starting from the given time t.

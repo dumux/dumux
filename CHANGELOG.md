@@ -3,33 +3,35 @@ Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 
 - __Requirements__: DuMux requires Dune >=2.9 and CMake >= 3.16. It was successfully tested with dune-mmesh 1.4 and OPM 2023.10.
 
-### General changes / structure
-
 ### Improvements and Enhancements
 
-- __SimpleH2O__: Fixed an issue where the function vaporizationEnthalpy returned the result in the wrong unit, added new nonisothermal test.
-- __Face Centered Velocity Reconstrution__: For freeflow evaluation using the FC Staggered discretization, a reconstrution method has been implemented to collect the full velocity vector at the face center.
-- __Darcy-Brinkman Freeflow__: There is no a convenience function to add a Brinkman term to turn the Navier-Stokes model into the Darcy-Brinkman model. With this, a single domain can contain both free flow and flow through a porous medium.
+- __Energy Balance__: Modified the energy balance implementation to correctly include the contribution of gravity.
+- __Porous Medium Flow for 2pncmin__: Fixed a bug for the non-isothermal 2pncmin test to use the permeability of the current time and not the reference one as permeability can change over time.
+- __TPFA Dispersion__: Fixed the transmissibility calculation for TPFA dispersion fluxes.
+- __Darcy-Brinkman Freeflow__: Introduced a convenience function to add a Brinkman term to turn the Navier-Stokes model into the Darcy-Brinkman model. With this, a single domain can contain both free flow and flow through a porous medium.
 The term is added as a source term in the problem using the new helper function `addBrinkmanTerm`.
-The function uses new spatial parameter interface implemented in the new `BrinkmanSpatialParams` class (`dumux/freeflow/spatialparams.hh`). The helper function can deal with isotropic and anisotropic permeabilites.
-- __Facet-Coupling__: Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
-- __Periodic Boundaries__: Fixed an issue for vector-valued unknowns. Other schemes that provide a periodic map at boundaries now also support periodicity.
+The function uses a new spatial parameter interface implemented in the new `BrinkmanSpatialParams` class (`dumux/freeflow/spatialparams.hh`). The helper function can deal with isotropic and anisotropic permeabilites.
+- __Face Centered Velocity Reconstrution__: For the FC Staggered discretization of free flow, a reconstrution method has been implemented to collect the full velocity vector at the face center.
 - __Pore network__: Added a model and a test case for two-phase compositional fluid flow.
-- __Facet-Coupling__: The facet-coupling framework has been modified such that lower-dimensional domains coinciding with the bulk domain boundary are supported.
 - __Components__: Added the new class `ShomateMethod` for calculating the heat capacity and enthalpy of components at specified temperatures. An example implementation can be found for methane (CH4).
-- __TPFA Dispersion__: Fixed the transmissibility calculation for tpfa dispersion fluxes.
-- __Energy Balance Implementation__: modify the energy balance implementation to correctly include the contribution of gravity.
+- __SimpleH2O__: Fixed an issue where the function vaporizationEnthalpy returned the result in the wrong unit, added new nonisothermal test.
+- __Facet-Coupling__:
+    * Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
+    * The facet-coupling framework has been modified such that lower-dimensional domains coinciding with the bulk domain boundary are supported.
+- __Periodic Boundaries__: Fixed an issue for vector-valued unknowns. Other schemes that provide a periodic map at boundaries now also support periodicity.
+- __TimeLoop__: Added function to allow adjustments of the time step size in the main file, fixes corner cases.
 - __Pipeline__: Variable docker image testing is now possible directly out of dumux. A weekly Ubuntu 24.04 pipeline is introduced for a smooth transition to 24.04 in the future.
 - __Dependencies__: Fieldcompare and Pylint have been upgraded to newer versions.
-- __Porous Medium Flow for 2pncmin__ Fixed a bug for the non-isothermal 2pncmin test to use the permeability of the current time and not the reference one as permeability can change over time.
-### Immediate interface changes not allowing/requiring a deprecation period:
-- __RichardsNewtonSolver__: It is now possible to select the MPICommunicator used by the RichardsNewtonSolver (e.g., either real or dummy communicator)
-- __CompositionalFluidState__: setRelativeHumidity was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
 
-- __porousmedium/nonisothermal/localresidual__: fluidPhaseStorage() now requires problem. Old interface will be deleted after release 3.9.
-- __porousmedium/nonequilibrium/thermal/localresidual__: fluidPhaseStorage() now requires problem. Old interface will be deleted after release 3.9.
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+- __RichardsNewtonSolver__: It is now possible to select the `MPICommunicator` used by the `RichardsNewtonSolver` (either real or dummy communicator).
+- __CompositionalFluidState__: `setRelativeHumidity` was removed. Use the other setters. This setter was removed because it was very specific with a lot of specific prerequisites not fitting the general concept of the class. It was also outdated and not used in any example or test and didn't fit the index convention used in the fluid systems anymore.
+- __LocalResidual of porousmediumflow/nonisothermal and porousmediumflow/nonequilibrium/thermal__: `fluidPhaseStorage` now requires the problem. The old interface is deprecated but a corresponding function call doesn't calculate anything.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.9:
-- __Periodic Map__: `periodicVertexMap()` has been deprecated. Use `periodicDofMap()` instead.
+
+- __Periodic Map__: `periodicVertexMap` has been deprecated. Use `periodicDofMap` instead.
 
 Differences Between DuMu<sup>x</sup> 3.8 and DuMu<sup>x</sup> 3.7
 =============================================
