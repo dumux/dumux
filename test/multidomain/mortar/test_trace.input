@@ -1,0 +1,11 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[0.Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1
+
+[Problem]
+EnableGravity = false
