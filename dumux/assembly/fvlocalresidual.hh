@@ -217,7 +217,8 @@ public:
         source += problem.source(element, fvGeometry, elemVolVars, scv);
 
         // add contribution from possible point sources
-        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+        if (!problem.pointSourceMap().empty())
+            source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         return source;
     }
