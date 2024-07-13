@@ -21,6 +21,7 @@
 #include <dune/python/pybind11/pybind11.h>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/pointsource.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/python/common/boundarytypes.hh>
 #include <dumux/python/common/fvspatialparams.hh>
@@ -49,6 +50,10 @@ public:
     static constexpr std::size_t numEq = static_cast<std::size_t>(PrimaryVariables::dimension);
     using BoundaryTypes = Dumux::BoundaryTypes<PrimaryVariables::dimension>;
 
+    using PointSource = Dumux::PointSource<GlobalPosition, NumEqVector>;
+    using PointSourceMap = std::map< std::pair<std::size_t, std::size_t>,
+                                     std::vector<PointSource> >;
+
     FVProblem(std::shared_ptr<const GridGeometry> gridGeometry,
               std::shared_ptr<const SpatialParams> spatialParams,
               pybind11::object pyProblem)
@@ -57,6 +62,7 @@ public:
     , name_("python_problem")
     , paramGroup_("")
     , spatialParams_(spatialParams)
+    , pointSourceMap_()
     {
         if (pybind11::hasattr(pyProblem_, "name"))
             name_ = pyProblem.attr("name")().template cast<std::string>();
@@ -174,6 +180,11 @@ public:
             return NumEqVector(0.0);
     }
 
+    const PointSourceMap& pointSourceMap() const
+    {
+        return pointSourceMap_;
+    }
+
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
@@ -211,6 +222,7 @@ private:
     std::string name_;
     std::string paramGroup_;
     std::shared_ptr<const SpatialParams> spatialParams_;
+    PointSourceMap pointSourceMap_;
 };
 
 // Python wrapper for the above FVProblem C++ class
