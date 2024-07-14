@@ -261,11 +261,8 @@ private:
         prepareLinearAlgebraParallel<LinearSolverTraits, ParallelTraits>(A, b, *parallelHelper_);
         auto linearOperator = std::make_shared<LinearOperator>(A, *comm_);
 
-        // construct solver
-        auto solver = getSolverFromFactory_(linearOperator);
-
         // solve linear system
-        solver->apply(x, b, result_);
+        apply_(linearOperator, x, b);
     }
 #endif // HAVE_MPI
 
@@ -279,23 +276,45 @@ private:
         if (firstCall_)
             initSolverFactories<Matrix, LinearOperator>();
 
-        // construct solver
-        auto solver = getSolverFromFactory_(linearOperator);
-
         // solve linear system
-        solver->apply(x, b, result_);
+        apply_(linearOperator, x, b);
     }
 
     template<class LinearOperator>
     auto getSolverFromFactory_(std::shared_ptr<LinearOperator>& fop)
     {
-        try { return Dune::getSolverFromFactory(fop, params_); }
-        catch(Dune::Exception& e)
-        {
-            std::cerr << "Could not create solver with factory" << std::endl;
-            std::cerr << e.what() << std::endl;
-            throw e;
+        try {
+            return Dune::getSolverFromFactory(fop, params_);
+        } catch(Dune::Exception& e) {
+            std::cerr << "Dune::Exception during solver construction: " << e.what() << std::endl;
+            return std::decay_t<decltype(Dune::getSolverFromFactory(fop, params_))>();
         }
+    }
+
+    template<class LinearOperator>
+    void apply_(std::shared_ptr<LinearOperator>& fop, Vector& x, Vector& b)
+    {
+        auto solver = getSolverFromFactory_(fop);
+
+        // make solver constructor failure recoverable by throwing an exception
+        // on all processes if one or more processes fail
+        bool success = static_cast<bool>(solver);
+#if HAVE_MPI
+        int successRemote = success;
+        if (isParallel_)
+            successRemote = comm_->communicator().min(success);
+
+        if (!success)
+            DUNE_THROW(Dune::Exception, "Could not create ISTL solver");
+        else if (!successRemote)
+            DUNE_THROW(Dune::Exception, "Could not create ISTL solver on remote process");
+#else
+        if (!success)
+            DUNE_THROW(Dune::Exception, "Could not create ISTL solver");
+#endif
+
+        // solve linear system (here we assume that either all processes are successful or all fail)
+        solver->apply(x, b, result_);
     }
 
     const std::string paramGroup_;
