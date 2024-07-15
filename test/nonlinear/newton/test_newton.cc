@@ -14,6 +14,7 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/common/initialize.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 /*
@@ -84,6 +85,9 @@ int main(int argc, char* argv[])
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
+
+    // initialize parameters
+    Dumux::Parameters::init(argc, argv);
 
     // use the Newton solver to find a solution to a scalar equation
     using Assembler = MockScalarAssembler;
