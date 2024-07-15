@@ -1,3 +1,17 @@
+Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
+=============================================
+
+### General changes / structure
+
+### Improvements and Enhancements
+
+- __ISTL solver factory__: Fixed an issue with exceptions where an exception thrown during solver construction would lead to a deadlock in parallel simulation. The solver factory now communicated the failure which makes the exception recoverable, e.g. in the Newton solver.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+### Deprecated properties/classes/functions/files, to be removed after 3.10:
+
+
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
 
