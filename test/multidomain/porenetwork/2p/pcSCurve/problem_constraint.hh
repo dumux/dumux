@@ -44,7 +44,9 @@ public:
                          std::shared_ptr<CouplingManager> couplingManager = nullptr)
     : ParentType(gridGeometry, paramGroup),
       couplingManager_(couplingManager)
-    {}
+    {
+        thetaScalingFactor_ = getParam<double>("Constraint.Problem.ThetaScalingFactor", 1.0);
+    }
 
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
@@ -85,21 +87,21 @@ public:
             auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
                           elemVolVarsPNM[1].capillaryPressure()) / couplingManager_->pcEntry(element) - 1.0;
 
-            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp));
+            return ((thetaScalingFactor_ - theta)*max(0.0,dp) - (theta)*min(0.0,dp));
         }
         else
         {
             auto pcSnapoff = couplingManager_->pcSnapoff(element);
-            auto dp = min(elemVolVarsPNM[0].capillaryPressure(),
+            auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
                           elemVolVarsPNM[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
 
-            return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp));
+            return ((thetaScalingFactor_ - theta)*max(0.0,dp) - (theta)*min(0.0,dp));
         }
     }
 
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
-
+    double thetaScalingFactor_;
 };
 } // end namespace Dumux
 

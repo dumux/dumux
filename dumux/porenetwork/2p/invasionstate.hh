@@ -437,10 +437,11 @@ private:
             return Result{}; //nothing happened
         }
 
+        auto thetaScalingFactor = getParam<double>("Constraint.Problem.ThetaScalingFactor", 1.0);
         if(!fluxVarsCache.invaded())
-            invadedAfterSwitch = theta > invasionThetaThreshold_;
+            invadedAfterSwitch = theta > (invasionThetaThreshold_ * thetaScalingFactor);
         else
-            invadedAfterSwitch = theta > snapoffThetaThreshold_;
+            invadedAfterSwitch = theta > (snapoffThetaThreshold_ * thetaScalingFactor);
 
         invaded_[eIdx] = invadedAfterSwitch;
 

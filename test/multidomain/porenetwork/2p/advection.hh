@@ -111,23 +111,23 @@ public:
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
             const bool invaded = fluxVarsCache.invaded();
-            static const bool scalingKFactor = getParam<double>("Newton.scalingKFactor", 1);
+            static const double thetaScalingFactor = getParam<double>("Constraint.Problem.ThetaScalingFactor", 1);
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
-                theta = std::clamp(theta, 0.0, 1.0);
+                theta = std::clamp(theta, 0.0, thetaScalingFactor);
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
                     const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
                                               : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
 
-                    return (theta*kw + (1-theta)*k1p)*scalingKFactor;
+                    return kw/thetaScalingFactor * theta +  k1p * (1-theta/thetaScalingFactor) ;
                 }
                 else // non-wetting phase
                 {
                     // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    return  (theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache))*scalingKFactor;
+                    return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)/thetaScalingFactor* theta;
                 }
             }
             else

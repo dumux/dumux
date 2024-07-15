@@ -172,6 +172,7 @@ int main(int argc, char** argv)
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver newtonSolver(assembler, linearSolver, couplingManager);
 
+    auto thetaScalingFactor = getParam<double>("Constraint.Problem.ThetaScalingFactor", 1);
     // The following update is needed because the constraint is formualted for each time step and needs to be updated afterwards
     // One could also change the constraint by accounting for previous time step data
     auto updateState = [&]()
@@ -180,7 +181,7 @@ int main(int argc, char** argv)
         for (const auto& element : elements(pnmGridGeometry->gridView()))
         {
             const auto eIdx = constraintGridGeometry->elementMapper().index(element);
-            x[constraintId][eIdx] = (double) state.invaded(element);
+            x[constraintId][eIdx] = state.invaded(element) ? thetaScalingFactor : 0;
         }
     };
 
