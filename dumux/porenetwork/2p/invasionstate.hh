@@ -312,6 +312,13 @@ class TwoPInvasionState<P, StateSwitchMethod::theta>
 {
     using Problem = P;
 
+    template <class T>
+    using GlobalCapillaryPressureDetector = decltype(std::declval<T>().globalCapillaryPressure());
+
+    template<class T>
+    static constexpr bool hasGlobalCapillaryPressure()
+    { return Dune::Std::is_detected<GlobalCapillaryPressureDetector, T>::value; }
+
     enum class EventType {invasion, snapOff, none};
 
 public:
@@ -334,6 +341,7 @@ public:
 
         numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
         verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
+        restrictToGlobalCapillaryPressure_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.RestrictInvasionToGlobalCapillaryPressure", false);
     }
 
     //! Return whether a given throat is invaded or not.
@@ -418,8 +426,16 @@ private:
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+        const Scalar pcEntry = fluxVarsCache.pcEntry();
         const auto throatPc = fluxVarsCache.pc();
         const auto theta = problem_.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
+
+        // check if there is a user-specified global capillary pressure which needs to be obeyed
+        if (maybeRestrictToGlobalCapillaryPressure_(pcEntry))
+        {
+            invaded_[eIdx] = false;
+            return Result{}; //nothing happened
+        }
 
         if(!fluxVarsCache.invaded())
             invadedAfterSwitch = theta > invasionThetaThreshold_;
@@ -462,6 +478,17 @@ private:
 
             return result;
         }
+    }
+
+    //! If the user has specified a global capillary pressure, check if it is lower than the given entry capillary pressure.
+    //! This may be needed to exactly reproduce pc-S curves given by static network models.
+    template<class Scalar>
+    bool maybeRestrictToGlobalCapillaryPressure_(const Scalar pcEntry) const
+    {
+        if constexpr (hasGlobalCapillaryPressure<Problem>())
+            return restrictToGlobalCapillaryPressure_ && (pcEntry > problem_.globalCapillaryPressure());
+        else
+            return false;
     }
 
     double invasionThetaThreshold_;
