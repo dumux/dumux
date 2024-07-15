@@ -147,11 +147,6 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // calculate the averaged values
-        avgValues.eval(dofsToNeglect);
-        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
-
-
         // try solving the non-linear system
         nonLinearSolver.solve(x, *timeLoop);
 
@@ -165,6 +160,10 @@ int main(int argc, char** argv)
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        // calculate the averaged values
+        avgValues.eval(dofsToNeglect);
+        problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
         {
@@ -174,7 +173,9 @@ int main(int argc, char** argv)
                 vtkWriter.write(timeLoop->time());
         }
 
-
+        // check if all drainge steps have been performed
+        if(problem->simulationFinished())
+            timeLoop->setFinished();
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -184,9 +185,6 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
-    // calculate the averaged values
-    avgValues.eval(dofsToNeglect);
-    problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
     nonLinearSolver.report();
 
     ////////////////////////////////////////////////////////////

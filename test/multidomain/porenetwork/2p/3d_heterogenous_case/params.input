@@ -1,11 +1,13 @@
 [TimeLoop]
-DtInitial = 1e-3 # [s]
-TEnd = 10 # [s]
+DtInitial = 1e-5 # [s]
+TEnd = 1e6 # [s]
+MaxTimeStepSize = 1e6
+MaxDtNonEquilibrium = 1e-3
 CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape =  Circle
+ThroatCrossSectionShape = Square
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 10 10 10
 ParameterType = lognormal
@@ -17,44 +19,49 @@ DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
 RemoveThroatsOnBoundary = 0 1 2 3 4 5
 PruningSeedIndices = 2 3
 Sanitize = true
-SanitationMode = KeepLargestCluster
+#SanitationMode = KeepLargestCluster
 DeletionRandomNumberSeed = 33
 ParameterRandomNumberSeed = 22
 
 [Problem]
 Name = pnm_3d
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
-CapillaryPressure = 4840
+InitialPc = 4000
+FinalPc = 6000
+NumSteps = 10
 RegularizationDelta = 1e-1
 RegularizationFunction = Spline
-DisWReflow = false
-DisNOutflow = false
-BoundConductivity = true
-UseUpwindPc = true
-switchConductivityCurve = true
+EnableGravity = false
+UseUpwindPc = false
 neglectInletOutlet = true
+PrintMatrix = false
 
 [Vtk]
 AddVelocity = 1
 
 [Newton]
-#UseLineSearch = true
-MaxSteps = 20
-TargetSteps = 10
-MaxRelativeShift = 1e-6
-MaxTimeStepDivisions = 20
+UseLineSearch = false
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-4
+MaxTimeStepDivisions = 50
+PlausibilityCheck = true
 
 [InvasionState]
 Verbosity = true
-InvasionThetaThreshold = 1e-14
+InvasionThetaThreshold = 1e-10
 BlockNonwettingPhaseAtThroatLabel = 3
+RestrictInvasionToGlobalCapillaryPressure = false
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-10
+
+[Component]
+LiquidDynamicViscosity = 1e-3
+LiquidDensity = 1000
 
 [SpatialParams]
 SurfaceTension = 0.0725
 RegularizationLowSw = 0.01
 RegularizationHighSw = 0.99
 HighSwRegularizationMethod = Spline
-
-[Component]
-LiquidDensity = 1000
-LiquidDynamicViscosity = 1e-3

@@ -133,6 +133,23 @@ int main(int argc, char** argv)
     pnmVtkWriter.write(0.0);
     constraintVtkWriter.write(0.0);
 
+    using PNMSolutionVector = GetPropType<PNMTypeTag, Properties::SolutionVector>;
+    Dumux::PoreNetwork::AveragedValues<PNMGridVariables, PNMSolutionVector> avgValues(*pnmGridVariables, x[pnmId]);
+    using FS = typename PNMGridVariables::VolumeVariables::FluidSystem;
+    avgValues.addAveragedQuantity([](const auto& v){ return v.saturation(FS::phase0Idx); }, [](const auto& v){ return v.poreVolume(); }, "avgSat");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase0Idx); }, [](const auto& v){ return v.saturation(FS::phase0Idx)*v.poreVolume(); }, "avgPw");
+    avgValues.addAveragedQuantity([](const auto& v){ return v.pressure(FS::phase1Idx); }, [](const auto& v){ return v.saturation(FS::phase1Idx)*v.poreVolume(); }, "avgPn");
+
+    std::vector<std::size_t> dofsToNeglect;
+    const auto neglectInletOutlet = getParam<bool>("Problem.neglectInletOutlet", false);
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        using Labels = GetPropType<PNMTypeTag, Properties::Labels>;
+        const auto vIdx = pnmGridGeometry->vertexMapper().index(vertex);
+        if ((pnmGridGeometry->poreLabel(vIdx) == Labels::inlet || pnmGridGeometry->poreLabel(vIdx) == Labels::outlet) && neglectInletOutlet)
+            dofsToNeglect.push_back(vIdx);
+    }
+
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<double>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
@@ -191,12 +208,20 @@ int main(int argc, char** argv)
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        // calculate the averaged values
+        avgValues.eval(dofsToNeglect);
+        pnmProblem->postTimeStep(timeLoop->time(), avgValues, pnmGridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
+
         // write vtk output
         if(pnmProblem->shouldWriteOutput(timeLoop->timeStepIndex(), *pnmGridVariables))
         {
             pnmVtkWriter.write(timeLoop->time());
             constraintVtkWriter.write(timeLoop->time());
         }
+
+        // check if all drainge steps have been performed
+        if(pnmProblem->simulationFinished())
+            timeLoop->setFinished();
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -207,6 +232,7 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     newtonSolver.report();
+    newtonSolver.reportTotalIterations();
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

@@ -66,9 +66,47 @@ public:
            getParamFromGroup<Scalar>(paramGroup, "Problem.RegularizationDelta", 1e-8))
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
-        pc_ = getParam<Scalar>("Problem.CapillaryPressure");
-        logfile_.open("logfile_" + this->name() + ".txt");
         useUpwindPc_ = getParam<bool>("Problem.UseUpwindPc", true);
+        initialPc_ = getParam<Scalar>("Problem.InitialPc");
+        finalPc_ = getParam<Scalar>("Problem.FinalPc");
+        numSteps_ = getParam<int>("Problem.NumSteps");
+        swShiftThreshold_ = getParam<Scalar>("Problem.RelShiftThreshold", 1e-12);
+        writeOnlyEqPoints_ = getParam<bool>("Problem.WriteOnlyEquilibriumPoints", false);
+
+        pcEpisopde_.resize(numSteps_ + 1);
+        for (int i = 0 ; i < pcEpisopde_.size(); i++)
+              pcEpisopde_[i] = initialPc_ + i*(finalPc_ - initialPc_)/numSteps_;
+
+        std::cout << "The following global PCs are applied: " << std::endl;
+        for (auto x: pcEpisopde_)
+        {
+            std::cout << x << std::endl;
+        }
+
+        if (!writeOnlyEqPoints_)
+        {
+            logfile_.open("logfile_" + this->name() + ".txt"); //for the logfile
+            logfile_ <<"Logfile for: " + this->name()  << std::endl;
+            logfile_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
+                     << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
+                     << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
+                     << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
+                     << std::endl;
+        }
+
+        logfileEqPoints_.open("eqPoints_" + this->name() + ".txt");
+        logfileEqPoints_ << std::left << std::setw(20) << std::setfill(' ') << "Time"
+                         << std::left << std::setw(20) << std::setfill(' ') << "globalPc"
+                         << std::left << std::setw(20) << std::setfill(' ') << "swAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pwAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pnAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "pcAveraged"
+                         << std::left << std::setw(20) << std::setfill(' ') << "numThroatsInvaded"
+                         << std::endl;
+        step_ = 0;
     }
 
      /*!
@@ -97,7 +135,7 @@ public:
         // A global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
         // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
-            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pc_);
+            values[snIdx] = 1.0 - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).sw(pcEpisopde_[step_]);
         return values;
     }
     // \}
@@ -182,14 +220,62 @@ public:
     template<class AveragedValues>
     void postTimeStep(const Scalar time, const AveragedValues& avgValues, std::size_t numThroatsInvaded, const Scalar dt)
     {
-        logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
-                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
-                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
-                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
-                 << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
-                 << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
-                 << std::endl;
+        const Scalar avgSw = avgValues["avgSat"];
+
+        if (!writeOnlyEqPoints_)
+        {
+            logfile_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                                   << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                                   << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                                   << std::endl;
+        }
+
+        // store the three most recent averaged saturations
+        std::rotate(swAvg_.rbegin(), swAvg_.rbegin()+1, swAvg_.rend());
+        swAvg_[0]= avgSw;
+
+        // Check for steady state and end episode
+        dSwDt_ = std::abs(swAvg_[0]-swAvg_[1])/dt;
+        const Scalar pc = pcEpisopde_[step_];
+        std::cout << "global pC applied: " << pc << " / " << finalPc_ << " (step " << step_ << " of " << numSteps_ << ")" << std::endl;
+        std::cout << "swAverage: " << swAvg_[0] << " (relative shift: " << dSwDt_ << "). " << std::endl;
+        std::cout << numThroatsInvaded << " of " << this->gridGeometry().gridView().size(0) << " throats invaded." << std::endl;
+        if(dSwDt_ < swShiftThreshold_)
+        {
+            std::cout << "Equlibrium point reached!" << std::endl;
+
+            logfileEqPoints_ << std::fixed << std::left << std::setw(20) << std::setfill(' ') << time
+                                           << std::left << std::setw(20) << std::setfill(' ') <<  pcEpisopde_[step_]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgSat"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPw"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << avgValues["avgPn"] - avgValues["avgPw"]
+                                           << std::left << std::setw(20) << std::setfill(' ') << numThroatsInvaded
+                                           << std::endl;
+            inEquilibrium_ = true;
+            ++step_;
+        }
     }
+
+    bool equilibriumPointReached() const
+    { return dSwDt_ < swShiftThreshold_; }
+
+    bool simulationFinished() const
+    { return (step_ > numSteps_) && (dSwDt_ < swShiftThreshold_) ; }
+
+    /*!
+     * \brief Imposes a global capillary pressure for the invasion mechanism. Only throats
+     *        with an entry pressure smaller than this can be invaded.
+     */
+    Scalar globalCapillaryPressure() const
+    { return pcEpisopde_[step_]; }
+
+    Scalar dSwDt() const
+    { return dSwDt_; }
 
 private:
 
@@ -225,11 +311,25 @@ private:
     }
 
     int vtpOutputFrequency_;
-    Scalar pc_;
-    std::ofstream logfile_;
+
     std::shared_ptr<CouplingManager> couplingManager_;
     Dumux::PoreNetwork::Throat::Regularization<Scalar> reg_;
     bool useUpwindPc_;
+
+    Scalar initialPc_;
+    Scalar finalPc_;
+    int numSteps_;
+    std::vector<Scalar> pcEpisopde_;
+    std::array<Scalar, 2> swAvg_ = {{1.0, 1.0}};
+    std::ofstream logfile_;
+    std::ofstream logfileEqPoints_;
+    Scalar dSwDt_ = 0.0;
+    mutable bool inEquilibrium_ = false;
+    Scalar swShiftThreshold_;
+    bool writeOnlyEqPoints_;
+
+    int step_;
+
 };
 } //end namespace Dumux
 
