@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES generate_lattice_grid.py plot_sn_t.py 1d_4pores.dgf)
+dune_symlink_to_source_files(FILES generate_lattice_grid.py plot_sn_t.py 1d_4pores.dgf run_and_plot.py static_pc_sw_pc-s-curve.txt)
 
 dumux_add_test(NAME pnm_3d
                SOURCES main.cc
