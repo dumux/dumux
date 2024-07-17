@@ -468,7 +468,7 @@ private:
         (*residual_) = 0.0;
     }
 
-    // reset the jacobian vector to 0.0
+    // reset the jacobian matrix to 0.0
     void resetJacobian_()
     {
         if(!jacobian_)
