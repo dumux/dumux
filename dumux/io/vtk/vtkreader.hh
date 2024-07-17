@@ -244,7 +244,7 @@ private:
             const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
             const auto types = parseDataArray_<std::vector<unsigned int>>(typesNode);
 
-            if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
+            if (verbose) std::cout << "Found " << offsets.size() << " elements." << std::endl;
 
             unsigned int lastOffset = 0;
             for (unsigned int i = 0; i < offsets.size(); ++i)
@@ -318,6 +318,9 @@ private:
                         DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
 
                     cellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                    if (verbose)
+                        std::cout << "Read cell data field " << attributeText << std::endl;
                 }
             }
             // for poly data
@@ -336,6 +339,9 @@ private:
                             DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
 
                         polyLineCellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                        if (verbose)
+                            std::cout << "Read cell data field " << attributeText << std::endl;
                     }
 
                     // a polyline can have many points in the VTK format
@@ -395,6 +401,9 @@ private:
                     DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a point data array.");
 
                 pointData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                if (verbose)
+                    std::cout << "Read point data field " << attributeText << std::endl;
             }
         }
     }
