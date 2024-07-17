@@ -123,17 +123,19 @@ public:
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = ParentType::getFileExtension(fileName);
-        if(extension != "dgf" && extension != "msh")
-            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
+        if (extension != "dgf" && extension != "msh" && extension != "vtu")
+            DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
 
-        // make the grid
+        // Dune Grid Format (DGF) files
         if (extension == "dgf")
         {
             ParentType::enableDgfGridPointer_ = true;
             ParentType::dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
             ParentType::gridData_ = std::make_shared<typename ParentType::GridData>(ParentType::dgfGridPtr());
         }
-        if (extension == "msh")
+
+        // Gmsh mesh format
+        else if (extension == "msh")
         {
             // get some optional parameters
             const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
@@ -141,14 +143,10 @@ public:
             const bool domainMarkers = getParamFromGroup<bool>(modelParamGroup, "Grid.DomainMarkers", false);
 
             if (domainMarkers)
-                ParentType::enableGmshDomainMarkers_ = true;
-
-            // only fill the factory for rank 0
-            if (domainMarkers)
             {
+                ParentType::enableGmshDomainMarkers_ = true;
                 std::vector<int> boundaryMarkersInsertionIndex, boundaryMarkers, faceMarkers, elementMarkers;
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
-
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkersInsertionIndex, elementMarkers, verbose, boundarySegments);
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
 
@@ -175,12 +173,21 @@ public:
             else
             {
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
-
-                if (Dune::MPIHelper::getCommunication().rank() == 0)
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
-
                 ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
+        }
+
+        // VTK file formats for unstructured grids
+        else if (extension == "vtu")
+        {
+            VTKReader vtkReader(fileName);
+            VTKReader::Data cellData, pointData;
+            auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+            const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+            ParentType::gridPtr() = vtkReader.readGrid(*gridFactory, cellData, pointData, verbose);
+            ParentType::gridData_ = std::make_shared<typename ParentType::GridData>(ParentType::gridPtr(), std::move(gridFactory), std::move(cellData), std::move(pointData));
+            ParentType::enableVtkData_ = true;
         }
     }
 
