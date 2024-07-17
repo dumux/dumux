@@ -96,7 +96,7 @@ public:
      */
     void loadBalance()
     {
-        if (Dune::MPIHelper::getCommunication().size() > 1)
+        if (Dune::MPIHelper::instance().size() > 1)
         {
             // if we may have dgf parameters use load balancing of the dgf pointer
             if(enableDgfGridPointer_)
@@ -114,6 +114,16 @@ public:
                 gridPtr()->loadBalance(dh.interface());
                 gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
             }
+
+            // if we have VTK parameters we have to manually load balance the data
+            else if (enableVtkData_)
+            {
+                // cell and point data is communicated during load balance
+                auto dh = gridData_->createVtkDataHandle();
+                gridPtr()->loadBalance(dh.interface());
+                gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+            }
+
             else
                 gridPtr()->loadBalance();
         }
@@ -209,13 +219,11 @@ protected:
             const bool domainMarkers = getParamFromGroup<bool>(modelParamGroup, "Grid.DomainMarkers", false);
 
             if (domainMarkers)
-                enableGmshDomainMarkers_ = true;
-
-            // as default read it on all processes in parallel
-            if(domainMarkers)
             {
+                enableGmshDomainMarkers_ = true;
                 std::vector<int> boundaryMarkers, elementMarkers;
                 auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+                // the gmsh reader reads the grid on rank 0
                 Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkers, elementMarkers, verbose, boundarySegments);
                 gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
                 gridData_ = std::make_shared<GridData>(gridPtr_, std::move(gridFactory), std::move(elementMarkers), std::move(boundaryMarkers));
@@ -312,6 +320,11 @@ protected:
      * \brief A state variable if domain markers have been read from a Gmsh file.
      */
     bool enableGmshDomainMarkers_ = false;
+
+    /*!
+     * \brief A state variable if cell or point data have been read from a VTK file.
+     */
+    bool enableVtkData_ = false;
 
     std::shared_ptr<Grid> gridPtr_;
     Dune::GridPtr<Grid> dgfGridPtr_;
