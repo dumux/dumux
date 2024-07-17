@@ -122,12 +122,16 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
         // make a grid factory
         Dune::GridFactory<Grid> factory;
 
-        readGrid_(factory, verbose);
+        // only read on rank 0
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
@@ -143,9 +147,12 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
-        readGrid_(factory, verbose);
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
@@ -163,10 +170,13 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
-        readGrid_(factory, verbose);
-        readGridData_(cellData, pointData, verbose);
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+            readGridData_(cellData, pointData, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
