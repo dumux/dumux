@@ -18,7 +18,7 @@
  -
  \nabla \cdot \left\lbrace
  \varrho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
- \left( \text{\nabla}
+ \left( \nabla
  p_w - \varrho_w \textbf{g}
  \right)
  +
