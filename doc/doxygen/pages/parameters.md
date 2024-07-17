@@ -175,3 +175,14 @@ Parameters are parsed into the parameter tree in the following precedence:
 2. Input file arguments overwrite
 3. User-default arguments overwrite
 4. Global defaults
+
+## Parameter list
+
+We curate a list of available pre-defined parameters here: @ref parameterlist.txt.
+
+Note that not all listed parameters will be available in all types of simulations. For example, naturally, the Newton
+solver can only be configured (via parameters in the group `[Newton]`) for
+simulations that actually use a Newton solver. Model-specific parameters are only
+read and used when the corresponding model is in use.
+
+
