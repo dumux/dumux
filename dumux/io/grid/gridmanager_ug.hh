@@ -123,6 +123,17 @@ public:
                 // Right now, UGGrid cannot communicate element data. If this gets implemented, communicate the data here:
                 // ParentType::gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
             }
+
+            // if we have VTK parameters we have to manually load balance the data
+            else if (ParentType::enableVtkData_)
+            {
+                // cell and point data is communicated during load balance
+                auto dh = ParentType::gridData_->createVtkDataHandle();
+                ParentType::gridPtr()->loadBalance(dh.interface());
+                // Right now, UGGrid cannot communicate element data. If this gets implemented, communicate the data here:
+                // gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+            }
+
             else
                 ParentType::gridPtr()->loadBalance();
         }
@@ -168,7 +179,7 @@ private:
 namespace Grid::Capabilities {
 
 // To the best of our knowledge UGGrid is view thread-safe for sequential runs
-// This specialization maybe be removed after we depend on Dune release 2.9 if is guaranteed by UGGrid itself by then
+// This specialization maybe be removed after we depend on Dune release 2.10 if is guaranteed by UGGrid itself by then
 template<int dim>
 struct MultithreadingSupported<Dune::UGGrid<dim>>
 {
