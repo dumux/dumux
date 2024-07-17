@@ -186,7 +186,7 @@ private:
 
         // get the first piece node
         const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
-        const auto myrank = Dune::MPIHelper::getCommunication().rank();
+        const auto myrank = Dune::MPIHelper::instance().rank();
         for (int rank = 0; rank < myrank; ++rank)
         {
             pieceNode = pieceNode->NextSiblingElement("Piece");
