@@ -513,6 +513,7 @@ private:
             case Dune::VTK::GeometryType::line: return Dune::GeometryTypes::line;
             case Dune::VTK::GeometryType::triangle: return Dune::GeometryTypes::triangle;
             case Dune::VTK::GeometryType::quadrilateral: return Dune::GeometryTypes::quadrilateral;
+            case Dune::VTK::GeometryType::tetrahedron: return Dune::GeometryTypes::tetrahedron;
             case Dune::VTK::GeometryType::hexahedron: return Dune::GeometryTypes::hexahedron;
             case Dune::VTK::GeometryType::prism: return Dune::GeometryTypes::prism;
             case Dune::VTK::GeometryType::pyramid: return Dune::GeometryTypes::pyramid;
