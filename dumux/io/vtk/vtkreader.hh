@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <filesystem>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
@@ -52,7 +53,11 @@ public:
     explicit VTKReader(const std::string& fileName)
     {
         using namespace tinyxml2;
-        fileName_ = Dune::MPIHelper::getCommunication().size() > 1 ?
+        const auto ext = std::filesystem::path(fileName).extension().string();
+        // If in parallel and the file to read is a parallel piece collection (pvtu/pvtp)
+        // read only the piece belonging to the own process. For this to work, the files
+        // have to have exactly the same amount of pieces than processes.
+        fileName_ = Dune::MPIHelper::instance().size() > 1 && ext[1] == 'p' ?
                         getProcessFileName_(fileName) : fileName;
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
