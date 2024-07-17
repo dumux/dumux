@@ -80,7 +80,7 @@ class MultiBinaryCouplingManager
         return CouplingMap::globalToLocal(domainI, domainJ);
     }
 
-    //! If two domain are coupled
+    //! If two domains are coupled
     template<class Map, std::size_t i, std::size_t j>
     static constexpr bool isCoupled_(Dune::index_constant<i> domainI, Dune::index_constant<j>)
     { return Detail::HasIndex<j, std::decay_t<decltype(Map::coupledDomains(domainI))>>::value; }
@@ -214,7 +214,7 @@ public:
     }
 
     // ! evaluate coupling residual for the derivative low dim DOF with respect to bulk DOF
-    // ! we only need to evaluate the part of the residual that will be influence by the bulk DOF
+    // ! we only need to evaluate the part of the residual that will be influenced by the bulk DOF
     template<std::size_t i, class LocalAssemblerI, std::size_t j>
     decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
                                         const SubControlVolumeFace<i>& scvfI,
@@ -236,7 +236,7 @@ public:
     }
 
     //! evaluate coupling residual for the derivative low dim DOF with respect to bulk DOF
-    //! we only need to evaluate the part of the residual that will be influence by the bulk DOF
+    //! we only need to evaluate the part of the residual that will be influenced by the bulk DOF
     template<std::size_t i, class LocalAssemblerI, std::size_t j>
     decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
                                         const LocalAssemblerI& localAssemblerI,
@@ -257,7 +257,7 @@ public:
     }
 
     //! evaluate coupling residual for the derivative low dim DOF with respect to bulk DOF
-    //! we only need to evaluate the part of the residual that will be influence by the bulk DOF
+    //! we only need to evaluate the part of the residual that will be influenced by the bulk DOF
     template<std::size_t i, class LocalAssemblerI, std::size_t j>
     decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
                                         const LocalAssemblerI& localAssemblerI,
