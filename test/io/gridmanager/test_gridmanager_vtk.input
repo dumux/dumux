@@ -1,3 +1,7 @@
+[Grid]
+File = ./grids/disk.vtu
+Verbosity = true
+
 [FoamGrid]
 Grid.File = ./grids/lupine.vtp
 Grid.Verbosity = true

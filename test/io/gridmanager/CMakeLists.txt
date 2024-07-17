@@ -308,6 +308,35 @@ dumux_add_test(NAME test_gridmanager_vtk_ug
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lens.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-uggrid-0.vtu)
 
+dumux_add_test(NAME test_gridmanager_vtk_alu
+              SOURCES test_gridmanager_vtk.cc
+              LABELS unit io
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/disk_alu-element-00000.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-refined-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/disk_alu-element-00001.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/disk_alu-vertex-00000.vtu)
+
+dumux_add_test(NAME test_gridmanager_vtk_alu_parallel
+              TARGET test_gridmanager_vtk_alu
+              LABELS unit io
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+              CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --ignore "rank"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu_parallel"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-element-00000.pvtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-refined-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-element-00001.pvtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-vertex-00000.pvtu)
 
 dumux_add_test(NAME test_gmshboundaryflag
               SOURCES test_gmshboundaryflag.cc

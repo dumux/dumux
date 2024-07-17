@@ -23,8 +23,8 @@ int main(int argc, char** argv)
     Dumux::Parameters::init(argc, argv, "test_gridmanager_dgf.input");
 
     auto name = Dumux::getParam<std::string>("Problem.Name");
-    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers("dgf", name + "-element");
-    Dumux::GridManagerTests<GRIDTYPE>::testVertexMarkers("dgf", name + "-vertex");
+    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers<int>("dgf", name + "-element");
+    Dumux::GridManagerTests<GRIDTYPE>::testVertexMarkers<int>("dgf", name + "-vertex");
 
     return 0;
 }

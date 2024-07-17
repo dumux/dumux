@@ -16,8 +16,9 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/grid/gridmanager_ug.hh>
-#include <dumux/io/grid/gridmanager_foam.hh>
+#include <dumux/io/grid/gridmanager.hh>
+
+#include "gridmanagertests.hh"
 
 namespace Dumux {
 
@@ -84,17 +85,24 @@ int main(int argc, char** argv)
 
     using namespace Dumux;
 
-#if UGGRID
+#ifndef GRIDTYPE
+    #if UGGRID
 
-    testVTKReader<Dune::UGGrid<2>>("UGGrid");
-    return 0;
+        testVTKReader<Dune::UGGrid<2>>("UGGrid");
+        return 0;
 
-#elif FOAMGRID
+    #elif FOAMGRID
 
-    testVTKReader<Dune::FoamGrid<1, 3>>("FoamGrid");
-    return 0;
+        testVTKReader<Dune::FoamGrid<1, 3>>("FoamGrid");
+        return 0;
+    #else
+    #warning "Unknown grid type. Skipping test."
+        return 77;
+    #endif
 #else
-#warning "Unknown grid type. Skipping test."
-    return 77;
+    auto name = Dumux::getParam<std::string>("Problem.Name");
+    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers<double>("vtu", name + "-element");
+    Dumux::GridManagerTests<GRIDTYPE>::testVertexMarkers<double>("vtu", name + "-vertex");
+    return 0;
 #endif
 }
