@@ -28,8 +28,10 @@ VanGenuchtenN = 4.7
 #Permeability = 1e-15
 
 [Problem]
-Name = 2p_VanGenuchten
+Name = 2p_tabulated
 EnableGravity = true
+VtpOutputFrequency = 5 # Write every n-th time step.
+
 
 [Vtk]
 WriteFaceData = false

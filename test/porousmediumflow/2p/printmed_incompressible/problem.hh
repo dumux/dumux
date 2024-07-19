@@ -43,6 +43,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using DropSolver = DropletSolverTwoP<TypeTag, false>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     enum {
         waterPressureIdx = Indices::pressureIdx,
         airSaturationIdx = Indices::saturationIdx,
@@ -56,7 +57,20 @@ public:
     : ParentType(gridGeometry)
     , tabletCenter_(tabletCenter)
     , tabletRadius_{tabletRadius}
-    {}
+    {
+        vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
+    }
+
+    bool shouldWriteOutput(const int timeStepIndex) const
+    {
+        if (vtpOutputFrequency_ < 0)
+            return true;
+
+        if (vtpOutputFrequency_ == 0)
+            return (timeStepIndex == 0);
+        else
+            return (timeStepIndex % vtpOutputFrequency_ == 0);
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -301,6 +315,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     const GlobalPosition tabletCenter_;
     const Scalar tabletRadius_;
+    int vtpOutputFrequency_;
 
 
     std::shared_ptr<DropSolver> dropletSolver_;

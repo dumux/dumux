@@ -6,6 +6,10 @@ dune_symlink_to_source_files(FILES "X-dir-CapillaryPressureVsAverageSaturation.d
 dune_symlink_to_source_files(FILES "X-dir-Non-wetting-EffPermeabilityVsAverageSaturation.dat")
 dune_symlink_to_source_files(FILES "X-dir-Wetting-EffPermeabilityVsAverageSaturation.dat")
 
+dune_symlink_to_source_files(FILES "Y-dir-CapillaryPressureVsAverageSaturation.dat")
+dune_symlink_to_source_files(FILES "Y-dir-Non-wetting-EffPermeabilityVsAverageSaturation.dat")
+dune_symlink_to_source_files(FILES "Y-dir-Wetting-EffPermeabilityVsAverageSaturation.dat")
+
 # using box
 dumux_add_test(NAME test_2p_incompressible_box_printmed
               LABELS porousmediumflow 2p

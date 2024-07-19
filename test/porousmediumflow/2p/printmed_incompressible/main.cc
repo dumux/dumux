@@ -214,7 +214,9 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         dropSolver->update();
+
         // write vtk output
+        if(problem->shouldWriteOutput(timeLoop->timeStepIndex()))
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
