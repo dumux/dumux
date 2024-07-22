@@ -280,6 +280,27 @@ public:
 
         }
     }
+    template<class Drop, class SubControlVolume>
+    static Scalar aboveHeight(const Drop& droplet, const SubControlVolume& scv)
+    {
+        const auto dofPosition = scv.dofPosition();
+        const auto dropContactCenter = droplet.center();
+        const auto dropRadius = droplet.radius();
+        const auto dropMaxHeight = droplet.height();
+
+        auto dropSphereCenter = dropContactCenter;
+        dropSphereCenter[1] -=  dropRadius - dropMaxHeight;
+
+        auto diff = dropSphereCenter - dofPosition;
+
+        Scalar height = dropRadius * dropRadius;
+        height -= (diff[0] * diff[0] + diff[2] * diff[2]);
+        height = std::sqrt(height);
+        height += dropSphereCenter[1];
+        height -= dofPosition[1];
+
+        return height;
+    }
 private:
 
     template<class SubControlVolumeFace>

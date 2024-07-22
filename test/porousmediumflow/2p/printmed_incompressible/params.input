@@ -18,6 +18,7 @@ InitialVolume = 5e-9        # m3
 #InitialContactRadius = 5e-4   # m
 InitialCenter = 5e-3 1e-3 5e-3
 DistanceBetweenDroplets = 1.5e-3
+DropletGravity = true
 
 [SpatialParams]
 Permeability = 2.4147e-18

@@ -88,7 +88,9 @@ public:
             dropletRadius_ = droplet.radius();
             dropletContactRadius_ = droplet.contactRadius();
             dropletContactAngle_ = droplet.contactAngle();
+            dropletHeight_ = droplet.height();
             dropletPc_ = problem.dropSolver()->Pc(droplet);
+            dropletGravity_ = problem.dropSolver()->gravityImpact(droplet, scv);
         }
 
     }
@@ -108,12 +110,20 @@ public:
     Scalar dropletPc() const
     { return dropletPc_; }
 
+    Scalar dropletHeight() const
+    { return dropletHeight_; }
+
+    Scalar dropletGravity() const
+    { return dropletGravity_; }
+
 private:
     Scalar dropletVolume_ = 0.0;
     Scalar dropletRadius_ = 0.0;
     Scalar dropletContactRadius_ = 0.0;
     Scalar dropletContactAngle_ = 0.0;
     Scalar dropletPc_ = 0.0;
+    Scalar dropletHeight_ = 0.0;
+    Scalar dropletGravity_ = 0.0;
 
 };
 
@@ -167,7 +177,9 @@ public:
             dropletRadius_ = droplet.radius();
             dropletContactRadius_ = droplet.contactRadius();
             dropletContactAngle_ = droplet.contactAngle();
+            dropletHeight_ = droplet.height();
             dropletPc_ = problem.dropSolver()->Pc(droplet);
+            dropletGravity_ = problem.dropSolver()->gravityImpact(droplet, scv);
         }
 
     }
@@ -187,12 +199,20 @@ public:
     Scalar dropletPc() const
     { return dropletPc_; }
 
+    Scalar dropletHeight() const
+    { return dropletHeight_; }
+
+    Scalar dropletGravity() const
+    { return dropletGravity_; }
+
 private:
     Scalar dropletVolume_ = 0.0;
     Scalar dropletRadius_ = 0.0;
     Scalar dropletContactRadius_ = 0.0;
     Scalar dropletContactAngle_ = 0.0;
     Scalar dropletPc_ = 0.0;
+    Scalar dropletHeight_ = 0.0;
+    Scalar dropletGravity_ = 0.0;
 
 };
 

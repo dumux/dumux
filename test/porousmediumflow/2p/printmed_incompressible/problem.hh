@@ -59,6 +59,7 @@ public:
     , tabletRadius_{tabletRadius}
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
+        dropletGravity_ = getParam<bool>("Drop.DropletGravity", true);
     }
 
     bool shouldWriteOutput(const int timeStepIndex) const
@@ -173,7 +174,10 @@ public:
             {
 
                 const auto& droplet = dropletSolver_->droplet();
-                values[Indices::pressureIdx] = 1e5 + dropletSolver_->Pc(droplet);
+                values[Indices::pressureIdx] += dropletSolver_->Pc(droplet);
+                if (dropletGravity_)
+                    values[Indices::pressureIdx] += dropletSolver_->gravityImpact(droplet, scv);
+
                 values[Indices::saturationIdx] = 1.0;
             }
             else
@@ -316,6 +320,8 @@ private:
     const GlobalPosition tabletCenter_;
     const Scalar tabletRadius_;
     int vtpOutputFrequency_;
+
+    bool dropletGravity_;
 
 
     std::shared_ptr<DropSolver> dropletSolver_;

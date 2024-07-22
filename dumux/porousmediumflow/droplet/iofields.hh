@@ -61,6 +61,10 @@ public:
                               "dropletContactAngle");
         out.addVolumeVariable([](const auto& v){ return v.dropletPc(); },
                               "dropletPc");
+        out.addVolumeVariable([](const auto& v){ return v.dropletHeight(); },
+                              "dropletHeight");
+        out.addVolumeVariable([](const auto& v){ return v.dropletGravity(); },
+                              "dropletGravity");
     }
 
     template <class ModelTraits, class FluidSystem, class SolidSystem = void>

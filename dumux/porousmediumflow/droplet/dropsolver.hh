@@ -176,6 +176,19 @@ public:
         return 2 * surfaceTension_ / radius;
     }
 
+    Scalar gravityImpact(const Drop& droplet, const SubControlVolume& scv) const
+    {
+        const auto radius = droplet.radius();
+        if (radius == 0.0)
+            return 0.0;
+
+        const auto height = DropIntersection<Scalar, GlobalPosition>::aboveHeight(droplet, scv);
+        const Scalar g = 9.81;
+        const Scalar density = 1e3;
+
+        return density * g * height;  //TODODrop call density form volvar
+    }
+
     Scalar dropRadius(const Element& element, const Drop& droplet) const
     {
         return droplet.radius();
