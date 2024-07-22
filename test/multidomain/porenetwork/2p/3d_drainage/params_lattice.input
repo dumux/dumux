@@ -1,0 +1,41 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 4 # [s]
+CheckPoints =
+
+[Grid]
+File = ./lattice_network.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Circle
+
+[Problem]
+Name = pnm_3d
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
+EnableGravity = false
+CapillaryPressure = 7000
+UseFixedPressureAndSaturationBoundary = false
+NonWettingMassFlux = 5e-10
+RegularizationDelta = 1e-4
+RegularizationFunction = Spline
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+MaxSteps = 10
+TargetSteps = 4
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+NewtonOverview = NewtonOverview.txt
+
+[InvasionState]
+Verbosity = true
+#AccuracyCriterion = 0.99
+#BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-14
+
+[SpatialParams]
+RegularizationLowSw = 0.01
+RegularizationHighSw = 0.99
+HighSwRegularizationMethod = Spline

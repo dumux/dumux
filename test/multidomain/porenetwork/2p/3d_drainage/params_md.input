@@ -1,0 +1,58 @@
+[TimeLoop]
+DtInitial = 1e-3 # [s]
+TEnd = 100 # [s]
+CheckPoints =
+
+[Grid]
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+UpperRight = 1e-3 1e-3 1e-3
+NumPores = 10 10 10
+ParameterType = lognormal
+MeanPoreInscribedRadius = 4.5e-5
+StandardDeviationPoreInscribedRadius = 3e-6
+DeletionProbability = 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+PruningSeedIndices = 2 3
+Sanitize = true
+DeletionRandomNumberSeed = 33
+ParameterRandomNumberSeed = 22
+BoundaryPoreLabels = xMin:2 xMax:3
+
+[Problem]
+VtpOutputFrequency = -1
+EnableGravity = false
+CapillaryPressure = 4840
+NonWettingMassFlux = 5e-10
+
+[Pnm.Problem]
+Name = pnm_3d_md
+
+[Constraint.Problem]
+Name = pnm_3d_md_constraint
+
+[Vtk]
+AddVelocity = 1
+
+[Newton]
+UseLineSearch = true
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-6
+MaxTimeStepDivisions = 10
+NewtonOutputFilename = NewtonLog.txt
+
+[InvasionState]
+Verbosity = true
+BlockNonwettingPhaseAtThroatLabel = 3
+InvasionThetaThreshold = 1e-14
+SnapoffThetaThreshold = 0.999999999999
+
+[SpatialParams]
+RegularizationLowSw = 0.01
+RegularizationHighSw = 0.99
+HighSwRegularizationMethod = Spline
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3

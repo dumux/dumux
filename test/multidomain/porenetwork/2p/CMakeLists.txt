@@ -4,3 +4,4 @@
 add_subdirectory(1d_drainage)
 add_subdirectory(bifurcated_pipelines_drainage)
 add_subdirectory(pcSCurve)
+add_subdirectory(3d_drainage)
