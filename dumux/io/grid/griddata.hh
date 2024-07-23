@@ -235,27 +235,51 @@ public:
     // \{
 
     /*!
-     * \brief Get a element parameter
+     * \brief Get an element parameter
      * \param element the element
      * \param fieldName the name of the field to read from the vtk data
      */
     double getParameter(const Element& element, const std::string& fieldName) const
+    { return getArrayParameter<double, 1>(element, fieldName)[0]; }
+
+    /*!
+     * \brief Get an element parameter that is an array
+     * \param element the element
+     * \param fieldName the name of the field to read from the vtk data
+     * \tparam T the parameter scalar type
+     * \tparam size the number of parameters in the array
+     */
+    template<class T, std::size_t size>
+    std::array<T, size> getArrayParameter(const Element& element, const std::string& fieldName) const
     {
         if (dataSourceType_ != DataSourceType::vtk)
             DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
 
         if (cellData_.count(fieldName) == 0)
-            DUNE_THROW(Dune::IOError, "No field with the name " << fieldName << " found in cell data");
+            DUNE_THROW(Dune::IOError, "No field with the name " << fieldName << " found in cell data.");
 
         // parameters are only given for level 0 elements
         auto level0element = element;
         while (level0element.hasFather())
             level0element = level0element.father();
 
-        if (gridPtr_->comm().size() > 1)
-            return cellData_.at(fieldName)[gridPtr_->levelGridView(0).indexSet().index(level0element)];
-        else
-            return cellData_.at(fieldName)[gridFactory_->insertionIndex(level0element)];
+        // different index depending on whether we have communicated user data (parallel setting) or not (sequential setting)
+        const auto index = [&]{
+            if (gridPtr_->comm().size() > 1)
+                return gridPtr_->levelGridView(0).indexSet().index(level0element);
+            else
+                return gridFactory_->insertionIndex(level0element);
+        }();
+
+        std::array<T, size> param;
+        const auto& data = cellData_.at(fieldName);
+
+        if (const std::size_t nc = data.size()/gridPtr_->levelGridView(0).size(0); size != nc)
+            DUNE_THROW(Dune::IOError, "Array size " << size << " does not match number of components of field " << nc);
+
+        for (std::size_t i = 0; i < size; ++i)
+            param[i] = static_cast<T>(data[i + size*index]);
+        return param;
     }
 
     /*!
@@ -265,6 +289,18 @@ public:
      * \note You can only pass vertices that exist on level 0!
      */
     double getParameter(const Vertex& vertex, const std::string& fieldName) const
+    { return getArrayParameter<double, 1>(vertex, fieldName)[0]; }
+
+    /*!
+     * \brief Call the parameters function of the DGF grid pointer if available for vertex data
+     * \param vertex the vertex
+     * \param fieldName the name of the field to read from the vtk data
+     * \tparam T the parameter scalar type
+     * \tparam size the number of parameters in the array
+     * \note You can only pass vertices that exist on level 0 (otherwise: undefined behaviour).
+     */
+    template<class T, std::size_t size>
+    std::array<T, size> getArrayParameter(const Vertex& vertex, const std::string& fieldName) const
     {
         if (dataSourceType_ != DataSourceType::vtk)
             DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
@@ -275,10 +311,23 @@ public:
         if (pointData_.count(fieldName) == 0)
             DUNE_THROW(Dune::IOError, "No field with the name " << fieldName << " found in point data");
 
-        if (gridPtr_->comm().size() > 1)
-            return pointData_.at(fieldName)[gridPtr_->levelGridView(0).indexSet().index(vertex)];
-        else
-            return pointData_.at(fieldName)[gridFactory_->insertionIndex(vertex)];
+        // different index depending on whether we have communicated user data (parallel setting) or not (sequential setting)
+        const auto index = [&]{
+            if (gridPtr_->comm().size() > 1)
+                return gridPtr_->levelGridView(0).indexSet().index(vertex);
+            else
+                return gridFactory_->insertionIndex(vertex);
+        }();
+
+        std::array<T, size> param;
+        const auto& data = pointData_.at(fieldName);
+
+        if (const std::size_t nc = data.size()/gridPtr_->levelGridView(0).size(Grid::dimension); size != nc)
+            DUNE_THROW(Dune::IOError, "Array size " << size << " does not match number of components of field " << nc);
+
+        for (std::size_t i = 0; i < size; ++i)
+            param[i] = static_cast<T>(data[i + size*index]);
+        return param;
     }
 
     /*!
