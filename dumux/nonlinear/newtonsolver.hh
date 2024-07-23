@@ -205,19 +205,21 @@ public:
     using typename ParentType::Variables;
     using Communication = Comm;
 
-    /*!
-     * \brief The Constructor
-     */
     NewtonSolver(std::shared_ptr<Assembler> assembler,
                  std::shared_ptr<LinearSolver> linearSolver,
                  const Communication& comm = Dune::MPIHelper::getCommunication(),
-                 const std::string& paramGroup = "")
+                 const std::string& paramGroup = "",
+                 const std::string& paramGroupName = "Newton",
+                 int verbosity = 2)
     : ParentType(assembler, linearSolver)
     , endIterMsgStream_(std::ostringstream::out)
     , comm_(comm)
     , paramGroup_(paramGroup)
+    , solverName_(paramGroupName)
     , priVarSwitchAdapter_(std::make_unique<PrimaryVariableSwitchAdapter>(paramGroup))
     {
+        verbosity_ = comm_.rank() == 0 ? getParamFromGroup<int>(paramGroup, solverName_ + ".Verbosity", verbosity) : 0;
+
         initParams_(paramGroup);
 
         // set the linear system (matrix & residual) in the assembler
@@ -332,7 +334,7 @@ public:
                     if (verbosity_ >= 1)
                     {
                         const auto dt = timeLoop.timeStepSize();
-                        std::cout << Fmt::format("Newton solver did not converge with dt = {} seconds. ", dt)
+                        std::cout << Fmt::format("{} solver did not converge with dt = {} seconds. ", solverName_, dt)
                                   << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
                     }
 
@@ -344,8 +346,8 @@ public:
             else
             {
                 DUNE_THROW(NumericalProblem,
-                    Fmt::format("Newton solver didn't converge after {} time-step divisions; dt = {}.\n",
-                                maxTimeStepDivisions_, timeLoop.timeStepSize()));
+                    Fmt::format("{} solver didn't converge after {} time-step divisions; dt = {}.\n",
+                                solverName_, maxTimeStepDivisions_, timeLoop.timeStepSize()));
             }
         }
     }
@@ -361,7 +363,7 @@ public:
         const bool converged = solve_(vars);
         if (!converged)
             DUNE_THROW(NumericalProblem,
-                Fmt::format("Newton solver didn't converge after {} iterations.\n", numSteps_));
+                Fmt::format("{} solver didn't converge after {} iterations.\n", solverName_, numSteps_));
     }
 
     /*!
@@ -497,7 +499,7 @@ public:
         catch (const Dune::Exception &e)
         {
             if (verbosity_ >= 1)
-                std::cout << "Newton: Caught exception from the linear solver: \"" << e.what() << "\"\n";
+                std::cout << solverName_ << ": Caught exception from the linear solver: \"" << e.what() << "\"\n";
 
             converged = false;
         }
@@ -620,7 +622,7 @@ public:
                 std::cout << '\r'; // move cursor to beginning of line
 
             const auto width = Fmt::formatted_size("{}", maxSteps_);
-            std::cout << Fmt::format("Newton iteration {:{}} done", numSteps_, width);
+            std::cout << Fmt::format("{} iteration {:{}} done", solverName_, numSteps_, width);
 
             if (enableShiftCriterion_)
                 std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
@@ -712,11 +714,11 @@ public:
     void report(std::ostream& sout = std::cout) const
     {
         sout << '\n'
-             << "Newton statistics\n"
+             << solverName_ << " statistics\n"
              << "----------------------------------------------\n"
-             << "-- Total Newton iterations:            " << totalWastedIter_ + totalSucceededIter_ << '\n'
-             << "-- Total wasted Newton iterations:     " << totalWastedIter_ << '\n'
-             << "-- Total succeeded Newton iterations:  " << totalSucceededIter_ << '\n'
+             << "-- Total iterations:                   " << totalWastedIter_ + totalSucceededIter_ << '\n'
+             << "-- Total wasted iterations:            " << totalWastedIter_ << '\n'
+             << "-- Total succeeded iterations:         " << totalSucceededIter_ << '\n'
              << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
              << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
              << std::endl;
@@ -738,30 +740,30 @@ public:
      */
     void reportParams(std::ostream& sout = std::cout) const
     {
-        sout << "\nNewton solver configured with the following options and parameters:\n";
+        sout << "\n" << solverName_ << " solver configured with the following options and parameters:\n";
         // options
-        if (useLineSearch_) sout << " -- Newton.UseLineSearch = true\n";
-        if (useChop_) sout << " -- Newton.EnableChop = true\n";
-        if (enablePartialReassembly_) sout << " -- Newton.EnablePartialReassembly = true\n";
-        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.EnableAbsoluteResidualCriterion = true\n";
-        if (enableShiftCriterion_) sout << " -- Newton.EnableShiftCriterion = true (relative shift convergence criterion)\n";
-        if (enableResidualCriterion_) sout << " -- Newton.EnableResidualCriterion = true\n";
-        if (satisfyResidualAndShiftCriterion_) sout << " -- Newton.SatisfyResidualAndShiftCriterion = true\n";
+        if (useLineSearch_) sout << " -- " << solverName_ << ".UseLineSearch = true\n";
+        if (useChop_) sout << " -- " << solverName_ << ".EnableChop = true\n";
+        if (enablePartialReassembly_) sout << " -- " << solverName_ << ".EnablePartialReassembly = true\n";
+        if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".EnableAbsoluteResidualCriterion = true\n";
+        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
+        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
+        if (satisfyResidualAndShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualAndShiftCriterion = true\n";
         // parameters
-        if (enableShiftCriterion_) sout << " -- Newton.MaxRelativeShift = " << shiftTolerance_ << '\n';
-        if (enableAbsoluteResidualCriterion_) sout << " -- Newton.MaxAbsoluteResidual = " << residualTolerance_ << '\n';
-        if (enableResidualCriterion_) sout << " -- Newton.ResidualReduction = " << reductionTolerance_ << '\n';
-        sout << " -- Newton.MinSteps = " << minSteps_ << '\n';
-        sout << " -- Newton.MaxSteps = " << maxSteps_ << '\n';
-        sout << " -- Newton.TargetSteps = " << targetSteps_ << '\n';
+        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
+        if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".MaxAbsoluteResidual = " << residualTolerance_ << '\n';
+        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".ResidualReduction = " << reductionTolerance_ << '\n';
+        sout << " -- " << solverName_ << ".MinSteps = " << minSteps_ << '\n';
+        sout << " -- " << solverName_ << ".MaxSteps = " << maxSteps_ << '\n';
+        sout << " -- " << solverName_ << ".TargetSteps = " << targetSteps_ << '\n';
         if (enablePartialReassembly_)
         {
-            sout << " -- Newton.ReassemblyMinThreshold = " << reassemblyMinThreshold_ << '\n';
-            sout << " -- Newton.ReassemblyMaxThreshold = " << reassemblyMaxThreshold_ << '\n';
-            sout << " -- Newton.ReassemblyShiftWeight = " << reassemblyShiftWeight_ << '\n';
+            sout << " -- " << solverName_ << ".ReassemblyMinThreshold = " << reassemblyMinThreshold_ << '\n';
+            sout << " -- " << solverName_ << ".ReassemblyMaxThreshold = " << reassemblyMaxThreshold_ << '\n';
+            sout << " -- " << solverName_ << ".ReassemblyShiftWeight = " << reassemblyShiftWeight_ << '\n';
         }
-        sout << " -- Newton.RetryTimeStepReductionFactor = " << retryTimeStepReductionFactor_ << '\n';
-        sout << " -- Newton.MaxTimeStepDivisions = " << maxTimeStepDivisions_ << '\n';
+        sout << " -- " << solverName_ << ".RetryTimeStepReductionFactor = " << retryTimeStepReductionFactor_ << '\n';
+        sout << " -- " << solverName_ << ".MaxTimeStepDivisions = " << maxTimeStepDivisions_ << '\n';
         sout << std::endl;
     }
 
@@ -790,7 +792,7 @@ public:
     }
 
     /*!
-     * \brief Specifies the verbosity level
+     * \brief Specify the verbosity level
      */
     void setVerbosity(int val)
     { verbosity_ = val; }
@@ -1014,7 +1016,7 @@ private:
         catch (const NumericalProblem &e)
         {
             if (verbosity_ >= 1)
-                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+                std::cout << solverName_ << ": Caught exception: \"" << e.what() << "\"\n";
 
             totalWastedIter_ += numSteps_;
 
@@ -1089,7 +1091,7 @@ private:
                                 const ResidualVector& deltaU)
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "Chopped Newton update strategy not implemented.");
+                   "Chopped " << solverName_ << " solver update strategy not implemented.");
     }
 
     /*!
@@ -1111,41 +1113,40 @@ private:
     //! initialize the parameters by reading from the parameter tree
     void initParams_(const std::string& group = "")
     {
-        useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch", false);
-        lineSearchMinRelaxationFactor_ = getParamFromGroup<Scalar>(group, "Newton.LineSearchMinRelaxationFactor", 0.125);
-        useChop_ = getParamFromGroup<bool>(group, "Newton.EnableChop", false);
+        useLineSearch_ = getParamFromGroup<bool>(group, solverName_ + ".UseLineSearch", false);
+        lineSearchMinRelaxationFactor_ = getParamFromGroup<Scalar>(group, solverName_ + ".LineSearchMinRelaxationFactor", 0.125);
+        useChop_ = getParamFromGroup<bool>(group, solverName_ + ".EnableChop", false);
         if(useLineSearch_ && useChop_)
             DUNE_THROW(Dune::InvalidStateException, "Use either linesearch OR chop!");
 
-        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion", false);
-        enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion", true);
-        enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion", false) || enableAbsoluteResidualCriterion_;
-        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion", false);
-        enableDynamicOutput_ = getParamFromGroup<bool>(group, "Newton.EnableDynamicOutput", true);
+        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".EnableAbsoluteResidualCriterion", false);
+        enableShiftCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".EnableShiftCriterion", true);
+        enableResidualCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".EnableResidualCriterion", false) || enableAbsoluteResidualCriterion_;
+        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".SatisfyResidualAndShiftCriterion", false);
+        enableDynamicOutput_ = getParamFromGroup<bool>(group, solverName_ + ".EnableDynamicOutput", true);
 
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented,
-                       "at least one of NewtonEnableShiftCriterion or "
-                       << "NewtonEnableResidualCriterion has to be set to true");
+                       "at least one of " << solverName_ << ".EnableShiftCriterion or "
+                       << solverName_ << ".EnableResidualCriterion has to be set to true");
         }
 
-        setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift", 1e-8));
-        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual", 1e-5));
-        setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction", 1e-5));
-        setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps", 10));
-        setMinSteps(getParamFromGroup<int>(group, "Newton.MinSteps", 2));
-        setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps", 18));
+        setMaxRelativeShift(getParamFromGroup<Scalar>(group, solverName_ + ".MaxRelativeShift", 1e-8));
+        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, solverName_ + ".MaxAbsoluteResidual", 1e-5));
+        setResidualReduction(getParamFromGroup<Scalar>(group, solverName_ + ".ResidualReduction", 1e-5));
+        setTargetSteps(getParamFromGroup<int>(group, solverName_ + ".TargetSteps", 10));
+        setMinSteps(getParamFromGroup<int>(group, solverName_ + ".MinSteps", 2));
+        setMaxSteps(getParamFromGroup<int>(group, solverName_ + ".MaxSteps", 18));
 
-        enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly", false);
-        reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMinThreshold", 1e-1*shiftTolerance_);
-        reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMaxThreshold", 1e2*shiftTolerance_);
-        reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyShiftWeight", 1e-3);
+        enablePartialReassembly_ = getParamFromGroup<bool>(group, solverName_ + ".EnablePartialReassembly", false);
+        reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyMinThreshold", 1e-1*shiftTolerance_);
+        reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyMaxThreshold", 1e2*shiftTolerance_);
+        reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyShiftWeight", 1e-3);
 
-        maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
-        retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, "Newton.RetryTimeStepReductionFactor", 0.5);
+        maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, solverName_ + ".MaxTimeStepDivisions", 10);
+        retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, solverName_ + ".RetryTimeStepReductionFactor", 0.5);
 
-        verbosity_ = comm_.rank() == 0 ? getParamFromGroup<int>(group, "Newton.Verbosity", 2) : 0;
         numSteps_ = 0;
 
         // output a parameter report
@@ -1224,8 +1225,10 @@ private:
     bool satisfyResidualAndShiftCriterion_;
     bool enableDynamicOutput_;
 
-    //! the parameter group for getting parameters from the parameter tree
+    //! the parameter group problem prefix for getting parameters from the parameter tree
     std::string paramGroup_;
+    //! the parameter group for getting parameters from the parameter tree
+    std::string solverName_;
 
     // infrastructure for partial reassembly
     bool enablePartialReassembly_;
