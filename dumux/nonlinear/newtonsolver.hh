@@ -804,6 +804,18 @@ public:
     { return verbosity_ ; }
 
     /*!
+     * \brief Specify whether line search is enabled or not
+     */
+    void setUseLineSearch(bool val = true)
+    { useLineSearch_ = val; }
+
+    /*!
+     * \brief Return whether line search is enabled or not
+     */
+    bool useLineSearch() const
+    { return useLineSearch_; }
+
+    /*!
      * \brief Returns the parameter group
      */
     const std::string& paramGroup() const
