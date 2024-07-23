@@ -1,13 +1,13 @@
 [TimeLoop]
 DtInitial = 1e-8 # [s]
-TEnd = 10 # [s]
-MaxTimeStepSize = 10
-InkJetFrequency = 1e-3 #Hz
+TEnd = 98 # [s]
+MaxTimeStepSize = 1
+InkJetFrequency = 0.02 #Hz
 
 [Grid]
 LowerLeft = 0 0 0
-UpperRight = 1e-2 1e-3 1e-2
-Cells = 100 5 100
+UpperRight = 1e-2 5e-3 1e-2
+Cells = 100 25 100
 
 [Tablet]
 Radius = 5e-3
@@ -31,7 +31,7 @@ VanGenuchtenN = 4.7
 [Problem]
 Name = 2p_tabulated
 EnableGravity = true
-VtpOutputFrequency = 5 # Write every n-th time step.
+VtpOutputFrequency = 10 # Write every n-th time step.
 
 
 [Vtk]
