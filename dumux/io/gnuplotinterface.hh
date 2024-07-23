@@ -227,12 +227,12 @@ public:
      * \param fileName The name of the written data file
      * \param options Specific gnuplot options passed to this plot
      */
-    void addDataSetToPlot(const std::vector<Scalar>& x,
-                          const std::vector<Scalar>& y,
+    template<class DataX, class DataY>
+    void addDataSetToPlot(const DataX& x, const DataY& y,
                           const std::string& fileName,
                           const std::string& options = "with lines")
     {
-        if (x.empty() || y.empty())
+        if (x.size() == 0 || y.size() == 0)
             DUNE_THROW(Dune::InvalidStateException, "Data vectors have to contain data!");
 
         if (x.size() > y.size())
