@@ -576,7 +576,7 @@ struct LinearTable
     static constexpr Scalar interpolate(Scalar ip, const RandomAccessContainer0& range, const RandomAccessContainer1& values)
     {
         // check bounds
-        if (ip > range.back()) return values.back();
+        if (ip > range[range.size()-1]) return values[values.size()-1];
         if (ip < range[0]) return values[0];
 
         // if we are within bounds find the index of the lower bound
