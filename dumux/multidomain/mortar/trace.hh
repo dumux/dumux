@@ -235,6 +235,42 @@ template<typename GridVariables, typename Indicator>
 FVTrace(std::shared_ptr<GridVariables>, Indicator&&) -> FVTrace<std::remove_const_t<GridVariables>>;
 
 
+//! Trace operator (combines a trace and a given assembler function)
+template<typename Trace, typename FaceAssembler>
+class TraceOperator
+{
+ public:
+    using TraceGridView = typename Trace::TraceGridView;
+    using TraceEntityMapper = typename Trace::TraceEntityMapper;
+
+    TraceOperator(Trace&& trace, FaceAssembler&& assembler)
+    : trace_{std::move(trace)}
+    , assembler_{std::move(assembler)}
+    {}
+
+    //! Return the grid view representing the trace
+    TraceGridView gridView() const
+    { return trace_.leafGridView(); }
+
+    //! Return the index mapper for trace grid elements
+    const TraceEntityMapper& elementMapper() const
+    { return trace_.elementMapper(); }
+
+    //! Return the index mapper for trace grid vertices
+    const TraceEntityMapper& vertexMapper() const
+    { return trace_.vertexMapper(); }
+
+    //! Assemble variables on the trace according to the stored assembler
+    template<typename SolutionVector>
+    SolutionVector assemble(const SolutionVector& x) const {
+        return trace_.assemble(x, assembler_);
+    }
+
+ private:
+    Trace trace_;
+    FaceAssembler assembler_;
+};
+
 //! Return the default advective flux function for trace flux assembly in cellcentered schemes (TODO: name should be trace related)
 template<typename FluxVariables, typename Problem>
 inline constexpr auto defaultCCAdvectiveFluxFunction(const Problem& problem)
