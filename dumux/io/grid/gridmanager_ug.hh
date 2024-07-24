@@ -179,7 +179,7 @@ private:
 namespace Grid::Capabilities {
 
 // To the best of our knowledge UGGrid is view thread-safe for sequential runs
-// This specialization maybe be removed after we depend on Dune release 2.10 if is guaranteed by UGGrid itself by then
+// TODO / Deprecation notice: This specialization may be removed after we depend on Dune release 2.10 if is guaranteed by UGGrid itself by then
 template<int dim>
 struct MultithreadingSupported<Dune::UGGrid<dim>>
 {
