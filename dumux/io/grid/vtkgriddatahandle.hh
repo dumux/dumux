@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief A data handle for commucating grid data for VTK grids
+ * \brief A data handle for communicating grid data for VTK grids
  */
 #ifndef DUMUX_VTK_GRID_DATA_HANDLE_HH
 #define DUMUX_VTK_GRID_DATA_HANDLE_HH
