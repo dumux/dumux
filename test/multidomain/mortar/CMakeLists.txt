@@ -14,3 +14,9 @@ dumux_add_test(NAME test_trace_tpfa
                COMPILE_DEFINITIONS TYPETAG=TraceTpfa
                CMD_ARGS test_trace.input
                LABELS unit)
+
+dumux_add_test(NAME test_mortar_model
+               SOURCES test_model.cc
+               COMPILE_DEFINITIONS TYPETAG=MortarModelTpfa
+               CMD_ARGS test_model.input
+               LABELS unit)

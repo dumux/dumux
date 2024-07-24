@@ -1,0 +1,6 @@
+[0.Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1
+
+[Problem]
+EnableGravity = false
