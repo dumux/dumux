@@ -63,9 +63,12 @@ template<typename GridVariables, typename TraceGrid = TraceDetail::DefaultTraceG
 class FVTrace
 {
     using GridGeometry = typename GridVariables::GridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+
     using GridView = typename GridGeometry::GridView;
     using GridIntersection = typename GridView::Intersection;
-    using Coordinate = typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
+    using GridElement = typename GridView::template Codim<0>::Entity;
+    using Coordinate = typename GridElement::Geometry::GlobalCoordinate;
 
     using TraceElementToScvfElementIndices = std::unordered_map<std::size_t, std::vector<std::size_t>>;
 
@@ -163,14 +166,24 @@ class FVTrace
     const TraceEntityMapper& vertexMapper() const
     { return *traceVertexMapper_; }
 
+    //! Return the index of the trace element that the given scvf coincides with
+    std::size_t traceElement(const GridElement& element, const SubControlVolumeFace& scvf) const
+    {
+        const auto eIdx = domainGridGeometry_().elementMapper().index(element);
+        for (const auto& [traceElemIdx, scvfIndices] : traceToScvfIndices_.at(eIdx))
+            if (scvfIndices.contains(scvf.index()))
+                return traceElemIdx;
+        DUNE_THROW(Dune::InvalidStateException, "Could not find trace element for the given scvf.");
+    }
+
     //! Assemble variables on the trace
     template<typename SolutionVector, typename FaceVariableFunctor>
         requires(std::invocable<FaceVariableFunctor,
-            const typename GridView::template Codim<0>::Entity&,
+            const GridElement&,
             const typename GridGeometry::LocalView&,
             const typename GridVariables::GridVolumeVariables::LocalView&,
             const typename GridVariables::GridFluxVariablesCache::LocalView&,
-            const typename GridGeometry::SubControlVolumeFace&
+            const SubControlVolumeFace&
         >)
     SolutionVector assemble(const SolutionVector& x, FaceVariableFunctor&& vars) const {
         SolutionVector trace;
