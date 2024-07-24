@@ -63,9 +63,7 @@ public:
         {
             for (std::size_t mId = 0; mId < mortarGridGeometries_.size(); ++mId)
             {
-                auto glue = makeGlue(subDomainGridGeometry(sdId), mortarGridGeometry(mId));
-
-                if (glue.size() > 0)
+                if (auto glue = makeGlue(subDomainGridGeometry(sdId), mortarGridGeometry(mId)); glue.size() > 0)
                 {
                     std::cout << "Found intersections between subdomain " << sdId << " and mortar " << mId << std::endl;
                     subDomainToInterfaceIds_[sdId].push_back(interfaces_.size());
