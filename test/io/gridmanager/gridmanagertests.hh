@@ -130,6 +130,7 @@ public:
         }
     }
 
+    template<class Marker = int>
     static void testElementMarkers(const std::string& type = "gmsh",
                                    const std::string& vtkFileName = "test",
                                    bool refine = true)
@@ -140,7 +141,8 @@ public:
         auto gridData = gridManager.getGridData();
 
         // read the element markers and the rank
-        std::vector<int> elementMarker, rank;
+        std::vector<Marker> elementMarker;
+        std::vector<int> rank;
         getElementMarkers_(gridManager.grid().leafGridView(), gridData, elementMarker, type);
         getRank_(gridManager.grid().leafGridView(), rank);
 
@@ -160,6 +162,7 @@ public:
         }
     }
 
+    template<class Marker = int>
     static void testVertexMarkers(const std::string& type = "dgf",
                                   const std::string& vtkFileName = "test")
     {
@@ -169,7 +172,7 @@ public:
         auto gridData = gridManager.getGridData();
 
         // read the element markers and the rank
-        std::vector<int> vertexMarker;
+        std::vector<Marker> vertexMarker;
         getVertexMarkers_(gridManager.grid().levelGridView(0), gridData, vertexMarker, type);
 
         // construct a vtk output writer and attach the element markers
@@ -192,10 +195,10 @@ private:
         }
     }
 
-    template<class GridData>
+    template<class GridData, class Marker>
     static void getElementMarkers_(const GridView& gridView,
                                    const GridData& gridData,
-                                   std::vector<int>& elementMarker,
+                                   std::vector<Marker>& elementMarker,
                                    const std::string& type)
     {
         elementMarker.clear();
@@ -208,19 +211,21 @@ private:
                 elementMarker[eIdx] = gridData->getElementDomainMarker(element);
             else if (type == "dgf")
                 elementMarker[eIdx] = gridData->parameters(element)[0];
+            else if (type == "vtu" || type == "vtk")
+                elementMarker[eIdx] = gridData->getParameter(element, "elementMarker");
             else
                 DUNE_THROW(Dune::InvalidStateException, "No parameters for type " << type);
         }
     }
 
-    template<class LevelGridView, class GridData>
+    template<class LevelGridView, class GridData, class Marker>
     static void getVertexMarkers_(const LevelGridView& gridView,
                                   const GridData& gridData,
-                                  std::vector<int>& vertexMarker,
+                                  std::vector<Marker>& vertexMarker,
                                   const std::string& type)
     {
-        if (type != "dgf")
-            DUNE_THROW(Dune::InvalidStateException, "Vertex marker only exist for dgf grids.");
+        if (type == "gmsh")
+            DUNE_THROW(Dune::InvalidStateException, "Vertex markers are not supported for gmsh grids.");
 
         vertexMarker.clear();
         vertexMarker.resize(gridView.size(Grid::dimension));
@@ -228,14 +233,19 @@ private:
         for (const auto& vertex : vertices(gridView.grid().levelGridView(0)))
         {
             const auto vIdx = gridView.indexSet().index(vertex);
-            vertexMarker[vIdx] = gridData->parameters(vertex)[0];
+            if (type == "dgf")
+                vertexMarker[vIdx] = gridData->parameters(vertex)[0];
+            else if (type == "vtu" || type == "vtk")
+                vertexMarker[vIdx] = gridData->getParameter(vertex, "vertexData");
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No parameters for type " << type);
         }
     }
 
-    template<class GridData>
+    template<class GridData, class Marker>
     static void getBoundaryMarkers_(const GridView& gridView,
                                     const GridData& gridData,
-                                    std::vector<int>& boundaryMarker)
+                                    std::vector<Marker>& boundaryMarker)
     {
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim), 0);

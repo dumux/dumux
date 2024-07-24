@@ -7,6 +7,8 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 
 - __ISTL solver factory__: Fixed an issue with exceptions where an exception thrown during solver construction would lead to a deadlock in parallel simulation. The solver factory now communicated the failure which makes the exception recoverable, e.g. in the Newton solver.
 
+- __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:

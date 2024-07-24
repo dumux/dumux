@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <filesystem>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
@@ -52,7 +53,11 @@ public:
     explicit VTKReader(const std::string& fileName)
     {
         using namespace tinyxml2;
-        fileName_ = Dune::MPIHelper::getCommunication().size() > 1 ?
+        const auto ext = std::filesystem::path(fileName).extension().string();
+        // If in parallel and the file to read is a parallel piece collection (pvtu/pvtp)
+        // read only the piece belonging to the own process. For this to work, the files
+        // have to have exactly the same amount of pieces than processes.
+        fileName_ = Dune::MPIHelper::instance().size() > 1 && ext[1] == 'p' ?
                         getProcessFileName_(fileName) : fileName;
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
@@ -117,12 +122,16 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
         // make a grid factory
         Dune::GridFactory<Grid> factory;
 
-        readGrid_(factory, verbose);
+        // only read on rank 0
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
@@ -138,9 +147,12 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
-        readGrid_(factory, verbose);
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
@@ -158,10 +170,13 @@ public:
     {
         static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
 
-        if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
-
-        readGrid_(factory, verbose);
-        readGridData_(cellData, pointData, verbose);
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
+            readGrid_(factory, verbose);
+            readGridData_(cellData, pointData, verbose);
+        }
 
         return std::unique_ptr<Grid>(factory.createGrid());
     }
@@ -181,7 +196,7 @@ private:
 
         // get the first piece node
         const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
-        const auto myrank = Dune::MPIHelper::getCommunication().rank();
+        const auto myrank = Dune::MPIHelper::instance().rank();
         for (int rank = 0; rank < myrank; ++rank)
         {
             pieceNode = pieceNode->NextSiblingElement("Piece");
@@ -239,7 +254,7 @@ private:
             const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
             const auto types = parseDataArray_<std::vector<unsigned int>>(typesNode);
 
-            if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
+            if (verbose) std::cout << "Found " << offsets.size() << " elements." << std::endl;
 
             unsigned int lastOffset = 0;
             for (unsigned int i = 0; i < offsets.size(); ++i)
@@ -313,6 +328,9 @@ private:
                         DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
 
                     cellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                    if (verbose)
+                        std::cout << "Read cell data field " << attributeText << std::endl;
                 }
             }
             // for poly data
@@ -331,6 +349,9 @@ private:
                             DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a cell data array.");
 
                         polyLineCellData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                        if (verbose)
+                            std::cout << "Read cell data field " << attributeText << std::endl;
                     }
 
                     // a polyline can have many points in the VTK format
@@ -390,6 +411,9 @@ private:
                     DUNE_THROW(Dune::IOError, "Couldn't get Name attribute of a point data array.");
 
                 pointData[std::string(attributeText)] = parseDataArray_<std::vector<double>>(dataArray);
+
+                if (verbose)
+                    std::cout << "Read point data field " << attributeText << std::endl;
             }
         }
     }
@@ -499,6 +523,7 @@ private:
             case Dune::VTK::GeometryType::line: return Dune::GeometryTypes::line;
             case Dune::VTK::GeometryType::triangle: return Dune::GeometryTypes::triangle;
             case Dune::VTK::GeometryType::quadrilateral: return Dune::GeometryTypes::quadrilateral;
+            case Dune::VTK::GeometryType::tetrahedron: return Dune::GeometryTypes::tetrahedron;
             case Dune::VTK::GeometryType::hexahedron: return Dune::GeometryTypes::hexahedron;
             case Dune::VTK::GeometryType::prism: return Dune::GeometryTypes::prism;
             case Dune::VTK::GeometryType::pyramid: return Dune::GeometryTypes::pyramid;
