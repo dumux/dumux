@@ -70,10 +70,12 @@ public:
      */
     FluxOverAxisAlignedSurface(const GridVariables& gridVariables,
                                const SolutionVector& sol,
-                               const LocalResidual& localResidual)
+                               const LocalResidual& localResidual,
+                               bool nonIntersectingSurfaceIsError = false)
     : gridVariables_(gridVariables)
     , sol_(sol)
     , localResidual_(localResidual)
+    , nonIntersectingSurfaceIsError_(nonIntersectingSurfaceIsError)
     {
         verbose_ = getParamFromGroup<bool>(problem_().paramGroup(), "FluxOverAxisAlignedSurface.Verbose", false);
     }
@@ -218,6 +220,12 @@ public:
             std::cout << "Flux over surface " << name << ": " << data.flux << std::endl;
     }
 
+    /*!
+     * \brief Set if non-intersecting surfaces are treated as error.
+     */
+    void setNonIntersectingSurfaceIsError(bool isError = true)
+    { nonIntersectingSurfaceIsError_ = isError; }
+
 private:
 
     template<class FluxType>
@@ -280,6 +288,9 @@ private:
 
             if (intersectingElements.empty())
             {
+                if (!nonIntersectingSurfaceIsError_)
+                    continue;
+
                 std::cout << "surface boundaries: " << std::endl;
                 printSurfaceBoundaries_(surfaceData.surface);
 
@@ -380,6 +391,7 @@ private:
     const SolutionVector& sol_;
     const LocalResidual localResidual_; // store a copy of the local residual
     bool verbose_;
+    bool nonIntersectingSurfaceIsError_;
 };
 
 } // end namespace Dumux
