@@ -22,6 +22,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/std/type_traits.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/istl/bvector.hh>
 
 // forward declaration
@@ -95,7 +96,12 @@ public:
     static void axpy(typename DofVector::field_type a, const OtherDofVector& x, DofVector& y)
     {
         for (typename DofVector::size_type i = 0; i < y.size(); ++i)
-            y[i].axpy(a, x[i]);
+        {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(y[0])>>::value)
+                y[i] += a*x[i];
+            else
+                y[i].axpy(a, x[i]);
+        }
     }
 };
 
