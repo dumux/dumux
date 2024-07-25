@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: [Felix Weinhardt](https://www.iws.uni-stuttgart.de/en/institute/team/Weinhardt/), Gabriele Seitz, Theresa Schollenberger, and Katharina Heck; based on the DuMu<sup>x</sup> test application by [Timo Koch](https://timokoch.github.io/).
+
 # Single-phase flow and tracer transport
 
 In this example, single-phase flow and tracer transport through a domain with a

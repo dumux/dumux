@@ -1,3 +1,5 @@
+> This documented example was originally contributed by: [Timo Koch](https://timokoch.github.io/)
+
 # Embedded network 1D-3D model (tissue perfusion)
 
 We solve a tracer transport problem in a domain that consists of a porous medium block

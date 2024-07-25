@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: [Johannes Hommel](https://www.iws.uni-stuttgart.de/en/institute/team/Hommel/)
+
 # Biomineralization
 
 We simulate microbially-induced calcite precipitation in a vertical sand-column.

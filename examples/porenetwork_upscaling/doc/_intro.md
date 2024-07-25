@@ -1,3 +1,6 @@
+> :footprints: This documented example was originally contributed by: Kilian Weishaupt. It has been significantly extended with a contribution by [Maziar Veyskarami](https://www.iws.uni-stuttgart.de/en/institute/team/Veyskarami/).
+
+
 # Determining the upscaled properties of a pore network
 
 __In this example, you will learn how to__

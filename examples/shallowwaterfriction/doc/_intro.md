@@ -1,3 +1,5 @@
+> This documented example was originally contributed by: Leopold Stadler and Martin Utz.
+
 # Shallow water flow with bottom friction
 In this example, the shallow water flow model is applied to simulate
 a steady subcritical flow including bottom friction (bed shear stress).

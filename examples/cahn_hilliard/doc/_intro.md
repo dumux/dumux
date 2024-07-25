@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: [Timo Koch](https://timokoch.github.io/)
+
 # Cahn-Hilliard equation
 
 In this example, we create an application solving the Cahn-Hilliard equation which describes

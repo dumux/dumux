@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: [Martin Schneider](https://www.iws.uni-stuttgart.de/en/institute/team/Schneider/), Dennis Gläser, and [Timo Koch](https://timokoch.github.io/).
+
 # Rotation-symmetric pressure distribution
 
 __In this example, you will learn how to__

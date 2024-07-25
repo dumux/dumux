@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: [Timo Koch](https://timokoch.github.io/)
+
 # Diffusion equation
 
 In this example, we create an application solving the diffusion equation.

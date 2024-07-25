@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: Katharina Heck, Sina Ackermann, and Beatrix Becker; based on the DuMu<sup>x</sup> test application by [Martin Schneider](https://www.iws.uni-stuttgart.de/en/institute/team/Schneider/) inspired by an older DuMu<sup>x</sup> test by Markus Wolff and Benjamin Faigle.
+
 # Two-phase flow infiltration problem with adaptive grid
 
 __In this example, you will learn how to__

@@ -1,3 +1,5 @@
+> :footprints: This documented example was originally contributed by: Melanie Lipp; based on the DuMu<sup>x</sup> test application by Kilian Weishaupt.
+
 # Free flow through a channel
 
 __You learn how to__
