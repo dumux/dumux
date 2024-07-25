@@ -223,7 +223,7 @@ public:
     /*!
      * \brief Set if non-intersecting surfaces are treated as error.
      */
-    void setNonIntersectingSurfaceIsError(bool isError)
+    void setNonIntersectingSurfaceIsError(bool isError = true)
     { nonIntersectingSurfaceIsError_ = isError; }
 
 private:
@@ -288,7 +288,7 @@ private:
 
             if (intersectingElements.empty())
             {
-                if(!nonIntersectingSurfaceIsError_)
+                if (!nonIntersectingSurfaceIsError_)
                     continue;
 
                 std::cout << "surface boundaries: " << std::endl;
