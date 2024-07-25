@@ -813,6 +813,8 @@ private:
 template <class LinearSolverTraitsTuple, class Matrix, class Vector>
 class UzawaPreconditioner : public Dune::Preconditioner<Vector, Vector>
 {
+    using Communication = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+
     template<std::size_t i>
     using DiagBlockType = std::decay_t<decltype(std::declval<Matrix>()[Dune::index_constant<i>{}][Dune::index_constant<i>{}])>;
 
@@ -869,6 +871,7 @@ public:
     , relaxationFactor_(params.get<scalar_field_type>("relaxation"))
     , verbosity_(params.get<int>("verbosity"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
+    , comms_(comms)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(b)), [&](const auto i)
@@ -913,6 +916,13 @@ public:
      *
      * \param update The update to be computed.
      * \param currentDefect The current defect.
+     *
+     * update is assumed to be zero at the beginning of the apply
+     * method and unique at its end. Furthermore, currentDefect is
+     * assumed to be in a consistent representation. See Section 4.3
+     * about preconditioners in Bastian and Blatt (2009) On the
+     * Generic Parallelisation of Iterative Solvers for the Finite
+     * Element Method.
      */
     void apply(Vector& update, const Vector& currentDefect)
     {
@@ -941,11 +951,24 @@ public:
         // the actual Uzawa iteration
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
-            // u_k+1 = u_k + Q_A^−1*(f − (A*u_k + B*p_k)),
+            // u_k+1 = u_k + Q_A^−1*(f − A*u_k - B*p_k),
             auto uRhs = f;
+
+            // Make u consistent
+            std::get<_0>(comms_)->copyOwnerToAll(u, u);
+            // Perform f -= A*u_k: MatrixAdapter_A.applyscaleadd(-1.,u,uRhs)
             A.mmv(u, uRhs);
+
+            // Make p consistent
+            std::get<_1>(comms_)->copyOwnerToAll(p, p);
+            // Perform f -= B*p_k
             B.mmv(p, uRhs);
+
+            // Make uRhs unique and perform Q_A^-1*f
+            // ToDo: Turn preconditioner into BlockPreconditioner
+            std::get<_0>(comms_)->project(uRhs);
             auto uIncrement = u;
+            // uIncrement = 0.0;
             std::get<_0>(preconditioners_)->pre(uIncrement, uRhs);
             std::get<_0>(preconditioners_)->apply(uIncrement, uRhs);
             std::get<_0>(preconditioners_)->post(uIncrement);
@@ -953,7 +976,13 @@ public:
 
             // p_k+1 = p_k + omega*(g - C*u_k+1 - D*p_k)
             auto pIncrement = g;
+
+            // Make u consistent and perform C*u_k+1
+            std::get<_0>(comms_)->copyOwnerToAll(u, u);
             C.mmv(u, pIncrement);
+
+            // Make p consistent and perform D*p_k
+            std::get<_1>(comms_)->copyOwnerToAll(p, p);
             D.mmv(p, pIncrement);
             pIncrement *= relaxationFactor_;
             p += pIncrement;
@@ -1107,6 +1136,7 @@ private:
     //! \brief The verbosity level
     const int verbosity_;
     const std::string paramGroup_;
+    std::array<std::shared_ptr<Communication>, numBlocks> comms_;
 };
 
 } // end namespace Dumux
