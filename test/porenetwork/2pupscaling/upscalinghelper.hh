@@ -68,6 +68,15 @@ public:
         averageSaturation_[problem.direction()].push_back(staticProperties.averageSaturation);
         pc_[problem.direction()].push_back(staticProperties.pcGlobal);
     }
+
+    template <class Problem>
+    void networkPorosity(const Problem &problem)
+    {
+        auto sideLengths = problem.sideLengths();
+        auto networkTotalVolume = std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>());
+
+        networkPorosity_ = totalPoreVolume_ / networkTotalVolume;
+    }
     // [[/codeblock]]
 
     // ### Determine the domain's side lengths
@@ -155,6 +164,12 @@ public:
     {
         directions_ = directions;
     }
+
+    static void setTotalPoreVolume( Scalar totalPoreVolume)
+    { totalPoreVolume_ = totalPoreVolume; }
+
+    static void reportPorosity()
+    { std::cout<<"the porosity of the network is:  "<<networkPorosity_<<std::endl; }
     // [[/codeblock]]
 
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number
@@ -308,6 +323,8 @@ private:
     const std::array<std::string, 2> phaseName_{"Wetting", "Non-wetting"};
     std::vector<std::size_t> directions_;
     inline static std::array<std::vector<std::string>, 2> filesToPlot_; // 0 index for rel perm vs. sw and 1 index for pc vs. sw
+    inline static Scalar totalPoreVolume_;
+    inline static Scalar networkPorosity_;
 };
 
 } // end namespace Dumux

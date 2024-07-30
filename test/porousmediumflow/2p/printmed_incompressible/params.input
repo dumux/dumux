@@ -16,8 +16,8 @@ Radius = 5e-3
 InitialContactAngle = 40      # °
 InitialVolume = 5e-9        # m3
 #InitialContactRadius = 5e-4   # m
-InitialCenter = 5e-3 1e-3 5e-3
-DistanceBetweenDroplets = 1.5e-3
+InitialCenter = 5e-3 5e-3 5e-3
+DistanceBetweenDroplets = 0e-3
 DropletGravity = true
 
 [SpatialParams]
@@ -40,5 +40,6 @@ AddVelocity = true
 
 [Newton]
 EnablePartialReassembly = false
-TargetSteps = 10 # set the "desirable" number of Newton iterations of a time step
+TargetSteps = 5 # set the "desirable" number of Newton iterations of a time step
+MaxSteps = 6
 EnableChop = false # chop for better convergence

@@ -218,6 +218,9 @@ public:
 
     auto staticProperties()
     { return flowPropertiesStatic_; };
+
+    Scalar totalPoreVolume()
+    { return totalPoreVolume_; }
 private:
 
     void sequenceWriterAddCell_(Dune::VTKSequenceWriter<GridView>& sequenceWriter)

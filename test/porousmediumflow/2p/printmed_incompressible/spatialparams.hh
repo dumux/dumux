@@ -80,7 +80,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 0.28; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.

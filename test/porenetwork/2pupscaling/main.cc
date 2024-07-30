@@ -230,6 +230,7 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
 
         }
 
+        upscalingHelper.networkPorosity(*problem);
         // calculate and report the upscaled properties
         constexpr bool isCreepingFlow = 0;
         // upscalingHelper.calculateUpscaledProperties(*problem, isCreepingFlow);
@@ -275,6 +276,7 @@ const auto runStaticProblem(GridManager& gridManager)
         sequenceWriter.write(step);
     }
 
+    UpscalingHelper<Scalar>::setTotalPoreVolume(problem.totalPoreVolume());
     return problem.staticProperties();
 }
 
@@ -314,6 +316,7 @@ int main(int argc, char** argv)
     runSinglePhaseUpscaling<TypeTagGas>(gridManager, flowPropertiesStatic);
 
     UpscalingHelper<Scalar>::plot();
+    UpscalingHelper<Scalar>::reportPorosity();
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
