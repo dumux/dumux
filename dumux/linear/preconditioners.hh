@@ -908,33 +908,27 @@ public:
     }
 
     /*! \brief Prepare the preconditioner
-     */
-    void pre (Vector& v, Vector& d) {}
-
-    /*!
-     * \brief Apply the preconditioner
      *
      * \param update The update to be computed.
      * \param currentDefect The current defect.
      *
-     * update is assumed to be zero at the beginning of the apply
-     * method and unique at its end. Furthermore, currentDefect is
-     * assumed to be in a consistent representation. See Section 4.3
-     * about preconditioners in Bastian and Blatt (2009) On the
-     * Generic Parallelisation of Iterative Solvers for the Finite
-     * Element Method.
+     * As a preparatoy step Dirichlet cell values are incorporated and
+     * communication between all processes is performed. Therefore,
+     * according to the concept described in Bastian and Blatt (2009)
+     * On the Generic Parallelisation of Iterative Solvers for the
+     * Finite Element Method (Section 4.3) update is made consistent
+     * by a communication step, and currentDefect is made unique by
+     * setting every not-owned DoF equal to zero. The latter step does
+     * not involve communication.
      */
-    void apply(Vector& update, const Vector& currentDefect)
-    {
+    void pre (Vector& update, Vector& currentDefect) {
         using namespace Dune::Indices;
 
-        auto& A = matrix_[_0][_0];
-        auto& B = matrix_[_0][_1];
-        auto& C = matrix_[_1][_0];
         auto& D = matrix_[_1][_1];
 
-        const auto& f = currentDefect[_0];
-        const auto& g = currentDefect[_1];
+        auto& f = currentDefect[_0];
+        auto& g = currentDefect[_1];
+
         auto& u = update[_0];
         auto& p = update[_1];
 
@@ -948,49 +942,101 @@ public:
                     p[i][rowIt.index()] = g[i][rowIt.index()];
         }
 
+        // Make update consistent (involves communication)
+        std::get<_0>(comms_)->copyOwnerToAll(u, u);
+        std::get<_1>(comms_)->copyOwnerToAll(p, p);
+
+        // Make currentDeffect unique (this is a local operation)
+        std::get<_0>(comms_)->project(f);
+        std::get<_1>(comms_)->project(g);
+    }
+
+    /*!
+     * \brief Apply the preconditioner
+     *
+     * \param update The update to be computed.
+     * \param currentDefect The current defect.
+     *
+     * update is assumed to be zero at the beginning of the apply
+     * method and consistent at its end. Furthermore, currentDefect is
+     * assumed to be in a consistent representation. See Section 4.3
+     * about preconditioners in Bastian and Blatt (2009) On the
+     * Generic Parallelisation of Iterative Solvers for the Finite
+     * Element Method.
+     */
+    void apply(Vector& update, const Vector& currentDefect)
+    {
+        using namespace Dune::Indices;
+
+        const auto& A = matrix_[_0][_0];
+        const auto& B = matrix_[_0][_1];
+        const auto& C = matrix_[_1][_0];
+        const auto& D = matrix_[_1][_1];
+
+        const auto& f = currentDefect[_0];
+        const auto& g = currentDefect[_1];
+        auto& u = update[_0];
+        auto& p = update[_1];
+
         // the actual Uzawa iteration
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
+            // Every matrix-vector multiplication y=A*x is in fact an
+            // application of a linear operator. According to the
+            // concept described in Bastian and Blatt (see above) x
+            // has to be in a consistent representation and y valid
+            // before performing the multiplication. On completion y
+            // will be in a unique representation.
+
             // u_k+1 = u_k + Q_A^−1*(f − A*u_k - B*p_k),
             auto uRhs = f;
-
-            // Make u consistent
-            std::get<_0>(comms_)->copyOwnerToAll(u, u);
-            // Perform f -= A*u_k: MatrixAdapter_A.applyscaleadd(-1.,u,uRhs)
+            // Perform f -= A*u_k
             A.mmv(u, uRhs);
-
-            // Make p consistent
-            std::get<_1>(comms_)->copyOwnerToAll(p, p);
             // Perform f -= B*p_k
             B.mmv(p, uRhs);
-
-            // Make uRhs unique and perform Q_A^-1*f
-            // ToDo: Turn preconditioner into BlockPreconditioner
+            // Make uRhs unique
             std::get<_0>(comms_)->project(uRhs);
+
+            // Perform u+=Q_A^-1*f
+            //
+            // AMG should care about parallel communication, if
+            // applied with a parallel smoother, such that uIncrement
+            // will be consistent at completion. Thus, it should not
+            // be necessary to make u consistent after applying the
+            // preconditioner.
             auto uIncrement = u;
-            // uIncrement = 0.0;
+            uIncrement = 0.0;
             std::get<_0>(preconditioners_)->pre(uIncrement, uRhs);
             std::get<_0>(preconditioners_)->apply(uIncrement, uRhs);
             std::get<_0>(preconditioners_)->post(uIncrement);
             u += uIncrement;
+            // Make u consistent (should not be necessary)
+            std::get<_0>(comms_)->copyOwnerToAll(u, u);
 
             // p_k+1 = p_k + omega*(g - C*u_k+1 - D*p_k)
             auto pIncrement = g;
-
-            // Make u consistent and perform C*u_k+1
-            std::get<_0>(comms_)->copyOwnerToAll(u, u);
+            // Perform C*u_k+1
             C.mmv(u, pIncrement);
-
-            // Make p consistent and perform D*p_k
-            std::get<_1>(comms_)->copyOwnerToAll(p, p);
+            // Perform D*p_k
             D.mmv(p, pIncrement);
+            // Perform p+=omega*g
             pIncrement *= relaxationFactor_;
             p += pIncrement;
 
+            // Make p consistent
+            std::get<_1>(comms_)->copyOwnerToAll(p, p);
+
             if (verbosity_ > 1)
             {
-                std::cout << "Uzawa iteration " << k
-                << ", residual: " << uRhs.two_norm() + pIncrement.two_norm()/relaxationFactor_ << std::endl;
+                const auto uRhsnorm = std::get<_0>(comms_)->norm(uRhs);
+                const auto pnorm = std::get<_1>(comms_)->norm(p);
+                const auto rank = Dune::MPIHelper::getCommunication().rank();
+                if (rank == 0)
+                {
+                    std::cout << "Uzawa iteration " << k
+                              << ", residual: " << uRhsnorm + pnorm/relaxationFactor_
+                              << std::endl;
+                }
             }
         }
     }
