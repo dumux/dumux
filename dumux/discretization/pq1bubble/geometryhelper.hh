@@ -291,6 +291,11 @@ public:
         return boxHelper_.getBoundaryScvfCorners(localFacetIndex, indexInFacet);
     }
 
+    Dune::GeometryType getBoundaryScvfGeometryType(unsigned int localScvfIdx) const
+    {
+        return Dune::GeometryTypes::cube(dim-1);
+    }
+
     template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
     GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
     {
@@ -404,6 +409,11 @@ public:
             return false;
         else
             return true;
+    }
+
+    bool isOverlappingBoundaryScvf(unsigned int localFacetIndex) const
+    {
+        return false;
     }
 
     bool isOverlappingScv(unsigned int localScvIndex) const
