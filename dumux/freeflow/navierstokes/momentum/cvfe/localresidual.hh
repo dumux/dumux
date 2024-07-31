@@ -31,9 +31,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class NavierStokesMomentumCVFELocalResidual
-: public CVFELocalResidual<TypeTag>
+: public GetPropType<TypeTag, Properties::BaseLocalResidual>
 {
-    using ParentType = CVFELocalResidual<TypeTag>;
+    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
