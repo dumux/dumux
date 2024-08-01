@@ -199,7 +199,7 @@ public:
         if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-
+// std::cout<<"  values[Indices::momentumYBalanceIdx]    "<<values[Indices::momentumYBalanceIdx]<<std::endl;
             const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
             values[Indices::conti0EqIdx] = massFlux[0];
             values[Indices::conti0EqIdx + 1] = massFlux[1];

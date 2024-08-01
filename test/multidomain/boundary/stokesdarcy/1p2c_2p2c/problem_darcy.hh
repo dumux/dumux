@@ -132,6 +132,8 @@ public:
 
         if (couplingManager().isCoupledEntity(CouplingManager::darcyIdx, scvf))
             values.setAllCouplingNeumann();
+        else if (onLowerBoundary_(scvf.center()))
+            values.setAllDirichlet();
 
         return values;
     }
@@ -225,8 +227,17 @@ public:
         PrimaryVariables values(0.0);
         values.setState(initialPhasePresence_);
 
-        values[pressureIdx] = pressure_ + 1000. * this->spatialParams().gravity(globalPos)[1] * (globalPos[1] - this->gridGeometry().bBoxMax()[1]);
-        values[switchIdx] = initialSw_;
+        // values[pressureIdx] = pressure_ + 1000. * this->spatialParams().gravity(globalPos)[1] * (globalPos[1] - this->gridGeometry().bBoxMax()[1]); // TODO use water density rho instead of 1000
+        if (onLowerBoundary_(globalPos))
+        {
+            values[pressureIdx] = pressure_;
+            values[switchIdx] = 1.0;
+        }
+        else
+        {
+            values[pressureIdx] = pressure_;
+            values[switchIdx] = initialSw_;
+        }
 
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = this->spatialParams().temperatureAtPos(globalPos);

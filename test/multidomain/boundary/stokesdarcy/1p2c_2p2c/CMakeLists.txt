@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-
+set(CMAKE_BUILD_TYPE Debug)
 add_input_file_links()
 
 dumux_add_test(NAME test_md_boundary_darcy2p2c_stokes1p2c_horizontal
