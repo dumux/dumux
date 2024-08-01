@@ -16,6 +16,7 @@
 
 #include <utility>
 #include <unordered_map>
+#include <type_traits>
 
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -40,9 +41,20 @@
 namespace Dumux {
 
 namespace Detail {
+template<class T>
+using EnableHybridCVFE
+    = typename T::EnableHybridCVFE;
+
+template<class T>
+static constexpr bool enablesHybridCVFE
+    = Dune::Std::detected_or_t<std::false_type, EnableHybridCVFE, T>{};
+
 template<class GV, class T>
 using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
-    Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    std::conditional_t<enablesHybridCVFE<T>,
+        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+        Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>
+    >,
     SpecifiesGeometryHelper,
     T
 >;
@@ -84,6 +96,17 @@ struct PQ1BubbleDefaultGridGeometryTraits
 
 /*!
  * \ingroup PQ1BubbleDiscretization
+ * \brief The default traits for the hybrid pq1bubble finite volume grid geometry
+ *        Defines the scv and scvf types and the mapper types
+ * \tparam the grid view type
+ */
+template<class BaseTraits>
+struct HybridPQ1BubbleCVFEGridGeometryTraits
+: public BaseTraits
+{ using EnableHybridCVFE = std::true_type; };
+
+/*!
+ * \ingroup PQ1BubbleDiscretization
  * \brief Base class for the finite volume geometry vector for pq1bubble schemes
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
@@ -106,6 +129,8 @@ class PQ1BubbleFVGridGeometry
     static const int dimWorld = GV::dimensionworld;
 
     static_assert(dim > 1, "Only implemented for dim > 1");
+
+    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
 
 public:
     //! export the discretization method this geometry belongs to
@@ -198,7 +223,6 @@ public:
     { return { gg.cache_ }; }
 
 private:
-
     class PQ1BubbleGridGeometryCache
     {
         friend class PQ1BubbleFVGridGeometry;
@@ -282,9 +306,12 @@ private:
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
-            numScv_ += geometryHelper.numScv();
+            // ToDo: Currently we still create scvs also for Fe dofs
+            numScv_ += GeometryHelper::numElementDofs(elementGeometry.type());
             // construct the sub control volumes
-            cache_.scvs_[eIdx].resize(geometryHelper.numScv());
+            cache_.scvs_[eIdx].resize(GeometryHelper::numElementDofs(elementGeometry.type()));
+
+            // Scvs related to control volumes
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
@@ -294,8 +321,25 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
+                );
+            }
+
+            // Hybrid scvs, i.e. Fem dofs
+            if constexpr (enableHybridCVFE)
+            {
+                // We add the additional Fe dof
+                // ToDo: get rid of building scvs for Fe dofs
+                LocalIndexType scvLocalIdx = geometryHelper.numScv();
+                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
+                    elementGeometry.volume(),
+                    elementGeometry.center(),
+                    elementGeometry.center(),
+                    scvLocalIdx,
+                    eIdx,
+                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    true
                 );
             }
 
