@@ -7,9 +7,9 @@
    viewBox="0 0 135.04941 89.817163"
    id="svg2"
    version="1.1"
-   inkscape:version="1.2.2 (1:1.2.2+202212051552+b0a8486541)"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    sodipodi:docname="cctpfa.svg"
-   inkscape:export-filename="../png/cctpfa.png"
+   inkscape:export-filename="cctpfa.png"
    inkscape:export-xdpi="600"
    inkscape:export-ydpi="600"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -28,16 +28,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.313709"
-     inkscape:cx="34.20629"
-     inkscape:cy="55.110135"
+     inkscape:zoom="5.6568545"
+     inkscape:cx="73.715879"
+     inkscape:cy="52.414288"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1043"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-width="1858"
+     inkscape:window-height="1136"
+     inkscape:window-x="1982"
+     inkscape:window-y="27"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -45,7 +45,8 @@
      fit-margin-bottom="0"
      inkscape:showpageshadow="2"
      inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1" />
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:snap-global="false" />
   <defs
      id="defs4">
     <marker
@@ -4270,14 +4271,15 @@
        style="display:inline;fill:#030000;fill-opacity:1;stroke:none;stroke-width:0.361758;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.361758, 0.723516;stroke-dashoffset:0;stroke-opacity:1" />
     <circle
        r="0.81912094"
-       cy="195.46837"
-       cx="381.80997"
+       cy="201.57587"
+       cx="384.15106"
        id="path5370-6-2-0"
        style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.361758;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.361758, 0.723516;stroke-dashoffset:0;stroke-opacity:1" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.375;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow3)"
-       d="m 364.78124,204.47672 15.93874,-8.51431"
-       id="path21446" />
+       d="m 364.68861,204.30697 18.65197,-2.5688"
+       id="path21446"
+       sodipodi:nodetypes="cc" />
     <g
        transform="matrix(0.533333,0,0,0.533333,375.02197,187.8303)"
        ns0:version="1.8.2"
@@ -4579,7 +4581,7 @@
       </g>
     </g>
     <g
-       transform="matrix(0.350113 -0.193446 0.193446 0.350113 367.276 198.248)"
+       transform="matrix(0.38799782,-0.09725304,0.09725304,0.38799782,369.72013,199.98119)"
        ns0:version="1.8.2"
        ns0:texconverter="pdflatex"
        ns0:pdfconverter="inkscape"
@@ -4647,12 +4649,12 @@
       </defs>
       <g
          id="id-721ecab1-9575-4035-becc-413d909e343a"
-         transform="translate(-149.087, -127.843)">
+         transform="translate(-149.087,-127.843)">
         <g
            style="fill:#000000;fill-opacity:1"
            id="id-206749ce-803e-421c-9f2d-46e41b92b77b">
           <g
-             transform="translate(148.712, 134.765)"
+             transform="translate(148.712,134.765)"
              id="g134006">
             <path
                style="stroke:none"
@@ -4664,7 +4666,7 @@
            style="fill:#000000;fill-opacity:1"
            id="id-f97acbde-fc99-4eb9-8681-dda60d2065fc">
           <g
-             transform="translate(155.077, 136.259)"
+             transform="translate(155.077,136.259)"
              id="g134010">
             <path
                style="stroke:none"
@@ -4676,7 +4678,7 @@
            style="fill:#000000;fill-opacity:1"
            id="id-42aaeca5-4d9f-488e-9dc4-30236ec70180">
           <g
-             transform="translate(161.834, 136.259)"
+             transform="translate(161.834,136.259)"
              id="g134014">
             <path
                style="stroke:none"
@@ -4684,7 +4686,7 @@
                id="id-cc95e4a9-ef4c-4fcd-ac1f-da11ff4bc9d3" />
           </g>
           <g
-             transform="translate(164.2, 136.259)"
+             transform="translate(164.2,136.259)"
              id="g134017">
             <path
                style="stroke:none"
@@ -4775,7 +4777,7 @@
       </g>
     </g>
     <g
-       transform="matrix(0.4,0,0,0.4,383.07339,194.31425)"
+       transform="matrix(0.4,0,0,0.4,385.42627,199.63478)"
        ns0:version="1.8.2"
        ns0:texconverter="pdflatex"
        ns0:pdfconverter="inkscape"
