@@ -16,8 +16,10 @@
 
 #include <optional>
 #include <utility>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/rangeutilities.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -43,6 +45,7 @@ class PQ1BubbleFVElementGeometry;
 template<class GG>
 class PQ1BubbleFVElementGeometry<GG, true>
 {
+    using ThisType = PQ1BubbleFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -52,6 +55,25 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+
+    class LocalDof
+    {
+    public:
+        LocalDof(std::size_t dofIndex) : dofIndex_(dofIndex) {}
+        std::size_t index() const { return dofIndex_; }
+    private:
+        std::size_t dofIndex_;
+    };
+
+    class FVLocalDof : public LocalDof
+    {
+    public:
+        FVLocalDof(std::size_t dofIndex, const ThisType& fvGeometry)
+        : LocalDof(dofIndex), fvGeometry_(fvGeometry) {}
+        const typename GG::SubControlVolume& scv() const { return fvGeometry_.scv(this->index()); }
+    private:
+        const ThisType& fvGeometry_;
+    };
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -93,6 +115,33 @@ public:
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
+    }
+
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto fvLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(std::size_t(0), fvGeometry.numScv()-GeometryHelper::numHybridDofs(fvGeometry.element().type())),
+            [&](const auto i) { return FVLocalDof{ i, fvGeometry }; }
+        );
+    }
+
+    //! iterate over dof indices that are treated as hybrid dofs using the finite element method
+    friend inline auto hybridLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()-GeometryHelper::numHybridDofs(fvGeometry.element().type()), fvGeometry.numScv()),
+            [](const auto i) { return LocalDof{ i }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(std::size_t(0), fvGeometry.numScv()),
+            [](const auto i) { return LocalDof{ i }; }
+        );
     }
 
     //! iterator range for sub control volumes faces. Iterates over
