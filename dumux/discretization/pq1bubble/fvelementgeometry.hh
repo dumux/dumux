@@ -26,6 +26,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
@@ -56,24 +57,6 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
 
-    class LocalDof
-    {
-    public:
-        LocalDof(std::size_t dofIndex) : dofIndex_(dofIndex) {}
-        std::size_t index() const { return dofIndex_; }
-    private:
-        std::size_t dofIndex_;
-    };
-
-    class FVLocalDof : public LocalDof
-    {
-    public:
-        FVLocalDof(std::size_t dofIndex, const ThisType& fvGeometry)
-        : LocalDof(dofIndex), fvGeometry_(fvGeometry) {}
-        const typename GG::SubControlVolume& scv() const { return fvGeometry_.scv(this->index()); }
-    private:
-        const ThisType& fvGeometry_;
-    };
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -122,7 +105,7 @@ public:
     {
         return Dune::transformedRangeView(
             Dune::range(std::size_t(0), fvGeometry.numScv()-GeometryHelper::numHybridDofs(fvGeometry.element().type())),
-            [&](const auto i) { return FVLocalDof{ i, fvGeometry }; }
+            [&](const auto i) { return CVFE::FVLocalDof{ static_cast<LocalIndexType>(i), fvGeometry }; }
         );
     }
 
@@ -131,7 +114,7 @@ public:
     {
         return Dune::transformedRangeView(
             Dune::range(fvGeometry.numScv()-GeometryHelper::numHybridDofs(fvGeometry.element().type()), fvGeometry.numScv()),
-            [](const auto i) { return LocalDof{ i }; }
+            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
         );
     }
 
@@ -140,7 +123,7 @@ public:
     {
         return Dune::transformedRangeView(
             Dune::range(std::size_t(0), fvGeometry.numScv()),
-            [](const auto i) { return LocalDof{ i }; }
+            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
         );
     }
 
