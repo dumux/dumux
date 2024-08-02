@@ -7,18 +7,20 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesResidualImpl
+ * \copydoc Dumux::NavierStokesMomentumCVFELocalResidual
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 
 #include <dune/common/hybridutilities.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/fem/integrationpointdata.hh>
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
@@ -64,11 +66,16 @@ class NavierStokesMomentumCVFELocalResidual
 
     static constexpr auto dim = GridView::dimension;
 
+    using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using IpData = FEIntegrationPointData<GlobalPosition, LocalBasis>;
     using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
+    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVolumeVariables, IpData>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
 
 public:
     //! Use the parent type's constructor
+    using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
     /*!
@@ -135,7 +142,7 @@ public:
         return source;
     }
 
-        /*!
+    /*!
      * \brief Evaluates the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
@@ -159,6 +166,158 @@ public:
         flux += fluxHelper.advectiveMomentumFlux(context);
         flux += fluxHelper.diffusiveMomentumFlux(context);
         flux += fluxHelper.pressureContribution(context);
+        return flux;
+    }
+
+    void evalElementStorage(ElementResidualVector& residual,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& prevElemVolVars,
+                            const ElementVolumeVariables& curElemVolVars) const
+    {
+        static const auto intOrder
+            = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderStorage", 4);
+
+        const auto &localBasis = fvGeometry.feLocalBasis();
+        using RangeType = typename LocalBasis::Traits::RangeType;
+        std::vector<RangeType> integralShapeFunctions(localBasis.size(), RangeType(0.0));
+
+        // We apply mass lumping such that we only need to calculate the integral of basis functions
+        // such that we don't evaluate the solution but only integrate the basis functions
+        const auto& geometry = element.geometry();
+        const auto& quadRule = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), intOrder);
+        for (const auto& quadPoint : quadRule)
+        {
+            const Scalar qWeight = quadPoint.weight()*Extrusion::integrationElement(geometry, quadPoint.position());
+            // Obtain and store shape function values and gradients at the current quad point
+            IpData ipData(geometry, quadPoint.position(), localBasis);
+
+            // get density from the problem
+            for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+                integralShapeFunctions[localDofIdx] += ipData.shapeValue(localDofIdx)*qWeight;
+        }
+
+        for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+        {
+            const auto curDensity = problem.density(element, fvGeometry, geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), false);
+            const auto prevDensity = problem.density(element, fvGeometry,  geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), true);
+            const auto curVelocity = curElemVolVars[localDofIdx].velocity();
+            const auto prevVelocity = prevElemVolVars[localDofIdx].velocity();
+            auto timeDeriv = (curDensity*curVelocity - prevDensity*prevVelocity);
+            timeDeriv /= this->timeLoop().timeStepSize();
+
+            // add storage to residual
+            for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                residual[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx]*timeDeriv[eqIdx];
+        }
+    }
+
+    void evalElementFluxAndSource(ElementResidualVector& residual,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const ElementBoundaryTypes &elemBcTypes) const
+    {
+        static const bool enableUnsymmetrizedVelocityGradient
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+        static const auto intOrder
+            = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderFluxAndSource", 4);
+
+        const auto &localBasis = fvGeometry.feLocalBasis();
+
+        const auto& geometry = element.geometry();
+        const auto& quadRule = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), intOrder);
+        for (const auto& quadPoint : quadRule)
+        {
+            const Scalar qWeight = quadPoint.weight()*Extrusion::integrationElement(geometry, quadPoint.position());
+
+            // Obtain and store shape function values and gradients at the current quad point
+            IpData ipData(geometry, quadPoint.position(), localBasis);
+            FluxFunctionContext context(problem, fvGeometry, elemVolVars, ipData);
+            const auto& v = context.velocity();
+            const auto& gradV = context.gradVelocity();
+
+            // get viscosity from the problem
+            const Scalar mu = problem.effectiveViscosity(element, fvGeometry, ipData.ipLocal());
+            // get density from the problem
+            const Scalar density = problem.density(element, fvGeometry, ipData.ipLocal());
+
+            for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+            {
+                NumEqVector fluxAndSourceTerm(0.0);
+                // add advection term
+                if (problem.enableInertiaTerms())
+                    fluxAndSourceTerm += density*(v*ipData.gradN(localDofIdx))*v;
+
+                // add diffusion term
+                fluxAndSourceTerm -= enableUnsymmetrizedVelocityGradient ?
+                                        mu*mv(gradV, ipData.gradN(localDofIdx))
+                                        : mu*mv(gradV + getTransposed(gradV), ipData.gradN(localDofIdx));
+
+                // add pressure term
+                fluxAndSourceTerm += problem.pressure(element, fvGeometry, ipData.ipLocal()) * ipData.gradN(localDofIdx);
+
+                // finally add source and Neumann term and add everything to residual
+                // ToDo: generalize by not assuming that a sourceAtPos function must exist
+                const auto sourceAtPos = problem.sourceAtPos(ipData.ipGlobal());
+
+                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                {
+                    fluxAndSourceTerm[eqIdx] += ipData.shapeValue(localDofIdx) * sourceAtPos[eqIdx];
+                    residual[localDofIdx][eqIdx] += qWeight*fluxAndSourceTerm[eqIdx];
+                }
+            }
+        }
+
+        if(elemBcTypes.hasNeumann())
+            residual += evalNeumannSegments_(problem, element, fvGeometry, elemVolVars, elemBcTypes);
+    }
+
+private:
+    ElementResidualVector evalNeumannSegments_(const Problem& problem,
+                                               const Element& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementBoundaryTypes &elemBcTypes) const
+    {
+        ElementResidualVector flux(0.0);
+
+        static const auto intOrder
+            = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderBoundary", 4);
+
+        const auto &localBasis = fvGeometry.feLocalBasis();
+
+        const auto& geometry = element.geometry();
+        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            const auto bcTypes = problem.boundaryTypesAtPos(intersection.geometry().center());
+            if(!bcTypes.hasNeumann())
+                continue;
+
+            // select quadrature rule for intersection faces (dim-1)
+            auto isGeometry = intersection.geometry();
+            const auto& faceRule = Dune::QuadratureRules<Scalar, dim-1>::rule(isGeometry.type(), intOrder);
+            for (const auto& quadPoint : faceRule)
+            {
+                // position of quadrature point in local coordinates of inside element
+                auto local = geometry.local(isGeometry.global(quadPoint.position()));
+
+                // get quadrature rule weight for intersection
+                Scalar qWeight = quadPoint.weight() * Extrusion::integrationElement(isGeometry, quadPoint.position());
+                IpData ipData(geometry, local, localBasis);
+
+                const auto& neumannFlux = qWeight*problem.neumannAtPos(ipData.ipGlobal());
+
+                for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                        flux[localDofIdx] += ipData.shapeValue(localDofIdx) * neumannFlux[eqIdx];
+
+            }
+
+        }
+
         return flux;
     }
 };
