@@ -23,7 +23,6 @@
 #include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/assembly/cvfelocalresidual.hh>
-#include <dumux/assembly/hybridcvfelocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
@@ -126,13 +125,8 @@ public:
 
 //! Set the BaseLocalResidual to CVFELocalResidual
 template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::PQ1BubbleModel>
+struct BaseLocalResidual<TypeTag, TTag::PQ1BubbleBase>
 { using type = CVFELocalResidual<TypeTag>; };
-
-//! Set the BaseLocalResidual for hybrid scheme to HybridLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::PQ1BubbleHybridModel>
-{ using type = HybridCVFELocalResidual<TypeTag>; };
 
 } // namespace Dumux::Properties
 
