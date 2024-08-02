@@ -20,11 +20,13 @@
 #include <array>
 #include <vector>
 
+#include <dune/common/rangeutilities.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
 namespace Dumux {
@@ -95,6 +97,24 @@ public:
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
+    }
+
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto fvLocalDofs(const BoxFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [&](const auto i) { return CVFE::FVLocalDof{ static_cast<LocalIndexType>(i), fvGeometry }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
+        );
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -271,6 +291,24 @@ public:
     {
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         return Dune::IteratorRange<Iter>(fvGeometry.scvs_.begin(), fvGeometry.scvs_.end());
+    }
+
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto fvLocalDofs(const BoxFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [&](const auto i) { return CVFE::FVLocalDof{ static_cast<LocalIndexType>(i), fvGeometry }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
+        );
     }
 
     //! iterator range for sub control volumes faces. Iterates over
