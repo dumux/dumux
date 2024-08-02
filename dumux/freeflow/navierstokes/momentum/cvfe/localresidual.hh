@@ -194,12 +194,13 @@ public:
             IpData ipData(geometry, quadPoint.position(), localBasis);
 
             // get density from the problem
-            for (auto localDofIdx : hybridLocalDofs(fvGeometry))
-                integralShapeFunctions[localDofIdx] += ipData.shapeValue(localDofIdx)*qWeight;
+            for (const auto& localDof : hybridLocalDofs(fvGeometry))
+                integralShapeFunctions[localDof.index()] += ipData.shapeValue(localDof.index())*qWeight;
         }
 
-        for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+        for (const auto& localDof : hybridLocalDofs(fvGeometry))
         {
+            const auto localDofIdx = localDof.index();
             const auto curDensity = problem.density(element, fvGeometry, geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), false);
             const auto prevDensity = problem.density(element, fvGeometry,  geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), true);
             const auto curVelocity = curElemVolVars[localDofIdx].velocity();
@@ -244,8 +245,9 @@ public:
             // get density from the problem
             const Scalar density = problem.density(element, fvGeometry, ipData.ipLocal());
 
-            for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+            for (const auto& localDof : hybridLocalDofs(fvGeometry))
             {
+                const auto localDofIdx = localDof.index();
                 NumEqVector fluxAndSourceTerm(0.0);
                 // add advection term
                 if (problem.enableInertiaTerms())
@@ -310,9 +312,9 @@ private:
 
                 const auto& neumannFlux = qWeight*problem.neumannAtPos(ipData.ipGlobal());
 
-                for (auto localDofIdx : hybridLocalDofs(fvGeometry))
+                for (const auto& localDof : hybridLocalDofs(fvGeometry))
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                        flux[localDofIdx] += ipData.shapeValue(localDofIdx) * neumannFlux[eqIdx];
+                        flux[localDof.index()] += ipData.shapeValue(localDof.index()) * neumannFlux[eqIdx];
 
             }
 
