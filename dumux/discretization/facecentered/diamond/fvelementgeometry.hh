@@ -17,9 +17,11 @@
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/common/rangeutilities.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 
 namespace Dumux {
@@ -79,6 +81,24 @@ public:
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
+    }
+
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto fvLocalDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [&](const auto i) { return CVFE::FVLocalDof{ static_cast<LocalIndexType>(i), fvGeometry }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
+        );
     }
 
     //! iterator range for sub control volumes faces. Iterates over
