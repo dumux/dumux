@@ -169,12 +169,12 @@ public:
         return flux;
     }
 
-    void evalElementStorage(ElementResidualVector& residual,
-                            const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& prevElemVolVars,
-                            const ElementVolumeVariables& curElemVolVars) const
+    void addToElementStorageResidual(ElementResidualVector& residual,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& prevElemVolVars,
+                                     const ElementVolumeVariables& curElemVolVars) const
     {
         static const auto intOrder
             = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderStorage", 4);
@@ -214,12 +214,12 @@ public:
         }
     }
 
-    void evalElementFluxAndSource(ElementResidualVector& residual,
-                                  const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementBoundaryTypes &elemBcTypes) const
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const ElementBoundaryTypes &elemBcTypes) const
     {
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
