@@ -68,6 +68,15 @@ def openPngFile(fileName):
     printReadMessage(fileName, "png", image.shape)
     return image
 
+def openTifFile(fileName):
+    """DOC ME!"""
+
+    import matplotlib.image as mpimg  # pylint: disable=import-outside-toplevel,import-error
+    image=mpimg.imread('binarized_slice_xy_0103.tif')
+    image = np.array(image, dtype=bool)
+    printReadMessage(fileName, "tif", image.shape)
+    return image
+
 
 def openFile(fileName, numVoxels):
     """Opens the image with fileName and number of voxels in each direction
@@ -86,6 +95,10 @@ def openFile(fileName, numVoxels):
         if len(numVoxels) > 0:
             logger.warning("Argument numVoxels ignored for png files")
         return openPngFile(fileName)
+    if fileName.endswith(".tif"):
+        if len(numVoxels) > 0:
+            logger.warning("Argument numVoxels ignored for tif files")
+        return openTifFile(fileName)
 
     raise NotImplementedError(fileName + "not supported")
 
