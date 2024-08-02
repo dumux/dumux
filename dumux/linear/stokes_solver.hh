@@ -35,6 +35,7 @@
 #include <dumux/linear/parallelmatrixadapter.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/linear/symmetrize_constraints.hh>
+#include <dumux/assembly/jacobianpattern.hh>
 
 namespace Dumux::Detail {
 
@@ -244,9 +245,9 @@ private:
         if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForVelocity", false))
         {
 #if HAVE_UMFPACK
-            directSolver_ = std::make_shared<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
+            directSolverForA_ = std::make_shared<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
             using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<U, U>>;
-            preconditionerForA_ = std::make_shared<Wrap>(*directSolver_);
+            preconditionerForA_ = std::make_shared<Wrap>(*directSolverForA_);
 #else
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
@@ -260,8 +261,22 @@ private:
             >(lopV, params);
         }
 
-        using PressJacobi = Dumux::ParMTJac<P, V, V>;
-        preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, 1, 1.0);
+        if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForPressure", false))
+        {
+#if HAVE_UMFPACK
+            directSolverForP_ = std::make_shared<Dune::UMFPack<P>>(pmatrix_, verbosity_);
+            using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<V, V>>;
+            preconditionerForP_ = std::make_shared<Wrap>(*directSolverForP_);
+#else
+            DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
+#endif
+        }
+        else
+        {
+            using PressJacobi = Dumux::ParMTJac<P, V, V>;
+            std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
+            preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, numIterations, 1.0);
+        }
     }
 
     template<class Sol, class Rhs>
@@ -289,7 +304,8 @@ private:
 
     std::shared_ptr<Dune::Preconditioner<U, U>> preconditionerForA_;
     std::shared_ptr<Dune::Preconditioner<V, V>> preconditionerForP_;
-    std::shared_ptr<Dune::InverseOperator<U, U>> directSolver_;
+    std::shared_ptr<Dune::InverseOperator<U, U>> directSolverForA_;
+    std::shared_ptr<Dune::InverseOperator<V, V>> directSolverForP_;
 
     const std::string paramGroup_;
     Mode mode_;
@@ -400,36 +416,76 @@ private:
         return std::make_shared<LinearOperator>(massMatrix);
     }
 
-    template<class M>
+    template<class M, class DM = typename PressureGG::DiscretizationMethod>
     std::shared_ptr<M> createMassMatrix_()
     {
         auto massMatrix = std::make_shared<M>();
         massMatrix->setBuildMode(M::random);
         const auto numDofs = pGridGeometry_->numDofs();
 
-        Dune::MatrixIndexSet pattern;
-        pattern.resize(numDofs, numDofs);
-        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-            pattern.add(globalI, globalI);
-        pattern.exportIdx(*massMatrix);
-
-        const auto& gv = pGridGeometry_->gridView();
-        auto fvGeometry = localView(*pGridGeometry_);
-        for (const auto& element : elements(gv))
+        if constexpr (DM{} == DiscretizationMethods::cctpfa || DM{} == DiscretizationMethods::ccmpfa)
         {
-            fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
+            Dune::MatrixIndexSet pattern;
+            pattern.resize(numDofs, numDofs);
+            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+                pattern.add(globalI, globalI);
+            pattern.exportIdx(*massMatrix);
+
+            const auto& gv = pGridGeometry_->gridView();
+            auto fvGeometry = localView(*pGridGeometry_);
+            for (const auto& element : elements(gv))
             {
-                using Extrusion = Extrusion_t<PressureGG>;
-                const auto dofIndex = scv.dofIndex();
-                if (element.partitionType() == Dune::GhostEntity) // do not modify ghosts
-                    (*massMatrix)[dofIndex][dofIndex] = 1.0;
-                else
-                    (*massMatrix)[dofIndex][dofIndex] += weight_*Extrusion::volume(fvGeometry, scv)/(2.0*viscosity_);
+                fvGeometry.bindElement(element);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    using Extrusion = Extrusion_t<PressureGG>;
+                    const auto dofIndex = scv.dofIndex();
+                    if (element.partitionType() == Dune::GhostEntity) // do not modify ghosts
+                        (*massMatrix)[dofIndex][dofIndex] = 1.0;
+                    else
+                        (*massMatrix)[dofIndex][dofIndex] += weight_*Extrusion::volume(fvGeometry, scv)/(2.0*viscosity_);
+                }
             }
+
+            return massMatrix;
+        }
+        else if constexpr (DM{} == DiscretizationMethods::box || DM{} == DiscretizationMethods::fcdiamond)
+        {
+            getJacobianPattern<true>(*pGridGeometry_).exportIdx(*massMatrix);
+            (*massMatrix) = 0.0;
+
+            const auto& gv = pGridGeometry_->gridView();
+            auto fvGeometry = localView(*pGridGeometry_);
+            std::vector<Dune::FieldVector<double, 1>> values;
+
+            for (const auto& element : elements(gv))
+            {
+                const auto geometry = element.geometry();
+                const auto& localBasis = pGridGeometry_->feCache().get(element.type()).localBasis();
+                const auto numLocalDofs = localBasis.size();
+                values.resize(numLocalDofs);
+
+                fvGeometry.bindElement(element);
+                for (const auto& scvJ : scvs(fvGeometry))
+                {
+                    // Use mid-point rule (only works for linear ansatz functions)
+                    const auto globalJ = scvJ.dofIndex();
+                    const auto qWeightJ = PressureGG::Extrusion::volume(fvGeometry, scvJ);
+                    const auto quadPos = geometry.local(scvJ.center());
+                    localBasis.evaluateFunction(quadPos, values);
+
+                    for (const auto& scvI : scvs(fvGeometry))
+                    {
+                        const auto valueIJ = values[scvI.localDofIndex()]*qWeightJ/(2.0*viscosity_);
+                        (*massMatrix)[scvI.dofIndex()][globalJ][0][0] += valueIJ;
+                    }
+                }
+            }
+
+            return massMatrix;
         }
 
-        return massMatrix;
+        DUNE_THROW(Dune::NotImplemented, "Mass matrix for discretization method not implemented");
     }
 
     double density_, viscosity_, weight_;
