@@ -194,3 +194,17 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
                                      ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_simplex_pq1bubble_1.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_pq1bubble_simplex params.input
                              -Problem.Name donea_momentum_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleHybridModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS      --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_simplex_hybrid_pq1bubble_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex params.input
+                           -Problem.Name donea_momentum_simplex_hybrid -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
