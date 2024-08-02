@@ -245,9 +245,9 @@ private:
         if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForVelocity", false))
         {
 #if HAVE_UMFPACK
-            directSolver_ = std::make_shared<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
+            directSolverForA_ = std::make_shared<Dune::UMFPack<A>>(matrix_[_0][_0], verbosity_);
             using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<U, U>>;
-            preconditionerForA_ = std::make_shared<Wrap>(*directSolver_);
+            preconditionerForA_ = std::make_shared<Wrap>(*directSolverForA_);
 #else
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
@@ -261,8 +261,22 @@ private:
             >(lopV, params);
         }
 
-        using PressJacobi = Dumux::ParMTJac<P, V, V>;
-        preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, 1, 1.0);
+        if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForPressure", false))
+        {
+#if HAVE_UMFPACK
+            directSolverForP_ = std::make_shared<Dune::UMFPack<P>>(pmatrix_, verbosity_);
+            using Wrap = Dune::InverseOperator2Preconditioner<Dune::InverseOperator<V, V>>;
+            preconditionerForP_ = std::make_shared<Wrap>(*directSolverForP_);
+#else
+            DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
+#endif
+        }
+        else
+        {
+            using PressJacobi = Dumux::ParMTJac<P, V, V>;
+            std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
+            preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, numIterations, 1.0);
+        }
     }
 
     template<class Sol, class Rhs>
@@ -290,7 +304,8 @@ private:
 
     std::shared_ptr<Dune::Preconditioner<U, U>> preconditionerForA_;
     std::shared_ptr<Dune::Preconditioner<V, V>> preconditionerForP_;
-    std::shared_ptr<Dune::InverseOperator<U, U>> directSolver_;
+    std::shared_ptr<Dune::InverseOperator<U, U>> directSolverForA_;
+    std::shared_ptr<Dune::InverseOperator<V, V>> directSolverForP_;
 
     const std::string paramGroup_;
     Mode mode_;
