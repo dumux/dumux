@@ -16,14 +16,17 @@
 
 #include <optional>
 #include <utility>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/rangeutilities.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
@@ -93,6 +96,33 @@ public:
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         const auto& s = fvGeometry.ggCache_->scvs(fvGeometry.eIdx_);
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
+    }
+
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto cvLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [&](const auto i) { return CVFE::CVLocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                fvGeometry
+            }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numScv()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
     }
 
     //! iterator range for sub control volumes faces. Iterates over
