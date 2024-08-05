@@ -121,15 +121,15 @@ public:
             values.setNeumann(Indices::energyEqIdx);
 #endif
 
-        if (onUpperBoundary_(globalPos) || onLeftBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(Indices::velocityZIdx);
             values.setNeumann(Indices::conti0EqIdx);
             values.setNeumann(Indices::conti0EqIdx + 1);
         }
-
-        if (onRightBoundary_(globalPos))
+        else if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(Indices::conti0EqIdx + 1);
@@ -138,13 +138,21 @@ public:
             values.setOutflow(Indices::energyEqIdx);
 #endif
         }
-
-        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        else if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::conti0EqIdx + 1);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             values.setBeaversJoseph(Indices::momentumXBalanceIdx);
+            values.setBeaversJoseph(Indices::momentumZBalanceIdx);
+        }
+        else
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(Indices::velocityZIdx);
+            values.setNeumann(Indices::conti0EqIdx);
+            values.setNeumann(Indices::conti0EqIdx + 1);
         }
         return values;
     }

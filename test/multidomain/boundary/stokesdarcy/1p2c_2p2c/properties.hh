@@ -93,7 +93,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::StokesOnePTwoC>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the gas phase
+  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the water phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
@@ -114,9 +114,6 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct NormalizePressure<TypeTag, TTag::StokesOnePTwoC> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::StokesOnePTwoC>

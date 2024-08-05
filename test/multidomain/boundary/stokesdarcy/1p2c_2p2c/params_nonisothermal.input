@@ -4,27 +4,27 @@ MaxTimeStepSize = 43200 # [s] (12 hours)
 TEnd = 864000 # [s] (6 days)
 
 [Stokes.Grid]
-Positions0 = 0.0 0.25
+Positions0 = 0.0 0.75
 Positions1 = 0.25 0.5
 Grading0 = 1.0
-Grading1 = 1.5
+Grading1 = 1.0 #1.5
 Cells0 = 8
-Cells1 = 16
+Cells1 = 64
 
 [Darcy.Grid]
-Positions0 = 0.0 0.25
+Positions0 = 0.25 0.50
 Positions1 = 0.0 0.25
 Cells0 = 8
-Cells1 = 8
+Cells1 = 16
 Grading0 = 1.0
-Grading1 = -1.5
+Grading1 = 1.0 #-1.5
 
 [Stokes.Problem]
 Name = stokes
 RefVelocity = 3.5 # [m/s]
 RefPressure = 1e5 # [Pa]
 refMoleFrac = 0 # [-]
-RefTemperature = 298.15 # [K]
+RefTemperature = 313.15 # [K]
 
 [Darcy.Problem]
 Name = darcy
@@ -40,7 +40,7 @@ Swr = 0.005
 Snr = 0.01
 VanGenuchtenAlpha = 6.371e-4
 VanGenuchtenN = 6.9
-PorousMediumTemperature = 298.15 # [K]
+PorousMediumTemperature = 293.15 # [K]
 
 [Problem]
 Name = test_stokes1p2cnidarcy2p2cnihorizontal

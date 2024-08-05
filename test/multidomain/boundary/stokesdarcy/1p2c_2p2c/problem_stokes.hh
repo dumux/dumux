@@ -121,15 +121,16 @@ public:
             values.setNeumann(Indices::energyEqIdx);
 #endif
 
-        if (onUpperBoundary_(globalPos) || onLeftBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-            values.setNeumann(Indices::conti0EqIdx);
-            values.setNeumann(Indices::conti0EqIdx + 1);
+            values.setDirichlet(Indices::conti0EqIdx + 1);
+#if NONISOTHERMAL
+            values.setDirichlet(Indices::energyEqIdx);
+#endif
         }
-
-        if (onRightBoundary_(globalPos))
+        else if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(Indices::conti0EqIdx + 1);
@@ -138,13 +139,22 @@ public:
             values.setOutflow(Indices::energyEqIdx);
 #endif
         }
-
-        if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
+        else if (couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values.setCouplingNeumann(Indices::conti0EqIdx);
             values.setCouplingNeumann(Indices::conti0EqIdx + 1);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             values.setBeaversJoseph(Indices::momentumXBalanceIdx);
+        }
+        else
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setNeumann(Indices::conti0EqIdx);
+            values.setNeumann(Indices::conti0EqIdx + 1);
+#if NONISOTHERMAL
+            values.setNeumann(Indices::energyEqIdx);
+#endif
         }
         return values;
     }
@@ -199,7 +209,7 @@ public:
         if(couplingManager().isCoupledEntity(CouplingManager::stokesIdx, scvf))
         {
             values[Indices::momentumYBalanceIdx] = couplingManager().couplingData().momentumCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-// std::cout<<"  values[Indices::momentumYBalanceIdx]    "<<values[Indices::momentumYBalanceIdx]<<std::endl;
+
             const auto massFlux = couplingManager().couplingData().massCouplingCondition(element, fvGeometry, elemVolVars, elemFaceVars, scvf, diffCoeffAvgType_);
             values[Indices::conti0EqIdx] = massFlux[0];
             values[Indices::conti0EqIdx + 1] = massFlux[1];

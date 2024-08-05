@@ -1,27 +1,39 @@
 [TimeLoop]
-DtInitial =  10 # [s]
+DtInitial =  1e-2 # [s]
 MaxTimeStepSize = 43200 # [s] (12 hours)
 TEnd = 864000 # [s] (6 days)
 
 [Stokes.Grid]
-Positions0 = 0.0 0.25
-Positions1 = 0.25 0.5
-Grading0 = 1.0
-Grading1 = 1.0
-Cells0 = 8
-Cells1 = 32
+#Positions0 = 0.100 0.00 0.0
+#Positions1 = 0.360 0.05 0.0   # 260 mm * 50 mm * 100 mm, assume two parallel plates
+#Positions2 = 0.360 0.00 0.1
+#Grading0 = 1.0
+#Grading1 = 1.0
+#Grading2 = 1.0
+#Cells0 = 8
+#Cells1 = 16
+#Cells2 = 16
+LowerLeft  = 0.100 0.00 0.00
+UpperRight = 0.360 0.05 0.10 # 260 mm * 50 mm * 100 mm, assume two parallel plates
+Cells = 26 10 20
 
 [Darcy.Grid]
-Positions0 = 0.0 0.25
-Positions1 = 0.0 0.25
-Cells0 = 8
-Cells1 = 8
-Grading0 = 1.0
-Grading1 = 1.0 #-1.5
+#Positions0 = 0.200 -0.005 0.035
+#Positions1 = 0.260  0.000 0.035  # 60 mm * 5 mm * 30 mm
+#Positions2 = 0.260 -0.005 0.065 
+#Cells0 = 8
+#Cells1 = 8
+#Cells2 = 8
+#Grading0 = 1.0
+#Grading1 = 1.0 #-1.5
+#Grading2 = 1.0
+LowerLeft  = 0.200 -0.005 0.035
+UpperRight = 0.260  0.000 0.065 # 60 mm * 5 mm * 30 mm
+Cells = 6 10 6
 
 [Stokes.Problem]
 Name = stokes
-RefVelocity = 3.5 # [m/s]
+RefVelocity = 1 # [m/s]
 RefPressure = 1e5 # [Pa]
 refMoleFrac = 0 # [-]
 RefTemperature = 298.15 # [K]
@@ -29,8 +41,8 @@ RefTemperature = 298.15 # [K]
 [Darcy.Problem]
 Name = darcy
 Pressure = 1.0e5
-Saturation = 0.80 # initial Sw
-InitPhasePresence = 3 # bothPhases
+Saturation = 1.0 # initial Sw
+InitPhasePresence = 1 # bothPhases
 
 [SpatialParams]
 Porosity = 0.41
