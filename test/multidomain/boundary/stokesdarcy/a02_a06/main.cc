@@ -168,24 +168,45 @@ int main(int argc, char** argv)
 
      using GlobalPosition = typename StokesElement::Geometry::GlobalCoordinate;
 
-     const Scalar xMin = stokesFvGridGeometry->bBoxMin()[0];
-     const Scalar xMax = stokesFvGridGeometry->bBoxMax()[0];
-     const Scalar yMin = stokesFvGridGeometry->bBoxMin()[1];
-     const Scalar yMax = stokesFvGridGeometry->bBoxMax()[1];
-     const Scalar zMin = stokesFvGridGeometry->bBoxMin()[2];
-     const Scalar zMax = stokesFvGridGeometry->bBoxMax()[2];
+     static constexpr int dim = DIM;
+     if (dim == 3)
+     {
+        const Scalar xMin = stokesFvGridGeometry->bBoxMin()[0];
+        const Scalar xMax = stokesFvGridGeometry->bBoxMax()[0];
+        const Scalar yMin = stokesFvGridGeometry->bBoxMin()[1];
+        const Scalar yMax = stokesFvGridGeometry->bBoxMax()[1];
+        const Scalar zMin = stokesFvGridGeometry->bBoxMin()[2];
+        const Scalar zMax = stokesFvGridGeometry->bBoxMax()[2];
 
-     const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
-     const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
-     const auto p2inlet = GlobalPosition{xMin, yMax, zMax};
-     const auto p3inlet = GlobalPosition{xMin, yMin, zMax};
-     flux.addSurface("inlet", p0inlet, p1inlet, p2inlet, p3inlet);
+        const auto p0inlet = GlobalPosition{xMin, yMin, zMin};
+        const auto p1inlet = GlobalPosition{xMin, yMax, zMin};
+        const auto p2inlet = GlobalPosition{xMin, yMax, zMax};
+        const auto p3inlet = GlobalPosition{xMin, yMin, zMax};
+        flux.addSurface("inlet", p0inlet, p1inlet, p2inlet, p3inlet);
 
-     const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
-     const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
-     const auto p2outlet = GlobalPosition{xMax, yMax, zMax};
-     const auto p3outlet = GlobalPosition{xMax, yMin, zMax};
-     flux.addSurface("outlet", p0outlet, p1outlet, p2outlet, p3outlet);
+        const auto p0outlet = GlobalPosition{xMax, yMin, zMin};
+        const auto p1outlet = GlobalPosition{xMax, yMax, zMin};
+        const auto p2outlet = GlobalPosition{xMax, yMax, zMax};
+        const auto p3outlet = GlobalPosition{xMax, yMin, zMax};
+        flux.addSurface("outlet", p0outlet, p1outlet, p2outlet, p3outlet);
+     }
+     else
+     {
+        const Scalar xMin = stokesFvGridGeometry->bBoxMin()[0];
+        const Scalar xMax = stokesFvGridGeometry->bBoxMax()[0];
+        const Scalar yMin = stokesFvGridGeometry->bBoxMin()[1];
+        const Scalar yMax = stokesFvGridGeometry->bBoxMax()[1];
+
+
+        const auto p0inlet = GlobalPosition{xMin, yMin};
+        const auto p1inlet = GlobalPosition{xMin, yMax};
+
+        flux.addSurface("inlet", p0inlet, p1inlet);
+
+        const auto p0outlet = GlobalPosition{xMax, yMin};
+        const auto p1outlet = GlobalPosition{xMax, yMax};
+        flux.addSurface("outlet", p0outlet, p1outlet);
+     }
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;

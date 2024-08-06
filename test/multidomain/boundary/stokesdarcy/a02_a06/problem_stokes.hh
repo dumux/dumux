@@ -61,6 +61,7 @@ class StokesSubProblem : public NavierStokesStaggeredProblem<TypeTag>
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
 
     static constexpr bool useMoles = GetPropType<TypeTag, Properties::ModelTraits>::useMoles();
+    static constexpr int dim = DIM;
 
 public:
     StokesSubProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
@@ -125,9 +126,10 @@ public:
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-            values.setDirichlet(Indices::velocityZIdx);
-            values.setNeumann(Indices::conti0EqIdx);
-            values.setNeumann(Indices::conti0EqIdx + 1);
+            if (dim == 3)
+                values.setDirichlet(Indices::velocityZIdx);
+
+            values.setDirichlet(Indices::conti0EqIdx + 1);
         }
         else if (onRightBoundary_(globalPos))
         {
@@ -144,13 +146,15 @@ public:
             values.setCouplingNeumann(Indices::conti0EqIdx + 1);
             values.setCouplingNeumann(Indices::momentumYBalanceIdx);
             values.setBeaversJoseph(Indices::momentumXBalanceIdx);
-            values.setBeaversJoseph(Indices::momentumZBalanceIdx);
+            if (dim == 3)
+                values.setBeaversJoseph(Indices::momentumZBalanceIdx);
         }
         else
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-            values.setDirichlet(Indices::velocityZIdx);
+            if (dim == 3)
+                values.setDirichlet(Indices::velocityZIdx);
             values.setNeumann(Indices::conti0EqIdx);
             values.setNeumann(Indices::conti0EqIdx + 1);
         }

@@ -64,7 +64,11 @@ struct ReplaceCompEqIdx<TypeTag, TTag::DarcyTwoPTwoC> { static constexpr int val
 // struct Grid<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dune::YaspGrid<3, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyTwoPTwoC> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
+struct Grid<TypeTag, TTag::DarcyTwoPTwoC>
+{
+    static constexpr int dim = DIM;
+    using type = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
+};
 
 
 template<class TypeTag>
@@ -93,7 +97,10 @@ struct StokesOnePTwoC { using InheritsFrom = std::tuple<NavierStokesNCNI, Stagge
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::StokesOnePTwoC> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
+struct Grid<TypeTag, TTag::StokesOnePTwoC>
+{   static constexpr int dim = DIM;
+    using type = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, dim> >;
+};
 
 // The fluid system
 template<class TypeTag>
