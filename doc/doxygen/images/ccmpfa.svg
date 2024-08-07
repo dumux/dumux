@@ -6,7 +6,7 @@
    inkscape:export-xdpi="600"
    inkscape:export-filename="ccmpfa.png"
    sodipodi:docname="ccmpfa.svg"
-   inkscape:version="1.3.2 (1:1.3.2+202404261509+091e20ef0f)"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
    version="1.1"
    id="svg4484"
    viewBox="0 0 143.68817 90.076891"
@@ -22,7 +22,7 @@
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:ns0="http://www.iki.fi/pav/software/textext/">
   <sodipodi:namedview
-     inkscape:current-layer="g10"
+     inkscape:current-layer="layer1"
      fit-margin-bottom="0"
      fit-margin-right="0"
      fit-margin-left="0"
@@ -34,15 +34,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="8"
-     inkscape:cx="77.375"
-     inkscape:cy="22"
+     inkscape:cx="41.875"
+     inkscape:cy="53.25"
      inkscape:document-units="px"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1054"
+     inkscape:window-width="1312"
+     inkscape:window-height="449"
      inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
      inkscape:lockguides="false"
      inkscape:snap-global="false"
      inkscape:showpageshadow="2"
@@ -2376,7 +2376,7 @@
        cy="541.04425"
        cx="280.07361"
        id="path5370-6-2-5"
-       style="display:inline;opacity:1;fill:#2819e0;fill-opacity:1;stroke:none;stroke-width:0.361758;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.361758, 0.723516;stroke-dashoffset:0;stroke-opacity:1"
+       style="display:inline;opacity:1;fill:#008080;fill-opacity:1;stroke:none;stroke-width:0.361758;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.361758, 0.723516;stroke-dashoffset:0;stroke-opacity:1"
        rx="0.81912094"
        ry="0.819121" />
     <path
@@ -2705,7 +2705,8 @@
          ns0:stroke-to-path="0"
          ns0:inkscapeversion="1.3.2"
          id="g7325"
-         ns0:jacobian_sqrt="0.4">
+         ns0:jacobian_sqrt="0.4"
+         style="fill:#008080">
         <defs
            id="id-ce0f7e30-fa91-4f96-a8c6-34dfff4f938a">
           <g
@@ -2722,13 +2723,16 @@
            fill="#0000ff"
            fill-opacity="1"
            id="id-c50a0b47-5703-4fcb-9a54-d893364fcb1e"
-           transform="translate(-149.009,-130.359)">
+           transform="translate(-149.009,-130.359)"
+           style="fill:#008080">
           <g
              transform="translate(148.712,134.765)"
-             id="g6031">
+             id="g6031"
+             style="fill:#008080">
             <path
                d="m 4.671875,-3.703125 c 0,-0.546875 -0.265625,-0.703125 -0.4375,-0.703125 -0.25,0 -0.5,0.265625 -0.5,0.484375 0,0.125 0.046875,0.1875 0.15625,0.296875 0.21875,0.203125 0.34375,0.453125 0.34375,0.8125 0,0.421875 -0.609375,2.703125 -1.765625,2.703125 -0.515625,0 -0.75,-0.34375 -0.75,-0.875 0,-0.546875 0.28125,-1.28125 0.578125,-2.109375 0.078125,-0.171875 0.125,-0.3125 0.125,-0.5 0,-0.4375 -0.3125,-0.8125 -0.8125,-0.8125 -0.9375,0 -1.3125,1.453125 -1.3125,1.53125 0,0.109375 0.09375,0.109375 0.109375,0.109375 0.109375,0 0.109375,-0.03125 0.15625,-0.1875 0.296875,-1 0.71875,-1.234375 1.015625,-1.234375 0.078125,0 0.25,0 0.25,0.3125 0,0.25 -0.109375,0.53125 -0.171875,0.703125 -0.4375,1.15625 -0.5625,1.609375 -0.5625,2.046875 0,1.078125 0.875,1.234375 1.328125,1.234375 1.671875,0 2.25,-3.296875 2.25,-3.8125 z m 0,0"
-               id="id-4b06ddd1-fe74-4b6c-8c82-b7c381b4fd50" />
+               id="id-4b06ddd1-fe74-4b6c-8c82-b7c381b4fd50"
+               style="fill:#008080" />
           </g>
         </g>
       </g>
