@@ -11,7 +11,7 @@ def writeDGF(filename, vData, eData):
             + "\n"
         )
         outputfile.write(
-            "% Element parameters: ThroatInscribedRadius ThroatLength ThroatLabel"
+            "% Element parameters: ThroatInscribedRadius ThroatLength"
             + "\n"
         )
         outputfile.write("Vertex\n")
@@ -20,7 +20,7 @@ def writeDGF(filename, vData, eData):
             outputfile.write(" ".join([str(v) for v in vData[i]]) + "\n")
         outputfile.write("\n#\n")
         outputfile.write("SIMPLEX\n")
-        outputfile.write("parameters " + str(3) + "\n")  # cell data, -2 because first 2 parameters are pb to pth links, shape[0] and shape[1] are row and column number
+        outputfile.write("parameters " + str(2) + "\n")  # cell data, -2 because first 2 parameters are pb to pth links, shape[0] and shape[1] are row and column number
         for i in range(len(eData)):
             outputfile.write(
                 " ".join(
@@ -93,7 +93,7 @@ throat_number = len(throat_indices_0)
 throatLength = np.ones(throat_number) * tL
 throatRadius   = np.random.normal(pR*0.5, pR*0.1, throat_number)
 #throatRadius = np.ones(throat_number) * pR * 0.5
-throatLabel = np.ones(throat_number) * -1
-eData = np.array([throat_indices_0, throat_indices_1, throatRadius, throatLength, throatLabel]).T
+# throatLabel = np.ones(throat_number) * -1
+eData = np.array([throat_indices_0, throat_indices_1, throatRadius, throatLength]).T
 
 writeDGF("lattice_network.dgf", vData, eData)
