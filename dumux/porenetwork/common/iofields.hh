@@ -33,6 +33,8 @@ public:
 
         out.addVolumeVariable([](const auto& volVars){ return volVars.poreInscribedRadius(); }, "poreInscribedRadius");
 
+        out.addVolumeVariable([](const auto& volVars){ return volVars.poreVolume(); }, "poreVolume");
+
         out.addField(out.problem().gridGeometry().throatLabel(), "throatLabel", Vtk::FieldType::element);
 
         out.addFluxVariable([](const auto& fluxVars, const auto& fluxVarsCache)
