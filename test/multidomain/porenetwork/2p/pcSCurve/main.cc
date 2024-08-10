@@ -180,9 +180,15 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
+        // report total iteration numbers and set the time step size as initial dt when equlibirum point is reached
+        if (problem->equilibriumPointReached())
+        {
+            timeLoop->setTimeStepSize(dt);
+            nonLinearSolver.reportTotalIterations();
+        }
+        else
         // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
-
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
     } while (!timeLoop->finished());
 
     nonLinearSolver.report();

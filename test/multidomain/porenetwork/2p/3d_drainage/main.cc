@@ -189,7 +189,7 @@ int main(int argc, char** argv)
     avgValues.eval(dofsToNeglect);
     problem->postTimeStep(timeLoop->time(), avgValues, gridVariables->gridFluxVarsCache().invasionState().numThroatsInvaded(), timeLoop->timeStepSize());
     nonLinearSolver.report();
-
+    nonLinearSolver.reportTotalIterations();
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////

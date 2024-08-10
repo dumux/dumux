@@ -227,13 +227,20 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
+        // report total iteration numbers and set the time step size as initial dt when equlibirum point is reached
+        if (pnmProblem->equilibriumPointReached())
+        {
+            timeLoop->setTimeStepSize(dt);
+            newtonSolver.reportTotalIterations();
+        }
+        else
         // set new dt as suggested by newton solver
-        timeLoop->setTimeStepSize(newtonSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            timeLoop->setTimeStepSize(newtonSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
     newtonSolver.report();
-    newtonSolver.reportTotalIterations();
+
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
