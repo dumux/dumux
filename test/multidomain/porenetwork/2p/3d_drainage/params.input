@@ -5,7 +5,7 @@ CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape =  Square
+ThroatCrossSectionShape = Square
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 10 10 10
 ParameterType = lognormal
@@ -26,11 +26,7 @@ Name = pnm_3d
 VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occured. -1 writes every step
 RegularizationDelta = 1e-1
 RegularizationFunction = Spline
-DisWReflow = false
-DisNOutflow = false
-BoundConductivity = false
 UseUpwindPc = false
-switchConductivityCurve = true
 neglectInletOutlet = true
 NonWettingMassFlux = 5e-10
 
