@@ -6,7 +6,7 @@
 """
 A simple script for conveniently running the SNOW algorithm of PoreSpy
 (watershed image segmentation) in order to extract a (dual) pore network
-from a 2D or 3D raster image. Accepts .raw, .png and .nrrd images.
+from a 2D or 3D raster image. Accepts .raw, .png and .nrrd images as well as .npy data.
 Requires the PoreSpy (https://porespy.org/) and OpenPNM package (https://openpnm.org/).
 """
 
@@ -69,6 +69,12 @@ def openPngFile(fileName):
     return image
 
 
+def openNpyFile(fileName):
+    image = np.load(fileName)
+    printReadMessage(fileName, "npy", image.shape)
+    return image
+
+
 def openFile(fileName, numVoxels):
     """Opens the image with fileName and number of voxels in each direction
     detecting the file type from extension.
@@ -86,6 +92,10 @@ def openFile(fileName, numVoxels):
         if len(numVoxels) > 0:
             logger.warning("Argument numVoxels ignored for png files")
         return openPngFile(fileName)
+    if fileName.endswith(".npy"):
+        if len(numVoxels) > 0:
+            logger.warning("Argument numVoxels ignored for npy files")
+        return openNpyFile(fileName)
 
     raise NotImplementedError(fileName + "not supported")
 
