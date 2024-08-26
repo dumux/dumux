@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 """
-Multi-domain & Regularization.
+1d drainage case.
 
-1d drainage case, compare accuracy & efficency.
+Multi-domain vs Regularization for PNM.
+
+Compare accuracy & efficency.
 
 We use global L2 error to measure accuracy,
 iteration numbers to represent efficiency.
@@ -18,8 +20,8 @@ import matplotlib.pyplot as plt
 #############################################
 ##########     Given parameters  ############
 #############################################
-swEntry = 0.101485677973638 # saturation below which invaison happens
-snEntry = 1 - swEntry # nonwetting saturation to invade next pore
+swEntry = 0.101485677973638 # saturation threshold for invasion
+snEntry = 1 - swEntry # Sn to invade next pore
 singlePoreVolume = 6.4e-11 # single pore volume in m³
 massFlux = 5e-10 # injection rate in kg/s
 density = 1000 # density of injection fluid in kg/m³
@@ -27,15 +29,15 @@ kinematicViscosity = 1e-7 # kinemaic viscosity in m²/s
 volumeFlux = massFlux/density # volume flux of injected flux in m³/kg
 tEnd = 500 # total injection time in s
 numTotalPores = 10 # total pore number
-maxTimeStep = [10, 20, 50] # We limit the maximum time step size from 5s to 10s
-regularizationDelta = [0.4, 0.6] # we test few different regularization Delta
+maxTimeStep = [10, 20, 50] # We limit the time step size
+regularizationDelta = [0.4, 0.6] # we test different regularization Delta
 
 
 ##############################################
 ####    Calculate analytical Solution  #######
 ##############################################
 timeToInvadeOnePore = snEntry * singlePoreVolume / volumeFlux
-numberInvPores = int (tEnd/timeToInvadeOnePore) # how many pores are totaly invaded
+numberInvPores = int (tEnd/timeToInvadeOnePore) # number of totally invaded pores
 totalInjection = volumeFlux * tEnd # total volume of injected fluid
 previousTotalInvPoreVolume = singlePoreVolume * numberInvPores * snEntry
 snLastPore = (totalInjection - previousTotalInvPoreVolume)/singlePoreVolume
@@ -72,8 +74,8 @@ totalNewtonIterationsReg =  [[], []]
 
 # Test case using theta-regularization
 for maxdt in maxTimeStep:
-    print("First we run the drainage case using theta-regularization")
-    for idx, interval in enumerate(regularizationDelta):
+    print("First we run the drainage case using regularization")
+    for idx, interval in enumerate(regularizationDelta): # idx represents index for different Regularization Delta
         print("The regularization Delta is: ", interval)
         subprocess.run(['./' + testName[0]]
                        + ['-TimeLoop.DtInitial', str(maxdt)]
@@ -93,7 +95,7 @@ for maxdt in maxTimeStep:
         subprocess.run(['rm', 'NewtonLog.txt'])
         subprocess.run([pvpythonPath, extractScript, '-f', extractedVtpFileName[0], '-p1', '0.0', '0.0', '0.0', '-p2', '4.5e-3', '0', '0', "-r", '9'])
         swNumerical = np.genfromtxt(extractedResultsName[0], skip_header=1, usecols=0, delimiter=",").T
-        l2errorSw =  np.sum(np.power((swNumerical-swAnalytical),2))/10
+        l2errorSw =  np.sum(np.power((swNumerical-swAnalytical),2))/10 # calculate L2 error between anayltical solution and numerical solution
         l2errorSw = np.sqrt(l2errorSw)
         l2ErrorReg[idx].append(l2errorSw)
         timestepFile = 'time_steps_' + str(testName[0]) +".txt"
