@@ -233,9 +233,9 @@ ax[0].set_xlabel("Average time step size")
 ax[0].set_ylabel("$E_{S_{w}}$ [-]")
 ax[0].set_yscale('log')
 ax[0].set_xticks([0.5, 1, 2, 4])
-ax[0].legend(loc='upper center', bbox_to_anchor=(0.47, 1.32), ncol=2, prop={'size': 8})
+ax[0].legend(loc='upper center', bbox_to_anchor=(0.47, 1.4), ncol=2, prop={'size': 8})
 
-# 2nd subplot about efficiency
+# 2nd subplot about efficienc
 for idx, interval in enumerate(regularizationDelta):
     ax[1].plot(averageTimeStepFI[idx], totalNewtonIterationsFI[idx], marker="o", label = 'FI-N, $\\tilde{\delta} = $' + str(interval), linewidth = 1, markersize = 6)
     ax[1].plot(averageTimeStepRegNonReduce[idx], totalNewtonIterationsRegNonReduce[idx], marker="^", label = 'FI-R, $\delta = $' + str(interval), linewidth = 1, markersize = 6)
@@ -247,9 +247,9 @@ ax[1].set_xlabel("Average time step size")
 ax[1].set_ylabel("total newton iterations [-]")
 ax[1].set_yscale('log')
 ax[1].set_xticks([0.5, 1, 2, 4])
-ax[1].legend(loc='upper center', bbox_to_anchor=(0.5, 1.32), ncol=2, prop={'size': 8})
+ax[1].legend(loc='upper center', bbox_to_anchor=(0.5, 1.4), ncol=2, prop={'size': 8})
 
 
 plt.subplots_adjust(wspace=0, hspace=0)
-fig.tight_layout(rect=[0.03, 0.07, 1, 0.9], pad=0.4, w_pad=2.0, h_pad=1.0)
+fig.tight_layout(rect=[0.03, 0.07, 1, 1], pad=0.4, w_pad=2.0, h_pad=1.0)
 plt.savefig("1D_drainage_accuracy_efficency.pdf", dpi=900)
