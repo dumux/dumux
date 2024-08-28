@@ -542,7 +542,7 @@ public:
         if (phaseIdx == liquidPhaseIdx) {
             if (compIdx == H2OIdx)
                 return vaporPressure(fluidState, compIdx)/p;
-            return BinaryCoeff::H2O_Air::henry(T)/p;
+            return BinaryCoeff::H2O_Air::henryMixture(T)/p;
         }
 
         // for the gas phase, assume an ideal gas when it comes to
