@@ -34,10 +34,10 @@ public:
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-        const Scalar E = 2388.8777;
-        const Scalar F = -14.9593;
-        const Scalar G = 42.0179;
-        const Scalar H = -29.4396;
+        static const Scalar E = 2388.8777;
+        static const Scalar F = -14.9593;
+        static const Scalar G = 42.0179;
+        static const Scalar H = -29.4396;
 
         return henryIAPWS(E, F, G, H, temperature);
     }

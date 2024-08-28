@@ -93,6 +93,7 @@ public:
     }
 };
 
-} // end namespace Dumux::BinaryCoeff
+} // end namespace BinaryCoeff
+} // end namespace Dumux
 
 #endif
