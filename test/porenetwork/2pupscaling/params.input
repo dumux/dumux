@@ -15,21 +15,21 @@
 #ParameterRandomNumberSeed = 22
 
 [Grid]
-File = ./grids/440_coarsened.dgf
+File = ./grids/myNumPyPart.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 
 [Problem]
 Name = test_pnm_2p_upscaling
-InitialPc = 5e4 # [Pa]
-FinalPc = 2e7 # [Pa]
+InitialPc = 1e3 # [Pa]
+FinalPc = 2.8e4 # [Pa]
 NumSteps = 60 # the number of episodes to run
 PlotPcS = true
 SurfaceTension = 0.0725
 ContactAngle = 0.0
-InletPoreLabel = 4
-OutletPoreLabel = 3
-Directions = 1 # the directions to be plotted 0 1 2
+InletPoreLabel = 1
+OutletPoreLabel = 2
+Directions = 0 # the directions to be plotted 0 1 2
 AllowDraingeOfOutlet = true
 EnableGravity = 0 # disable gravity
 MaximumPressureGradient = 1e10 #Pa/m
