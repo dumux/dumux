@@ -25,7 +25,7 @@ namespace Dumux {
  * \param H Correlation parameter
  * \param temperature the temperature \f$\mathrm{[K]}\f$
  *
- * This function calculates \f$\mathrm{K_D}\f$, see:
+ * This function calculates \f$\mathrm{K_D}\f$ times the vapor pressure, see:
  *
  * IAPWS: "Guideline on the Henry's Constant and Vapor-Liquid
  * Distribution Constant for Gases in H2O and D2O at High
