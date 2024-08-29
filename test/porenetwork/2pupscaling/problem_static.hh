@@ -112,6 +112,7 @@ public:
         sw_.resize(leafGridView.size(1), 1.0);
         poreLabel_.resize(leafGridView.size(1));
         throatTransmissibility_.resize(leafGridView.size(0));
+        throatVolume_.resize(leafGridView.size(0));
 
         // helper function to evaluate the entry capillary pressure
         auto getPcEntry = [&](const std::size_t eIdx)
@@ -130,6 +131,9 @@ public:
             const auto eIdx = leafGridView.indexSet().index(element);
             pcEntry_[eIdx] = getPcEntry(eIdx);
             throatLabel_[eIdx] = gridGeometry_.throatLabel(eIdx);
+            const Scalar throatRadius =  gridGeometry_.throatInscribedRadius(eIdx);
+            const Scalar throatLength =  gridGeometry_.throatLength(eIdx);
+            throatVolume_[eIdx] = throatRadius * throatRadius * throatLength; //square cross-section
 
             for (int i = 0; i < 2; ++i)
             {
@@ -143,6 +147,7 @@ public:
             if (poreLabel_[i] != inletPoreLabel_ && (poreLabel_[i] != outletPoreLabel_ || allowDraingeOfOutlet_))
                 totalPoreVolume_ += poreVolume_[i];
 
+        totalThroatVolume_ = std::accumulate(throatVolume_.begin(), throatVolume_.end(), 0.0);
 
         // prepare logfile
         logfileName_ = name_ + "_pc-s-curve.txt";
@@ -387,12 +392,14 @@ private:
     std::vector<Scalar> pcEntry_;
     std::vector<int> throatLabel_;
     std::vector<Scalar> poreVolume_;
+    std::vector<Scalar> throatVolume_;
     std::vector<Scalar> pc_;
     std::vector<Scalar> sw_;
     Scalar averageSaturation_;
     std::vector<int> poreLabel_;
     std::vector<std::array<Scalar, 2>> throatTransmissibility_;
     Scalar totalPoreVolume_;
+    Scalar totalThroatVolume_;
 
     std::string logfileName_;
 

@@ -42,7 +42,7 @@ public:
     {
         // get the domain side lengths from the problem
         auto sideLengths = problem.sideLengths();
-
+        std::cout<<"side lengths:  "<<sideLengths[0]<<"   "<<sideLengths[1]<<"   "<<sideLengths[2]<<std::endl;
 
         // get the applied pressure gradient
         const auto pressureGradient = problem.pressureGradient();
@@ -56,8 +56,10 @@ public:
         ;
 
         // calculate apparent velocity
+        assert(problem.direction() == 0); // for this application, only the premeability in x-direction is calculated
+
         sideLengths[problem.direction()] = 1.0;
-        const auto outflowArea = std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>());
+        const auto outflowArea = M_PI * std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>()); //for a cylinder
         const auto vApparent = volumeFlux / outflowArea;
 
         // compute apparent permeability
@@ -73,8 +75,9 @@ public:
     void networkPorosity(const Problem &problem)
     {
         auto sideLengths = problem.sideLengths();
-        auto networkTotalVolume = std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>());
 
+        auto networkTotalVolume = M_PI * std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>()); // for a cylinder
+        std::cout<<" networkTotalVolume:  "<<networkTotalVolume<<" totalPoreVolume_:  "<<totalPoreVolume_<<std::endl;
         networkPorosity_ = totalPoreVolume_ / networkTotalVolume;
     }
     // [[/codeblock]]
@@ -169,7 +172,8 @@ public:
     { totalPoreVolume_ = totalPoreVolume; }
 
     static void reportPorosity()
-    { std::cout<<"the porosity of the network is:  "<<networkPorosity_<<std::endl; }
+    { std::cout<<"the porosity of the network is:  "<<networkPorosity_<<std::endl;
+      std::cout<<"the porosity of the network computed by Porespy is :  "<<0.4<<std::endl;}
     // [[/codeblock]]
 
     // ### Save the relevant data for plot of permeability ratio vs. Forchheimer number

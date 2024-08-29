@@ -15,15 +15,16 @@
 #ParameterRandomNumberSeed = 22
 
 [Grid]
-File = ./grids/myNumPyPart.dgf
+File = ./grids/myNumPy.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
+AddThroatVolumeToPoreVolume = true
 
 [Problem]
-Name = test_pnm_2p_upscaling
+Name = test_pnm_2p_upscaling_new
 InitialPc = 1e3 # [Pa]
 FinalPc = 2.8e4 # [Pa]
-NumSteps = 60 # the number of episodes to run
+NumSteps = 30 # the number of episodes to run
 PlotPcS = true
 SurfaceTension = 0.0725
 ContactAngle = 0.0
