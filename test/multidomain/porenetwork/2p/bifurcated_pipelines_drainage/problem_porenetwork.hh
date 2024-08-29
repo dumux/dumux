@@ -155,9 +155,9 @@ public:
                 }
                 else
                 {
-                    using std::min; using std::abs;
+                    using std::max; using std::abs;
                     auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
-                    auto dp = min(elemVolVars[0].capillaryPressure(),
+                    auto dp = max(elemVolVars[0].capillaryPressure(),
                                   elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
                     // Use a regularization function for theta
                     return reg_.eval(dp,invaded);

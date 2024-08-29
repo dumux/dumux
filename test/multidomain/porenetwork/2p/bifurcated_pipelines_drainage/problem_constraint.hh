@@ -84,7 +84,7 @@ public:
         else
         {
             auto pcSnapoff = couplingManager_->pcSnapoff(element);
-            auto dp = min(elemVolVarsPNM[0].capillaryPressure(),
+            auto dp = max(elemVolVarsPNM[0].capillaryPressure(),
                           elemVolVarsPNM[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
 
             return ((1-theta)*max(0.0,dp) - (theta)*min(0.0,dp)) + regBounds;
