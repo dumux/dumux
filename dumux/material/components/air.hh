@@ -44,10 +44,10 @@ public:
     * \brief Assumed gaseous composition of air in \f$\mathrm{[mol/mol]}\f$.
     */
     struct airMoleFraction{
-        const Scalar O2= 0.209;
-        const Scalar Ar= 0.00934;
-        const Scalar CO2= 0.0004;
-        const Scalar N2= 1-O2-Ar-CO2;
+        constexpr static Scalar O2= 0.209;
+        constexpr static Scalar Ar= 0.00934;
+        constexpr static Scalar CO2= 0.0004;
+        constexpr static Scalar N2= 1-O2-Ar-CO2;
     };
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of Air.
