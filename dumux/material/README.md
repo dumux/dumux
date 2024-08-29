@@ -36,6 +36,7 @@ $\phi_i  p^L = \frac{y_i}{x_i}p^V$
 Substituting the definition of Henry's constant:
 
 $\phi_i p^L= K_H$
+
 $\phi_i=\frac{K_H}{p^L}$
 
 This provides an ansatz for fugacity irrespective of the equilibrium. Many data sources for vapor-liquid equilibrium (VLE) use these definitions.
@@ -64,7 +65,7 @@ $\phi_{Ar} x_{Ar} p^L = p^V y_{Ar}$
 
 $\phi_{CO_2} x_{CO_2} p^L = p^V y_{CO_2}$
 
-## 6. Derivation of $\phi_{air-water}$ and $K_{H,air}$
+## 6. Derivation of $\phi_{air}^{H_2O,L}$ and $K_{H,air}^{H_2O,L}$
 
 Let's sum up all equations and introduce $x_{air}$ as the sum of all concentrations in the liquid phase and $y_{air}$ as the sum in the gas phase:
 
@@ -78,13 +79,14 @@ $\sum_i x_i=x_{air}=\frac{p^V y_{air}}{p^L}(\sum_i \frac{y_{i,air}}{\phi_i})$
 
 Rearranging and renaming:
 
-$(\sum_i \frac{y_{i,air}}{\phi_i})^{-1}=\phi_{air}$
+$(\sum_i \frac{y_{i,air}}{\phi_i})^{-1}=\phi_{air}^{H_2O,L}$
 
 Yields:
 
-$\phi_{air} x_{air} p^L=p^V y_{air}$
+$\phi_{air}^{H_2O,L}$ x_{air} p^L=p^V y_{air}$
 
 But note, that the composition of air in water is different in comparison to gas.
+
 Similary, one can derive for $K_{h,air}$:
 From:
 
@@ -93,4 +95,4 @@ $(\sum_i \frac{y_{i,air}}{\phi_i})^{-1}=\phi_{air}$
 with:
 $\phi_i=K_{H,i}/p^L$
 
-$K_{H,air}=(\sum_i \frac{y_{i,air}}{K_{H,i}})^{-1}$
+$K_{H,air}^{H_2O,L}=(\sum_i \frac{y_{i,air}}{K_{H,i}})^{-1}$
