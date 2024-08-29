@@ -63,12 +63,12 @@ public:
         const Scalar yCO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
         const Scalar yAr_air=Dumux::Components::Air<Scalar>::airMoleFraction::Ar;
 
-        const Scalar kh_O2=H2O_O2::henry(temperature);
-        const Scalar kh_N2=H2O_N2::henry(temperature);
-        const Scalar kh_CO2=H2O_CO2::henry(temperature);
-        const Scalar kh_Ar=H2O_AR::henry(temperature);
+        Scalar kh_O2=H2O_O2::henry(temperature);
+        Scalar kh_N2=H2O_N2::henry(temperature);
+        Scalar kh_CO2=H2O_CO2::henry(temperature);
+        Scalar kh_Ar=H2O_AR::henry(temperature);
 
-        static const Scalar r=(yO2_air/kh_O2+yN2_air/kh_N2+yCO2_air/kh_CO2+yAr_air/kh_Ar);
+        Scalar r=(yO2_air/kh_O2+yN2_air/kh_N2+yCO2_air/kh_CO2+yAr_air/kh_Ar);
         return 1/r;
     }
 
