@@ -14,7 +14,14 @@
 
 #include <cmath>
 
-namespace Dumux::BinaryCoeff {
+#include "./../components/air.hh"
+#include "h2o_ar.hh"
+#include "h2o_co2.hh"
+#include "h2o_n2.hh"
+#include "h2o_o2.hh"
+
+namespace Dumux {
+namespace BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -32,6 +39,7 @@ public:
      * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
      */
     template <class Scalar>
+    [[deprecated("Will be renamed to henryFinsterle after 3.10. A new henryMixture function will be the expected function.")]]
     static Scalar henry(Scalar temperature)
     {
       using std::exp;
@@ -39,6 +47,31 @@ public:
 
       return 1./r;
     }
+    template <class Scalar>
+    static Scalar henryFinsterle(Scalar temperature)
+    {
+        using std::exp;
+        Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
+
+        return 1./r;
+    }
+    template <class Scalar>
+    static Scalar henryMixture(Scalar temperature)
+    {
+        const Scalar yO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::O2;
+        const Scalar yN2_air=Dumux::Components::Air<Scalar>::airMoleFraction::N2;
+        const Scalar yCO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
+        const Scalar yAr_air=Dumux::Components::Air<Scalar>::airMoleFraction::Ar;
+
+        Scalar kh_O2=H2O_O2::henry(temperature);
+        Scalar kh_N2=H2O_N2::henry(temperature);
+        Scalar kh_CO2=H2O_CO2::henry(temperature);
+        Scalar kh_Ar=H2O_AR::henry(temperature);
+
+        Scalar r=(yO2_air/kh_O2+yN2_air/kh_N2+yCO2_air/kh_CO2+yAr_air/kh_Ar);
+        return 1/r;
+    }
+
 
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and air
