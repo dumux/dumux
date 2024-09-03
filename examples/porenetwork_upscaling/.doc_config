@@ -19,17 +19,23 @@
         "upscalinghelper.hh"
     ],
 
+    "doc/postprocessing.md" : [
+        "doc/postprocessing_intro.md"
+    ],
+
     "navigation" : {
         "mainpage" : "README.md",
         "subpages" : [
             "doc/problem.md",
             "doc/main.md",
-            "doc/upscalinghelper.md"
+            "doc/upscalinghelper.md",
+            "doc/postprocessing.md"
         ],
         "subtitles" : [
             "Permeability upscaling with a pore-network model",
             "Main program flow",
-            "Upscaling"
+            "Upscaling",
+            "Postprocessing/Visualization of a pore-network model"
         ]
     }
 }
