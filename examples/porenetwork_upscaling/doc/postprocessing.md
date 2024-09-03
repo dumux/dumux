@@ -74,7 +74,7 @@ Just showing the pore throats of the network will look e.g. like
     </center>
 </figure>
 
->Note: The size of the tubes can only be scaled by _Point Data_ (e.g. pore inscribed radius), but not by cell data as e.g. throat inscribed radius. To do so, the cell data first has be to transformed to point data. This can be done with the filter _CellDatatoPointData_. Subsequently applying the _Tube_ filter to the applyed _CellDatatoPointData_ filter (select _CellDatatoPointData_ in the _Pipeline Browser_ before using the _Tube_ filter). 
+>Note: The size of the tubes can only be scaled by _Point Data_ (e.g. pore inscribed radius), but not by cell data as e.g. throat inscribed radius. To do so, the cell data first has be to transformed to point data. This can be done with the filter _CellDatatoPointData_. Subsequently applying the _Tube_ filter to the applyed _CellDatatoPointData_ filter (select _CellDatatoPointData_ in the _Pipeline Browser_ before using the _Tube_ filter). <br>
 ![](../img/doc_pnm_visualization_pipelineBrowser2.png)
 
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 3](upscalinghelper.md) |
