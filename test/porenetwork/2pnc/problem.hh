@@ -107,7 +107,7 @@ public:
         if (isInletPore_(scv))
         {
             values.setState(Indices::secondPhaseOnly);
-            values[Indices::pressureIdx] = inletPressure_;
+            values[Indices::pressureIdx] = inletPressure_ - 756.01;
             values[Indices::switchIdx] = 0.0;
 #if !ISOTHERMAL
             values[Indices::temperatureIdx] = inletTemperature_;
@@ -174,7 +174,7 @@ public:
         else
         {
             values.setState(Indices::bothPhases);
-            values[Indices::switchIdx] = 0.000001;
+            values[Indices::switchIdx] = 0.001;
         }
 
 #if !ISOTHERMAL
