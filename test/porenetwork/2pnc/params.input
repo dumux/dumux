@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-1 # [s]
-TEnd = 1.8e4 # [s]
-MaxTimeStepSize = 1e0 # [s]
+TEnd = 7.2e4 # [s]
+MaxTimeStepSize = 5e0 # [s]
 
 [Grid]
 File = ./grids/pnm_converted.dgf
@@ -9,13 +9,13 @@ PoreGeometry = Octahedron
 ThroatCrossSectionShape = Square
 
 [Problem]
-Name = test_pnm_2pnc
+Name = test_pnm_2pnc_pc_smallwettinglayer_150_longtime
 VtpOutputFrequency = 100 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
 Source = 1e-5
-InletPressure = 1e5
+InletPressure = 1.01325e5
 OutletPressure = 1e5
 
 [Vtk]
@@ -25,6 +25,7 @@ AddVelocity = 1
 MaxSteps = 10
 TargetSteps = 4
 MaxRelativeShift = 1e-5
+MaxTimeStepDivisions = 20
 
 [InvasionState]
 Verbosity = true
