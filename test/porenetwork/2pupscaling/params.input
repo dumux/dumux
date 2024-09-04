@@ -18,18 +18,18 @@
 File = ./grids/myNumPy.dgf
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
-AddThroatVolumeToPoreVolume = true
+AddThroatVolumeToPoreVolume = false
 
 [Problem]
 Name = test_pnm_2p_upscaling_new
 InitialPc = 1e3 # [Pa]
 FinalPc = 2.8e4 # [Pa]
-NumSteps = 30 # the number of episodes to run
+NumSteps = 60 # the number of episodes to run
 PlotPcS = true
 SurfaceTension = 0.0725
 ContactAngle = 0.0
-InletPoreLabel = 1
-OutletPoreLabel = 2
+InletPoreLabel = 2
+OutletPoreLabel = 1
 Directions = 0 # the directions to be plotted 0 1 2
 AllowDraingeOfOutlet = true
 EnableGravity = 0 # disable gravity

@@ -59,7 +59,7 @@ public:
         assert(problem.direction() == 0); // for this application, only the premeability in x-direction is calculated
 
         sideLengths[problem.direction()] = 1.0;
-        const auto outflowArea = M_PI * std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>()); //for a cylinder
+        const auto outflowArea = M_PI/4 * std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>()); //for a cylinder
         const auto vApparent = volumeFlux / outflowArea;
 
         // compute apparent permeability
@@ -76,7 +76,7 @@ public:
     {
         auto sideLengths = problem.sideLengths();
 
-        auto networkTotalVolume = M_PI * std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>()); // for a cylinder
+        auto networkTotalVolume = M_PI/4 * std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>()); // for a cylinder
         std::cout<<" networkTotalVolume:  "<<networkTotalVolume<<" totalPoreVolume_:  "<<totalPoreVolume_<<std::endl;
         networkPorosity_ = totalPoreVolume_ / networkTotalVolume;
     }
