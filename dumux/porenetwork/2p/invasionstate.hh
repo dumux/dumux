@@ -210,27 +210,31 @@ private:
 
         //Determine whether throat gets invaded or snap-off occurs
         const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+        const Scalar sw = std::min(elemVolVars[0].saturation(0), elemVolVars[1].saturation(0));
         const auto pcMax = std::max_element(pc.begin(), pc.end());
         const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
-        // check if there is a user-specified global capillary pressure which needs to be obeyed
-        if (maybeRestrictToGlobalCapillaryPressure_(pcEntry))
-        {
-            if (*pcMax > pcEntry)
-            {
-                std::cout << "Throat " << eIdx << " would have been invaded by pc of " << *pcMax << "but a global capillary pressure restricion was set in the problem.";
-                std::cout << ". pcEntry: " << spatialParams.pcEntry(element, elemVolVars) << std::endl;
-            }
+        // // check if there is a user-specified global capillary pressure which needs to be obeyed
+        // if (maybeRestrictToGlobalCapillaryPressure_(pcEntry))
+        // {
+        //     if (*pcMax > pcEntry)
+        //     {
+        //         std::cout << "Throat " << eIdx << " would have been invaded by pc of " << *pcMax << "but a global capillary pressure restricion was set in the problem.";
+        //         std::cout << ". pcEntry: " << spatialParams.pcEntry(element, elemVolVars) << std::endl;
+        //     }
 
-            invadedCurrentIteration_[eIdx] = false;
-            return Result{}; //nothing happened
-        }
+        //     invadedCurrentIteration_[eIdx] = false;
+        //     return Result{}; //nothing happened
+        // }
 
-        if (*pcMax > pcEntry)
+        if (*pcMax > pcEntry/* || sw < 1e-2*/)
            invadedAfterSwitch = true;
         else if (*pcMax <= pcSnapoff)
            invadedAfterSwitch = false;
+
+        // if (sw < 1e-2)
+        //     invadedAfterSwitch = true;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
 
