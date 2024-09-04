@@ -145,6 +145,7 @@ int main(int argc, char** argv)
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
+    vtkWriter.write(timeLoop->time());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
