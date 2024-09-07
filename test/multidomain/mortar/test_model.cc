@@ -6,10 +6,12 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#include <dune/functions/functionspacebases/lagrangebasis.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/fem/fegridgeometry.hh>
 #include <dumux/multidomain/mortar/model.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -60,7 +62,9 @@ using SubDomainGridVariables = Dumux::GetPropType<TypeTag, Dumux::Properties::Gr
 using SubDomainProblem = Dumux::GetPropType<TypeTag, Dumux::Properties::Problem>;
 
 using MortarGrid = Dune::FoamGrid<1, 2>;
-using MortarGridGeometry = Dumux::CCTpfaFVGridGeometry<typename MortarGrid::LeafGridView>;
+using MortarGridGeometry = Dumux::FEGridGeometry<
+    Dune::Functions::LagrangeBasis<typename MortarGrid::LeafGridView, 1>
+>;
 using MortarGridFactory = Dune::StructuredGridFactory<MortarGrid>;
 
 using SolutionVector = Dune::BlockVector<Dune::FieldVector<double, 1>>;
@@ -111,7 +115,7 @@ int main(int argc, char** argv) {
 
     auto sd1GG = std::make_shared<SubDomainGridGeometry>(sd1.leafGridView());
     auto sd2GG = std::make_shared<SubDomainGridGeometry>(sd2.leafGridView());
-    auto mGG = std::make_shared<MortarGridGeometry>(mg->leafGridView());
+    auto mGG = std::make_shared<MortarGridGeometry>(std::make_shared<typename MortarGridGeometry::FEBasis>(mg->leafGridView()));
 
     auto sd1GV = std::make_shared<SubDomainGridVariables>(std::make_shared<SubDomainProblem>(sd1GG), sd1GG);
     auto sd2GV = std::make_shared<SubDomainGridVariables>(std::make_shared<SubDomainProblem>(sd2GG), sd2GG);

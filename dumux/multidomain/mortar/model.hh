@@ -150,6 +150,8 @@ class Model
     std::vector<std::unique_ptr<Mortar<SolutionVector>>> mortars_;
 };
 
+// TODO: Distinguish mortar and SD solution vector
+// TODO: Template on MortarGridView and hardcode FEGridGeometry?
 template<typename SolutionVector, typename MortarGridGeometry>
 class ModelFactory
 {
@@ -205,7 +207,7 @@ class ModelFactory
         mortarToInterface_.push_back(invalidId);
     }
 
-    template<typename SD, typename InterfaceCallBack>  // TODO: SD concept?
+    template<typename SD, typename InterfaceCallBack>  // TODO: SD concept?; TODO: Callback concept?
     void insertSubDomain(std::shared_ptr<SD> subDomain, InterfaceCallBack&& callback) {
         FVTrace trace{subDomain->gridVariables(), [] (auto&&...) { return true; }};
 
