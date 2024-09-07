@@ -134,7 +134,14 @@ int main(int argc, char** argv) {
 
     Dumux::Mortar::ModelFactory<Traits> factory;
     factory.insertMortar(mGG);
-    factory.insertSubDomain(std::make_shared<SubDomain>(sd1GV));
+    factory.insertSubDomain(std::make_shared<SubDomain>(sd1GV), [] (const auto& subDomain, const std::size_t mortarId, auto&& trace) {
+        // register this trace in the subdomain
+        // - we need to be able to take the boundary data from the projected mortar where needed;
+        // - we also need to be able to project data back into the mortar from this specific trace
+        // probably: subDomain.setTrace(std::move(trace), mortarId);
+        //           subDomain.assembleTraceWith(...)
+        //           subDomain.
+    });
 
     return 0;
 }

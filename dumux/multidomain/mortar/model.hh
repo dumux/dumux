@@ -209,8 +209,8 @@ class ModelFactory
         mortarToInterface_.push_back(invalidId);
     }
 
-    template<typename SD>  // TODO: SD concept?
-    void insertSubDomain(std::shared_ptr<SD> subDomain) {
+    template<typename SD, typename RegisterTrace>  // TODO: SD concept?
+    void insertSubDomain(std::shared_ptr<SD> subDomain, const RegisterTrace& registerTrace) {
         FVTrace trace{subDomain->gridVariables(), [] (auto&&...) { return true; }};
 
         using TraceGridView = std::remove_cvref_t<decltype(trace.gridView())>;
@@ -256,6 +256,7 @@ class ModelFactory
                     std::move(projectors.toMortar)
                 });
                 registerMapping_(thisSubDomainIndex, nextProjectorIndex, mortarId);
+                registerTrace(*subDomain, mortarId, std::move(subTrace));
             }
         }
         subDomains_.emplace_back(std::make_unique<SubDomainImpl<SD>>(std::move(subDomain)));
