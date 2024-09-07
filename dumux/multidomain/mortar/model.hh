@@ -15,8 +15,11 @@
 #include <vector>
 #include <memory>
 #include <limits>
+#include <concepts>
 
 #include <dumux/multidomain/glue.hh>
+
+#include "projectorinterface.hh"
 #include "trace.hh"
 
 namespace Dumux::Mortar {
@@ -30,10 +33,27 @@ struct SubDomain
 };
 
 template<typename SolutionVector>
-struct Projector
+class Projector
 {
-    virtual SolutionVector toSubDomainTrace(const SolutionVector&) const = 0;
-    virtual SolutionVector fromSubDomainTrace(const SolutionVector&) const = 0;
+    using Interface = ProjectorInterface<SolutionVector>;
+public:
+
+    template<std::derived_from<Interface> ToTrace,
+             std::derived_from<Interface> FromTrace>
+    Projector(ToTrace&& toTrace, FromTrace&& fromTrace)
+    : toSubDomainTrace_{std::move(toTrace)}
+    , fromSubDomainTrace_{std::move(fromTrace)}
+    {}
+
+    SolutionVector toSubDomainTrace(const SolutionVector& x) const
+    { return toSubDomainTrace_->project(x); }
+
+    SolutionVector fromSubDomainTrace(const SolutionVector& x) const
+    { return fromSubDomainTrace_->project(x); }
+
+private:
+    std::unique_ptr<Interface> toSubDomainTrace_;
+    std::unique_ptr<Interface> fromSubDomainTrace_;
 };
 
 template<typename SolutionVector>
