@@ -27,6 +27,7 @@
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#include <dune/istl/bvector.hh>
 
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -185,8 +186,17 @@ class FVTrace
             const typename GridVariables::GridFluxVariablesCache::LocalView&,
             const SubControlVolumeFace&
         >)
-    SolutionVector assembleFaceAverage(const SolutionVector& x, FaceVariableFunctor&& vars) const {
-        SolutionVector trace;
+    auto assembleFaceAverage(const SolutionVector& x, FaceVariableFunctor&& vars) const {
+        using FaceVars = std::invoke_result_t<
+            FaceVariableFunctor,
+            const GridElement&,
+            const typename GridGeometry::LocalView&,
+            const typename GridVariables::GridVolumeVariables::LocalView&,
+            const typename GridVariables::GridFluxVariablesCache::LocalView&,
+            const SubControlVolumeFace&
+        >;
+
+        Dune::BlockVector<FaceVars> trace;
         trace.resize(gridView().size(0));
         trace = 0;
         for (const auto& e : elements(domainGridView_())) {
