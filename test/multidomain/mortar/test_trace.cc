@@ -79,8 +79,8 @@ int main(int argc, char** argv) {
 
     FVTrace trace{gridVariables, [] (const auto&) { return true; }};
     using FV = GetPropType<TypeTag, Properties::FluxVariables>;
-    const auto traceFluxes = trace.assemble(x, defaultCCAdvectiveFluxFunction<FV>(*problem));
-    const auto tracePressures = trace.assemble(x, tracePressureFunctionTpfaOneP<FV>(*problem));
+    const auto traceFluxes = trace.assembleFaceAverage(x, defaultCCAdvectiveFluxFunction<FV>(*problem));
+    const auto tracePressures = trace.assembleFaceAverage(x, tracePressureFunctionTpfaOneP<FV>(*problem));
 
     // verify the result
     for (const auto& e : elements(trace.gridView())) {

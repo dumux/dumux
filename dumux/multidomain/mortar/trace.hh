@@ -176,7 +176,7 @@ class FVTrace
         DUNE_THROW(Dune::InvalidStateException, "Could not find trace element for the given scvf.");
     }
 
-    //! Assemble variables on the trace
+    //! Assemble cell-wise variables on the trace, averaged over the embedded scvfs
     template<typename SolutionVector, typename FaceVariableFunctor>
         requires(std::invocable<FaceVariableFunctor,
             const GridElement&,
@@ -185,7 +185,7 @@ class FVTrace
             const typename GridVariables::GridFluxVariablesCache::LocalView&,
             const SubControlVolumeFace&
         >)
-    SolutionVector assemble(const SolutionVector& x, FaceVariableFunctor&& vars) const {
+    SolutionVector assembleFaceAverage(const SolutionVector& x, FaceVariableFunctor&& vars) const {
         SolutionVector trace;
         trace.resize(gridView().size(0));
         trace = 0;
