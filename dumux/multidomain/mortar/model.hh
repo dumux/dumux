@@ -226,7 +226,12 @@ class ModelFactory
             if (glue.size() > 0)
             {
                 std::cout << "Subdomain " << subDomains_.size() << "  -> mortar " << mortarId << std::endl;
-                callback(subDomain, std::move(trace), mortarId);
+
+                FVTrace subTrace{subDomain->gridVariables(), [&] (const auto& is) {
+                    return !intersectingEntities(is.geometry(), mortars_[mortarId].gridGeometry().boundingBoxTree()).empty();
+                }};
+
+                callback(subDomain, std::move(subTrace), mortarId);
                 registerMapping_(subDomains_.size(), mortarId);
             }
         }
