@@ -201,7 +201,7 @@ class ModelFactory
     void insertMortar(std::shared_ptr<MortarGridGeometry> gridGeometry) {
         if (!subDomains_.empty())
             DUNE_THROW(Dune::InvalidStateException, "Mortars have to be inserted prior to the subdomains");
-        mortars_.emplace_back(std::make_unique<MortarImpl>(std::move(gridGeometry)));
+        mortars_.emplace_back(MortarImpl{std::move(gridGeometry)});
         mortarToInterface_.push_back(invalidId);
     }
 
@@ -222,7 +222,7 @@ class ModelFactory
                 TraceElementMapper, typename MortarGridGeometry::ElementMapper
             > glue;
 
-            glue.build(traceBBoxTree, accessMortarImpl_(mortarId).gridGeometry().boundingBoxTree());
+            glue.build(traceBBoxTree, mortars_[mortarId].gridGeometry().boundingBoxTree());
             if (glue.size() > 0)
             {
                 std::cout << "Subdomain " << subDomains_.size() << "  -> mortar " << mortarId << std::endl;
@@ -234,9 +234,6 @@ class ModelFactory
     }
 
  private:
-    const MortarImpl& accessMortarImpl_(std::size_t i) const
-    { return static_cast<const MortarImpl&>(*(mortars_[i])); }
-
     void registerMapping_(std::size_t subDomainIndex, std::size_t mortarIndex)
     {
         const auto interfaceId = mortarToInterface_.at(mortarIndex);
@@ -261,7 +258,7 @@ class ModelFactory
     std::vector<Interface> interfaces_;
     std::vector<std::unique_ptr<Projector<SolutionVector>>> projectors_;
     std::vector<std::unique_ptr<SubDomain<SolutionVector>>> subDomains_;
-    std::vector<std::unique_ptr<Mortar<SolutionVector>>> mortars_;
+    std::vector<MortarImpl> mortars_;
     std::vector<std::vector<std::size_t>> subDomainToInterfaces_;
     std::vector<std::size_t> mortarToInterface_;
 };
