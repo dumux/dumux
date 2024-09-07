@@ -67,7 +67,7 @@ public:
 
     struct ProjectorPair
     {
-        ProjectorPtr toSubDomain;
+        ProjectorPtr toSubDomainTrace;
         ProjectorPtr toMortar;
     };
 
@@ -78,29 +78,25 @@ public:
     /*!
      * \brief Create a forward/backwards projector pair.
      */
-    template<typename SubDomainGridGeometry, typename MortarGridGeometry, typename Glue>
-    ProjectorPair make(const SubDomainGridGeometry& sdGG,
-                       const MortarGridGeometry& mortarGG,
+    template<typename SubDomainTraceBasis, typename MortarBasis, typename Glue>
+    ProjectorPair make(const SubDomainTraceBasis& traceBasis,
+                       const MortarBasis& mortarBasis,
                        const Glue& glue)
     {
-        switch (projectorType_)
-        {
-            case ProjectorType::L2:
-                Dune::Functions::LagrangeBasis<typename SubDomainGridGeometry::GridView, 0> subDomainBasis(sdGG.gridView());
-                auto matrixPair = makeProjectionMatricesPair(subDomainBasis, mortarGG.feBasis(), glue);
-                return {
-                    .toSubDomain = std::make_shared<L2Projector<SolutionVector>>(
-                        std::move(matrixPair.second.first),
-                        std::move(matrixPair.second.second)
-                    ),
-                    .toMortar = std::make_shared<L2Projector<SolutionVector>>(
-                        std::move(matrixPair.first.first),
-                        std::move(matrixPair.first.second)
-                    )
-                };
-            default:
-                DUNE_THROW(Dune::NotImplemented, "Unsupported projector type");
+        if (projectorType_ == ProjectorType::L2) {
+            auto matrixPair = makeProjectionMatricesPair(traceBasis, mortarBasis, glue);
+            return {
+                .toSubDomainTrace = std::make_shared<L2Projector<SolutionVector>>(
+                    std::move(matrixPair.second.first),
+                    std::move(matrixPair.second.second)
+                ),
+                .toMortar = std::make_shared<L2Projector<SolutionVector>>(
+                    std::move(matrixPair.first.first),
+                    std::move(matrixPair.first.second)
+                )
+            };
         }
+        DUNE_THROW(Dune::NotImplemented, "Unsupported projector type");
     }
 
 private:

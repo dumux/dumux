@@ -20,6 +20,7 @@
 #include <dumux/multidomain/glue.hh>
 
 #include "projectorinterface.hh"
+#include "projectors.hh"
 #include "trace.hh"
 
 namespace Dumux::Mortar {
@@ -38,9 +39,7 @@ class Projector
     using Interface = ProjectorInterface<SolutionVector>;
 public:
 
-    template<std::derived_from<Interface> ToTrace,
-             std::derived_from<Interface> FromTrace>
-    Projector(ToTrace&& toTrace, FromTrace&& fromTrace)
+    Projector(std::shared_ptr<Interface> toTrace, std::shared_ptr<Interface> fromTrace)
     : toSubDomainTrace_{std::move(toTrace)}
     , fromSubDomainTrace_{std::move(fromTrace)}
     {}
@@ -52,8 +51,8 @@ public:
     { return fromSubDomainTrace_->project(x); }
 
 private:
-    std::unique_ptr<Interface> toSubDomainTrace_;
-    std::unique_ptr<Interface> fromSubDomainTrace_;
+    std::shared_ptr<Interface> toSubDomainTrace_;
+    std::shared_ptr<Interface> fromSubDomainTrace_;
 };
 
 template<typename SolutionVector>
@@ -152,9 +151,12 @@ class Model
 
 // TODO: Distinguish mortar and SD solution vector
 // TODO: Template on MortarGridView and hardcode FEGridGeometry?
-template<typename SolutionVector, typename MortarGridGeometry>
+template<typename Traits>
 class ModelFactory
 {
+    using SolutionVector = typename Traits::SolutionVector;
+    using MortarGridGeometry = FEGridGeometry<typename Traits::MortarBasis>;
+
     static constexpr std::size_t invalidId = std::numeric_limits<std::size_t>::max();
 
     class MortarImpl : public Mortar<SolutionVector> {
@@ -207,8 +209,8 @@ class ModelFactory
         mortarToInterface_.push_back(invalidId);
     }
 
-    template<typename SD, typename InterfaceCallBack>  // TODO: SD concept?; TODO: Callback concept?
-    void insertSubDomain(std::shared_ptr<SD> subDomain, InterfaceCallBack&& callback) {
+    template<typename SD>  // TODO: SD concept?
+    void insertSubDomain(std::shared_ptr<SD> subDomain) {
         FVTrace trace{subDomain->gridVariables(), [] (auto&&...) { return true; }};
 
         using TraceGridView = std::remove_cvref_t<decltype(trace.gridView())>;
@@ -216,14 +218,16 @@ class ModelFactory
         using TraceEntitySet = GridViewGeometricEntitySet<TraceGridView, 0, TraceElementMapper>;
         BoundingBoxTree<TraceEntitySet> traceBBoxTree{std::make_shared<TraceEntitySet>(trace.gridView())};
 
+        const auto thisSubDomainIndex = subDomains_.size();
         subDomainToInterfaces_.push_back({});
         for (std::size_t mortarId = 0; mortarId < mortars_.size(); ++mortarId)
         {
-            MultiDomainGlue<
+            using Glue = MultiDomainGlue<
                 TraceGridView, typename MortarGridGeometry::GridView,
                 TraceElementMapper, typename MortarGridGeometry::ElementMapper
-            > glue;
+            >;
 
+            Glue glue;
             glue.build(traceBBoxTree, mortars_[mortarId].gridGeometry().boundingBoxTree());
             if (glue.size() > 0)
             {
@@ -232,16 +236,33 @@ class ModelFactory
                 FVTrace subTrace{subDomain->gridVariables(), [&] (const auto& is) {
                     return !intersectingEntities(is.geometry(), mortars_[mortarId].gridGeometry().boundingBoxTree()).empty();
                 }};
+                BoundingBoxTree<TraceEntitySet> subTraceBBoxTree{std::make_shared<TraceEntitySet>(subTrace.gridView())};
 
-                callback(subDomain, std::move(subTrace), mortarId);
-                registerMapping_(subDomains_.size(), mortarId);
+                Glue subGlue;
+                subGlue.build(subTraceBBoxTree, mortars_[mortarId].gridGeometry().boundingBoxTree());
+
+                using TraceBasis = typename Traits::template SubDomainTraceBasis<TraceGridView>;
+                TraceBasis traceSubTraceBasis{subTrace.gridView()};
+
+                auto projectors = ProjectorFactory<typename Traits::SolutionVector>{Traits::projectorType}.make(
+                    traceSubTraceBasis,
+                    mortars_[mortarId].gridGeometry().feBasis(),
+                    subGlue
+                );
+
+                const auto nextProjectorIndex = projectors_.size();
+                projectors_.emplace_back(Projector<typename Traits::SolutionVector>{
+                    std::move(projectors.toSubDomainTrace),
+                    std::move(projectors.toMortar)
+                });
+                registerMapping_(thisSubDomainIndex, nextProjectorIndex, mortarId);
             }
         }
         subDomains_.emplace_back(std::make_unique<SubDomainImpl<SD>>(std::move(subDomain)));
     }
 
  private:
-    void registerMapping_(std::size_t subDomainIndex, std::size_t mortarIndex)
+    void registerMapping_(std::size_t subDomainIndex, std::size_t projectorIndex, std::size_t mortarIndex)
     {
         const auto interfaceId = mortarToInterface_.at(mortarIndex);
         if (interfaceId != invalidId)
@@ -256,14 +277,14 @@ class ModelFactory
             mortarToInterface_.at(mortarIndex) = interfaces_.size();
             interfaces_.emplace_back(Interface{
                 .mortarIndex = mortarIndex,
-                .positive = {.subDomainIndex = subDomainIndex, .projectorIndex = invalidId},
+                .positive = {.subDomainIndex = subDomainIndex, .projectorIndex = projectorIndex},
                 .negative = {invalidId, invalidId}
             });
         }
     }
 
     std::vector<Interface> interfaces_;
-    std::vector<std::unique_ptr<Projector<SolutionVector>>> projectors_;
+    std::vector<Projector<SolutionVector>> projectors_;
     std::vector<std::unique_ptr<SubDomain<SolutionVector>>> subDomains_;
     std::vector<MortarImpl> mortars_;
     std::vector<std::vector<std::size_t>> subDomainToInterfaces_;

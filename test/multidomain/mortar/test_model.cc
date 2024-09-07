@@ -12,7 +12,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fem/fegridgeometry.hh>
+#include <dumux/discretization/projection/projector.hh>
 #include <dumux/multidomain/mortar/model.hh>
+#include <dumux/multidomain/mortar/projectors.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/components/constant.hh>
@@ -105,6 +107,16 @@ class SubDomain
     std::shared_ptr<SubDomainGridVariables> gv_;
 };
 
+struct Traits {
+    using SolutionVector = ::SolutionVector;
+    using MortarBasis = typename MortarGridGeometry::FEBasis;
+
+    template<typename TraceGridView>
+    using SubDomainTraceBasis = Dune::Functions::LagrangeBasis<TraceGridView, 0>;
+
+    static constexpr auto projectorType = Dumux::Mortar::ProjectorType::L2;
+};
+
 int main(int argc, char** argv) {
     Dumux::initialize(argc, argv);
     Dumux::Parameters::init(argc, argv);
@@ -120,11 +132,9 @@ int main(int argc, char** argv) {
     auto sd1GV = std::make_shared<SubDomainGridVariables>(std::make_shared<SubDomainProblem>(sd1GG), sd1GG);
     auto sd2GV = std::make_shared<SubDomainGridVariables>(std::make_shared<SubDomainProblem>(sd2GG), sd2GG);
 
-    Dumux::Mortar::ModelFactory<SolutionVector, MortarGridGeometry> factory;
+    Dumux::Mortar::ModelFactory<Traits> factory;
     factory.insertMortar(mGG);
-    factory.insertSubDomain(std::make_shared<SubDomain>(sd1GV), [&] (auto& subDomain, auto&& trace, std::size_t mortarId) {
-        auto op = Dumux::TraceOperator{std::move(trace), [] (auto&&...) { return 1.0; }};
-    });
+    factory.insertSubDomain(std::make_shared<SubDomain>(sd1GV));
 
     return 0;
 }
