@@ -2,26 +2,26 @@
 
 After compiling and running the code for a pore-network model, it is useful to visualize the results. Especially representing the pore bodies and throats by idealized geometries may help for interpreting the data (such as e.g. pressure distribution). Visulizing the pore-network and it's data can be done with the open source visualization application paraview. In the following we will show how to show the pore bodies and throats by spheres or boxes and tubes.
 
-Before starting, make sure you loaded your results into paraview (_File_ -> _Open_ -> Select your .pvd or your *.vtp file).
+Before starting, make sure you loaded your results into paraview (`File` -> `Open` -> Select your .pvd or your *.vtp file).
 
 
 ## Change representation of pore bodies
 ### Representation as spheres
 
-For showing the pore bodies as spheres, the _Glyph_ filter can be used:
+For showing the pore bodies as spheres, the `Glyph` filter can be used:
 1. Select your input file (.pvd or .vtp) in the Pipeline Browser <br>
 ![](../img/doc_pnm_visualization_pipelineBrowser.png)
-1. Choose the _Glyph_ filter either by clicking on the respective icon (the name will appear if the cursor is moving over it) ![](../img/doc_pnm_visualization_glyphSymbol.png) <br>
-or go to the _Filters_ -> _Common_ OR _Alphabetical_ -> _Glyph_
-1. Within the _Properties_ panel, go to the _Glyph Source_ section and choose the _Glyph Type_ as _Spheres_. Once the _Spheres_ are selected as the representation type, parameters for the sphere will appear. Increase the _Theta Resolution_ and _Phi Resolution_ to e.g. 15 (such that the sphere will be more smooth as it is approximated as polygons).
-2. In the _Scale_ section, you can modify how large the spheres should be displayed. 
-   - For showing all spheres with the same size, choose for the _Scale Array_ -> _No scale array_, then adapt the _Scale factor_ by clicking on the icon ![](../img/doc_pnm_visualization_resetValue.png) for resetting the value using current data values. You can also give a concrete value, but make sure it is not too small and not too large. Otherwise you won't be able to see something.<br>
+1. Choose the `Glyph` filter either by clicking on the respective icon (the name will appear if the cursor is moving over it) ![](../img/doc_pnm_visualization_glyphSymbol.png) <br>
+or go to the `Filters` -> `Common` OR `Alphabetical` -> `Glyph`
+1. Within the `Properties` panel, go to the `Glyph Source` section and choose the `Glyph Type` as `Spheres`. Once the `Spheres` are selected as the representation type, parameters for the sphere will appear. Increase the `Theta Resolution` and `Phi Resolution` to e.g. 15 (such that the sphere will be more smooth as it is approximated as polygons).
+2. In the `Scale` section, you can modify how large the spheres should be displayed. 
+   - For showing all spheres with the same size, choose for the `Scale Array` -> `No scale array`, then adapt the `Scale factor` by clicking on the icon ![](../img/doc_pnm_visualization_resetValue.png) for resetting the value using current data values. You can also give a concrete value, but make sure it is not too small and not too large. Otherwise you won't be able to see something.<br>
    ![](../img/doc_pnm_visualization_scale.png)
-   - For showing the actual size of the pore bodies, choose e.g. _poreInscribedRadius_ as the _Scale Array_. Again choose to _Scale Factor_ appropriate (easiest way is to click on the respective icon as described above).<br>
+   - For showing the actual size of the pore bodies, choose e.g. `poreInscribedRadius` as the `Scale Array`. Again choose to `Scale Factor` appropriate (easiest way is to click on the respective icon as described above).<br>
    ![](../img/doc_pnm_visualization_scale2.png)
-3. Within the section _Masking_, select under _Glyph Mode_ to apply the sphere filter to _All Points_. <br>
+3. Within the section `Masking`, select under `Glyph Mode` to apply the sphere filter to `All Points`. <br>
 ![](../img/doc_pnm_visualization_masking.png)
-1. Apply this filter with the properties defined before by clicking _Apply_. <br>
+1. Apply this filter with the properties defined before by clicking `Apply`. <br>
 ![apply](../img/doc_pnm_visualization_apply.png)
 
 This should lead to something like the following:
@@ -36,15 +36,15 @@ This should lead to something like the following:
 ### Representation as cubes/boxes
 1. (see 1. from [above](#representation-as-spheres))
 2. (see 2. from [above](#representation-as-spheres))
-3. Within the _Properties_ panel, go to the _Glyph Source_ section and choose the _Glyph Type_ as _Box_.
-4. In the _Scale_ section, you can modify how large the cubes should be displayed. 
-   - For showing all pore bodies with the same size, choose for the _Scale Array_ -> _No scale array_, then adapt the _Scale factor_ as described [above](#representation-as-spheres).
-   - For showing the actual size of the pore bodies, choose e.g. _poreInscribedRadius_ as the _Scale Array_. Again choose to _Scale Factor_ appropriate.
+3. Within the `Properties` panel, go to the `Glyph Source` section and choose the `Glyph Type` as `Box`.
+4. In the `Scale` section, you can modify how large the cubes should be displayed. 
+   - For showing all pore bodies with the same size, choose for the `Scale Array` -> `No scale array`, then adapt the `Scale factor` as described [above](#representation-as-spheres).
+   - For showing the actual size of the pore bodies, choose e.g. `poreInscribedRadius` as the `Scale Array`. Again choose to `Scale Factor` appropriate.
 5. Continue for step 5 and 6 from [above](#representation-as-spheres)
 <figure>
     <center>
         <img src="../img/doc_pnm_visualization_resultBox.png" width="60%"/>
-        <figcaption> <b> Fig.2 </b> - Visualized pore-network with represented pore bodies as cubes (_Box_ filter). The size of the spheres is scaled by the pore inscribed radius.
+        <figcaption> <b> Fig.2 </b> - Visualized pore-network with represented pore bodies as cubes (`Box` filter). The size of the spheres is scaled by the pore inscribed radius.
         </figcaption>
     </center>
 </figure>
@@ -54,10 +54,10 @@ This should lead to something like the following:
 For showing the pore throats as cylinders instead of lines, we use apply the tube filter in the following.
 1. Select your input file (.pvd or .vtp) in the Pipeline Browser. <br>
 ![](../img/doc_pnm_visualization_pipelineBrowser.png)
-1. Choose the _Tube_ filter by going to the _Filters_ -> _Alphabetical_ -> _Tube_
-2. In the _Properties_ panel: increase the _Number of Sides_ to e.g. 10 for a smoother reprentation of the tubes. <br>
+1. Choose the `Tube` filter by going to the `Filters` -> `Alphabetical` -> `Tube`
+2. In the `Properties` panel: increase the `Number of Sides` to e.g. 10 for a smoother reprentation of the tubes. <br>
 ![](../img/doc_pnm_visualization_tubeSides.png)
-1. Leave everything else and click _Apply_.
+1. Leave everything else and click `Apply`.
 
 Just showing the pore throats of the network will look e.g. like
 <figure>
@@ -68,5 +68,5 @@ Just showing the pore throats of the network will look e.g. like
     </center>
 </figure>
 
->Note: The size of the tubes can only be scaled by _Point Data_ (e.g. pore inscribed radius), but not by cell data as e.g. throat inscribed radius. To do so, the cell data first has be to transformed to point data. This can be done with the filter _CellDatatoPointData_. Subsequently applying the _Tube_ filter to the applyed _CellDatatoPointData_ filter (select _CellDatatoPointData_ in the _Pipeline Browser_ before using the _Tube_ filter). <br>
+>Note: The size of the tubes can only be scaled by `Point Data` (e.g. pore inscribed radius), but not by cell data as e.g. throat inscribed radius. To do so, the cell data first has be to transformed to point data. This can be done with the filter `CellDatatoPointData`. Subsequently applying the `Tube` filter to the applyed `CellDatatoPointData` filter (select `CellDatatoPointData` in the `Pipeline Browser` before using the `Tube` filter). <br>
 ![](../img/doc_pnm_visualization_pipelineBrowser2.png)
