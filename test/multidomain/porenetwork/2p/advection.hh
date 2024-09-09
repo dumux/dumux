@@ -112,6 +112,7 @@ public:
             using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
             const bool invaded = fluxVarsCache.invaded();
             static const double thetaScalingFactor = getParam<double>("Constraint.Problem.ThetaScalingFactor", 1);
+            static const bool regularizeExtremSaturation = getParam<bool>("Problem.RegularizeExtremSaturation", false);
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
@@ -122,12 +123,27 @@ public:
                     const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
                                               : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
 
-                    return kw/thetaScalingFactor * theta +  k1p * (1-theta/thetaScalingFactor) ;
+                    auto kwEff = kw/thetaScalingFactor * theta +  k1p * (1-theta/thetaScalingFactor);
+                    if (regularizeExtremSaturation)
+                    {
+                        static const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
+                        auto extremCase = problem.ifextremSaturation(elemVolVars, fluxVarsCache);
+                            kwEff =  k1p * extremCase / thresholdValue;
+                    }
+                    return kwEff;
                 }
                 else // non-wetting phase
                 {
+                    auto kn1p = Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    auto knEff = Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)/thetaScalingFactor* theta;
+                     if (regularizeExtremSaturation)
+                     {
+                        static const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
+                        auto extremCase = problem.ifextremSaturation(elemVolVars, fluxVarsCache);
+                        knEff = kn1p * extremCase/thresholdValue;
+                     }
                     // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
-                    return  Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)/thetaScalingFactor* theta;
+                    return  knEff;
                 }
             }
             else

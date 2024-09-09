@@ -29,6 +29,8 @@ RegularizationFunction = Spline
 UseUpwindPc = false
 neglectInletOutlet = true
 NonWettingMassFlux = 5e-10
+RegularizeExtremSaturation = false
+RegSwThreshold = 1e-3
 
 [Vtk]
 AddVelocity = 1

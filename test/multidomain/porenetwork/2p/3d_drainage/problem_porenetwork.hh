@@ -227,6 +227,25 @@ public:
                  << std::endl;
     }
 
+    template<class FluxVariablesCache>
+    double ifextremSaturation(const ElementVolumeVariables& elemVolVars,
+                           const FluxVariablesCache& fluxVarsCache) const
+    {
+        const auto invaded = fluxVarsCache.invaded();
+        const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
+        double extremCase = thresholdValue;     // default value is 0
+        using std::max; using std::min;
+        auto sn1 = elemVolVars[0].saturation(1);
+        auto sn2 = elemVolVars[1].saturation(1);
+
+        if (invaded) // for uninvaded thraot the properties are okay
+        {
+            if (min(sn1, sn2) < thresholdValue) // there is a fully saturated pore
+                extremCase = min(sn1, sn2);  // in this case, throat must allow water to flow somewhere
+        }
+        return extremCase;
+    }
+
 private:
 
     bool isInletPore_(const SubControlVolume& scv) const
