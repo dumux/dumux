@@ -191,7 +191,7 @@ for itime, maxdt in enumerate(maxTimeStep):
         averageTimeStepRegReduce[idx].append(timestep_avg)
 
 
-    # run regularization test case with reduced delta
+    # run test case with md method
     delete_all_vtp_files()
     subprocess.run(['./' + testName[2]]
                     + ['params_md.input ']
