@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES generate_lattice_grid.py plot_sn_t.py 1d_4pores.dgf fir-fitheta-it-compare.py)
+dune_symlink_to_source_files(FILES generate_lattice_grid.py plot_sn_t.py 1d_4pores.dgf fir-fitheta-it-compare.py convergence.py)
 
 dumux_add_test(NAME pnm_3d_drainage
                SOURCES main.cc
