@@ -718,7 +718,6 @@ public:
                                       const SubControlVolumeFace<darcyIdx>& scvf,
                                       const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        NumEqVector flux(0.0);
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(element, scvf);
         const auto& darcyVolVars = darcyElemVolVars[scvf.insideScvIdx()];
         const auto& stokesVolVars = darcyContext.volVars;
@@ -743,7 +742,6 @@ public:
                                       const SubControlVolumeFace<stokesIdx>& scvf,
                                       const DiffusionCoefficientAveragingType diffCoeffAvgType = DiffusionCoefficientAveragingType::ffOnly) const
     {
-        NumEqVector flux(0.0);
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(element, scvf);
         const auto& stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
         const auto& darcyVolVars = stokesContext.volVars;

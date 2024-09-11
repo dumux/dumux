@@ -316,7 +316,6 @@ public:
      */
     NumEqVector frontalAdvectiveMomentumFlux() const
     {
-        NumEqVector flux(0.0);
         const auto& scvf = this->scvFace();
         assert(scvf.isFrontal());
 
@@ -362,7 +361,6 @@ public:
      */
     NumEqVector lateralAdvectiveMomentumFlux() const
     {
-        NumEqVector flux(0.0);
         const auto& scvf = this->scvFace();
         assert(scvf.isLateral());
 
