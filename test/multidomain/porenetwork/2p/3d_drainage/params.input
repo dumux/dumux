@@ -1,11 +1,11 @@
 [TimeLoop]
 DtInitial = 1e-3 # [s]
-TEnd = 100 # [s]
+TEnd = 200 # [s]
 CheckPoints =
 
 [Grid]
 PoreGeometry = Cube
-ThroatCrossSectionShape = Square
+ThroatCrossSectionShape = Circle
 UpperRight = 1e-3 1e-3 1e-3
 NumPores = 10 10 10
 ParameterType = lognormal
@@ -29,7 +29,7 @@ RegularizationFunction = Spline
 UseUpwindPc = false
 neglectInletOutlet = true
 NonWettingMassFlux = 5e-10
-RegularizeExtremSaturation = false
+RegularizeExtremSaturation = true
 RegSwThreshold = 1e-3
 
 [Vtk]

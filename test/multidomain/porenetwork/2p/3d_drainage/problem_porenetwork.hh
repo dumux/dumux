@@ -233,15 +233,20 @@ public:
     {
         const auto invaded = fluxVarsCache.invaded();
         const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
-        double extremCase = thresholdValue;     // default value is 0
+        double extremCase = thresholdValue;     // default value is threshold value
         using std::max; using std::min;
-        auto sn1 = elemVolVars[0].saturation(1);
-        auto sn2 = elemVolVars[1].saturation(1);
+        // auto sn1 = elemVolVars[0].saturation(1);
+        // auto sn2 = elemVolVars[1].saturation(1);
+        auto pn1 = elemVolVars[0].pressure(1);
+        auto pn2 = elemVolVars[1].pressure(1);
+        auto upwindVolVars = elemVolVars[0];
+        if (pn2 > pn1)
+            upwindVolVars = elemVolVars[1];
 
-        if (invaded) // for uninvaded thraot the properties are okay
+        if (invaded) // for uninvaded throat the properties are okay
         {
-            if (min(sn1, sn2) < thresholdValue) // there is a fully saturated pore
-                extremCase = min(sn1, sn2);  // in this case, throat must allow water to flow somewhere
+            if (upwindVolVars.saturation(1) < thresholdValue) // there is a fully saturated pore
+                extremCase = upwindVolVars.saturation(1);  // in this case, throat must allow water to flow somewhere
         }
         return extremCase;
     }

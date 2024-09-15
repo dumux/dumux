@@ -117,6 +117,7 @@ public:
             {
                 auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
                 theta = std::clamp(theta, 0.0, thetaScalingFactor);
+                auto extremCase = problem.ifextremSaturation(elemVolVars, fluxVarsCache);
                 if (phaseIdx == wPhaseIdx)
                 {
                     const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
@@ -124,24 +125,22 @@ public:
                                               : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
 
                     auto kwEff = kw/thetaScalingFactor * theta +  k1p * (1-theta/thetaScalingFactor);
-                    if (regularizeExtremSaturation)
+                    if (regularizeExtremSaturation && extremCase > 0)
                     {
                         static const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
-                        auto extremCase = problem.ifextremSaturation(elemVolVars, fluxVarsCache);
-                            kwEff =  k1p * extremCase / thresholdValue;
+                        // kwEff = k1p* (1 - extremCase/ thresholdValue);
+                        kwEff = k1p;
                     }
                     return kwEff;
                 }
                 else // non-wetting phase
                 {
-                    auto kn1p = Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                     auto knEff = Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)/thetaScalingFactor* theta;
-                     if (regularizeExtremSaturation)
-                     {
-                        static const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
-                        auto extremCase = problem.ifextremSaturation(elemVolVars, fluxVarsCache);
-                        knEff = kn1p * extremCase/thresholdValue;
-                     }
+                    if (regularizeExtremSaturation && extremCase > 0)
+                    {
+                       static const auto thresholdValue = getParam<Scalar>("Problem.RegSwThreshold", 1e-3); // threshold where we start regularization
+                       knEff = knEff * extremCase / thresholdValue; // close the throat for non-wetting when the pore is fully draianged
+                    }
                     // auto entryKn = Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
                     return  knEff;
                 }
