@@ -1,0 +1,52 @@
+[TimeLoop]
+DtInitial = 0.01 # [s]
+TEnd = 1.0 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 6.28 6.28
+Cells = 2 4
+
+[Problem]
+Name = test_ff_sincos
+EnableGravity = false
+PrintErrors = true
+EnableInertiaTerms = true
+IsStationary = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 0.1
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 4
+MaxRelativeShift = 1e-5
+SatisfyResidualAndShiftCriterion = true
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false
+
+[Flux]
+UpwindWeight = 0.5
+
+[LinearSolver]
+Type = restartedflexiblegmressolver
+Verbosity = 1
+GMResRestart = 50
+
+[LinearSolver.Preconditioner]
+Type = uzawa
+Verbosity = 6
+Iterations = 5
+DetermineRelaxationFactor = false
+Relaxation = 10.0
+
+[SpatialParams]
+Temperature = 298.0

@@ -978,6 +978,32 @@ public:
         auto& u = update[_0];
         auto& p = update[_1];
 
+        // Debugging output of matrices.
+        if (verbosity_ > 5)
+        {
+            static int iter = 0;
+            if (iter == 0)
+            {
+                const auto size=Dune::MPIHelper::getCommunication().size();
+                const auto rank=Dune::MPIHelper::getCommunication().rank();
+                const std::string sri
+                    = "_s" + std::to_string(size)
+                    + "_r" + std::to_string(rank)
+                    + "_iter" + std::to_string(iter);
+                Dune::writeMatrixToMatlab(A, "matrixA" + sri + ".dat");
+                Dune::writeMatrixToMatlab(B, "matrixB" + sri + ".dat");
+                Dune::writeMatrixToMatlab(C, "matrixC" + sri + ".dat");
+                Dune::writeMatrixToMatlab(D, "matrixD" + sri + ".dat");
+                ++iter;
+
+                // Terminate the program after storing the matrices
+                std::cout << "UzawaPreconditioner::apply(): "
+                          << "Program terminates after storing the block matrices"
+                          << std::endl;
+                std::abort();
+            }
+        }
+
         // the actual Uzawa iteration
         for (std::size_t k = 0; k < numIterations_; ++k)
         {
@@ -1015,9 +1041,9 @@ public:
 
             // p_k+1 = p_k + omega*(g - C*u_k+1 - D*p_k)
             auto pIncrement = g;
-            // Perform C*u_k+1
+            // Perform g-=C*u_k+1
             C.mmv(u, pIncrement);
-            // Perform D*p_k
+            // Perform g-=D*p_k
             D.mmv(p, pIncrement);
             // Perform p+=omega*g
             pIncrement *= relaxationFactor_;
@@ -1026,16 +1052,26 @@ public:
             // Make p consistent
             std::get<_1>(comms_)->copyOwnerToAll(p, p);
 
+            // Debugging output
             if (verbosity_ > 1)
             {
                 const auto uRhsnorm = std::get<_0>(comms_)->norm(uRhs);
+                const auto unorm = std::get<_0>(comms_)->norm(u);
                 const auto pnorm = std::get<_1>(comms_)->norm(p);
                 const auto rank = Dune::MPIHelper::getCommunication().rank();
                 if (rank == 0)
                 {
                     std::cout << "Uzawa iteration " << k
-                              << ", residual: " << uRhsnorm + pnorm/relaxationFactor_
-                              << std::endl;
+                              << ", residual: " << uRhsnorm + pnorm/relaxationFactor_;
+                    // More debugging output
+                    if (verbosity_ > 2)
+                    {
+                        std::cout << ", |uRhs| = " << uRhsnorm
+                                  << ", |u| = " << unorm
+                                  << ", |p| = " << pnorm
+                                  << ", relaxationFactor_ = " << relaxationFactor_;
+                    }
+                    std::cout << std::endl;
                 }
             }
         }
