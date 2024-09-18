@@ -17,7 +17,7 @@ PriorityList = 2 3 0 1
 LowerLeft = 0 2e-3
 UpperRight = 5e-3 4e-3
 UpstreamCells0 = 5
-CellsPerThroat = 3
+CellsPerPore = 3
 DownstreamCells0 = 5
 Cells1 = 6
 
