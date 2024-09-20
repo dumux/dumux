@@ -33,11 +33,11 @@
 ## How to use this test:
 ## - Start a sequential run with 1 process that assembles and stores the
 ##  matrices on the 2x4 grid as above:
-##   ~$ mpirun -np 1 ./executable ./params.input
+##   ~$ mpirun -np 1 ./test_ff_navierstokes_sincos_uzawa ./params_for_parallel_matrix_test.input
 ## - Then start the same program in parallel with 2 processes:
-##   ~$ mpirun -np 2 ./executable ./params.input
+##   ~$ mpirun -np 2 ./test_ff_navierstokes_sincos_uzawa ./params_for_parallel_matrix_test.input
 ## - Finally call this test function:
-##   ~$ octave test_parallelization_of_Navier_Stokes_matrices
+##   ~$ octave test_parallelization_of_Navier_Stokes_matrices.m
 
 function [A,A0,A1,B,B0,B1,C,C0,C1,D,D0,D1]=test_parallelization_of_Navier_Stokes_matrices()
   disp('############################################################### ')
