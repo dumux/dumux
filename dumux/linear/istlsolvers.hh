@@ -17,6 +17,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/version.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -499,10 +500,15 @@ private:
             using LinearOperator = typename std::decay_t<decltype(op)>::element_type;
             const auto& params = params_.sub("preconditioner");
             using Prec = Dune::Preconditioner<typename LinearOperator::domain_type, typename LinearOperator::range_type>;
+#if DUNE_VERSION_GTE(DUNE_ISTL,2,11)
+            using OpTraits = Dune::OperatorTraits<LinearOperator>;
+            std::shared_ptr<Prec> prec = PreconditionerFactory{}(OpTraits{}, op, params);
+#else
             using TL = Dune::TypeList<typename LinearOperator::matrix_type, typename LinearOperator::domain_type, typename LinearOperator::range_type>;
             std::shared_ptr<Prec> prec = PreconditionerFactory{}(TL{}, op, params);
+#endif
 
-#if HAVE_MPI
+#if HAVE_MPI && DUNE_VERSION_LT(DUNE_ISTL,2,11)
             if (prec->category() != op->category() && prec->category() == Dune::SolverCategory::sequential)
                 prec = Dune::wrapPreconditioner4Parallel(prec, op);
 #endif
@@ -870,7 +876,6 @@ using SuperLUIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::Sup
 
 #if HAVE_UMFPACK
 #include <dune/istl/umfpack.hh>
-#include <dune/common/version.hh>
 
 namespace Dumux {
 
