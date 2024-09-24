@@ -44,34 +44,16 @@ public:
         auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
-            if (element.partitionType() == Dune::InteriorEntity)
-                continue;
+            assert(element.partitionType() == Dune::OverlapEntity || element.partitionType() == Dune::InteriorEntity);
 
-            assert(element.partitionType() == Dune::OverlapEntity);
-
-            // restrict the FvGeometry locally and bind to the element
-            fvGeometry.bind(element);
-            // loop over sub control faces
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.isFrontal() && !scvf.boundary() && !scvf.processorBoundary())
-                {
-                    const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
-                    const auto& facet = element.template subEntity <1> (ownScv.indexInElement());
-                    if (facet.partitionType() == Dune::BorderEntity)
-                        map_[ownScv.index()].push_back(scvf.outsideScvIdx());
-                }
-            }
-        }
-
-        for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
-        {
             fvGeometry.bind(element);
 
             // loop over sub control faces
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                assert(!scvf.processorBoundary());
+                if(scvf.processorBoundary())
+                    continue;
+
                 const auto& ownScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto ownDofIndex = ownScv.dofIndex();
                 const auto ownScvIndex = ownScv.index();
