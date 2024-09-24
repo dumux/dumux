@@ -508,9 +508,21 @@ private:
             std::shared_ptr<Prec> prec = PreconditionerFactory{}(TL{}, op, params);
 #endif
 
-#if HAVE_MPI && DUNE_VERSION_LT(DUNE_ISTL,2,11)
+#if HAVE_MPI
+#if DUNE_VERSION_LT(DUNE_ISTL,2,11)
             if (prec->category() != op->category() && prec->category() == Dune::SolverCategory::sequential)
                 prec = Dune::wrapPreconditioner4Parallel(prec, op);
+#else
+            if constexpr (OpTraits::isParallel)
+            {
+                using Comm = typename OpTraits::comm_type;
+                const Comm& comm = OpTraits::getCommOrThrow(op);
+                if (op->category() == Dune::SolverCategory::overlapping && prec->category() == Dune::SolverCategory::sequential)
+                    prec = std::make_shared<Dune::BlockPreconditioner<typename OpTraits::domain_type, typename OpTraits::range_type,Comm> >(prec, comm);
+                else if (op->category() == Dune::SolverCategory::nonoverlapping && prec->category() == Dune::SolverCategory::sequential)
+                    prec = std::make_shared<Dune::NonoverlappingBlockPreconditioner<Comm, Prec> >(prec, comm);
+            }
+#endif
 #endif
             return std::make_shared<InverseOperator>(op, scalarProduct_, prec, params_);
         }, ops);
