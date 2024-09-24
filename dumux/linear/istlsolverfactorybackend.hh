@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 
@@ -36,6 +37,7 @@
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/istlsolverregistry.hh>
 #include <dumux/linear/solvercategory.hh>
+#include <dumux/linear/istlsolversmultitype.hh>
 
 namespace Dumux {
 
@@ -54,6 +56,7 @@ namespace {
 template<class LinearOperator>
 int initSolverFactoriesForMultiTypeBlockMatrix()
 {
+#if DUNE_VERSION_LT(DUNE_ISTL,2,11)
     using M  = typename LinearOperator::matrix_type;
     using X  = typename LinearOperator::range_type;
     using Y  = typename LinearOperator::domain_type;
@@ -65,6 +68,13 @@ int initSolverFactoriesForMultiTypeBlockMatrix()
     using TLS = Dune::TypeList<X,Y>;
     auto& isfac = Dune::IterativeSolverFactory<X,Y>::instance();
     return Dune::addRegistryToFactory<TLS>(isfac, Dune::IterativeSolverTag{});
+#else
+    using OpTraits = Dune::OperatorTraits<LinearOperator>;
+    auto& pfac = Dune::PreconditionerFactory<LinearOperator>::instance();
+    Dune::addRegistryToFactory<OpTraits>(pfac, Dumux::MultiTypeBlockMatrixPreconditionerTag{});
+    auto& sfac = Dune::SolverFactory<LinearOperator>::instance();
+    return Dune::addRegistryToFactory<OpTraits>(sfac, Dumux::MultiTypeBlockMatrixSolverTag{});
+#endif
 }
 } // end namespace
 
