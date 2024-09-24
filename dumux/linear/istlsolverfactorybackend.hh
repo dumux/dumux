@@ -37,6 +37,7 @@
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/istlsolverregistry.hh>
 #include <dumux/linear/solvercategory.hh>
+#include <dumux/linear/istlsolversmultitype.hh>
 
 namespace Dumux {
 
@@ -69,11 +70,10 @@ int initSolverFactoriesForMultiTypeBlockMatrix()
     return Dune::addRegistryToFactory<TLS>(isfac, Dune::IterativeSolverTag{});
 #else
     using OpTraits = Dune::OperatorTraits<LinearOperator>;
-    auto& sfac = Dune::SolverFactory<LinearOperator>::instance();
     auto& pfac = Dune::PreconditionerFactory<LinearOperator>::instance();
-    Dune::addRegistryToFactory<OpTraits>(sfac, Dumux::MultiTypeBlockMatrixDirectSolverTag{});
     Dune::addRegistryToFactory<OpTraits>(pfac, Dumux::MultiTypeBlockMatrixPreconditionerTag{});
-    return Dune::addRegistryToFactory<OpTraits>(sfac, Dune::SolverTag{});
+    auto& sfac = Dune::SolverFactory<LinearOperator>::instance();
+    return Dune::addRegistryToFactory<OpTraits>(sfac, Dumux::MultiTypeBlockMatrixSolverTag{});
 #endif
 }
 } // end namespace
