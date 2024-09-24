@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-dune_symlink_to_source_files(FILES "params.input" "annulus.msh")
+dune_symlink_to_source_files(FILES "params.input" "annulus.msh" "annulus3d.msh")
 dumux_add_test(
     NAME test_hyperelastic_growth
     LABELS geomechanics elastic
