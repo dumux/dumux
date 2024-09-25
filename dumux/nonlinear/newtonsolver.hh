@@ -542,8 +542,24 @@ public:
                       const SolutionVector& uLastIter,
                       const ResidualVector& deltaU)
     {
+        if (useLineSearch_)
+            lineSearchUpdate_(vars, uLastIter, deltaU);
+
+        else if (useChop_)
+            choppedUpdate_(vars, uLastIter, deltaU);
+
+        else
+        {
+            auto uCurrentIter = uLastIter;
+            Backend::axpy(-1.0, deltaU, uCurrentIter);
+            solutionChanged_(vars, uCurrentIter);
+
+            if (enableResidualCriterion_)
+                computeResidualReduction_(vars);
+        }
+
         if (enableShiftCriterion_ || enablePartialReassembly_)
-            newtonUpdateShift_(uLastIter, deltaU);
+            newtonComputeShift_(Backend::dofs(vars), uLastIter);
 
         if (enablePartialReassembly_) {
             // Determine the threshold 'eps' that is used for the partial reassembly.
@@ -569,7 +585,9 @@ public:
                                            min(reassemblyMaxThreshold_,
                                                shift_*reassemblyShiftWeight_));
 
-            updateDistanceFromLastLinearization_(uLastIter, deltaU);
+            auto actualDeltaU = uLastIter;
+            actualDeltaU -= Backend::dofs(vars);
+            updateDistanceFromLastLinearization_(uLastIter, actualDeltaU);
             partialReassembler_->computeColors(this->assembler(),
                                                distanceFromLastLinearization_,
                                                reassemblyThreshold);
@@ -578,22 +596,6 @@ public:
             for (unsigned int i = 0; i < distanceFromLastLinearization_.size(); i++)
                 if (partialReassembler_->dofColor(i) == EntityColor::red)
                     distanceFromLastLinearization_[i] = 0;
-        }
-
-        if (useLineSearch_)
-            lineSearchUpdate_(vars, uLastIter, deltaU);
-
-        else if (useChop_)
-            choppedUpdate_(vars, uLastIter, deltaU);
-
-        else
-        {
-            auto uCurrentIter = uLastIter;
-            Backend::axpy(-1.0, deltaU, uCurrentIter);
-            solutionChanged_(vars, uCurrentIter);
-
-            if (enableResidualCriterion_)
-                computeResidualReduction_(vars);
         }
     }
 
@@ -1060,13 +1062,23 @@ private:
      * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
+    [[deprecated("Use computeShift_(u1, u2) instead")]]
     virtual void newtonUpdateShift_(const SolutionVector &uLastIter,
                                     const ResidualVector &deltaU)
     {
         auto uNew = uLastIter;
         Backend::axpy(-1.0, deltaU, uNew);
-        shift_ = Detail::Newton::maxRelativeShift<Scalar>(uLastIter, uNew);
+        newtonComputeShift_(uLastIter, uNew);
+    }
 
+    /*!
+     * \brief Update the maximum relative shift of one solution
+     *        compared to another.
+     */
+    virtual void newtonComputeShift_(const SolutionVector &u1,
+                                     const SolutionVector &u2)
+    {
+        shift_ = Detail::Newton::maxRelativeShift<Scalar>(u1, u2);
         if (comm_.size() > 1)
             shift_ = comm_.max(shift_);
     }
