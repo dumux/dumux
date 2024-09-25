@@ -54,6 +54,10 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
+    static constexpr bool useThetaRegularization = InvasionState::stateMethod == Dumux::PoreNetwork::StateSwitchMethod::theta;
+
 public:
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
@@ -180,6 +184,40 @@ public:
     { return false; }
 
     // \}
+
+    // throat parameter indicating invasion state
+    template<class FluxVariablesCache, class SubControlVolumeFace, bool enable = useThetaRegularization, typename std::enable_if_t<enable, int> = 0>
+    Scalar theta(const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const ElementVolumeVariables& elemVolVars,
+                 const FluxVariablesCache& fluxVarsCache,
+                 const SubControlVolumeFace& scvf) const
+    {
+        const auto invaded = fluxVarsCache.invaded();
+        static const auto delta = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RegularizationDelta", 1e-2);
+        if(!invaded)
+        {
+            using std::max; using std::sin; using std::clamp;
+            auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
+            auto dp = max(elemVolVars[0].capillaryPressure(),
+                            elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+
+            // Use some regularized Heaviside function for theta
+            dp = clamp(dp, 0.0, delta); // regularize once pc is above entry pressure
+            return 0.5*(1+sin(M_PI*(dp-0.5*delta)/(delta)));
+        }
+        else
+        {
+            using std::max; using std::abs; using std::sin; using std::clamp;
+            auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+            auto dp = max(elemVolVars[0].capillaryPressure(),
+                            elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+
+            // Use some regularized Heaviside function for theta
+            dp = clamp(dp, -delta, 0.0); // regularize once pc is below snapoff pressure
+            return 0.5*(1+sin(M_PI*(dp+0.5*delta)/(delta)));
+        }
+    }
 
 private:
 

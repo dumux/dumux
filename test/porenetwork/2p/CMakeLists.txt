@@ -13,8 +13,19 @@ dumux_add_test(NAME test_pnm_2p
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p-reference.vtp
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00093.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00171.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p")
+
+dumux_add_test(NAME test_pnm_2p_reg
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 USETHETAREGULARIZATION=1
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_reg-reference.vtp
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg-00259.vtp
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg -Problem.Name test_pnm_2p_reg")
 
 dumux_add_test(NAME test_pnm_2pni
                SOURCES main.cc

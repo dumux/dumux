@@ -68,6 +68,26 @@ public:
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
 
+#if USETHETAREGULARIZATION
+//! The grid flux variables cache when using regularization
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::DrainageProblem>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+    using Traits = PoreNetwork::PNMTwoPDefaultGridFVCTraits<Problem,
+                                                            FluxVariablesCache,
+                                                            Dumux::PoreNetwork::TwoPInvasionState<Problem, Dumux::PoreNetwork::StateSwitchMethod::theta>>;
+public:
+    using type = PoreNetwork::PNMTwoPGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache, Traits>;
+};
+#endif
+
 } //end namespace Dumux::Properties
 
 #endif
