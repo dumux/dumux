@@ -406,6 +406,7 @@ namespace Dumux::Optimization {
 /*!
  * \ingroup Nonlinear
  * \brief Creates a nonlinear least squares solver with \f$n\f$ model parameters and \f$m\f$ observations
+ * For a detailed description of the mathematical background see \cite NocedalWright2006
  * \param f The residual functional to minimize the norm of (\f$ f: \mathbb{R}^n \mapsto \mathbb{R}^m \f$)
  * \param x0 Initial guess for the parameters (vector of size \f$n\f$)
  * \param size The number of observations (\f$m\f$)
