@@ -1088,6 +1088,16 @@ private:
             if (reduction_ < lastReduction_ || lambda <= lineSearchMinRelaxationFactor_)
             {
                 endIterMsgStream_ << Fmt::format(", residual reduction {:.4e}->{:.4e}@lambda={:.4f}", lastReduction_, reduction_, lambda);
+
+                // eventually update the shift
+                if (lambda < 1.0)
+                {
+                    auto newDeltaU = deltaU;
+                    newDeltaU *= lambda;
+
+                    newtonUpdateShift_(uLastIter, newDeltaU);
+                }
+
                 return;
             }
 
