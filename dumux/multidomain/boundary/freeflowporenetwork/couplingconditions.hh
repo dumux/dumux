@@ -189,6 +189,28 @@ public:
             return VelocityVector(0.0);
     }
 
+    template<class Context>
+    static VelocityVector interfacePoreBodyVelocity(const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                                  const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                                                  const Context& context)
+    {
+        VelocityVector velocity = interfaceThroatVelocity(fvGeometry, scvf, context);
+        const auto& pnmScv = context.scv;
+        const auto& pnmFVGeometry = context.fvGeometry;
+        const auto& pnmScvf = pnmFVGeometry.scvf(0);
+        const auto& pnmElemVolVars = context.elemVolVars;
+        const auto& pnmElemFluxVarsCache = context.elemFluxVarsCache;
+        const auto& pnmProblem = pnmElemVolVars.gridVolVars().problem();
+        const auto& pnmGridGeometry = pnmProblem.gridGeometry();
+
+        const Scalar poreRadius = pnmGridGeometry.poreInscribedRadius(pnmScv.dofIndex());
+        const Scalar throatRadius = pnmGridGeometry.throatInscribedRadius(pnmScv.elementIndex());
+
+        const Scalar scalingFactor = (throatRadius * throatRadius) / (poreRadius * poreRadius); \\ TODO include pore-body shape
+
+        return velocity * scalingFactor;
+    }
+
     /*!
      * \brief Evaluate an advective flux across the interface and consider upwinding.
      */
