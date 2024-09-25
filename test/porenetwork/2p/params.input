@@ -1,6 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-5 # [s]
-TEnd = 0.01 # [s]
+MaxTimeStepSize = 1e-4
+TEnd = 0.005 # [s]
 
 [Grid]
 File = ../1p/grids/pnm_converted.dgf
@@ -13,6 +14,7 @@ VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an
 EnableGravity = false
 CapillaryPressure = 5000
 UseFixedPressureAndSaturationBoundary = false
+RegularizationDelta = 1e-4
 
 [Vtk]
 AddVelocity = 1
@@ -24,7 +26,8 @@ MaxRelativeShift = 1e-5
 
 [InvasionState]
 Verbosity = true
-#AccuracyCriterion = 0.99
+AccuracyCriterion = 0.99
+InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
