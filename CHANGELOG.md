@@ -1,17 +1,3 @@
-Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
-=============================================
-
-### General changes / structure
-
-### Improvements and Enhancements
-
-- __ISTL solver factory__: Fixed an issue with exceptions where an exception thrown during solver construction would lead to a deadlock in parallel simulation. The solver factory now communicated the failure which makes the exception recoverable, e.g. in the Newton solver.
-
-### Immediate interface changes not allowing/requiring a deprecation period:
-
-### Deprecated properties/classes/functions/files, to be removed after 3.10:
-
-
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
 
@@ -32,6 +18,7 @@ The function uses a new spatial parameter interface implemented in the new `Brin
 - __Facet-Coupling__:
     * Fixed the handling of duplicate degrees of freedom in the box facet-coupling model in the corner case that an internal fracture turns into a boundary fracture (see [merge request 3748](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/merge_requests/3748) for images).
     * The facet-coupling framework has been modified such that lower-dimensional domains coinciding with the bulk domain boundary are supported.
+- __ISTL solver factory__: Fixed an issue with exceptions where an exception thrown during solver construction would lead to a deadlock in parallel simulation. The solver factory now communicated the failure which makes the exception recoverable, e.g. in the Newton solver.
 - __Periodic Boundaries__: Fixed an issue for vector-valued unknowns. Other schemes that provide a periodic map at boundaries now also support periodicity.
 - __TimeLoop__: Added function to allow adjustments of the time step size in the main file, fixes corner cases.
 - __Pipeline__: Variable docker image testing is now possible directly out of dumux. A weekly Ubuntu 24.04 pipeline is introduced for a smooth transition to 24.04 in the future.
