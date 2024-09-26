@@ -22,6 +22,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
+#include "test_newton_common.hh"
+
 /*
   Parallel Newton test. If the solver fails, we reduce the time step size.
   In parallel this can lead to dead locks if we don't correctly handle exceptions.
@@ -31,50 +33,7 @@
 
 namespace Dumux {
 
-class MockScalarAssembler
-{
-public:
-    using Scalar = double;
-    using ResidualType = Scalar;
-    using JacobianMatrix = Scalar;
-    using SolutionVector = Scalar;
-
-    void setLinearSystem() {}
-
-    void assembleResidual(const ResidualType& sol)
-    {
-        res_ = sol*sol - 5.0;
-    }
-
-    void assembleJacobianAndResidual (const ResidualType& sol)
-    {
-        assembleResidual(sol);
-        jac_ = 2.0*sol;
-    }
-
-    JacobianMatrix& jacobian() { return jac_; }
-
-    ResidualType& residual() { return res_; }
-
-    // the following four methods are obsolete for the new assembly
-    // chosen if the assembler exports 'Variables' (see test_newton.cc)
-    // {
-    void updateGridVariables(const ResidualType& sol) {}
-
-    void resetTimeStep(const ResidualType& sol) {}
-
-    ResidualType& prevSol() { return res_; }
-
-    // we fake this for this test
-    bool isStationaryProblem() { return false; }
-    // }
-
-private:
-    JacobianMatrix jac_;
-    ResidualType res_;
-};
-
-class MockScalarLinearSolver
+class MockScalarParallelLinearSolver
 {
 public:
     MockScalarLinearSolver(int rank, std::shared_ptr<TimeLoop<double>> timeLoop)
@@ -178,7 +137,7 @@ int main(int argc, char* argv[])
 
     // use the Newton solver to find a solution to a scalar equation
     using Assembler = MockScalarAssembler;
-    using LinearSolver = MockScalarLinearSolver;
+    using LinearSolver = MockScalarParallelLinearSolver;
     using Solver = NewtonSolver<Assembler, LinearSolver, DefaultPartialReassembler>;
 
     const int rank = Dune::MPIHelper::instance().rank();

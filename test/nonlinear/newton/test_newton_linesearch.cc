@@ -15,7 +15,7 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/nonlinear/newtonsolver_linesearch_cubicbacktracking.hh>
 
 #include "test_newton_common.hh"
 
