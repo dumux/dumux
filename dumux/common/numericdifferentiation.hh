@@ -14,6 +14,7 @@
 #define DUMUX_NUMERIC_DIFFERENTIATION_HH
 
 #include <cmath>
+#include <cassert>
 #include <limits>
 
 namespace Dumux {
