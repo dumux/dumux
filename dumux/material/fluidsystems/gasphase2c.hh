@@ -133,107 +133,45 @@ public:
     /*!
      * \brief Returns true if the fluid is assumed to be an ideal gas
      */
-    static constexpr bool isIdealGas(int phaseIdx,int compIdx)
-    {
-        switch(compIdx)
-        {
-            case comp0Idx: return MainComponent::gasIsIdeal();
-            case comp1Idx: return SecondComponent::gasIsIdeal();
-        }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static bool isIdealGas(int phaseIdx = 0)
+    { return true; /* we're a gas! */ }
 
     /*!
-     * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
-     *
-     * \param compIdx The index of the component to consider
+     * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
     static Scalar molarMass(int compIdx)
-    {
-        static const Scalar M[] = {
-            MainComponent::molarMass(),
-            SecondComponent::molarMass(),
-        };
-
-        assert(0 <= compIdx && compIdx < numComponents);
-        return M[compIdx];
-    }
+    {  return compIdx ? SecondComponent::molarMass() : MainComponent::molarMass(); }
 
     /*!
-     * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
-     *
-     * \param compIdx The index of the component to consider
+     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of the main component
      */
-    static Scalar criticalTemperature(int compIdx )
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::criticalTemperature();
-            case comp1Idx: return SecondComponent::criticalTemperature();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static Scalar criticalTemperature()
+    {  return MainComponent::criticalTemperature(); }
 
     /*!
-     * \brief Critical pressure of a component \f$\mathrm{[Pa]}\f$.
-     *
-     * \param compIdx The index of the component to consider
+     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of the main component
      */
-    static Scalar criticalPressure(int compIdx)
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::criticalPressure();
-            case comp1Idx: return SecondComponent::criticalPressure();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static Scalar criticalPressure()
+    {  return MainComponent::criticalPressure(); }
 
     /*!
-     * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the main component's triple point.
      */
-    static Scalar tripleTemperature(int compIdx)
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::tripleTemperature();
-            case comp1Idx: return SecondComponent::tripleTemperature();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static Scalar tripleTemperature()
+    {  return MainComponent::tripleTemperature(); }
 
     /*!
-     * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
+     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at the main component's triple point.
      */
-    static Scalar triplePressure(int compIdx)
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::triplePressure();
-            case comp1Idx: return SecondComponent::triplePressure();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static Scalar triplePressure()
+    { return MainComponent::triplePressure(); }
 
     /*!
-     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the main component at a given
      *        temperature.
-     * \param T temperature \f$\mathrm{[K]}\f$
      */
-    static Scalar vaporPressure(Scalar T, int compIdx)
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::vaporPressure();
-            case comp1Idx: return SecondComponent::vaporPressure();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    static Scalar vaporPressure(Scalar T)
+    {  return MainComponent::vaporPressure(T); }
 
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
