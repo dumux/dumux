@@ -31,6 +31,21 @@
 
 namespace Dumux {
 
+//! Register some preconditioners of ISTL that can be used with MultiTypeBlockMatrix for use with the ISTL solver factory
+DUMUX_REGISTER_PRECONDITIONER("ssor", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dune::SeqSSOR, 2>());
+DUMUX_REGISTER_PRECONDITIONER("sor", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dune::SeqSOR, 2>());
+DUMUX_REGISTER_PRECONDITIONER("jac", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dune::SeqJac, 2>());
+DUMUX_REGISTER_PRECONDITIONER("richardson", Dumux::MultiTypeBlockMatrixPreconditionerTag,
+    [](auto opTraits, const auto& op, const ParameterTree& config){
+        using OpTraits = std::decay_t<decltype(opTraits)>;
+        return std::make_shared<Richardson<typename OpTraits::domain_type, typename OpTraits::range_type>>(config);
+    }
+);
+
+} // end namespace Dumux
+
+namespace Dumux {
+
 /*!
  * \ingroup Linear
  * \brief A preconditioner based on the Uzawa algorithm for saddle-point problems of the form
