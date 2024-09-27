@@ -154,15 +154,6 @@ public:
     }
 
     /*!
-     * \brief Returns true if and only if a fluid phase is assumed to
-     *        have a constant viscosity.
-     *
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    //static constexpr bool viscosityIsConstant(int phaseIdx)
-    //{ return Component::gasViscosityIsConstant(); }
-
-    /*!
      * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
@@ -348,17 +339,37 @@ public:
     static Scalar enthalpy(const FluidState &fluidState,
                            const int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "Enthalpy");
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        return Component0::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp0Idx)
+            + Component1::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp1Idx);
     }
 
     /*!
-     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of the pure component as a gas.
-     * \param temperature The given temperature \f$\mathrm{[K]}\f$
-     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param componentIdx The index of the component to consider
+     *
      */
-    static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "Internal Energy");
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (componentIdx == comp0Idx)
+        {
+            return Component0::gasEnthalpy(T, p);
+        }
+        else if (componentIdx == comp1Idx)
+        {
+            return Component1::gasEnthalpy(T, p);
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
     }
 
     /*!
@@ -378,37 +389,38 @@ public:
                             const int phaseIdx)
     {
         // TODO: Add other policies especially one that allows to choose one Compoents viscosity as overall viscosity.
-            // Wilke method (Reid et al.):
+
+        // Wilke method (Reid et al.):
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-            Scalar muResult = 0;
-            const Scalar mu[numComponents] = {
-                Component0::gasViscosity(T, p),
-                Component1::gasViscosity(T, p)
-            };
+        Scalar muResult = 0;
+        const Scalar mu[numComponents] = {
+            Component0::gasViscosity(T, p),
+            Component1::gasViscosity(T, p)
+        };
 
-            Scalar sumx = 0.0;
-            using std::max;
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                sumx += fluidState.moleFraction(phaseIdx, compIdx);
-            sumx = max(1e-10, sumx);
+        Scalar sumx = 0.0;
+        using std::max;
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            sumx += fluidState.moleFraction(phaseIdx, compIdx);
+        sumx = max(1e-10, sumx);
 
-            for (int i = 0; i < numComponents; ++i) {
-                Scalar divisor = 0;
-                using std::pow;
-                using std::sqrt;
-                for (int j = 0; j < numComponents; ++j) {
-                    Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(molarMass(j)/molarMass(i), 1/4.0);
-                    phiIJ *= phiIJ;
-                    phiIJ /= sqrt(8*(1 + molarMass(i)/molarMass(j)));
-                    divisor += fluidState.moleFraction(phaseIdx, j)/sumx * phiIJ;
-                }
-                muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
+        for (int i = 0; i < numComponents; ++i) {
+            Scalar divisor = 0;
+            using std::pow;
+            using std::sqrt;
+            for (int j = 0; j < numComponents; ++j) {
+                Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(molarMass(j)/molarMass(i), 1/4.0);
+                phiIJ *= phiIJ;
+                phiIJ /= sqrt(8*(1 + molarMass(i)/molarMass(j)));
+                divisor += fluidState.moleFraction(phaseIdx, j)/sumx * phiIJ;
             }
-            return muResult;
+            muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
+        }
+        return muResult;
     }
 
     using Base<Scalar, ThisType>::fugacityCoefficient;
