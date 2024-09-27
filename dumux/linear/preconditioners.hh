@@ -316,8 +316,22 @@ private:
     const bool useDirectVelocitySolverForA_;
 };
 
-DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
+#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
+DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag,
+    [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+    -> std::shared_ptr<Dune::Preconditioner<typename decltype(opTraits)::domain_type, typename decltype(opTraits)::range_type>>
+    {
+        using OpTraits = decltype(opTraits);
+        using M = typename OpTraits::matrix_type;
+        if constexpr (Dumux::isMultiTypeBlockMatrix<M>::value && M::M() == 2 && M::N() == 2)
+            return Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>()(opTraits, op, config);
 
+        DUNE_THROW(Dune::UnsupportedType, "Unsupported Type for Uzawa preconditioner");
+    }
+);
+#else
+DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
+#endif // DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
 
 /*! \brief Multi-threaded Jacobi preconditioner
  *
