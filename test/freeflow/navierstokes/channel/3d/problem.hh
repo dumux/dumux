@@ -75,6 +75,8 @@ public:
         nu_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
 
         height_ = getParam<Scalar>("Problem.Height");
+        relativeFrictionFactorLense_ = getParam<Scalar>("Problem.RelativeFrictionFactorLense",.5);
+
         if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
     }
@@ -95,12 +97,18 @@ public:
                    const SubControlVolume& scv) const
     {
         auto source = Sources(0.0);
+        auto globalPos = scv.center();
+        Scalar heightRel = 1.;
+        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
+        {
+            heightRel = relativeFrictionFactorLense_;
+        }
 
         if constexpr (ParentType::isMomentumProblem() && enablePseudoThreeDWallFriction)
         {
             static const Scalar height = getParam<Scalar>("Problem.Height");
             static const Scalar factor = getParam<Scalar>("Problem.PseudoWallFractionFactor", 8.0);
-            source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height, factor);
+            source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height*heightRel, factor);
         }
 
         return source;
@@ -205,6 +213,7 @@ private:
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     static constexpr Scalar eps_=1e-6;
+    Scalar relativeFrictionFactorLense_;
     Scalar deltaP_;
     Scalar height_;
     Scalar rho_;

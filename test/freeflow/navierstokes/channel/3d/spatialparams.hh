@@ -41,6 +41,7 @@ public:
     {
 
         height_ = getParam<Scalar>("Problem.Height");
+        relativeExtrusionFactorLens_ = getParam<Scalar>("Problem.RelativeExtrusionFactorLens",.5);
 
         if constexpr (enablePseudoThreeDWallFriction)
             extrusionFactor_ = 2.0/3.0 * height_;
@@ -63,15 +64,23 @@ public:
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
-    { return extrusionFactor_; }
+    { return extrusionFactorAtPos(scv.dofPosition()); }
 
     /*!
      * \brief Return how much the domain is extruded at a given position.
      */
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return extrusionFactor_; }
+    {
+        Scalar heightRel = 1.;
+        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
+        {
+            heightRel = relativeExtrusionFactorLens_;
+        }
+        return extrusionFactor_*heightRel;
+    }
 
 private:
+    Scalar relativeExtrusionFactorLens_;
     Scalar extrusionFactor_;
     Scalar height_;
 };
