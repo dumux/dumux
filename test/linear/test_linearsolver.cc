@@ -135,6 +135,9 @@ int main(int argc, char* argv[])
         });
 
         Test::solveWithFactory(MTA, MTx, MTb, "SSORBiCGSTAB");
+
+        // TODO Why does CG choke on this matrix? It works fine for one block
+        // and this should just be three identical blocks on the diagonal.
     }
 
     return 0;
