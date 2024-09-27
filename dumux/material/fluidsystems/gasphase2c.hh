@@ -40,21 +40,19 @@ struct GasPhaseTwoCDefaultPolicy
  * \ingroup FluidSystems
  * \brief A gaseous phase consisting of two components
  */
-template <class Scalar, class Component0T, class Component1T, class Policy = GasPhaseTwoCDefaultPolicy<> >
+template <class Scalar, class MainComponent, class SecondComponent, class Policy = GasPhaseTwoCDefaultPolicy<> >
 class GasPhaseTwoC
-: public Base<Scalar, GasPhaseTwoC<Scalar, Component0T, Component1T, Policy> >
+: public Base<Scalar, GasPhaseTwoC<Scalar, MainComponent, SecondComponent, Policy> >
 {
-    using ThisType = GasPhaseTwoC<Scalar, Component0T, Component1T, Policy>;
+    using ThisType = GasPhaseTwoC<Scalar, MainComponent, SecondComponent, Policy>;
 
-    static_assert(ComponentTraits<Component0T>::hasGasState, "The component does not implement a gas state!");
-    static_assert(ComponentTraits<Component1T>::hasGasState, "The component does not implement a gas state!");
+    static_assert(ComponentTraits<MainComponent>::hasGasState, "The component does not implement a gas state!");
+    static_assert(ComponentTraits<SecondComponent>::hasGasState, "The component does not implement a gas state!");
 
     // convenience aliases using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
-    using Component0 = Component0T;
-    using Component1 = Component1T;
     using ParameterCache = NullParameterCache;
 
     static constexpr int numPhases = 1;  //!< Number of phases in the fluid system
@@ -90,8 +88,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::name();
-            case comp1Idx: return Component1::name();
+            case comp0Idx: return MainComponent::name();
+            case comp1Idx: return SecondComponent::name();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -147,8 +145,8 @@ public:
     {
         switch(compIdx)
         {
-            case comp0Idx: return Component0::gasIsIdeal();
-            case comp1Idx: return Component1::gasIsIdeal();
+            case comp0Idx: return MainComponent::gasIsIdeal();
+            case comp1Idx: return SecondComponent::gasIsIdeal();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -161,8 +159,8 @@ public:
     static Scalar molarMass(int compIdx)
     {
         static const Scalar M[] = {
-            Component0::molarMass(),
-            Component1::molarMass(),
+            MainComponent::molarMass(),
+            SecondComponent::molarMass(),
         };
 
         assert(0 <= compIdx && compIdx < numComponents);
@@ -178,8 +176,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::criticalTemperature();
-            case comp1Idx: return Component1::criticalTemperature();
+            case comp0Idx: return MainComponent::criticalTemperature();
+            case comp1Idx: return SecondComponent::criticalTemperature();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -194,8 +192,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::criticalPressure();
-            case comp1Idx: return Component1::criticalPressure();
+            case comp0Idx: return MainComponent::criticalPressure();
+            case comp1Idx: return SecondComponent::criticalPressure();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -208,8 +206,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::tripleTemperature();
-            case comp1Idx: return Component1::tripleTemperature();
+            case comp0Idx: return MainComponent::tripleTemperature();
+            case comp1Idx: return SecondComponent::tripleTemperature();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -222,8 +220,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::triplePressure();
-            case comp1Idx: return Component1::triplePressure();
+            case comp0Idx: return MainComponent::triplePressure();
+            case comp1Idx: return SecondComponent::triplePressure();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -238,8 +236,8 @@ public:
     {
         switch (compIdx)
         {
-            case comp0Idx: return Component0::vaporPressure();
-            case comp1Idx: return Component1::vaporPressure();
+            case comp0Idx: return MainComponent::vaporPressure();
+            case comp1Idx: return SecondComponent::vaporPressure();
         }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
@@ -273,8 +271,8 @@ public:
 
         // assume ideal mixture: steam, nitrogen and oxygen don't "see" each other
         else
-            return Component0::gasDensity(T, fluidState.partialPressure(phaseIdx, comp0Idx))
-            + Component1::gasDensity(T, fluidState.partialPressure(phaseIdx, comp1Idx));
+            return MainComponent::gasDensity(T, fluidState.partialPressure(phaseIdx, comp0Idx))
+            + SecondComponent::gasDensity(T, fluidState.partialPressure(phaseIdx, comp1Idx));
     }
 
     /*!
@@ -309,8 +307,8 @@ public:
             return IdealGas::molarDensity(T,p);
         }
 
-        return Component0::gasMolarDensity(T, fluidState.partialPressure(phaseIdx, comp0Idx))
-             + Component1::gasMolarDensity(T, fluidState.partialPressure(phaseIdx, comp1Idx));
+        return MainComponent::gasMolarDensity(T, fluidState.partialPressure(phaseIdx, comp0Idx))
+             + SecondComponent::gasMolarDensity(T, fluidState.partialPressure(phaseIdx, comp1Idx));
     }
 
     /*!
@@ -342,8 +340,8 @@ public:
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
 
-        return Component0::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp0Idx)
-            + Component1::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp1Idx);
+        return MainComponent::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp0Idx)
+            + SecondComponent::gasEnthalpy(T,p)*fluidState.massFraction(phaseIdx,comp1Idx);
     }
 
     /*!
@@ -363,11 +361,11 @@ public:
 
         if (componentIdx == comp0Idx)
         {
-            return Component0::gasEnthalpy(T, p);
+            return MainComponent::gasEnthalpy(T, p);
         }
         else if (componentIdx == comp1Idx)
         {
-            return Component1::gasEnthalpy(T, p);
+            return SecondComponent::gasEnthalpy(T, p);
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
     }
@@ -398,8 +396,8 @@ public:
 
         Scalar muResult = 0;
         const Scalar mu[numComponents] = {
-            Component0::gasViscosity(T, p),
-            Component1::gasViscosity(T, p)
+            MainComponent::gasViscosity(T, p),
+            SecondComponent::gasViscosity(T, p)
         };
 
         Scalar sumx = 0.0;
