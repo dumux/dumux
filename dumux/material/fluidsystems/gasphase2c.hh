@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FluidSystems
- * \brief @copybrief Dumux::FluidSystems::OnePTwoCGas
+ * \brief @copybrief Dumux::FluidSystems::GasPhaseTwoC
  */
 #ifndef DUMUX_GAS_PHASE_HH
 #define DUMUX_GAS_PHASE_HH
@@ -28,10 +28,10 @@ namespace FluidSystems {
 
 /*!
  * \ingroup FluidSystems
- * \brief Policy for the OnePTwoCGas fluid system
+ * \brief Policy for the GasPhaseTwoC fluid system
  */
 template<bool fastButSimplifiedRelations = false>
-struct OnePTwoCGasDefaultPolicy
+struct GasPhaseTwoCDefaultPolicy
 {
     static constexpr  bool useIdealGasDensity() { return fastButSimplifiedRelations; }
 };
@@ -40,11 +40,11 @@ struct OnePTwoCGasDefaultPolicy
  * \ingroup FluidSystems
  * \brief A gaseous phase consisting of two components
  */
-template <class Scalar, class Component0T, class Component1T, class Policy = OnePTwoCGasDefaultPolicy<> >
-class OnePTwoCGas
-: public Base<Scalar, OnePTwoCGas<Scalar, Component0T, Component1T, Policy> >
+template <class Scalar, class Component0T, class Component1T, class Policy = GasPhaseTwoCDefaultPolicy<> >
+class GasPhaseTwoC
+: public Base<Scalar, GasPhaseTwoC<Scalar, Component0T, Component1T, Policy> >
 {
-    using ThisType = OnePTwoCGas<Scalar, Component0T, Component1T, Policy>;
+    using ThisType = GasPhaseTwoC<Scalar, Component0T, Component1T, Policy>;
 
     static_assert(ComponentTraits<Component0T>::hasGasState, "The component does not implement a gas state!");
     static_assert(ComponentTraits<Component1T>::hasGasState, "The component does not implement a gas state!");
