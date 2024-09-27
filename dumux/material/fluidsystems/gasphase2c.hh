@@ -85,15 +85,7 @@ public:
      * \param compIdx The index of the component to consider
      */
     static std::string componentName(int compIdx)
-    {
-        switch (compIdx)
-        {
-            case comp0Idx: return MainComponent::name();
-            case comp1Idx: return SecondComponent::name();
-        }
-
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
-    }
+    { return compIdx ? SecondComponent::name() : MainComponent::name(); }
 
     /*!
      * \brief A human readable name for the component.
