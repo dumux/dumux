@@ -100,8 +100,8 @@ public:
     /*!
      * \brief A human readable name for the component.
      */
-    //static std::string name()
-    //{ return Component::name(); }
+    static std::string name()
+    { return "GasPhaseTwoC"; }
 
     /*!
      * \brief There is only one phase, so not mass transfer between phases can occur
