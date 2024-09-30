@@ -9,7 +9,7 @@ variables:
   UBUNTU_VERSION: "22.04"
   DUMUX_DOCKER_CI_BRANCH: master
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
-  DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
+  DUMUX_CI_TRIGGER_LECTURE_BRANCH: releases/3.9
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.9"
   GIT_SUBMODULE_STRATEGY: recursive
 
@@ -102,42 +102,20 @@ full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    CXX_MAX_STANDARD: "20"
+    DUMUX_ENABLE_CPPCHECK: "true"
+    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
+    DUMUX_CHECK_EXAMPLE_DOCS: "true"
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
-minimal-dune-master-release-clang:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION
-
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
-
-full-dune-master-gcc-cpp-20:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-12-ubuntu-$UBUNTU_VERSION
-    CXX_MAX_STANDARD: "20"
-    DUMUX_ENABLE_CPPCHECK: "true"
-    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
-    DUMUX_CHECK_EXAMPLE_DOCS: "true"
-
-##################################
-# additional scheduled pipelines #
-full-dune-master-clang:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION
-
-full-dune-master-gcc:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION
 
 ################################################
 # trigger test pipelines of downstream modules #
