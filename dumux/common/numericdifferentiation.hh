@@ -14,6 +14,7 @@
 #define DUMUX_NUMERIC_DIFFERENTIATION_HH
 
 #include <cmath>
+#include <cassert>
 #include <limits>
 
 namespace Dumux {
@@ -60,7 +61,7 @@ public:
      * \param fx0 The result of the function evaluated at x0
      * \param eps The numeric epsilon used in the differentiation
      * \param numericDifferenceMethod The numeric difference method
-     *        (1: forward differences (default), 0: central differences, -1: backward differences)
+     *        (1: forward differences (default), 0: central differences, -1: backward differences, 5: five-point stencil method)
      */
     template<class Function, class Scalar, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,
@@ -69,7 +70,23 @@ public:
                                   const Scalar eps,
                                   const int numericDifferenceMethod = 1)
     {
+        // Five-point stencil numeric difference,
+        // Abramowitz & Stegun, Table 25.2.
+        // The error is proportional to eps^4.
+        if (numericDifferenceMethod == 5)
+        {
+            derivative = function(x0 + eps);
+            derivative -= function(x0 - eps);
+            derivative *= 8.0;
+            derivative += function(x0 - 2*eps);
+            derivative -= function(x0 + 2*eps);
+            derivative /= 12*eps;
+            return;
+        }
+
+        // Forward, central, or backward differences
         Scalar delta = 0.0;
+
         // we are using forward or central differences, i.e. we need to calculate f(x + \epsilon)
         if (numericDifferenceMethod >= 0)
         {
