@@ -1,12 +1,14 @@
 [Grid]
 UpperRight = 0.005 0.005
-Cells = 300 200
+Cells = 50 50
 
 [Problem]
 Name = test_stokes_channel_pseudo3d
 DeltaP = 10
 EnableGravity = false
 Height = 0.00025
+RelativeFrictionFactorLense = 0.5
+RelativeExtrusionFactorLens = 0.5
 
 [Component]
 LiquidDensity = 1e3
