@@ -64,21 +64,20 @@ int main(int argc, char** argv)
     Dumux::GridManager<Grid> gridManager;
 
 #if HAVE_DUNE_SUBGRID && GRID_DIM == 3
-    const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
+    const bool isLensGeometry = getParam<bool>("Problem.IsLensGeometry", false);
+    const Scalar heightFactor = getParam<Scalar>("Problem.RelativeExtrusionFactorLens", 0.5);
 
     auto selector = [&](const auto& element)
     {
-        if (!isStaircaseGeometry)
+        if (!isLensGeometry)
             return true;
-
-        const Scalar deltaX = 0.003;
-        const Scalar deltaZ = 0.000075;
-        const Scalar deltaY = 0.0003;
 
         const Scalar eps = 1e-8;
         const auto globalPos = element.geometry().center();
-
-        return globalPos[2] > (deltaZ/deltaX * globalPos[0] + deltaZ/deltaY * globalPos[1] - deltaZ + eps);
+        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
+            return (globalPos[2] > (0.00025*0.5*(1.0-heightFactor) - eps) &&
+                    globalPos[2] < (0.00025*(1.0-0.5*heightFactor) + eps));
+        return true;
     };
 
     gridManager.init(selector, "Internal");

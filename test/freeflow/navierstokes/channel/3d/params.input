@@ -1,12 +1,14 @@
 [Grid]
-UpperRight = 0.005 0.002 0.00025
-Cells = 30 20 10
+UpperRight = 0.005 0.005 0.00025
+Cells = 50 50 10
 
 [Problem]
-Name = test_stokes_channel_3d
+Name = test_stokes_channel_3d_lens
 DeltaP = 10
 EnableGravity = false
 Height = 0.00025
+RelativeExtrusionFactorLens = 0.5
+IsLensGeometry = true
 
 [Component]
 LiquidDensity = 1e3
