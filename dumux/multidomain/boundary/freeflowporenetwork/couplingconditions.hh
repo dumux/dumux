@@ -206,7 +206,7 @@ public:
         const Scalar poreRadius = pnmGridGeometry.poreInscribedRadius(pnmScv.dofIndex());
         const Scalar throatRadius = pnmGridGeometry.throatInscribedRadius(pnmScv.elementIndex());
 
-        const Scalar scalingFactor = (throatRadius * throatRadius) / (poreRadius * poreRadius); \\ TODO include pore-body shape
+        const Scalar scalingFactor = (throatRadius * throatRadius) / (poreRadius * poreRadius); // TODO include pore-body shape
 
         return velocity * scalingFactor;
     }
