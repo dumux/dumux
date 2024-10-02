@@ -112,6 +112,11 @@ public:
         {
             solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
         });
+
+        forEach(prevSolutionVectors_, [&](auto&& prevSolutionVector)
+        {
+            prevSolutionVector = std::make_shared<typename std::decay_t<decltype(prevSolutionVector)>::element_type>();
+        });
     }
 
     //! return the binary sub-coupling manager
@@ -181,6 +186,16 @@ public:
         forEach(integralRange(Dune::Hybrid::size(solutionVectors_)), [&](const auto id)
         {
             *std::get<id>(solutionVectors_) = curSol[id];
+        });
+    }
+
+    //! Update the solution vector before assembly
+    void updatePrevSolution(const typename MDTraits::SolutionVector& prevSol)
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(prevSolutionVectors_)), [&](const auto id)
+        {
+            *std::get<id>(prevSolutionVectors_) = prevSol[id];
         });
     }
 
@@ -373,9 +388,16 @@ protected:
     const SolutionVectors& curSol() const
     { return solutionVectors_; }
 
+    SolutionVectors& prevSol()
+    { return prevSolutionVectors_; }
+
+    const SolutionVectors& prevSol() const
+    { return prevSolutionVectors_; }
+
 private:
     CouplingManagers couplingManagers_;
     SolutionVectors solutionVectors_;
+    SolutionVectors prevSolutionVectors_;
 
     CouplingStencil emptyStencil_;
 };
