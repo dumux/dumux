@@ -148,6 +148,19 @@ public:
         computeCouplingStencils_();
     }
 
+    //! use as binary coupling manager in multi model context and for transient problems
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
+              GridVariablesTuple&& gridVariables,
+              typename ParentType::SolutionVectorStorage& curSol,
+              typename ParentType::SolutionVectorStorage& prevSol)
+    {
+        init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
+        this->attachPrevSolution(prevSol);
+        isPrevSolAttached_ = true;
+        isTransient_ = true;
+    }
+
     // \}
 
     using CouplingManager<Traits>::evalCouplingResidual;
@@ -512,7 +525,12 @@ private:
                                                 : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
 
             if (isTransient_)
-                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            {
+                if (isPrevSolAttached_)
+                    prevElemVolVars.bindElement(elementI, fvGeometry, this->prevSol(freeFlowMassIndex));
+                else
+                    prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            }
 
             momentumCouplingContext_().emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
         }
@@ -522,8 +540,12 @@ private:
             momentumCouplingContext_()[0].fvGeometry.bind(elementI);
             momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
 
-            if (isTransient_)
-                momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            if (isTransient_){
+                if (isPrevSolAttached_)
+                    momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, this->prevSol(freeFlowMassIndex));
+                else
+                    momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            }
         }
     }
 
@@ -663,6 +685,7 @@ private:
 
     const SolutionVector* prevSol_;
     bool isTransient_;
+    bool isPrevSolAttached_;
 
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
