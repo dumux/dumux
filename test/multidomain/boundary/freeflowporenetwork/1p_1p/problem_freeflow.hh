@@ -57,6 +57,7 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 0.0);
         deltaP_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 0.0);
         singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
         enablePseudoThreeDWallFriction_ = !singleThroatTest_;
@@ -238,6 +239,18 @@ public:
         return source;
     }
 
+    // The following function defines the initial conditions
+    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    {
+        InitialValues values(0.0); //velocity is 0.0
+
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            values[Indices::pressureIdx] = initialPressure_;
+        }
+        return values;
+    }
+
     /*!
      * \brief Returns true if the scvf lies on a porous slip boundary
      */
@@ -279,6 +292,7 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
+    Scalar initialPressure_;
     Scalar deltaP_;
     bool singleThroatTest_;
     bool enablePseudoThreeDWallFriction_;

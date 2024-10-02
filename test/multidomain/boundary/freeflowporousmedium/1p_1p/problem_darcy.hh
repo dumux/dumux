@@ -134,7 +134,11 @@ public:
      * \param element The element
      */
     PrimaryVariables initial(const Element &element) const
-    { return PrimaryVariables(0.0); }
+    {
+        PrimaryVariables values(0.0);
+        values = initialPressure_;
+        return values;
+    }
 
     // \}
 
@@ -151,6 +155,7 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     std::string problemName_;
     bool verticalFlow_;
+    Scalar initialPressure_;
 };
 
 } // end namespace Dumux

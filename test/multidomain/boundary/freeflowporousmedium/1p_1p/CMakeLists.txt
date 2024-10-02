@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(convergence)
+add_subdirectory(transient)
 
 add_input_file_links()
 
