@@ -538,9 +538,9 @@ public:
      *               system of equations. This parameter also stores
      *               the updated solution.
      */
-    void newtonUpdate(Variables& vars,
-                      const SolutionVector& uLastIter,
-                      const ResidualVector& deltaU)
+    virtual void newtonUpdate(Variables& vars,
+                              const SolutionVector& uLastIter,
+                              const ResidualVector& deltaU)
     {
         if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonUpdateShift_(uLastIter, deltaU);
