@@ -13,3 +13,6 @@ dumux_add_test(SOURCES test_newton_parallel.cc
                COMMAND ${MPIEXEC}
                CMD_ARGS -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_newton_parallel
                CMAKE_GUARD HAVE_MPI)
+
+dumux_add_test(SOURCES test_newton_trustregion.cc
+               LABELS unit nonlinear)
