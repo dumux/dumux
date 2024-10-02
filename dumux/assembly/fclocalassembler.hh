@@ -403,7 +403,7 @@ public:
                 static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivs, origResiduals,
-                                                        eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
+                                                          eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 const auto updateJacobian = [&]()
                 {
@@ -417,54 +417,15 @@ public:
                     }
                 };
 
-                using GeometryHelper = typename std::decay_t<decltype(fvGeometry.gridGeometry())>::GeometryHelper;
-                using LocalIntersectionMapper = typename std::decay_t<decltype(fvGeometry.gridGeometry())>::LocalIntersectionMapper;
-                LocalIntersectionMapper localIsMapper;
-
-                const bool isParallel = fvGeometry.gridGeometry().gridView().comm().size() > 1;
-                if (isParallel)
-                    localIsMapper.update(fvGeometry.gridGeometry().gridView(), element);
-
                 if (element.partitionType() == Dune::InteriorEntity)
                     updateJacobian();
                 else
                 {
                     const auto localIdxI = scvI.indexInElement();
-                    const auto localIdxJ = scvJ.indexInElement();
+                    const auto& facetI = element.template subEntity <1> (localIdxI);
 
-                    const auto& facetI = GeometryHelper::facet(localIsMapper.refToRealIdx(localIdxI), element);
-                    // add contribution of opposite scv lying within the overlap/ghost zone
-                    if (facetI.partitionType() == Dune::BorderEntity &&
-                        (localIdxJ == GeometryHelper::localOppositeIdx(localIdxI) || scvJ.dofIndex() == scvI.dofIndex()))
-                        updateJacobian();
-                }
-
-                if (isParallel && element.partitionType() == Dune::InteriorEntity)
-                {
-                    const auto localIdxI = scvI.indexInElement();
-                    const auto& facetI = GeometryHelper::facet(localIsMapper.refToRealIdx(localIdxI), element);
                     if (facetI.partitionType() == Dune::BorderEntity)
-                    {
-                        for (const auto& scvf : scvfs(fvGeometry, scvI))
-                        {
-                            if (scvf.isFrontal() || scvf.boundary())
-                                continue;
-
-                            // parallel scvs TODO drawing
-                            if (scvf.outsideScvIdx() == scvJ.index())
-                                updateJacobian();
-                            else
-                            {
-                                // normal scvs
-                                const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(scvf);
-                                if (orthogonalScvf.boundary())
-                                    continue;
-
-                                if (orthogonalScvf.insideScvIdx() == scvJ.index() || orthogonalScvf.outsideScvIdx() == scvJ.index())
-                                    updateJacobian();
-                            }
-                        }
-                    }
+                        updateJacobian();
                 }
 
                 // restore the original state of the scv's volume variables
