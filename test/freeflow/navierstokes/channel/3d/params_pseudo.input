@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 0.005 0.005
-Cells = 50 50
+Cells = 200 200
 
 [Problem]
 Name = test_stokes_channel_pseudo3d
