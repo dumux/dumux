@@ -158,10 +158,11 @@ protected:
                        const GlobalPosition& upperRight,
                        const std::array<int, dim>& cells,
                        const std::string& paramGroup,
-                       const int overlap = 1)
+                       const int overlap = 1,
+                       const std::bitset<dim> periodic = std::bitset<dim>{})
     {
         hostGridManager_ = std::make_unique<HostGridManager>();
-        hostGridManager_->init(lowerLeft, upperRight, cells, paramGroup, overlap);
+        hostGridManager_->init(lowerLeft, upperRight, cells, paramGroup, overlap, periodic);
     }
 
     /*!
@@ -215,6 +216,9 @@ public:
      */
     void init(const std::string& paramGroup = "")
     {
+        const auto overlap = getParamFromGroup<int>(paramGroup, "Grid.Overlap", 1);
+        const auto periodic = getParamFromGroup<std::bitset<dim>>(paramGroup, "Grid.Periodic", std::bitset<dim>{});
+
         // check if there is an image file we can construct the element selector from
         if (hasParamInGroup(paramGroup, "Grid.Image"))
         {
@@ -227,7 +231,7 @@ public:
 
                 // read image
                 const auto img = NetPBMReader::readPBM(imgFileName);
-                createGridFromImage_(img, paramGroup);
+                createGridFromImage_(img, paramGroup, overlap, periodic);
             }
             else
                 DUNE_THROW(Dune::IOError, "The SubGridManager doesn't support image files with extension: *." << ext);
@@ -260,7 +264,7 @@ public:
             }();
 
             // construct the host grid
-            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
+            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup, overlap, periodic);
 
             // check if the marker is customized, per default
             // we use all cells that are encoded as 0
@@ -289,7 +293,7 @@ public:
             const auto lowerLeft = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.LowerLeft", GlobalPosition(0.0));
             const auto upperRight = getParamFromGroup<GlobalPosition>(paramGroup, "Grid.UpperRight");
             const auto cells = getParamFromGroup<std::array<int, dim>>(paramGroup, "Grid.Cells");
-            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
+            this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup, overlap, periodic);
             const auto elementSelector = [](const auto& element){ return true; };
             // create the grid
             this->gridPtr() = std::make_unique<Grid>(this->hostGrid_());
@@ -300,7 +304,7 @@ public:
 
 private:
     template<class Img>
-    void createGridFromImage_(const Img& img, const std::string& paramGroup)
+    void createGridFromImage_(const Img& img, const std::string& paramGroup, const int overlap, const std::bitset<dim> periodic)
     {
         using GlobalPosition = typename ParentType::Grid::template Codim<0>::Geometry::GlobalCoordinate;
         const bool repeated = hasParamInGroup(paramGroup,"Grid.Repeat");
@@ -331,7 +335,7 @@ private:
         }();
 
         // construct the host grid
-        this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup);
+        this->initHostGrid_(lowerLeft, upperRight, cells, paramGroup, overlap, periodic);
 
         // check if the marker is customized, per default
         // we mark all cells that are encoded as 0
