@@ -157,7 +157,6 @@ public:
     {
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         this->attachPrevSolution(prevSol);
-        isPrevSolAttached_ = true;
         isTransient_ = true;
     }
 
@@ -526,7 +525,7 @@ private:
 
             if (isTransient_)
             {
-                if (isPrevSolAttached_)
+                if (prevSol_ == nullptr)
                     prevElemVolVars.bindElement(elementI, fvGeometry, this->prevSol(freeFlowMassIndex));
                 else
                     prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
@@ -541,7 +540,7 @@ private:
             momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
 
             if (isTransient_){
-                if (isPrevSolAttached_)
+                if (prevSol_ == nullptr)
                     momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, this->prevSol(freeFlowMassIndex));
                 else
                     momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
@@ -685,7 +684,6 @@ private:
 
     const SolutionVector* prevSol_;
     bool isTransient_;
-    bool isPrevSolAttached_;
 
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
