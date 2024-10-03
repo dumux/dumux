@@ -9,6 +9,6 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c
                 COMPILE_DEFINITIONS ISOTHERMAL=1) #TODO: add reference files as soon as solutions seem reasonable)
 
 ########## NON-ISOTHERMAL ##########
-dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2cni
+dumux_add_test(NAME test_md_boundary_ff1p2cni_pnm1p2cni
                 SOURCES main.cc
                 COMPILE_DEFINITIONS ISOTHERMAL=0) #TODO: add reference files as soon as solutions seem reasonable)
