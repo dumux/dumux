@@ -37,7 +37,32 @@
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
+#include <dumux/geometry/intersectionentityset.hh>
+
 #include "properties.hh"
+
+template<class Position>
+std::vector<Position> corners(const Position& c, const Position& l)
+{
+    const Position lowerLeft = c - 0.5*l;
+    return {
+        lowerLeft                              , lowerLeft + Position({l[0], 0.0, 0.0}),
+        lowerLeft + Position({0.0, l[1], 0.0}) , lowerLeft + Position({l[0], l[1], 0.0}),
+        lowerLeft + Position({0.0, 0.0, l[2]}) , lowerLeft + Position({l[0], 0.0, l[2]}),
+        lowerLeft + Position({0.0, l[1], l[2]}), lowerLeft + Position({l[0], l[1], l[2]})
+    };
+}
+
+
+// helper function to generate an REV geometry
+template<class ctype, int dim>
+auto makeAveragingVolume(const Dune::FieldVector<ctype, dim>& center,
+                         const Dune::FieldVector<ctype, dim>& l)
+{
+    return Dune::MultiLinearGeometry<ctype, dim, dim>{
+        Dune::GeometryTypes::cube(dim), corners(center, l)
+    };
+}
 
 int main(int argc, char** argv)
 {
@@ -184,6 +209,59 @@ int main(int argc, char** argv)
         DUNE_THROW(Dune::Exception, "Permeability " << K << " doesn't match reference " << KRef << " by " << K-KRef);
     if (Dune::FloatCmp::ne(phi, phiRef, 1e-5))
         DUNE_THROW(Dune::Exception, "Porosity " << phi << " doesn't match reference " << phiRef << " by " << phi-phiRef);
+
+    ////////////////////////////////////////////////////////////
+    // do the same calculations by using volume averaging
+    ////////////////////////////////////////////////////////////
+
+    // Calculate element velocities
+    std::vector<GlobalPosition> velocity(leafGridView.size(0));
+    auto fvGeometry = localView(*massGridGeometry);
+    for (const auto& element : elements(leafGridView))
+    {
+        const auto eIdx = massGridGeometry->elementMapper().index(element);
+        fvGeometry.bind(element);
+        const auto getFaceVelocity = [&](const auto&, const auto& scvf)
+        { return massProblem->faceVelocity(element, fvGeometry, scvf); };
+
+        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
+    }
+
+    const auto size = massGridGeometry->bBoxMax() - massGridGeometry->bBoxMin();
+    const auto center = 0.5*(massGridGeometry->bBoxMax() + massGridGeometry->bBoxMin());
+    const auto geo = makeAveragingVolume(center, size);
+
+    using GES = GridViewGeometricEntitySet<GridView>;
+    using AES = SingleGeometryEntitySet<std::decay_t<decltype(geo)>>;
+    using IntersectionSet = IntersectionEntitySet<GES, AES>;
+    const auto gridEntitySet = std::make_shared<GES>(leafGridView);
+    const auto averagingEntitySet = std::make_shared<AES>(geo);
+    IntersectionSet iset;
+    iset.build(gridEntitySet, averagingEntitySet);
+
+    Scalar phiAvg(0.0);
+    GlobalPosition vAvg(0.0);
+    for(const auto& is : intersections(iset))
+    {
+        const auto geo = is.geometry();
+        const auto volume = geo.volume();
+        const auto eIdx = gridEntitySet->index(is.domainEntity());
+
+        phiAvg += volume;
+        // Here we apply a piecewise-constant interpolation (because of staggered scheme)
+        vAvg += velocity[eIdx]*volume;
+    }
+    phiAvg /= geo.volume();
+    vAvg /= geo.volume();
+
+    Scalar KAvg = vAvg[0]*1e-12;
+    std::cout << "Permeability by volume averaging is: " << KAvg << " m^2" << std::endl;
+    std::cout << "Porosity by volume averaging is: " << phiAvg << std::endl;
+
+    if (Dune::FloatCmp::ne(KAvg, KRef, 1e-5))
+        DUNE_THROW(Dune::Exception, "Permeability (by volume averaging) " << KAvg << " doesn't match reference " << KRef << " by " << KAvg-KRef);
+    if (Dune::FloatCmp::ne(phiAvg, phiRef, 1e-5))
+        DUNE_THROW(Dune::Exception, "Porosity (by volume averaging)" << phiAvg << " doesn't match reference " << phiRef << " by " << phiAvg-phiRef);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
