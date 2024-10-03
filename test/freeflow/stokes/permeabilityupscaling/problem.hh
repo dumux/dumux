@@ -1,21 +1,14 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
-/*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
+//
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+/*!
+ * \file
+ * \ingroup NavierStokesTests
+ * \brief Pore flow test for the staggered grid (Navier-)Stokes model.
+ */
 
 #ifndef DUMUX_TEST_STOKES_PERMEABILITY_UPSCALING_PROBLEM_HH
 #define DUMUX_TEST_STOKES_PERMEABILITY_UPSCALING_PROBLEM_HH
@@ -25,17 +18,20 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
 namespace Dumux {
 
-template <class TypeTag>
-class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
+/*!
+ * \ingroup NavierStokesTests
+ * \brief  Test problem of the pore flow test for permeability upscaling
+ */
+template <class TypeTag, class BaseProblem>
+class PoreFlowTestProblem : public BaseProblem
 {
-    using ParentType = NavierStokesProblem<TypeTag>;
+    using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -52,16 +48,14 @@ class ThreeDChannelTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    static constexpr int dim = GridGeometry::GridView::dimension;
-    static constexpr bool enablePseudoThreeDWallFriction = dim != 3;
 
 public:
-    ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    PoreFlowTestProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                        std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager)
     {
         // gradP is 1/m
@@ -116,7 +110,8 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             const auto p = isInlet_(globalPos) ? deltaP_ : 0.0;
-            values = NavierStokesMomentumBoundaryFluxHelper::fixedPressureMomentumFlux(
+            using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
+            values = FluxHelper::fixedPressureMomentumFlux(
                 *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
             );
         }

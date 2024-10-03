@@ -1,21 +1,14 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
-/*****************************************************************************
- *   See the file COPYING for full copying permissions.                      *
- *                                                                           *
- *   This program is free software: you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
- *****************************************************************************/
+//
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+/*!
+ * \file
+ * \ingroup NavierStokesTests
+ * \brief Pore flow test for permeability upscaling
+ */
 
 #include <config.h>
 
@@ -26,16 +19,16 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/properties.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
-#include <dumux/linear/incompressiblestokessolver.hh>
-#include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/linear/linearsolverparameters.hh>
+#include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -51,8 +44,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::ThreeDChannelTestMomentum;
-    using MassTypeTag = Properties::TTag::ThreeDChannelTestMass;
+    using MomentumTypeTag = Properties::TTag::PoreFlowTestMomentum;
+    using MassTypeTag = Properties::TTag::PoreFlowTestMass;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -80,9 +73,8 @@ int main(int argc, char** argv)
     using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
     auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
-    // the coupling manager
-    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
-    using CouplingManager = StaggeredFreeFlowCouplingManager<Traits>;
+    // mass-momentum coupling manager
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
     auto couplingManager = std::make_shared<CouplingManager>();
 
     // the problems (boundary conditions)
@@ -94,6 +86,7 @@ int main(int argc, char** argv)
     // the solution vector
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
     constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
@@ -124,45 +117,14 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // solve
-    if (getParam<bool>("LinearSolver.UseDirectSolver", false))
-    {
-        using LinearSolver = UMFPackBackend;
-        auto linearSolver = std::make_shared<LinearSolver>();
-        // the non-linear solver
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
-    }
-    else if (getParam<bool>("LinearSolver.UseUzawa", false))
-    {
-        using LinearSolver = UzawaBiCGSTABBackend<LinearSolverTraits<MassGridGeometry>>;
-        auto linearSolver = std::make_shared<LinearSolver>();
-        // the non-linear solver
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
-    }
-    else
-    {
-        using LinearSolver = IncompressibleStokesSolver<typename Assembler::JacobianMatrix, typename Assembler::ResidualType>;
-        auto params = LinearSolverParameters<LinearSolverTraits<MassGridGeometry>>::createParameterTree();
-        params["Component.LiquidDensity"] = getParam<std::string>("Component.LiquidDensity");
-        params["Component.LiquidKinematicViscosity"] = getParam<std::string>("Component.LiquidKinematicViscosity");
-        params["preconditioner.UseBlockTriangular"] = getParam<std::string>("LinearSolver.Preconditioner.UseBlockTriangular", "false");
-        params["preconditioner.UseFullSchurComplement"] = getParam<std::string>("LinearSolver.Preconditioner.UseFullSchurComplement", "false");
-        params["preconditioner.UseDirectVelocitySolver"] = getParam<std::string>("LinearSolver.Preconditioner.UseDirectVelocitySolver", "false");
-        const auto [massMatrix, dirichletDofs]
-            = computeIncompressibleStokesMassMatrixAndDirichletDofs<SolutionVector>(
-                leafGridView,
-                *massGridGeometry, massIdx,
-                *momentumGridGeometry, *momentumProblem, momentumIdx
-            );
-        auto linearSolver = std::make_shared<LinearSolver>(massMatrix, dirichletDofs, params);
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
-    }
+    // the linear solver
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
+
+    // solve the non-linear system
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    nonLinearSolver.solve(x);
 
     // post-processing and output
     vtkWriter.write(1.0);
