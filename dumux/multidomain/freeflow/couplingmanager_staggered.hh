@@ -44,9 +44,9 @@ namespace Dumux {
  */
 template<class Traits>
 class FCStaggeredFreeFlowCouplingManager
-: public TransientCouplingManager<Traits>
+: public Detail::TransientCouplingManager<Traits>
 {
-    using ParentType = TransientCouplingManager<Traits>;
+    using ParentType = Detail::TransientCouplingManager<Traits>;
 public:
     static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
     static constexpr auto freeFlowMassIndex = typename Traits::template SubDomain<1>::Index();
@@ -162,7 +162,7 @@ public:
 
     // \}
 
-    using TransientCouplingManager<Traits>::evalCouplingResidual;
+    using Detail::TransientCouplingManager<Traits>::evalCouplingResidual;
 
     /*!
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables

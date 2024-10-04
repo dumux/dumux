@@ -136,7 +136,7 @@ struct CouplingManagers
  */
 template<class MDTraits>
 class FreeFlowPorousMediumCouplingManagerBase
-: public TransientMultiBinaryCouplingManager<
+: public Detail::TransientMultiBinaryCouplingManager<
     MDTraits,
     FreeFlowPorousMediumDetail::CouplingMaps,
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,
@@ -144,7 +144,7 @@ class FreeFlowPorousMediumCouplingManagerBase
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMassPorousMediumCouplingManager
 >
 {
-    using ParentType = TransientMultiBinaryCouplingManager<
+    using ParentType = Detail::TransientMultiBinaryCouplingManager<
         MDTraits,
         FreeFlowPorousMediumDetail::CouplingMaps,
         typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,

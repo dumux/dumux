@@ -25,7 +25,7 @@
 
 #include "couplingmanager.hh"
 
-namespace Dumux {
+namespace Dumux::Detail {
 
 
 /*!

@@ -5,7 +5,7 @@
 #include <dune/common/hybridutilities.hh>
 #include "multibinarycouplingmanager.hh"
 
-namespace Dumux {
+namespace Dumux::Detail {
 
 /*!
  * \ingroup MultiDomain
