@@ -525,7 +525,7 @@ private:
 
             if (isTransient_)
             {
-                if (prevSol_ == nullptr)
+                if (!prevSol_)
                     prevElemVolVars.bindElement(elementI, fvGeometry, this->prevSol(freeFlowMassIndex));
                 else
                     prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
@@ -540,7 +540,7 @@ private:
             momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
 
             if (isTransient_){
-                if (prevSol_ == nullptr)
+                if (!prevSol_)
                     momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, this->prevSol(freeFlowMassIndex));
                 else
                     momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
