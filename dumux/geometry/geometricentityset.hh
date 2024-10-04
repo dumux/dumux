@@ -14,7 +14,12 @@
 #ifndef DUMUX_GEOMETRY_GEOMETRIC_ENTITY_SET_HH
 #define DUMUX_GEOMETRY_GEOMETRIC_ENTITY_SET_HH
 
+#include <array>
+#include <vector>
 #include <memory>
+#include <utility>
+#include <initializer_list>
+
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dumux/common/entitymap.hh>
@@ -98,6 +103,52 @@ private:
     std::shared_ptr<const EntityMap> entityMap_;
 };
 
+} // end namespace Dumux
+
+#ifndef DOXYGEN
+namespace Dumux::Detail::GeometricEntity {
+
+/*!
+* \brief Wrapper to turn a geometry into a geometric entity
+*/
+template<class GeoType>
+class EntityWrapper
+{
+public:
+    using Geometry = GeoType;
+
+    /*!
+    * \brief Constructor
+    */
+    EntityWrapper(const Geometry& geo, const std::size_t index) : geo_(geo), index_(index) {}
+
+    /*!
+    * \brief Constructor
+    */
+    EntityWrapper(Geometry&& geo, const std::size_t index) : geo_(std::move(geo)), index_(index) {}
+
+    /*!
+    * \brief Returns the geometry
+    */
+    const Geometry& geometry() const
+    { return geo_; }
+
+    /*!
+    * \brief Returns the index of the geometry
+    */
+    std::size_t index() const
+    { return index_; }
+
+private:
+    Geometry geo_;
+    std::size_t index_;
+};
+
+} // end namespace Dumux::Detail::GeometricEntity
+#endif // DOXYGEN
+
+namespace Dumux {
+
 /*!
  * \ingroup Geometry
  * \brief An interface for a set of geometric entities
@@ -107,43 +158,8 @@ private:
 template<class GeoType>
 class GeometriesEntitySet
 {
-    /*!
-     * \brief Wrapper to turn a geometry into a geometric entity
-     */
-    class EntityWrapper
-    {
-    public:
-        using Geometry = GeoType;
-
-        /*!
-         * \brief Constructor
-         */
-        EntityWrapper(const Geometry& geo, const std::size_t index) : geo_(geo), index_(index) {}
-
-        /*!
-         * \brief Constructor
-         */
-        EntityWrapper(Geometry&& geo, const std::size_t index) : geo_(std::move(geo)), index_(index) {}
-
-        /*!
-         * \brief Returns the geometry
-         */
-        const Geometry& geometry() const
-        { return geo_; }
-
-        /*!
-         * \brief Returns the index of the geometry
-         */
-        std::size_t index() const
-        { return index_; }
-
-    private:
-        Geometry geo_;
-        std::size_t index_;
-    };
-
 public:
-    using Entity = EntityWrapper;
+    using Entity = Detail::GeometricEntity::EntityWrapper<GeoType>;
 
     /*!
      * \brief Constructor for initializer_list
@@ -221,6 +237,90 @@ public:
 
 private:
     std::vector<Entity> entities_;
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief An interface for a fixed-size set of geometric entities
+ * \note This can be used e.g. to construct a bounding box volume hierarchy of a grid
+ * It defines the minimum requirement for such a set
+ */
+template<class GeoType, std::size_t N>
+class FixedSizeGeometriesEntitySet
+{
+    template<class GT, std::size_t... I>
+    FixedSizeGeometriesEntitySet(GT&& gt, std::index_sequence<I...>)
+    : entities_{{ Entity(std::get<I>(gt), I)... }}
+    { static_assert(sizeof...(I) == N, "Number of geometries must match the size of the entity set"); }
+
+public:
+    using Entity = Detail::GeometricEntity::EntityWrapper<GeoType>;
+
+    /*!
+     * \brief Constructor with one or more geometries as arguments
+     * \note The number of geometries must match the size of the entity set
+     */
+    template<class... G>
+    FixedSizeGeometriesEntitySet(G&&... g)
+    : FixedSizeGeometriesEntitySet(std::forward_as_tuple(std::forward<G>(g)...), std::make_index_sequence<N>{})
+    {}
+
+    /*!
+     * \brief The world dimension of the entity set
+     */
+    static constexpr int dimensionworld = Entity::Geometry::coorddimension;
+
+    /*!
+     * \brief the coordinate type
+     */
+    using ctype = typename Entity::Geometry::ctype;
+
+    /*!
+     * \brief the number of entities in this set
+     */
+    constexpr auto size() const
+    { return entities_.size(); }
+
+    /*!
+     * \brief begin iterator to enable range-based for iteration
+     */
+    decltype(auto) begin() const
+    { return entities_.begin(); }
+
+    /*!
+     * \brief end iterator to enable range-based for iteration
+     */
+    decltype(auto) end() const
+    { return entities_.end(); }
+
+    /*!
+     * \brief get an entities index
+     */
+    template<class Entity>
+    std::size_t index(const Entity& e) const
+    { return e.index(); }
+
+    /*!
+     * \brief get an entity from an index
+     */
+    const Entity& entity(std::size_t index) const
+    { assert(index < entities_.size()); return entities_[index]; }
+
+private:
+    std::array<Entity, N> entities_;
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief An interface for a geometric entity set with a single geometry
+ */
+template<class GeoType>
+class SingleGeometryEntitySet
+: public FixedSizeGeometriesEntitySet<GeoType, 1>
+{
+    using ParentType = FixedSizeGeometriesEntitySet<GeoType, 1>;
+public:
+    using ParentType::ParentType;
 };
 
 } // end namespace Dumux
