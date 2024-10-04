@@ -89,6 +89,16 @@ struct MultiDomainTupleSharedPtrConst
     using type = typename makeFromIndexedType<std::tuple, PtrType, Indices>::type;
 };
 
+//! helper alias to create a tuple of const T* from an indexed type
+template<template<std::size_t> class T, class Indices>
+struct MultiDomainTupleConstPtr
+{
+    template<std::size_t i>
+    using PtrType = const T<i>*;  // Create a pointer to constant T<i>
+
+    using type = typename makeFromIndexedType<std::tuple, PtrType, Indices>::type;
+};
+
 //! helper alias to create the JacobianMatrix type
 template<template<std::size_t> class SubDomainDiagBlocks, class Indices, class Scalar>
 struct MultiDomainMatrixType
@@ -219,6 +229,10 @@ public:
     //! helper alias to create tuple<std::shared_ptr<const ...>> from indexed type
     template<template<std::size_t> class T>
     using TupleOfSharedPtrConst = typename Detail::MultiDomainTupleSharedPtrConst<T, Indices>::type;
+
+    //! helper alias to create tuple<const T*...> from indexed type
+    template<template<std::size_t> class T>
+    using TupleOfConstPtr = typename Detail::MultiDomainTupleConstPtr<T, Indices>::type;
 
     //\}
 };
