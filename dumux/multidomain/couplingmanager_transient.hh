@@ -30,8 +30,8 @@ namespace Dumux {
 
 /*!
  * \ingroup MultiDomain
- * \brief The interface of the coupling manager for transient, multi domain problems,
- *  where staggered grid is coupled to another domain
+ * \brief Extension of the coupling manager that can be useful for the implementation
+ *  of some coupling managers for transient problems using forward/backward Euler in time
  * \note The current implementation of the "previous solution" mechanism is a workaround that is
  * needed for the handling of the previous solution in the class `FCStaggeredFreeFlowCouplingManager`.
  * This approach is not optimal and should be refactored in future iterations.
