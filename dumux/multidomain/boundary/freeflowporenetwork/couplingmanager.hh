@@ -228,9 +228,9 @@ public:
         std::get<0>(ffSolVecTuple) = std::get<freeFlowMomentumIndex>(this->curSol());
         std::get<1>(ffSolVecTuple) = std::get<freeFlowMassIndex>(this->curSol());
 
-        typename SubCouplingManager<freeFlowMomentumIndex, freeFlowMassIndex>::SolutionVectorStorage ffSolVecTupleOld;
-        std::get<0>(ffSolVecTupleOld) = std::get<freeFlowMomentumIndex>(this->prevSol());
-        std::get<1>(ffSolVecTupleOld) = std::get<freeFlowMassIndex>(this->prevSol());
+        typename SubCouplingManager<freeFlowMomentumIndex, freeFlowMassIndex>::PrevSolutionVectorStorage ffSolVecTupleOld;
+        std::get<0>(ffSolVecTupleOld) = std::get<freeFlowMomentumIndex>(this->prevSol()).get();
+        std::get<1>(ffSolVecTupleOld) = std::get<freeFlowMassIndex>(this->prevSol()).get();
 
         this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).init(
             freeFlowMomentumProblem, freeFlowMassProblem,

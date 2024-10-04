@@ -40,11 +40,12 @@ template<class Traits>
 class TransientCouplingManager
 : public CouplingManager<Traits>
 {
-    using ParentType = CouplingManager<Traits>;
-
+    template<std::size_t id>
+    using SubSolutionVector
+        = std::decay_t<decltype(std::declval<typename Traits::SolutionVector>()[Dune::index_constant<id>()])>;
 protected:
     //! the type in which the solution vector is stored in the manager
-    using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
+    using PrevSolutionVectorStorage = typename Traits::template TupleOfConstPtr<SubSolutionVector>;
 
 public:
     /*!
@@ -59,7 +60,7 @@ public:
     {
         using namespace Dune::Hybrid;
         forEach(prevSols_, [](auto& solutionVector){
-            solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
+            solutionVector = new SubSolutionVector<0>();
         });
     }
 
@@ -69,13 +70,13 @@ protected:
      * \note The caller has to make sure that prevSol stays alive for the lifetime of
      *       the coupling manager. Otherwise we have a dangling reference here. Use with care.
      */
-    void attachPrevSolution(typename ParentType::SolutionVectorStorage& prevSol)
+    void attachPrevSolution(PrevSolutionVectorStorage& prevSol)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(prevSols_)), [&](const auto id)
         {
             // do not take ownership of the external pointer's object
-            std::get<id>(prevSols_) = Dune::stackobject_to_shared_ptr(*std::get<id>(prevSol));
+            std::get<id>(prevSols_) = std::get<id>(prevSol);
         });
     }
 
@@ -92,7 +93,7 @@ private:
     /*!
      * \brief A tuple of shared_ptr's to previous solution vectors of the subproblems
      */
-    SolutionVectorStorage prevSols_;
+    PrevSolutionVectorStorage prevSols_;
 };
 
 } // end namespace Dumux

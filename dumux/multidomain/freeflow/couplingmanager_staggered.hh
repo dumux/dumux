@@ -54,6 +54,7 @@ public:
     // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
     // to manager the solution vector storage outside this class
     using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
+    using PrevSolutionVectorStorage = typename ParentType::PrevSolutionVectorStorage;
 private:
     template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
@@ -153,7 +154,7 @@ public:
               std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
               typename ParentType::SolutionVectorStorage& curSol,
-              typename ParentType::SolutionVectorStorage& prevSol)
+              typename ParentType::PrevSolutionVectorStorage& prevSol)
     {
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         this->attachPrevSolution(prevSol);
