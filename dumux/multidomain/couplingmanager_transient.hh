@@ -82,17 +82,6 @@ protected:
     /*!
      * \brief the previous solution vector of the subproblem
      * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     * \return reference to the previous solution vector of the subproblem of type SubSolutionVector<i>
-     */
-    template<std::size_t i>
-    auto& prevSol(Dune::index_constant<i> domainIdx)
-    { return *std::get<i>(prevSols_); }
-
-    /*!
-     * \brief the previous solution vector of the subproblem
-     * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
      * \return const reference to the previous solution vector of the subproblem of type SubSolutionVector<i>
      */
     template<std::size_t i>
