@@ -68,7 +68,6 @@ class MultiBinaryCouplingManager
 
     template<std::size_t id>
     using SubSolutionVector = std::decay_t<decltype(std::declval<typename MDTraits::SolutionVector>()[Dune::index_constant<id>()])>;
-    using SolutionVectors = typename MDTraits::template TupleOfSharedPtr<SubSolutionVector>;
 
     static constexpr auto couplingManagerMap_ = CouplingMap::managerMap();
 
@@ -95,6 +94,8 @@ class MultiBinaryCouplingManager
         );
         return couplingManagerMap_[i][j];
     }
+protected:
+    using SolutionVectors = typename MDTraits::template TupleOfSharedPtr<SubSolutionVector>;
 
 public:
     template<std::size_t i, std::size_t j>
@@ -111,11 +112,6 @@ public:
         forEach(solutionVectors_, [&](auto&& solutionVector)
         {
             solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
-        });
-
-        forEach(prevSolutionVectors_, [&](auto&& prevSolutionVector)
-        {
-            prevSolutionVector = std::make_shared<typename std::decay_t<decltype(prevSolutionVector)>::element_type>();
         });
     }
 
@@ -186,16 +182,6 @@ public:
         forEach(integralRange(Dune::Hybrid::size(solutionVectors_)), [&](const auto id)
         {
             *std::get<id>(solutionVectors_) = curSol[id];
-        });
-    }
-
-    //! Update the solution vector before assembly
-    void updatePrevSolution(const typename MDTraits::SolutionVector& prevSol)
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(prevSolutionVectors_)), [&](const auto id)
-        {
-            *std::get<id>(prevSolutionVectors_) = prevSol[id];
         });
     }
 
@@ -388,16 +374,9 @@ protected:
     const SolutionVectors& curSol() const
     { return solutionVectors_; }
 
-    SolutionVectors& prevSol()
-    { return prevSolutionVectors_; }
-
-    const SolutionVectors& prevSol() const
-    { return prevSolutionVectors_; }
-
 private:
     CouplingManagers couplingManagers_;
     SolutionVectors solutionVectors_;
-    SolutionVectors prevSolutionVectors_;
 
     CouplingStencil emptyStencil_;
 };

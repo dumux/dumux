@@ -21,7 +21,7 @@
 #include <dumux/multidomain/boundary/freeflowporousmedium/ffmasspm/couplingmanager.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/ffmomentumpm/couplingmanager.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
-#include <dumux/multidomain/multibinarycouplingmanager.hh>
+#include <dumux/multidomain/multibinarycouplingmanager_transient.hh>
 
 namespace Dumux {
 
@@ -136,7 +136,7 @@ struct CouplingManagers
  */
 template<class MDTraits>
 class FreeFlowPorousMediumCouplingManagerBase
-: public MultiBinaryCouplingManager<
+: public TransientMultiBinaryCouplingManager<
     MDTraits,
     FreeFlowPorousMediumDetail::CouplingMaps,
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,
@@ -144,7 +144,7 @@ class FreeFlowPorousMediumCouplingManagerBase
     typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowMassPorousMediumCouplingManager
 >
 {
-    using ParentType = MultiBinaryCouplingManager<
+    using ParentType = TransientMultiBinaryCouplingManager<
         MDTraits,
         FreeFlowPorousMediumDetail::CouplingMaps,
         typename FreeFlowPorousMediumDetail::CouplingManagers<MDTraits>::FreeFlowCouplingManager,
