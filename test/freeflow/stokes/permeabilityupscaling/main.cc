@@ -37,8 +37,7 @@
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
-#include <dumux/geometry/intersectingentities.hh>
-#include <dumux/common/quadrature.hh>
+#include <dumux/geometry/intersectionentityset.hh>
 
 #include "properties.hh"
 
@@ -46,21 +45,23 @@ template<class Position>
 std::vector<Position> corners(const Position& c, const Position& l)
 {
     const Position lowerLeft = c - 0.5*l;
-    return std::vector<Position>({
-                                    lowerLeft                              , lowerLeft + Position({l[0], 0.0, 0.0}),
-                                    lowerLeft + Position({0.0, l[1], 0.0}) , lowerLeft + Position({l[0], l[1], 0.0}),
-                                    lowerLeft + Position({0.0, 0.0, l[2]}) , lowerLeft + Position({l[0], 0.0, l[2]}),
-                                    lowerLeft + Position({0.0, l[1], l[2]}), lowerLeft + Position({l[0], l[1], l[2]})
-                                });
+    return {
+        lowerLeft                              , lowerLeft + Position({l[0], 0.0, 0.0}),
+        lowerLeft + Position({0.0, l[1], 0.0}) , lowerLeft + Position({l[0], l[1], 0.0}),
+        lowerLeft + Position({0.0, 0.0, l[2]}) , lowerLeft + Position({l[0], 0.0, l[2]}),
+        lowerLeft + Position({0.0, l[1], l[2]}), lowerLeft + Position({l[0], l[1], l[2]})
+    };
 }
 
 
 // helper function to generate an REV geometry
-template<class Geometry>
-Geometry makeAveragingVolume(const Dune::FieldVector<typename Geometry::ctype, Geometry::coorddimension>& center,
-                             const Dune::FieldVector<typename Geometry::ctype, Geometry::coorddimension>& l)
+template<class ctype, int dim>
+auto makeAveragingVolume(const Dune::FieldVector<ctype, dim>& center,
+                         const Dune::FieldVector<ctype, dim>& l)
 {
-    return { Dune::GeometryTypes::cube(3), corners(center, l) };
+    return Dune::MultiLinearGeometry<ctype, dim, dim>{
+        Dune::GeometryTypes::cube(dim), corners(center, l)
+    };
 }
 
 int main(int argc, char** argv)
@@ -212,7 +213,6 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // do the same calculations by using volume averaging
     ////////////////////////////////////////////////////////////
-    static constexpr int dim = GridView::dimension;
 
     // Calculate element velocities
     std::vector<GlobalPosition> velocity(leafGridView.size(0));
@@ -227,34 +227,41 @@ int main(int argc, char** argv)
         velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
     }
 
-    using Geometry = Dune::MultiLinearGeometry<Scalar, dim, dim>;
     const auto size = massGridGeometry->bBoxMax() - massGridGeometry->bBoxMin();
     const auto center = 0.5*(massGridGeometry->bBoxMax() + massGridGeometry->bBoxMin());
-    const auto& geo = makeAveragingVolume<Geometry>(center, size);
-    const auto intersections = intersectingEntities(geo , massGridGeometry->boundingBoxTree());
-    using IndexType = typename IndexTraits<typename MassGridGeometry::GridView>::GridIndex;
-    const auto& quad = Dumux::Quadrature::IntersectingEntitiesRule<Scalar, dim, IndexType>(intersections);
+    const auto geo = makeAveragingVolume(center, size);
 
-    Scalar phi_avg(0.0);
-    GlobalPosition v_avg(0.0);
-    for(const auto& qp : quad)
+    using GES = GridViewGeometricEntitySet<GridView>;
+    using AES = SingleGeometryEntitySet<std::decay_t<decltype(geo)>>;
+    using IntersectionSet = IntersectionEntitySet<GES, AES>;
+    const auto gridEntitySet = std::make_shared<GES>(leafGridView);
+    const auto averagingEntitySet = std::make_shared<AES>(geo);
+    IntersectionSet iset;
+    iset.build(gridEntitySet, averagingEntitySet);
+
+    Scalar phiAvg(0.0);
+    GlobalPosition vAvg(0.0);
+    for(const auto& is : intersections(iset))
     {
-        phi_avg += qp.weight();
+        const auto geo = is.geometry();
+        const auto volume = geo.volume();
+        const auto eIdx = gridEntitySet->index(is.domainEntity());
+
+        phiAvg += volume;
         // Here we apply a piecewise-constant interpolation (because of staggered scheme)
-        v_avg += velocity[qp.index()]*qp.weight();
+        vAvg += velocity[eIdx]*volume;
     }
-    phi_avg /= geo.volume();
-    v_avg /= geo.volume();
+    phiAvg /= geo.volume();
+    vAvg /= geo.volume();
 
-    Scalar K_avg = v_avg[0]*1e-12;
-    std::cout << "Permeability by volume averaging is: " << K_avg << " m^2" << std::endl;
-    std::cout << "Porosity by volume averaging is: " << phi_avg << std::endl;
+    Scalar KAvg = vAvg[0]*1e-12;
+    std::cout << "Permeability by volume averaging is: " << KAvg << " m^2" << std::endl;
+    std::cout << "Porosity by volume averaging is: " << phiAvg << std::endl;
 
-    if (Dune::FloatCmp::ne(K_avg, KRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Permeability (by volume averaging) " << K_avg << " doesn't match reference " << KRef << " by " << K_avg-KRef);
-    if (Dune::FloatCmp::ne(phi_avg, phiRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Porosity (by volume averaging)" << phi_avg << " doesn't match reference " << phiRef << " by " << phi_avg-phiRef);
-
+    if (Dune::FloatCmp::ne(KAvg, KRef, 1e-5))
+        DUNE_THROW(Dune::Exception, "Permeability (by volume averaging) " << KAvg << " doesn't match reference " << KRef << " by " << KAvg-KRef);
+    if (Dune::FloatCmp::ne(phiAvg, phiRef, 1e-5))
+        DUNE_THROW(Dune::Exception, "Porosity (by volume averaging)" << phiAvg << " doesn't match reference " << phiRef << " by " << phiAvg-phiRef);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

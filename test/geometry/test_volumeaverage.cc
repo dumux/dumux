@@ -16,7 +16,7 @@
 
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
-#include <dumux/geometry/intersectingentities.hh>
+#include <dumux/geometry/intersectionentityset.hh>
 #include <dumux/common/quadrature.hh>
 
 int main (int argc, char *argv[])
@@ -46,12 +46,6 @@ int main (int argc, char *argv[])
     Dumux::GridManager<Grid> gridManager;
     gridManager.init(elementSelector);
     const auto leafGridView = gridManager.grid().leafGridView();
-    using EntitySet = Dumux::GridViewGeometricEntitySet<typename Grid::LeafGridView, 0>;
-    using BoundingBoxTree = Dumux::BoundingBoxTree<EntitySet>;
-
-    // build a bounding box tree
-    auto bBoxTree = BoundingBoxTree();
-    bBoxTree.build(std::make_shared<EntitySet>(leafGridView));
 
     using Scalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<Scalar, 2>;
@@ -60,22 +54,32 @@ int main (int argc, char *argv[])
     auto f = [&] (const GlobalPosition& pos) { return 0.85*pos[0] + 2.3*pos[1]; };
 
     // perform volume averaging on a coarser grid
-    const auto coarseGrid = Dune::StructuredGridFactory<Dune::YaspGrid<dim>>::createCubeGrid({0.0, 0.0},
-                                                                                             {1.0, 1.0},
-                                                                                             {6, 6});
+    using CoarseGrid = Dune::YaspGrid<dim>;
+    const auto coarseGrid = Dune::StructuredGridFactory<CoarseGrid>::createCubeGrid(
+        {0.0, 0.0}, {1.0, 1.0}, {6, 6}
+    );
 
     Scalar totalVolumeFraction(0.0);
+
+    using GridEntitySet = Dumux::GridViewGeometricEntitySet<typename Grid::LeafGridView, 0>;
+    using GeometryEntitySet = Dumux::SingleGeometryEntitySet<typename CoarseGrid::template Codim<0>::Entity::Geometry>;
+    Dumux::IntersectionEntitySet<GridEntitySet, GeometryEntitySet> iset;
+    const auto gridEntitySet = std::make_shared<GridEntitySet>(leafGridView);
+
     for(const auto& coarseElement : elements(coarseGrid->leafGridView()))
     {
-        const auto intersections = Dumux::intersectingEntities(coarseElement.geometry() , bBoxTree);
-        const auto& quad = Dumux::Quadrature::IntersectingEntitiesRule<Scalar, dim, typename Grid::LeafGridView::IndexSet::IndexType>(intersections);
+        Scalar fraction = 0.0;
+        Scalar f_avg = 0.0;
 
-        Scalar fraction(0.0);
-        Scalar f_avg(0.0);
-        for(const auto& qp : quad)
+        iset.build(gridEntitySet, std::make_unique<GeometryEntitySet>(coarseElement.geometry()));
+        for (const auto& is : intersections(iset))
         {
-            fraction += qp.weight();
-            f_avg += qp.weight()*f(qp.position());
+            const auto geometry = is.geometry();
+            const auto volume = geometry.volume();
+            const auto center = geometry.center();
+
+            fraction += volume;
+            f_avg += volume*f(center);
         }
 
         totalVolumeFraction += fraction;
