@@ -89,11 +89,6 @@ public:
         forEach(curSols_, [](auto& solutionVector){
             solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
         });
-
-
-        forEach(prevSols_, [](auto& solutionVector){
-            solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
-        });
     }
 
     /*!
@@ -335,21 +330,6 @@ protected:
     }
 
     /*!
-     * \brief Attach a previous solution vector stored outside of this class.
-     * \note The caller has to make sure that prevSol stays alive for the lifetime of
-     *       the coupling manager. Otherwise we have a dangling reference here. Use with care.
-     */
-    void attachPrevSolution(SolutionVectorStorage& prevSol)
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(prevSols_)), [&](const auto id)
-        {
-            // do not take ownership of the external pointer's object
-            std::get<id>(prevSols_) = Dune::stackobject_to_shared_ptr(*std::get<id>(prevSol));
-        });
-    }
-
-    /*!
      * \brief the current solution vector of the subproblem
      * \param domainIdx The domain index
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
@@ -367,35 +347,12 @@ protected:
     const SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx) const
     { return *std::get<i>(curSols_); }
 
-        /*!
-     * \brief the previous solution vector of the subproblem
-     * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     */
-    template<std::size_t i>
-    SubSolutionVector<i>& prevSol(Dune::index_constant<i> domainIdx)
-    { return *std::get<i>(prevSols_); }
-
-    /*!
-     * \brief the previous solution vector of the subproblem
-     * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     */
-    template<std::size_t i>
-    const SubSolutionVector<i>& prevSol(Dune::index_constant<i> domainIdx) const
-    { return *std::get<i>(prevSols_); }
-
 private:
     /*!
      * \brief A tuple of shared_ptr's to current solution vectors of the subproblems
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
     SolutionVectorStorage curSols_;
-
-    /*!
-     * \brief A tuple of shared_ptr's to previous solution vectors of the subproblems
-     */
-    SolutionVectorStorage prevSols_;
 
     /*!
      * \brief A tuple of (raw) pointers to the sub problems

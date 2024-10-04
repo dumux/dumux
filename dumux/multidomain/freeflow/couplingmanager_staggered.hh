@@ -28,7 +28,7 @@
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
 
-#include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/couplingmanager_transient.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
@@ -44,9 +44,9 @@ namespace Dumux {
  */
 template<class Traits>
 class FCStaggeredFreeFlowCouplingManager
-: public CouplingManager<Traits>
+: public TransientCouplingManager<Traits>
 {
-    using ParentType = CouplingManager<Traits>;
+    using ParentType = TransientCouplingManager<Traits>;
 public:
     static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
     static constexpr auto freeFlowMassIndex = typename Traits::template SubDomain<1>::Index();
@@ -162,7 +162,7 @@ public:
 
     // \}
 
-    using CouplingManager<Traits>::evalCouplingResidual;
+    using TransientCouplingManager<Traits>::evalCouplingResidual;
 
     /*!
      * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
@@ -433,7 +433,7 @@ public:
      */
     // \{
 
-    //! \copydoc CouplingManager::updateCouplingContext
+    //! \copydoc TransientCouplingManager::updateCouplingContext
     template<std::size_t i, std::size_t j, class LocalAssemblerI>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
