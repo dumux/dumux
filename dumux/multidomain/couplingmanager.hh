@@ -28,17 +28,6 @@
 
 namespace Dumux {
 
-namespace Detail {
-
-// helper to create a multitype vector of references to solution vectors
-template<class... Args, std::size_t ...Is>
-auto toRef(const std::tuple<Args...>& v, std::index_sequence<Is...> indices)
-{
-    return Dune::MultiTypeBlockVector<std::add_lvalue_reference_t<typename Args::element_type>...>(*std::get<Is>(v)...);
-}
-
-} // end namespace Detail
-
 /*!
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for multi domain problems
