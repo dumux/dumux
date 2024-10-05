@@ -103,7 +103,7 @@ public:
     //! Initialize the coupling manager
     void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> freeFlowMomentumProblem,
               std::shared_ptr<Problem<porousMediumIndex>> porousMediumProblem,
-              SolutionVectorStorage& curSol)
+              const SolutionVectorStorage& curSol)
     {
         this->setSubProblems(std::make_tuple(freeFlowMomentumProblem, porousMediumProblem));
         this->attachSolution(curSol);

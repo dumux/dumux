@@ -97,7 +97,7 @@ public:
     void init(std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
               std::shared_ptr<Problem<poreNetworkIndex>> pnmProblem,
               std::shared_ptr<CouplingMapper> couplingMapper,
-              SolutionVectorStorage& curSol)
+              const SolutionVectorStorage& curSol)
     {
         couplingMapper_ = couplingMapper;
         this->setSubProblems(std::make_tuple(freeFlowMassProblem, pnmProblem));

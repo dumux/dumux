@@ -139,7 +139,7 @@ public:
     void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
               std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
-              typename ParentType::SolutionVectorStorage& curSol)
+              const typename ParentType::SolutionVectorStorage& curSol)
     {
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
