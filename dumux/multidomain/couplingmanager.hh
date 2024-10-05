@@ -308,7 +308,7 @@ protected:
      * \note The caller has to make sure that curSol stays alive for the lifetime of
      *       the coupling manager. Otherwise we have a dangling reference here. Use with care.
      */
-    void attachSolution(SolutionVectorStorage& curSol)
+    void attachSolution(const SolutionVectorStorage& curSol)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(curSols_)), [&](const auto id)
