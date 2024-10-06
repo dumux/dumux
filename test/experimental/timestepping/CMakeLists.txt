@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dumux_add_test(SOURCES test_timestepmethods.cc LABELS unit timestepping experimental)
+dumux_add_test(SOURCES test_newmarkbeta.cc LABELS unit timestepping experimental)
