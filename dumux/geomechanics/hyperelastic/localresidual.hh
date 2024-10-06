@@ -14,6 +14,8 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/std/type_traits.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
@@ -21,6 +23,26 @@
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail::Hyperelastic {
+// helper struct detecting if the user-defined problem class has a solidDensity method
+template <typename T, typename ...Ts>
+using SolidDensityDetector = decltype(std::declval<T>().solidDensity(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasSolidDensity()
+{ return Dune::Std::is_detected<SolidDensityDetector, T, Args...>::value; }
+
+// helper struct detecting if the user-defined problem class has a acceleration method
+template <typename T, typename ...Ts>
+using AccelerationDetector = decltype(std::declval<T>().acceleration(std::declval<Ts>()...));
+
+template<class T, typename ...Args>
+static constexpr bool hasAcceleration()
+{ return Dune::Std::is_detected<AccelerationDetector, T, Args...>::value; }
+} // end namespace Detail::Hyperelastic
+#endif
 
 /*!
  * \ingroup Hyperelastic
@@ -51,15 +73,36 @@ public:
     using ParentType::ParentType;
     using ElementResidualVector = typename ParentType::ElementResidualVector;
 
+    using ParentType::evalStorage;
+
     /*!
-     * \brief Evaluate the rate of change of all conserved quantities
+     * \brief Evaluate the storage contribution to the residual: rho*d^2u/dt^2
      */
-    NumEqVector computeStorage(const Problem& problem,
-                               const SubControlVolume& scv,
-                               const VolumeVariables& volVars) const
+    void evalStorage(ElementResidualVector& residual,
+                     const Problem& problem,
+                     const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& prevElemVolVars,
+                     const ElementVolumeVariables& curElemVolVars,
+                     const SubControlVolume& scv) const
     {
-        // only the static model is implemented so far
-        return NumEqVector(0.0);
+        const auto& curVolVars = curElemVolVars[scv];
+
+        if constexpr (Detail::Hyperelastic::hasSolidDensity<Problem, const Element&, const SubControlVolume&>()
+                      && Detail::Hyperelastic::hasAcceleration<Problem, const Element&, const SubControlVolume&, Scalar, decltype(curVolVars.displacement())>())
+        {
+            const auto& curVolVars = curElemVolVars[scv];
+            NumEqVector storage = problem.solidDensity(element, scv)*problem.acceleration(
+                element, scv, this->timeLoop().timeStepSize(), curVolVars.displacement()
+            );
+            storage *= curVolVars.extrusionFactor()*Extrusion::volume(fvGeometry, scv);
+            residual[scv.localDofIndex()] += storage;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                "Problem class must implement solidDensity and acceleration"
+                " methods to evaluate storage term"
+            );
     }
 
     /*!
