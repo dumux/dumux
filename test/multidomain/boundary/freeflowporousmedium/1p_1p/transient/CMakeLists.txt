@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+add_input_file_links()
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_transient
+              LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
+              SOURCES main.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pm1p_transient_freeflow-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pm1p_transient_freeflow-00019.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pm1p_transient_darcy-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pm1p_transient_darcy-00019.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pm1p_transient params.input
+                                   -Vtk.OutputName test_md_boundary_ff1p_pm1p_transient")

@@ -100,7 +100,7 @@ public:
               std::shared_ptr<Problem<poreNetworkIndex>> porousMediumProblem,
               GridVariablesTuple&& gridVariables,
               std::shared_ptr<CouplingMapper> couplingMapper,
-              SolutionVectorStorage& curSol)
+              const SolutionVectorStorage& curSol)
     {
         couplingMapper_ = couplingMapper;
         gridVariables_ = gridVariables;

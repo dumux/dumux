@@ -170,6 +170,10 @@ class FreeFlowPorousMediumCouplingManagerBase
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     using SolutionVector = typename MDTraits::SolutionVector;
 
+    template<std::size_t id>
+    using SubSolutionVector
+        = std::decay_t<decltype(std::declval<SolutionVector>()[Dune::index_constant<id>()])>;
+
 public:
 
     template<std::size_t i, std::size_t j>
@@ -189,30 +193,36 @@ public:
               GridVarsTuple&& gridVarsTuple,
               const SolutionVector& curSol)
     {
-        this->updateSolution(curSol); // generic coupling manager stores tuple of shared_ptr
+        // initialize sub coupling manager that are not stationary or transient problem specific
+        this->init_(freeFlowMomentumProblem, freeFlowMassProblem, porousMediumProblem, std::forward<GridVarsTuple>(gridVarsTuple), curSol);
 
-        // initialize the binary sub coupling managers
-        typename SubCouplingManager<freeFlowMomentumIndex, freeFlowMassIndex>::SolutionVectorStorage ffSolVecTuple;
-        std::get<0>(ffSolVecTuple) = std::get<freeFlowMomentumIndex>(this->curSol());
-        std::get<1>(ffSolVecTuple) = std::get<freeFlowMassIndex>(this->curSol());
+        // initialize stationary-specific sub coupling manager for free-flow
+        using FFSol = typename SubCouplingManager<freeFlowMomentumIndex, freeFlowMassIndex>::SolutionVectorStorage;
         this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).init(
             freeFlowMomentumProblem, freeFlowMassProblem,
             std::make_tuple(std::get<freeFlowMomentumIndex>(gridVarsTuple), std::get<freeFlowMassIndex>(gridVarsTuple)),
-            ffSolVecTuple
+            FFSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<freeFlowMassIndex>(this->curSol()) }
         );
+    }
 
-        typename SubCouplingManager<freeFlowMassIndex, porousMediumIndex>::SolutionVectorStorage ffMassPmSolVecTuple;
-        std::get<0>(ffMassPmSolVecTuple) = std::get<freeFlowMassIndex>(this->curSol());
-        std::get<1>(ffMassPmSolVecTuple) = std::get<porousMediumIndex>(this->curSol());
-        this->subCouplingManager(freeFlowMassIndex, porousMediumIndex).init(
-            freeFlowMassProblem, porousMediumProblem, ffMassPmSolVecTuple
-        );
+    template<class GridVarsTuple>
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> freeFlowMomentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
+              std::shared_ptr<Problem<porousMediumIndex>> porousMediumProblem,
+              GridVarsTuple&& gridVarsTuple,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        // initialize sub coupling manager that are not stationary or transient problem specific
+        this->init_(freeFlowMomentumProblem, freeFlowMassProblem, porousMediumProblem, std::forward<GridVarsTuple>(gridVarsTuple), curSol);
 
-        typename SubCouplingManager<freeFlowMomentumIndex, porousMediumIndex>::SolutionVectorStorage ffMomentumPmSolVecTuple;
-        std::get<0>(ffMomentumPmSolVecTuple) = std::get<freeFlowMomentumIndex>(this->curSol());
-        std::get<1>(ffMomentumPmSolVecTuple) = std::get<porousMediumIndex>(this->curSol());
-        this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).init(
-            freeFlowMomentumProblem, porousMediumProblem, ffMomentumPmSolVecTuple
+        using FFSol = typename SubCouplingManager<freeFlowMomentumIndex, freeFlowMassIndex>::SolutionVectorStorage;
+        using FFPrevSol = std::tuple<const SubSolutionVector<freeFlowMomentumIndex>*, const SubSolutionVector<freeFlowMassIndex>*>;
+        this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).init(
+            freeFlowMomentumProblem, freeFlowMassProblem,
+            std::make_tuple(std::get<freeFlowMomentumIndex>(gridVarsTuple), std::get<freeFlowMassIndex>(gridVarsTuple)),
+            FFSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<freeFlowMassIndex>(this->curSol()) },
+            FFPrevSol{ &prevSol[freeFlowMomentumIndex], &prevSol[freeFlowMassIndex] }
         );
     }
 
@@ -270,6 +280,32 @@ public:
         return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingStencil(ii, elementI, scvI, jj);
         });
+    }
+private:
+    /*
+    * \brief Initializes sub-coupling managers for stationary and transient problems
+    */
+    template<class GridVarsTuple>
+    void init_(std::shared_ptr<Problem<freeFlowMomentumIndex>> freeFlowMomentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
+              std::shared_ptr<Problem<porousMediumIndex>> porousMediumProblem,
+              GridVarsTuple&& gridVarsTuple,
+              const SolutionVector& curSol)
+    {
+        this->updateSolution(curSol); // generic coupling manager stores tuple of shared_ptr
+
+        // initialize the binary sub coupling managers
+        using FFMassPMSol = typename SubCouplingManager<freeFlowMassIndex, porousMediumIndex>::SolutionVectorStorage;
+        this->subCouplingManager(freeFlowMassIndex, porousMediumIndex).init(
+            freeFlowMassProblem, porousMediumProblem,
+            FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+        );
+
+        using FFMomPMSol = typename SubCouplingManager<freeFlowMomentumIndex, porousMediumIndex>::SolutionVectorStorage;
+        this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).init(
+            freeFlowMomentumProblem, porousMediumProblem,
+            FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+        );
     }
 };
 

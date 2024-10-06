@@ -73,6 +73,15 @@ private:
     using Scalar = typename Traits::Scalar;
     using SolutionVector = typename Traits::SolutionVector;
 
+    template<std::size_t id>
+    using SubSolutionVector
+        = std::decay_t<decltype(std::declval<SolutionVector>()[Dune::index_constant<id>()])>;
+
+    template<std::size_t id>
+    using ConstSubSolutionVectorPtr = const SubSolutionVector<id>*;
+
+    using PrevSolutionVectorStorage = typename Traits::template Tuple<ConstSubSolutionVectorPtr>;
+
     using CouplingStencilType = std::vector<std::size_t>;
 
     using GridVariablesTuple = typename Traits::template TupleOfSharedPtr<GridVariables>;
@@ -131,21 +140,33 @@ public:
               const SolutionVector& prevSol)
     {
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
-        prevSol_ = &prevSol;
-        isTransient_ = true;
+
+        Dune::Hybrid::forEach(std::make_index_sequence<Traits::numSubDomains>{}, [&](auto i)
+        { std::get<i>(prevSolutions_) = &prevSol[i]; });
     }
 
     //! use as binary coupling manager in multi model context
     void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
               std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
               GridVariablesTuple&& gridVariables,
-              typename ParentType::SolutionVectorStorage& curSol)
+              const typename ParentType::SolutionVectorStorage& curSol)
     {
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->attachSolution(curSol);
 
         computeCouplingStencils_();
+    }
+
+    //! use as binary coupling manager in multi model context and for transient problems
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
+              GridVariablesTuple&& gridVariables,
+              const typename ParentType::SolutionVectorStorage& curSol,
+              const PrevSolutionVectorStorage& prevSol)
+    {
+        init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
+        prevSolutions_ = prevSol;
     }
 
     // \}
@@ -191,7 +212,7 @@ public:
 
         if (!localAssemblerI.assembler().isStationaryProblem())
         {
-            assert(isTransient_);
+            assert(isTransient_());
             localResidual.evalStorage(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, scvI);
         }
 
@@ -234,7 +255,7 @@ public:
                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -261,7 +282,7 @@ public:
                                  const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                                  const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
         const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(insideMomentumScv.elementIndex());
@@ -289,7 +310,7 @@ public:
                    const SubControlVolume<freeFlowMomentumIndex>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, scv.elementIndex());
         const auto& massScv = (*scvs(momentumCouplingContext_()[0].fvGeometry).begin());
 
@@ -508,11 +529,11 @@ private:
             auto curElemVolVars = localView(gridVars_(freeFlowMassIndex).curGridVolVars());
             curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMassIndex));
 
-            auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
+            auto prevElemVolVars = isTransient_() ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
                                                 : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
 
-            if (isTransient_)
-                prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            if (isTransient_())
+                prevElemVolVars.bindElement(elementI, fvGeometry, prevSol_(freeFlowMassIndex));
 
             momentumCouplingContext_().emplace_back(MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars), eIdx});
         }
@@ -522,8 +543,8 @@ private:
             momentumCouplingContext_()[0].fvGeometry.bind(elementI);
             momentumCouplingContext_()[0].curElemVolVars.bind(elementI, momentumCouplingContext_()[0].fvGeometry, this->curSol(freeFlowMassIndex));
 
-            if (isTransient_)
-                momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, (*prevSol_)[freeFlowMassIndex]);
+            if (isTransient_())
+                momentumCouplingContext_()[0].prevElemVolVars.bindElement(elementI, momentumCouplingContext_()[0].fvGeometry, prevSol_(freeFlowMassIndex));
         }
     }
 
@@ -661,8 +682,14 @@ private:
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
 
-    const SolutionVector* prevSol_;
-    bool isTransient_;
+    bool isTransient_() const
+    { return std::get<0>(prevSolutions_) != nullptr; }
+
+    template<std::size_t i>
+    const SubSolutionVector<i>& prevSol_(Dune::index_constant<i>) const
+    { return *std::get<i>(prevSolutions_); }
+
+    PrevSolutionVectorStorage prevSolutions_;
 
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };

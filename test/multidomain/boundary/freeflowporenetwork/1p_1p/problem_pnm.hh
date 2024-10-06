@@ -40,6 +40,8 @@ class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
 public:
     template<class SpatialParams>
     PNMOnePProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -47,6 +49,7 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 0.0);
         singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
     }
 
@@ -145,6 +148,19 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Evaluate the initial value for a given global position.
+     *
+     * For this method, the \a priVars parameter stores primary
+     * variables.
+     */
+    PrimaryVariables initialAtPos(const GlobalPosition& pos) const
+    {
+        PrimaryVariables values(0.0);
+        values = initialPressure_;
+        return values;
+    }
+
     // \}
 
     // \}
@@ -160,6 +176,7 @@ public:
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
     bool singleThroatTest_;
+    Scalar initialPressure_;
 };
 
 } // end namespace Dumux

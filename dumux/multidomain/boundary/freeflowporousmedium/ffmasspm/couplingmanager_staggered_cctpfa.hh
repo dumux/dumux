@@ -104,7 +104,7 @@ public:
     //! Initialize the coupling manager
     void init(std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
               std::shared_ptr<Problem<porousMediumIndex>> darcyProblem,
-              SolutionVectorStorage& curSol)
+              const SolutionVectorStorage& curSol)
     {
         this->setSubProblems(std::make_tuple(freeFlowMassProblem, darcyProblem));
         this->attachSolution(curSol);
