@@ -70,6 +70,7 @@ public:
      * source: Birch, Albert Francis, and Harry Clark. "The thermal conductivity of rocks
      *  and its dependence upon temperature and composition."
      * American Journal of Science 238.8 (1940): 529-558.
+     * https://doi.org/10.2475/ajs.238.8.529
      * Table 6: \lambda(T=273.15 K)=6.6 cal/(cm*s*degC) and 1 cal /(cm*s*degC) = 418.4 W/(m*K)
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
