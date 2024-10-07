@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 
     couplingManager->init(freeFlowMomentumProblem, freeFlowMassProblem, pnmProblem,
                           std::make_tuple(freeFlowMomentumGridVariables, freeFlowMassGridVariables, pnmGridVariables),
-                          sol);
+                          sol, solOld);
 
     freeFlowMomentumGridVariables->init(sol[freeFlowMomentumIndex]);
     freeFlowMassGridVariables->init(sol[freeFlowMassIndex]);
