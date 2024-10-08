@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Components
- * \brief Properties of pure molecular oxygen \f$O_2\f$.
+ * \brief Properties of granite.
  */
 #ifndef DUMUX_GRANITE_HH
 #define DUMUX_GRANITE_HH
@@ -67,6 +67,8 @@ public:
 
     /*!
      * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
+     * \note Birch & Clark (1940) \cite Birch1940
+     *       Table 6: lambda(T=273.15 K)=6.6 cal/(cm*s*degC) and 1 cal/(cm*s*degC)=418.4 W/(m*K)
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar solidThermalConductivity(Scalar temperature)
