@@ -25,6 +25,8 @@
 #include <dune/common/typetraits.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dumux/common/typetraits/isvalid.hh>
+
 // forward declaration
 namespace Dune {
 
@@ -32,6 +34,21 @@ template<class... Args>
 class MultiTypeBlockVector;
 
 } // end namespace Dune
+
+namespace Dumux::Detail::DofBackend {
+
+struct HasResize
+{
+    template<class V>
+    auto operator()(const V& v) -> decltype(std::declval<V>().resize(0))
+    {}
+};
+
+template<class Vector>
+static constexpr auto hasResize()
+{ return decltype( isValid(HasResize())(std::declval<Vector>()) )::value; }
+
+} // end namespace Dumux::Detail::VariablesBackend
 
 namespace Dumux {
 
@@ -89,7 +106,12 @@ public:
 
     //! Make a zero-initialized dof vector instance
     static DofVector zeros(SizeType size)
-    { DofVector d; d.resize(size); return d; }
+    {
+        DofVector d;
+        if constexpr (Detail::DofBackend::hasResize<Vector>())
+            d.resize(size);
+        return d;
+    }
 
     //! Perform axpy operation (y += a * x)
     template<class OtherDofVector>
@@ -172,9 +194,9 @@ class VariablesBackend;
  */
 template<class Vars>
 class VariablesBackend<Vars, false>
-: public DofBackend<Vars>
+: public Dumux::DofBackend<Vars>
 {
-    using ParentType = DofBackend<Vars>;
+    using ParentType = Dumux::DofBackend<Vars>;
 
 public:
     using Variables = Vars;
@@ -200,7 +222,7 @@ public:
  */
 template<class Vars>
 class VariablesBackend<Vars, true>
-: public DofBackend<typename Vars::SolutionVector>
+: public Dumux::DofBackend<typename Vars::SolutionVector>
 {
 public:
     using DofVector = typename Vars::SolutionVector;
