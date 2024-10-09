@@ -152,6 +152,31 @@ int main (int argc, char *argv[])
                 testPolyLineIntersections(i, j);
     }
 
+    {
+        std::cout << "\nIntersect two polylines testing fixed size geometric entity sets:\n" << std::endl;
+        std::cout << "-- Test number of segments: " << 1 << " and " << 2 << "\n";
+
+        using Geo = Dune::AffineGeometry<double, 1, 2>;
+        using Point = Geo::GlobalCoordinate;
+
+        // once test constructor with l-values
+        const auto geo1 = Geo(Dune::GeometryTypes::line, std::array<Point, 2>{{Point({0.0, 0.0}), Point({1.0, 1.0})}});
+        const auto geo2 = Geo(Dune::GeometryTypes::line, std::array<Point, 2>{{Point({1.0, 1.0}), Point({2.0, 2.0})}});
+        auto geoSet0 = std::make_shared<FixedSizeGeometriesEntitySet<Geo, 2>>(geo1, geo2);
+
+        // once test constructor with move semantics
+        auto geoSet1 = std::make_shared<SingleGeometryEntitySet<Geo>>(
+            Geo(Dune::GeometryTypes::line, std::array<Point, 2>{{Point({0.0, 0.0}), Point({2.0, 2.0})}})
+        );
+
+        IntersectionEntitySet<FixedSizeGeometriesEntitySet<Geo, 2>, SingleGeometryEntitySet<Geo>> intersectionEntitySet;
+        intersectionEntitySet.build(geoSet0, geoSet1);
+
+        if (intersectionEntitySet.size() != 2)
+            DUNE_THROW(Dune::Exception, "Wrong number of line segment intersections."
+                        << " Expected " << 2 << " got " << intersectionEntitySet.size());
+    }
+
     std::cout << "All tests passed!" << std::endl;
     return 0;
 }
