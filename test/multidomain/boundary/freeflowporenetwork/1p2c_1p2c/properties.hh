@@ -53,7 +53,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PNMOnePNCModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    using H2OAir = FluidSystems::H2OAir<Scalar>;
     static constexpr int phaseIdx = H2OAir::gasPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
@@ -64,7 +64,7 @@ struct AdvectionType<TypeTag, TTag::PNMOnePNCModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityBruus<GetPropType<TypeTag, Properties::Scalar>>;
+    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityBruus<Scalar>;
 public:
     using type =  Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
 };
@@ -101,7 +101,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::FreeFlowOnePNC>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
+    using H2OAir = FluidSystems::H2OAir<Scalar>;
     static constexpr int phaseIdx = H2OAir::gasPhaseIdx;
     using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
