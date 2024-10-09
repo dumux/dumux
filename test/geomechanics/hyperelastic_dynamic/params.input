@@ -1,0 +1,24 @@
+[TimeLoop]
+TEnd = 10
+DtInitial = 0.01
+
+[Grid]
+File = solid.msh
+
+[Problem]
+Name = test_saint_venant_kirchhoff_dynamic
+Gravity = 2.0
+
+[SpatialParams]
+YoungsModulus = 1.4e6
+PoissonRatio = 0.4
+SolidDensity = 1000
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6

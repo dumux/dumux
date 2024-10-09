@@ -51,6 +51,24 @@ private:
     Scalar E_, nu_, mu_, K_, lambda_;
 };
 
+template<class GridGeometry, class Scalar>
+class DefaultDynamicHyperelasticSpatialParams
+: public DefaultHyperelasticSpatialParams<GridGeometry, Scalar>
+{
+    using ParentType = DefaultHyperelasticSpatialParams<GridGeometry, Scalar>;
+public:
+    DefaultDynamicHyperelasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    : ParentType(gridGeometry)
+    , rho_(getParam<Scalar>("SpatialParams.SolidDensity"))
+    {}
+
+    Scalar solidDensity() const
+    { return rho_; }
+
+private:
+    Scalar rho_;
+};
+
 } // end namespace Dumux
 
 #endif
