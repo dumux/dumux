@@ -21,6 +21,7 @@ dumux_add_test(SOURCES test_circlepoints.cc LABELS unit)
 dumux_add_test(SOURCES test_cylinderintegration.cc LABELS unit)
 dumux_add_test(SOURCES test_makegeometry.cc LABELS unit)
 dumux_add_test(SOURCES test_refinementquadraturerule.cc LABELS unit)
+dumux_add_test(SOURCES test_volumeaverage.cc LABELS unit CMAKE_GUARD dune-subgrid_FOUND)
 dune_symlink_to_source_files(FILES ball.msh)
 dumux_add_test(SOURCES test_intersectionentityset.cc
                CMAKE_GUARD dune-alugrid_FOUND
