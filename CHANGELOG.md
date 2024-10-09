@@ -7,6 +7,7 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 
 - __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.
 - __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
+- __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
