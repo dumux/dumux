@@ -29,6 +29,8 @@
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include <dumux/io/grid/periodicityhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -114,6 +116,7 @@ public:
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
     : ParentType(std::move(gg))
+    , periodicityHelper_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -267,7 +270,7 @@ private:
                 if (intersection.neighbor())
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (periodicityHelper_.isPeriodic(intersection))
                         this->setPeriodic();
 
                     if (dim == dimWorld)
@@ -366,6 +369,8 @@ private:
 
     //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<GridIndexType>> flipScvfIndices_;
+
+    const PeriodicityHelper<typename GridView::Grid>& periodicityHelper_;
 };
 
 /*!
@@ -421,6 +426,7 @@ public:
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
     : ParentType(std::move(gg))
+    , periodicityHelper_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -539,7 +545,7 @@ private:
                 if (intersection.neighbor())
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (periodicityHelper_.isPeriodic(intersection))
                         this->setPeriodic();
 
                     if (dim == dimWorld)
@@ -592,6 +598,8 @@ private:
     //! vectors that store the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<NeighborVolVarIndices>> neighborVolVarIndices_;
+
+    const PeriodicityHelper<typename GridView::Grid>& periodicityHelper_;
 };
 
 } // end namespace Dumux
