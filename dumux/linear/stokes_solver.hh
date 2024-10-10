@@ -27,6 +27,7 @@
 #include <dune/istl/paamg/amg.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
@@ -346,7 +347,19 @@ public:
     {
         params_ = LinearSolverParameters<LinearSolverTraits<VelocityGG>>::createParameterTree(this->paramGroup());
         density_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDensity");
-        viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDynamicViscosity");
+
+        if (hasParamInGroup(this->paramGroup(), "Component.LiquidDynamicViscosity"))
+            viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDynamicViscosity");
+        else if (hasParamInGroup(this->paramGroup(), "Component.LiquidKinematicViscosity"))
+            viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidKinematicViscosity") * density_;
+        else
+        {
+            const std::string group = this->paramGroup() == "" ? "Component" : this->paramGroup() + ".Component";
+            DUNE_THROW(ParameterException, "Stokes solver requires the parameters"
+                           << " LiquidDynamicViscosity or LiquidKinematicViscosity"
+                           << " in parameter group [" << group << "]");
+        }
+
         weight_ = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
         solverType_ = getParamFromGroup<std::string>(this->paramGroup(), "LinearSolver.Type", "gmres");
         scalarProduct_ = std::make_shared<Dune::ScalarProduct<Vector>>();
