@@ -52,18 +52,19 @@ struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid>>
     template<typename Intersection, typename SubGrid>
     static bool isPeriodic (const Intersection& intersection, const SubGrid& subGrid)
     {
-        const auto& hostElement = subGrid.getHostEntity<0>(subGrid.leafGridView(), intersection.inside());
+        const auto& hostElement = subGrid.template getHostEntity<0>(intersection.inside());
         for (const auto& hostIntersection : intersections(subGrid.getHostGrid().leafGridView(), hostElement))
         {
             if (hostIntersection.indexInInside() == intersection.indexInInside())
             {
-                if (!subGrid.contains(hostIntersection.outside()))
+                const bool periodicInHostGrid = PeriodicityHelper<HostGrid>::isPeriodic(hostIntersection);
+                if (periodicInHostGrid && !subGrid.template contains<0>(hostIntersection.outside()))
                     DUNE_THROW(Dune::GridError, "Periodic boundary in host grid but outside element not included in subgrid");
-                return PeriodicityHelper<HostGrid>::isPeriodic(hostIntersection);
+                return periodicInHostGrid;
             }
         }
     }
-}
+};
 
 } // end namespace Dumux
 
