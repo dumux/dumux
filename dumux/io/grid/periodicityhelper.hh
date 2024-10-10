@@ -46,6 +46,34 @@ struct PeriodicityHelper<Dune::YaspGrid<dim, ct>>
     }
 };
 
+template<typename HostIntersection, typename SubIntersection>
+bool isEquivalent(const HostIntersection& host, const SubIntersection& sub)
+{
+    const auto& hCenter = host.geometry().center();
+    const auto& sCenter = sub.geometry().center();
+    return ((hCenter-sCenter).two_norm2() < 1e-12);
+            //&& std::abs(host.unitOuterNormal()*sub.unitOuterNormal()-1.0) < 1e-6);
+}
+
+template<int dim, typename HostGrid>
+struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid>>
+{
+    template<typename Intersection, typename SubGrid>
+    static bool isPeriodic (const Intersection& intersection, const SubGrid& subGrid)
+    {
+        const auto& hostElement = subGrid.getHostEntity<0>(subGrid.leafGridView(), intersection.inside());
+        for (const auto& hostIntersection : intersections(subGrid.getHostGrid().leafGridView(), hostElement))
+        {
+            if (isEquivalent(hostIntersection, intersection))
+            {
+                if (!subGrid.contains(hostIntersection.outside()))
+                    return false;
+                return PeriodicityHelper<HostGrid>::isPeriodic(hostIntersection);
+            }
+        }
+    }
+}
+
 } // end namespace Dumux
 
 #endif
