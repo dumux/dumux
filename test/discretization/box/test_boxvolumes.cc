@@ -33,12 +33,12 @@ int main (int argc, char *argv[])
 
     // initialize parameters
     Parameters::init([](auto& p){
-        p["Grid.File"] = "delaunay3d.msh";
+        p["Grid.File"] = "hexahedral.dgf";
     });
 
     std::cout << "Checking the SCVs volumes" << std::endl;
 
-    using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
+    using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>;
     using GridGeometry = BoxFVGridGeometry<double, typename Grid::LeafGridView, true>;
 
     // make a grid
@@ -52,6 +52,10 @@ int main (int argc, char *argv[])
 
     double maxRelErrorGeo = 0.0;
     double maxRelErrorScv = 0.0;
+    double meanRelErrorGeo = 0.0;
+    double meanRelErrorScv = 0.0;
+    int n = 0;
+
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = gridGeometry.elementMapper().index(element);
@@ -66,15 +70,20 @@ int main (int argc, char *argv[])
             const auto exactVol = Dumux::volume(geometry);
             const auto relErrorGeo = std::abs(geometry.volume() - exactVol)/exactVol;
             maxRelErrorGeo = std::max(maxRelErrorGeo, relErrorGeo);
+            meanRelErrorGeo += relErrorGeo*relErrorGeo;
             const auto relErrorPScv = std::abs(scv.volume() - exactVol)/exactVol;
             maxRelErrorScv = std::max(maxRelErrorScv, relErrorPScv);
+            meanRelErrorScv += relErrorPScv*relErrorPScv;
             std::cout << "Volumes for scv: " << "eIdx: " << eIdx << " dofIdx: " << idx << std::endl;
             std::cout << "Quadrature volume: " << exactVol << "   ";
             std::cout << "geometry.volume() rel error: " << relErrorGeo << "   ";
             std::cout << "scv.volume() rel error: " << relErrorPScv << "   ";
+            n++;
         }
     }
     std::cout<<std::endl;
     std::cout << "Max rel error geometry.volume(): " << maxRelErrorGeo << std::endl;
     std::cout << "Max rel error scv.volume() : " << maxRelErrorScv << std::endl;
+    std::cout << "Mean squared error geometry.volume(): " << meanRelErrorGeo/n << std::endl;
+    std::cout << "Mean squared error scv.volume() : " << meanRelErrorScv/n << std::endl;
 }
