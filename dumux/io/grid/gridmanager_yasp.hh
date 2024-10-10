@@ -77,9 +77,7 @@ public:
             std::array<int, dim> cells; cells.fill(1);
             cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
 
-            // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
-            // const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>{});
-            const std::bitset<dim> periodic;
+            const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>{});
 
             // get the overlap
             const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
