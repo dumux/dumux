@@ -11,11 +11,20 @@ EnableInertiaTerms = false
 [Component]
 # this test requires a unit fluid
 LiquidDensity = 1
-LiquidKinematicViscosity = 1
+LiquidDynamicViscosity = 1
 
 [ Newton ]
 MaxSteps = 20
 MaxRelativeShift = 1e-8
+
+[LinearSolver]
+MaxIterations = 500
+ResidualReduction = 1e-10
+SymmetrizeDirichlet = true
+DirectSolverForVelocity = false
+GMResRestart = 500
+Type = gmres
+Verbosity = 1
 
 [Vtk]
 WriteFaceData = false
