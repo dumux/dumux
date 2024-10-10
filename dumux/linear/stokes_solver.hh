@@ -353,9 +353,12 @@ public:
         else if (hasParamInGroup(this->paramGroup(), "Component.LiquidKinematicViscosity"))
             viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidKinematicViscosity") * density_;
         else
-            DUNE_THROW(ParameterException, "Stokes solver requires parameters"
-                           << " Component.LiquidDynamicViscosity or Component.LiquidKinematicViscosity"
-                           << " in group [" << this->paramGroup() << "]");
+        {
+            const std::string group = this->paramGroup() == "" ? "Component" : this->paramGroup() + ".Component";
+            DUNE_THROW(ParameterException, "Stokes solver requires the parameters"
+                           << " LiquidDynamicViscosity or LiquidKinematicViscosity"
+                           << " in parameter group [" << group << "]");
+        }
 
         weight_ = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
         solverType_ = getParamFromGroup<std::string>(this->paramGroup(), "LinearSolver.Type", "gmres");
