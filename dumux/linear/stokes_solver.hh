@@ -27,6 +27,7 @@
 #include <dune/istl/paamg/amg.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/preconditioners.hh>
 #include <dumux/linear/linearsolverparameters.hh>
