@@ -31,26 +31,27 @@ int main (int argc, char *argv[])
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
 
+    // initialize parameters
+    Parameters::init([](auto& p){
+        p["Grid.File"] = "delaunay3d.msh";
+    });
+
     std::cout << "Checking the SCVs volumes" << std::endl;
 
     using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
-
-    constexpr int dim = Grid::dimension;
-
     using GridGeometry = BoxFVGridGeometry<double, typename Grid::LeafGridView, true>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     // make a grid
-    GlobalPosition lower(0.0);
-    GlobalPosition upper(1.0);
-    std::array<unsigned int, dim> els{{2, 2, 2}};
-    std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lower, upper, els);
-    auto leafGridView = grid->leafGridView();
+    GridManager<Grid> gridManager;
+    gridManager.init();
+
+    // we compute on the leaf grid view
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     GridGeometry gridGeometry(leafGridView);
 
+    double maxRelErrorGeo = 0.0;
+    double maxRelErrorScv = 0.0;
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = gridGeometry.elementMapper().index(element);
@@ -62,10 +63,18 @@ int main (int argc, char *argv[])
             const auto& geometry = fvGeometry.geometry(scv);
 
             const auto idx = scv.dofIndex();
+            const auto exactVol = Dumux::volume(geometry);
+            const auto relErrorGeo = std::abs(geometry.volume() - exactVol)/exactVol;
+            maxRelErrorGeo = std::max(maxRelErrorGeo, relErrorGeo);
+            const auto relErrorPScv = std::abs(scv.volume() - exactVol)/exactVol;
+            maxRelErrorScv = std::max(maxRelErrorScv, relErrorPScv);
             std::cout << "Volumes for scv: " << "eIdx: " << eIdx << " dofIdx: " << idx << std::endl;
-            std::cout << "geometry.volume(): " << geometry.volume() << "   ";
-            std::cout << "scv.volume(): " << scv.volume() << "   ";
-            std::cout << "Quadrature volume: " << Dumux::volume(geometry) << "   ";
+            std::cout << "Quadrature volume: " << exactVol << "   ";
+            std::cout << "geometry.volume() rel error: " << relErrorGeo << "   ";
+            std::cout << "scv.volume() rel error: " << relErrorPScv << "   ";
         }
     }
+    std::cout<<std::endl;
+    std::cout << "Max rel error geometry.volume(): " << maxRelErrorGeo << std::endl;
+    std::cout << "Max rel error scv.volume() : " << maxRelErrorScv << std::endl;
 }
