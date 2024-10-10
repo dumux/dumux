@@ -46,15 +46,6 @@ struct PeriodicityHelper<Dune::YaspGrid<dim, ct>>
     }
 };
 
-template<typename HostIntersection, typename SubIntersection>
-bool isEquivalent(const HostIntersection& host, const SubIntersection& sub)
-{
-    const auto& hCenter = host.geometry().center();
-    const auto& sCenter = sub.geometry().center();
-    return ((hCenter-sCenter).two_norm2() < 1e-12);
-            //&& std::abs(host.unitOuterNormal()*sub.unitOuterNormal()-1.0) < 1e-6);
-}
-
 template<int dim, typename HostGrid>
 struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid>>
 {
@@ -64,10 +55,10 @@ struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid>>
         const auto& hostElement = subGrid.getHostEntity<0>(subGrid.leafGridView(), intersection.inside());
         for (const auto& hostIntersection : intersections(subGrid.getHostGrid().leafGridView(), hostElement))
         {
-            if (isEquivalent(hostIntersection, intersection))
+            if (hostIntersection.indexInInside() == intersection.indexInInside())
             {
                 if (!subGrid.contains(hostIntersection.outside()))
-                    return false;
+                    DUNE_THROW(Dune::GridError, "Periodic boundary in host grid but outside element not included in subgrid");
                 return PeriodicityHelper<HostGrid>::isPeriodic(hostIntersection);
             }
         }
