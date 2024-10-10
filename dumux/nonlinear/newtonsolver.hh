@@ -628,10 +628,8 @@ public:
 
             if (enableShiftCriterion_)
                 std::cout << Fmt::format(", maximum relative shift = {:.4e}", shift_);
-            if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
-                std::cout << Fmt::format(", residual = {:.4e}", residualNorm_);
-            else if (enableResidualCriterion_)
-                std::cout << Fmt::format(", residual reduction = {:.4e}", reduction_);
+            if (enableResidualCriterion_ || enableAbsoluteResidualCriterion_)
+                std::cout << Fmt::format(", residual = {:.4e}, residual reduction = {:.4e}", residualNorm_, reduction_);
 
             std::cout << endIterMsgStream_.str() << "\n";
         }
