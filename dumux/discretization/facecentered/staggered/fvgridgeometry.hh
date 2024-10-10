@@ -35,6 +35,8 @@
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dumux/discretization/facecentered/staggered/localintersectionindexmapper.hh>
 
+#include <dumux/io/grid/periodicityhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -489,7 +491,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return intersection.boundary() && intersection.neighbor();
+        return PeriodicityHelper<typename GridView::Grid>::isPeriodic(intersection);
     }
 
     // mappers
@@ -792,7 +794,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return intersection.boundary() && intersection.neighbor();
+        return PeriodicityHelper<typename GridView::Grid>::isPeriodic(intersection);
     }
 
     // mappers
