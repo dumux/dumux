@@ -3,6 +3,7 @@
 #define DUMUX_IO_GRID_PERIODICITY_HELPER_HH
 
 #include <dune/grid/spgrid.hh>
+#include <dune/subgrid/subgrid.hh>
 
 namespace Dumux {
 
@@ -34,6 +35,40 @@ public:
     bool isPeriodic (const Intersection& intersection) const
     {
         return intersection.neighbor() && intersection.boundary();
+    }
+};
+
+// SubGrid does not preserve intersection.boundary() at periodic boundaries of host grid
+template<int dim, typename HostGrid, bool MapIndexStorage>
+struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid, MapIndexStorage>>
+{
+private:
+    using Grid = Dune::SubGrid<dim, HostGrid, MapIndexStorage>;
+
+    const Grid& subGrid_;
+    const PeriodicityHelper<HostGrid> hostHelper_;
+
+public:
+    PeriodicityHelper<Grid> (const Grid& subGrid)
+        : subGrid_(subGrid), hostHelper_(subGrid_.getHostGrid()) {};
+
+    template<typename Intersection>
+    bool isPeriodic (const Intersection& intersection) const
+    {
+        if (!intersection.neighbor())
+            return false;
+        const auto& hostElement = subGrid_.template getHostEntity<0>(intersection.inside());
+        for (const auto& hostIntersection : intersections(subGrid_.getHostGrid().leafGridView(), hostElement))
+        {
+            if (hostIntersection.indexInInside() == intersection.indexInInside())
+            {
+                const bool periodicInHostGrid = hostHelper_.isPeriodic(hostIntersection);
+                if (periodicInHostGrid && !subGrid_.template contains<0>(hostIntersection.outside()))
+                    DUNE_THROW(Dune::GridError, "Periodic boundary in host grid but outside element not included in subgrid");
+                return periodicInHostGrid;
+            }
+        }
+        return false;
     }
 };
 
