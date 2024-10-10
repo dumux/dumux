@@ -282,8 +282,8 @@ public:
     }
 
     /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
+     * \brief Computes the derivatives of residuals in subcontrolvolumes in the given element
+     *        with respect to primary variables of domainJ and adds them to the global matrix.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,

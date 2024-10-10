@@ -500,8 +500,8 @@ public:
     }
 
     /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
+     * \brief Computes the derivatives of the residual of the given element with respect to primary
+     *        variables of domainJ and adds them to the global matrix.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
@@ -759,8 +759,8 @@ public:
     }
 
     /*!
-     * \brief Computes the coupling derivatives with respect to the given element and adds them
-     *        to the global matrix.
+     * \brief Computes the derivatives of the residual of the given element with respect to primary
+     *        variables of domainJ and adds them to the global matrix.
      * \note Since the coupling can only enter sources or fluxes and these are evaluated on
      *       the old time level (explicit scheme), the coupling blocks are empty.
      */
@@ -893,8 +893,8 @@ public:
     }
 
     /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
+     * \brief Computes the derivatives of the residual of the given element with respect to primary
+     *        variables of domainJ and adds them to the global matrix.
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
