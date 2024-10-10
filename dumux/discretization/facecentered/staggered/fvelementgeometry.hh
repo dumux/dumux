@@ -654,8 +654,7 @@ private:
                 )
             {
                 const auto& lateralIntersection = geometryHelper_.intersection(lateralFacetIndex, element);
-                const auto& lateralFacet =  geometryHelper_.facet(lateralFacetIndex, element);
-                const auto& lateralFacetGeometry = lateralFacet.geometry();
+                const auto& lateralIntersectionGeometry = lateralIntersection.geometry();
 
                 // helper lambda to get the lateral scvf's global inside and outside scv indices
                 const auto globalScvIndicesForLateralFace = [&]
@@ -690,7 +689,7 @@ private:
                 scvfs_[localScvfIdx] = SubControlVolumeFace(
                     elementGeometry,
                     intersectionGeometry,
-                    lateralFacetGeometry,
+                    lateralIntersectionGeometry,
                     globalScvIndicesForLateralFace, // TODO higher order
                     localScvfIdx,
                     scvfIndices_()[localScvfIdx],

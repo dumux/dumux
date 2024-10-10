@@ -424,7 +424,7 @@ private:
                     scvfs_.emplace_back(
                         elementGeometry,
                         intersectionGeometry,
-                        geometryHelper.facet(lateralFacetIndex, element).geometry(),
+                        lateralIntersection.geometry(),
                         globalScvIndicesForLateralFace, // TODO higher order
                         localScvfIdx,
                         globalScvfIdx,

@@ -100,10 +100,9 @@ public:
     }
 
     //! The constructor for lateral faces
-    template<class LateralFacetGeometry>
     FaceCenteredStaggeredSubControlVolumeFace(const ElementGeometry& elementGeometry,
                                               const IntersectionGeometry& intersectionGeometry,
-                                              const LateralFacetGeometry& lateralFacetGeometry,
+                                              const IntersectionGeometry& lateralIntersectionGeometry,
                                               const std::array<GridIndexType, 2> globalScvIndices,
                                               const SmallLocalIndexType localScvfIdx,
                                               const GridIndexType globalScvfIdx,
@@ -113,7 +112,7 @@ public:
     : globalScvIndices_(globalScvIndices)
     , localScvfIdx_(localScvfIdx)
     , globalScvfIdx_(globalScvfIdx)
-    , area_(0.5*lateralFacetGeometry.volume())
+    , area_(0.5*lateralIntersectionGeometry.volume())
     , normalAxis_(Dumux::normalAxis(unitOuterNormal))
     , outerNormalSign_(sign(unitOuterNormal[normalAxis_]))
     , faceType_(faceType)
@@ -121,8 +120,8 @@ public:
     {
         assert(faceType == FaceType::lateral);
         const auto shift = intersectionGeometry.center() - elementGeometry.center();
-        ipGlobal_ = lateralFacetGeometry.center() + shift;
-        center_ = 0.5*(lateralFacetGeometry.center() + ipGlobal_);
+        ipGlobal_ = lateralIntersectionGeometry.center() + shift;
+        center_ = 0.5*(lateralIntersectionGeometry.center() + ipGlobal_);
     }
 
     //! The center of the sub control volume face
