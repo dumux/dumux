@@ -29,6 +29,8 @@
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include <dumux/io/grid/periodicityhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -266,8 +268,9 @@ private:
                 // inner sub control volume faces (includes periodic boundaries)
                 if (intersection.neighbor())
                 {
+                    const bool isPeriodic = PeriodicityHelper<typename GridView::Grid>::isPeriodic(intersection);
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (isPeriodic)
                         this->setPeriodic();
 
                     if (dim == dimWorld)
@@ -539,7 +542,7 @@ private:
                 if (intersection.neighbor())
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (PeriodicityHelper<typename GridView::Grid>::isPeriodic(intersection))
                         this->setPeriodic();
 
                     if (dim == dimWorld)
