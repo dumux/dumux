@@ -19,7 +19,6 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/indextraits.hh>
 #include <dumux/common/properties.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -27,8 +26,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 #include <dumux/linear/istlsolvers.hh>
-#include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -62,6 +60,39 @@ auto makeAveragingVolume(const Dune::FieldVector<ctype, dim>& center,
     return Dune::MultiLinearGeometry<ctype, dim, dim>{
         Dune::GeometryTypes::cube(dim), corners(center, l)
     };
+}
+
+template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
+auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
+                   std::shared_ptr<MassGG> massGridGeometry,
+                   std::shared_ptr<MomP> momentumProblem,
+                   MomIdx momentumIdx, MassIdx massIdx)
+{
+    Vector dirichletDofs;
+    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+    dirichletDofs = 0.0;
+
+    auto fvGeometry = localView(*momentumGridGeometry);
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        fvGeometry.bind(element);
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary() || !scvf.isFrontal())
+                continue;
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+            if (scv.boundary())
+            {
+                const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
+                for (int i = 0; i < bcTypes.size(); ++i)
+                    if (bcTypes.isDirichlet(i))
+                        dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+            }
+        }
+    }
+
+    return dirichletDofs;
 }
 
 int main(int argc, char** argv)
@@ -142,14 +173,26 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the linear solver
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
-
-    // solve the non-linear system
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-    nonLinearSolver.solve(x);
+    // the linearize and solve
+    if (getParam<bool>("LinearSolver.UseIterativeSolver", true))
+    {
+        using Matrix = typename Assembler::JacobianMatrix;
+        using Vector = typename Assembler::ResidualType;
+        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
+    else
+    {
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
 
     // post-processing and output
     vtkWriter.write(1.0);
