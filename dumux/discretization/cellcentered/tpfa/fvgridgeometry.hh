@@ -315,6 +315,17 @@ private:
 
                     hasBoundaryScvf_[eIdx] = true;
                 }
+                else
+                {
+                    scvfs_.emplace_back(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        ScvfGridIndexStorage({eIdx, static_cast<GridIndexType>(this->gridView().size(0) + numBoundaryScvf_++)}),
+                                        true);
+                    scvfsIndexSet.push_back(scvfIdx++);
+
+                    hasBoundaryScvf_[eIdx] = true;
+                }
             }
 
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
