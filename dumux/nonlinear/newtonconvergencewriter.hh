@@ -20,8 +20,13 @@
 
 namespace Dumux {
 
-//! provide an interface as a form of type erasure
-//! this is the minimal requirements a convergence write passed to a newton method has to fulfill
+/*!
+ * \ingroup Nonlinear
+ * \brief A convergence writer interface
+ * Provide an interface that show the minimal requirements a convergence write passed to a newton method has to fulfill
+ * \note This is used together with a Newton solver, see documentation of the Newton solver for
+ *       more information on how to use this class.
+ */
 template <class SolutionVector, class ResidualVector>
 struct ConvergenceWriterInterface
 {
@@ -33,10 +38,8 @@ struct ConvergenceWriterInterface
 /*!
  * \ingroup Nonlinear
  * \brief Writes the intermediate solutions for every Newton iteration
- * \note To use this create a shared_ptr to an instance of this class in the main file
- *       and pass it to newton.solve(x, convergencewriter). You can use the reset method
- *       to write out multiple Newton solves with a unique id, if you don't call use all
- *       Newton iterations just come after each other in the pvd file.
+ * \note This is used together with a Newton solver, see documentation of the Newton solver for
+ *       more information on how to use this class.
  */
 template <class GridGeometry, class SolutionVector, class ResidualVector>
 class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector, ResidualVector>

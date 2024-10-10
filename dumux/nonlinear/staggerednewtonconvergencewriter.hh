@@ -26,10 +26,8 @@ namespace Dumux {
 /*!
  * \ingroup Nonlinear
  * \brief Writes the intermediate solutions for every Newton iteration (for staggered grid scheme)
- * \note To use this create a shared_ptr to an instance of this class in the main file
- *       and pass it to newton.solve(x, convergencewriter). You can use the reset method
- *       to write out multiple Newton solves with a unique id, if you don't call use all
- *       Newton iterations just come after each other in the pvd file.
+ * \note This is used together with a Newton solver, see documentation of the Newton solver for
+ *       more information on how to use this class.
  */
 template <class GridGeometry, class SolutionVector, class ResidualVector>
 class StaggeredNewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector, ResidualVector>
