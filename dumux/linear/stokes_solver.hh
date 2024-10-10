@@ -348,9 +348,9 @@ public:
         params_ = LinearSolverParameters<LinearSolverTraits<VelocityGG>>::createParameterTree(this->paramGroup());
         density_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDensity");
 
-        if(hasParamInGroup(this->paramGroup(), "Component.LiquidDynamicViscosity"))
+        if (hasParamInGroup(this->paramGroup(), "Component.LiquidDynamicViscosity"))
             viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidDynamicViscosity");
-        else if(hasParamInGroup(this->paramGroup(), "Component.LiquidKinematicViscosity"))
+        else if (hasParamInGroup(this->paramGroup(), "Component.LiquidKinematicViscosity"))
             viscosity_ = getParamFromGroup<double>(this->paramGroup(), "Component.LiquidKinematicViscosity") * density_;
         else
             DUNE_THROW(ParameterException, "Stokes solver requires parameters"
