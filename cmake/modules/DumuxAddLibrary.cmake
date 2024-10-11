@@ -13,7 +13,7 @@ function(dumux_add_library)
 
   # since dune 2.10 dune libraries may have a namespace
   if(DUNE_COMMON_VERSION VERSION_GREATER_EQUAL 2.10)
-    set(DUNE_ADD_LIB_ARGS "${DUNE_ADD_LIB_ARGS} NAMESPACE DuMux::")
+    set(DUNE_ADD_LIB_ARGS "${DUNE_ADD_LIB_ARGS};NAMESPACE DuMux::")
   endif()
 
   # forward to dune library creation
