@@ -1,5 +1,5 @@
 [Problem]
-Name = incompressible
+Name = periodic
 
 [Grid]
 File = periodic.dgf
