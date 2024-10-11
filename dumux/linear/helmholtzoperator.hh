@@ -281,7 +281,7 @@ auto makeHelmholtzMatrix(const GridView& gridView, const Scalar a = 1.0, const S
  */
 template<class Discretization, class GridView, class Scalar>
 auto makeLaplaceMatrix(const GridView& gridView, const Scalar a = 1.0)
-{ return createHelmholtzMatrix(gridView, a, 0.0); };
+{ return makeHelmholtzMatrix<Discretization>(gridView, a, 0.0); };
 
 template<class LinearOperator, class Discretization, class GridView, class Scalar>
 std::shared_ptr<LinearOperator> makeHelmholtzLinearOperator(const GridView& gridView, const Scalar a, const Scalar b)
