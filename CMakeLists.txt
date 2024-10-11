@@ -51,6 +51,8 @@ endif()
 # start a dune project with information from dune.module
 dune_project()
 
+
+include(DumuxAddLibrary)
 # Create a dune library exported as DuMux::DuMux
 dumux_add_library(dumux INTERFACE EXPORT_NAME DuMux)
 
