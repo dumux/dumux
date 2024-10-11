@@ -2,8 +2,15 @@
 #ifndef DUMUX_IO_GRID_PERIODICITY_HELPER_HH
 #define DUMUX_IO_GRID_PERIODICITY_HELPER_HH
 
-#include <dune/grid/spgrid.hh>
-#include <dune/subgrid/subgrid.hh>
+// forward declare
+namespace Dune {
+
+template<class ct, int dim, template< int > class Ref, class Comm>
+class SPGrid;
+
+template<int dim, class HostGrid, bool MapIndexStorage>
+class SubGrid;
+} // end namespace Dune
 
 namespace Dumux {
 
