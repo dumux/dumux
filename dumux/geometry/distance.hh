@@ -13,10 +13,10 @@
 #define DUMUX_GEOMETRY_DISTANCE_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/integrate.hh>
 
 namespace Dumux {
 
@@ -30,11 +30,7 @@ averageDistancePointGeometry(const typename Geometry::GlobalCoordinate& p,
                              const Geometry& geometry,
                              std::size_t integrationOrder = 2)
 {
-    typename Geometry::ctype avgDist = 0.0;
-    const auto& quad = Dune::QuadratureRules<typename Geometry::ctype, Geometry::mydimension>::rule(geometry.type(), integrationOrder);
-    for (const auto& qp : quad)
-        avgDist += (geometry.global(qp.position())-p).two_norm()*qp.weight()*geometry.integrationElement(qp.position());
-    return avgDist/geometry.volume();
+    return integralAverage( [&](const auto& pos){ return (geometry.global(pos)-p).two_norm(); }, geometry, integrationOrder);
 }
 
 /*!
@@ -267,11 +263,7 @@ averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
                                const Geometry& geometry,
                                std::size_t integrationOrder = 2)
 {
-    typename Geometry::ctype avgDist = 0.0;
-    const auto& quad = Dune::QuadratureRules<typename Geometry::ctype, Geometry::mydimension>::rule(geometry.type(), integrationOrder);
-    for (const auto& qp : quad)
-        avgDist += distancePointSegment(geometry.global(qp.position()), a, b)*qp.weight()*geometry.integrationElement(qp.position());
-    return avgDist/geometry.volume();
+    return integralAverage( [&](const auto& pos){ return distancePointSegment(geometry.global(pos), a, b); }, geometry, integrationOrder);
 }
 
 /*!
