@@ -19,6 +19,7 @@
 
 // make the local view function available whenever we use the grid geometry
 #include <dumux/discretization/localview.hh>
+#include <dumux/io/grid/periodicityhelper.hh>
 
 namespace Dumux {
 
@@ -64,6 +65,8 @@ public:
     using ElementMapper = typename BaseImplementation::ElementMapper;
     //! export the vertex mapper type
     using VertexMapper = typename BaseImplementation::VertexMapper;
+
+    using SupportsPeriodicity = Detail::SupportsPeriodicity<Grid>;
 
     /*!
      * \ingroup Discretization
