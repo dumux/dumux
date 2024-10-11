@@ -24,6 +24,8 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/stokes_solver.hh>
 
+#include <dumux/linear/incompressiblestokessolver.hh>
+
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
@@ -154,11 +156,13 @@ int main(int argc, char** argv)
     // the linearize and solve
     if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
     {
-        using Matrix = typename Assembler::JacobianMatrix;
-        using Vector = typename Assembler::ResidualType;
-        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
-        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        using M = typename Assembler::JacobianMatrix;
+        using V = typename Assembler::ResidualType;
+        using LinearSolver = IncompressibleStokesSolver<M, V, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<V>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+
         auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+
         using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
         nonLinearSolver.solve(x);
