@@ -6,6 +6,7 @@ set(modules
   AddInputFileLinks.cmake
   AddKokkosFlags.cmake
   AddOpenMPFlags.cmake
+  DumuxAddLibrary.cmake
   DumuxDoxygen.cmake
   DumuxMacros.cmake
   DumuxTestMacros.cmake

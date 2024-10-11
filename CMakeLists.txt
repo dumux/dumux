@@ -50,11 +50,21 @@ endif()
 
 # start a dune project with information from dune.module
 dune_project()
-if (DUMUX_HAVE_STD_FORMAT)
-  dune_enable_all_packages(MODULE_LIBRARIES dumux)
-else()
-  dune_enable_all_packages(MODULE_LIBRARIES dumux dumux_fmt)
+
+
+include(DumuxAddLibrary)
+# Create a dune library exported as DuMux::DuMux
+dumux_add_library(dumux EXPORT_NAME DuMux)
+
+if (NOT DUMUX_HAVE_STD_FORMAT)
+  dumux_add_library(dumux_fmt EXPORT_NAME DuMux::fmt)
+  target_link_libraries(dumux INTERFACE dumux_fmt)
 endif()
+# Enable all dune registered packages on the 'dumux' library.
+dune_target_enable_all_packages(dumux)
+
+# Make 'dumux' library global for this project. Any target built within this module will be linked against the 'dumux' library.
+link_libraries(dumux)
 
 target_compile_features(dumux PUBLIC cxx_std_20)
 
