@@ -55,8 +55,6 @@ public:
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
     {
-        if (!intersection.neighbor())
-            return false;
         const auto& hostElement = subGrid_.template getHostEntity<0>(intersection.inside());
         for (const auto& hostIntersection : intersections(subGrid_.getHostGrid().leafGridView(), hostElement))
         {
