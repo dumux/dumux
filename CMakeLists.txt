@@ -54,7 +54,7 @@ dune_project()
 
 include(DumuxAddLibrary)
 # Create a dune library exported as DuMux::DuMux
-dumux_add_library(dumux INTERFACE EXPORT_NAME DuMux)
+dumux_add_library(dumux EXPORT_NAME DuMux)
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_fmt EXPORT_NAME DuMux::fmt)
