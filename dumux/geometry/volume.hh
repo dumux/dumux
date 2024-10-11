@@ -158,12 +158,20 @@ auto convexPolytopeVolume(const Geometry& geo)
 template<class Geometry>
 auto volume(const Geometry& geo, unsigned int integrationOrder = 4)
 {
-    using ctype = typename Geometry::ctype;
-    ctype volume = 0.0;
-    const auto rule = Dune::QuadratureRules<ctype, Geometry::mydimension>::rule(geo.type(), integrationOrder);
-    for (const auto& qp : rule)
-        volume += geo.integrationElement(qp.position())*qp.weight();
-    return volume;
+
+    if(geo.affine() && !geo.type().isNone())
+    {
+        return convexPolytopeVolume(geo);
+    }
+    else
+    {
+        using ctype = typename Geometry::ctype;
+        ctype volume = 0.0;
+        const auto rule = Dune::QuadratureRules<ctype, Geometry::mydimension>::rule(geo.type(), integrationOrder);
+        for (const auto& qp : rule)
+            volume += geo.integrationElement(qp.position())*qp.weight();
+        return volume;
+    }
 }
 
 /*!
