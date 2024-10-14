@@ -214,20 +214,6 @@ public:
     /*!
      * \brief Specifies if the solver ought to be chatty.
      */
-    [[deprecated("Will be removed after release 3.9. Use setVerbosity(int).")]]
-    void setVerbose(bool val)
-    { verbosity_ = val ? 1 : 0; }
-
-    /*!
-     * \brief Returns true if the solver ought to be chatty.
-     */
-    [[deprecated("Will be removed after release 3.9. Use int verbsity().")]]
-    bool verbose() const
-    { return verbosity_ > 0; }
-
-    /*!
-     * \brief Specifies if the solver ought to be chatty.
-     */
     void setVerbosity(int val)
     { verbosity_ = val; }
 
