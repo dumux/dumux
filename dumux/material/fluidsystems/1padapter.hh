@@ -279,6 +279,16 @@ public:
         assert(phaseIdx == 0);
         return MultiPhaseFluidSystem::heatCapacity(adaptFluidState(fluidState), phase);
     }
+
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx,
+                                int phaseIdx = 0)
+    {
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::vaporPressure(adaptFluidState(fluidState), compIdx);
+    }
+
 };
 
 } // namespace FluidSystems
