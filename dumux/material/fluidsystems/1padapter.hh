@@ -279,6 +279,20 @@ public:
         assert(phaseIdx == 0);
         return MultiPhaseFluidSystem::heatCapacity(adaptFluidState(fluidState), phase);
     }
+
+    /*!
+     * \brief Vapor pressure of a component \f$\mathrm{[Pa]}\f$.
+     *
+     * \param fluidState The fluid state
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar vaporPressure(const FluidState &fluidState,
+                                int compIdx)
+    {
+        return MultiPhaseFluidSystem::vaporPressure(adaptFluidState(fluidState),
+                                                    AdapterPolicy::compIdx(compIdx));
+    }
 };
 
 } // namespace FluidSystems
