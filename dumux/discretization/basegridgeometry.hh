@@ -65,7 +65,7 @@ public:
     using ElementMapper = typename BaseImplementation::ElementMapper;
     //! export the vertex mapper type
     using VertexMapper = typename BaseImplementation::VertexMapper;
-
+    //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = Detail::SupportsPeriodicity<Grid>;
 
     /*!
