@@ -34,6 +34,8 @@
 #include <dumux/discretization/facecentered/diamond/fvelementgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 
+#include <dumux/io/grid/periodicityhelper.hh>
+
 namespace Dumux {
 
 namespace Detail {
@@ -111,6 +113,7 @@ public:
     : ParentType(gridView)
     , dofMapper_(gridView, Dune::mcmgLayout(Dune::Codim<1>{}))
     , cache_(*this)
+    , periodicityHelper_(this->gridView().grid())
     {
         update_();
     }
@@ -373,7 +376,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return intersection.boundary() && intersection.neighbor();
+        return periodicityHelper_.isPeriodic(intersection);
     }
 
     // faces on the boundary
@@ -391,6 +394,8 @@ private:
     const FeCache feCache_;
 
     Cache cache_;
+
+    const PeriodicityHelper<typename GridView::Grid>& periodicityHelper_;
 };
 
 } // end namespace Dumux
