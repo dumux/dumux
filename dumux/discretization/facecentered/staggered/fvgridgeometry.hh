@@ -147,7 +147,6 @@ public:
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
     : ParentType(std::move(gg))
     , intersectionMapper_(this->gridView())
-    , periodicityHelper_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -492,7 +491,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return periodicityHelper_.isPeriodic(intersection);
+        return this->periodicityHelper_.isPeriodic(intersection);
     }
 
     // mappers
@@ -510,8 +509,6 @@ private:
 
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
-
-    const PeriodicityHelper<typename GridView::Grid> periodicityHelper_;
 };
 
 /*!
@@ -571,7 +568,6 @@ public:
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
     : ParentType(std::move(gg))
     , intersectionMapper_(this->gridView())
-    , periodicityHelper_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -798,7 +794,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return periodicityHelper_.isPeriodic(intersection);
+        return this->periodicityHelper_.isPeriodic(intersection);
     }
 
     // mappers
@@ -817,8 +813,6 @@ private:
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
     std::unordered_map<GridIndexType, GridIndexType> outsideVolVarIndices_;
-
-    const PeriodicityHelper<typename GridView::Grid> periodicityHelper_;
 };
 
 } // end namespace Dumux

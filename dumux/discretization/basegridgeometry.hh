@@ -74,6 +74,7 @@ public:
      */
     BaseGridGeometry(std::shared_ptr<BaseImplementation> impl)
     : impl_(std::move(impl))
+    , periodicityHelper_(this->gridView().grid())
     {}
 
     /*!
@@ -177,6 +178,10 @@ private:
 
     //! if the grid geometry has periodic boundaries
     bool periodic_ = false;
+
+protected:
+    //! Grid-specific helper to check intersections for periodicity
+    const PeriodicityHelper<Grid> periodicityHelper_;
 };
 
 } // end namespace Dumux
