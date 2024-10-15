@@ -375,7 +375,7 @@ private:
                 }
 
                 // inform the grid geometry if we have periodic boundaries
-                else if (intersection.boundary() && intersection.neighbor())
+                else if (this->periodicityHelper_.isPeriodic(intersection))
                 {
                     this->setPeriodic();
 
@@ -394,7 +394,7 @@ private:
                         for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
                             // only check periodic vertices of the periodic neighbor
-                            if (isOutside.boundary() && isOutside.neighbor())
+                            if (this->periodicityHelper_.isPeriodic(isOutside))
                             {
                                 const auto fIdxOutside = isOutside.indexInInside();
                                 const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);

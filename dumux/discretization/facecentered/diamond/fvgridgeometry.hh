@@ -373,7 +373,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return intersection.boundary() && intersection.neighbor();
+        return this->periodicityHelper.isPeriodic(intersection);
     }
 
     // faces on the boundary
