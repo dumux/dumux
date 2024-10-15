@@ -22,6 +22,7 @@
 #endif
 
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
@@ -36,10 +37,15 @@
 #define FVGEOMCACHING 0
 #endif
 
+#ifndef USESUBGRID
+#define USESUBGRID 0
+#endif
+
 namespace Dumux::Properties {
 namespace TTag {
 struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
 struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
+struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -47,9 +53,13 @@ struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressib
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePIncompressible> {
     using HostGrid = Dune::SPGrid<double, 2>;
+#if HAVE_DUNE_SUBGRID && USESUBGRID
     using type = Dune::SubGrid<2, HostGrid>;
+#else
+    using type = HostGrid;
+#endif // SUBGRID
 };
-#endif
+#endif // HAVE_DUNE_SPGRID
 
 // Set the problem type
 template<class TypeTag>
