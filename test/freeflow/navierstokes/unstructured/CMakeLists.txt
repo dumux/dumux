@@ -80,6 +80,6 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa_p
                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS      --script fuzzy --zeroThreshold {"process rank":100}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/s0003-test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa_parallel-00001.pvtu
-                             --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0005-test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 5 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa_parallel -Problem.EnableInertiaTerms false -LinearSolver.UseIterativeSolver true")

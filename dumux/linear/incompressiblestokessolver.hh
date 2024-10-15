@@ -139,6 +139,20 @@ private:
         if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", false))
             symmetrizeConstraints(A, b, dirichletDofs_);
 
+        // print out matrix before making it consistent
+        {
+            int rank = pGridGeometry_->gridView().comm().rank();
+            using namespace Dune::Indices;
+            std::ofstream a00(std::to_string(rank) + "A00.txt");
+            Dune::printSparseMatrix(a00, A[_0][_0], "", "", 10);
+            std::ofstream a01(std::to_string(rank) + "A01.txt");
+            Dune::printSparseMatrix(a01, A[_0][_1], "", "", 10);
+            std::ofstream a10(std::to_string(rank) + "A10.txt");
+            Dune::printSparseMatrix(a10, A[_1][_0], "", "", 10);
+            std::ofstream a11(std::to_string(rank) + "A11.txt");
+            Dune::printSparseMatrix(a11, A[_1][_1], "", "", 10);
+        }
+
         // make matrix and right-hand side consistent
         {
             using namespace Dune::Indices;
@@ -146,6 +160,28 @@ private:
             using U = std::decay_t<decltype(std::declval<Vector>()[_0])>;
             using PTraits = typename LinearSolverTraits<VelocityGG>::template ParallelNonoverlapping<M, U>;
             prepareLinearAlgebraParallel<LinearSolverTraits<VelocityGG>, PTraits>(A[_0][_0], b[_0], *pHelperVelocity_);
+            using MC = std::decay_t<decltype(std::declval<Matrix>()[_0][_1])>;
+            using RowDofMapper = std::decay_t<decltype(pHelperVelocity_->dofMapper())>;
+            static constexpr int rowDofCodim = 1;
+            using ColDofMapper = std::decay_t<decltype(pHelperPressure_->dofMapper())>;
+            static constexpr int colDofCodim = 0;
+            using GV = std::decay_t<decltype(pHelperVelocity_->gridView())>;
+            auto h = ParallelCouplingMatrixHelper<MC, GV, RowDofMapper, rowDofCodim, ColDofMapper, colDofCodim>(pHelperVelocity_->gridView(), pHelperVelocity_->dofMapper());
+            h.sumEntries(A[_0][_1], *pGridGeometry_);
+        }
+
+        // print out matrix after making it consistent
+        {
+            int rank = pGridGeometry_->gridView().comm().rank();
+            using namespace Dune::Indices;
+            std::ofstream a00c(std::to_string(rank) + "A00c.txt");
+            Dune::printSparseMatrix(a00c, A[_0][_0], "", "", 10);
+            std::ofstream a01c(std::to_string(rank) + "A01c.txt");
+            Dune::printSparseMatrix(a01c, A[_0][_1], "", "", 10);
+            std::ofstream a10c(std::to_string(rank) + "A10c.txt");
+            Dune::printSparseMatrix(a10c, A[_1][_0], "", "", 10);
+            std::ofstream a11c(std::to_string(rank) + "A11c.txt");
+            Dune::printSparseMatrix(a11c, A[_1][_1], "", "", 10);
         }
 
         // make Matrix symmetric
@@ -215,7 +251,7 @@ private:
         forEach(std::make_index_sequence<Matrix::N()>(), [&](const auto i) {
             forEach(std::make_index_sequence<Matrix::M()>(), [&](const auto j) {
                 if (A[i][j].nonzeroes() > 0)
-                    Dune::printmatrix(std::cout, A[i][j], "A" + std::to_string(i()) + std::to_string(j()), "");
+                    Dune::printSparseMatrix(std::cout, A[i][j], "A" + std::to_string(i()) + std::to_string(j()), "");
                 else
                     std::cout << "A" << i() << j() << ": 0" << std::endl;
             });

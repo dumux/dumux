@@ -1,5 +1,8 @@
 [Grid]
-File = cylinder_channel.msh
+#File = cylinder_channel.msh
+LowerLeft = 0 0
+UpperRight = 2.2 0.41
+Cells = 10 3
 
 [Problem]
 Name = benchmark_stationary
