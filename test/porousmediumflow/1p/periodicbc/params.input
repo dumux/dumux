@@ -1,10 +1,8 @@
 [Problem]
-Name = incompressible
+Name = periodic
 
 [Grid]
-UpperRight = 1 1
-Cells = 100 100
-Periodic = 1 0
+File = periodic.dgf
 
 [Source]
 Position = 0.1 0.5

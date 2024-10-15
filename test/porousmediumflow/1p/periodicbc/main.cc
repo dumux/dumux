@@ -59,15 +59,15 @@ int main(int argc, char** argv)
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    auto selector = [](const auto& element)
-    {
-        const auto& center = element.geometry().center();
-        return std::pow(center[0]-0.8, 2) + std::pow(center[1]-1.0, 2) > 1.0/9.0;
-    };
-
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     auto gridManager = GridManager<Grid>();
+
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    auto selector = [](const auto& element) { return true; };
     gridManager.init(selector);
+#else
+    gridManager.init();
+#endif
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
