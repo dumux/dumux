@@ -97,6 +97,8 @@ public:
     using GridView = GV;
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
+    //! the mpfa discretization does not support periodicity
+    struct SupportsPeriodicity : public std::false_type {};
 
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCMpfa;
@@ -488,6 +490,8 @@ public:
     using GridView = GV;
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
+    //! the mpfa discretization does not support periodicity
+    struct SupportsPeriodicity : public std::false_type {};
 
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCMpfa;

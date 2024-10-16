@@ -207,6 +207,8 @@ public:
     using GridView = GV;
     //! export the dof type indices
     using DofTypeIndices = typename T::DofTypeIndices;
+    //! the staggered discretization does not support periodicity
+    struct SupportsPeriodicity : public std::false_type {};
 
     //! return a integral constant for cell center dofs
     static constexpr auto cellCenterIdx()
@@ -496,6 +498,8 @@ public:
     using GridView = GV;
     //! export the dof type indices
     using DofTypeIndices = typename T::DofTypeIndices;
+    //! the staggered discretization does not support periodicity
+    struct SupportsPeriodicity : public std::false_type {};
 
     //! return a integral constant for cell center dofs
     static constexpr auto cellCenterIdx()
