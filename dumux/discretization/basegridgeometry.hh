@@ -54,6 +54,7 @@ class BaseGridGeometry
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using Element = typename GV::template Codim<0>::Entity;
     using BaseImplementation = BasicGridGeometry_t<GV, Traits>;
+    using PeriodicityHelper_t = PeriodicityHelper<typename GV::Grid>;
 public:
     //! export the grid type
     using Grid = typename BaseImplementation::Grid;
@@ -66,7 +67,7 @@ public:
     //! export the vertex mapper type
     using VertexMapper = typename BaseImplementation::VertexMapper;
     //! export whether the grid(geometry) supports periodicity
-    using SupportsPeriodicity = Detail::SupportsPeriodicity<Grid>;
+    using SupportsPeriodicity = typename PeriodicityHelper_t::SupportsPeriodicity;
 
     /*!
      * \ingroup Discretization
@@ -181,7 +182,7 @@ private:
 
 protected:
     //! Grid-specific helper to check intersections for periodicity
-    const PeriodicityHelper<Grid> periodicityHelper_;
+    const PeriodicityHelper_t periodicityHelper_;
 };
 
 } // end namespace Dumux
