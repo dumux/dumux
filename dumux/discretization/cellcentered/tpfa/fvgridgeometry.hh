@@ -102,6 +102,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCTpfa;
@@ -412,6 +414,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCTpfa;

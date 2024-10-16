@@ -107,6 +107,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export the finite element cache type
     using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")

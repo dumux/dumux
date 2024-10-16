@@ -142,6 +142,8 @@ public:
     using StaticInformation = typename Traits::StaticInfo;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
@@ -566,6 +568,8 @@ public:
     using StaticInformation = typename Traits::StaticInfo;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")

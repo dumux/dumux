@@ -114,6 +114,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
@@ -471,6 +473,8 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)

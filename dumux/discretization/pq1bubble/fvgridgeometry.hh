@@ -126,6 +126,8 @@ public:
     using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
     //! export the grid view type
     using GridView = GV;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
 
     //! Constructor
     PQ1BubbleFVGridGeometry(const GridView gridView)

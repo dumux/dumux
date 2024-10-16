@@ -14,20 +14,11 @@ class SubGrid;
 
 namespace Dumux {
 
-namespace Detail {
-template<class Grid>
-struct SupportsPeriodicity : public std::false_type {};
-
-template<class ct, int dim, template< int > class Ref, class Comm>
-struct SupportsPeriodicity<Dune::SPGrid<ct, dim, Ref, Comm>> : public std::true_type {};
-
-template<int dim, class HostGrid, bool MapIndexStorage>
-struct SupportsPeriodicity<Dune::SubGrid<dim, HostGrid, MapIndexStorage>> : public SupportsPeriodicity<HostGrid> {};
-} // end namespace Detail
-
 template<typename Grid>
 struct PeriodicityHelper
 {
+    struct SupportsPeriodicity : public std::false_type {};
+
     PeriodicityHelper<Grid>() {};
 
     PeriodicityHelper<Grid>(const Grid& grid) {};
@@ -45,6 +36,8 @@ struct PeriodicityHelper<Dune::SPGrid<ct, dim, Ref, Comm>>
 private:
     using Grid = Dune::SPGrid<ct, dim, Ref, Comm>;
 public:
+    struct SupportsPeriodicity : public std::true_type {};
+
     PeriodicityHelper<Grid>() {};
 
     PeriodicityHelper<Grid>(const Grid& grid) {};
@@ -67,6 +60,8 @@ private:
     const PeriodicityHelper<HostGrid> hostHelper_;
 
 public:
+    struct SupportsPeriodicity : public PeriodicityHelper<HostGrid>::SupportsPeriodicity {};
+
     PeriodicityHelper<Grid> (const Grid& subGrid)
         : subGrid_(subGrid), hostHelper_(subGrid_.getHostGrid()) {};
 
