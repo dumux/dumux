@@ -23,6 +23,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -59,7 +60,13 @@ int main(int argc, char** argv)
 
     // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
+
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    auto selector = [](const auto& element) { return true; };
+    gridManager.init(selector);
+#else
     gridManager.init();
+#endif
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid

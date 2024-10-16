@@ -128,7 +128,7 @@ public:
         for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
         {
             const auto center = intersection.geometry().center();
-            if (intersection.boundary() && intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+            if (intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
                 values.set(0);
         }
 
