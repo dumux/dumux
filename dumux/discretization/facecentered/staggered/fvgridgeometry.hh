@@ -35,8 +35,6 @@
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dumux/discretization/facecentered/staggered/localintersectionindexmapper.hh>
 
-#include <dumux/io/grid/periodicityhelper.hh>
-
 namespace Dumux {
 
 /*!
