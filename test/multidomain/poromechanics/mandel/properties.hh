@@ -29,6 +29,7 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/geomechanics/poroelastic/couplingmanager.hh>
 
+#include "simplecompressibleh2o.hh"
 #include "spatialparams_1p.hh"
 #include "spatialparams_poroelastic.hh"
 
@@ -47,8 +48,8 @@ struct OnePSub { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::OnePSub>
 {
-    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
+    using type = Dumux::FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
+            Dumux::Components::SimpleCompressibleH2O<GetPropType<TypeTag, Properties::Scalar>>>;
 };
 
 // Set the grid type
@@ -82,8 +83,8 @@ struct Problem<TypeTag, TTag::PoroElasticSub> { using type = Dumux::PoroElasticS
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::PoroElasticSub>
 {
-    using type = Dumux::FluidSystems::OnePLiquid< GetPropType<TypeTag, Properties::Scalar>,
-                                                  Dumux::Components::Constant<0, GetPropType<TypeTag, Properties::Scalar>> >;
+    using type = Dumux::FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
+            Dumux::Components::SimpleCompressibleH2O<GetPropType<TypeTag, Properties::Scalar>>>;
 };
 
 // The spatial parameters property
