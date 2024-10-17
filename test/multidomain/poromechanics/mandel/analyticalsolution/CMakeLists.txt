@@ -1,0 +1,3 @@
+dune_symlink_to_source_files(FILES "params.input" "pos.txt")
+
+add_executable(test_multidomain_poromechanics_mandel_analyticalsolution test_analyticalsolution.cc)
