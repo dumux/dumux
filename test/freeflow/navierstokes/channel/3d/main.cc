@@ -141,6 +141,7 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+    vtkWriter.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "deltaP");
     vtkWriter.write(0.0);
 
     // the linear solver
