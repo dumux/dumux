@@ -12,6 +12,7 @@ function(dumux_add_library)
   endif()
 
   # since dune 2.10 dune libraries may have a namespace
+  message("DUNE_COMMON_VERSION=${DUNE_COMMON_VERSION}")
   if(DUNE_COMMON_VERSION VERSION_GREATER_EQUAL 2.10)
     set(DUNE_ADD_LIB_ARGS "${DUNE_ADD_LIB_ARGS};NAMESPACE;DuMux::")
   endif()
