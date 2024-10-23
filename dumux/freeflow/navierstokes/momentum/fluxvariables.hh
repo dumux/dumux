@@ -173,7 +173,7 @@ public:
         static const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
 
         const auto mu = this->problem().effectiveViscosity(this->element(), this->fvGeometry(), this->scvFace());
-        result -= factor * mu * velGradII * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor() * scvf.directionSign();
+        result -= factor * mu * velGradII * Extrusion::area(fvGeometry, scvf) * extrusionFactor_(elemVolVars, scvf) * scvf.directionSign();
 
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
@@ -187,7 +187,7 @@ public:
                     divergence += VelocityGradients::velocityGradII(fvGeometry, otherFrontalScvf, elemVolVars);
             }
 
-            result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+            result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(fvGeometry, scvf) * extrusionFactor_(elemVolVars, scvf);
         }
 
         return result;
@@ -250,7 +250,7 @@ public:
         }
 
         // Account for the area of the staggered lateral face.
-        return result * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        return result * Extrusion::area(fvGeometry, scvf) * extrusionFactor_(elemVolVars, scvf);
     }
 
     /*!
@@ -278,7 +278,7 @@ public:
 
         // The pressure force needs to take the extruded scvf area into account.
         const auto pressure = this->problem().pressure(this->element(), this->fvGeometry(), scvf);
-        result = pressure*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+        result = pressure*Extrusion::area(this->fvGeometry(), scvf) * extrusionFactor_(this->elemVolVars(), scvf);
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellantion) for the final residual value.
@@ -286,7 +286,7 @@ public:
         // subtract a reference value from the actual pressure contribution. Assuming an axisparallel cartesian grid,
         // scvf.area() will have the same value at both opposing faces such that the reference pressure contribution
         // cancels out in the final residual which combines the pressure contribution of two adjacent elements
-        // We explicitly do extrude the area here because that might yield different results in both elements.
+        // We explicitly do not extrude the area here because that might yield different results in both elements.
         // The multiplication by scvf.area() aims at having a reference value of the same order of magnitude as the actual pressure contribution.
         const auto referencePressure = this->problem().referencePressure(this->element(), this->fvGeometry(), scvf);
         result -= referencePressure*scvf.area();
