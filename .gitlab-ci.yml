@@ -101,7 +101,7 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-12-ubuntu-$UBUNTU_VERSION
     CXX_MAX_STANDARD: "20"
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
