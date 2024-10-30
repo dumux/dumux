@@ -55,6 +55,19 @@ struct CCTpfaDefaultGridGeometryTraits
     //! conformity is assumed. For normal grids, we allow a maximum of one
     //! hanging node per scvf. Use different traits if you need more.
     static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 1<<(GridView::dimension-1);
+
+private:
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+public:
+    //! Whether an intersection has a neighbor (can be used to customize the connectivity)
+    bool neighbor(const Element& element, const Intersection& intersection) const
+    { return intersection.neighbor(); }
+
+    //! Whether an intersection is at a boundary (can be used to customize the connectivity)
+    bool boundary(const Element& element, const Intersection& intersection) const
+    { return intersection.boundary(); }
 };
 
 /*!
@@ -113,6 +126,7 @@ public:
     using GridView = GV;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    //! Requires: Traits have to be default-constructible
     CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
     : ParentType(std::move(gg))
     {
@@ -121,25 +135,25 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
-        update_();
+        update_(Traits{});
     }
 
     //! Constructor from gridView
+    //! Requires: Traits have to be default-constructible
     CCTpfaFVGridGeometry(const GridView& gridView)
     : CCTpfaFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
     {}
 
-    template<class F>
-    CCTpfaFVGridGeometry(const GridView& gridView, F&& f)
+    //! Constructor with a strategy (see default traits implementation for customization points)
+    CCTpfaFVGridGeometry(const GridView& gridView, const Traits& strategy)
     : ParentType(std::make_shared<BasicGridGeometry>(gridView))
-    , boundaryMarker_(std::forward<F>(f))
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
             DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
 
-        update_();
+        update_(strategy);
     }
 
     //! the element mapper is the dofMapper
@@ -171,17 +185,35 @@ public:
 
 
     //! update all fvElementGeometries (call this after grid adaption)
+    //! Requires: Traits have to be default-constructible
     void update(const GridView& gridView)
     {
         ParentType::update(gridView);
-        update_();
+        update_(Traits{});
     }
 
     //! update all fvElementGeometries (call this after grid adaption)
+    //! Requires: Traits have to be default-constructible
     void update(GridView&& gridView)
     {
         ParentType::update(std::move(gridView));
-        update_();
+        update_(Traits{});
+    }
+
+    //! update all fvElementGeometries (call this after grid adaption)
+    //! with a customized strategy
+    void update(const GridView& gridView, const Traits& strategy)
+    {
+        ParentType::update(gridView);
+        update_(strategy);
+    }
+
+    //! update all fvElementGeometries (call this after grid adaption)
+    //! with a customized strategy
+    void update(GridView&& gridView, const Traits& strategy)
+    {
+        ParentType::update(std::move(gridView));
+        update_(strategy);
     }
 
     //! Get a sub control volume with a global scv index
@@ -222,7 +254,7 @@ public:
 
 private:
 
-    void update_()
+    void update_(const Traits& strategy)
     {
         // clear containers (necessary after grid refinement)
         scvs_.clear();
@@ -278,11 +310,10 @@ private:
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 // inner sub control volume faces (includes periodic boundaries)
-                const bool isUserMarkedBoundary = boundaryMarker_ ? boundaryMarker_(element, intersection) : false;
-                if (intersection.neighbor() && !isUserMarkedBoundary)
+                if (strategy.neighbor(element, intersection))
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (strategy.boundary(element, intersection))
                         this->setPeriodic();
 
                     if constexpr (dim == dimWorld)
@@ -315,8 +346,9 @@ private:
                         }
                     }
                 }
+
                 // boundary sub control volume faces
-                else if (intersection.boundary() || isUserMarkedBoundary)
+                else if (strategy.boundary(element, intersection))
                 {
                     if constexpr (dim == dimWorld)
                     {
@@ -393,10 +425,6 @@ private:
         DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
     }
 
-    template<class Func>
-    void setBoundaryMarker(Func&& func)
-    { boundaryMarker_ = std::forward<Func>(func); }
-
     //! connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
@@ -409,8 +437,6 @@ private:
 
     //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<GridIndexType>> flipScvfIndices_;
-
-    std::function<bool(const Element&, const Intersection&)> boundaryMarker_;
 };
 
 /*!

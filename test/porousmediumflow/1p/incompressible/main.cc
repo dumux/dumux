@@ -18,6 +18,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <memory>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -47,7 +48,9 @@
 
 #include "properties.hh"
 #include "problem.hh"
+
 #include "../internaldirichlet/properties.hh"
+#include "../internalbarrier/properties.hh"
 
 //! Function to write out the scv-wise velocities (overload for mpfa)
 template<class GridGeometry, class GridVariables, class Sol>
@@ -66,6 +69,22 @@ void writeMpfaVelocities(const GridGeometry& gridGeometry,
         writer.write("mpfa_scv_velocities");
     }
 }
+
+namespace Dumux {
+
+// default implementation of a grid geometry factory
+// (can be specialized for tags in other tests)
+template<class TypeTag>
+struct GridGeometryFactory
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+
+    std::unique_ptr<GridGeometry> create(const GridView& gridView) const
+    { return std::make_unique<GridGeometry>(gridView); }
+};
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -106,7 +125,10 @@ int main(int argc, char** argv)
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+
+    // this indirection via a factor is for testing purposes
+    // to be able to customize the grid geometry creation
+    std::shared_ptr<GridGeometry> gridGeometry = GridGeometryFactory<TypeTag>{}.create(leafGridView);
 
     // the problem (boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
