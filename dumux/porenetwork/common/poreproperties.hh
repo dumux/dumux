@@ -86,6 +86,19 @@ inline Scalar volume(Shape shape, Scalar inscribedRadius, Scalar height)
     }
 }
 
+//! Returns the cross-sectional area of a given geometry based on the inscribed radius
+template<class Scalar>
+inline Scalar crossSectionalArea(Shape shape, Scalar inscribedRadius)
+{
+    switch(shape)
+    {
+        case Shape::cube: return 4.0*inscribedRadius*inscribedRadius; break;
+        case Shape::sphere: return M_PI*inscribedRadius*inscribedRadius; break;
+        case Shape::cylinder: return M_PI*inscribedRadius*inscribedRadius; break;
+        default : DUNE_THROW(Dune::NotImplemented, "Unsupported pore body geometry for crossSectionalArea");
+    }
+}
+
 } // end Dumux::PoreNetwork::Pore
 
 #endif
