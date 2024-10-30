@@ -64,7 +64,7 @@ public:
     Scalar extrusionFactor(const Element& element,
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
-    { return extrusionFactorAtPos(scv.dofPosition()); }
+    { return extrusionFactorAtPos(scv.center()); }
 
     /*!
      * \brief Return how much the domain is extruded at a given position.
