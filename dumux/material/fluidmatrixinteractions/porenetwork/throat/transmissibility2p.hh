@@ -85,7 +85,7 @@ struct RansohoffRadke
     };
 
     /*!
-    * \brief Returns the integral conductivity of all wetting layers occupying the corners of a throat
+    * \brief Returns the integral wetting-phase conductivity of all wetting layers occupying the corners of a throat
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar wettingLayerTransmissibility(const Element& element,
@@ -109,7 +109,7 @@ struct RansohoffRadke
     }
 
     /*!
-    * \brief Returns the integral conductivity of all wetting layers at critical status entry pressure
+    * \brief Returns the integral wetting-phase conductivity of all wetting layers at entry pressure
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar entryWettingLayerTransmissibility(const Element& element,
@@ -127,30 +127,6 @@ struct RansohoffRadke
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
             result += fluxVarsCache.entryWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
-
-        return result;
-    }
-
-    /*!
-    * \brief Returns the integral conductivity of all wetting layers at critical status snapoff
-    */
-    template<class Element, class FVElementGeometry, class FluxVariablesCache>
-    static Scalar snapoffWettingLayerTransmissibility(const Element& element,
-                                                      const FVElementGeometry& fvGeometry,
-                                                      const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                                                      const FluxVariablesCache& fluxVarsCache)
-    {
-        const Scalar throatLength = fluxVarsCache.throatLength();
-        const Scalar rC = fluxVarsCache.curvatureRadiusSnapoff(0);
-
-        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
-        const auto numCorners = Throat::numCorners(shape);
-
-        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
-        Scalar result = 0.0;
-        for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.snapoffWettingLayerArea(i) * rC * rC / (throatLength * fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
 
         return result;
     }
@@ -235,8 +211,6 @@ struct BakkeOren
 
     /*!
     * \brief Returns the conductivity of a throat at entry pressure.
-    *
-    * See Bakke & Oren (1997), eq. 9
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar entryNonWettingPhaseTransmissibility(const Element& element,
@@ -255,8 +229,6 @@ struct BakkeOren
 
     /*!
     * \brief Returns the conductivity of a throat at snap-off pressure.
-    *
-    * See Bakke & Oren (1997), eq. 9
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar snapoffNonWettingPhaseTransmissibility(const Element& element,
@@ -274,9 +246,7 @@ struct BakkeOren
     }
 
     /*!
-    * \brief Returns the conductivity of a throat at entry pressure.
-    *
-    * See Bakke & Oren (1997), eq. 9
+    * \brief Returns the derivative of non-wetting phase conductivity with respect to capillary pressure at entry pressure.
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar dKndPcEntry(const Element& element,
@@ -297,9 +267,7 @@ struct BakkeOren
     }
 
     /*!
-    * \brief Returns the conductivity of a throat at snap-off pressure.
-    *
-    * See Bakke & Oren (1997), eq. 9
+    * \brief Returns the derivative o non-wetting conductivity of with respect to capillary pressure at snap-off pressure.
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar dKndPcSnapoff(const Element& element,
