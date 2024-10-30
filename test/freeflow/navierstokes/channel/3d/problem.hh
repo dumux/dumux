@@ -99,7 +99,8 @@ public:
         auto source = Sources(0.0);
         auto globalPos = scv.center();
         Scalar heightRel = 1.;
-        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
+        const static Scalar eps = 1e-6;
+        if(globalPos[0] > 0.001-eps && globalPos[0]< 0.004+eps && globalPos[1] > 0.001-eps && globalPos[1] < 0.004+eps)
         {
             heightRel = relativeFrictionFactorLense_;
         }

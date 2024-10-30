@@ -72,10 +72,13 @@ public:
     Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
     {
         Scalar heightRel = 1.;
-        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
-        {
-            heightRel = relativeExtrusionFactorLens_;
-        }
+        const Scalar eps = 1e-6;
+        if constexpr (enablePseudoThreeDWallFriction)
+            if(globalPos[0] > 0.001-eps && globalPos[0]< 0.004+eps && globalPos[1] > 0.001-eps &&
+                    globalPos[1] < 0.004+eps)
+            {
+                heightRel = relativeExtrusionFactorLens_;
+            }
         return extrusionFactor_*heightRel;
     }
 
