@@ -12,7 +12,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_ff-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_ff-00001.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_pnm.vtp
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_pnm-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_pnm-00001.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p params.input
                                    -Vtk.OutputName test_md_boundary_ff1p_pnm1p")
