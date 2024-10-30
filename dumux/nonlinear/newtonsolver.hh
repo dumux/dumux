@@ -987,6 +987,18 @@ private:
                 // tell the solver that we're done with this iteration
                 newtonEndStep(vars, uLastIter);
 
+                // Some extra checking afte the 3th iteration, can be useful if system contains large gradients, like in the fracture examples.
+                if(enableShiftCriterion_)
+                {
+                    if( (lastShift_-shift_)*(lastShift_-shift_)/(lastShift_*lastShift_) < 0.00000001 && numSteps_> 2)
+                    {
+                        totalWastedIter_ += numSteps_;
+                        std::cout << "Reducing time step due to low shift reduction."<< '\n';
+                        newtonFail(vars);
+                        return false;
+                    }
+                }
+
                 // if a convergence writer was specified compute residual and write output
                 if (convergenceWriter_)
                 {
