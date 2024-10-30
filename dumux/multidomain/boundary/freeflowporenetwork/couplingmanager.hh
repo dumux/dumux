@@ -323,6 +323,16 @@ public:
         return CouplingConditions::interfaceThroatVelocity(fvGeometry, scvf, context);
     }
 
+    auto interfacePoreBodyVelocity(const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                   const typename FVElementGeometry<freeFlowMomentumIndex>::SubControlVolumeFace& scvf) const
+    {
+        const auto& context = this->subCouplingManager(freeFlowMomentumIndex, poreNetworkIndex).couplingContext(
+            fvGeometry, scvf
+        );
+
+        return CouplingConditions::interfacePoreBodyVelocity(fvGeometry, scvf, context);
+    }
+
     // //////////////////////// Conditions for FreeFlowMomentum - FreeFlowMass coupling //////////
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
