@@ -91,6 +91,7 @@ public:
         poreInscribedRadius_.resize(numPores);
         poreLabel_.resize(numPores);
         poreVolume_.resize(numPores);
+        poreCrossSectionalArea_.resize(numPores);
 
         // first check if the same geometry shall be used for all entities ...
         if (hasParamInGroup(gridData.paramGroup(), "Grid.PoreGeometry"))
@@ -123,6 +124,7 @@ public:
                 poreGeometry_[vIdx] = getPoreGeometry_(gridData, vertex);
 
             poreVolume_[vIdx] = getPoreVolume_(gridData, vertex, vIdx);
+            poreCrossSectionalArea_[vIdx] = getPoreCrossSectionalArea_(gridData, vertex, vIdx);
         }
 
         for (const auto& element : elements(gridView))
@@ -215,6 +217,14 @@ public:
     //! Returns the vector of pore volumes
     const std::vector<Scalar>& poreVolume() const
     { return poreVolume_; }
+
+    //! Returns the cross-sectional area of the pore
+    Scalar poreCrossSectionalArea(const GridIndex dofIdxGlobal) const
+    { return poreCrossSectionalArea_[dofIdxGlobal]; }
+
+    //! Returns the vector of pore cross-sectional area
+    const std::vector<Scalar>& poreCrossSectionalArea() const
+    { return poreCrossSectionalArea_; }
 
     //! Returns the inscribed radius of the throat
     Scalar throatInscribedRadius(const GridIndex eIdx) const
@@ -354,6 +364,12 @@ private:
         }
     }
 
+    template<class GridData>
+    Scalar getPoreCrossSectionalArea_(const GridData& gridData, const Vertex& vertex, const std::size_t vIdx) const
+    {
+             return Pore::crossSectionalArea(poreGeometry(vIdx), poreInscribedRadius(vIdx));
+    }
+
     //! automatically determine throat cross-sectional area if not provided by the grid file
     template<class GridData>
     Scalar getThroatCrossSectionalArea_(const GridData& gridData, const Element& element, const std::size_t eIdx) const
@@ -434,6 +450,7 @@ private:
     mutable std::vector<Pore::Shape> poreGeometry_;
     std::vector<Scalar> poreInscribedRadius_;
     std::vector<Scalar> poreVolume_;
+    std::vector<Scalar> poreCrossSectionalArea_;
     std::vector<Label> poreLabel_; // 0:no, 1:general, 2:coupling1, 3:coupling2, 4:inlet, 5:outlet
     std::vector<SmallLocalIndex> coordinationNumber_;
     mutable std::vector<Throat::Shape> throatGeometry_;
