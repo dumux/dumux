@@ -39,6 +39,10 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
+#if USE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#endif
+
 // function to evaluate the element stresses
 template< class StressType,
           class Problem,
@@ -132,8 +136,12 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module and output fields
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+#if USE_GRIDFORMAT
+    IO::OutputModule vtkWriter(*gridVariables, x, problem->name());
+#else
     using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
+#endif
     IOFields::initOutputModule(vtkWriter);
 
     // also, add exact solution to the output
@@ -158,8 +166,8 @@ int main(int argc, char** argv)
 
     for (int dir = 0; dir < dim; ++dir)
     {
-        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir), Vtk::FieldType::element);
-        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir), Vtk::FieldType::element);
+        vtkWriter.addField(sigmaStorage[dir], "sigma_" + std::to_string(dir));
+        vtkWriter.addField(effSigmaStorage[dir], "effSigma_" + std::to_string(dir));
     }
 
     // use convenience function to compute stresses

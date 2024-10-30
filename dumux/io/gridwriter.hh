@@ -16,10 +16,15 @@
 
 #if DUMUX_HAVE_GRIDFORMAT
 
+#include <ranges>
+#include <execution>
 #include <type_traits>
 
 #include <gridformat/gridformat.hpp>
 #include <gridformat/traits/dune.hpp>
+
+#include <dune/common/exceptions.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux::IO {
 
@@ -45,6 +50,12 @@ auto makeWriter(const Grid& grid, const Format& fmt, Args&&... args)
     const auto& comm = GridFormat::Dune::Traits::GridView<Grid>::get(grid).comm();
     return makeParallelWriter(grid, fmt, comm, std::forward<Args>(args)...);
 }
+
+template<typename T>
+concept Container = requires(const T& t) {
+    { t.size() };
+    { t[std::size_t{}] };
+};
 
 } // namespace Detail
 #endif // DOXYGEN
@@ -132,7 +143,6 @@ class GridWriter
     { writer_.set_meta_data("rank", gridView_.comm().rank()); }
 
     /*!
-     * \ingroup InputOutput
      * \brief Write the registered fields into the file with the given name.
      * \note This function throws if the writer was constructed for time series output.
      */
@@ -140,7 +150,6 @@ class GridWriter
     { return writer_.write(name); }
 
     /*!
-     * \ingroup InputOutput
      * \brief Write a step in a time series.
      * \note This function throws if the writer was not constructed for time series output.
      */
@@ -208,6 +217,367 @@ class GridWriter
     Writer writer_;
 };
 
+/*!
+ * \ingroup InputOutput
+ * \brief Generic output module for entity & volume variable fields. Supports a variety of grid file formats.
+ */
+template<typename GridVariables, typename SolutionVector>
+class OutputModule : private GridWriter<typename GridVariables::GridGeometry::GridView, 1> {
+    using ParentType = GridWriter<typename GridVariables::GridGeometry::GridView, 1>;
+    using GridView = typename GridVariables::GridGeometry::GridView;
+
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridVariables::GridGeometry::DiscretizationMethod>;
+    static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
+    using Scalar = typename GridVariables::Scalar;
+    using Vector = Dune::FieldVector<Scalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using VolVar = typename GridVariables::VolumeVariables;
+
+    class VolVarFieldStorage;
+
+ public:
+    using VolumeVariables = VolVar;
+
+    static constexpr auto defaultFileFormat = IO::Format::pvd_with(
+        IO::Format::vtu.with({
+            .encoder = IO::Encoding::ascii,
+            .compressor = IO::Compression::none,
+            .data_format = VTK::DataFormat::inlined
+        })
+    );
+
+    /*!
+     * \brief Constructor for output to the default file format.
+     */
+    explicit OutputModule(const GridVariables& gridVariables,
+                          const SolutionVector& sol,
+                          const std::string& filename)
+    : ParentType{defaultFileFormat, gridVariables.gridGeometry().gridView(), filename, order<1>}
+    , gridVariables_{gridVariables}
+    , solutionVector_{sol}
+    {}
+
+    /*!
+     * \brief Constructor for stationary file formats.
+     * \note This does not compile if the chosen format is not a stationary file format.
+     */
+    template<typename Format>
+    explicit OutputModule(const Format& fmt,
+                          const GridVariables& gridVariables,
+                          const SolutionVector& sol)
+    : ParentType{fmt, gridVariables.gridGeometry().gridView(), order<1>}
+    , gridVariables_{gridVariables}
+    , solutionVector_{sol}
+    {}
+
+    /*!
+     * \brief Constructor for transient file formats, i.e. time series.
+     * \note This does not compile if the chosen format is not a transient file format.
+     */
+    template<typename Format>
+    explicit OutputModule(const Format& fmt,
+                          const GridVariables& gridVariables,
+                          const SolutionVector& sol,
+                          const std::string& filename)
+    : ParentType{fmt, gridVariables.gridGeometry().gridView(), filename, order<1>}
+    , gridVariables_{gridVariables}
+    , solutionVector_{sol}
+    {}
+
+    /*!
+     * \brief Register a volume variable to be added to the output.
+     */
+    template<std::invocable<const VolumeVariables&> VolVarFunction>
+    void addVolumeVariable(VolVarFunction&& f, const std::string& name)
+    {
+        using ResultType = std::invoke_result_t<std::remove_cvref_t<VolVarFunction>, const VolumeVariables&>;
+        if constexpr (GridFormat::Concepts::Scalar<ResultType>)
+            setVolVarField_<ResultType>(name, volVarFields_.registerScalarField(name, [_f=std::move(f)] (const auto& vv) {
+                return static_cast<Scalar>(_f(vv));
+            }));
+        else if constexpr (GridFormat::mdrange_dimension<ResultType> == 1)
+            setVolVarField_<GridFormat::MDRangeScalar<ResultType>>(name, volVarFields_.registerVectorField(name, [_f=std::move(f)] (const auto& vv) {
+                return VolVarFieldStorage::toStorageVector(_f(vv));
+            }));
+        else if constexpr (GridFormat::mdrange_dimension<ResultType> == 2)
+            setVolVarField_<GridFormat::MDRangeScalar<ResultType>>(name, volVarFields_.registerTensorField(name, [_f=std::move(f)] (const auto& vv) {
+                return VolVarFieldStorage::toStorageTensor(_f(vv));
+            }));
+        else
+        {
+            static_assert(
+                Dune::AlwaysFalse<VolVarFunction>::value,
+                "Could not identify the given volume variable as scalar, vector or tensor."
+            );
+        }
+    }
+
+    /*!
+     * \brief Register a dof field, which draws its values from the given container.
+     *        Automatically selects point or cell field depending on the size of the container.
+     */
+    template<Detail::Container C>
+    void addField(const C& values, const std::string& name)
+    { addField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a dof field with the given precision, which draws its values from the given container.
+     *        Automatically selects point or cell field depending on the size of the container.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        const bool hasCellSize = values.size() == gridVariables_.gridGeometry().elementMapper().size();
+        const bool hasPointSize = values.size() == gridVariables_.gridGeometry().vertexMapper().size();
+        if (hasCellSize && hasPointSize)
+            DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of field type failed. Please use addCellField or addPointField instead.");
+        if (!hasCellSize && !hasPointSize)
+            DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of field type failed. Given container size does not match neither the number of points nor cells.");
+
+        if (hasCellSize)
+            addCellField(values, name, prec);
+        else
+            addPointField(values, name, prec);
+    }
+
+    /*!
+     * \brief Register a point field.
+     */
+    template<GridFormat::Concepts::PointFunction<GridView> DofFunction>
+    void addPointField(DofFunction&& f, const std::string& name)
+    { this->setPointField(name, std::forward<DofFunction>(f)); }
+
+    /*!
+     * \brief Register a point field from a container holding its values.
+     */
+    template<Detail::Container C>
+    void addPointField(const C& values, const std::string& name)
+    { addPointField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a point field with the given precision from a container holding its values.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addPointField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        if (values.size() != gridVariables_.gridGeometry().vertexMapper().size())
+            DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of points in the grid");
+
+        this->setPointField(name, [&] (const auto& vertex) {
+            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
+        }, prec);
+    }
+
+    /*!
+     * \brief Register a point field.
+     */
+    template<GridFormat::Concepts::CellFunction<GridView> DofFunction>
+    void addCellField(DofFunction&& f, const std::string& name)
+    { this->setCellField(name, std::forward<DofFunction>(f)); }
+
+    /*!
+     * \brief Register a cell field from a container holding its values.
+     */
+    template<Detail::Container C>
+    void addCellField(const C& values, const std::string& name)
+    { addCellField(values, name, GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}); }
+
+    /*!
+     * \brief Register a cell field with the given precision from a container holding its values.
+     */
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addCellField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        if (values.size() != gridVariables_.gridGeometry().elementMapper().size())
+            DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of cells in the grid");
+
+        this->setCellField(name, [&] (const auto& element) {
+            return values[gridVariables_.gridGeometry().elementMapper().index(element)];
+        }, prec);
+    }
+
+    /*!
+     * \brief Write the registered fields into the file with the given name.
+     */
+    std::string write(const std::string& name)
+    {
+        volVarFields_.updateFieldData(gridVariables_, solutionVector_);
+        auto filename = ParentType::write(name);
+        volVarFields_.clearFieldData();
+        return filename;
+    }
+
+    /*!
+     * \brief Write a step in a time series.
+     */
+    template<std::floating_point T>
+    std::string write(T time)
+    {
+        volVarFields_.updateFieldData(gridVariables_, solutionVector_);
+        auto filename = ParentType::write(time);
+        volVarFields_.clearFieldData();
+        return filename;
+     }
+
+    //! clear all registered data
+    void clear() {
+        ParentType::clear();
+        volVarFields_.clear();
+    }
+
+ private:
+    template<typename ResultType, typename Id>
+    void setVolVarField_(const std::string& name, Id&& volVarFieldId)
+    {
+        auto dofEntityField = [&, _id=std::move(volVarFieldId)] (const auto& entity) {
+            return volVarFields_.getValue(_id, gridVariables_.gridGeometry().dofMapper().index(entity));
+        };
+        if constexpr (isCVFE)
+            this->setPointField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
+        else
+            this->setCellField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
+    }
+
+    const GridVariables& gridVariables_;
+    const SolutionVector& solutionVector_;
+    VolVarFieldStorage volVarFields_;
+};
+
+// Class to store vol var fields; implementation detail of the OutputModule class
+template<typename GridVariables, typename SolutionVector>
+class OutputModule<GridVariables, SolutionVector>::VolVarFieldStorage
+{
+    enum class FieldType
+    { scalar, vector, tensor };
+
+    struct FieldInfo
+    {
+        std::string name;
+        FieldType type;
+        std::size_t index;
+    };
+
+    template<typename T>
+    struct FieldStorage
+    {
+        std::vector<T> data;
+        std::function<T(const VolVar&)> getter;
+    };
+
+public:
+    template<FieldType ft>
+    struct FieldId { std::size_t index; };
+
+    template<std::ranges::range R>
+    static constexpr auto toStorageVector(R&& in)
+    {
+        Vector result;
+        std::ranges::copy(in, result.begin());
+        return result;
+    }
+
+    template<GridFormat::Concepts::MDRange<2> R>
+    static constexpr auto toStorageTensor(R&& in)
+    {
+        Tensor result;
+        std::ranges::for_each(in, [&, i=0] (const auto& row) mutable {
+            std::ranges::copy(row, result[i++].begin());
+        });
+        return result;
+    }
+
+    template<FieldType ft>
+    const auto& getValue(const FieldId<ft>& id, std::size_t idx) const
+    {
+        if constexpr (ft == FieldType::scalar)
+            return scalarFieldStorage_.at(id.index).data.at(idx);
+        else if constexpr (ft == FieldType::vector)
+            return vectorFieldStorage_.at(id.index).data.at(idx);
+        else
+            return tensorFieldStorage_.at(id.index).data.at(idx);
+    }
+
+    auto registerScalarField(std::string name, std::function<Scalar(const VolVar&)> f)
+    { return register_<FieldType::scalar>(std::move(name), scalarFieldStorage_, std::move(f)); }
+
+    auto registerVectorField(std::string name, std::function<Vector(const VolVar&)> f)
+    { return register_<FieldType::vector>(std::move(name), vectorFieldStorage_, std::move(f)); }
+
+    auto registerTensorField(std::string name, std::function<Tensor(const VolVar&)> f)
+    { return register_<FieldType::tensor>(std::move(name), tensorFieldStorage_, std::move(f)); }
+
+    void updateFieldData(const GridVariables& gridVars, const SolutionVector& x)
+    {
+        resizeFieldData_(gridVars.gridGeometry().numDofs());
+        const auto range = GridFormat::cells(gridVars.gridGeometry().gridView());
+        std::for_each(
+            std::execution::par_unseq,
+            std::ranges::begin(range),
+            std::ranges::end(range),
+            [&] (const auto& element) {
+                auto fvGeometry = localView(gridVars.gridGeometry()).bindElement(element);
+                auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, x);
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    const auto& volVars = elemVolVars[scv];
+                    for (auto& s : scalarFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                    for (auto& s : vectorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                    for (auto& s : tensorFieldStorage_) { s.data.at(scv.dofIndex()) = s.getter(volVars); }
+                }
+        });
+    }
+
+    void clearFieldData()
+    {
+        for (auto& s : scalarFieldStorage_) { s.data.clear(); }
+        for (auto& s : vectorFieldStorage_) { s.data.clear(); }
+        for (auto& s : tensorFieldStorage_) { s.data.clear(); }
+    }
+
+    void clear()
+    {
+        fields_.clear();
+        scalarFieldStorage_.clear();
+        vectorFieldStorage_.clear();
+        tensorFieldStorage_.clear();
+    }
+
+private:
+    template<FieldType ft, typename T>
+    auto register_(std::string&& name,
+                   std::vector<FieldStorage<T>>& storage,
+                   std::function<T(const VolVar&)>&& f)
+    {
+        if (exists_<ft>(name))
+            DUNE_THROW(Dune::InvalidStateException, "Volume variables field '" << name << "' is already defined.");
+
+        FieldId<ft> id{storage.size()};
+        fields_.emplace_back(FieldInfo{std::move(name), ft, id.index});
+        storage.push_back({{}, std::move(f)});
+        return id;
+    }
+
+    template<FieldType ft>
+    bool exists_(const std::string& name) const
+    {
+        return std::ranges::any_of(fields_, [&] (const FieldInfo& info) {
+            return info.type == ft && info.name == name;
+        });
+    }
+
+    void resizeFieldData_(std::size_t size)
+    {
+        std::ranges::for_each(scalarFieldStorage_, [&] (auto& s) { s.data.resize(size); });
+        std::ranges::for_each(vectorFieldStorage_, [&] (auto& s) { s.data.resize(size); });
+        std::ranges::for_each(tensorFieldStorage_, [&] (auto& s) { s.data.resize(size); });
+    }
+
+    std::vector<FieldInfo> fields_;
+    std::vector<FieldStorage<Scalar>> scalarFieldStorage_;
+    std::vector<FieldStorage<Vector>> vectorFieldStorage_;
+    std::vector<FieldStorage<Tensor>> tensorFieldStorage_;
+};
+
 } // namespace Dumux::IO
 
 #else // DUMUX_HAVE_GRIDFORMAT
@@ -224,7 +594,24 @@ public:
         static_assert(
             false,
             "GridWriter only available when the GridFormat library is available. "
-            "Use `git submodule init && git submodule update` to pull it."
+            "Use `git submodule update --init` to pull it and reconfigure the project "
+            "(note: C++20 is required)."
+        );
+    }
+};
+
+template<class... Args>
+class OutputModule
+{
+public:
+    template<class... _Args>
+    OutputModule(_Args&&...)
+    {
+        static_assert(
+            false,
+            "OutputModule only available when the GridFormat library is available. "
+            "Use `git submodule update --init` to pull it and reconfigure the project "
+            "(note: C++20 is required)."
         );
     }
 };
