@@ -9,6 +9,7 @@ EnableGravity = false
 Height = 0.00025
 RelativeExtrusionFactorLens = 0.5
 IsLensGeometry = true
+IsStaircaseGeometry = false
 
 [Component]
 LiquidDensity = 1e3

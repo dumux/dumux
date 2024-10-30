@@ -77,8 +77,8 @@ public:
         height_ = getParam<Scalar>("Problem.Height");
         relativeFrictionFactorLense_ = getParam<Scalar>("Problem.RelativeFrictionFactorLense",.5);
 
-        if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
-            DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
+        //if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
+        //    DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
     }
 
     /*!

@@ -65,19 +65,27 @@ int main(int argc, char** argv)
 
 #if HAVE_DUNE_SUBGRID && GRID_DIM == 3
     const bool isLensGeometry = getParam<bool>("Problem.IsLensGeometry", false);
+    const bool isStaircaseGeometry = getParam<bool>("Problem.IsStaircaseGeometry", false);
     const Scalar heightFactor = getParam<Scalar>("Problem.RelativeExtrusionFactorLens", 0.5);
 
     auto selector = [&](const auto& element)
     {
-        if (!isLensGeometry)
-            return true;
-
         const Scalar eps = 1e-8;
         const auto globalPos = element.geometry().center();
-        if(globalPos[0] > 0.001 && globalPos[0]< 0.004 && globalPos[1] > 0.001 && globalPos[1] < 0.004)
-            return (globalPos[2] > (0.00025*0.5*(1.0-heightFactor) - eps) &&
-                    globalPos[2] < (0.00025*(1.0-0.5*heightFactor) + eps));
-        return true;
+        if (isStaircaseGeometry)
+        {
+            const Scalar deltaH = 0.003;
+            return std::abs(globalPos[2] - 0.000125) < 0.000125 * (1.0-0.5*globalPos[0]/0.005) + eps;
+        }
+        else if (isLensGeometry)
+        {
+            if(globalPos[0] > 0.001-eps && globalPos[0]< 0.004+eps && globalPos[1] > 0.001-eps && globalPos[1] < 0.004+eps)
+                return (globalPos[2] > (0.00025*0.5*(1.0-heightFactor) - eps) &&
+                        globalPos[2] < (0.00025*(1.0-0.5*heightFactor) + eps));
+            return true;
+        }
+        else
+            return true;
     };
 
     gridManager.init(selector, "Internal");
