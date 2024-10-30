@@ -94,7 +94,7 @@ inline Scalar crossSectionalArea(Shape shape, Scalar inscribedRadius)
     {
         case Shape::cube: return 4.0*inscribedRadius*inscribedRadius; break;
         case Shape::sphere: return M_PI*inscribedRadius*inscribedRadius; break;
-        case Shape::cylinder return M_PI*inscribedRadius*inscribedRadius; break;
+        case Shape::cylinder: return M_PI*inscribedRadius*inscribedRadius; break;
         default : DUNE_THROW(Dune::NotImplemented, "Unsupported pore body geometry for crossSectionalArea");
     }
 }

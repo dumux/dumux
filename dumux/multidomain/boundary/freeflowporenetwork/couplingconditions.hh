@@ -203,10 +203,10 @@ public:
         const auto& pnmProblem = pnmElemVolVars.gridVolVars().problem();
         const auto& pnmGridGeometry = pnmProblem.gridGeometry();
 
-        const Scalar poreRadius = pnmGridGeometry.poreInscribedRadius(pnmScv.dofIndex());
-        const Scalar throatRadius = pnmGridGeometry.throatInscribedRadius(pnmScv.elementIndex());
+        const Scalar poreCrossSectionalArea = pnmGridGeometry.poreCrossSectionalArea(pnmScv.dofIndex());
+        const Scalar throatCrossSectionalArea = pnmGridGeometry.throatCrossSectionalArea(pnmScv.elementIndex());
 
-        const Scalar scalingFactor = (throatRadius * throatRadius) / (poreRadius * poreRadius); // TODO include pore-body shape
+        const Scalar scalingFactor = throatCrossSectionalArea / poreCrossSectionalArea; // TODO include pore-body shape
 
         return velocity * scalingFactor;
     }
