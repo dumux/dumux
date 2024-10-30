@@ -194,13 +194,13 @@ public:
                                                   const Context& context)
     {
         VelocityVector velocity = interfaceThroatVelocity(fvGeometry, scvf, context);
-        const auto& pnmScv = context.scv;
-        const auto& pnmFVGeometry = context.fvGeometry;
-        const auto& pnmScvf = pnmFVGeometry.scvf(0);
+
         const auto& pnmElemVolVars = context.elemVolVars;
-        const auto& pnmElemFluxVarsCache = context.elemFluxVarsCache;
         const auto& pnmProblem = pnmElemVolVars.gridVolVars().problem();
         const auto& pnmGridGeometry = pnmProblem.gridGeometry();
+        const auto& pnmFVGeometry = context.fvGeometry;
+        const auto& pnmScvf = pnmFVGeometry.scvf(0);
+        const auto& pnmScv = pnmFVGeometry.scv(pnmScvf.insideScvIdx());
 
         const Scalar poreCrossSectionalArea = pnmGridGeometry.poreCrossSectionalArea(pnmScv.dofIndex());
         const Scalar throatCrossSectionalArea = pnmGridGeometry.throatCrossSectionalArea(pnmScv.elementIndex());

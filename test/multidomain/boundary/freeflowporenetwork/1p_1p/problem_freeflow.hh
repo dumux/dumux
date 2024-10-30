@@ -274,7 +274,7 @@ public:
      */
     VelocityVector porousMediumVelocity(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
-        return couplingManager_->interfaceThroatVelocity(fvGeometry, scvf);
+        return couplingManager_->interfacePoreBodyVelocity(fvGeometry, scvf);
     }
 
     // \}
