@@ -298,9 +298,23 @@ def guideFolderDeletion(modulePath, candidates):
     return deleted
 
 
+def guideCloneProtocol(projectName: str):
+    """Interactive process to choose clone protocol: https or ssh"""
+    if queryYesNo(
+        f"Do you want to use the SSH protocol to clone the {projectName} repo? "
+        "(if 'no', the HTTPS protocol is used)",
+        default="no",
+    ):
+        baseURL = "git@git.iws.uni-stuttgart.de:dumux-pub/"
+    else:
+        baseURL = "https://git.iws.uni-stuttgart.de/dumux-pub/"
+
+    return baseURL
+
+
 def pubProjectURL(projectName):
     """Default URL for dumux-pub modules"""
-    baseURL = "https://git.iws.uni-stuttgart.de/dumux-pub/"
+    baseURL = guideCloneProtocol(projectName)
     return baseURL + f"{projectName.lower()}.git"
 
 
