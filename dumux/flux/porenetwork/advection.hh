@@ -113,23 +113,27 @@ public:
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
+            const bool invaded = fluxVarsCache.invaded();
             if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, FluxVariablesCache, SubControlVolumeFace>())
             {
                 const auto theta = problem.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
                 if (phaseIdx == wPhaseIdx)
                 {
-                    const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
-                    const Scalar kw = Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);;
+                    const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                              : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+
                     return theta*kw + (1-theta)*k1p;
                 }
                 else // non-wetting phase
                 {
-                    return  theta*Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    auto kn = invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                      : Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return theta*kn;
                 }
             }
             else
             {
-                const bool invaded = fluxVarsCache.invaded();
                 if (phaseIdx == wPhaseIdx)
                 {
                     return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
