@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup PoromechanicsTests
- * \brief Solver for the equation tan(x)/x = a
+ * \brief Analytical solution for Mandel's problem
  */
 
 
@@ -20,6 +20,7 @@
 #include <iostream>
 #include <algorithm>
 
+#include <dumux/nonlinear/findscalarroot.hh>
 #include "mandelelasticparams.hh"
 namespace Dumux{
 namespace Details{
@@ -28,30 +29,9 @@ using namespace std;
 
 
 /**
- * @brief Computes the value of the function f(x) = tan(x) / x - a.
- */
-template<class Scalar>
-Scalar fx(const Scalar a, const Scalar x)
-{
-    return tan(x) / x - a;
-}
-
-
-/**
- * @brief Computes the derivative of the function f(x) = tan(x) / x - a.
- */
-template<class Scalar>
-Scalar fxx(const Scalar a, const Scalar x)
-{
-    return 1.0 / cos(x) / cos(x) / x - tan(x) / x / x;
-}
-
-/**
  * @brief Solves for the nth x for function f(x) = tan(x) / x - a.
  *
- * This function iteratively solves for the nth value using a combination
- * of Newton's method and a clamping strategy to ensure convergence within
- * specified bounds [(n-1/2)*Pi, (n+1/2)*Pi].
+ * This function iteratively solves for the nth value using Brent's method.
  *
  */
 template <typename Scalar>
@@ -61,22 +41,14 @@ Scalar solveNthBeta(const Scalar a, const int n)
     Scalar xOld = (n+0.1) * M_PI;
     Scalar xNew = xOld;
 
-    Scalar lowerBound = (n - 1.0/2) * M_PI;
-    Scalar upperBound = lowerBound + M_PI;
+    // Try to avoid infinitives
+    Scalar lowerBound = (1.0+1e-9)*(n - 1.0/2) * M_PI;
+    Scalar upperBound = lowerBound + (1.0-1e-5) * M_PI;
 
-    do
-    {
-        xOld = xNew;
-        Scalar factor = 1.0;
-        do
-        {
-            xNew = - fx(a,xOld) / fxx(a,xOld)/factor + xOld;
-            factor *= 2;
-        } while (xNew != std::clamp(xNew,lowerBound,upperBound));
-
-    } while (abs(fx(a,xNew)) > 1e-14 && abs(xNew-xOld)/xOld > 1e-30);
-
-    return xNew;
+    Scalar beta = findScalarRootBrent(lowerBound, upperBound,
+                        [&](const Scalar x){ return tan(x) / x - a; },
+                        1e-3, 200);
+    return beta;
 }
 
 /**
