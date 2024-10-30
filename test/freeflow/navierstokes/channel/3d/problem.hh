@@ -99,8 +99,7 @@ public:
         auto source = Sources(0.0);
         auto globalPos = scv.center();
         Scalar heightRel = 1.;
-        const static Scalar eps = 1e-6;
-        if(globalPos[0] > 0.001-eps && globalPos[0]< 0.004+eps && globalPos[1] > 0.001-eps && globalPos[1] < 0.004+eps)
+        if(globalPos[0] > 0.001-eps_ && globalPos[0]< 0.004+eps_ && globalPos[1] > 0.001-eps_ && globalPos[1] < 0.004+eps_)
         {
             heightRel = relativeFrictionFactorLense_;
         }
@@ -110,6 +109,28 @@ public:
             static const Scalar height = getParam<Scalar>("Problem.Height");
             static const Scalar factor = getParam<Scalar>("Problem.PseudoWallFractionFactor", 8.0);
             source[scv.dofAxis()] = this->pseudo3DWallFriction(element, fvGeometry, elemVolVars, scv, height*heightRel, factor);
+
+            const auto& frontalScvf = scvfs(fvGeometry, scv).begin();
+            const auto p = this->pressure(element, fvGeometry, frontalScvf);
+            const auto h = this->spatialParams().extrusionFactorAtPos(scv.center());
+            for (const auto& is : intersections(fvGeometry.gridGeometry().gridView(), element))
+            {
+                if (!is.neighbor())
+                    continue;
+                const auto& outsideElement = is.outside();
+                if (is.normal()*frontalScvf.unitOuterNormal() + 1.0 < eps_)
+                    continue;
+                const auto& outsideFvGeometry = ;
+                for (const auto& outsideScvf : scvfs(outsideFvGeometry))
+                {
+                    if (frontalScvf.unitOuterNormal() * outsideScvf.unitOuterNormal() + 1.0 < eps_)
+                    {
+                        const auto outsideH = ;
+                        const auto& distance = ;
+                    }
+                }
+            }
+            source[scv.dofAxis()] += p * gradH;
         }
 
         return source;
