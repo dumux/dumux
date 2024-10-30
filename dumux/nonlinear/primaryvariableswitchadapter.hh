@@ -96,6 +96,13 @@ public:
     bool switched() const
     { return priVarsSwitchedInLastIteration_; }
 
+    /*!
+     * \brief Getter required for the newton solver to test, if we have already too many primary variable switches done inside a time step
+     */
+    int getTotNumSwitches()
+    {
+        return priVarSwitch_->getTotNumSwitches();
+    }
 private:
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;

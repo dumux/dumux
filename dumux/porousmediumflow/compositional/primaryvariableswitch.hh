@@ -62,6 +62,8 @@ public:
     void reset(const std::size_t numDofs)
     {
         wasSwitched_.assign(numDofs, false);
+        numPrivarSwitches_=0;
+        allProcessesNumPrivarSwitches_=0;
     }
 
     /*!
@@ -109,6 +111,7 @@ public:
                     {
                         switched = true;
                         ++countSwitched;
+                        ++numPrivarSwitches_;
                     }
                 }
             }
@@ -123,7 +126,20 @@ public:
         if (gridGeometry.gridView().comm().size() > 1)
             switched = gridGeometry.gridView().comm().max(switched);
 
+        // Update the total number of Primary variable switches over all subdomains.
+        allProcessesNumPrivarSwitches_= gridGeometry.gridView().comm().sum(numPrivarSwitches_);
+
         return switched;
+    }
+
+    /*!
+     * \brief Getter required for the newton solver to test, if we have already too many primary variable switches done inside a time step
+     *
+     * \note this getter is used by the primary variable switch adapter
+     */
+    int getTotNumSwitches()
+    {
+        return allProcessesNumPrivarSwitches_;
     }
 
     /*!
@@ -432,6 +448,8 @@ protected:
 
     std::vector<bool> wasSwitched_;
     std::vector<bool> visited_;
+    int numPrivarSwitches_;
+    int allProcessesNumPrivarSwitches_;
 
 private:
     template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
