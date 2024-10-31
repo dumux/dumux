@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
-  target_sources(dumux_fmt PRIVATE format.cc)
+  target_sources(dumux_format PRIVATE format.cc)
 
   file(GLOB FMT_HEADERS *.h)
   install(FILES ${FMT_HEADERS} format.cc

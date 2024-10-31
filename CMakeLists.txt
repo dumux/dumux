@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 project("dumux" C CXX)
 
@@ -51,25 +51,31 @@ endif()
 # start a dune project with information from dune.module
 dune_project()
 
-
 include(DumuxAddLibrary)
-# Create a dune library exported as DuMux::DuMux
-dumux_add_library(dumux EXPORT_NAME DuMux)
+
+# Create a library exported as Dumux::Dumux
+dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
+
+# enforce C++-20
+target_compile_features(dumux PUBLIC cxx_std_20)
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
-  dumux_add_library(dumux_fmt EXPORT_NAME DuMux::fmt)
-  target_link_libraries(dumux INTERFACE dumux_fmt)
+  dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
+  target_compile_features(dumux_format PUBLIC cxx_std_20)
+  target_link_libraries(dumux INTERFACE dumux_format)
 endif()
+
 # Enable all dune registered packages on the 'dumux' library.
 dune_target_enable_all_packages(dumux)
 
 # Make 'dumux' library global for this project. Any target built within this module will be linked against the 'dumux' library.
 link_libraries(dumux)
 
-target_compile_features(dumux PUBLIC cxx_std_20)
-
 if (DUMUX_HAVE_GRIDFORMAT)
-    dune_register_package_flags(LIBRARIES gridformat::gridformat)
+  dune_register_package_flags(
+    LIBRARIES gridformat::gridformat
+    COMPILE_DEFINITIONS ENABLE_GRIDFORMAT=1
+  )
 endif()
 
 add_subdirectory(cmake/modules)

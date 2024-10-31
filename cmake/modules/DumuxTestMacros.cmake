@@ -260,6 +260,9 @@ function(dumux_add_test)
     set(ADDTEST_TARGET ${ADDTEST_NAME})
   endif()
 
+  # link the dumux library to the test target
+  target_link_libraries(${ADDTEST_TARGET} PRIVATE Dumux::Dumux)
+
   if(NOT ADDTEST_MPI_RANKS)
     set(ADDTEST_MPI_RANKS 1)
   endif()
