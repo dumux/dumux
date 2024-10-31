@@ -511,7 +511,9 @@ public:
         resizeFieldData_(gridVars.gridGeometry().numDofs());
         const auto range = GridFormat::cells(gridVars.gridGeometry().gridView());
         std::for_each(
+#if __cpp_lib_parallel_algorithm >= 201603L
             std::execution::par_unseq,
+#endif
             std::ranges::begin(range),
             std::ranges::end(range),
             [&] (const auto& element) {
