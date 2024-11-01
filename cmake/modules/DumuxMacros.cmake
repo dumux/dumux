@@ -7,7 +7,6 @@ include(AddInputFileLinks)
 include(DumuxDoxygen)
 include(DumuxTestMacros)
 
-find_package(GLPK QUIET)
 find_package(Gnuplot QUIET)
 set(DUMUX_HAVE_GNUPLOT ${GNUPLOT_FOUND})
 find_package(Gstat QUIET)
