@@ -63,12 +63,6 @@
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
-/* Defines whether pvpython has been found */
-#cmakedefine DUMUX_HAVE_PVPYTHON 1
-
-/* Define the path to pvpython */
-#define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
-
 /* Define to 1 if quadmath was found */
 #cmakedefine DUMUX_HAVE_QUAD 1
 
