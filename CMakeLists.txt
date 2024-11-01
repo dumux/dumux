@@ -51,13 +51,26 @@ endif()
 # start a dune project with information from dune.module
 dune_project()
 
-include(DumuxAddLibrary)
+# external dependencies
+include(FetchContent)
+if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+  FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
+  FetchContent_MakeAvailable(gridformat)
+  set(DUMUX_HAVE_GRIDFORMAT true)
+  message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
+endif()
 
-# Create a library exported as Dumux::Dumux
+# Create the dumux library target exported as Dumux::Dumux
+include(DumuxAddLibrary)
 dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
 
 # enforce C++-20
 target_compile_features(dumux PUBLIC cxx_std_20)
+
+if (DUMUX_HAVE_GRIDFORMAT)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_GRIDFORMAT=1)
+  target_link_libraries(dumux INTERFACE gridformat::gridformat)
+endif()
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
@@ -65,18 +78,8 @@ if (NOT DUMUX_HAVE_STD_FORMAT)
   target_link_libraries(dumux INTERFACE dumux_format)
 endif()
 
-# Enable all dune registered packages on the 'dumux' library.
+# Enable all dune registered packages on the dumux library.
 dune_target_enable_all_packages(dumux)
-
-# Make 'dumux' library global for this project. Any target built within this module will be linked against the 'dumux' library.
-link_libraries(dumux)
-
-if (DUMUX_HAVE_GRIDFORMAT)
-  dune_register_package_flags(
-    LIBRARIES gridformat::gridformat
-    COMPILE_DEFINITIONS ENABLE_GRIDFORMAT=1
-  )
-endif()
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
@@ -90,4 +93,16 @@ if(DUMUX_ENABLE_PYTHONBINDINGS)
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
+# this will also generate the dumux-config.cmake file which is
+# used to make Dumux available to other projects
+set(DUNE_CUSTOM_PKG_CONFIG_SECTION "")
+# make sure downstream projects can find gridformat too
+if (DUMUX_HAVE_GRIDFORMAT)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure gridformat build in dumux is found"
+    "include(CMakeFindDependencyMacro)"
+    "find_dependency(gridformat PATHS ${gridformat_BINARY_DIR}/cmake)"
+  )
+endif()
+
 finalize_dune_project()
