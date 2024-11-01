@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-
 add_input_file_links()
-add_gstat_file_links()
 
 # isothermal tests
 dumux_add_test(NAME test_1p_tpfa
@@ -59,6 +57,7 @@ dumux_add_test(NAME test_1p_forchheimer_box
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
 # a gstat test (because it's a random permeability field we can't test against a reference solution)
+dune_symlink_to_source_files(FILES control.gstat)
 dumux_add_test(NAME test_1p_gstat
               LABELS porousmediumflow 1p
               SOURCES main.cc

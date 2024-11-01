@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # additional macros
-include(AddGstatFileLinks)
 include(AddInputFileLinks)
 include(DumuxDoxygen)
 include(DumuxTestMacros)
