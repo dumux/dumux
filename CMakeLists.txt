@@ -60,6 +60,25 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
   message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
 endif()
 
+find_package(TBB QUIET)
+# in a second step make sure the
+# minimum TBB version required is found
+set(DUMUX_MIN_TBB_VERSION 2021)
+if(TBB_FOUND)
+  if(TBB_VERSION_MAJOR VERSION_LESS DUMUX_MIN_TBB_VERSION)
+    find_package(TBB ${DUMUX_MIN_TBB_VERSION})
+    # disable TBB manually if required version not found
+    if(NOT TBB_FOUND)
+      message(STATUS "Disabling TBB since version requirement not satisfied (>= ${DUMUX_MIN_TBB_VERSION}).")
+      set(ENABLE_TBB FALSE)
+      set(HAVE_TBB FALSE)
+    endif()
+  endif()
+endif()
+
+find_package(Kokkos QUIET)
+find_package(OpenMP QUIET)
+
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
 dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
@@ -67,9 +86,28 @@ dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
 # enforce C++-20
 target_compile_features(dumux PUBLIC cxx_std_20)
 
+# check multithreading features
+include(DumuxMultithreadingBackend)
+target_compile_definitions(dumux PUBLIC DUMUX_MULTITHREADING_BACKEND=${DUMUX_MULTITHREADING_BACKEND})
+
 if (DUMUX_HAVE_GRIDFORMAT)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_GRIDFORMAT=1)
   target_link_libraries(dumux INTERFACE gridformat::gridformat)
+endif()
+
+if (TBB_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_TBB=1)
+  target_link_libraries(dumux INTERFACE TBB::tbb)
+endif()
+
+if (Kokkos_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_KOKKOS=1)
+  target_link_libraries(dumux INTERFACE Kokkos::kokkos)
+endif()
+
+if (OpenMP_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_OPENMP=1)
+  target_link_libraries(dumux INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
@@ -95,13 +133,33 @@ endif()
 # finalize the dune project, e.g. generating config.h etc.
 # this will also generate the dumux-config.cmake file which is
 # used to make Dumux available to other projects
-set(DUNE_CUSTOM_PKG_CONFIG_SECTION "")
+set(DUNE_CUSTOM_PKG_CONFIG_SECTION "include(CMakeFindDependencyMacro)")
 # make sure downstream projects can find gridformat too
 if (DUMUX_HAVE_GRIDFORMAT)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure gridformat build in dumux is found"
-    "include(CMakeFindDependencyMacro)"
     "find_dependency(gridformat PATHS ${gridformat_BINARY_DIR}/cmake)"
+  )
+endif()
+# make sure downstream projects can find TBB too
+if (TBB_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure TBB is found"
+    "find_dependency(TBB)"
+  )
+endif()
+# make sure downstream projects can find Kokkos too
+if (Kokkos_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure Kokkos is found"
+    "find_dependency(Kokkos)"
+  )
+endif()
+# make sure downstream projects can find OpenMP too
+if (OpenMP_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure OpenMP is found"
+    "find_dependency(OpenMP)"
   )
 endif()
 
