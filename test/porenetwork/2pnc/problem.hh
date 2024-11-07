@@ -14,9 +14,8 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/material/components/air.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porenetwork/2pnc/model.hh>
+#include <dumux/material/components/air.hh>
 
 namespace Dumux {
 
@@ -40,13 +39,20 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
+    using GridFluxVariablesCache = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
+    using InvasionState = std::decay_t<decltype(std::declval<GridFluxVariablesCache>().invasionState())>;
+    static constexpr bool useThetaRegularization = InvasionState::stateMethod == Dumux::PoreNetwork::StateSwitchMethod::theta;
+
 public:
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
     {
         vtpOutputFrequency_ = getParam<int>("Problem.VtpOutputFrequency");
-        inletPressure_ = getParam<Scalar>("Problem.InletPressure", 1.1e5);
+        useFixedPressureAndSaturationBoundary_ = getParam<bool>("Problem.UseFixedPressureAndSaturationBoundary", false);
+        pc_ = getParam<Scalar>("Problem.CapillaryPressure");
+        source_ = getParam<Scalar>("Problem.Source");
+        inletPressure_ = getParam<Scalar>("Problem.InletPressure", 1e5);
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1e5);
 #if !ISOTHERMAL
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 288.15);
@@ -82,12 +88,12 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        // Use Dirichlet BCs for both inlet and outlet
-        if (isInletPore_(scv) || isOutletPore_(scv))
+        // If a global phase pressure difference (pn,inlet - pw,outlet) with fixed saturations is specified, use a Dirichlet BC here
+        if (isInletPore_(scv))
             bcTypes.setAllDirichlet();
-#if !ISOTHERMAL
-        bcTypes.setDirichlet(Indices::temperatureIdx);
-#endif
+        else if (isOutletPore_(scv))
+            bcTypes.setAllNeumann();
+
         return bcTypes;
     }
 
@@ -97,26 +103,30 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
+        values[Indices::pressureIdx] = 1e5;
+        values[Indices::switchIdx] = 0.0;
 
+        // If a global phase pressure difference (pn,inlet - pw,outlet) is specified and the saturation shall also be fixed, apply:
+        // pw,inlet = pw,outlet = 1e5; pn,outlet = pw,outlet + pc(S=0) = pw,outlet; pn,inlet = pw,inlet + pc_
         if (isInletPore_(scv))
         {
-            values.setState(Indices::bothPhases);
-            values[Indices::pressureIdx] = inletPressure_;
-            values[Indices::switchIdx] = 1.0;
+            values.setState(Indices::secondPhaseOnly);
+            values[Indices::pressureIdx] = inletPressure_ - this->spatialParams().fluidMatrixInteraction(element, scv, int()/*dummyElemsol*/).pc(0.0);
+            values[Indices::switchIdx] = 0.0;
+#if !ISOTHERMAL
+            values[Indices::temperatureIdx] = inletTemperature_;
+#endif
         }
-        else
+        else if (isOutletPore_(scv))
         {
-            values.setState(Indices::bothPhases);
+            values.setState(Indices::firstPhaseOnly);
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::switchIdx] = 0.0;
-        }
-
 #if !ISOTHERMAL
-        if (isInletPore_(scv))
-            values[Indices::temperatureIdx] = inletTemperature_;
-        else
             values[Indices::temperatureIdx] = outletTemperature_;
 #endif
+        }
+
         return values;
     }
 
@@ -134,6 +144,19 @@ public:
                             const SubControlVolume& scv) const
     {
         PrimaryVariables values(0.0);
+
+        // for isothermal case, we fix injection rate of non-wetting phase at inlet
+        // for non-isothermal case, we fix injection of air enthalpy at inlet
+//         if (!useFixedPressureAndSaturationBoundary_ && isInletPore_(scv))
+//         {
+//             values[Indices::conti0EqIdx + 1] = source_/scv.volume();
+// #if !ISOTHERMAL
+//             const auto pressure = elemVolVars[scv].pressure(1);
+//             const auto airEnthalpy = Components::Air<Scalar>::gasEnthalpy(inletTemperature_, pressure);
+//             values[Indices::temperatureIdx] = airEnthalpy * source_ * Components::Air<Scalar>::molarMass()/scv.volume();
+// #endif
+//         }
+
         return values;
     }
     // \}
@@ -142,32 +165,71 @@ public:
     PrimaryVariables initial(const Vertex& vertex) const
     {
         PrimaryVariables values(0.0);
+        values[Indices::pressureIdx] = inletPressure_;
 
-        values.setState(Indices::bothPhases);
-        values[Indices::pressureIdx] = outletPressure_;
-        values[Indices::switchIdx] = 0.0;
+        // get global index of pore
+        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
+        if (isInletPore_(dofIdxGlobal))
+        {
+            values.setState(Indices::secondPhaseOnly);
+            values[Indices::pressureIdx] = inletPressure_;
+            values[Indices::switchIdx] = 0.0;
+        }
+        else
+        {
+            values.setState(Indices::bothPhases);
+            values[Indices::switchIdx] = 1e-6;
+        }
 
 #if !ISOTHERMAL
         values[Indices::temperatureIdx] = outletTemperature_;
 #endif
-
-        const auto dofIdxGlobal = this->gridGeometry().vertexMapper().index(vertex);
-        if (isInletPore_(dofIdxGlobal))
-        {
-            values.setState(Indices::bothPhases);
-            values[Indices::pressureIdx] = inletPressure_;
-            values[Indices::switchIdx] = 1.0;
-#if !ISOTHERMAL
-            values[Indices::temperatureIdx] = inletTemperature_;
-#endif
-        }
 
         return values;
     }
 
     //!  Evaluate the initial invasion state of a pore throat
     bool initialInvasionState(const Element& element) const
-    { return false; }
+    {   auto eIdx = this->gridGeometry().elementMapper().index(element);
+        if (this->gridGeometry().throatLabel(eIdx) == Labels::inlet)
+            return false;
+        return false;
+    }
+
+    // throat parameter indicating invasion state
+    template<class FluxVariablesCache, class SubControlVolumeFace, bool enable = useThetaRegularization, typename std::enable_if_t<enable, int> = 0>
+    Scalar theta(const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const ElementVolumeVariables& elemVolVars,
+                 const FluxVariablesCache& fluxVarsCache,
+                 const SubControlVolumeFace& scvf) const
+    {
+        const auto invaded = fluxVarsCache.invaded();
+        static const auto delta = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RegularizationDelta", 1e-2);
+        if(!invaded)
+        {
+            using std::max; using std::sin; using std::clamp;
+            auto pcEntry = this->spatialParams().pcEntry(element, elemVolVars);
+            auto dp = max(elemVolVars[0].capillaryPressure(),
+                            elemVolVars[1].capillaryPressure()) / pcEntry - 1.0;
+
+            // Use some regularized Heaviside function for theta
+            dp = clamp(dp, 0.0, delta); // regularize once pc is above entry pressure
+            return 0.5*(1+sin(M_PI*(dp-0.5*delta)/(delta)));
+        }
+        else
+        {
+            using std::max; using std::abs; using std::sin; using std::clamp;
+            auto pcSnapoff = this->spatialParams().pcSnapoff(element, elemVolVars);
+            auto dp = max(elemVolVars[0].capillaryPressure(),
+                            elemVolVars[1].capillaryPressure()) / abs(pcSnapoff) - sign(pcSnapoff);
+
+            // Use some regularized Heaviside function for theta
+            dp = clamp(dp, -delta, 0.0); // regularize once pc is below snapoff pressure
+            return 0.5*(1+sin(M_PI*(dp+0.5*delta)/(delta)));
+        }
+    }
+
 
     // \}
 
@@ -189,12 +251,16 @@ private:
     }
 
     int vtpOutputFrequency_;
+    bool useFixedPressureAndSaturationBoundary_;
+    Scalar pc_;
+    Scalar source_;
     Scalar inletPressure_;
     Scalar outletPressure_;
 #if !ISOTHERMAL
     Scalar inletTemperature_;
     Scalar outletTemperature_;
 #endif
+    Scalar inletPc_ = 0.0;
 };
 } //end namespace Dumux
 

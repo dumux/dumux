@@ -202,8 +202,8 @@ inline Scalar totalCrossSectionalArea(const Shape shape, const Scalar inscribedR
     switch(shape)
     {
         case Shape::equilateralTriangle: return 3.0*sqrt(3.0)*inscribedRadius*inscribedRadius;
-        case Shape::square: return 4.0*inscribedRadius*inscribedRadius;
-        case Shape::circle: return M_PI*inscribedRadius*inscribedRadius;
+        case Shape::square: return 2.0*inscribedRadius*1.5e-4; //4.0*inscribedRadius*inscribedRadius;
+        case Shape::circle: return 2.0*inscribedRadius*1.5e-4;//M_PI*inscribedRadius*inscribedRadius;
         case Shape::twoPlates: return 2.0*inscribedRadius;
         default : DUNE_THROW(Dune::InvalidStateException, "Unsupported geometry: " << shapeToString(shape));
     }

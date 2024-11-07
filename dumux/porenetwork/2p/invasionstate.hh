@@ -242,8 +242,8 @@ private:
 
         if (*pcMax > pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMax <= pcSnapoff)
-           invadedAfterSwitch = false;
+        // else if (*pcMax <= pcSnapoff)
+        //    invadedAfterSwitch = false;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
 
@@ -423,8 +423,8 @@ private:
 
         if(!fluxVarsCache.invaded())
             invadedCur = theta > invasionThetaThreshold_;
-        else
-            invadedCur = theta > snapoffThetaThreshold_;
+        // else
+        //     invadedCur = theta > snapoffThetaThreshold_;
 
         invaded_[eIdx] = invadedCur;
 

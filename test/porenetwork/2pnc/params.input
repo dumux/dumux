@@ -1,16 +1,28 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
-TEnd = 1e2 # [s]
+DtInitial = 1e-1 # [s]
+TEnd = 2.04e5 # [s]
+MaxTimeStepSize = 10e0 # [s]
 
 [Grid]
-File = ./grids/1d_grid.dgf
-PoreGeometry = Cube
-ThroatCrossSectionShape = Square
+File = ./grids/pnm_connected.dgf
+PoreGeometry = Octahedron
+ThroatCrossSectionShape = Rectangle
+ThroatHeight = 1.5e-4
 
 [Problem]
-Name = test_pnm_2pnc
-VtpOutputFrequency = 10 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
+Name = test
+VtpOutputFrequency = -1 # Write every n-th time step. 0 only writes a file if an invasion / snap-off occurred. -1 writes every step
 EnableGravity = false
+CapillaryPressure = 5000
+UseFixedPressureAndSaturationBoundary = false
+Source = 1e-5
+InletPressure = 1.01325e5
+OutletPressure = 1.01325e5
+IsConnected = true
+WettingLayerScaleColumn = true
+WettingLayerCoeffColumn = 1.0
+WettingLayerCoeffChannelOrFirstThroat = 1.0
+RegularizationDelta = 1e-4
 
 [Vtk]
 AddVelocity = 1
@@ -18,11 +30,17 @@ AddVelocity = 1
 [Newton]
 MaxSteps = 10
 TargetSteps = 4
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-4
+MaxTimeStepDivisions = 20
 
 [InvasionState]
 Verbosity = true
-#AccuracyCriterion = 0.99
+PcOrSwInvasionCriterium = 0 # 0:Pc 1:Sw 2:Both
+SaturationCriterium = 1e-2 #
+ScalePcCoefficient = 1e-5 # Pc in pore bodies will be multiplied with this coefficient
+AccuracyCriterion = 0.99
+InvasionThetaThreshold = 1e-14
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
+

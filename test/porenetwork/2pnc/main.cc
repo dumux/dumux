@@ -110,7 +110,12 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
+#if !USETHETAREGULARIZATION
     using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
+#else
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+#endif
+
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
@@ -122,6 +127,8 @@ int main(int argc, char** argv)
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
+        if (gridVariables->gridFluxVarsCache().invasionState().updateAfterTimeStep())
+            gridVariables->gridFluxVarsCache().invasionState().update(x, gridVariables->curGridVolVars(), gridVariables->gridFluxVarsCache());
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

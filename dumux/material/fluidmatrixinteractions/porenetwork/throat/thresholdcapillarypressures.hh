@@ -69,6 +69,8 @@ Scalar pcSnapoff(const Scalar surfaceTension,
 {
     if (Throat::isRegularShape(shape)) // call the pc snap-off calculated for regular shapes(same corner angles and side length)
         return pcSnapoffRegularShape(surfaceTension, contactAngle, inscribedRadius, shape);
+    else if (shape == Throat::Shape::rectangle)
+        return pcSnapoffRegularShape(surfaceTension, contactAngle, inscribedRadius, shape);
     else
         DUNE_THROW(Dune::NotImplemented, "Pc snap-off is not implemented for this irregular shape");
 }

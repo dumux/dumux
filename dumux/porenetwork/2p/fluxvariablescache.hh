@@ -67,21 +67,53 @@ public:
 
         const auto& cornerHalfAngles = spatialParams.cornerHalfAngles(element);
         wettingLayerArea_.clear(); wettingLayerArea_.resize(cornerHalfAngles.size());
+        wettingLayerArea_[0]=0.0; wettingLayerArea_[1]=0.0;wettingLayerArea_[2]=0.0;wettingLayerArea_[3]=0.0;
         const Scalar totalThroatCrossSectionalArea = spatialParams.throatCrossSectionalArea(element, elemVolVars);
         entryWettingLayerArea_.clear(); entryWettingLayerArea_.resize(cornerHalfAngles.size());
         snapoffWettingLayerArea_.clear(); snapoffWettingLayerArea_.resize(cornerHalfAngles.size());
-
+        const auto throatLabel = fvGeometry.gridGeometry().throatLabel(eIdx);
         const Scalar alpha = spatialParams.contactAngle(element, elemVolVars);
         if constexpr (Dumux::Detail::hasProblemThetaFunction<Problem, Element, FVElementGeometry, ElementVolumeVariables, ThisType, SubControlVolumeFace>())
         {
-            for (int i = 0; i< cornerHalfAngles.size(); ++i)
+            if (throatLabel != 2 && throatLabel != -2 /*|| (throatLabel == 2 && delPWettingPhase < 0.0)*/)
             {
-                wettingLayerArea_[i] = std::min(
-                    Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]),
-                    totalThroatCrossSectionalArea
-                );
-                entryWettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
-                snapoffWettingLayerArea_[i] =  Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+                bool scaleTheWholeColumn = getParam<bool>("Problem.WettingLayerScaleColumn", false);
+                Scalar coeffColumn = getParam<Scalar>("Problem.WettingLayerCoeffColumn", 1.0);
+                Scalar columnCoeff = scaleTheWholeColumn ? coeffColumn:1.0;
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                {
+                    wettingLayerArea_[i] = columnCoeff * std::min(
+                        Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]),
+                        totalThroatCrossSectionalArea
+                    );
+                    entryWettingLayerArea_[i] = columnCoeff * Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
+                    snapoffWettingLayerArea_[i] =  columnCoeff * Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+                }
+            }
+            else if (throatLabel == -2)
+            {
+                Scalar coeff = getParam<Scalar>("Problem.WettingLayerCoeffChannelOrFirstThroat", 1.0);
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                {
+                    wettingLayerArea_[i] = coeff * std::min(
+                        Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]),
+                        totalThroatCrossSectionalArea
+                    );
+                    entryWettingLayerArea_[i] = coeff * Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
+                    snapoffWettingLayerArea_[i] =  coeff * Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+                }
+            }
+            else if (throatLabel == 2)
+            {
+                for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                {
+                    wettingLayerArea_[i] = 0.0 * std::min(
+                        Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]),
+                        totalThroatCrossSectionalArea
+                    );
+                    entryWettingLayerArea_[i] = 0.0 * Throat::wettingLayerCrossSectionalArea(curvatureRadiusInvasion(), alpha, cornerHalfAngles[i]);
+                    snapoffWettingLayerArea_[i] =  0.0 * Throat::wettingLayerCrossSectionalArea(curvatureRadiusSnapoff(), alpha, cornerHalfAngles[i]);
+                }
             }
 
                 auto wettingAreaEntry = std::min(std::accumulate(entryWettingLayerArea_.begin(), entryWettingLayerArea_.end(), 0.0), totalThroatCrossSectionalArea);
@@ -98,16 +130,33 @@ public:
         {
             if (invaded) // two-phase flow
             {
-                for (int i = 0; i< cornerHalfAngles.size(); ++i)
-                    wettingLayerArea_[i] = Throat::wettingLayerCrossSectionalArea(curvatureRadius(), alpha, cornerHalfAngles[i]);
+                const Scalar theta = spatialParams.contactAngle(element, elemVolVars);
+                if (throatLabel != 2 && throatLabel != -2 /*|| (throatLabel == 2 && delPWettingPhase < 0.0)*/)
+                {
+                    bool scaleTheWholeColumn = getParam<bool>("Problem.WettingLayerScaleColumn", false);
+                    Scalar coeffColumn = getParam<Scalar>("Problem.WettingLayerCoeffColumn", 1.0);
+                    Scalar columnCoeff = scaleTheWholeColumn ? coeffColumn:1.0;
 
-                // make sure the wetting phase area does not exceed the total cross-section area
-                throatCrossSectionalArea_[wPhaseIdx()] = std::min(
-                    std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
-                    totalThroatCrossSectionalArea
-                );
-                throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
-            }
+                    for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                    {
+                        wettingLayerArea_[i] = columnCoeff * Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+                    }
+                }
+                else if (throatLabel == -2)
+                {
+                    Scalar coeff = getParam<Scalar>("Problem.WettingLayerCoeffChannelOrFirstThroat", 1.0);
+                    for (int i = 0; i< cornerHalfAngles.size(); ++i)
+                    {
+                        wettingLayerArea_[i] = coeff * Throat::wettingLayerCrossSectionalArea(curvatureRadius(), theta, cornerHalfAngles[i]);
+                    }
+                }
+                    // make sure the wetting phase area does not exceed the total cross-section area
+                    throatCrossSectionalArea_[wPhaseIdx()] = std::min(
+                        std::accumulate(wettingLayerArea_.begin(), wettingLayerArea_.end(), 0.0),
+                        totalThroatCrossSectionalArea
+                    );
+                    throatCrossSectionalArea_[nPhaseIdx()] = totalThroatCrossSectionalArea - throatCrossSectionalArea_[wPhaseIdx()];
+                }
             else // single-phase flow
             {
                 for (int i = 0; i< cornerHalfAngles.size(); ++i)
