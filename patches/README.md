@@ -1,9 +1,9 @@
 ### OPM
-Within the OPM release 2021.10, some files in opm-common miss include statements. While on some systems such as Ubuntu 20.04, the corresponding headers are included implicitly, explicit includes are required on other systems such as Ubuntu 21.10. To add the includes, apply the patch
+OPM release 2024.10 is incompatible with Dune > 2.9 since deprecated names have been removed there. To switch to the new names, apply the patch
 
- - `opm_common_2021_10.patch` in your directory containing opm-common
+ - `opm_grid_2024_10.patch` in your directory containing opm-grid
    ```bash
-   patch -p1 <../dumux/patches/opm_common_2021_10.patch
+   patch -p1 <../dumux/patches/opm_grid_2024_10.patch
    ```
 
 ### dune-istl
