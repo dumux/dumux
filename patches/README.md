@@ -1,10 +1,16 @@
 ### OPM
-Within the OPM release 2021.10, some files in opm-common miss include statements. While on some systems such as Ubuntu 20.04, the corresponding headers are included implicitly, explicit includes are required on other systems such as Ubuntu 21.10. To add the includes, apply the patch
+OPM release 2024.10 is incompatible with Dune > 2.9.
 
- - `opm_common_2021_10.patch` in your directory containing opm-common
-   ```bash
-   patch -p1 <../dumux/patches/opm_common_2021_10.patch
-   ```
+* Deprecated names have been removed in Dune. To switch to the new names, apply the patch `opm_grid_2024_10.patch` in your directory containing opm-grid by
+```bash
+patch -p1 <../dumux/patches/opm_grid_2024_10.patch
+```
+
+* The wrong file `FindSuiteSparse.cmake` is used when configuring opm-grid as part of configuring Dumux. To use the correct one, apply the patch `opm_common_2024_10.patch` in your directory containing opm-common by
+```bash
+patch -p1 <../dumux/patches/opm_common_2024_10.patch
+```
+
 
 ### dune-istl
 If the AMGBackend should be used without SuperLU as coarse grid solver, it can
