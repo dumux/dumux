@@ -1,0 +1,14 @@
+diff --git a/cmake/Modules/OpmFind.cmake b/cmake/Modules/OpmFind.cmake
+index 0f7998b8b..963281ea0 100644
+--- a/cmake/Modules/OpmFind.cmake
++++ b/cmake/Modules/OpmFind.cmake
+@@ -139,6 +139,9 @@ macro (find_and_append_package_to prefix name)
+       else()
+         set(_CONFIG_MODE "")
+       endif()
++      if("${name}" STREQUAL "SuiteSparse")
++        list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../opm-common/cmake/Modules)
++      endif()
+       find_package (${name} ${ARGN} ${_CONFIG_MODE})
+     else()
+       if(${name}_DIR)
