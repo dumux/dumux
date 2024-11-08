@@ -1,0 +1,75 @@
+diff --git a/examples/finitevolume/finitevolume.cc b/examples/finitevolume/finitevolume.cc
+index e6cd0b79..46a61fb9 100644
+--- a/examples/finitevolume/finitevolume.cc
++++ b/examples/finitevolume/finitevolume.cc
+@@ -36,7 +36,7 @@ template<class G>
+ void timeloop(const G& grid, double tend)
+ {
+     // make a mapper for codim 0 entities in the leaf grid
+-#if DUNE_VERSION_NEWER(DUNE_GEOMETRY, 2, 8)
++#if DUNE_VERSION_GTE(DUNE_GEOMETRY, 2, 8)
+     Dune::MultipleCodimMultipleGeomTypeMapper<typename G::LeafGridView>  mapper(grid.leafGridView(), Dune::mcmgElementLayout());
+ #else
+     Dune::LeafMultipleCodimMultipleGeomTypeMapper<G> mapper(grid, Dune::mcmgElementLayout());
+diff --git a/opm/grid/common/SubGridPart.hpp b/opm/grid/common/SubGridPart.hpp
+index ea11240b..0a4b734d 100644
+--- a/opm/grid/common/SubGridPart.hpp
++++ b/opm/grid/common/SubGridPart.hpp
+@@ -50,8 +50,7 @@ struct SubGridPartTraits {
+     using IntersectionIterator = typename Grid ::Traits ::LeafIntersectionIterator;
+ 
+     /** \brief type of the collective communication */
+-    using CollectiveCommunication = typename Grid ::Traits ::CollectiveCommunication;
+-
++    using CollectiveCommunication = typename Grid ::Traits ::Communication;
+ 
+     template <class BaseEntityType>
+     class SubEntity : public BaseEntityType
+diff --git a/opm/grid/cpgrid/CpGridData.cpp b/opm/grid/cpgrid/CpGridData.cpp
+index d63d80d3..f2b6a937 100644
+--- a/opm/grid/cpgrid/CpGridData.cpp
++++ b/opm/grid/cpgrid/CpGridData.cpp
+@@ -945,7 +945,7 @@ struct AttributeDataHandle
+           c2e_(cell_to_entity), grid_(grid)
+     {}
+ 
+-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 8)
++#if DUNE_VERSION_GTE(DUNE_COMMON, 2, 8)
+     bool fixedSize()
+ #else
+         bool fixedsize()
+diff --git a/opm/grid/cpgrid/Entity2IndexDataHandle.hpp b/opm/grid/cpgrid/Entity2IndexDataHandle.hpp
+index c2d6c59c..0a909b0c 100644
+--- a/opm/grid/cpgrid/Entity2IndexDataHandle.hpp
++++ b/opm/grid/cpgrid/Entity2IndexDataHandle.hpp
+@@ -64,7 +64,7 @@ public:
+         : fromGrid_(fromGrid), toGrid_(toGrid), data_(data)
+     {}
+ 
+-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 8)
++#if DUNE_VERSION_GTE(DUNE_COMMON, 2, 8)
+     bool fixedSize()
+     {
+         return data_.fixedSize(3, codim);
+diff --git a/tests/cpgrid/distribution_test.cpp b/tests/cpgrid/distribution_test.cpp
+index 6621535e..3fffc56a 100644
+--- a/tests/cpgrid/distribution_test.cpp
++++ b/tests/cpgrid/distribution_test.cpp
+@@ -120,7 +120,7 @@ public:
+ 
+     typedef int DataType;
+ 
+-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 8)
++#if DUNE_VERSION_GTE(DUNE_COMMON, 2, 8)
+     bool fixedSize()
+ #else
+     bool fixedsize()
+@@ -217,7 +217,7 @@ public:
+     {}
+ 
+     typedef int DataType;
+-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 8)
++#if DUNE_VERSION_GTE(DUNE_COMMON, 2, 8)
+     bool fixedSize()
+ #else
+     bool fixedsize()
