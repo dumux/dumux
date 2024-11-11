@@ -4,133 +4,76 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-//
-// Created by yue on 7/25/23.
-//
 
-#ifndef MANDEL_MATERIAL_PORO_ELASTIC_PARAMETERS_HH
-#define MANDEL_MATERIAL_PORO_ELASTIC_PARAMETERS_HH
+#ifndef DUMUX_TEST_MANDEL_ELASTIC_PARAMS_HH
+#define DUMUX_TEST_MANDEL_ELASTIC_PARAMS_HH
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux{
+namespace Dumux {
+
 /*!
  * \ingroup
- * \brief Auxilary structure for poro elastic parameters within the framework of
- * linear poro-elasticity.
- *
+ * \brief Parameters for the Mandel poroelastic problem and the analytical solution
  * \tparam Scalar
  */
 template<class Scalar>
-struct MandelPoroElasticParameters{
-    MandelPoroElasticParameters(){
-        E_ = getParam<Scalar>("MaterialParameters.EModulus");
-        nu_ = getParam<Scalar>("MaterialParameters.Nu");
-        lambda_ = (E_ * nu_) / ((1+nu_) * (1-2*nu_));
-        G_ = E_ / 2 /(1+nu_);
-        Kb_ = E_ / 3 / (1 - 2*nu_);
+struct MandelPoroElasticParameters
+{
+    MandelPoroElasticParameters()
+    {
+        E_ = getParam<Scalar>("Problem.EModulus");
+        nu_ = getParam<Scalar>("Problem.Nu");
+        lambda_ = (E_ * nu_) / ((1.0 + nu_) * (1.0 - 2.0*nu_));
+        G_ = E_ / 2.0 /(1.0 + nu_);
+        Kb_ = E_ / 3.0 / (1.0 - 2.0*nu_);
 
-        alpha_ = getParam<Scalar>("MaterialParameters.Alpha");
-        M_ = getParam<Scalar>("MaterialParameters.MModulus");
+        alpha_ = getParam<Scalar>("Problem.Alpha");
+        M_ = getParam<Scalar>("Problem.MModulus");
 
         Kbu_ = Kb_ + alpha_*alpha_*M_;
         B_ = alpha_ * M_ / Kbu_;
         nuu_ = (3*Kbu_ - 2*G_) /2 /(3*Kbu_ + G_);
     };
 
-    /*!
-     * \brief return first lame parameter
-     *
-     * \return Scalar
-     */
-    const Scalar lambda() const
-    {return lambda_; }
+    //! First Lamé parameter
+    Scalar lambda() const { return lambda_; }
 
-    /*!
-     * \brief return the second lame parameter
-     *
-     * \return Scalar
-     */
-    const Scalar Nu() const
-    {return nu_;}
+    //! Second Lamé parameter
+    Scalar Nu() const { return nu_; }
 
-    /*!
-     * \brief return E Modulus
-     *
-     * \return Scalar
-     */
-    const Scalar E() const
-    {return E_;}
+    //! Young's modulus
+    Scalar E() const { return E_; }
 
-    /*!
-     * \brief return shear modulus
-     *
-     * \return Scalar
-     */
-    const Scalar G() const
-    {return G_;}
+    //! Shear modulus
+    Scalar G() const { return G_; }
 
-    /*!
-     * \brief return bulk modulus
-     *
-     * \return Scalar
-     */
-    const Scalar Kb() const
-    {return Kb_;}
+    //! Bulk modulus
+    Scalar Kb() const { return Kb_; }
 
-    /*!
-     * \brief return Biot's coefficient
-     *
-     * \return Scalar
-     */
-    const Scalar& alpha() const
-    {return alpha_;}
+    //! Biot's coefficient
+    Scalar alpha() const { return alpha_; }
 
-    /*!
-     * \brief return Biot's Modulus
-     *
-     * \return Scalar
-     */
-    const Scalar& M() const
-    {return M_;}
+    //! Biot modulus
+    Scalar M() const { return M_; }
 
-    /*!
-     * \brief return Skempton pore pressure coeffcient
-     *
-     * \return Scalar
-     */
-    Scalar B() const
-    {return B_;}
+    //! Skempton's coefficient
+    Scalar B() const { return B_; }
 
-    /*!
-     * \brief return undrained Possion's ratio
-     *
-     * \return Scalar
-     */
-    Scalar Nuu() const
-    {return nuu_;}
+    //! Undrained Poisson's ratio
+    Scalar Nuu() const { return nuu_; }
 
-    /*!
-     * \brief return undrained bulk modulus
-     *
-     * \return Scalar
-     */
-    Scalar Kbu() const
-    {return Kbu_;}
+    //! Undrained bulk modulus
+    Scalar Kbu() const { return Kbu_; }
+
+    //! Drained bulk modulus
+    Scalar Kdr() const
+    { return 2.0*lambda_; }
 
 private:
-    Scalar E_; // E modulus
-    Scalar nu_; // Poisson's ratio
-    Scalar G_; // shear modulus
-    Scalar Kb_; // Bulk modulus
-    Scalar lambda_; //first lame parameter
-
-    Scalar alpha_; // Biot coefficient
-    Scalar M_; // Biot Modulus
-
-    Scalar Kbu_; // Undrained bulk modulus
-    Scalar B_; // Skempton's coefficient
-    Scalar nuu_; // Undrained Poisson's ratio
+    Scalar E_, nu_, G_, Kb_, lambda_, alpha_, M_, Kbu_, B_, nuu_;
 };
-}//end namespace dumux
+
+} // end namespace Dumux
+
 #endif
