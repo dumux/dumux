@@ -13,9 +13,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -24,7 +21,6 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-
 
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/multidomain/traits.hh>
@@ -43,16 +39,8 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    ////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////
-
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    // print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
 
     // initialize parameter tree
     Parameters::init(argc, argv);
@@ -111,6 +99,7 @@ int main(int argc, char** argv)
     onePProblem->applyInitialSolution(x[onePId]);
     poroMechProblem->applyInitialSolution(x[poroMechId]);
     SolutionVector xOld = x;
+
     // vectors for the exact solution
     auto pExact = x[onePId];
     auto uExact = x[poroMechId];
@@ -145,6 +134,10 @@ int main(int argc, char** argv)
     OnePOutputFields::initOutputModule(onePVtkWriter);
     PoroMechOutputFields::initOutputModule(poroMechVtkWriter);
 
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDT);
+
     // get the corner positions for the analytical solution
     Dune::BlockVector<Dune::FieldVector<Scalar, 2>> cornerPos;
     cornerPos.resize(uExact.size());
@@ -153,17 +146,12 @@ int main(int argc, char** argv)
         const auto vIdx = poroMechFvGridGeometry->vertexMapper().index(vertex);
         cornerPos[vIdx] = vertex.geometry().center();
     }
-    Dumux::parallelFor(onePFvGridGeometry->gridView().size(0), [&](const std::size_t eIdx)
-    {
-        const auto& element = onePFvGridGeometry->element(eIdx);
-        pExact[eIdx] = mandelAnalyticalSolution->pressureAtPos(element.geometry().center(), /*time=*/0.0);
-    });
 
-    Dumux::parallelFor(uExact.size(), [&](const std::size_t vertexIdx)
-    {
-        const auto& pos = cornerPos[vertexIdx];
-        uExact[vertexIdx] = mandelAnalyticalSolution->displacementAtPos(pos, /*time=*/0.0);
-    });
+    Dumux::parallelFor(onePFvGridGeometry->gridView().size(0), [&](const std::size_t eIdx)
+    { pExact[eIdx] = mandelAnalyticalSolution->pressure(onePFvGridGeometry->element(eIdx).geometry().center(), timeLoop->time()); });
+
+    Dumux::parallelFor(uExact.size(), [&](const std::size_t vIdx)
+    { uExact[vIdx] = mandelAnalyticalSolution->displacement(cornerPos[vIdx], timeLoop->time()); });
 
     onePVtkWriter.addField(pExact, "pExact");
     poroMechVtkWriter.addField(uExact, "uExact");
@@ -171,11 +159,6 @@ int main(int argc, char** argv)
     // write initial solution
     onePVtkWriter.write(0.0);
     poroMechVtkWriter.write(0.0);
-
-    //instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDT);
-    poroMechProblem->setTimeLoop(timeLoop);
 
     const auto timeSteppingMethod = []() -> std::shared_ptr<Experimental::MultiStageMethod<double>>
     {
@@ -194,10 +177,12 @@ int main(int argc, char** argv)
 
     // the assembler
     using Assembler = Experimental::MultiStageMultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(std::make_tuple(onePProblem, poroMechProblem),
-                                                 std::make_tuple(onePFvGridGeometry, poroMechFvGridGeometry),
-                                                 std::make_tuple(onePGridVariables, poroMechGridVariables),
-                                                 couplingManager, timeSteppingMethod, xOld);
+    auto assembler = std::make_shared<Assembler>(
+        std::make_tuple(onePProblem, poroMechProblem),
+        std::make_tuple(onePFvGridGeometry, poroMechFvGridGeometry),
+        std::make_tuple(onePGridVariables, poroMechGridVariables),
+        couplingManager, timeSteppingMethod, xOld
+    );
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -225,17 +210,10 @@ int main(int argc, char** argv)
         poroMechGridVariables->advanceTimeStep();
 
         Dumux::parallelFor(onePFvGridGeometry->gridView().size(0), [&](const std::size_t eIdx)
-        {
-            const auto& element = onePFvGridGeometry->element(eIdx);
-            pExact[eIdx] = mandelAnalyticalSolution->pressureAtPos(element.geometry().center(), timeLoop->time());
-        });
+        { pExact[eIdx] = mandelAnalyticalSolution->pressure(onePFvGridGeometry->element(eIdx).geometry().center(), timeLoop->time()); });
 
-        Dumux::parallelFor(uExact.size(), [&](const std::size_t vertexIdx)
-        {
-            const auto& pos = cornerPos[vertexIdx];
-            uExact[vertexIdx] = mandelAnalyticalSolution->displacementAtPos(pos, timeLoop->time());
-        });
-
+        Dumux::parallelFor(uExact.size(), [&](const std::size_t vIdx)
+        { uExact[vIdx] = mandelAnalyticalSolution->displacement(cornerPos[vIdx], timeLoop->time()); });
 
         // write vtk output
         onePVtkWriter.write(timeLoop->time());
@@ -244,36 +222,15 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        using OnePPrimaryVariables = GetPropType<OnePTypeTag, Properties::PrimaryVariables>;
-        OnePPrimaryVariables storage(0);
-        const auto& onePLocalResidual = assembler->localResidual(onePId);
-        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
-        {
-            const auto fvGeometry = localView(*onePFvGridGeometry).bindElement(element);
-            const auto elemVolVars = localView(onePGridVariables->curGridVolVars()).bindElement(element, fvGeometry, x[onePId]);
-            storage += onePLocalResidual.evalStorage(fvGeometry, elemVolVars)[0];
-        }
-        std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
-        std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
-        std::cout << "***************************************" << std::endl;
-
     } while (!timeLoop->finished());
-
 
     // output some Newton statistics
     nonLinearSolver->report();
 
     timeLoop->finalize(leafGridView.comm());
 
-    ////////////////////////////////////////////////////////////
-    // finalize, print dumux message to say goodbye
-    ////////////////////////////////////////////////////////////
-    if (mpiHelper.rank() == 0)
-    {
+    if (leafGridView.comm().rank() == 0)
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
 
     return 0;
-
 }
