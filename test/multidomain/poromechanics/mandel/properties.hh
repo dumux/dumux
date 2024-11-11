@@ -4,15 +4,9 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup PoromechanicsTests
- * \brief Definition of the spatial parameters for the two-phase flow
- *        sub-problem in the coupled poro-mechanical elp problem.
- */
 
-#ifndef DUMUX_GEOMECHANICS_ELTWOP_PROPERTIES_HH
-#define DUMUX_GEOMECHANICS_ELTWOP_PROPERTIES_HH
+#ifndef DUMUX_TEST_MD_MANDEL_PROPERTIES_HH
+#define DUMUX_TEST_MD_MANDEL_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
 
