@@ -4,15 +4,9 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup PoromechanicsTests
- * \brief The spatial parameters class for the test problem using the
- *        1p box model.
- */
 
-#ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
-#define DUMUX_1P_TEST_SPATIALPARAMS_HH
+#ifndef DUMUX_TEST_MD_MANDEL_ONEP_SPATIALPARAMS_HH
+#define DUMUX_TEST_MD_MANDEL_ONEP_SPATIALPARAMS_HH
 
 #include <dumux/discretization/elementsolution.hh>
 
@@ -21,16 +15,14 @@
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 #include "analyticalsolution/analyticalsolution.hh"
+
 namespace Dumux {
 
-/*!
- * \ingroup PoromechanicsTests
- * \brief The spatial parameters class for the test problem using the
- *        1p box model.
- */
 template<class GridGeometry, class Scalar, class CouplingManager>
-class OnePSpatialParams : public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
-                                                                 OnePSpatialParams<GridGeometry, Scalar, CouplingManager>>
+class OnePSpatialParams
+: public FVPorousMediumFlowSpatialParamsOneP<
+    GridGeometry, Scalar, OnePSpatialParams<GridGeometry, Scalar, CouplingManager>
+>
 {
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
@@ -48,9 +40,9 @@ public:
     OnePSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
                       std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(gridGeometry)
-    , couplingManagerPtr_(couplingManagerPtr)
-    , permeability_(getParam<Scalar>("SpatialParams.Permeability"))
-    , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
+    , couplingManager_(couplingManagerPtr)
+    , permeability_(getParam<Scalar>("Problem.Permeability"))
+    , initPorosity_(getParam<Scalar>("Problem.InitialPorosity"))
     {}
 
     //! Returns the permeability at a given position.
@@ -65,35 +57,26 @@ public:
     {
         static constexpr auto poroMechId = CouplingManager::poroMechId;
 
-        const auto& poroMechGridGeom = couplingManagerPtr_->problem(poroMechId).gridGeometry();
-        const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol(poroMechId), poroMechGridGeom);
+        const auto& poroMechGridGeom = couplingManager_->problem(poroMechId).gridGeometry();
+        const auto poroMechElemSol = elementSolution(element, couplingManager_->curSol(poroMechId), poroMechGridGeom);
 
         // evaluate the deformation-dependent porosity at the scv center
         return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initPorosity_);
     }
 
-    template<class SubControlVolume>
-    Scalar initPorePressure(const Element& element, const SubControlVolume& scv) const
-    {
-        return analyticalSolution().initialPressure();
-    }
-
     //! Returns reference to the coupling manager.
     const CouplingManager& couplingManager() const
-    { return *couplingManagerPtr_; }
+    { return *couplingManager_; }
 
     const auto& analyticalSolution() const
-    {
-        return *analyticalSolutionPtr_;
-    }
+    { return *analyticalSolution_; }
 
-    void setAnalyticalSolution(const AnalyticalSolution& analyticalSolution)
-    {
-        analyticalSolutionPtr_ = &analyticalSolution;
-    }
+    void setAnalyticalSolution(const AnalyticalSolution& sol)
+    { analyticalSolution_ = &sol; }
+
 private:
-    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
-    const AnalyticalSolution *analyticalSolutionPtr_;
+    std::shared_ptr<const CouplingManager> couplingManager_;
+    const AnalyticalSolution *analyticalSolution_;
     Scalar permeability_;
     Scalar initPorosity_;
 };

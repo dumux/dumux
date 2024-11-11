@@ -4,14 +4,8 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup PoromechanicsTests
- * \brief Definition of the spatial parameters for the single-phase flow
- *        sub-problem in the coupled poro-mechanical el1p problem.
- */
-#ifndef DUMUX_1P_SUB_PROBLEM_HH
-#define DUMUX_1P_SUB_PROBLEM_HH
+#ifndef DUMUX_TEST_MD_MANDEL_ONEP_SUB_PROBLEM_HH
+#define DUMUX_TEST_MD_MANDEL_ONEP_SUB_PROBLEM_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -22,27 +16,19 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup PoromechanicsTests
- * \brief The single-phase sub problem in the el1p coupled problem.
- */
 template <class TypeTag>
 class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    // copy pressure index for convenience
-    enum { pressureIdx = GetPropType<TypeTag, Properties::ModelTraits>::Indices::pressureIdx };
-
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
 public:
     OnePSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -50,38 +36,25 @@ public:
                    const std::string& paramGroup = "OneP")
     : ParentType(gridGeometry, spatialParams, paramGroup)
     {
-        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        problemName_ = getParam<std::string>("Vtk.OutputName") + "_"
+            + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        return problemName_;
-    }
+    { return problemName_; }
 
-    //! Evaluates the boundary conditions for a Dirichlet boundary segment.
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    //! Evaluates the initial value for a control volume.
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    { return this->spatialParams().analyticalSolution().initialPressure();}
+    { return this->spatialParams().analyticalSolution().initialPressure(globalPos); }
 
-    //! Evaluates source terms.
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0);}
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param globalPos The global position
-     */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-       BoundaryTypes values;
+        BoundaryTypes values;
         values.setAllNeumann();
 
         // right boundary
