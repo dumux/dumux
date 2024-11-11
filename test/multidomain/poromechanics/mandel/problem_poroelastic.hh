@@ -10,8 +10,8 @@
  * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 
-#ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
-#define DUMUX_POROELASTIC_SUBPROBLEM_HH
+#ifndef DUMUX_TEST_MD_MANDEL_POROELASTIC_SUB_PROBLEM_HH
+#define DUMUX_TEST_MD_MANDEL_POROELASTIC_SUB_PROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
 
@@ -23,54 +23,35 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup PoromechanicsTests
- * \brief The poro-elastic sub-problem in the el1p coupled problem.
- */
 template<class TypeTag>
 class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
-    using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 public:
     PoroElasticSubProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                           std::shared_ptr<GetPropType<TypeTag, Properties::SpatialParams>> spatialParams,
                           const std::string& paramGroup = "PoroElastic")
     : ParentType(gridGeometry, spatialParams, paramGroup)
     {
-        problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        problemName_ = getParam<std::string>("Vtk.OutputName") + "_"
+            + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
     }
 
-    /*!
-     * \brief The problem name.
-     */
     const std::string& name() const
-    {
-        return problemName_;
-    }
-    //! Evaluates the initial value for a control volume.
+    { return problemName_; }
+
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    {
-        return this->spatialParams().analyticalSolution().initialDisplacementAtPos(globalPos);
-    }
+    { return this->spatialParams().analyticalSolution().initialDisplacement(globalPos); }
 
     //! Evaluates the boundary conditions for a Dirichlet boundary segment.
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
@@ -87,22 +68,14 @@ public:
 
         // top boundary
         if (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-            values = this->spatialParams().analyticalSolution().displacementAtPos(globalPos, timeLoopPtr_->time()  +
-                              timeLoopPtr_->timeStepSize());
+            values = this->spatialParams().analyticalSolution().displacement(globalPos, time_);
 
         return values;
     }
 
-    //! Evaluates the boundary conditions for a Neumann boundary segment.
     PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param globalPos The global position
-     */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
@@ -123,29 +96,12 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluates the source term for all phases within a given
-     *        sub-control volume.
-     */
-    PrimaryVariables source(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume& scv) const
-    { return PrimaryVariables(0.0); }
-
-    void setTimeLoop(TimeLoopPtr timeLoop)
-    {
-        timeLoopPtr_ = timeLoop;
-    }
-
-    Scalar nextTimeStep() const
-    {
-        return timeLoopPtr_->time()
-             + timeLoopPtr_->timeStepSize();
-    }
+    //! set the time
+    void setTime(const Scalar t) const
+    { time_ = t; }
 
 private:
-    TimeLoopPtr timeLoopPtr_;
+    mutable Scalar time_ = 0.0;
     static constexpr Scalar eps_ = 3e-6;
     std::string problemName_;
 };

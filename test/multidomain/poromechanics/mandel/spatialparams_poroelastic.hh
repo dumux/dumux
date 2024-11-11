@@ -4,30 +4,22 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- * \ingroup PoromechanicsTests
- * \brief Definition of the spatial parameters for the poro-elastic problem.
- */
-#ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
-#define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
+#ifndef DUMUX_TEST_MD_MANDEL_POROELASTIC_SPATIALPARAMS_HH
+#define DUMUX_TEST_MD_MANDEL_POROELASTIC_SPATIALPARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
 #include <dumux/geomechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 #include "analyticalsolution/analyticalsolution.hh"
+
 namespace Dumux {
 
-/*!
- * \ingroup PoromechanicsTests
- * \brief Definition of the spatial parameters for the poro-elastic
- *        sub-problem in the coupled poro-mechanical el1p problem.
- */
 template<class Scalar, class GridGeometry, class CouplingManager>
-class PoroElasticSpatialParams : public FVPoroElasticSpatialParams< GridGeometry,
-                                                                    Scalar,
-                                                                    PoroElasticSpatialParams<Scalar, GridGeometry, CouplingManager> >
+class PoroElasticSpatialParams
+: public FVPoroElasticSpatialParams<
+    GridGeometry, Scalar, PoroElasticSpatialParams<Scalar, GridGeometry, CouplingManager>
+>
 {
     using ThisType = PoroElasticSpatialParams<Scalar, GridGeometry, CouplingManager>;
     using ParentType = FVPoroElasticSpatialParams<GridGeometry, Scalar, ThisType>;
@@ -46,12 +38,12 @@ public:
                              std::shared_ptr<CouplingManager> couplingManagerPtr)
     : ParentType(gridGeometry)
     , couplingManager_(couplingManagerPtr)
-    , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
+    , initPorosity_(getParam<Scalar>("Problem.InitialPorosity"))
     {
         // Young's modulus [Pa]
-        Scalar E = getParam<Scalar>("MaterialParameters.EModulus");
+        Scalar E = getParam<Scalar>("Problem.EModulus");
         // Poisson's ratio [-]
-        Scalar nu = getParam<Scalar>("MaterialParameters.Nu");
+        Scalar nu = getParam<Scalar>("Problem.Nu");
         // Lame parameters [Pa]
         lameParams_.setLambda((E * nu) / ((1 + nu) * (1 - 2 * nu)));
         lameParams_.setMu(E / (2 * (1 + nu)));
@@ -68,7 +60,9 @@ public:
                     const ElementSolution& elemSol) const
 
     {
-        return PorosityDeformation<Scalar>::evaluatePorosity(this->gridGeometry(), element, scv, elemSol, initPorosity_);
+        return PorosityDeformation<Scalar>::evaluatePorosity(
+            this->gridGeometry(), element, scv, elemSol, initPorosity_
+        );
     }
 
     /*!
