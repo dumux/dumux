@@ -43,3 +43,4 @@ TranspirationRate = 2.15e-8 # [kg / s]
 MaxRelativeShift = 1e-12
 MaxAbsoluteResidual = 1e-21
 EnableAbsoluteResidualCriterion = true
+SatisfyResidualOrShiftCriterion = true
