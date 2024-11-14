@@ -4,7 +4,7 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 ### General changes / structure
 
 ### Improvements and Enhancements
-
+- __NewtonSolver__: Fix applying the right Newton convergence criteria based on user's wish and add a new parameter "SatisfyResidualOrShiftCriterion" to avoid confusion. Fix the Newton parameters report accordingly.
 - __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.
 - __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. `GridFormat` is added as a submodule and can be pulled in with `git submodule update --init`.
 - __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
