@@ -652,7 +652,7 @@ public:
      */
     virtual bool newtonConverged() const
     {
-        // in case the model has a priVar switch and some some primary variables
+        // in case the model has a priVar switch and some primary variables
         // actually switched their state in the last iteration, enforce another iteration
         if (priVarSwitchAdapter_->switched())
             return false;
@@ -747,13 +747,25 @@ public:
         if (enablePartialReassembly_) sout << " -- " << solverName_ << ".EnablePartialReassembly = true\n";
         if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".EnableAbsoluteResidualCriterion = true\n";
         if (satisfyResidualAndShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualAndShiftCriterion = true\n";
-        if (satisfyResidualOrShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualOrShiftCriterion = true\n";
-        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
-        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
+        else if (satisfyResidualOrShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualOrShiftCriterion = true\n";
+        else if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
+        else if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
         // parameters
-        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
-        if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".MaxAbsoluteResidual = " << residualTolerance_ << '\n';
-        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".ResidualReduction = " << reductionTolerance_ << '\n';
+        if (satisfyResidualAndShiftCriterion_ || satisfyResidualOrShiftCriterion_)
+        {
+            if (enableAbsoluteResidualCriterion_)
+                sout << " -- " << solverName_ << ".MaxAbsoluteResidual = " << residualTolerance_<<" -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
+            else
+                sout << " -- " << solverName_ << ".ResidualReduction = " << reductionTolerance_<<" -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
+        }
+        else if (enableResidualCriterion_)
+        {
+            if (enableAbsoluteResidualCriterion_)
+                sout << " -- " << solverName_ << ".MaxAbsoluteResidual = " << residualTolerance_<< '\n';
+            else
+                sout << " -- " << solverName_ << ".ResidualReduction = " << reductionTolerance_ << '\n';
+        }
+        else if (enableShiftCriterion_) sout << " -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
         sout << " -- " << solverName_ << ".MinSteps = " << minSteps_ << '\n';
         sout << " -- " << solverName_ << ".MaxSteps = " << maxSteps_ << '\n';
         sout << " -- " << solverName_ << ".TargetSteps = " << targetSteps_ << '\n';
