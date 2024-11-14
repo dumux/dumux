@@ -657,18 +657,7 @@ public:
         if (priVarSwitchAdapter_->switched())
             return false;
 
-        if (enableShiftCriterion_ && !enableResidualCriterion_)
-        {
-            return shift_ <= shiftTolerance_;
-        }
-        else if (!enableShiftCriterion_ && enableResidualCriterion_)
-        {
-            if(enableAbsoluteResidualCriterion_)
-                return residualNorm_ <= residualTolerance_;
-            else
-                return reduction_ <= reductionTolerance_;
-        }
-        else if (satisfyResidualAndShiftCriterion_)
+        if (satisfyResidualAndShiftCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
                 return shift_ <= shiftTolerance_
@@ -677,7 +666,7 @@ public:
                 return shift_ <= shiftTolerance_
                         && reduction_ <= reductionTolerance_;
         }
-        else if(enableShiftCriterion_ && enableResidualCriterion_)
+        else if(satisfyResidualOrShiftCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
                 return shift_ <= shiftTolerance_
@@ -685,6 +674,17 @@ public:
             else
                 return shift_ <= shiftTolerance_
                         || reduction_ <= reductionTolerance_;
+        }
+        else if (enableResidualCriterion_)
+        {
+            if(enableAbsoluteResidualCriterion_)
+                return residualNorm_ <= residualTolerance_;
+            else
+                return reduction_ <= reductionTolerance_;
+        }
+        else if (enableShiftCriterion_)
+        {
+            return shift_ <= shiftTolerance_;
         }
         else
         {
@@ -746,9 +746,10 @@ public:
         if (useChop_) sout << " -- " << solverName_ << ".EnableChop = true\n";
         if (enablePartialReassembly_) sout << " -- " << solverName_ << ".EnablePartialReassembly = true\n";
         if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".EnableAbsoluteResidualCriterion = true\n";
-        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
-        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
         if (satisfyResidualAndShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualAndShiftCriterion = true\n";
+        if (satisfyResidualOrShiftCriterion_) sout << " -- " << solverName_ << ".SatisfyResidualOrShiftCriterion = true\n";
+        if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
+        if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
         // parameters
         if (enableShiftCriterion_) sout << " -- " << solverName_ << ".MaxRelativeShift = " << shiftTolerance_ << '\n';
         if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".MaxAbsoluteResidual = " << residualTolerance_ << '\n';
@@ -1145,6 +1146,7 @@ private:
         enableShiftCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".EnableShiftCriterion", true);
         enableResidualCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".EnableResidualCriterion", false) || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".SatisfyResidualAndShiftCriterion", false);
+        satisfyResidualOrShiftCriterion_ = getParamFromGroup<bool>(group, solverName_ + ".SatisfyResidualOrShiftCriterion", false);
         enableDynamicOutput_ = getParamFromGroup<bool>(group, solverName_ + ".EnableDynamicOutput", true);
 
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
@@ -1245,6 +1247,7 @@ private:
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
+    bool satisfyResidualOrShiftCriterion_;
     bool enableDynamicOutput_;
 
     //! the parameter group problem prefix for getting parameters from the parameter tree
