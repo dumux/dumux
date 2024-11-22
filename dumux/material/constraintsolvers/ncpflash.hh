@@ -65,12 +65,12 @@ namespace Dumux {
 template <class Scalar, class FluidSystem>
 class NcpFlash
 {
-    enum { numPhases = FluidSystem::numPhases };
-    enum { numComponents = FluidSystem::numComponents };
+    static constexpr auto numPhases = FluidSystem::numPhases;
+    static constexpr auto numComponents = FluidSystem::numComponents;
 
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    static constexpr int numEq = numPhases*(numComponents + 1);
+    static constexpr auto numEq = numPhases*(numComponents + 1);
 
     using Matrix = Dune::FieldMatrix<Scalar, numEq, numEq>;
     using Vector = Dune::FieldVector<Scalar, numEq>;

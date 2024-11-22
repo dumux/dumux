@@ -239,17 +239,17 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2/*numEnergyEqFluid*/>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { numPhases = ModelTraits::numFluidPhases() };
-    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
-    enum { energyEq0Idx = Indices::energyEq0Idx };
-    enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
-    enum { conti0EqIdx = Indices::conti0EqIdx };
+    static constexpr auto numPhases = ModelTraits::numFluidPhases();
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+    static constexpr int energyEq0Idx = Indices::energyEq0Idx;
+    static constexpr int energyEqSolidIdx = Indices::energyEqSolidIdx;
+    static constexpr int conti0EqIdx = Indices::conti0EqIdx;
 
-    enum { numComponents = ModelTraits::numFluidComponents() };
-    enum { phase0Idx = FluidSystem::phase0Idx};
-    enum { phase1Idx = FluidSystem::phase1Idx};
-    enum { sPhaseIdx = numPhases};
+    static constexpr auto numComponents = ModelTraits::numFluidComponents();
+    static constexpr int phase0Idx = FluidSystem::phase0Idx;
+    static constexpr int phase1Idx = FluidSystem::phase1Idx;
+    static constexpr int sPhaseIdx = numPhases;
 
     static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
 
