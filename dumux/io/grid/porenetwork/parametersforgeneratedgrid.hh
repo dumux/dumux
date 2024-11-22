@@ -410,7 +410,7 @@ private:
 
         const auto generateFunction = [&](auto& poreRadiusDist)
         {
-            return [=](const auto& vertex, const int poreLabel) mutable
+            return [this,poreLabelsToSetFixedRadius,poreLabelsToApplyFactorForRadius,poreRadiusForLabel,poreRadiusFactorForLabel,generator,poreRadiusDist](const auto& vertex, const int poreLabel) mutable
             {
                 const auto radius = poreRadiusDist(generator);
 
@@ -518,10 +518,10 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "CapPoresOnBoundaries must not contain duplicates");
 
         // automatically determine the pore volume if not provided by the grid file
-        return [=] (const auto& vertex, const auto vIdx)
+        return [this,&getParameter,geometry,capPoresOnBoundaries] (const auto& vertex, const auto vIdx)
         {
             const Scalar r = getParameter(vertex, "PoreInscribedRadius");
-            const Scalar volume = [&]
+            const Scalar volume = [&,vertex,r,geometry]
             {
                 if (geometry == Pore::Shape::cylinder)
                 {
@@ -570,7 +570,7 @@ private:
         // shape parameter for calculation of throat radius
         const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatInscribedRadiusN", 0.1);
 
-        return [=](const Element& element)
+        return [this,&getParameter,inputThroatInscribedRadius,throatN](const Element& element)
         {
             const Scalar delta = element.geometry().volume();
             const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
@@ -597,7 +597,7 @@ private:
         // decide whether to subtract the pore radii from the throat length or not
         const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
-        return [=](const Element& element)
+        return [this,&getParameter,inputThroatLength,subtractRadiiFromThroatLength](const Element& element)
         {
             if (inputThroatLength > 0.0)
                 return inputThroatLength;
