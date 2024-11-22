@@ -97,7 +97,8 @@ public:
 
         FluidState fluidState;
         fluidState.setPressure(0, outletPressure_);
-        fluidState.setTemperature(283.15);
+        const auto upperRight = getParam<GlobalPosition>("Grid.UpperRight");
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos(upperRight));
 
         outletDensity_ = FluidSystem::density(fluidState, 0);
     }
