@@ -68,19 +68,19 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
 
-    enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases       = ModelTraits::numFluidPhases() };
-    enum { numComponents   = ModelTraits::numFluidComponents() };
-    enum { s0Idx = Indices::s0Idx };
-    enum { p0Idx = Indices::p0Idx };
-    enum { conti00EqIdx    = Indices::conti0EqIdx };
-    enum { energyEq0Idx    = Indices::energyEqIdx };
-    enum { liquidPhaseIdx       = FluidSystem::liquidPhaseIdx };
-    enum { gasPhaseIdx       = FluidSystem::gasPhaseIdx };
-    enum { wCompIdx        = FluidSystem::H2OIdx };
-    enum { nCompIdx        = FluidSystem::N2Idx };
-    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
-    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr auto numPhases = ModelTraits::numFluidPhases();
+    static constexpr auto numComponents = ModelTraits::numFluidComponents();
+    static constexpr int s0Idx = Indices::s0Idx;
+    static constexpr int p0Idx = Indices::p0Idx;
+    static constexpr int conti00EqIdx = Indices::conti0EqIdx;
+    static constexpr int energyEq0Idx = Indices::energyEqIdx;
+    static constexpr int liquidPhaseIdx = FluidSystem::liquidPhaseIdx;
+    static constexpr int gasPhaseIdx = FluidSystem::gasPhaseIdx;
+    static constexpr int wCompIdx = FluidSystem::H2OIdx;
+    static constexpr int nCompIdx = FluidSystem::N2Idx;
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
     static constexpr bool enableChemicalNonEquilibrium = getPropValue<TypeTag, Properties::EnableChemicalNonEquilibrium>();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
