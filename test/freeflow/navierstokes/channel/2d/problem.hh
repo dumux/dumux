@@ -52,6 +52,8 @@ class ChannelTestProblem : public BaseProblem
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
 
     static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
     using Element = typename FVElementGeometry::Element;
@@ -88,7 +90,16 @@ public:
             DUNE_THROW(Dune::InvalidStateException, outletBC + " is not a valid outlet boundary condition");
 
         useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", false);
+        enableGravity_ = getParam<bool>("Problem.EnableGravity", false);
+
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
+        referencePressure_ = getParam<Scalar>("Problem.RefPressure", 1.1e5);
+
+        FluidState fluidState;
+        fluidState.setPressure(0, outletPressure_);
+        fluidState.setTemperature(283.15);
+
+        outletDensity_ = FluidSystem::density(fluidState, 0);
     }
 
     /*!
@@ -187,18 +198,22 @@ public:
     {
         BoundaryFluxes values(0.0);
 
+        Scalar outletPressure = outletPressure_;
+        if (enableGravity_)
+            outletPressure += hydrostaticPressure_(scvf.center());
+
         if constexpr (ParentType::isMomentumProblem())
         {
             using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
 
             if (outletCondition_ == OutletCondition::unconstrainedOutflow)
-                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure, false /*zeroNormalVelocityGradient*/);
             else if (outletCondition_ == OutletCondition::outflow)
-                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure, true /*zeroNormalVelocityGradient*/);
             else
             {
                 assert(outletCondition_ == OutletCondition::neumannXneumannY || outletCondition_ == OutletCondition::neumannXdirichletY);
-                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, false /*zeroNormalVelocityGradient*/);
+                values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure, false /*zeroNormalVelocityGradient*/);
 
                 Dune::FieldMatrix<Scalar, dimWorld, dimWorld> shearRate(0.0); // gradV + gradV^T
                 shearRate[0][1] = dudy(scvf.ipGlobal()[1], inletVelocity_); // we assume du/dx = dv/dy = dv/dx = 0
@@ -302,6 +317,9 @@ public:
         else
         {
             values[Indices::pressureIdx] = outletPressure_;
+            if (enableGravity_)
+                values[Indices::pressureIdx] += hydrostaticPressure_(globalPos);
+
 #if NONISOTHERMAL
             values[Indices::temperatureIdx] = 283.15;
 #endif
@@ -322,7 +340,7 @@ public:
     Scalar referencePressure(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const SubControlVolumeFace& scvf) const
-    { return outletPressure_; }
+    { return referencePressure_; }
 
     void setTime(Scalar time)
     {
@@ -348,13 +366,24 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
+    Scalar hydrostaticPressure_(const GlobalPosition& globalPos) const
+    {
+        Scalar height = globalPos[dimWorld - 1] - this->gridGeometry().bBoxMax()[dimWorld - 1];
+        Scalar g = this->spatialParams().gravity(globalPos)[dimWorld - 1];
+
+        return outletDensity_ * g * height;
+    }
+
     static constexpr Scalar eps_=1e-6;
     Scalar inletVelocity_;
     Scalar dynamicViscosity_;
     Scalar outletPressure_;
     OutletCondition outletCondition_;
     bool useVelocityProfile_;
+    bool enableGravity_;
     Scalar time_;
+    Scalar outletDensity_;
+    Scalar referencePressure_;
 };
 } // end namespace Dumux
 
