@@ -88,15 +88,10 @@ public:
 namespace Detail {
 
 template<class TypeTag, class Impl>
-struct DiscretizationDefaultLocalOperator<
-    TypeTag,
-    Impl,
-    std::enable_if_t<
-        Dumux::Properties::inheritsFrom<Properties::TTag::BoxFacetCouplingModel, TypeTag>(),
-        DiscretizationMethods::Box
-    >
->
-{ using type = BoxFacetCouplingLocalResidual<TypeTag, Impl>; };
+    requires ( Dumux::Properties::inheritsFrom<Properties::TTag::BoxFacetCouplingModel, TypeTag>() )
+struct DiscretizationDefaultLocalOperator<TypeTag, Impl, DiscretizationMethods::Box> {
+    using type = BoxFacetCouplingLocalResidual<TypeTag, Impl>;
+};
 
 } // namespace Detail
 
