@@ -60,7 +60,7 @@ DUMUX_REGISTER_SOLVER("cholmod", Dumux::MultiTypeBlockMatrixSolverTag,
                                    "Unsupported Type in Cholmod (only double and float supported)");
                       });
 #endif // HAVE_SUITESPARSE_CHOLMOD
-#if HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
+#if HAVE_SUITESPARSE_UMFPACK
 DUMUX_REGISTER_SOLVER("umfpack", Dumux::MultiTypeBlockMatrixSolverTag,
                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
@@ -87,7 +87,7 @@ DUMUX_REGISTER_SOLVER("umfpack", Dumux::MultiTypeBlockMatrixSolverTag,
                                    "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
                         return nullptr;
                       });
-#endif // HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
+#endif // HAVE_SUITESPARSE_UMFPACK
 } // end namespace Dumux
 
 #endif // DUMUX_LINEAR_ISTL_SOLVERS_MULTITYPE_HH

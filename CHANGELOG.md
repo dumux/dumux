@@ -1,6 +1,8 @@
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 =============================================
 
+- __Requirements__: DuMux requires Dune >=2.10 and CMake >= 3.16.
+
 ### General changes / structure
 
 ### Improvements and Enhancements
