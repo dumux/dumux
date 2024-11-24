@@ -900,12 +900,7 @@ namespace Dumux {
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
 template<class LSTraits, class LATraits>
-using UMFPackIstlSolver = Detail::DirectIstlSolver<
-    LSTraits, LATraits, Dune::UMFPack
-#if DUNE_VERSION_GTE(DUNE_ISTL,2,10)
-    , false // no need to convert multi-type matrix anymore
-#endif
->;
+using UMFPackIstlSolver = Detail::DirectIstlSolver<LSTraits, LATraits, Dune::UMFPack, false>;
 
 } // end namespace Dumux
 
