@@ -88,6 +88,7 @@ namespace Dumux {
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
  * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam LocalResidual The local residual (local operator) of the chosen model
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true, class LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>>
 class FVAssembler
