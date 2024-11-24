@@ -213,7 +213,7 @@ options.add_argument(
     "--download", action="store_true", default=False, help="Only download the packages."
 )
 
-parser.add_argument("--dune-branch", default="releases/2.9", help="Dune branch to be checked out.")
+parser.add_argument("--dune-branch", default="releases/2.10", help="Dune branch to be checked out.")
 parser.add_argument(
     "--dumux-branch", default="releases/3.9", help="Dumux branch to be checked out."
 )
