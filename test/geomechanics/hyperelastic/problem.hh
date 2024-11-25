@@ -7,12 +7,25 @@
 #ifndef DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 #define DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 
+#include <xpress/xp.hpp>
+
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+
+
+// add compatibility traits for Dune::FieldMatrix (TODO: where to put such thing!? in deps folder as well?)
+#ifndef DOXYGEN
+namespace xp {
+
+template<typename T, int rows, int cols>
+struct shape_of<Dune::FieldMatrix<T, rows, cols>> { using type = xp::md_shape<rows, cols>; };
+
+}  // namespace xp
+#endif  // DOXYGEN
 
 namespace Dumux {
 
@@ -83,35 +96,34 @@ public:
     // from Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
     // ψ = K(0.5(J*J - 1) - ln J) + 0.5µ (J^(-2/3) tr(C) - 3)
     // P = 2F∂ψ/∂C = µ J^(-2/3) (F - 1/3*tr(C)*F^-T) + K*(J*J - 1)F^-T
-    Tensor firstPiolaKirchhoffStressTensor(Tensor F) const
+    Tensor firstPiolaKirchhoffStressTensor(Tensor FIn) const
     {
-        // invariants
-        const auto J = F.determinant();
-        const auto Jm23 = std::pow(J, -2.0/3.0);
-        auto trC = 0.0;
-        for (int i = 0; i < dimWorld; ++i)
-            for (int j = 0; j < dimWorld; ++j)
-                trC += F[i][j]*F[i][j];
+        static_assert(dimWorld == 3, "1st Piola-Kirchhoff stress tensor only implemented in 3d");
 
-        // inverse transpose of deformation gradient
-        const auto invFT = [&](){
-            auto invFT = F;
-            if (J != 0.0)
-                invFT.invert();
-            return transpose(invFT);
-        }();
+        using real = xp::dtype::real;
+        using shape = xp::md_shape<3, 3>;
 
-        // material parameters
-        const auto mu = this->spatialParams().shearModulus();
-        const auto K = this->spatialParams().bulkModulus();
+        const xp::var<real> K;
+        const xp::var<real> mu;
+        const xp::tensor<shape, real> F;
 
-        // assemble 1st Piola Kirchhoff stress tensor
-        Tensor P(0.0);
-        P.axpy(K*(J*J - 1), invFT);
-        auto& FTerm = F;
-        FTerm.axpy(-1.0/3.0*trC, invFT);
-        P.axpy(mu*Jm23, FTerm);
-        return P;
+        const auto trC = F*F;
+        const auto J = det(F);
+        const auto psi = K*(xp::val<0.5>*(J*J - xp::val<1.0>) - log(J))
+                        + xp::val<0.5>*mu*(pow(J, xp::val<-2.0/3.0>)*trC - xp::val<3.0>);
+
+        const auto J_value = value_of(J, at(F = FIn));
+        derivative_of(psi, wrt(F), at(
+            mu = this->spatialParams().shearModulus(),
+            K = this->spatialParams().bulkModulus(),
+            F = FIn,
+            // precompute a few expressions to speed up computations
+            J = J_value,
+            trC = value_of(trC, at(F = FIn)),
+            J*J = value_of(J*J, at(J = J_value))
+        )).export_to(FIn);
+
+        return FIn;
     }
 
 private:

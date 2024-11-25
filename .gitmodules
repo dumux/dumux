@@ -4,3 +4,6 @@
 [submodule "deps/gridformat"]
 	path = deps/gridformat
 	url = https://github.com/dglaeser/gridformat.git
+[submodule "deps/xpress"]
+	path = deps/xpress
+	url = https://github.com/dglaeser/xpress

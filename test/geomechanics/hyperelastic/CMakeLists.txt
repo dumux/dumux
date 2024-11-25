@@ -12,6 +12,8 @@ dumux_add_test(
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box-00001.vtu
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box params.input"
 )
+target_link_libraries(test_hyperelastic_box PRIVATE xpress::xpress)
+
 dumux_add_test(
     NAME test_hyperelastic_box_gridformat_io
     LABELS geomechanics elastic
