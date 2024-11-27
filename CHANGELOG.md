@@ -3,6 +3,8 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 
 ### General changes / structure
 
+- __C++20__: DuMu<sup>x</sup> now requires a C++ compiler supporting the C++20 feature set union of GCC 11 and Clang 14. C++20 mode is enforced.
+
 ### Improvements and Enhancements
 
 - __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.

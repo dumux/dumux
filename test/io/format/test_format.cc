@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
             "\u2080", "\u2245", 42
         );
 
-        testString(std::string_view{buffer, result.size}, "Hubble's H₀ ≅ 42 miles/sec/mpc.");
+        testString(std::string_view{buffer, result.out}, "Hubble's H₀ ≅ 42 miles/sec/mpc.");
     }
 
     // formatted_size

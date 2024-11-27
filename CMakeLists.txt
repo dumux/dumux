@@ -56,8 +56,7 @@ else()
   dune_enable_all_packages(MODULE_LIBRARIES dumux dumux_fmt)
 endif()
 
-# enforce C++-17
-target_compile_features(dumux PUBLIC cxx_std_17)
+target_compile_features(dumux PUBLIC cxx_std_20)
 
 if (DUMUX_HAVE_GRIDFORMAT)
     dune_register_package_flags(LIBRARIES gridformat::gridformat)

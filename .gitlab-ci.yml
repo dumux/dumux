@@ -13,6 +13,7 @@ variables:
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.9"
   GIT_SUBMODULE_STRATEGY: recursive
+  DUMUX_ENABLE_GRIDFORMAT: "OFF"
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -109,7 +110,7 @@ minimal-dune-latest-release-gcc:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
-minimal-dune-master-release-clang:
+minimal-dune-master-clang:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
@@ -119,14 +120,14 @@ full-dune-latest-release-clang:
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
 
-full-dune-master-gcc-cpp-20:
+full-dune-master-gcc-docs:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
-    CXX_MAX_STANDARD: "20"
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
+    DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 ##################################
 # additional scheduled pipelines #
@@ -134,11 +135,7 @@ full-dune-master-clang:
   extends: .non-mr-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
-
-full-dune-master-gcc:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
+    DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 ################################################
 # trigger test pipelines of downstream modules #

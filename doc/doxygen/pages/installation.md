@@ -12,7 +12,7 @@ Alternatively, you can try to employ MinGW, Cygwin or a Linux Virtual Machine.
 
 In order to build DuMu<sup>x</sup> you need at least the following software:
 
-* Standard-compliant C++17 compiler supporting the common feature set supported by GCC 9.3 and Clang 10
+* Standard-compliant C++20 compiler supporting the common feature set supported by GCC 11 and Clang 14
 * CMake 3.16 or newer
 * pkg-config
 * The DUNE core modules (>= 2.9), see installation instructions below
