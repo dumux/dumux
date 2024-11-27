@@ -14,11 +14,11 @@
 
 #include <cmath>
 
-#include "./../components/air.hh"
-#include "h2o_ar.hh"
-#include "h2o_co2.hh"
-#include "h2o_n2.hh"
-#include "h2o_o2.hh"
+#include <dumux/material/components/air.hh>
+#include <dumux/material/binarycoefficients/h2o_ar.hh>
+#include <dumux/material/binarycoefficients/h2o_co2.hh>
+#include <dumux/material/binarycoefficients/h2o_n2.hh>
+#include <dumux/material/binarycoefficients/h2o_o2.hh>
 
 namespace Dumux {
 namespace BinaryCoeff {
