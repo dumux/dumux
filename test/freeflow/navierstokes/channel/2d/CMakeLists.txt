@@ -16,6 +16,19 @@ dumux_add_test(NAME test_ff_stokes_channel_outflow
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
                              -Problem.Name test_ff_stokes_channel_outflow")
 
+dumux_add_test(NAME test_ff_stokes_channel_outflow_gravity
+              TARGET test_ff_channel
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --relative 1e-5
+                             --ignore p
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_outflow_gravity-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
+                             -Problem.EnableGravity true -Problem.Name test_ff_stokes_channel_outflow_gravity")
+
 dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
