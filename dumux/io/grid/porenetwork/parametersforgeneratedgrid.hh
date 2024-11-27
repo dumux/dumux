@@ -244,7 +244,7 @@ private:
     /*!
      * \brief Returns a list of boundary face priorities from user specified input or default values if no input is given
      *
-     * This essentially determines the index of a node on an edge or corner. For instance in a 2D case, a list of {0,1,2,3} 
+     * This essentially determines the index of a node on an edge or corner. For instance in a 2D case, a list of {0,1,2,3}
      * will give highest priority to the "x-direction" and lowest to the "diagonal-direction".
      */
     BoundaryList getPriorityList_() const
@@ -410,7 +410,7 @@ private:
 
         const auto generateFunction = [&](auto& poreRadiusDist)
         {
-            return [=](const auto& vertex, const int poreLabel) mutable
+            return [=,this](const auto& vertex, const int poreLabel) mutable
             {
                 const auto radius = poreRadiusDist(generator);
 
@@ -518,7 +518,7 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "CapPoresOnBoundaries must not contain duplicates");
 
         // automatically determine the pore volume if not provided by the grid file
-        return [=] (const auto& vertex, const auto vIdx)
+        return [=,this] (const auto& vertex, const auto vIdx)
         {
             const Scalar r = getParameter(vertex, "PoreInscribedRadius");
             const Scalar volume = [&]
@@ -570,7 +570,7 @@ private:
         // shape parameter for calculation of throat radius
         const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatInscribedRadiusN", 0.1);
 
-        return [=](const Element& element)
+        return [=,this](const Element& element)
         {
             const Scalar delta = element.geometry().volume();
             const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
@@ -597,7 +597,7 @@ private:
         // decide whether to subtract the pore radii from the throat length or not
         const bool subtractRadiiFromThroatLength = getParamFromGroup<bool>(paramGroup_, prefix + "SubtractPoreInscribedRadiiFromThroatLength", true);
 
-        return [=](const Element& element)
+        return [=,this](const Element& element)
         {
             if (inputThroatLength > 0.0)
                 return inputThroatLength;
