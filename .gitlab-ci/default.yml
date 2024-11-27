@@ -26,6 +26,7 @@ variables:
   REFERENCE_SHA: ""
   DUMUX_ENABLE_CPPCHECK: ""
   DUMUX_ENABLE_DOXYGEN_BUILD: ""
+  DUMUX_ENABLE_GRIDFORMAT: "OFF"
 
 
 configure:
@@ -33,7 +34,7 @@ configure:
   script:
     - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
-      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
+      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current cmake
     - dunecontrol --opts=opts_file.opts --current make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
