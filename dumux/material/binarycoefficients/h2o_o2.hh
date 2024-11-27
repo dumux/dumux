@@ -42,12 +42,6 @@ public:
         return henryIAPWS(E, F, G, H, temperature);
     }
 
-    template <class Scalar>
-    static Scalar henryMixture(Scalar temperature)
-    {
-        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_O2::henryMixture()");
-    }
-
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and oxygen.
      *
