@@ -137,12 +137,6 @@ full-dune-master-clang:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_GRIDFORMAT: "ON"
 
-full-dune-master-gcc:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
-    DUMUX_ENABLE_GRIDFORMAT: "ON"
-
 ################################################
 # trigger test pipelines of downstream modules #
 ################################################
