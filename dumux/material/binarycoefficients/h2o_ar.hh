@@ -49,11 +49,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_AR::liquidDiffCoeff()");
     }
 
-    template <class Scalar>
-    static Scalar henryMixture(Scalar temperature) {
-        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_AR::henryMixture()");
-    }
-
 };
 
 } // end namespace BinaryCoeff
