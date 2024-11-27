@@ -58,10 +58,10 @@ public:
     template <class Scalar>
     static Scalar henryMixture(Scalar temperature)
     {
-        const Scalar yO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::O2;
-        const Scalar yN2_air=Dumux::Components::Air<Scalar>::airMoleFraction::N2;
-        const Scalar yCO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
-        const Scalar yAr_air=Dumux::Components::Air<Scalar>::airMoleFraction::Ar;
+        static constexpr Scalar yO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::O2;
+        static constexpr Scalar yCO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
+        static constexpr Scalar yAr_air=Dumux::Components::Air<Scalar>::airMoleFraction::Ar;
+        static constexpr Scalar yN2_air=Dumux::Components::Air<Scalar>::airMoleFraction::N2;
 
         Scalar kh_O2=H2O_O2::henry(temperature);
         Scalar kh_N2=H2O_N2::henry(temperature);
