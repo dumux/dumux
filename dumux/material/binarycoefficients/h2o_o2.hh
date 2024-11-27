@@ -34,12 +34,18 @@ public:
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-        static const Scalar E = 2305.0674;
-        static const Scalar F = -11.3240;
-        static const Scalar G = 25.3224;
-        static const Scalar H = -15.6449;
+        static constexpr Scalar E = 2305.0674;
+        static constexpr Scalar F = -11.3240;
+        static constexpr Scalar G = 25.3224;
+        static constexpr Scalar H = -15.6449;
 
         return henryIAPWS(E, F, G, H, temperature);
+    }
+
+    template <class Scalar>
+    static Scalar henryMixture(Scalar temperature)
+    {
+        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_O2::henryMixture()");
     }
 
     /*!

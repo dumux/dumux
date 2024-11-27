@@ -31,12 +31,27 @@ public:
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-        static const Scalar E = 2310.5463;
-        static const Scalar F = -46.7034;
-        static const Scalar G = 160.4066;
-        static const Scalar H = -118.3043;
+        static constexpr Scalar E = 2310.5463;
+        static constexpr Scalar F = -46.7034;
+        static constexpr Scalar G = 160.4066;
+        static constexpr Scalar H = -118.3043;
 
         return henryIAPWS(E, F, G, H, temperature);
+    }
+
+    template <class Scalar>
+    static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure) {
+        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_AR::gasDiffCoeff()");
+    }
+
+    template <class Scalar>
+    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure) {
+        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_AR::liquidDiffCoeff()");
+    }
+
+    template <class Scalar>
+    static Scalar henryMixture(Scalar temperature) {
+        DUNE_THROW(Dune::NotImplemented, "BinaryCoefficients::H2O_AR::henryMixture()");
     }
 
 };
