@@ -11,6 +11,8 @@ patch -p1 <../dumux/patches/opm_grid_2024_10.patch
 patch -p1 <../dumux/patches/opm_common_2024_10.patch
 ```
 
+OPM release 2024.10 is not fully compatible with C++20. The patch `opm_grid_2024_10.patch` also includes a fix to `CpGridData.hpp`.
+
 
 ### dune-istl
 If the AMGBackend should be used without SuperLU as coarse grid solver, it can

@@ -73,3 +73,38 @@ index 6621535e..3fffc56a 100644
      bool fixedSize()
  #else
      bool fixedsize()
+diff --git a/opm/grid/cpgrid/CpGridData.hpp b/opm/grid/cpgrid/CpGridData.hpp
+index d5f4ecc2..bd1411dd 100644
+--- a/opm/grid/cpgrid/CpGridData.hpp
++++ b/opm/grid/cpgrid/CpGridData.hpp
+@@ -1064,8 +1064,8 @@ struct BaseMover
+ template<class DataHandle>
+ struct Mover<DataHandle,0> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,0>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView,
++          CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+@@ -1082,8 +1082,8 @@ struct Mover<DataHandle,0> : public BaseMover<DataHandle>
+ template<class DataHandle>
+ struct Mover<DataHandle,1> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,1>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView,
++          CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+@@ -1106,8 +1106,8 @@ struct Mover<DataHandle,1> : public BaseMover<DataHandle>
+ template<class DataHandle>
+ struct Mover<DataHandle,3> : public BaseMover<DataHandle>
+ {
+-    Mover<DataHandle,3>(DataHandle& data, CpGridData* gatherView,
+-                        CpGridData* scatterView)
++    Mover(DataHandle& data, CpGridData* gatherView,
++          CpGridData* scatterView)
+     : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
+     {}
+     void operator()(std::size_t from_cell_index,std::size_t to_cell_index)
