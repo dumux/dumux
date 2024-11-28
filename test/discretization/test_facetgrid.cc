@@ -15,6 +15,7 @@
 #include <string_view>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/initialize.hh>
@@ -29,6 +30,23 @@ std::vector<T> uniqueValuesIn(std::vector<T> in)
     std::sort(in.begin(), in.end());
     in.erase(std::unique(in.begin(), in.end()), in.end());
     return in;
+}
+
+template<typename FacetElementGeometry, typename DomainElementGeometry>
+bool overlap(const FacetElementGeometry& facetGeo, const DomainElementGeometry& domainGeo)
+{
+    const auto cornersOf = [] (const auto& geo) {
+        return std::views::iota(0, geo.corners())
+            | std::views::transform([&] (int c) { return geo.corner(c); });
+    };
+
+    for (const auto& facetGeoCorner : cornersOf(facetGeo))
+        if (std::ranges::none_of(cornersOf(domainGeo), [&] (const auto& domainGeoCorner) {
+            return Dune::FloatCmp::eq(facetGeoCorner, domainGeoCorner);
+        }))
+            return false;
+
+    return true;
 }
 
 
@@ -58,6 +76,20 @@ int main(int argc, char** argv)
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGrid.gridView().size(0)));
         if (facetGrid.gridView().size(1) != 11)
             handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGrid.gridView().size(1)));
+
+        for (const auto& facetElement : elements(facetGrid.gridView()))
+        {
+            unsigned int count = 0;
+            for (const auto& domainElement : facetGrid.adjacentDomainElements(facetElement))
+            {
+                count++;
+                if (!overlap(facetElement.geometry(), domainElement.geometry()))
+                    handleError("Facet and Domain element do not overlap");
+            }
+
+            if (count != 2)
+                handleError("Expected two adjacent domain elements per facet element");
+        }
     }
 
     {
