@@ -18,8 +18,9 @@
 #include <memory>
 #include <utility>
 #include <concepts>
-#include <type_traits>
+#include <optional>
 #include <algorithm>
+#include <type_traits>
 #include <unordered_map>
 #include <ranges>
 
@@ -103,7 +104,6 @@ class FVFacetGrid
         std::unordered_map<std::size_t, std::size_t> insertedVertices;
         std::vector<std::vector<unsigned int>> elementCorners;
         std::vector<unsigned int> localCornerStorage;
-        std::size_t insertedElementCount = 0;
 
         elementCorners.reserve(domainGridView_().size(0));
         facetToScvfIndices_.resize(domainGridView_().size(0));
@@ -144,23 +144,27 @@ class FVFacetGrid
                         } ());
                     });
 
-                    bool insert = true;
-                    if (mayBeDuplicateElement)
-                        insert = std::none_of(elementCorners.begin(), elementCorners.end(), [&] (const auto& corners) {
+                    std::optional<std::size_t> facetElementIndex;
+                    if (mayBeDuplicateElement) {
+                        auto it = std::find_if(elementCorners.begin(), elementCorners.end(), [&] (const auto& corners) {
                             const auto contained = [&] (auto idx) -> bool { return std::ranges::count(corners, idx); };
                             return std::ranges::all_of(localCornerStorage, contained);
                         });
+                        if (it != elementCorners.end())
+                            facetElementIndex = std::distance(elementCorners.begin(), it);
+                    }
 
-                    if (insert)
+                    if (!facetElementIndex.has_value())
                     {
+                        facetElementIndex = elementCorners.size();
                         elementCorners.push_back(localCornerStorage);
                         facetGridFactory_->insertElement(isGeo.type(), localCornerStorage);
-                        insertedElementCount++;
-                        std::ranges::for_each(scvfs(fvGeometry), [&] (const auto& scvf) {
-                            if (FacetGridDetail::intersect(fvGeometry.geometry(scvf), isGeo))
-                                facetToScvfIndices_[eIdx][insertedElementCount - 1].push_back(scvf.index());
-                        });
                     }
+
+                    std::ranges::for_each(scvfs(fvGeometry), [&] (const auto& scvf) {
+                        if (FacetGridDetail::intersect(fvGeometry.geometry(scvf), isGeo))
+                            facetToScvfIndices_[eIdx][facetElementIndex.value()].push_back(scvf.index());
+                    });
             });
         });
 
