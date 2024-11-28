@@ -196,7 +196,15 @@ class FVFacetGrid
     const EntityMapper& vertexMapper() const
     { return *facetVertexMapper_; }
 
-    // TODO: iterators over "coupled" elements / scvfs
+    //! Return a range over all domain elements that overlap with the facet grid
+    std::ranges::view auto adjacentDomainElements() const
+    {
+        return elements(domainGridView_())
+            | std::views::filter([&] (const auto& element) {
+                const auto eIdx = domainGridGeometry_->elementMapper().index(element);
+                return facetToScvfIndices_.at(eIdx).size() > 0;
+            });
+    }
 
  private:
     const auto& domainGridView_() const { return domainGridGeometry_->gridView(); }
@@ -255,6 +263,7 @@ class FVTraceGrid : private FVFacetGrid<GridGeometry, FacetGrid>
     using ParentType::gridView;
     using ParentType::elementMapper;
     using ParentType::vertexMapper;
+    using ParentType::adjacentDomainElements;
 };
 
 template<typename GridGeometry>
