@@ -87,6 +87,7 @@ index d5f4ecc2..bd1411dd 100644
 +          CpGridData* scatterView)
      : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
      {}
+
 @@ -1082,8 +1082,8 @@ struct Mover<DataHandle,0> : public BaseMover<DataHandle>
  template<class DataHandle>
  struct Mover<DataHandle,1> : public BaseMover<DataHandle>
@@ -97,6 +98,7 @@ index d5f4ecc2..bd1411dd 100644
 +          CpGridData* scatterView)
      : BaseMover<DataHandle>(data), gatherView_(gatherView), scatterView_(scatterView)
      {}
+
 @@ -1106,8 +1106,8 @@ struct Mover<DataHandle,1> : public BaseMover<DataHandle>
  template<class DataHandle>
  struct Mover<DataHandle,3> : public BaseMover<DataHandle>
