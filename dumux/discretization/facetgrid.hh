@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <ranges>
 
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/common/gridfactory.hh>
@@ -85,6 +86,7 @@ class FVFacetGrid
 
  public:
     using GridView = typename FacetGrid::LeafGridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using EntityMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
     using DomainElement = typename GridGeometry::GridView::template Codim<0>::Entity;
@@ -106,7 +108,7 @@ class FVFacetGrid
         std::vector<unsigned int> localCornerStorage;
 
         elementCorners.reserve(domainGridView_().size(0));
-        facetToScvfIndices_.resize(domainGridView_().size(0));
+        domainElementToCouplingData_.resize(domainGridView_().size(0));
         auto fvGeometry = localView(*domainGridGeometry_);
 
         std::ranges::for_each(elements(domainGridView_()), [&] (const auto& element) {
@@ -163,7 +165,7 @@ class FVFacetGrid
 
                     std::ranges::for_each(scvfs(fvGeometry), [&] (const auto& scvf) {
                         if (FacetGridDetail::intersect(fvGeometry.geometry(scvf), isGeo))
-                            facetToScvfIndices_[eIdx][facetElementIndex.value()].push_back(scvf.index());
+                            domainElementToCouplingData_[eIdx][facetElementIndex.value()].push_back(scvf.index());
                     });
             });
         });
@@ -176,12 +178,17 @@ class FVFacetGrid
         std::vector<std::size_t> insertionToActualIndex(facetGrid_->leafGridView().size(0));
         for (const auto& e : elements(facetGrid_->leafGridView()))
             insertionToActualIndex[facetGridFactory_->insertionIndex(e)] = facetElementMapper_->index(e);
-        for (auto& map : facetToScvfIndices_) {
+        for (auto& map : domainElementToCouplingData_) {
             FacetElementToScvfElementIndices new_map;
             for (const auto& [facetElemInsertionIndex, scvfIndices] : map)
                 new_map[insertionToActualIndex[facetElemInsertionIndex]] = scvfIndices;
             map = std::move(new_map);
         }
+
+        facetToDomainElements_.resize(gridView().size(0));
+        for (std::size_t eIdxDomain = 0; eIdxDomain < domainGridView_().size(0); ++eIdxDomain)
+            for (const auto& [eIdxFacet, _] : domainElementToCouplingData_.at(eIdxDomain))
+                facetToDomainElements_[eIdxFacet].push_back(eIdxDomain);
     }
 
     //! Return the grid view containing the selected facets
@@ -196,13 +203,13 @@ class FVFacetGrid
     const EntityMapper& vertexMapper() const
     { return *facetVertexMapper_; }
 
-    //! Return a range over all domain elements that overlap with the facet grid
-    std::ranges::view auto adjacentDomainElements() const
+    //! Return a range over all domain elements that overlap with the given facet grid element
+    std::ranges::view auto adjacentDomainElements(const Element& element) const
     {
-        return elements(domainGridView_())
-            | std::views::filter([&] (const auto& element) {
-                const auto eIdx = domainGridGeometry_->elementMapper().index(element);
-                return facetToScvfIndices_.at(eIdx).size() > 0;
+        const auto eIdx = elementMapper().index(element);
+        return facetToDomainElements_.at(eIdx)
+            | std::views::transform([&] (const auto& eIdxDomain) {
+                return domainGridGeometry_->element(eIdxDomain);
             });
     }
 
@@ -217,7 +224,8 @@ class FVFacetGrid
     std::unique_ptr<EntityMapper> facetElementMapper_;
     std::unique_ptr<EntityMapper> facetVertexMapper_;
 
-    std::vector<FacetElementToScvfElementIndices> facetToScvfIndices_;
+    std::vector<FacetElementToScvfElementIndices> domainElementToCouplingData_;
+    std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
 };
 
 template<typename GridGeometry, typename Indicator>

@@ -24,12 +24,11 @@
 
 
 template<typename T>
-std::vector<T> uniqueValuesIn(const std::vector<T>& in)
+std::vector<T> uniqueValuesIn(std::vector<T> in)
 {
-    std::vector<T> result = in;
-    std::sort(result.begin(), result.end());
-    result.erase(std::unique(result.begin(), result.end()), result.end());
-    return result;
+    std::sort(in.begin(), in.end());
+    in.erase(std::unique(in.begin(), in.end()), in.end());
+    return in;
 }
 
 
@@ -69,12 +68,12 @@ int main(int argc, char** argv)
             handleError("Unexpected number of trace grid vertices: " + std::to_string(traceGrid.gridView().size(0)));
 
         std::vector<std::size_t> adjacentElements;
-        for (const auto& element: traceGrid.adjacentDomainElements())
-            adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
+        for (const auto& facetElement : elements(traceGrid.gridView()))
+            for (const auto& element: traceGrid.adjacentDomainElements(facetElement))
+                adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
+        adjacentElements = uniqueValuesIn(adjacentElements);
         if (adjacentElements.size() != 10 + 10 + 2*8)
             handleError("Unexpected number of adjacent domain elements");
-        if (uniqueValuesIn(adjacentElements).size() != adjacentElements.size())
-            handleError("Unexpected duplicates in adjacent domain elements");
     }
 
     return exit_code;
