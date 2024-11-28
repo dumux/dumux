@@ -14,7 +14,6 @@
 #include <cmath>
 #include <string_view>
 
-#include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
@@ -68,10 +67,11 @@ int main(int argc, char** argv)
     };
 
     {
-        FVFacetGrid facetGrid{
-            std::make_shared<GridGeometry>(grid.leafGridView()),
-            [] (const auto& is) { return std::abs(is.geometry().center()[0] - 0.5) < 1e-6; }
-        };
+        auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
+        FVFacetGrid facetGrid{gridGeometry, [] (const auto& is) {
+            return std::abs(is.geometry().center()[0] - 0.5) < 1e-6;
+        }};
+
         if (facetGrid.gridView().size(0) != 10)
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGrid.gridView().size(0)));
         if (facetGrid.gridView().size(1) != 11)
@@ -85,6 +85,18 @@ int main(int argc, char** argv)
                 count++;
                 if (!overlap(facetElement.geometry(), domainElement.geometry()))
                     handleError("Facet and Domain element do not overlap");
+
+                unsigned int scvfCount = 0;
+                const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
+                for (const auto scvfIdx : facetGrid.adjacentScvfIndices(facetElement, domainElement))
+                {
+                    scvfCount++;
+                    if (!overlap(fvGeometry.geometry(fvGeometry.scvf(scvfIdx)), facetElement.geometry()))
+                        handleError("Facet element and domain scvf do not overlap");
+                }
+
+                if (scvfCount != 1)
+                    handleError("Expected one adjacent domain scvf per facet element");
             }
 
             if (count != 2)
