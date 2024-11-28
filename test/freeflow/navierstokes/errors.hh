@@ -703,7 +703,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
         using MomIndices = typename MomentumProblem::Indices;
         logFile << Fmt::format(
             " {0}(p) = {1} {0}(vx) = {2} {0}(vy) = {3}",
-            name, e[MassIndices::pressureIdx], e[MomIndices::velocityXIdx], e[MomIndices::velocityYIdx]
+            name, e[MassIndices::pressureIdx], e[MomIndices::velocity(0)+1], e[MomIndices::velocity(1)+1]
         );
     };
 
