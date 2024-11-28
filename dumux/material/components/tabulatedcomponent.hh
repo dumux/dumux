@@ -302,7 +302,7 @@ private:
     void tabularizeVaporPressure_()
     {
         // fill the temperature-pressure arrays
-        Dumux::parallelFor(nTemp_, [=](std::size_t iT)
+        Dumux::parallelFor(nTemp_, [this](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
             vaporPressure_[iT] = RawComponent::vaporPressure(temperature);
@@ -330,7 +330,7 @@ private:
     template<class PropFunc, class Policy>
     void tabularizeTPArray_(const PropFunc& f, Policy policy, std::vector<typename RawComponent::Scalar>& values) const
     {
-        Dumux::parallelFor(nTemp_, [=,&values](std::size_t iT)
+        Dumux::parallelFor(nTemp_, [this,f,policy,&values](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -364,7 +364,7 @@ private:
                                    std::vector<typename RawComponent::Scalar>& rhoMin,
                                    std::vector<typename RawComponent::Scalar>& rhoMax) const
     {
-        Dumux::parallelFor(nTemp_, [=,&rhoMin,&rhoMax](std::size_t iT)
+        Dumux::parallelFor(nTemp_, [this,rho,policy,&rhoMin,&rhoMax](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
@@ -390,7 +390,7 @@ private:
                                   const std::vector<typename RawComponent::Scalar>& rhoMin,
                                   const std::vector<typename RawComponent::Scalar>& rhoMax) const
     {
-        Dumux::parallelFor(nTemp_, [=,&pressure,&rhoMin,&rhoMax](std::size_t iT)
+        Dumux::parallelFor(nTemp_, [this,p,&pressure,&rhoMin,&rhoMax](std::size_t iT)
         {
             Scalar temperature = iT * (tempMax_ - tempMin_)/(nTemp_ - 1) + tempMin_;
 
