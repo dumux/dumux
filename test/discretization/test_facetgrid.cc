@@ -60,10 +60,10 @@ int main(int argc, char** argv)
 
     Grid grid{{1.0, 1.0}, {10, 10}};
 
-    int exit_code = 0;
+    int exitCode = 0;
     const auto handleError = [&] (std::string_view message) {
         std::cout << message << std::endl;
-        exit_code += 1;
+        exitCode += 1;
     };
 
     {
@@ -120,5 +120,5 @@ int main(int argc, char** argv)
             handleError("Unexpected number of adjacent domain elements");
     }
 
-    return exit_code;
+    return exitCode;
 }
