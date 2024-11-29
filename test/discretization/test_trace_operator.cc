@@ -58,6 +58,12 @@ int main(int argc, char** argv)
     auto traceGrid = std::make_shared<BoundaryGrid>(makeFVBoundaryGrid<FacetGridType>(gridGeometry));
     FVTraceOperator traceOperator{traceGrid};
 
+    int exitCode = 0;
+    const auto handleError = [&] (std::string_view message) {
+        std::cout << message << std::endl;
+        exitCode += 1;
+    };
+
     {
         std::cout << "Testing scv assembly" << std::endl;
         const auto x = makeSolutionVector(*gridGeometry);
@@ -66,10 +72,7 @@ int main(int argc, char** argv)
         });
         for (const auto& v : vertices(traceGrid->gridView()))
             if (Dune::FloatCmp::ne(traceX[traceGrid->gridView().indexSet().index(v)][0], testField(v.geometry().center())))
-            {
-                std::cout << "Unexpected trace value" << std::endl;
-                return 1;
-            }
+                handleError("Unexpected trace value (scv assembly)");
     }
 
     {
@@ -79,10 +82,7 @@ int main(int argc, char** argv)
         });
         for (const auto& e : elements(traceGrid->gridView()))
             if (Dune::FloatCmp::ne(traceX[traceGrid->gridView().indexSet().index(e)][0], testField(e.geometry().center())))
-            {
-                std::cout << "Unexpected trace value" << std::endl;
-                return 1;
-            }
+                handleError("Unexpected trace value (scvf assembly)");
     }
 
     return exitCode;
