@@ -203,7 +203,7 @@ class FVFacetGrid
     { return *facetVertexMapper_; }
 
     //! Return a range over all domain elements that overlap with the given facet grid element
-    std::ranges::view auto adjacentDomainElements(const Element& element) const
+    std::ranges::view auto domainElementsAdjacentTo(const Element& element) const
     {
         return facetToDomainElements_.at(elementMapper().index(element))
             | std::views::transform([&] (const auto& eIdxDomain) {
@@ -212,7 +212,7 @@ class FVFacetGrid
     }
 
     //! Return a range over the indices of the scvfs that overlap with the given trace element from within the given domain element
-    std::ranges::view auto adjacentScvfIndices(const Element& element, const DomainElement& domainElement) const
+    std::ranges::view auto domainScvfsAdjacentTo(const Element& element, const DomainElement& domainElement) const
     {
         const auto eIdx = elementMapper().index(element);
         return domainElementToCouplingData_.at(domainGridGeometry_->elementMapper().index(domainElement))
@@ -289,8 +289,8 @@ class FVTraceGrid : private FVFacetGrid<GridGeometry, FacetGrid>
     using ParentType::elementMapper;
     using ParentType::vertexMapper;
     using ParentType::domainGridGeometry;
-    using ParentType::adjacentDomainElements;
-    using ParentType::adjacentScvfIndices;
+    using ParentType::domainElementsAdjacentTo;
+    using ParentType::domainScvfsAdjacentTo;
     using ParentType::domainToFacetVertexIndex;
 };
 

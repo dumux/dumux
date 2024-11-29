@@ -80,7 +80,7 @@ int main(int argc, char** argv)
         for (const auto& facetElement : elements(facetGrid.gridView()))
         {
             unsigned int count = 0;
-            for (const auto& domainElement : facetGrid.adjacentDomainElements(facetElement))
+            for (const auto& domainElement : facetGrid.domainElementsAdjacentTo(facetElement))
             {
                 count++;
                 if (!overlap(facetElement.geometry(), domainElement.geometry()))
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 
                 unsigned int scvfCount = 0;
                 const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
-                for (const auto scvfIdx : facetGrid.adjacentScvfIndices(facetElement, domainElement))
+                for (const auto scvfIdx : facetGrid.domainScvfsAdjacentTo(facetElement, domainElement))
                 {
                     scvfCount++;
                     if (!overlap(fvGeometry.geometry(fvGeometry.scvf(scvfIdx)), facetElement.geometry()))
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
         std::vector<std::size_t> adjacentElements;
         for (const auto& facetElement : elements(traceGrid.gridView()))
-            for (const auto& element: traceGrid.adjacentDomainElements(facetElement))
+            for (const auto& element: traceGrid.domainElementsAdjacentTo(facetElement))
                 adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
         adjacentElements = uniqueValuesIn(adjacentElements);
         if (adjacentElements.size() != 10 + 10 + 2*8)
