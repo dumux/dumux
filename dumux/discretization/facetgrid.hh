@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Discretization
- * \brief Class to extract facets of a grid into a new grid.
+ * \brief Class to extract facets of a grid into a surface grid.
  */
 #ifndef DUMUX_DISCRETIZATION_FACET_GRID_HH
 #define DUMUX_DISCRETIZATION_FACET_GRID_HH
@@ -103,7 +103,6 @@ class FVFacetGrid
     {
         facetGridFactory_ = std::make_unique<Dune::GridFactory<FacetGrid>>();
 
-        std::unordered_map<std::size_t, std::size_t> insertedVertices;
         std::vector<std::vector<unsigned int>> elementCorners;
         std::vector<unsigned int> localCornerStorage;
 
@@ -134,13 +133,13 @@ class FVFacetGrid
                         const auto vIdxLocal = refElement.subEntity(intersection.indexInInside(), 1, c, domainDim);
                         const auto vIdxGlobal = domainGridGeometry_->vertexMapper().subIndex(element, vIdxLocal, domainDim);
                         localCornerStorage.push_back([&] () {
-                            auto it = insertedVertices.find(vIdxGlobal);
-                            if (it == insertedVertices.end())
+                            auto it = domainToFacetVertexMap_.find(vIdxGlobal);
+                            if (it == domainToFacetVertexMap_.end())
                             {
                                 mayBeDuplicateElement = false;
-                                const auto currentVertexIndex = insertedVertices.size();
+                                const auto currentVertexIndex = domainToFacetVertexMap_.size();
                                 facetGridFactory_->insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
-                                it = insertedVertices.emplace(static_cast<std::size_t>(vIdxGlobal), currentVertexIndex).first;
+                                it = domainToFacetVertexMap_.emplace(static_cast<std::size_t>(vIdxGlobal), currentVertexIndex).first;
                             }
                             return it->second;
                         } ());
@@ -222,6 +221,14 @@ class FVFacetGrid
             | std::views::join;
     }
 
+    //! Return the index of vertex that coincides with the given domain vertex
+    std::size_t domainToFacetVertexIndex(std::size_t domainVertexIndex) const
+    { return domainToFacetVertexMap_.at(domainVertexIndex); }
+
+    //! Return a reference to the grid geometry that this grad has been extracted from
+    const GridGeometry& domainGridGeometry() const
+    { return *domainGridGeometry_; }
+
  private:
     const auto& domainGridView_() const { return domainGridGeometry_->gridView(); }
 
@@ -235,6 +242,7 @@ class FVFacetGrid
 
     std::vector<FacetElementToScvfElementIndices> domainElementToCouplingData_;
     std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
+    std::unordered_map<std::size_t, std::size_t> domainToFacetVertexMap_;
 };
 
 template<typename GridGeometry, typename Indicator>
@@ -280,7 +288,10 @@ class FVTraceGrid : private FVFacetGrid<GridGeometry, FacetGrid>
     using ParentType::gridView;
     using ParentType::elementMapper;
     using ParentType::vertexMapper;
+    using ParentType::domainGridGeometry;
     using ParentType::adjacentDomainElements;
+    using ParentType::adjacentScvfIndices;
+    using ParentType::domainToFacetVertexIndex;
 };
 
 template<typename GridGeometry>
