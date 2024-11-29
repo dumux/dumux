@@ -14,6 +14,10 @@ dumux_add_test(NAME test_facetgridmapper
                LABELS unit
                SOURCES test_facetgridmapper.cc
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+dumux_add_test(NAME test_trace_operator
+               LABELS unit
+               SOURCES test_trace_operator.cc
+               CMAKE_GUARD dune-foamgrid_FOUND)
 
 add_executable(test_walldistance EXCLUDE_FROM_ALL test_walldistance.cc)
 
