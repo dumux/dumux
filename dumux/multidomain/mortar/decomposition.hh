@@ -57,6 +57,9 @@ class Decomposition
     using SubDomainTrace = std::variant<FVTraceGrid<GridGeometries, MortarGrid>...>;
 
  public:
+    std::size_t numberOfMortars() const { return mortars_.size(); }
+    std::size_t numberOfSubDomains() const { return subDomains_.size(); }
+
     //! Visit the mortar domains that are coupled to the given subdomain
     template<typename GridGeometry, std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
         requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)

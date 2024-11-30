@@ -30,6 +30,12 @@ int main(int argc, char** argv) {
                             .make();
 
     int exitCode = 0;
+    if (decomposition.numberOfMortars() != 1 or decomposition.numberOfSubDomains() != 2)
+    {
+        std::cout << "Unexpected subdomain/mortar counts" << std::endl;
+        exitCode = 1;
+    }
+
     std::vector<int> errors;
     decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
     decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
