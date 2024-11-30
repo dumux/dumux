@@ -45,7 +45,7 @@ public:
 
     //! copy constructor from arbitrary fluid state
     template <class FluidState, typename std::enable_if_t<!std::is_same<FluidState, CompositionalFluidState>::value, int> = 0>
-    CompositionalFluidState(const FluidState &fs)
+    explicit CompositionalFluidState(const FluidState &fs)
     { assign(fs); }
 
     // copy and move constructor / assignment operator

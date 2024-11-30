@@ -58,7 +58,7 @@ public:
      * \brief The constructor.
      * \param geometries A vector of geometries describing the boundaries of the spatial domain.
      */
-    AABBDistanceField(const std::vector<Geometry>& geometries)
+    explicit AABBDistanceField(const std::vector<Geometry>& geometries)
     : tree_(std::make_unique<AABBTree>(std::make_shared<GeoSet>(geometries)))
     {
         std::vector<PointGeometry> points;

@@ -40,7 +40,7 @@ public:
      * so it initially behaves exactly like the underlying fluid
      * state.
      */
-    TemperatureOverlayFluidState(const FluidState &fs)
+    explicit TemperatureOverlayFluidState(const FluidState &fs)
     : fs_(&fs)
     {
         temperature_ = fs.temperature(/*phaseIdx=*/0);

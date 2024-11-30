@@ -267,7 +267,7 @@ class DiamondGeometryHelper
     using GlobalPosition = typename Dune::FieldVector<ctype, GridView::dimensionworld>;
 
 public:
-    DiamondGeometryHelper(const typename Element::Geometry& geo)
+    explicit DiamondGeometryHelper(const typename Element::Geometry& geo)
     : geo_(geo)
     {}
 

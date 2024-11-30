@@ -87,7 +87,7 @@ public:
     BoundingBoxTree() = default;
 
     //! Constructor with gridView
-    BoundingBoxTree(std::shared_ptr<const GeometricEntitySet> set)
+    explicit BoundingBoxTree(std::shared_ptr<const GeometricEntitySet> set)
     { build(set); }
 
     //! Build up bounding box tree for a grid with leafGridView

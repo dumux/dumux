@@ -320,7 +320,7 @@ public:
     template<class S>
     struct Params
     {
-        Params(S pcLowSwe = 0.01) : pcLowSwe_(pcLowSwe) {}
+        explicit Params(S pcLowSwe = 0.01) : pcLowSwe_(pcLowSwe) {}
 
         S pcLowSwe() const { return pcLowSwe_; }
         void setPcLowSwe(S pcLowSwe) { pcLowSwe_ = pcLowSwe; }

@@ -39,7 +39,7 @@ class GridViewGeometricEntitySet
 public:
     using Entity = typename GridView::template Codim<codim>::Entity;
 
-    GridViewGeometricEntitySet(const GridView& gridView)
+    explicit GridViewGeometricEntitySet(const GridView& gridView)
     : GridViewGeometricEntitySet(gridView, Mapper(gridView, Dune::mcmgLayout(Dune::Codim<codim>())))
     {}
 
@@ -177,7 +177,7 @@ public:
     /*!
      * \brief Constructor for a vector of geometries
      */
-    GeometriesEntitySet(const std::vector<typename Entity::Geometry>& geometries)
+    explicit GeometriesEntitySet(const std::vector<typename Entity::Geometry>& geometries)
     {
         std::size_t index = 0;
         for (auto&& g : geometries)
@@ -187,7 +187,7 @@ public:
     /*!
      * \brief Constructor for a vector of geometries
      */
-    GeometriesEntitySet(std::vector<typename Entity::Geometry>&& geometries)
+    explicit GeometriesEntitySet(std::vector<typename Entity::Geometry>&& geometries)
     {
         std::size_t index = 0;
         for (auto&& g : geometries)

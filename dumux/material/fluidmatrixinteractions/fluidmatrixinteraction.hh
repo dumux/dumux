@@ -26,7 +26,7 @@ namespace Dumux {
 template<class... Laws>
 struct FluidMatrixInteraction : public Laws...
 {
-   FluidMatrixInteraction(Laws&&... laws) : Laws(std::forward<Laws>(laws))... {}
+   explicit FluidMatrixInteraction(Laws&&... laws) : Laws(std::forward<Laws>(laws))... {}
 };
 
 /*!
@@ -69,7 +69,7 @@ public:
 
     using PcKrSwType = T;
 
-    PcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit PcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
 
     Scalar pc(const Scalar sw) const { return impl_.pc(sw); }
     Scalar dpc_dsw(const Scalar sw) const { return impl_.dpc_dsw(sw); }
@@ -107,7 +107,7 @@ class MultiPhasePcKrSw
 public:
     using Scalar = typename std::decay_t<T>::Scalar;
 
-    MultiPhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit MultiPhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
 
     template<class FS>
     auto capillaryPressures(const FS& fs, int wp) const { return impl_.capillaryPressures(fs, wp); }
@@ -141,7 +141,7 @@ struct ThreePhasePcKrSw
 
     using PcKrSwType = T;
 
-    ThreePhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit ThreePhasePcKrSw(T&& impl) : impl_(std::forward<T>(impl)) {}
 
     Scalar pcgw(const Scalar sw, const Scalar sn) const { return impl_.pcgw(sw, sn); }
     Scalar pcnw(const Scalar sw, const Scalar sn) const { return impl_.pcnw(sw, sn); }
@@ -176,7 +176,7 @@ template<class T>
 class WettingNonwettingInterfacialAreaPcSw
 {
 public:
-    WettingNonwettingInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit WettingNonwettingInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& wettingNonwettingInterface() const { return impl_; }
 private:
     T impl_;
@@ -199,7 +199,7 @@ template<class T>
 class WettingSolidInterfacialAreaPcSw
 {
 public:
-    WettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit WettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& wettingSolidInterface() const { return impl_; }
 private:
     T impl_;
@@ -222,7 +222,7 @@ template<class T>
 class NonwettingSolidInterfacialAreaPcSw
 {
 public:
-    NonwettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit NonwettingSolidInterfacialAreaPcSw(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& nonwettingSolidInterface() const { return impl_; }
 private:
     T impl_;
@@ -248,7 +248,7 @@ class Adsorption
 public:
     using value_type = T;
 
-    Adsorption(T&& impl) : impl_(std::forward<T>(impl)) {}
+    explicit Adsorption(T&& impl) : impl_(std::forward<T>(impl)) {}
     const T& adsorptionModel() const { return impl_; }
 private:
     T impl_;

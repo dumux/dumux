@@ -31,7 +31,7 @@ struct MockFVElementGeometry
 struct MockFluxVariablesCacheOneP
 {
     using Scalar = double;
-    MockFluxVariablesCacheOneP(const PoreNetwork::Throat::Shape shape)
+    explicit MockFluxVariablesCacheOneP(const PoreNetwork::Throat::Shape shape)
     : shape_(shape)
     {}
 

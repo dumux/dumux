@@ -54,7 +54,7 @@ public:
      * \param rStep characteristic relative integration length (positive real number between 0 and 1)
      * \note half the characteristic length means 2*2*2=8 times more integration points
      */
-    CylinderIntegration(const Scalar rStep)
+    explicit CylinderIntegration(const Scalar rStep)
     {
         rSamples_ = characteristicLengthToNumSamples_(rStep);
         initialize_();

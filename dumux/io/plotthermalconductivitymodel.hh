@@ -47,8 +47,8 @@ public:
      * \param temperature temperature in \f$\mathrm{[K]}\f$
      * \param pressure reference pressure in \f$\mathrm{[Pa]}\f$
      */
-    PlotThermalConductivityModel(Scalar temperature = 283.15,
-                                 Scalar pressure = 1e5)
+    explicit PlotThermalConductivityModel(Scalar temperature = 283.15,
+                                          Scalar pressure = 1e5)
     : numIntervals_(1000)
     {
         FluidState fluidstate;

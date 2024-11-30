@@ -29,7 +29,7 @@ struct OptionalScalar
 
     OptionalScalar() = default;
 
-    OptionalScalar(T value)
+    explicit OptionalScalar(T value)
     : value_(value)
     {}
 
