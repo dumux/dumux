@@ -36,6 +36,14 @@ int main(int argc, char** argv) {
         exitCode = 1;
     }
 
+    if (not decomposition.containsMortar(*mortarGG) or
+        not decomposition.containsSubDomain(*topGG) or
+        not decomposition.containsSubDomain(*bottomGG))
+    {
+        std::cout << "Contains queries failed" << std::endl;
+        exitCode = 1;
+    }
+
     std::vector<int> errors;
     decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
     decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
