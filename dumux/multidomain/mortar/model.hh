@@ -32,15 +32,27 @@ class Solver
 {
  public:
     using GridGeometry = GG;
+    using Element = typename GG::GridView::template Codim<0>::Entity;
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
     virtual ~Solver() = default;
     explicit Solver(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_{std::move(gridGeometry)}
     {}
 
+    //! Solve the subdomain problem
     virtual void solve() = 0;
-    // virtual void
 
+    //! Set the mortar boundary condition for the mortar with the given id
+    virtual void setMortar(std::size_t, MortarSolutionVector) = 0;
+
+    //! Register a mapping from the given sub-control volume face to the mortar domain with the given id
+    virtual void registerMortarScvf(const Element&, const SubControlVolumeFace&, std::size_t) = 0;
+
+    //! Assemble the variables on the trace overlapping with the given mortar domain
+    virtual MortarSolutionVector assembleTraceVariables(std::size_t) const = 0;
+
+    //! Return the underlying grid geometry
     const std::shared_ptr<const GridGeometry>& gridGeometry() const
     { return gridGeometry_; }
 
@@ -69,6 +81,48 @@ class Model
     using Decomposition = Mortar::Decomposition<MortarGridGeometry, SubDomainGridGeometries...>;
     using SolverVariant = std::variant<std::shared_ptr<Solver<MortarSolutionVector, SubDomainGridGeometries>>...>;
 
+    void setMortar(const MortarSolutionVector& x)
+    {
+        decomposition_->visitMortar([&] (const auto& mortar) {
+            const auto mortarId = decomposition_.id(*mortar);
+            decomposition_->visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
+                visitSolverFor_(subDomain, [&] (const auto& solver) {
+                    MortarSolutionVector restricted(mortar->numDofs());
+                    for (std::size_t i = 0; i < mortar->numDofs(); ++i)
+                        restricted[i] = x[mortarDofOffsets_[mortarId] + i];
+                    solver.setMortar(mortarId, restricted);
+                });
+            });
+        });
+    }
+
+    void solveSubDomains()
+    {
+        // TODO: parallel
+        std::for_each(solvers_.begin(), solvers_.end(), [] (auto& solver) {
+            solver.solve();
+        });
+    }
+
+    void assembleMortarResidual(MortarSolutionVector& residual) const
+    {
+        residual.resize(mortarSolution_.size());
+        decomposition_->visitMortar([&] (const auto& mortar) {
+            const auto mortarId = decomposition_.id(*mortar);
+            decomposition_->visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
+                visitSolverFor_(subDomain, [&] (const auto& solver) {
+                    [[maybe_unused]] const auto vars = solver.assembleTraceVariables(mortarId);
+                    // TODO: project
+                    // if (projected.size() != mortar.numDofs())
+                    //     DUNE_THROW(Dune::InvalidStateException, "Trace does not have the expected number of entries.");
+                    // std::ranges::for_each(projected, [i=std::size_t{0}] (const auto& entry) mutable {
+                    //     residual[mortarDofOffsets_[mortarId] + i++] += entry;
+                    // });
+                });
+            });
+        });
+    }
+
     const MortarSolutionVector& mortarSolution() const
     { return mortarSolution_; }
 
@@ -81,14 +135,40 @@ class Model
     {
         if (decomposition_.numberOfSubDomains() != solvers_.size())
             DUNE_THROW(Dune::InvalidStateException, "Number of solvers and subdomains do not match.");
+
         std::size_t numMortarDofs = 0;
-        decomposition_.visitMortars([&] (const auto& gg) { numMortarDofs += gg->numDofs(); });
+        mortarDofOffsets_.resize(decomposition_.numberOfMortars());
+        decomposition_.visitMortars([&] (const auto& mortar) {
+            mortarDofOffsets_[decomposition_.id(*mortar)] = mortar->numDofs();
+            numMortarDofs += mortar->numDofs();
+        });
+        std::exclusive_scan(
+            mortarDofOffsets_.begin(), mortarDofOffsets_.end(),
+            mortarDofOffsets_.begin(), std::size_t{0}
+        );
         mortarSolution_.resize(numMortarDofs);
+        std::ranges::fill(mortarSolution_, 0);
+    }
+
+    // TODO: store mapping (use map with pointers as hashes?) to avoid many iterations
+    template<typename GridGeometry, typename Visitor>
+    void visitSolverFor_(const GridGeometry& subDomain, Visitor&& v) const
+    {
+        for (const auto& variant : solvers_)
+            if(
+                std::visit([&] (const auto& solver) {
+                    if (solver.gridGeometry().get() == &subDomain) { v(solver); return true; }
+                    return false;
+                }, variant)
+            )
+                return;
+        DUNE_THROW(Dune::InvalidStateException, "Could not find solver matching the given subdomain");
     }
 
     Decomposition decomposition_;
     std::vector<SolverVariant> solvers_;
     MortarSolutionVector mortarSolution_;
+    std::vector<std::size_t> mortarDofOffsets_;
 };
 
 /*!
