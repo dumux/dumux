@@ -44,6 +44,23 @@ int main(int argc, char** argv) {
         exitCode = 1;
     }
 
+    int numVisits = 0;
+    int numMatchingVisits = 0;
+    decomposition.visitMortars([&] (const auto& m) { numVisits++; if(m == mortarGG) numMatchingVisits++; });
+    if (numVisits != 1 and numMatchingVisits != 1)
+    {
+        std::cout << "Visited unexpected mortars" << std::endl;
+        exitCode = 1;
+    }
+    numVisits = 0;
+    numMatchingVisits = 0;
+    decomposition.visitSubDomains([&] (const auto& s) { numVisits++; if(s == topGG or s == bottomGG) numMatchingVisits++; });
+    if (numVisits != 2 and numMatchingVisits != 2)
+    {
+        std::cout << "Visited unexpected subdomains" << std::endl;
+        exitCode = 1;
+    }
+
     std::vector<int> errors;
     decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
     decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
