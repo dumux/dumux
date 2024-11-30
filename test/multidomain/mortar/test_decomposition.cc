@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
@@ -28,19 +30,16 @@ int main(int argc, char** argv) {
                             .make();
 
     std::vector<int> exitCodes;
-    decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) {
-        if (mortar != mortarGG) exitCodes.push_back(1);
-    });
-    decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) {
-        if (mortar != mortarGG) exitCodes.push_back(1);
-    });
+    decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { exitCodes.push_back(mortar != mortarGG); });
+    decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { exitCodes.push_back(mortar != mortarGG); });
     decomposition.visitCoupledSubDomainsOf(*mortarGG, [&] (const auto& subDomain) {
-        if (subDomain != topGG && subDomain != bottomGG) exitCodes.push_back(1);
+        exitCodes.push_back(subDomain != topGG && subDomain != bottomGG);
     });
 
-    if (exitCodes.size() > 0)
+    const auto ec = std::accumulate(exitCodes.begin(), exitCodes.end(), 0);
+    if (ec > 0 || exitCodes.size() != 4)
     {
-        std::cout << "Mapping test did not succeed." << std::endl;
+        std::cout << "Mapping test did not succeed" << std::endl;
         return 1;
     }
 
