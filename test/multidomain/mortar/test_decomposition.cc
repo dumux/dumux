@@ -28,13 +28,13 @@ int main(int argc, char** argv) {
                             .make();
 
     std::vector<int> exitCodes;
-    decomposition.visitMortars(*topGG, [&] (const auto& mortar) {
+    decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) {
         if (mortar != mortarGG) exitCodes.push_back(1);
     });
-    decomposition.visitMortars(*bottomGG, [&] (const auto& mortar) {
+    decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) {
         if (mortar != mortarGG) exitCodes.push_back(1);
     });
-    decomposition.visitSubDomains(*mortarGG, [&] (const auto& subDomain) {
+    decomposition.visitCoupledSubDomainsOf(*mortarGG, [&] (const auto& subDomain) {
         if (subDomain != topGG && subDomain != bottomGG) exitCodes.push_back(1);
     });
 
