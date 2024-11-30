@@ -77,6 +77,28 @@ class Decomposition
         });
     }
 
+    //! Return the id of the given mortar within this decomposition
+    std::size_t id(const MortarGridGeometry& mortar) const
+    {
+        auto it = std::ranges::find_if(mortars_, [&] (const auto ptr) { return ptr.get() == &mortar; });
+        if (it == mortars_.end())
+            DUNE_THROW(Dune::InvalidStateException, "Given mortar grid geometry is not in this decomposition");
+        return std::ranges::distance(std::ranges::begin(mortars_), it);
+    }
+
+    //! Return the id of the given subdomain within this decomposition
+    template<typename GridGeometry>
+        requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
+    std::size_t id(const GridGeometry& subDomain) const
+    {
+        auto it = std::ranges::find_if(subDomains_, [&] (const auto& sd) {
+            return std::visit([&] (const auto& ptr) { return ptr.get() == &subDomain; }, sd);
+        });
+        if (it == subDomains_.end())
+            DUNE_THROW(Dune::InvalidStateException, "Given grid geometry is not in this decomposition");
+        return std::ranges::distance(std::ranges::begin(subDomains_), it);
+    }
+
     //! Visit all mortars in this decomposition
     template<std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
     void visitMortars(Visitor&& v) const
@@ -94,7 +116,7 @@ class Decomposition
     void visitCoupledMortarsOf(const GridGeometry& subDomain, Visitor&& v) const
     {
         std::ranges::for_each(
-            subDomainsToMortar_.at(subDomainIndexOf_(subDomain)),
+            subDomainsToMortar_.at(id(subDomain)),
             [&] (auto mortarIdx) { v(mortars_.at(mortarIdx)); }
         );
     }
@@ -105,7 +127,7 @@ class Decomposition
     void visitCoupledSubDomainsOf(const MortarGridGeometry& mortar, Visitor&& v) const
     {
         std::ranges::for_each(
-            mortarToSubDomains_.at(mortarIndexOf_(mortar)),
+            mortarToSubDomains_.at(id(mortar)),
             [&] (auto sdIdx) { std::visit(v, subDomains_.at(sdIdx)); }
         );
     }
@@ -115,8 +137,8 @@ class Decomposition
         requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
     void visitSubDomainTraceWith(const MortarGridGeometry& mortar, const GridGeometry& subDomain, Visitor&& v) const
     {
-        const auto mortarIndex = mortarIndexOf_(mortar);
-        const auto subDomainIndex = subDomainIndexOf_(subDomain);
+        const auto mortarIndex = id(mortar);
+        const auto subDomainIndex = id(subDomain);
         const auto& map = subDomainsToMortar_.at(subDomainIndex);
         const auto it = std::ranges::find(map, mortarIndex);
         if (it == std::ranges::end(map))
@@ -126,25 +148,6 @@ class Decomposition
     }
 
  private:
-    std::size_t mortarIndexOf_(const MortarGridGeometry& mortar) const
-    {
-        auto it = std::ranges::find_if(mortars_, [&] (const auto ptr) { return ptr.get() == &mortar; });
-        if (it == mortars_.end())
-            DUNE_THROW(Dune::InvalidStateException, "Given mortar grid geometry is not in this decomposition");
-        return std::ranges::distance(std::ranges::begin(mortars_), it);
-    }
-
-    template<typename GridGeometry>
-    std::size_t subDomainIndexOf_(const GridGeometry& subDomain) const
-    {
-        auto it = std::ranges::find_if(subDomains_, [&] (const auto& sd) {
-            return std::visit([&] (const auto& ptr) { return ptr.get() == &subDomain; }, sd);
-        });
-        if (it == subDomains_.end())
-            DUNE_THROW(Dune::InvalidStateException, "Given grid geometry is not in this decomposition");
-        return std::ranges::distance(std::ranges::begin(subDomains_), it);
-    }
-
     friend DecompositionFactory<MortarGridGeometry, GridGeometries...>;
     Decomposition() = default;
     std::vector<std::shared_ptr<const MortarGridGeometry>> mortars_;
