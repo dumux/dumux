@@ -20,12 +20,27 @@
 #include <ranges>
 
 #include <dune/common/exceptions.hh>
-#include <dumux/multidomain/glue.hh>
+
+#include <dumux/discretization/facetgrid.hh>
+#include <dumux/geometry/geometryintersection.hh>
 
 namespace Dumux::Mortar {
 
 template<typename MortarGridGeometry, typename... GridGeometries>
 class DecompositionFactory;
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<typename Geo1, typename Geo2>
+bool intersect(const Geo1& geo1, const Geo2& geo2) {
+    using Algo = GeometryIntersection<Geo1, Geo2>;
+    typename Algo::Intersection result;
+    return Algo::intersection(geo1, geo2, result);
+}
+
+}  // namespace Detail
+#endif  // DOXYGEN
 
 /*!
  * \ingroup MultiDomain
@@ -36,6 +51,11 @@ class DecompositionFactory;
 template<typename MortarGridGeometry, typename... GridGeometries>
 class Decomposition
 {
+    // The trace grid is currently fv-specific...
+    // If/once needed, we can introduce a trait and deduce the trace type from the grid geo
+    using MortarGrid = typename MortarGridGeometry::GridView::Grid;
+    using SubDomainTrace = std::variant<FVTraceGrid<GridGeometries, MortarGrid>...>;
+
  public:
     //! Visit the mortar domains that are coupled to the given subdomain
     template<typename GridGeometry, std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
@@ -85,6 +105,7 @@ class Decomposition
     std::vector<std::variant<std::shared_ptr<const GridGeometries>...>> subDomains_;
     std::vector<std::vector<std::size_t>> mortarToSubDomains_; // TODO: could use ReservedVector<size_t, 2>?
     std::vector<std::vector<std::size_t>> subDomainsToMortar_;
+    std::vector<std::vector<SubDomainTrace>> subDomainToMortarTraces_;
 };
 
 /*!
@@ -114,6 +135,7 @@ class DecompositionFactory
         result.subDomains_ = subDomains_;
         result.mortarToSubDomains_.resize(result.mortars_.size());
         result.subDomainsToMortar_.resize(result.subDomains_.size());
+        result.subDomainToMortarTraces_.resize(result.subDomains_.size());
         std::size_t mortarId = 0;
         for (const auto& mortarPtr : result.mortars_)
         {
@@ -121,7 +143,17 @@ class DecompositionFactory
             for (const auto& sd : result.subDomains_)
             {
                 const bool intersect = std::visit([&] (const auto& sdPtr) {
-                    return makeGlue(*mortarPtr, *sdPtr).size() > 0;
+                    FVTraceGrid trace{sdPtr, [&] (const auto& is) {
+                        // TODO: use intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree())
+                        //       once it is robust also for bboxes with zero thickness in one direction
+                        return std::ranges::any_of(elements(mortarPtr->gridView()), [&] (const auto& me) {
+                            return Detail::intersect(is.geometry(), me.geometry());
+                        });
+                    }};
+                    const bool intersects = trace.gridView().size(0) > 0;
+                    if (intersects)
+                        result.subDomainToMortarTraces_[sdId].emplace_back(std::move(trace));
+                    return intersects;
                 }, sd);
                 if (intersect)
                 {
