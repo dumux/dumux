@@ -7,6 +7,7 @@
 /*!
  * \file
  * \ingroup MultiDomain
+ * \ingroup MortarCoupling
  * \brief Class to represent a decomposition of a domain into multiple subdomains with mortars on their interfaces.
  */
 #ifndef DUMUX_MULTIDOMAIN_MORTAR_DECOMPOSITION_HH
@@ -44,9 +45,11 @@ bool intersect(const Geo1& geo1, const Geo2& geo2) {
 
 /*!
  * \ingroup MultiDomain
+ * \ingroup MortarCoupling
  * \brief Class to represent a decomposition of a domain into multiple subdomains with mortars on their interfaces.
  * \tparam MortarGridGeometry Grid geometry type of the mortar domain.
  * \tparam GridGeometries Types of all subdomain grid geometries that may occur in the decomposition.
+ * \note Construct an instance of this class using a `DecompositionFactory`.
  */
 template<typename MortarGridGeometry, typename... GridGeometries>
 class Decomposition
@@ -153,6 +156,7 @@ class Decomposition
 
 /*!
  * \ingroup MultiDomain
+ * \ingroup MortarCoupling
  * \brief Factory for decomposition.
  * \tparam MortarGridGeometry Grid geometry type of the mortar domain.
  * \tparam GridGeometries Types of all subdomain grid geometries that may occur in the decomposition.

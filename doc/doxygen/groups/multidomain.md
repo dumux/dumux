@@ -31,3 +31,7 @@
 @defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
 @brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
 @ingroup MultiDomain
+
+@defgroup MortarCoupling Non-conforming boundary coupling mode with interface mortars
+@brief Couples problems of arbitrary dimension along their boundaries using a mortar grid on the intersections between them.
+@ingroup MultiDomain
