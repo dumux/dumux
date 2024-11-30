@@ -29,19 +29,32 @@ int main(int argc, char** argv) {
                             .withSubDomain(bottomGG)
                             .make();
 
-    std::vector<int> exitCodes;
-    decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { exitCodes.push_back(mortar != mortarGG); });
-    decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { exitCodes.push_back(mortar != mortarGG); });
+    int exitCode = 0;
+    std::vector<int> errors;
+    decomposition.visitCoupledMortarsOf(*topGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
+    decomposition.visitCoupledMortarsOf(*bottomGG, [&] (const auto& mortar) { errors.push_back(mortar != mortarGG); });
     decomposition.visitCoupledSubDomainsOf(*mortarGG, [&] (const auto& subDomain) {
-        exitCodes.push_back(subDomain != topGG && subDomain != bottomGG);
+        errors.push_back(subDomain != topGG && subDomain != bottomGG);
     });
 
-    const auto ec = std::accumulate(exitCodes.begin(), exitCodes.end(), 0);
-    if (ec > 0 || exitCodes.size() != 4)
+    if (std::accumulate(errors.begin(), errors.end(), 0) > 0 || errors.size() != 4)
     {
-        std::cout << "Mapping test did not succeed" << std::endl;
-        return 1;
+        std::cout << "Unexpected mappings" << std::endl;
+        exitCode = 1;
     }
 
-    return 0;
+    errors.clear();
+    decomposition.visitSubDomainTraceWith(*mortarGG, *topGG, [&] (const auto& trace) {
+        errors.push_back(trace.gridView().size(0) != 10);
+    });
+    decomposition.visitSubDomainTraceWith(*mortarGG, *bottomGG, [&] (const auto& trace) {
+        errors.push_back(trace.gridView().size(0) != 10);
+    });
+    if (std::accumulate(errors.begin(), errors.end(), 0) > 0 || errors.size() != 2)
+    {
+        std::cout << "Unexpected traces" << std::endl;
+        exitCode = 1;
+    }
+
+    return exitCode;
 }
