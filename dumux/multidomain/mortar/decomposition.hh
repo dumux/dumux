@@ -13,6 +13,7 @@
 #define DUMUX_MULTIDOMAIN_MORTAR_DECOMPOSITION_HH
 
 #include <type_traits>
+#include <concepts>
 #include <variant>
 #include <memory>
 #include <vector>
@@ -36,9 +37,10 @@ template<typename MortarGridGeometry, typename... GridGeometries>
 class Decomposition
 {
  public:
-    template<typename GridGeometry, typename Visitor>
+    //! Visit the mortar domains that are coupled to the given subdomain
+    template<typename GridGeometry, std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
         requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
-    void visitMortars(const GridGeometry& subDomain, Visitor&& v) const
+    void visitCoupledMortarsOf(const GridGeometry& subDomain, Visitor&& v) const
     {
         std::ranges::for_each(
             subDomainsToMortar_.at(subDomainIndexOf_(subDomain)),
@@ -46,8 +48,10 @@ class Decomposition
         );
     }
 
+    //! Visit the subdomains that are coupled to the given mortar domain
     template<typename Visitor>
-    void visitSubDomains(const MortarGridGeometry& mortar, Visitor&& v) const
+        requires(std::conjunction_v<std::is_invocable<Visitor, const std::shared_ptr<const GridGeometries>&>...>)
+    void visitCoupledSubDomainsOf(const MortarGridGeometry& mortar, Visitor&& v) const
     {
         std::ranges::for_each(
             mortarToSubDomains_.at(mortarIndexOf_(mortar)),
