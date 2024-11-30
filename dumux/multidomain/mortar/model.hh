@@ -26,12 +26,18 @@ namespace Dumux::Mortar {
  * \ingroup MultiDomain
  * \ingroup MortarCoupling
  * \brief Abstract base class for subdomain solvers.
+ * \tparam MortarSolutionVector The type used to represent the solution in the mortar domain.
+ * \tparam MortarGrid The grid type used to represent the mortar domain.
+ * \tparam GG The subdomain grid geometry
  */
-template<typename MortarSolutionVector, typename GG>
+template<typename MortarSolutionVector,
+         typename MortarGrid,
+         typename GG>
 class Solver
 {
  public:
     using GridGeometry = GG;
+    using TraceGrid = FacetGrid<MortarGrid, GridGeometry>;
     using Element = typename GG::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
@@ -44,10 +50,10 @@ class Solver
     virtual void solve() = 0;
 
     //! Set the mortar boundary condition for the mortar with the given id
-    virtual void setMortar(std::size_t, MortarSolutionVector) = 0;
+    virtual void setTraceVariables(std::size_t, MortarSolutionVector) = 0;
 
-    //! Register a mapping from the given sub-control volume face to the mortar domain with the given id
-    virtual void registerMortarScvf(const Element&, const SubControlVolumeFace&, std::size_t) = 0;
+    //! Register a trace coupling to the mortar with the given id
+    virtual void registerMortarTrace(std::shared_ptr<const TraceGrid>, std::size_t) = 0;
 
     //! Assemble the variables on the trace overlapping with the given mortar domain
     virtual MortarSolutionVector assembleTraceVariables(std::size_t) const = 0;
@@ -77,9 +83,11 @@ template<typename MortarSolutionVector,
          typename... SubDomainGridGeometries>
 class Model
 {
+    using MortarGrid = typename MortarGridGeometry::GridView::Grid;
+
  public:
     using Decomposition = Mortar::Decomposition<MortarGridGeometry, SubDomainGridGeometries...>;
-    using SolverVariant = std::variant<std::shared_ptr<Solver<MortarSolutionVector, SubDomainGridGeometries>>...>;
+    using SolverVariant = std::variant<std::shared_ptr<Solver<MortarSolutionVector, MortarGrid, SubDomainGridGeometries>>...>;
 
     void setMortar(const MortarSolutionVector& x)
     {
@@ -142,6 +150,15 @@ class Model
         decomposition_.visitMortars([&] (const auto& mortar) {
             mortarDofOffsets_[decomposition_.id(*mortar)] = mortar->numDofs();
             numMortarDofs += mortar->numDofs();
+
+            const auto id = decomposition_.id(*mortar);
+            decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto sd) {
+                decomposition_.visitSubDomainTraceWith(*mortar, *sd, [&] (auto tracePtr) {
+                    visitSolverFor_(*sd, [&] (auto& solver) {
+                        solver->registerMortarTrace(tracePtr, id);
+                    });
+                });
+            });
         });
         std::exclusive_scan(
             mortarDofOffsets_.begin(), mortarDofOffsets_.end(),
@@ -158,7 +175,7 @@ class Model
         for (const auto& variant : solvers_)
             if(
                 std::visit([&] (const auto& solver) {
-                    if (solver.gridGeometry().get() == &subDomain) { v(solver); return true; }
+                    if (solver->gridGeometry().get() == &subDomain) { v(solver); return true; }
                     return false;
                 }, variant)
             )
@@ -182,12 +199,13 @@ template<typename MortarSolutionVector,
          typename... SubDomainGridGeometries>
 class ModelFactory
 {
+    using MortarGrid = typename MortarGridGeometry::GridView::Grid;
     using SolverVariant = typename Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>::SolverVariant;
 
     template<typename T>
     static constexpr bool isSupportedSolver
         = std::disjunction_v<std::is_same<typename T::GridGeometry, SubDomainGridGeometries>...>
-        and std::derived_from<T, Solver<MortarSolutionVector, typename T::GridGeometry>>;
+        and std::derived_from<T, Solver<MortarSolutionVector, MortarGrid, typename T::GridGeometry>>;
 
  public:
      //! Insert a mortar domain

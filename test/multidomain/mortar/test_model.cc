@@ -8,18 +8,16 @@
 #include <dumux/multidomain/mortar/model.hh>
 
 
-template<typename MortarSolution, typename GridGeometry>
-struct Solver : public Dumux::Mortar::Solver<MortarSolution, GridGeometry>
+template<typename MortarSolution, typename MortarGrid, typename GridGeometry>
+struct Solver : public Dumux::Mortar::Solver<MortarSolution, MortarGrid, GridGeometry>
 {
-    using ParentType = Dumux::Mortar::Solver<MortarSolution, GridGeometry>;
+    using ParentType = Dumux::Mortar::Solver<MortarSolution, MortarGrid, GridGeometry>;
     using ParentType::ParentType;
-
-    using typename ParentType::Element;
-    using typename ParentType::SubControlVolumeFace;
+    using typename ParentType::TraceGrid;
 
     void solve() override {}
-    virtual void setMortar(std::size_t, MortarSolution) override {};
-    virtual void registerMortarScvf(const Element&, const SubControlVolumeFace&, std::size_t) override {}
+    virtual void setTraceVariables(std::size_t, MortarSolution) override {};
+    virtual void registerMortarTrace(const std::shared_ptr<const TraceGrid>, std::size_t) override {}
     virtual MortarSolution assembleTraceVariables(std::size_t) const override { return {}; }
 };
 
@@ -40,7 +38,7 @@ int main(int argc, char** argv) {
     auto mortarGG = std::make_shared<MortarGridGeometry>(mortar->leafGridView());
 
     using MortarSolution = std::vector<double>;
-    using SubDomainSolver = Solver<MortarSolution, SubDomainGridGeometry>;
+    using SubDomainSolver = Solver<MortarSolution, MortarGrid, SubDomainGridGeometry>;
     auto bottomSolver = std::make_shared<SubDomainSolver>(bottomGG);
     auto topSolver = std::make_shared<SubDomainSolver>(topGG);
 
