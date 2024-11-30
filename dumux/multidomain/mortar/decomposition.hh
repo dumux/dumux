@@ -60,6 +60,20 @@ class Decomposition
     std::size_t numberOfMortars() const { return mortars_.size(); }
     std::size_t numberOfSubDomains() const { return subDomains_.size(); }
 
+    //! Return true if the given subdomain is part of this decomposition
+    template<typename GridGeometry>
+        requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
+    bool containsSubDomain(const GridGeometry& gridGeometry) const {
+        return std::ranges::any_of(subDomains_, [&] (const auto& sd) {
+            return std::visit([&] (const auto& ptr) { return ptr.get() == &gridGeometry; }, sd);
+        });
+    }
+
+    //! Return true if the given mortar is part of this decomposition
+    bool containsMortar(const MortarGridGeometry& mortar) const {
+        return std::ranges::any_of(mortars_, [&] (const auto& ptr) { return ptr.get() == &mortar; });
+    }
+
     //! Visit the mortar domains that are coupled to the given subdomain
     template<typename GridGeometry, std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
         requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
