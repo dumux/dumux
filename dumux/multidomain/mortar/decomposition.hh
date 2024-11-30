@@ -133,14 +133,23 @@ template<typename MortarGridGeometry, typename... GridGeometries>
 class DecompositionFactory
 {
  public:
+    //! Insert a mortar domain
+    void insertMortar(std::shared_ptr<const MortarGridGeometry> gg)
+    { mortars_.push_back(gg); }
+
     //! Insert a mortar domain and return this factory
     DecompositionFactory& withMortar(std::shared_ptr<const MortarGridGeometry> gg)
-    { mortars_.push_back(gg); return *this; }
+    { insertMortar(gg); return *this; }
+
+    //! Insert a subdomain
+    template<typename GridGeometry> requires(std::disjunction_v<std::is_same<std::remove_cvref_t<GridGeometry>, GridGeometries>...>)
+    void insertSubDomain(std::shared_ptr<GridGeometry> gg)
+    { subDomains_.push_back(gg); }
 
     //! Insert a subdomain and return this factory
     template<typename GridGeometry> requires(std::disjunction_v<std::is_same<std::remove_cvref_t<GridGeometry>, GridGeometries>...>)
     DecompositionFactory& withSubDomain(std::shared_ptr<GridGeometry> gg)
-    { subDomains_.push_back(gg); return *this; }
+    { insertSubDomain(gg); return *this; }
 
     //! Create a decomposition from all inserted mortars & subdomains
     Decomposition<MortarGridGeometry, GridGeometries...> make() const
