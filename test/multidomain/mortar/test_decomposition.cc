@@ -27,5 +27,22 @@ int main(int argc, char** argv) {
                             .withSubDomain(bottomGG)
                             .make();
 
+    std::vector<int> exitCodes;
+    decomposition.visitMortars(*topGG, [&] (const auto& mortar) {
+        if (mortar != mortarGG) exitCodes.push_back(1);
+    });
+    decomposition.visitMortars(*bottomGG, [&] (const auto& mortar) {
+        if (mortar != mortarGG) exitCodes.push_back(1);
+    });
+    decomposition.visitSubDomains(*mortarGG, [&] (const auto& subDomain) {
+        if (subDomain != topGG && subDomain != bottomGG) exitCodes.push_back(1);
+    });
+
+    if (exitCodes.size() > 0)
+    {
+        std::cout << "Mapping test did not succeed." << std::endl;
+        return 1;
+    }
+
     return 0;
 }
