@@ -274,7 +274,7 @@ private:
     static constexpr int dim = 1;
 public:
 
-    BoxGeometryHelper(const typename Element::Geometry& geometry)
+    explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
     {}
 
@@ -349,7 +349,7 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     static constexpr auto dimWorld = GridView::dimensionworld;
 public:
 
-    BoxGeometryHelper(const typename Element::Geometry& geometry)
+    explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
     {}
 
@@ -485,7 +485,7 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr auto dimWorld = GridView::dimensionworld;
 
 public:
-    BoxGeometryHelper(const typename Element::Geometry& geometry)
+    explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
     {}
 

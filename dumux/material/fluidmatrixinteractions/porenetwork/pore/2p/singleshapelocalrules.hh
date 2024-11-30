@@ -66,9 +66,9 @@ public:
      * \brief Construct from parameter structs
      * \note More efficient constructor but you need to ensure all parameters are initialized
      */
-    SingleShapeTwoPLocalRules(const BasicParams& baseParams = {},
-                              const RegularizationParams& regParams = {},
-                              const std::string& paramGroup = "")
+    explicit SingleShapeTwoPLocalRules(const BasicParams& baseParams = {},
+                                       const RegularizationParams& regParams = {},
+                                       const std::string& paramGroup = "")
     : basicParams_(baseParams)
 
     {

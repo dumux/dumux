@@ -40,7 +40,7 @@ public:
 
     //! copy constructor from arbitrary fluid state
     template <class FluidState, typename std::enable_if_t<!std::is_same<FluidState, ImmiscibleFluidState>::value, int> = 0>
-    ImmiscibleFluidState(const FluidState &fs)
+    explicit ImmiscibleFluidState(const FluidState &fs)
     { assign(fs); }
 
     // copy and move constructor / assignment operator

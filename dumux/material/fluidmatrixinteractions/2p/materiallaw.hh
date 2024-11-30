@@ -87,9 +87,9 @@ public:
      * \brief Construct from parameter structs
      * \note More efficient constructor but you need to ensure all parameters are initialized
      */
-    TwoPMaterialLaw(const BasicParams& baseParams,
-                    const EffToAbsParams& effToAbsParams = {},
-                    const RegularizationParams& regParams = {})
+    explicit TwoPMaterialLaw(const BasicParams& baseParams,
+                             const EffToAbsParams& effToAbsParams = {},
+                             const RegularizationParams& regParams = {})
     : basicParams_(baseParams)
     , effToAbsParams_(effToAbsParams)
     {
