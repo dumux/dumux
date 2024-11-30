@@ -79,6 +79,21 @@ class Decomposition
         );
     }
 
+    //! Visit the part of the subdomain trace that overlaps with the given mortar
+    template<typename GridGeometry, typename Visitor>
+        requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
+    void visitSubDomainTraceWith(const MortarGridGeometry& mortar, const GridGeometry& subDomain, Visitor&& v) const
+    {
+        const auto mortarIndex = mortarIndexOf_(mortar);
+        const auto subDomainIndex = subDomainIndexOf_(subDomain);
+        const auto& map = subDomainsToMortar_.at(subDomainIndex);
+        const auto it = std::ranges::find(map, mortarIndex);
+        if (it == std::ranges::end(map))
+            DUNE_THROW(Dune::InvalidStateException, "Could not find trace for the given pair of subdomain/mortar.");
+        const auto i = std::ranges::distance(std::ranges::begin(map), it);
+        std::visit(v, subDomainToMortarTraces_.at(subDomainIndex).at(i));
+    }
+
  private:
     std::size_t mortarIndexOf_(const MortarGridGeometry& mortar) const
     {
