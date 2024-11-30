@@ -57,7 +57,7 @@ class Decomposition
     // The trace grid is currently fv-specific...
     // If/once needed, we can introduce a trait and deduce the trace type from the grid geo
     using MortarGrid = typename MortarGridGeometry::GridView::Grid;
-    using SubDomainTrace = std::variant<FVTraceGrid<GridGeometries, MortarGrid>...>;
+    using SubDomainTrace = std::variant<std::shared_ptr<FacetGrid<MortarGrid, GridGeometries>>...>;
 
  public:
     std::size_t numberOfMortars() const { return mortars_.size(); }
@@ -167,6 +167,8 @@ class Decomposition
 template<typename MortarGridGeometry, typename... GridGeometries>
 class DecompositionFactory
 {
+    using MortarGrid = typename MortarGridGeometry::GridView::Grid;
+
  public:
     //! Insert a mortar domain
     void insertMortar(std::shared_ptr<const MortarGridGeometry> gg)
@@ -202,16 +204,18 @@ class DecompositionFactory
             for (const auto& sd : result.subDomains_)
             {
                 const bool intersect = std::visit([&] (const auto& sdPtr) {
-                    FVTraceGrid trace{sdPtr, [&] (const auto& is) {
+                    auto trace = makeFacetGrid<MortarGrid>(sdPtr, [&] (const auto& is) {
                         // TODO: use intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree())
                         //       once it is robust also for bboxes with zero thickness in one direction
                         return std::ranges::any_of(elements(mortarPtr->gridView()), [&] (const auto& me) {
                             return Detail::intersect(is.geometry(), me.geometry());
                         });
-                    }};
+                    });
                     const bool intersects = trace.gridView().size(0) > 0;
                     if (intersects)
-                        result.subDomainToMortarTraces_[sdId].emplace_back(std::move(trace));
+                        result.subDomainToMortarTraces_[sdId].emplace_back(
+                            std::make_shared<std::remove_cvref_t<decltype(trace)>>(std::move(trace))
+                        );
                     return intersects;
                 }, sd);
                 if (intersect)

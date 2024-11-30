@@ -90,6 +90,7 @@ class Model
                     MortarSolutionVector restricted(mortar->numDofs());
                     for (std::size_t i = 0; i < mortar->numDofs(); ++i)
                         restricted[i] = x[mortarDofOffsets_[mortarId] + i];
+                    // TODO: project
                     solver.setMortar(mortarId, restricted);
                 });
             });
