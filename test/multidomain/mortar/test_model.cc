@@ -14,7 +14,13 @@ struct Solver : public Dumux::Mortar::Solver<MortarSolution, GridGeometry>
     using ParentType = Dumux::Mortar::Solver<MortarSolution, GridGeometry>;
     using ParentType::ParentType;
 
+    using typename ParentType::Element;
+    using typename ParentType::SubControlVolumeFace;
+
     void solve() override {}
+    virtual void setMortar(std::size_t, MortarSolution) override {};
+    virtual void registerMortarScvf(const Element&, const SubControlVolumeFace&, std::size_t) override {}
+    virtual MortarSolution assembleTraceVariables(std::size_t) const override { return {}; }
 };
 
 
