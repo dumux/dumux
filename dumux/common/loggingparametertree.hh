@@ -131,7 +131,7 @@ public:
                 if (params_.hasSub(compoundGroup) || defaultParams_.hasSub(compoundGroup))
                     groupNames.push_back(compoundGroup);
 
-                groupPrefix = groupPrefix.substr(0, dotPos);
+                groupPrefix.resize(dotPos);
                 compoundGroup = groupPrefix + "." + subGroupName;
             }
         }
@@ -192,7 +192,7 @@ public:
         auto dot = prefix.rfind(".");
         while (dot != std::string::npos)
         {
-            prefix = prefix.substr(0, dot);
+            prefix.resize(dot);
             std::string compoundKey = prefix + "." + key;
 
             if (tree.hasKey(compoundKey))
