@@ -60,6 +60,11 @@ class Decomposition
     std::size_t numberOfMortars() const { return mortars_.size(); }
     std::size_t numberOfSubDomains() const { return subDomains_.size(); }
 
+    //! Return true if the given mortar is part of this decomposition
+    bool containsMortar(const MortarGridGeometry& mortar) const {
+        return std::ranges::any_of(mortars_, [&] (const auto& ptr) { return ptr.get() == &mortar; });
+    }
+
     //! Return true if the given subdomain is part of this decomposition
     template<typename GridGeometry>
         requires(std::disjunction_v<std::is_same<GridGeometry, GridGeometries>...>)
@@ -69,10 +74,16 @@ class Decomposition
         });
     }
 
-    //! Return true if the given mortar is part of this decomposition
-    bool containsMortar(const MortarGridGeometry& mortar) const {
-        return std::ranges::any_of(mortars_, [&] (const auto& ptr) { return ptr.get() == &mortar; });
-    }
+    //! Visit all mortars in this decomposition
+    template<std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
+    void visitMortars(Visitor&& v) const
+    { std::ranges::for_each(mortars_, v); }
+
+    //! Visit all subdomains in this decomposition
+    template<typename Visitor>
+        requires(std::conjunction_v<std::is_invocable<Visitor, const std::shared_ptr<const GridGeometries>&>...>)
+    void visitSubDomains(Visitor&& v) const
+    { std::ranges::for_each(subDomains_, [&] (const auto& sd) { std::visit(v, sd); }); }
 
     //! Visit the mortar domains that are coupled to the given subdomain
     template<typename GridGeometry, std::invocable<const std::shared_ptr<const MortarGridGeometry>&> Visitor>
