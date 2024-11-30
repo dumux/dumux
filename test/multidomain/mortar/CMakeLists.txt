@@ -5,3 +5,7 @@ dumux_add_test(NAME test_mortar_decomposition
               LABELS multidomain multidomain_mortar
               SOURCES test_decomposition.cc
               CMAKE_GUARD dune-foamgrid_FOUND)
+dumux_add_test(NAME test_mortar_model
+              LABELS multidomain multidomain_mortar
+              SOURCES test_model.cc
+              CMAKE_GUARD dune-foamgrid_FOUND)
