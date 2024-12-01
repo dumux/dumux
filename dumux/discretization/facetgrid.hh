@@ -22,23 +22,19 @@
 #include <algorithm>
 #include <type_traits>
 #include <unordered_map>
+#include <limits>
 #include <ranges>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
+
 #include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#if HAVE_DUNE_FOAMGRID
-#include <dune/foamgrid/foamgrid.hh>
-#endif  // HAVE_DUNE_FOAMGRID
-
-#include <dumux/common/typetraits/typetraits.hh>
-#include <dumux/common/typetraits/problem.hh>
-
-#include <dumux/discretization/extrusion.hh>
 #include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/geometricentityset.hh>
 
 namespace Dumux {
 
@@ -54,17 +50,94 @@ namespace FacetGridDetail {
     }
 
     template<typename GridView>
-    struct _DefaultFacetGrid
+    auto makeBoundingBoxTree(const GridView& gridView)
     {
-#if HAVE_DUNE_FOAMGRID
-        using type = Dune::FoamGrid<GridView::dimension - 1, GridView::dimension>;
-#else
-        static_assert(AlwaysFalse<GridView>::value, "FoamGrid not found; please explicitly specify a GridType for the trace.");
-#endif
-    };
+        using EntitySet = GridViewGeometricEntitySet<GridView>;
+        return BoundingBoxTree<EntitySet>{std::make_shared<EntitySet>(gridView)};
+    }
 
-    template<typename GridGeometry>
-    using DefaultFacetGrid = typename _DefaultFacetGrid<typename GridGeometry::GridView>::type;
+    template<typename ScvfGeo, typename FacetGridView, typename FacetBoundingBoxTree>
+    std::optional<std::size_t> coupledElementIndex(const ScvfGeo& scvfGeo,
+                                                   const FacetGridView& facetGridView,
+                                                   const FacetBoundingBoxTree& bboxTree)
+    {
+        // TODO: use `intersectingEntities` once it has been made robust for bboxes with width=0 in one direction
+        for (const auto& element : elements(facetGridView))
+            if (intersect(scvfGeo, element.geometry()))
+                return bboxTree.entitySet().index(element);
+        return {};
+    }
+
+    template<typename Grid, typename GridGeometry, typename  Selector>
+    std::pair<std::unique_ptr<Grid>, std::vector<std::size_t>>
+    makeFacetGrid(const GridGeometry& gridGeometry, Selector&& selector)
+    {
+        static constexpr std::size_t undefined = std::numeric_limits<std::size_t>::max();
+        static constexpr int domainDim = GridGeometry::GridView::dimension;
+        static_assert(int(Grid::dimension) == domainDim - 1);
+
+        const auto& gridView = gridGeometry.gridView();
+        const auto& vertexMapper = gridGeometry.vertexMapper();
+        const auto& elementMapper = gridGeometry.elementMapper();
+
+        std::vector<unsigned int> localCornerStorage;
+        std::vector<std::size_t> domainToFacetVertex(gridView.size(domainDim), undefined);
+
+        std::size_t vertexCount = 0;
+        Dune::GridFactory<Grid> factory;
+        for (const auto& element : elements(gridView))
+        {
+            const auto& refElement = Dune::referenceElement(element);
+            const auto& elemGeo = element.geometry();
+
+            for (const auto& is : intersections(gridView, element))
+            {
+                if (!selector(is))
+                    continue;
+
+                // visit each facet only once
+                if (!is.boundary())
+                    if (elementMapper.index(is.inside()) > elementMapper.index(is.outside()))
+                        continue;
+
+                const auto& isGeo = is.geometry();
+                localCornerStorage.clear();
+                localCornerStorage.reserve(isGeo.corners());
+                for (int c = 0; c < isGeo.corners(); ++c)
+                {
+                    const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, c, domainDim);
+                    const auto vIdxGlobal = vertexMapper.subIndex(element, vIdxLocal, domainDim);
+                    if (domainToFacetVertex.at(vIdxGlobal) == undefined)
+                    {
+                        factory.insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
+                        domainToFacetVertex[vIdxGlobal] = vertexCount;
+                        vertexCount++;
+                    }
+                    localCornerStorage.push_back(domainToFacetVertex[vIdxGlobal]);
+                }
+
+                factory.insertElement(isGeo.type(), localCornerStorage);
+            }
+        }
+
+        auto grid = factory.createGrid();
+
+        // update map from insertion to grid vertex indices
+        std::vector<std::size_t> insertionToGridIndex(grid->leafGridView().size(Grid::dimension), 0);
+        for (const auto& vertex : vertices(grid->leafGridView()))
+            insertionToGridIndex[factory.insertionIndex(vertex)] = grid->leafGridView().indexSet().index(vertex);
+
+        std::size_t domainVertexIndex = 0;
+        std::vector<std::size_t> facetToDomainVertexMap(grid->leafGridView().size(Grid::dimension));
+        for (auto& facetVertexIndex : domainToFacetVertex)
+        {
+            if (facetVertexIndex != undefined)
+                facetToDomainVertexMap[insertionToGridIndex[facetVertexIndex]] = domainVertexIndex;
+            domainVertexIndex++;
+        }
+
+        return std::make_pair(std::move(grid), std::move(facetToDomainVertexMap));
+    }
 
 }  // namespace FacetGridDetail
 #endif  // DOXYGEN
@@ -75,124 +148,120 @@ concept FacetSelectorFor = std::invocable<T, const typename GridGeometry::GridVi
 
 /*!
  * \ingroup Discretization
- * \brief Extracts facets of a finite-volume discretization and exposes them as a new grid.
- * \tparam GridGeometry The grid geometry from which to extract the facet grid.
+ * \brief Data structure to hold a grid that consists of facets of a discretization.
+ * \tparam Grid The facet grid type
+ * \tparam GG The discretization from which the facet grid has been extracted.
+ * \note If the grid geometry is a surface grid with bifurcations, the result depends on the grid implementation.
+ *       On surface grids, this class can only be safely used if there are no bifurcations between the selected facets.
  */
-template<typename GridGeometry, typename FacetGrid = FacetGridDetail::DefaultFacetGrid<GridGeometry>>
+template<typename Grid, typename GG>
+class FacetGrid
+{
+ public:
+    using DomainGridGeometry = GG;
+    using GridView = typename Grid::LeafGridView;
+    using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+
+    //! Construct a facet grid from a grid geometry and a facet selector
+    template<FacetSelectorFor<DomainGridGeometry> Selector>
+    explicit FacetGrid(std::shared_ptr<const DomainGridGeometry> gridGeometry, Selector&& selector)
+    : FacetGrid(gridGeometry, FacetGridDetail::makeFacetGrid<Grid>(*gridGeometry, std::forward<Selector>(selector)))
+    {}
+
+    //! Return a view on the facet grid
+    GridView gridView() const
+    { return facetGrid_->leafGridView(); }
+
+    //! Return the domain from which this facet grid was extracted
+    std::shared_ptr<const DomainGridGeometry> domainGridGeometry() const
+    { return domain_; }
+
+    //! Return the index of the given vertex within the domain
+    std::size_t domainVertexIndexOf(const Vertex& v) const
+    { return facetToDomainVertexIndex_.at(gridView().indexSet().index(v)); }
+
+ private:
+    FacetGrid(std::shared_ptr<const DomainGridGeometry> gridGeometry,
+              std::pair<std::unique_ptr<Grid>, std::vector<std::size_t>>&& pair)
+    : domain_{std::move(gridGeometry)}
+    , facetGrid_{std::move(pair.first)}
+    , facetToDomainVertexIndex_{std::move(pair.second)}
+    {}
+
+    std::shared_ptr<const DomainGridGeometry> domain_;
+    std::unique_ptr<Grid> facetGrid_;
+    std::vector<std::size_t> facetToDomainVertexIndex_;
+};
+
+//! Convenience factory function for facet grids
+template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Selector>
+auto makeFacetGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
+{ return FacetGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
+
+/*!
+ * \ingroup Discretization
+ * \brief Holds a facet grid + connectivity mapping for finite-volume discretizations.
+ * \tparam Grid The facet grid type
+ * \tparam GridGeometry The grid geometry on which the facet grid is defined.
+ */
+template<typename Grid, typename GridGeometry>
 class FVFacetGrid
 {
+    using FacetGrid = Dumux::FacetGrid<Grid, GridGeometry>;
     using FacetElementToScvfElementIndices = std::unordered_map<std::size_t, std::vector<std::size_t>>;
     static constexpr int domainDim = GridGeometry::GridView::dimension;
 
  public:
-    using GridView = typename FacetGrid::LeafGridView;
+    using GridView = typename Grid::LeafGridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
     using EntityMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
+    using DomainGridGeometry = GridGeometry;
     using DomainElement = typename GridGeometry::GridView::template Codim<0>::Entity;
     using DomainSubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     template<FacetSelectorFor<GridGeometry> FacetSelector>
-    explicit FVFacetGrid(std::shared_ptr<const GridGeometry> gg, FacetSelector&& selector)
-    : domainGridGeometry_{std::move(gg)}
-    { update(std::forward<FacetSelector>(selector)); }
+    explicit FVFacetGrid(std::shared_ptr<const GridGeometry> gridGeometry, FacetSelector&& selector)
+    : FVFacetGrid(std::make_shared<FacetGrid>(makeFacetGrid<Grid>(std::move(gridGeometry), std::forward<FacetSelector>(selector))))
+    {}
 
-    //! Recompute the facet grid and mappings (e.g. after grid adaptation or with different selector)
-    template<FacetSelectorFor<GridGeometry> FacetSelector>
-    void update(FacetSelector&& selector)
+    //! Constructor from a shared facet grid
+    explicit FVFacetGrid(std::shared_ptr<const FacetGrid> facetGrid)
+    : facetGrid_{std::move(facetGrid)}
     {
-        facetGridFactory_ = std::make_unique<Dune::GridFactory<FacetGrid>>();
+        const auto bboxTree = FacetGridDetail::makeBoundingBoxTree(gridView());
 
-        std::vector<std::vector<unsigned int>> elementCorners;
-        std::vector<unsigned int> localCornerStorage;
+        domainElementToCouplingData_.resize(domainGridGeometry()->gridView().size(0));
+        for (const auto& element : elements(domainGridGeometry()->gridView()))
+        {
+            // TODO: filter non-candidate elements to speed up computations?
+            const auto eIdx = domainGridGeometry()->elementMapper().index(element);
+            const auto fvGeometry = localView(*domainGridGeometry()).bindElement(element);
+            for (const auto& scvf : scvfs(fvGeometry))
+                if (
+                    auto faceIdx = FacetGridDetail::coupledElementIndex(fvGeometry.geometry(scvf), gridView(), bboxTree);
+                    faceIdx.has_value()
+                )
+                    domainElementToCouplingData_[eIdx][faceIdx.value()].push_back(scvf.index());
+        }
 
-        elementCorners.reserve(domainGridView_().size(0));
-        domainElementToCouplingData_.resize(domainGridView_().size(0));
-        auto fvGeometry = localView(*domainGridGeometry_);
-
-        std::ranges::for_each(elements(domainGridView_()), [&] (const auto& element) {
-            const auto eIdx = domainGridGeometry_->elementMapper().index(element);
-            const auto& refElement = Dune::referenceElement(element);
-            const auto& elemGeo = element.geometry();
-
-            auto getFVGeometry = [&, isBound=false] () mutable -> const typename GridGeometry::LocalView& {
-                if (!isBound) { fvGeometry.bindElement(element); isBound = true; }
-                return fvGeometry;
-            };
-
-            std::ranges::for_each(
-                intersections(domainGridView_(), element) | std::views::filter(selector),
-                [&] (const auto& intersection) {
-                    const auto fvGeometry = getFVGeometry();
-                    const auto& isGeo = intersection.geometry();
-
-                    bool mayBeDuplicateElement = true;
-                    localCornerStorage.clear();
-                    localCornerStorage.reserve(isGeo.corners());
-                    std::ranges::for_each(std::views::iota(0, isGeo.corners()), [&] (int c) {
-                        const auto vIdxLocal = refElement.subEntity(intersection.indexInInside(), 1, c, domainDim);
-                        const auto vIdxGlobal = domainGridGeometry_->vertexMapper().subIndex(element, vIdxLocal, domainDim);
-                        localCornerStorage.push_back([&] () {
-                            auto it = domainToFacetVertexMap_.find(vIdxGlobal);
-                            if (it == domainToFacetVertexMap_.end())
-                            {
-                                mayBeDuplicateElement = false;
-                                const auto currentVertexIndex = domainToFacetVertexMap_.size();
-                                facetGridFactory_->insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
-                                it = domainToFacetVertexMap_.emplace(static_cast<std::size_t>(vIdxGlobal), currentVertexIndex).first;
-                            }
-                            return it->second;
-                        } ());
-                    });
-
-                    std::optional<std::size_t> facetElementIndex;
-                    if (mayBeDuplicateElement) {
-                        auto it = std::find_if(elementCorners.begin(), elementCorners.end(), [&] (const auto& corners) {
-                            const auto contained = [&] (auto idx) -> bool { return std::ranges::count(corners, idx); };
-                            return std::ranges::all_of(localCornerStorage, contained);
-                        });
-                        if (it != elementCorners.end())
-                            facetElementIndex = std::distance(elementCorners.begin(), it);
-                    }
-
-                    if (!facetElementIndex.has_value())
-                    {
-                        facetElementIndex = elementCorners.size();
-                        elementCorners.push_back(localCornerStorage);
-                        facetGridFactory_->insertElement(isGeo.type(), localCornerStorage);
-                    }
-
-                    std::ranges::for_each(scvfs(fvGeometry), [&] (const auto& scvf) {
-                        if (FacetGridDetail::intersect(fvGeometry.geometry(scvf), isGeo))
-                            domainElementToCouplingData_[eIdx][facetElementIndex.value()].push_back(scvf.index());
-                    });
-            });
-        });
-
-        facetGrid_ = facetGridFactory_->createGrid();
         facetElementMapper_ = std::make_unique<EntityMapper>(gridView(), Dune::mcmgElementLayout());
         facetVertexMapper_ = std::make_unique<EntityMapper>(gridView(), Dune::mcmgVertexLayout());
 
-        // map insertion to mapper indices for scvf map
-        std::vector<std::size_t> insertionToActualIndex(facetGrid_->leafGridView().size(0));
-        for (const auto& e : elements(facetGrid_->leafGridView()))
-            insertionToActualIndex[facetGridFactory_->insertionIndex(e)] = facetElementMapper_->index(e);
-        for (auto& map : domainElementToCouplingData_) {
-            FacetElementToScvfElementIndices new_map;
-            for (const auto& [facetElemInsertionIndex, scvfIndices] : map)
-                new_map[insertionToActualIndex[facetElemInsertionIndex]] = scvfIndices;
-            map = std::move(new_map);
-        }
-
         facetToDomainElements_.resize(gridView().size(0));
-        for (std::size_t eIdxDomain = 0; eIdxDomain < domainGridView_().size(0); ++eIdxDomain)
+        for (std::size_t eIdxDomain = 0; eIdxDomain < domainGridGeometry()->gridView().size(0); ++eIdxDomain)
             for (const auto& [eIdxFacet, _] : domainElementToCouplingData_.at(eIdxDomain))
+            {
+                if (facetToDomainElements_[eIdxFacet].size() == 2)
+                    DUNE_THROW(Dune::InvalidStateException, "Found more than two neighbors to a facet element");
                 facetToDomainElements_[eIdxFacet].push_back(eIdxDomain);
+            }
     }
 
     //! Return the grid view containing the selected facets
     GridView gridView() const
-    { return facetGrid_->leafGridView(); }
+    { return facetGrid_->gridView(); }
 
     //! Return the index mapper for facet grid elements
     const EntityMapper& elementMapper() const
@@ -202,12 +271,20 @@ class FVFacetGrid
     const EntityMapper& vertexMapper() const
     { return *facetVertexMapper_; }
 
+    //! Return the domain from which this facet grid was extracted
+    std::shared_ptr<const GridGeometry> domainGridGeometry() const
+    { return facetGrid_->domainGridGeometry(); }
+
+    //! Return the index of the given vertex within the domain
+    std::size_t domainVertexIndexOf(const Vertex& v) const
+    { return facetGrid_->domainVertexIndexOf(v); }
+
     //! Return a range over all domain elements that overlap with the given facet grid element
     std::ranges::view auto domainElementsAdjacentTo(const Element& element) const
     {
         return facetToDomainElements_.at(elementMapper().index(element))
             | std::views::transform([&] (const auto& eIdxDomain) {
-                return domainGridGeometry_->element(eIdxDomain);
+                return domainGridGeometry()->element(eIdxDomain);
             });
     }
 
@@ -215,49 +292,35 @@ class FVFacetGrid
     std::ranges::view auto domainScvfsAdjacentTo(const Element& element, const DomainElement& domainElement) const
     {
         const auto eIdx = elementMapper().index(element);
-        return domainElementToCouplingData_.at(domainGridGeometry_->elementMapper().index(domainElement))
+        return domainElementToCouplingData_.at(domainGridGeometry()->elementMapper().index(domainElement))
             | std::views::filter([e=eIdx] (const auto& facetElementToScvfs) { return facetElementToScvfs.first == e; })
             | std::views::transform([&] (const auto& facetElementToScvfs) { return facetElementToScvfs.second; })
             | std::views::join;
     }
 
-    //! Return the index of vertex that coincides with the given domain vertex
-    std::size_t domainToFacetVertexIndex(std::size_t domainVertexIndex) const
-    { return domainToFacetVertexMap_.at(domainVertexIndex); }
-
-    //! Return a reference to the grid geometry that this grad has been extracted from
-    const GridGeometry& domainGridGeometry() const
-    { return *domainGridGeometry_; }
-
  private:
-    const auto& domainGridView_() const { return domainGridGeometry_->gridView(); }
-
-    std::shared_ptr<const GridGeometry> domainGridGeometry_;
-
-    std::unique_ptr<Dune::GridFactory<FacetGrid>> facetGridFactory_;
-    std::unique_ptr<FacetGrid> facetGrid_;
-
+    std::shared_ptr<const FacetGrid> facetGrid_;
     std::unique_ptr<EntityMapper> facetElementMapper_;
     std::unique_ptr<EntityMapper> facetVertexMapper_;
 
     std::vector<FacetElementToScvfElementIndices> domainElementToCouplingData_;
     std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
-    std::unordered_map<std::size_t, std::size_t> domainToFacetVertexMap_;
 };
 
-template<typename GridGeometry, typename Indicator>
-FVFacetGrid(std::shared_ptr<GridGeometry>, Indicator&&) -> FVFacetGrid<std::remove_const_t<GridGeometry>>;
-
+//! Convenience factory function for finite-volume facet grids
+template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Selector>
+auto makeFVFacetGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
+{ return FVFacetGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
 
 /*!
  * \ingroup Discretization
  * \brief Extract the trace of a finite-volume discretization and exposes it as a new grid (or a subset of the trace).
  * \tparam GridGeometry The grid geometry from which to extract the facet grid.
  */
-template<typename GridGeometry, typename FacetGrid = FacetGridDetail::DefaultFacetGrid<GridGeometry>>
-class FVTraceGrid : private FVFacetGrid<GridGeometry, FacetGrid>
+template<typename Grid, typename GridGeometry>
+class FVTraceGrid : public FVFacetGrid<Grid, GridGeometry>
 {
-    using ParentType = FVFacetGrid<GridGeometry, FacetGrid>;
+    using ParentType = FVFacetGrid<Grid, GridGeometry>;
 
  public:
     using typename ParentType::GridView;
@@ -266,39 +329,27 @@ class FVTraceGrid : private FVFacetGrid<GridGeometry, FacetGrid>
     using typename ParentType::DomainElement;
     using typename ParentType::DomainSubControlVolumeFace;
 
+    //! Constructor for selecting a subset of the boundary
     template<FacetSelectorFor<GridGeometry> FacetSelector>
     explicit FVTraceGrid(std::shared_ptr<const GridGeometry> gg, FacetSelector&& selector)
     : ParentType{std::move(gg), [&] (const auto& is) { return is.boundary() and selector(is); }}
     {}
 
-    //! Constructor
+    //! Constructor for the trace of the entire boundary
     explicit FVTraceGrid(std::shared_ptr<const GridGeometry> gg)
     : ParentType{std::move(gg), [&] (const auto& is) { return is.boundary(); }}
     {}
-
-    //! Recompute the facet grid and mappings (e.g. after grid adaptation or with different selector)
-    template<FacetSelectorFor<GridGeometry> FacetSelector>
-    void update(FacetSelector&& selector)
-    { ParentType::update([&] (const auto& is) { return is.boundary() and selector(is); }); }
-
-    //! Recompute the facet grid and mappings (e.g. after grid adaptation)
-    void update()
-    { ParentType::update([&] (const auto& is) { return is.boundary(); }); }
-
-    using ParentType::gridView;
-    using ParentType::elementMapper;
-    using ParentType::vertexMapper;
-    using ParentType::domainGridGeometry;
-    using ParentType::domainElementsAdjacentTo;
-    using ParentType::domainScvfsAdjacentTo;
-    using ParentType::domainToFacetVertexIndex;
 };
 
-template<typename GridGeometry>
-FVTraceGrid(std::shared_ptr<GridGeometry>) -> FVTraceGrid<std::remove_const_t<GridGeometry>>;
+//! Convenience factory function for finite-volume trace grids
+template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Selector>
+auto makeFVTraceGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
+{ return FVTraceGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
 
-template<typename GridGeometry, typename Indicator>
-FVTraceGrid(std::shared_ptr<GridGeometry>, Indicator&&) -> FVTraceGrid<std::remove_const_t<GridGeometry>>;
+//! Convenience factory function for finite-volume trace grids selecting the entire boundary
+template<typename Grid, typename GridGeometry>
+auto makeFVTraceGrid(std::shared_ptr<GridGeometry> gridGeometry)
+{ return FVTraceGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry)}; }
 
 } // end namespace Dumux
 
