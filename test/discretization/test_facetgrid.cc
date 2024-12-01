@@ -123,15 +123,15 @@ int test()
     }
 
     {
-        auto traceGrid = makeFVTraceGrid<FacetGridType>(std::make_shared<GridGeometry>(grid.leafGridView()));
-        if (traceGrid.gridView().size(0) != numBoundaryCells)
-            handleError("Unexpected number of trace grid cells: " + std::to_string(traceGrid.gridView().size(0)));
-        if (traceGrid.gridView().size(dim-1) != numBoundaryPoints)
-            handleError("Unexpected number of trace grid vertices: " + std::to_string(traceGrid.gridView().size(dim-1)));
+        auto boundaryGrid = makeFVBoundaryGrid<FacetGridType>(std::make_shared<GridGeometry>(grid.leafGridView()));
+        if (boundaryGrid.gridView().size(0) != numBoundaryCells)
+            handleError("Unexpected number of trace grid cells: " + std::to_string(boundaryGrid.gridView().size(0)));
+        if (boundaryGrid.gridView().size(dim-1) != numBoundaryPoints)
+            handleError("Unexpected number of trace grid vertices: " + std::to_string(boundaryGrid.gridView().size(dim-1)));
 
         std::vector<std::size_t> adjacentElements;
-        for (const auto& facetElement : elements(traceGrid.gridView()))
-            for (const auto& element: traceGrid.domainElementsAdjacentTo(facetElement))
+        for (const auto& facetElement : elements(boundaryGrid.gridView()))
+            for (const auto& element: boundaryGrid.domainElementsAdjacentTo(facetElement))
                 adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
         adjacentElements = uniqueValuesIn(adjacentElements);
         if (adjacentElements.size() != numGridCellsTouchingBoundary)
