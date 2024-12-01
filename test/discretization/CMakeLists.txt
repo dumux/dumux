@@ -13,7 +13,7 @@ add_input_file_links()
 dumux_add_test(NAME test_facetgrid
                LABELS unit
                SOURCES test_facetgrid.cc
-               CMAKE_GUARD dune-foamgrid_FOUND)
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
 
 add_executable(test_walldistance EXCLUDE_FROM_ALL test_walldistance.cc)
 

@@ -12,11 +12,14 @@
 #include <config.h>
 
 #include <cmath>
+#include <array>
+#include <numeric>
 #include <string_view>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
@@ -49,35 +52,45 @@ bool overlap(const FacetElementGeometry& facetGeo, const DomainElementGeometry& 
     return true;
 }
 
-
-int main(int argc, char** argv)
+template<typename FacetGridType>
+int test()
 {
-    using namespace Dumux;
-    initialize(argc, argv);
+    static constexpr int dim = FacetGridType::dimensionworld;
+    static_assert(dim > 1);
 
-    using Grid = Dune::YaspGrid<2>;
+    using Grid = Dune::YaspGrid<dim>;
     using GridView = typename Grid::LeafGridView;
-    using GridGeometry = CCTpfaFVGridGeometry<GridView>;
-    using FacetGridType = Dune::FoamGrid<1, 2>;
+    using GridGeometry = Dumux::CCTpfaFVGridGeometry<GridView>;
 
-    Grid grid{{1.0, 1.0}, {10, 10}};
+    const int cellsPerSide = 10;
+    std::array<int, dim> cells; std::ranges::fill(cells, cellsPerSide);
+    Dune::FieldVector<double, dim> size; std::ranges::fill(size, 1.0);
+
+    Grid grid{size, cells};
+    const auto gridView = grid.leafGridView();
+
+    const auto cellsPerSlice = std::pow(cellsPerSide, dim-1);
+    const auto pointPerSlice = std::pow(cellsPerSide+1, dim-1);
+    const auto numBoundaryCells = cellsPerSlice*dim*2;
+    const auto numBoundaryPoints = gridView.size(dim) - std::pow(cellsPerSide-1, dim);
+    const auto numGridCellsTouchingBoundary = gridView.size(0) - std::pow(cellsPerSide-2, dim);
 
     int exitCode = 0;
     const auto handleError = [&] (std::string_view message) {
-        std::cout << message << std::endl;
+        std::cout << message <<  " @ dim = " << dim << std::endl;
         exitCode += 1;
     };
 
     {
         auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
         auto facetGrid = makeFVFacetGrid<FacetGridType>(gridGeometry, [] (const auto& is) {
-            return std::abs(is.geometry().center()[0] - 0.5) < 1e-6;
+            return std::abs(is.geometry().center()[dim - 1] - 0.5) < 1e-6;
         });
 
-        if (facetGrid.gridView().size(0) != 10)
+        if (facetGrid.gridView().size(0) != cellsPerSlice)
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGrid.gridView().size(0)));
-        if (facetGrid.gridView().size(1) != 11)
-            handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGrid.gridView().size(1)));
+        if (facetGrid.gridView().size(dim-1) != pointPerSlice)
+            handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGrid.gridView().size(dim-1)));
 
         for (const auto& facetElement : elements(facetGrid.gridView()))
         {
@@ -86,15 +99,18 @@ int main(int argc, char** argv)
             {
                 count++;
                 if (!overlap(facetElement.geometry(), domainElement.geometry()))
-                    handleError("Facet and Domain element do not overlap");
+                    handleError("Facet and domain element do not overlap");
 
                 unsigned int scvfCount = 0;
                 const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
                 for (const auto scvfIdx : facetGrid.domainScvfsAdjacentTo(facetElement, domainElement))
                 {
                     scvfCount++;
-                    if (!overlap(fvGeometry.geometry(fvGeometry.scvf(scvfIdx)), facetElement.geometry()))
+                    const auto& scvf = fvGeometry.scvf(scvfIdx);
+                    if (!overlap(fvGeometry.geometry(scvf), facetElement.geometry()))
                         handleError("Facet element and domain scvf do not overlap");
+                    if (Dune::FloatCmp::ne(scvf.area(), facetElement.geometry().volume()))
+                        handleError("Facet element and scvf areas do not match");
                 }
 
                 if (scvfCount != 1)
@@ -108,19 +124,29 @@ int main(int argc, char** argv)
 
     {
         auto traceGrid = makeFVTraceGrid<FacetGridType>(std::make_shared<GridGeometry>(grid.leafGridView()));
-        if (traceGrid.gridView().size(0) != 40)
+        if (traceGrid.gridView().size(0) != numBoundaryCells)
             handleError("Unexpected number of trace grid cells: " + std::to_string(traceGrid.gridView().size(0)));
-        if (traceGrid.gridView().size(1) != 40)
-            handleError("Unexpected number of trace grid vertices: " + std::to_string(traceGrid.gridView().size(0)));
+        if (traceGrid.gridView().size(dim-1) != numBoundaryPoints)
+            handleError("Unexpected number of trace grid vertices: " + std::to_string(traceGrid.gridView().size(dim-1)));
 
         std::vector<std::size_t> adjacentElements;
         for (const auto& facetElement : elements(traceGrid.gridView()))
             for (const auto& element: traceGrid.domainElementsAdjacentTo(facetElement))
                 adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
         adjacentElements = uniqueValuesIn(adjacentElements);
-        if (adjacentElements.size() != 10 + 10 + 2*8)
+        if (adjacentElements.size() != numGridCellsTouchingBoundary)
             handleError("Unexpected number of adjacent domain elements");
     }
 
+    return exitCode;
+}
+
+
+int main(int argc, char** argv)
+{
+    using namespace Dumux;
+    initialize(argc, argv);
+    auto exitCode = test<Dune::FoamGrid<1, 2>>();
+    exitCode += test<Dune::ALUGrid<2, 3, Dune::cube, Dune::nonconforming>>();
     return exitCode;
 }
