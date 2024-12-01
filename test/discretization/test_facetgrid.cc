@@ -16,6 +16,7 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
     using Grid = Dune::YaspGrid<2>;
     using GridView = typename Grid::LeafGridView;
     using GridGeometry = CCTpfaFVGridGeometry<GridView>;
+    using FacetGridType = Dune::FoamGrid<1, 2>;
 
     Grid grid{{1.0, 1.0}, {10, 10}};
 
@@ -68,9 +70,9 @@ int main(int argc, char** argv)
 
     {
         auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
-        FVFacetGrid facetGrid{gridGeometry, [] (const auto& is) {
+        auto facetGrid = makeFVFacetGrid<FacetGridType>(gridGeometry, [] (const auto& is) {
             return std::abs(is.geometry().center()[0] - 0.5) < 1e-6;
-        }};
+        });
 
         if (facetGrid.gridView().size(0) != 10)
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGrid.gridView().size(0)));
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
     }
 
     {
-        FVTraceGrid traceGrid{std::make_shared<GridGeometry>(grid.leafGridView())};
+        auto traceGrid = makeFVTraceGrid<FacetGridType>(std::make_shared<GridGeometry>(grid.leafGridView()));
         if (traceGrid.gridView().size(0) != 40)
             handleError("Unexpected number of trace grid cells: " + std::to_string(traceGrid.gridView().size(0)));
         if (traceGrid.gridView().size(1) != 40)
