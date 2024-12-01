@@ -198,6 +198,16 @@ template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Se
 auto makeFacetGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
 { return FacetGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
 
+//! Convenience factory function for boundary grids (with additional selector)
+template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Selector>
+auto makeBoundaryGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
+{ return makeFacetGrid<Grid>(std::move(gridGeometry), [&] (const auto& is) { return is.boundary() and selector(is); }); }
+
+//! Convenience factory function for boundary grids that span the entire boundary
+template<typename Grid, typename GridGeometry>
+auto makeBoundaryGrid(std::shared_ptr<GridGeometry> gridGeometry)
+{ return makeFacetGrid<Grid>(std::move(gridGeometry), [&] (const auto& is) { return is.boundary(); }); }
+
 /*!
  * \ingroup Discretization
  * \brief Holds a facet grid + connectivity mapping for finite-volume discretizations.
@@ -312,44 +322,15 @@ template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Se
 auto makeFVFacetGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
 { return FVFacetGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
 
-/*!
- * \ingroup Discretization
- * \brief Extract the trace of a finite-volume discretization and exposes it as a new grid (or a subset of the trace).
- * \tparam GridGeometry The grid geometry from which to extract the facet grid.
- */
-template<typename Grid, typename GridGeometry>
-class FVTraceGrid : public FVFacetGrid<Grid, GridGeometry>
-{
-    using ParentType = FVFacetGrid<Grid, GridGeometry>;
-
- public:
-    using typename ParentType::GridView;
-    using typename ParentType::EntityMapper;
-
-    using typename ParentType::DomainElement;
-    using typename ParentType::DomainSubControlVolumeFace;
-
-    //! Constructor for selecting a subset of the boundary
-    template<FacetSelectorFor<GridGeometry> FacetSelector>
-    explicit FVTraceGrid(std::shared_ptr<const GridGeometry> gg, FacetSelector&& selector)
-    : ParentType{std::move(gg), [&] (const auto& is) { return is.boundary() and selector(is); }}
-    {}
-
-    //! Constructor for the trace of the entire boundary
-    explicit FVTraceGrid(std::shared_ptr<const GridGeometry> gg)
-    : ParentType{std::move(gg), [&] (const auto& is) { return is.boundary(); }}
-    {}
-};
-
 //! Convenience factory function for finite-volume trace grids
 template<typename Grid, typename GridGeometry, FacetSelectorFor<GridGeometry> Selector>
-auto makeFVTraceGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
-{ return FVTraceGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry), std::forward<Selector>(selector)}; }
+auto makeFVBoundaryGrid(std::shared_ptr<GridGeometry> gridGeometry, Selector&& selector)
+{ return makeFVFacetGrid<Grid>(std::move(gridGeometry), [&] (const auto& is) { return is.boundary() and selector(is); }); }
 
 //! Convenience factory function for finite-volume trace grids selecting the entire boundary
 template<typename Grid, typename GridGeometry>
-auto makeFVTraceGrid(std::shared_ptr<GridGeometry> gridGeometry)
-{ return FVTraceGrid<Grid, std::remove_const_t<GridGeometry>>{std::move(gridGeometry)}; }
+auto makeFVBoundaryGrid(std::shared_ptr<GridGeometry> gridGeometry)
+{ return makeFVFacetGrid<Grid>(std::move(gridGeometry), [&] (const auto& is) { return is.boundary(); }); }
 
 } // end namespace Dumux
 
