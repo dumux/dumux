@@ -742,6 +742,10 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
                                          std::shared_ptr<MomentumProblem> problem,
                                          const ErrorsSubProblem<MomentumProblem>& errors)
 {
+    static constexpr int dim
+        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+
+    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
     const auto numFaceDofs = problem->gridGeometry().numDofs();
 
     logFile << Fmt::format(
@@ -751,10 +755,9 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
 
     const auto print = [&](const auto& e, const std::string& name){
         using MomIndices = typename MomentumProblem::Indices;
-        logFile << Fmt::format(
-            " {0}(vx) = {1} {0}(vy) = {2}",
-            name, e[MomIndices::velocityXIdx], e[MomIndices::velocityYIdx]
-        );
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
+            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[MomIndices::velocity(dirIdx)]);
+        }
     };
 
     print(errors.l2Absolute(), "L2Abs");
