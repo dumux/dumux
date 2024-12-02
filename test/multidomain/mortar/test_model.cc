@@ -1,3 +1,5 @@
+#include <dune/common/fvector.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
@@ -37,7 +39,7 @@ int main(int argc, char** argv) {
     auto bottomGG = std::make_shared<SubDomainGridGeometry>(bottom.leafGridView());
     auto mortarGG = std::make_shared<MortarGridGeometry>(mortar->leafGridView());
 
-    using MortarSolution = std::vector<double>;
+    using MortarSolution = Dune::BlockVector<Dune::FieldVector<double, 1>>;
     using SubDomainSolver = Solver<MortarSolution, MortarGrid, SubDomainGridGeometry>;
     auto bottomSolver = std::make_shared<SubDomainSolver>(bottomGG);
     auto topSolver = std::make_shared<SubDomainSolver>(topGG);
