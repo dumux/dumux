@@ -9,9 +9,9 @@
 
 
 template<typename MortarSolution, typename MortarGrid, typename GridGeometry>
-struct Solver : public Dumux::Mortar::Solver<MortarSolution, MortarGrid, GridGeometry>
+struct Solver : public Dumux::Mortar::SubDomainSolver<MortarSolution, MortarGrid, GridGeometry>
 {
-    using ParentType = Dumux::Mortar::Solver<MortarSolution, MortarGrid, GridGeometry>;
+    using ParentType = Dumux::Mortar::SubDomainSolver<MortarSolution, MortarGrid, GridGeometry>;
     using ParentType::ParentType;
     using typename ParentType::TraceGrid;
 
