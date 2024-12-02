@@ -33,7 +33,7 @@ namespace Dumux::Mortar {
 template<typename MortarSolutionVector,
          typename MortarGrid,
          typename GG>
-class Solver
+class SubDomainSolver
 {
  public:
     using GridGeometry = GG;
@@ -41,8 +41,8 @@ class Solver
     using Element = typename GG::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
-    virtual ~Solver() = default;
-    explicit Solver(std::shared_ptr<const GridGeometry> gridGeometry)
+    virtual ~SubDomainSolver() = default;
+    explicit SubDomainSolver(std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_{std::move(gridGeometry)}
     {}
 
@@ -87,7 +87,7 @@ class Model
 
  public:
     using Decomposition = Mortar::Decomposition<MortarGridGeometry, SubDomainGridGeometries...>;
-    using SolverVariant = std::variant<std::shared_ptr<Solver<MortarSolutionVector, MortarGrid, SubDomainGridGeometries>>...>;
+    using SolverVariant = std::variant<std::shared_ptr<SubDomainSolver<MortarSolutionVector, MortarGrid, SubDomainGridGeometries>>...>;
 
     void setMortar(const MortarSolutionVector& x)
     {
@@ -205,7 +205,7 @@ class ModelFactory
     template<typename T>
     static constexpr bool isSupportedSolver
         = std::disjunction_v<std::is_same<typename T::GridGeometry, SubDomainGridGeometries>...>
-        and std::derived_from<T, Solver<MortarSolutionVector, MortarGrid, typename T::GridGeometry>>;
+        and std::derived_from<T, SubDomainSolver<MortarSolutionVector, MortarGrid, typename T::GridGeometry>>;
 
  public:
      //! Insert a mortar domain
