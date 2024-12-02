@@ -23,25 +23,12 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/discretization/facetgrid.hh>
-#include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/intersectingentities.hh>
 
 namespace Dumux::Mortar {
 
 template<typename MortarGridGeometry, typename... GridGeometries>
 class DecompositionFactory;
-
-#ifndef DOXYGEN
-namespace Detail {
-
-template<typename Geo1, typename Geo2>
-bool intersect(const Geo1& geo1, const Geo2& geo2) {
-    using Algo = GeometryIntersection<Geo1, Geo2>;
-    typename Algo::Intersection result;
-    return Algo::intersection(geo1, geo2, result);
-}
-
-}  // namespace Detail
-#endif  // DOXYGEN
 
 /*!
  * \ingroup MultiDomain
@@ -205,11 +192,7 @@ class DecompositionFactory
             {
                 const bool intersect = std::visit([&] (const auto& sdPtr) {
                     auto trace = makeFacetGrid<MortarGrid>(sdPtr, [&] (const auto& is) {
-                        // TODO: use intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree())
-                        //       once it is robust also for bboxes with zero thickness in one direction
-                        return std::ranges::any_of(elements(mortarPtr->gridView()), [&] (const auto& me) {
-                            return Detail::intersect(is.geometry(), me.geometry());
-                        });
+                        return !intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree()).empty();
                     });
                     const bool intersects = trace.gridView().size(0) > 0;
                     if (intersects)
