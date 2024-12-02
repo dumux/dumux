@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <limits>
 #include <type_traits>
 #include <iostream>
 
@@ -32,6 +33,16 @@
 #include <dune/common/fvector.hh>
 
 namespace Dumux {
+
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<typename ctype>
+inline constexpr ctype minimumBaseEpsilon = 10.0*std::numeric_limits<ctype>::epsilon();
+
+}  // namespace Detail
+#endif  // DOXYGEN
 
 /*!
  * \ingroup Geometry
@@ -362,9 +373,14 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*std::max(b[3]-b[0], a[3]-a[0]);
-    const ctype eps1 = eps_*std::max(b[4]-b[1], a[4]-a[1]);
-    const ctype eps2 = eps_*std::max(b[5]-b[2], a[5]-a[2]);
+    const ctype scale0 = std::max(b[3]-b[0], a[3]-a[0]);
+    const ctype scale1 = std::max(b[4]-b[1], a[4]-a[1]);
+    const ctype scale2 = std::max(b[5]-b[2], a[5]-a[2]);
+    const ctype maxScale = std::max(scale0, std::max(scale1, scale2));
+    const ctype minEps = maxScale*Detail::minimumBaseEpsilon<ctype>;
+    const ctype eps0 = std::max(eps_*scale0, minEps);
+    const ctype eps1 = std::max(eps_*scale1, minEps);
+    const ctype eps2 = std::max(eps_*scale2, minEps);
     return (b[0] - eps0 <= a[3] && a[0] <= b[3] + eps0 &&
             b[1] - eps1 <= a[4] && a[1] <= b[4] + eps1 &&
             b[2] - eps2 <= a[5] && a[2] <= b[5] + eps2);
@@ -381,8 +397,12 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*std::max(b[2]-b[0], a[2]-a[0]);
-    const ctype eps1 = eps_*std::max(b[3]-b[1], a[3]-a[1]);
+    const ctype scale0 = std::max(b[2]-b[0], a[2]-a[0]);
+    const ctype scale1 = std::max(b[3]-b[1], a[3]-a[1]);
+    const ctype maxScale = std::max(scale0, scale1);
+    const ctype minEps = maxScale*Detail::minimumBaseEpsilon<ctype>;
+    const ctype eps0 = std::max(eps_*scale0, minEps);
+    const ctype eps1 = std::max(eps_*scale1, minEps);
     return (b[0] - eps0 <= a[2] && a[0] <= b[2] + eps0 &&
             b[1] - eps1 <= a[3] && a[1] <= b[3] + eps1);
 }
@@ -397,7 +417,8 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*std::max(b[1]-b[0], a[1]-a[0]);
+    const ctype scale0 = std::max(b[1]-b[0], a[1]-a[0]);
+    const ctype eps0 = std::max(eps_*scale0, Detail::minimumBaseEpsilon<ctype>*scale0);
     return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
 }
 
