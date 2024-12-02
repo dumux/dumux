@@ -690,6 +690,11 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
                                  std::shared_ptr<MassProblem> massProblem,
                                  const Errors<MomentumProblem, MassProblem>& errors)
 {
+    static constexpr int dim
+        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+
+    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
+
     const auto numCCDofs = massProblem->gridGeometry().numDofs();
     const auto numFaceDofs = momentumProblem->gridGeometry().numDofs();
 
@@ -701,10 +706,10 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
     const auto print = [&](const auto& e, const std::string& name){
         using MassIndices = typename MassProblem::Indices;
         using MomIndices = typename MomentumProblem::Indices;
-        logFile << Fmt::format(
-            " {0}(p) = {1} {0}(vx) = {2} {0}(vy) = {3}",
-            name, e[MassIndices::pressureIdx], e[MomIndices::velocity(0)+1], e[MomIndices::velocity(1)+1]
-        );
+        logFile << Fmt::format(" {} = {}", name + "(p)", e[MassIndices::pressureIdx]);
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
+            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
+        }
     };
 
     print(errors.l2Absolute(), "L2Abs");
