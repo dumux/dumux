@@ -254,6 +254,11 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
                                  std::shared_ptr<Problem> problem,
                                  const NavierStokesErrors<Problem>& errors)
 {
+    static constexpr int dim
+        = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>::GridView::dimension;
+
+    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
+
     const auto numCCDofs = problem->gridGeometry().numCellCenterDofs();
     const auto numFaceDofs = problem->gridGeometry().numFaceDofs();
 
@@ -264,10 +269,10 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
 
     const auto print = [&](const auto& e, const std::string& name){
         using Indices = typename Problem::Indices;
-        logFile << Fmt::format(
-            " {0}(p) = {1} {0}(vx) = {2} {0}(vy) = {3}",
-            name, e[Indices::pressureIdx], e[Indices::velocityXIdx], e[Indices::velocityYIdx]
-        );
+        logFile << Fmt::format(" {} = {}", name + "(p)", e[Indices::pressureIdx]);
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
+            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[Indices::velocity(dirIdx)]);
+        }
     };
 
     print(errors.l2Absolute(), "L2Abs");
