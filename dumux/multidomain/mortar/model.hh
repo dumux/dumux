@@ -23,6 +23,7 @@
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectionentityset.hh>
+#include <dumux/parallel/parallel_for.hh>
 
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/discretization/functionspacebasis.hh>
@@ -203,9 +204,8 @@ class Model
 
     void solveSubDomains()
     {
-        // TODO: parallel
-        std::for_each(solvers_.begin(), solvers_.end(), [] (auto& solver) {
-            solver.solve();
+        parallelFor(solvers_.size(), [&] (std::size_t i) {
+            solvers_.at(i).solve();
         });
     }
 
