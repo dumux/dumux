@@ -49,6 +49,7 @@ class Model
     using MortarGrid = typename MortarGridGeometry::GridView::Grid;
 
  public:
+    using SolutionVector = MortarSolutionVector;
     using Decomposition = Mortar::Decomposition<MortarGridGeometry, SubDomainGridGeometries...>;
     using SolverVariant = std::variant<std::shared_ptr<SubDomainSolver<MortarSolutionVector, MortarGrid, SubDomainGridGeometries>>...>;
 
