@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -17,10 +19,28 @@ struct Solver : public Dumux::Mortar::SubDomainSolver<MortarSolution, MortarGrid
     using ParentType::ParentType;
     using typename ParentType::TraceGrid;
 
-    void solve() override {}
-    virtual void setTraceVariables(std::size_t, MortarSolution) override {};
-    virtual void registerMortarTrace(const std::shared_ptr<const TraceGrid>, std::size_t) override {}
-    virtual MortarSolution assembleTraceVariables(std::size_t) const override { return {}; }
+    void solve() override {
+        wasSolved = true;
+    }
+
+    virtual void setTraceVariables(std::size_t mortarId, MortarSolution) override {
+        traceWasSet[mortarId] = true;
+    }
+
+    virtual void registerMortarTrace(std::shared_ptr<const TraceGrid> trace, std::size_t mortarId) override {
+        numberOfTraceElements[mortarId] = trace->gridView().size(0);
+    }
+
+    virtual MortarSolution assembleTraceVariables(std::size_t mortarId) const override {
+        MortarSolution result;
+        result.resize(numberOfTraceElements.at(mortarId));
+        result = 0;
+        return result;
+    }
+
+    bool wasSolved = false;
+    std::unordered_map<std::size_t, bool> traceWasSet;
+    std::unordered_map<std::size_t, std::size_t> numberOfTraceElements;
 };
 
 
@@ -50,17 +70,31 @@ int main(int argc, char** argv) {
         .withSubDomain(bottomSolver)
         .make();
 
-    auto x = model.mortarSolution();
-    model.solveSubDomains();
-    model.setMortar(x);
-    model.assembleMortarResidual(x);
-
     int exitCode = 0;
     if (model.mortarSolution().size() != mortarGG->numDofs())
     {
         std::cout << "Unexpected mortar solution size" << std::endl;
         exitCode = 1;
     }
+
+    auto x = model.mortarSolution();
+    model.solveSubDomains();
+    model.setMortar(x);
+    model.assembleMortarResidual(x);
+
+    if (not bottomSolver->wasSolved) { std::cout << "Solve was not invoked" << std::endl; exitCode += 1; }
+    if (not topSolver->wasSolved) { std::cout << "Solve was not invoked" << std::endl; exitCode += 1; }
+
+    if (bottomSolver->traceWasSet.size() != 1 or not bottomSolver->traceWasSet.at(0))
+    { std::cout << "Trace not set" << std::endl; exitCode += 1; }
+
+    if (topSolver->traceWasSet.size() != 1 or not topSolver->traceWasSet.at(0))
+    { std::cout << "Trace not set" << std::endl; exitCode += 1; }
+
+    if (bottomSolver->numberOfTraceElements.size() != 1 or bottomSolver->numberOfTraceElements.at(0) != 10)
+    { std::cout << "Unexpected trace" << std::endl; exitCode += 1; }
+    if (topSolver->numberOfTraceElements.size() != 1 or topSolver->numberOfTraceElements.at(0) != 10)
+    { std::cout << "Unexpected trace" << std::endl; exitCode += 1; }
 
     return exitCode;
 }

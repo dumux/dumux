@@ -195,8 +195,7 @@ class Model
                     MortarSolutionVector restricted(mortar->numDofs());
                     for (std::size_t i = 0; i < mortar->numDofs(); ++i)
                         restricted[i] = x[mortarDofOffsets_[mortarId] + i];
-                    // TODO: project
-                    solver.setTraceVariables(mortarId, restricted);
+                    solver.setTraceVariables(mortarId, getProjector_(*mortar, *subDomain).toTrace(restricted));
                 });
             });
         });
@@ -216,13 +215,13 @@ class Model
             const auto mortarId = decomposition_.id(*mortar);
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
                 visitSolverFor_(*subDomain, [&] (const auto& solver) {
-                    [[maybe_unused]] const auto vars = solver.assembleTraceVariables(mortarId);
-                    // TODO: project
-                    // if (projected.size() != mortar.numDofs())
-                    //     DUNE_THROW(Dune::InvalidStateException, "Trace does not have the expected number of entries.");
-                    // std::ranges::for_each(projected, [i=std::size_t{0}] (const auto& entry) mutable {
-                    //     residual[mortarDofOffsets_[mortarId] + i++] += entry;
-                    // });
+                    const auto vars = solver.assembleTraceVariables(mortarId);
+                    const auto projected = getProjector_(*mortar, *subDomain).fromTrace(vars);
+                    if (projected.size() != mortar->numDofs())
+                        DUNE_THROW(Dune::InvalidStateException, "Trace does not have the expected number of entries.");
+                    std::ranges::for_each(projected, [&, i=std::size_t{0}] (const auto& entry) mutable {
+                        residual[mortarDofOffsets_[mortarId] + i++] += entry;
+                    });
                 });
             });
         });
@@ -288,8 +287,9 @@ class Model
         DUNE_THROW(Dune::InvalidStateException, "Could not find solver matching the given subdomain");
     }
 
-    template<typename GridGeometry, typename Visitor>
-    void getProjector_(const MortarGridGeometry& mortar, const GridGeometry& subDomain) const
+    template<typename GridGeometry>
+        requires(std::disjunction_v<std::is_same<GridGeometry, SubDomainGridGeometries>...>)
+    const auto& getProjector_(const MortarGridGeometry& mortar, const GridGeometry& subDomain) const
     { return *projectors_.at(projectorMap_.at(decomposition_.id(subDomain)).at(decomposition_.id(mortar))); }
 
     Decomposition decomposition_;
