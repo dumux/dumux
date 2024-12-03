@@ -258,6 +258,7 @@ class Model
                         *mortar, *sd, *tracePtr, decomposition
                     );
                     projectors_.emplace_back(std::make_unique<std::remove_cvref_t<decltype(p)>>(std::move(p)));
+                    projectorMap_[decomposition_.id(*sd)][decomposition_.id(*mortar)] = projectors_.size() - 1;
                 });
             });
         });
@@ -284,11 +285,16 @@ class Model
         DUNE_THROW(Dune::InvalidStateException, "Could not find solver matching the given subdomain");
     }
 
+    template<typename GridGeometry, typename Visitor>
+    void getProjector_(const MortarGridGeometry& mortar, const GridGeometry& subDomain) const
+    { return *projectors_.at(projectorMap_.at(decomposition_.id(subDomain)).at(decomposition_.id(mortar))); }
+
     Decomposition decomposition_;
     std::vector<SolverVariant> solvers_;
     MortarSolutionVector mortarSolution_;
     std::vector<std::size_t> mortarDofOffsets_;
     std::vector<std::unique_ptr<Projector<MortarSolutionVector>>> projectors_;
+    std::unordered_map<std::size_t, std::unordered_map<std::size_t, std::size_t>> projectorMap_;
 };
 
 /*!
