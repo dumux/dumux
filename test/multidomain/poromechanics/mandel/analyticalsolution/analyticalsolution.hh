@@ -4,6 +4,15 @@
 // SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+ * \file
+ * \ingroup PoromechanicsTests
+ * \brief The analytical solution for Mandel's problem.
+ * Reference:
+ *  paper1: "Mandel’s problem revisited." DOI: 10.1680/geot.1996.46.2.187
+ *  (Section 6.1) in paper2: "A coupling of mixed and continuous Galerkin finite element methods for poroelasticity I: the continuous in time case" DOI:10.1007/s10596-007-9045-y
+ */
+
 
 #ifndef DUMUX_TEST_MANDEL_ANALYTICAL_SOLUTION_HH
 #define DUMUX_TEST_MANDEL_ANALYTICAL_SOLUTION_HH
@@ -73,12 +82,13 @@ public:
 
         c_ = params_.M() * K / mu
              * (params_.Kb() + 4.0/3* params_.G())
-             / (params_.Kbu() + 4.0/3 * params_.G());
+             / (params_.Kbu() + 4.0/3 * params_.G()); // Eq.(21) in paper 1 with M (P-wave Modulus) = K + 4/3 G
 
-        A1_ = 3/ params_.B() /( 1+ params_.Nuu());
-        A2_ = params_.alpha() * (1 - 2* params_.Nu()) / (1- params_.Nu());
+        A1_ = 3/ params_.B() /( 1+ params_.Nuu()); // Eq.(27) in paper 1
+        A2_ = params_.alpha() * (1 - 2* params_.Nu()) / (1- params_.Nu()); // Eq.(31) in the paper 1
 
-        const Scalar ratio = (1-params_.Nu())/(params_.Nuu()-params_.Nu());
+        const Scalar ratio = (1-params_.Nu())/(params_.Nuu()-params_.Nu()); // Eq.(37) in paper 1 as A1/A2, see also the definition of  $\alpha_n$ in paper 2.
+
         beta_ = Details::solveBeta(ratio, getParam<int>("Problem.NBeta"));
     }
 
@@ -87,12 +97,12 @@ public:
     const Scalar initialDivU(const GlobalPosition&) const
     { return F_ * (2 * params_.Nuu() -1.0) / 2.0 / params_.G() /a_; }
 
-    //! p at t = 0
+    //! p at t = 0, see $p^{+}$ in section 6.1 in paper 2
     template<class GlobalPosition>
     const Scalar initialPressure(const GlobalPosition&) const
     { return F_ * params_.B() * (1 + params_.Nuu())/3.0/a_; }
 
-    //! p at t = 0
+    //! u at t = 0, see $S_{xo}, S_{yo}$ in section 6.1 in paper 2
     template<class GlobalPosition>
     const GlobalPosition initialDisplacement(const GlobalPosition& globalPos) const
     {
@@ -104,11 +114,10 @@ public:
 
         u[0] = F_ * params_.Nuu() * x / 2.0 /params_.G() / a_;
         u[1] = - F_ * (1-params_.Nuu()) * y / 2.0 /params_.G() / a_;
-
         return u;
     }
 
-    //! p(x,t)
+    //! p(x,t), see p in paper 2
     template<class GlobalPosition>
     Scalar pressure(const GlobalPosition& globalPos, const Scalar t) const
     {
@@ -131,7 +140,7 @@ public:
         return p;
     }
 
-    //! u(x,t)
+    //! u(x,t), see u_x, u_y in paper 2
     template<class GlobalPosition>
     GlobalPosition displacement(const GlobalPosition& globalPos, const Scalar t) const
     {
@@ -176,7 +185,7 @@ public:
         return u;
     }
 
-    //! σ_zz(x,t)
+    //! σ_yy(x,t) in paper 2
     template<class GlobalPosition>
     Scalar normalStressZZ(const GlobalPosition& globalPos, const Scalar t) const
     {
@@ -216,8 +225,8 @@ private:
     Scalar a_; // the length of the domain
     std::vector<Scalar> beta_; // beta values (roots of tan(x)/x - a = 0)
 
-    Scalar c_; // compression coefficient
-    Scalar A1_, A2_;
+    Scalar c_; // compression coefficient, see Eq.(21) in paper 1
+    Scalar A1_, A2_; // some coefficients, see Eq.(27) and Eq.(31) in paper 1
 
     MandelPoroElasticParameters<Scalar> params_; // poroelastic parameters
 };
