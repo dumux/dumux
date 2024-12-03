@@ -188,15 +188,15 @@ class Model
 
     void setMortar(const MortarSolutionVector& x)
     {
-        decomposition_->visitMortar([&] (const auto& mortar) {
+        decomposition_.visitMortars([&] (const auto& mortar) {
             const auto mortarId = decomposition_.id(*mortar);
-            decomposition_->visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
-                visitSolverFor_(subDomain, [&] (const auto& solver) {
+            decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
+                visitSolverFor_(*subDomain, [&] (auto& solver) {
                     MortarSolutionVector restricted(mortar->numDofs());
                     for (std::size_t i = 0; i < mortar->numDofs(); ++i)
                         restricted[i] = x[mortarDofOffsets_[mortarId] + i];
                     // TODO: project
-                    solver.setMortar(mortarId, restricted);
+                    solver.setTraceVariables(mortarId, restricted);
                 });
             });
         });
@@ -205,17 +205,17 @@ class Model
     void solveSubDomains()
     {
         parallelFor(solvers_.size(), [&] (std::size_t i) {
-            solvers_.at(i).solve();
+            std::visit([] (auto& s) { s->solve(); }, solvers_.at(i));
         });
     }
 
     void assembleMortarResidual(MortarSolutionVector& residual) const
     {
         residual.resize(mortarSolution_.size());
-        decomposition_->visitMortar([&] (const auto& mortar) {
+        decomposition_.visitMortars([&] (const auto& mortar) {
             const auto mortarId = decomposition_.id(*mortar);
-            decomposition_->visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
-                visitSolverFor_(subDomain, [&] (const auto& solver) {
+            decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
+                visitSolverFor_(*subDomain, [&] (const auto& solver) {
                     [[maybe_unused]] const auto vars = solver.assembleTraceVariables(mortarId);
                     // TODO: project
                     // if (projected.size() != mortar.numDofs())
@@ -252,7 +252,7 @@ class Model
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto sd) {
                 decomposition_.visitSubDomainTraceWith(*mortar, *sd, [&] (auto tracePtr) {
                     visitSolverFor_(*sd, [&] (auto& solver) {
-                        solver->registerMortarTrace(tracePtr, id);
+                        solver.registerMortarTrace(tracePtr, id);
                     });
                     std::derived_from<Projector<MortarSolutionVector>> auto p = projectorFactory(
                         *mortar, *sd, *tracePtr, decomposition
@@ -272,12 +272,15 @@ class Model
 
     // TODO: store mapping (use map with pointers as hashes?) to avoid many iterations
     template<typename GridGeometry, typename Visitor>
+        requires(std::disjunction_v<std::is_same<GridGeometry, SubDomainGridGeometries>...>)
     void visitSolverFor_(const GridGeometry& subDomain, Visitor&& v) const
     {
         for (const auto& variant : solvers_)
             if(
-                std::visit([&] (const auto& solver) {
-                    if (solver->gridGeometry().get() == &subDomain) { v(solver); return true; }
+                std::visit([&] <typename Solver> (const std::shared_ptr<Solver>& solver) {
+                    if constexpr (std::is_same_v<typename Solver::GridGeometry, GridGeometry>)
+                        if (solver->gridGeometry().get() == &subDomain)
+                        { v(*solver); return true; }
                     return false;
                 }, variant)
             )

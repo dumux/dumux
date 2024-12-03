@@ -50,6 +50,11 @@ int main(int argc, char** argv) {
         .withSubDomain(bottomSolver)
         .make();
 
+    auto x = model.mortarSolution();
+    model.solveSubDomains();
+    model.setMortar(x);
+    model.assembleMortarResidual(x);
+
     int exitCode = 0;
     if (model.mortarSolution().size() != mortarGG->numDofs())
     {
