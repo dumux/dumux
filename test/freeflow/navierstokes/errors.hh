@@ -232,12 +232,13 @@ private:
 
     std::vector<std::string> errorNames_(const std::string& e) const
     {
+        const auto velLabels = velocityLabels();
         if constexpr (dim == 1)
-            return { e + "(u)", e + "(p)" };
+            return { e + velLabels[0], e + "(p)" };
         else if constexpr (dim == 2)
-            return { e + "(u)", e + "(v)", e + "(p)" };
+            return { e + velLabels[0], e + velLabels[1], e + "(p)" };
         else
-            return { e + "(u)", e + "(v)", e + "(w)", e + "(p)" };
+            return { e + velLabels[0], e + velLabels[1], e + velLabels[2], e + "(p)" };
     }
 
     std::string name_;
@@ -647,11 +648,13 @@ public:
         // clear error file
         std::ofstream logFile(name_ + ".csv", std::ios::trunc);
 
+        const auto velLabels = velocityLabels();
+
         // write header
         logFile << "time";
         using ErrorNames = std::vector<std::string>;
         for (const std::string e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
-            printError_(logFile, ErrorNames({ e + "(p)", e + "(u)", e + "(v)", e + "(w)" }), "{:s}");
+            printError_(logFile, ErrorNames({ e + "(p)", e + velLabels[0], e + velLabels[1], e + velLabels[2] }), "{:s}");
         logFile << "\n";
     }
 
