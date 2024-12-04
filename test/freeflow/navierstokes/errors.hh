@@ -27,6 +27,12 @@
 namespace Dumux {
 
 /*!
+ * \brief Velocity labels used for printing errors
+ */
+std::vector<std::string> velocityLabels()
+{ return {"(vx)", "(vy)", "(vz)"}; }
+
+/*!
  * \brief Compute errors between an analytical solution and the numerical approximation
  */
 template<class Problem, class Scalar = double>
@@ -257,7 +263,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
     static constexpr int dim
         = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>::GridView::dimension;
 
-    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
+    const auto velLabels = velocityLabels();
 
     const auto numCCDofs = problem->gridGeometry().numCellCenterDofs();
     const auto numFaceDofs = problem->gridGeometry().numFaceDofs();
@@ -271,7 +277,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
         using Indices = typename Problem::Indices;
         logFile << Fmt::format(" {} = {}", name + "(p)", e[Indices::pressureIdx]);
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[Indices::velocity(dirIdx)]);
+            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[Indices::velocity(dirIdx)]);
         }
     };
 
@@ -698,7 +704,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
     static constexpr int dim
         = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
 
-    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
+    const auto velLabels = velocityLabels();
 
     const auto numCCDofs = massProblem->gridGeometry().numDofs();
     const auto numFaceDofs = momentumProblem->gridGeometry().numDofs();
@@ -713,7 +719,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
         using MomIndices = typename MomentumProblem::Indices;
         logFile << Fmt::format(" {} = {}", name + "(p)", e[MassIndices::pressureIdx]);
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
+            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
         }
     };
 
@@ -750,7 +756,7 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
     static constexpr int dim
         = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
 
-    const auto velocitiesNames = std::vector<std::string>{"(vx)", "(vy)", "(vz)"};
+    const auto velLabels = velocityLabels();
     const auto numFaceDofs = problem->gridGeometry().numDofs();
 
     logFile << Fmt::format(
@@ -761,7 +767,7 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
     const auto print = [&](const auto& e, const std::string& name){
         using MomIndices = typename MomentumProblem::Indices;
         for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velocitiesNames[dirIdx], e[MomIndices::velocity(dirIdx)]);
+            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)]);
         }
     };
 
