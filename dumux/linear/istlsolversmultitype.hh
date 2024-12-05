@@ -60,7 +60,7 @@ DUMUX_REGISTER_SOLVER("cholmod", Dumux::MultiTypeBlockMatrixSolverTag,
                                    "Unsupported Type in Cholmod (only double and float supported)");
                       });
 #endif // HAVE_SUITESPARSE_CHOLMOD
-#if HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
+#if HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 11)
 DUMUX_REGISTER_SOLVER("umfpack", Dumux::MultiTypeBlockMatrixSolverTag,
                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
@@ -76,7 +76,7 @@ DUMUX_REGISTER_SOLVER("umfpack", Dumux::MultiTypeBlockMatrixSolverTag,
                           // check if UMFPack<M>* is convertible to
                           // InverseOperator*. This checks compatibility of the
                           // domain and range types
-                          if constexpr (UMFPackImpl::isValidBlock<OpTraits>::value) {
+                          if constexpr (Dune::UMFPackImpl::isValidBlock<OpTraits>::value) {
                             const auto& A = opTraits.getAssembledOpOrThrow(op);
                             const M& mat = A->getmat();
                             int verbose = config.get("verbose", 0);
@@ -87,7 +87,7 @@ DUMUX_REGISTER_SOLVER("umfpack", Dumux::MultiTypeBlockMatrixSolverTag,
                                    "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
                         return nullptr;
                       });
-#endif // HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 10)
+#endif // HAVE_SUITESPARSE_UMFPACK && DUNE_VERSION_GTE(DUNE_ISTL, 2, 11)
 } // end namespace Dumux
 
 #endif // DUMUX_LINEAR_ISTL_SOLVERS_MULTITYPE_HH
