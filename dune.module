@@ -5,7 +5,7 @@ Module: dumux
 Version: 3.10-dev
 Author: The DuMux Team
 Maintainer: dumux@listserv.uni-stuttgart.de
-Depends: dune-common (>=2.10) dune-grid (>=2.10) dune-localfunctions (>=2.10) dune-istl (>=2.10)
+Depends: dune-common (>=2.10) dune-geometry (>=2.10) dune-grid (>=2.10) dune-localfunctions (>=2.10) dune-istl (>=2.10)
 Suggests: dune-alugrid (>=2.10) dune-foamgrid (>=2.10) dune-uggrid (>=2.10) dune-functions (>=2.10) opm-common opm-grid dune-subgrid (>=2.10) dune-spgrid (>=2.10) dune-mmesh (>=1.4)
 Description: DuMux is a module for simulation of multi-phase multi-component flow transport in porous media
 URL: https://dumux.org

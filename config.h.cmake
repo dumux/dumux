@@ -63,37 +63,11 @@
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
-/* Define to 1 if gmsh was found */
-#cmakedefine DUMUX_HAVE_GMSH 1
-
-/* Define path to gmsh executable */
-#cmakedefine GMSH_EXECUTABLE "@GMSH_EXECUTABLE@"
-
-/* Defines whether pvpython has been found */
-#cmakedefine DUMUX_HAVE_PVPYTHON 1
-
-/* Define the path to pvpython */
-#define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
-
 /* Define to 1 if quadmath was found */
 #cmakedefine DUMUX_HAVE_QUAD 1
 
-/* Set if Kokkos was found */
-#cmakedefine DUMUX_HAVE_KOKKOS ENABLE_KOKKOS
-
-/* Set if OpenMP was found */
-#cmakedefine DUMUX_HAVE_OPENMP ENABLE_OPENMP
-
-/* Set the DUMUX_MULTITHREADING_BACKEND */
-#ifndef DUMUX_MULTITHREADING_BACKEND
-#define DUMUX_MULTITHREADING_BACKEND ${DUMUX_MULTITHREADING_BACKEND}
-#endif
-
 /* Set DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS if available */
 #cmakedefine DUMUX_HAVE_CPP_PARALLEL_ALGORITHMS 1
-
-/* Set DUMUX_HAVE_GRIDFORMAT if available */
-#cmakedefine DUMUX_HAVE_GRIDFORMAT 1
 
 /* end dumux
    Everything below here will be overwritten

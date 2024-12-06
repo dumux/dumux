@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project("dumux" C CXX)
 
@@ -50,17 +50,59 @@ endif()
 
 # start a dune project with information from dune.module
 dune_project()
-if (DUMUX_HAVE_STD_FORMAT)
-  dune_enable_all_packages(MODULE_LIBRARIES dumux)
-else()
-  dune_enable_all_packages(MODULE_LIBRARIES dumux dumux_fmt)
+
+# external dependencies
+include(FetchContent)
+if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+  FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
+  FetchContent_MakeAvailable(gridformat)
+  set(DUMUX_HAVE_GRIDFORMAT true)
+  message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
 endif()
 
+find_package(TBB QUIET)
+find_package(Kokkos QUIET)
+find_package(OpenMP QUIET)
+
+# Create the dumux library target exported as Dumux::Dumux
+include(DumuxAddLibrary)
+dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
+
+# enforce C++-20
 target_compile_features(dumux PUBLIC cxx_std_20)
 
+# check multithreading features
+include(DumuxMultithreadingBackend)
+target_compile_definitions(dumux PUBLIC DUMUX_MULTITHREADING_BACKEND=${DUMUX_MULTITHREADING_BACKEND})
+
 if (DUMUX_HAVE_GRIDFORMAT)
-    dune_register_package_flags(LIBRARIES gridformat::gridformat)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_GRIDFORMAT=1)
+  target_link_libraries(dumux INTERFACE gridformat::gridformat)
 endif()
+
+if (TBB_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_TBB=1)
+  target_link_libraries(dumux INTERFACE TBB::tbb)
+endif()
+
+if (Kokkos_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_KOKKOS=1)
+  target_link_libraries(dumux INTERFACE Kokkos::kokkos)
+endif()
+
+if (OpenMP_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_OPENMP=1)
+  target_link_libraries(dumux INTERFACE OpenMP::OpenMP_CXX)
+endif()
+
+if (NOT DUMUX_HAVE_STD_FORMAT)
+  dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
+  target_compile_features(dumux_format PUBLIC cxx_std_20)
+  target_link_libraries(dumux INTERFACE dumux_format)
+endif()
+
+# Enable all dune registered packages on the dumux library.
+dune_target_enable_all_packages(dumux)
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
@@ -74,4 +116,36 @@ if(DUMUX_ENABLE_PYTHONBINDINGS)
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
+# this will also generate the dumux-config.cmake file which is
+# used to make Dumux available to other projects
+set(DUNE_CUSTOM_PKG_CONFIG_SECTION "include(CMakeFindDependencyMacro)")
+# make sure downstream projects can find gridformat too
+if (DUMUX_HAVE_GRIDFORMAT)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure gridformat build in dumux is found"
+    "find_dependency(gridformat PATHS ${gridformat_BINARY_DIR}/cmake)"
+  )
+endif()
+# make sure downstream projects can find TBB too
+if (TBB_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure TBB is found"
+    "find_dependency(TBB)"
+  )
+endif()
+# make sure downstream projects can find Kokkos too
+if (Kokkos_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure Kokkos is found"
+    "find_dependency(Kokkos)"
+  )
+endif()
+# make sure downstream projects can find OpenMP too
+if (OpenMP_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure OpenMP is found"
+    "find_dependency(OpenMP)"
+  )
+endif()
+
 finalize_dune_project()
