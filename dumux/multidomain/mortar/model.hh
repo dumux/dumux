@@ -17,151 +17,16 @@
 #include <memory>
 #include <utility>
 #include <variant>
+#include <concepts>
 
-#include <dune/functions/functionspacebases/lagrangebasis.hh>
-
-#include <dumux/geometry/boundingboxtree.hh>
-#include <dumux/geometry/geometricentityset.hh>
-#include <dumux/geometry/intersectionentityset.hh>
 #include <dumux/parallel/parallel_for.hh>
 
-#include <dumux/discretization/projection/projector.hh>
-#include <dumux/discretization/functionspacebasis.hh>
-#include <dumux/discretization/facetgrid.hh>
-
 #include "decomposition.hh"
+#include "solverinterface.hh"
+#include "projectorinterface.hh"
+#include "projectors.hh"
 
 namespace Dumux::Mortar {
-
-/*!
- * \ingroup MultiDomain
- * \ingroup MortarCoupling
- * \brief Interface for projectors between a subdomain trace and a mortar.
- */
-template<typename SolutionVector>
-struct Projector
-{
-    virtual ~Projector() = default;
-
-    //! Project a mortar solution to a subdomain trace
-    virtual SolutionVector toTrace(const SolutionVector& x) const { return toTrace_(x); }
-    //! Project a subdomain trace to a mortar
-    virtual SolutionVector fromTrace(const SolutionVector& x) const { return fromTrace_(x); }
-
- private:
-    virtual SolutionVector toTrace_(const SolutionVector&) const = 0;
-    virtual SolutionVector fromTrace_(const SolutionVector&) const = 0;
-};
-
-/*!
- * \ingroup MultiDomain
- * \ingroup MortarCoupling
- * \brief Default projector for finite-volume schemes and mortars representing primary variables (e.g. pressure mortars).
- */
-template<typename SolutionVector>
-class FVDefaultProjector : public Projector<SolutionVector>
-{
-    // TODO: generalize this? (assumes Dune::BlockVector).. But Dumux::Projector hardcodes BlockVector, anyway...
-    using Scalar = typename SolutionVector::field_type;
-    using L2Projector = Dumux::Projector<Scalar>;
-
- public:
-    // TODO: can ordering of function space basis be different and break the mapping to boundaries later?
-    template<typename MortarGridGeometry, typename Grid, typename GridGeometry>
-        requires(!DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
-    FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const FacetGrid<Grid, GridGeometry>& traceGrid)
-    : FVDefaultProjector(
-        mortarGridGeometry,
-        traceGrid,
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()},
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()}
-    )
-    {}
-
-    template<typename MortarGridGeometry, typename Grid, typename GridGeometry>
-        requires(DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
-    FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const FacetGrid<Grid, GridGeometry>& traceGrid)
-    : FVDefaultProjector(
-        mortarGridGeometry,
-        traceGrid,
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 1>{traceGrid.gridView()},
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()}
-    )
-    {}
-
- private:
-    template<typename MortarGridGeometry,
-             typename TraceGrid,
-             typename MortarTraceBasis,
-             typename ResidualTraceBasis>
-    FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const TraceGrid& traceGrid,
-                       const MortarTraceBasis& mortarTraceBasis,
-                       const ResidualTraceBasis& residualTraceBasis)
-    {
-        using MortarEntitySet = typename std::remove_cvref_t<decltype(mortarGridGeometry.boundingBoxTree())>::EntitySet;
-        using TraceEntitySet = GridViewGeometricEntitySet<typename TraceGrid::GridView>;
-        BoundingBoxTree<TraceEntitySet> traceTree{std::make_shared<TraceEntitySet>(traceGrid.gridView())};
-        IntersectionEntitySet<MortarEntitySet, TraceEntitySet> glue;
-        glue.build(mortarGridGeometry.boundingBoxTree(), traceTree);
-
-        const auto& mortarBasis = getFunctionSpaceBasis(mortarGridGeometry);
-        to_ = std::make_unique<L2Projector>(makeProjector(mortarBasis, mortarTraceBasis, glue));
-        from_ = std::make_unique<L2Projector>(makeProjectorPair(mortarBasis, residualTraceBasis, glue).second);
-    }
-
-    SolutionVector toTrace_(const SolutionVector& x) const override { return to_->project(x); }
-    SolutionVector fromTrace_(const SolutionVector& x) const override { return from_->project(x); }
-
-    std::unique_ptr<L2Projector> to_;
-    std::unique_ptr<L2Projector> from_;
-};
-
-/*!
- * \ingroup MultiDomain
- * \ingroup MortarCoupling
- * \brief Abstract base class for subdomain solvers.
- * \tparam MortarSolutionVector The type used to represent the solution in the mortar domain.
- * \tparam MortarGrid The grid type used to represent the mortar domain.
- * \tparam GG The subdomain grid geometry
- */
-template<typename MortarSolutionVector,
-         typename MortarGrid,
-         typename GG>
-class SubDomainSolver
-{
- public:
-    using GridGeometry = GG;
-    using TraceGrid = FacetGrid<MortarGrid, GridGeometry>;
-    using Element = typename GG::GridView::template Codim<0>::Entity;
-    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-
-    virtual ~SubDomainSolver() = default;
-    explicit SubDomainSolver(std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_{std::move(gridGeometry)}
-    {}
-
-    //! Solve the subdomain problem
-    virtual void solve() = 0;
-
-    //! Set the mortar boundary condition for the mortar with the given id
-    virtual void setTraceVariables(std::size_t, MortarSolutionVector) = 0;
-
-    //! Register a trace coupling to the mortar with the given id
-    virtual void registerMortarTrace(std::shared_ptr<const TraceGrid>, std::size_t) = 0;
-
-    //! Assemble the variables on the trace overlapping with the given mortar domain
-    virtual MortarSolutionVector assembleTraceVariables(std::size_t) const = 0;
-
-    //! Return the underlying grid geometry
-    const std::shared_ptr<const GridGeometry>& gridGeometry() const
-    { return gridGeometry_; }
-
- private:
-    std::shared_ptr<const GridGeometry> gridGeometry_;
-};
 
 // forward declaration
 template<typename MortarSolutionVector,
@@ -192,10 +57,9 @@ class Model
             const auto mortarId = decomposition_.id(*mortar);
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
                 visitSolverFor_(*subDomain, [&] (auto& solver) {
-                    MortarSolutionVector restricted(mortar->numDofs());
-                    for (std::size_t i = 0; i < mortar->numDofs(); ++i)
-                        restricted[i] = x[mortarDofOffsets_[mortarId] + i];
-                    solver.setTraceVariables(mortarId, getProjector_(*mortar, *subDomain).toTrace(restricted));
+                    solver.setTraceVariables(mortarId, getProjector_(*mortar, *subDomain).toTrace(
+                        extractEntriesFor(*mortar, x)
+                    ));
                 });
             });
         });
@@ -210,7 +74,7 @@ class Model
 
     void assembleMortarResidual(MortarSolutionVector& residual) const
     {
-        residual.resize(mortarSolution_.size());
+        residual.resize(numMortarDofs_);
         decomposition_.visitMortars([&] (const auto& mortar) {
             const auto mortarId = decomposition_.id(*mortar);
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto& subDomain) {
@@ -227,25 +91,42 @@ class Model
         });
     }
 
-    const MortarSolutionVector& mortarSolution() const
-    { return mortarSolution_; }
+    //! Return the underlying decomposition
+    const Decomposition& decomposition() const
+    { return decomposition_; }
+
+    //! Return the total number of degrees of freedom on the entire mortar domain
+    std::size_t numMortarDofs() const
+    { return numMortarDofs_; }
+
+    //! Extract the entries of an individual mortar subdomain from the given solution vector
+    MortarSolutionVector extractEntriesFor(const MortarGridGeometry& mortar, const MortarSolutionVector& x) const
+    {
+        if (x.size() != numMortarDofs_)
+            DUNE_THROW(Dune::InvalidStateException, "Given vector does not have the expected length");
+        const auto mortarId = decomposition_.id(mortar);
+        MortarSolutionVector restricted(mortar.numDofs());
+        for (std::size_t i = 0; i < mortar.numDofs(); ++i)
+            restricted[i] = x[mortarDofOffsets_[mortarId] + i];
+        return restricted;
+    }
 
  private:
     friend ModelFactory<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>;
 
     template<typename ProjectorFactory>
     Model(Decomposition&& decomposition, std::vector<SolverVariant> solvers, ProjectorFactory&& projectorFactory)
-    : decomposition_{std::move(decomposition)}
+    : numMortarDofs_{0}
+    , decomposition_{std::move(decomposition)}
     , solvers_{std::move(solvers)}
     {
         if (decomposition_.numberOfSubDomains() != solvers_.size())
             DUNE_THROW(Dune::InvalidStateException, "Number of solvers and subdomains do not match.");
 
-        std::size_t numMortarDofs = 0;
         mortarDofOffsets_.resize(decomposition_.numberOfMortars());
         decomposition_.visitMortars([&] (const auto& mortar) {
             mortarDofOffsets_[decomposition_.id(*mortar)] = mortar->numDofs();
-            numMortarDofs += mortar->numDofs();
+            numMortarDofs_ += mortar->numDofs();
 
             const auto id = decomposition_.id(*mortar);
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] <typename SD> (const std::shared_ptr<const SD>& sd) {
@@ -271,8 +152,6 @@ class Model
             mortarDofOffsets_.begin(), mortarDofOffsets_.end(),
             mortarDofOffsets_.begin(), std::size_t{0}
         );
-        mortarSolution_.resize(numMortarDofs);
-        std::ranges::fill(mortarSolution_, 0);
     }
 
     // TODO: store mapping (use map with pointers as hashes?) to avoid many iterations
@@ -298,9 +177,9 @@ class Model
     const auto& getProjector_(const MortarGridGeometry& mortar, const GridGeometry& subDomain) const
     { return *projectors_.at(projectorMap_.at(decomposition_.id(subDomain)).at(decomposition_.id(mortar))); }
 
+    std::size_t numMortarDofs_;
     Decomposition decomposition_;
     std::vector<SolverVariant> solvers_;
-    MortarSolutionVector mortarSolution_;
     std::vector<std::size_t> mortarDofOffsets_;
     std::vector<std::unique_ptr<Projector<MortarSolutionVector>>> projectors_;
     std::unordered_map<std::size_t, std::unordered_map<std::size_t, std::size_t>> projectorMap_;

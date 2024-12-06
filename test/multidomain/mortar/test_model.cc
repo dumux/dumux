@@ -70,14 +70,15 @@ int main(int argc, char** argv) {
         .withSubDomain(bottomSolver)
         .make();
 
+    MortarSolution x(model.numMortarDofs());
+
     int exitCode = 0;
-    if (model.mortarSolution().size() != mortarGG->numDofs())
+    if (x.size() != mortarGG->numDofs())
     {
         std::cout << "Unexpected mortar solution size" << std::endl;
         exitCode = 1;
     }
 
-    auto x = model.mortarSolution();
     model.solveSubDomains();
     model.setMortar(x);
     model.assembleMortarResidual(x);
