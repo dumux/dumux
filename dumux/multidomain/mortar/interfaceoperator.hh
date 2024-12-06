@@ -49,12 +49,17 @@ public:
     using SolutionVector = typename M::SolutionVector;
 
     explicit InterfaceOperator(Model&& model)
-    : model_{std::make_unique<M>(std::move(model))}
+    : model_{std::make_shared<M>(std::move(model))}
+    {}
+
+    explicit InterfaceOperator(std::shared_ptr<Model> model)
+    : model_{std::move(model)}
     {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply(const SolutionVector& x, SolutionVector& r) const
     {
+        r = 0.0;
         model_->setMortar(x);
         model_->solveSubDomains();
         model_->assembleMortarResidual(r);
@@ -76,13 +81,19 @@ public:
     { return Dune::SolverCategory::sequential; }
 
 private:
-    std::unique_ptr<Model> model_;
+    std::shared_ptr<Model> model_;
 };
 
 template<typename MortarSolutionVector,
          typename MortarGridGeometry,
          typename... SubDomainGridGeometries>
 InterfaceOperator(Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>&&)
+-> InterfaceOperator<Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>>;
+
+template<typename MortarSolutionVector,
+         typename MortarGridGeometry,
+         typename... SubDomainGridGeometries>
+InterfaceOperator(std::shared_ptr<Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>>)
 -> InterfaceOperator<Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...>>;
 
 }  // namespace Dumux::Mortar
