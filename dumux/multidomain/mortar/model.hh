@@ -69,7 +69,8 @@ class Model
 
     void solveSubDomains()
     {
-        parallelFor(solvers_.size(), [&] (std::size_t i) {
+        // TODO: run in parallel. Dumux::parallelFor led to an exception on macos with clang-18
+        std::ranges::for_each(std::views::iota(std::size_t{0}, solvers_.size()), [&] (std::size_t i) {
             std::visit([] (auto& s) { s->solve(); }, solvers_.at(i));
         });
     }
