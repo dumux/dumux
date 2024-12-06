@@ -68,8 +68,8 @@ class DarcyProblem
     static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
 
 public:
-    DarcyProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    DarcyProblem(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
     , MortarProblemBase(gridGeometry)
     {}
 

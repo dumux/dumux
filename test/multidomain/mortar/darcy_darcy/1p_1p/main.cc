@@ -22,8 +22,6 @@
 #include <dumux/multidomain/mortar/solvers.hh>
 #include <dumux/multidomain/mortar/preconditioners.hh>
 
-#include <dumux/linear/istlsolverfactorybackend.hh>
-
 #include "properties.hh"
 
 using TypeTag = Dumux::Properties::TTag::OnePDarcyMortarTpfa;
@@ -33,14 +31,7 @@ using MortarGrid = Dumux::GetPropType<TypeTag, Dumux::Properties::MortarGrid>;
 using MortarSolution = Dumux::GetPropType<TypeTag, Dumux::Properties::MortarSolutionVector>;
 using MortarGridGeometry = Dumux::BoxFVGridGeometry<double, typename MortarGrid::LeafGridView>;
 
-using LinearSolver = Dumux::IstlSolverFactoryBackend<
-    Dumux::LinearSolverTraits<GridGeometry>,
-    Dumux::LinearAlgebraTraits<
-        Dune::BCRSMatrix<Dune::FieldMatrix<double, 1, 1>>,
-        Dune::BlockVector<Dune::FieldVector<double, 1>>
-    >
->;
-using SubDomainSolver = Dumux::Mortar::DefaultSubDomainSolver<LinearSolver, TypeTag>;
+using SubDomainSolver = Dumux::Mortar::DefaultSubDomainSolver<TypeTag>;
 
 template<typename Geometry>
 auto bboxOf(const Geometry& geo)

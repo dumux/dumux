@@ -16,6 +16,8 @@
 #include <memory>
 #include <utility>
 
+#include <dumux/linear/istlsolverfactorybackend.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/facetgrid.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -27,7 +29,7 @@
 namespace Dumux::Mortar {
 
 //! Default solver for stationary single-domain problems, discretized by finite volume schemes
-template<typename LinearSolver, typename TypeTag>
+template<typename TypeTag>
 class DefaultSubDomainSolver : public SubDomainSolver<
     GetPropType<TypeTag, Properties::MortarSolutionVector>,
     GetPropType<TypeTag, Properties::MortarGrid>,
@@ -42,6 +44,10 @@ class DefaultSubDomainSolver : public SubDomainSolver<
     using MortarSolutionVector = GetPropType<TypeTag, Properties::MortarSolutionVector>;
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using LinearSolver = IstlSolverFactoryBackend<
+        Dumux::LinearSolverTraits<GetPropType<TypeTag, Properties::GridGeometry>>,
+        LinearAlgebraTraitsFromAssembler<Assembler>
+    >;
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
 
     using ParentType = SubDomainSolver<
@@ -54,18 +60,18 @@ class DefaultSubDomainSolver : public SubDomainSolver<
     using typename ParentType::GridGeometry;
     using typename ParentType::TraceGrid;
 
-    DefaultSubDomainSolver(std::shared_ptr<const GridGeometry> gridGeometry)
+    DefaultSubDomainSolver(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType{std::move(gridGeometry)}
     {
         x_.resize(this->gridGeometry()->numDofs());
         x_ = 0.0;
 
-        problem_ = std::make_shared<Problem>(this->gridGeometry());
+        problem_ = std::make_shared<Problem>(this->gridGeometry(), paramGroup);
         gridVariables_ = std::make_shared<GridVariables>(problem_, this->gridGeometry());
         gridVariables_->init(x_);
 
         assembler_ = std::make_shared<Assembler>(problem_, this->gridGeometry(), gridVariables_);
-        newtonSolver_ = std::make_unique<NewtonSolver>(assembler_, std::make_shared<LinearSolver>());
+        newtonSolver_ = std::make_unique<NewtonSolver>(assembler_, std::make_shared<LinearSolver>(paramGroup));
     }
 
     void solve() override
