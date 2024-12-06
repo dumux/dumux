@@ -31,7 +31,35 @@ concept TraceOperatorContext = requires(T& t, const A& arg) {
     { t.fvGeometry() };
 };
 
-// TODO: Default context for grid variables...
+// TODO: Default context for grid variables
+template<typename GridVariables, typename SolutionVector>
+class FVContext
+{
+ public:
+    FVContext(const GridVariables& gv, const SolutionVector& x)
+    : x_{x}
+    , fvGeometry_{localView(gv.curGridVolVars().problem().gridGeometry())}
+    , elemVolVars_{localView(gv.curGridVolVars())}
+    , elemFluxVarsCache_{localView(gv.gridFluxVarsCache())}
+    {}
+
+    void bind(const auto& element)
+    {
+        fvGeometry_.bind(element);
+        elemVolVars_.bind(element, fvGeometry_, x_);
+        elemFluxVarsCache_.bind(element, fvGeometry_, elemVolVars_);
+    }
+
+    const auto& fvGeometry() const { return fvGeometry_; }
+    const auto& elemVolVars() const { return elemVolVars_; }
+    const auto& elemFluxVarsCache() const { return elemFluxVarsCache_; }
+
+ private:
+    const SolutionVector& x_;
+    typename GridVariables::GridGeometry::LocalView fvGeometry_;
+    typename GridVariables::GridVolumeVariables::LocalView elemVolVars_;
+    typename GridVariables::GridFluxVariablesCache::LocalView elemFluxVarsCache_;
+};
 
 /*!
  * \ingroup Discretization
