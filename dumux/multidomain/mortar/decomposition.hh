@@ -192,6 +192,7 @@ class DecompositionFactory
         for (const auto& mortarPtr : result.mortars_)
         {
             std::size_t sdId = 0;
+            unsigned int numNeighbors = 0;
             for (const auto& sd : result.subDomains_)
             {
                 const bool intersect = std::visit([&] (const auto& sdPtr) {
@@ -209,10 +210,13 @@ class DecompositionFactory
                 {
                     result.mortarToSubDomains_[mortarId].push_back(sdId);
                     result.subDomainsToMortar_[sdId].push_back(mortarId);
+                    numNeighbors++;
                 }
                 sdId++;
             }
             mortarId++;
+            if (numNeighbors != 2)
+                DUNE_THROW(Dune::InvalidStateException, "Each mortar is expected to couple to two subdomains");
         }
 
         return result;
