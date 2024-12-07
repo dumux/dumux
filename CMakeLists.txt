@@ -53,11 +53,17 @@ dune_project()
 
 # external dependencies
 include(FetchContent)
-if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
-  FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
-  FetchContent_MakeAvailable(gridformat)
-  set(DUMUX_HAVE_GRIDFORMAT true)
-  message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
+
+option(DUMUX_ENABLE_GRIDFORMAT "Enable gridformat I/O integration" OFF)
+if (DUMUX_ENABLE_GRIDFORMAT)
+  if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+    FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
+    FetchContent_MakeAvailable(gridformat)
+    set(DUMUX_HAVE_GRIDFORMAT true)
+    message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
+  else()
+    message(FATAL_ERROR "DUMUX_ENABLE_GRIDFORMAT is ON but gridformat is not found. Run git submodule update --init.")
+  endif()
 endif()
 
 find_package(TBB QUIET)
