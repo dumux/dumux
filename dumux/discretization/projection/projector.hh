@@ -112,8 +112,9 @@ public:
         if (massMat_->N() != projMat_->N())
             DUNE_THROW(Dune::InvalidStateException, "Matrix row size mismatch: " << massMat_->N() << " vs " << projMat_->N());
 
-        if (*std::max_element(indexMapTarget_.begin(), indexMapTarget_.end()) > numDofsTarget_)
-            DUNE_THROW(Dune::InvalidStateException, "Index map exceeds provided number of dofs in target domain!");
+        if (!indexMapTarget_.empty())
+            if (*std::max_element(indexMapTarget_.begin(), indexMapTarget_.end()) > numDofsTarget_)
+                DUNE_THROW(Dune::InvalidStateException, "Index map exceeds provided number of dofs in target domain!");
 
         massMatrixSolver_.setMatrix(massMat_);
     }
