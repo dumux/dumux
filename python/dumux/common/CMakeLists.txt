@@ -16,7 +16,7 @@ dune_add_pybind11_module(
   COMPILE_DEFINITIONS DUMUX_MULTITHREADING_BACKEND=Serial
 )
 
-set_property(TARGET _common PROPERTY LINK_LIBRARIES dunecommon dunegrid APPEND)
+target_link_libraries(_common PUBLIC Dune::Common Dune::Grid Dumux::Dumux)
 
 if(SKBUILD)
   install(TARGETS _common LIBRARY DESTINATION python/dumux/common)
