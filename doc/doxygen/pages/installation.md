@@ -13,9 +13,9 @@ Alternatively, you can try to employ MinGW, Cygwin or a Linux Virtual Machine.
 In order to build DuMu<sup>x</sup> you need at least the following software:
 
 * Standard-compliant C++20 compiler supporting the common feature set supported by GCC 11 and Clang 14
-* CMake 3.16 or newer
+* CMake 3.22 or newer
 * pkg-config
-* The DUNE core modules (>= 2.9), see installation instructions below
+* The DUNE core modules (>= 2.10), see installation instructions below
 
 The following software is recommended but optional:
 
@@ -79,7 +79,7 @@ To clone the Dune core modules, run:
 
 ```bash
 for module in common geometry grid localfunctions istl; do
-    git clone -b releases/2.9 https://gitlab.dune-project.org/core/dune-$module.git
+    git clone -b releases/2.10 https://gitlab.dune-project.org/core/dune-$module.git
 done
 ```
 
@@ -197,7 +197,7 @@ Only the following Dune and DuMux versions are compatible:
 
 | DuMux version     | Dune version              |
 |-------------------|---------------------------|
-| master            | 2.9, master               |
+| master            | 2.10, master              |
 | 3.7, 3.8,  3.9    | 2.9                       |
 | 3.5, 3.6          | 2.8, 2.9                  |
 | 3.3, 3.4          | 2.7, 2.8                  |
