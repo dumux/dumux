@@ -1,11 +1,12 @@
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 =============================================
 
-- __Requirements__: DuMux requires Dune >=2.10 and CMake >= 3.16.
+- __Requirements__: DuMu<sup>x</sup> now requires Dune >=2.10, CMake >= 3.22,
+and a C++ compiler supporting the C++20 feature set union of GCC 11 and Clang 14.
+C++20 mode is enforced through CMake.
 
 ### General changes / structure
 
-- __C++20__: DuMu<sup>x</sup> now requires a C++ compiler supporting the C++20 feature set union of GCC 11 and Clang 14. C++20 mode is enforced.
 
 ### Improvements and Enhancements
 
