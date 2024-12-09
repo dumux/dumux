@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(darcydarcy)
+add_subdirectory(fluidstructure)
 add_subdirectory(freeflowporenetwork)
 add_subdirectory(freeflowporousmedium)
 add_subdirectory(stokesdarcy)
