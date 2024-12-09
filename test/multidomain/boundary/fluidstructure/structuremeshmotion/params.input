@@ -1,0 +1,35 @@
+[TimeLoop]
+TEnd = 10
+DtInitial = 0.01
+
+[Grid]
+File = mesh.msh
+DomainMarkers = true
+
+[Problem]
+Name = test_md_structure_meshmotion
+Gravity = 2.0
+
+[SpatialParams]
+YoungsModulus = 1.4e6
+PoissonRatio = 0.4
+SolidDensity = 1000
+
+[Component]
+SolidDensity = 1000
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[VTKOutput]
+Every = 1
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+
+[MeshMotion]
+LinearElasticLambda = 1000
+LinearElasticMu = 0.1

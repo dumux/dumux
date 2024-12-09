@@ -1,0 +1,5 @@
+dune_symlink_to_source_files(FILES params.input mesh.msh)
+set(CMAKE_BUILD_TYPE Debug)
+dumux_add_test(NAME test_md_fluidstructure_structure_meshmotion SOURCES main.cc)
+target_compile_options(test_md_fluidstructure_structure_meshmotion PRIVATE -fsanitize=address)
+target_link_options(test_md_fluidstructure_structure_meshmotion PRIVATE -fsanitize=address)
