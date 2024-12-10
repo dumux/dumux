@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(darcy_darcy)
+add_subdirectory(stokes_darcy)
 
 dumux_add_test(NAME test_mortar_decomposition
               LABELS multidomain multidomain_mortar
