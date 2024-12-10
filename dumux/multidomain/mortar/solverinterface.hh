@@ -23,11 +23,11 @@ namespace Dumux::Mortar {
  * \ingroup MultiDomain
  * \ingroup MortarCoupling
  * \brief Abstract base class for subdomain solvers.
- * \tparam MortarSolutionVector The type used to represent the solution in the mortar domain.
+ * \tparam MortarVector The type used to represent the solution in the mortar domain.
  * \tparam MortarGrid The grid type used to represent the mortar domain.
  * \tparam GG The subdomain grid geometry
  */
-template<typename MortarSolutionVector,
+template<typename MortarVector,
          typename MortarGrid,
          typename GG>
 class SubDomainSolver
@@ -35,6 +35,7 @@ class SubDomainSolver
  public:
     using GridGeometry = GG;
     using Trace = FacetGridManager<typename GG::GridView::Grid, MortarGrid>;
+    using MortarSolutionVector = MortarVector;
     using Element = typename GG::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
