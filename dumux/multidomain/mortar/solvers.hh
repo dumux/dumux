@@ -25,6 +25,7 @@
 
 #include "model.hh"
 #include "solverinterface.hh"
+#include "properties.hh"
 
 namespace Dumux::Mortar {
 
@@ -36,13 +37,13 @@ class DefaultSubDomainSolver : public SubDomainSolver<
     GetPropType<TypeTag, Properties::GridGeometry>
 >
 {
+    using ParentType = SubDomainSolver<
+        GetPropType<TypeTag, Properties::MortarSolutionVector>,
+        GetPropType<TypeTag, Properties::MortarGrid>,
+        GetPropType<TypeTag, Properties::GridGeometry>
+    >;
+
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using MortarSolutionVector = GetPropType<TypeTag, Properties::MortarSolutionVector>;
-
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     using LinearSolver = IstlSolverFactoryBackend<
         Dumux::LinearSolverTraits<GetPropType<TypeTag, Properties::GridGeometry>>,
@@ -50,15 +51,13 @@ class DefaultSubDomainSolver : public SubDomainSolver<
     >;
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
 
-    using ParentType = SubDomainSolver<
-        MortarSolutionVector,
-        GetPropType<TypeTag, Properties::MortarGrid>,
-        GetPropType<TypeTag, Properties::GridGeometry>
-    >;
-
  public:
     using typename ParentType::GridGeometry;
     using typename ParentType::TraceGrid;
+    using typename ParentType::MortarSolutionVector;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     DefaultSubDomainSolver(std::shared_ptr<const GridGeometry> gridGeometry, const std::string& paramGroup = "")
     : ParentType{std::move(gridGeometry)}

@@ -28,7 +28,6 @@
 
 #include "problem.hh"
 #include "spatialparams.hh"
-#include "property_declarations.hh"
 
 namespace Dumux::Properties {
 
