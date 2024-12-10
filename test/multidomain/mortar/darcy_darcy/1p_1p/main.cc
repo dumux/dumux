@@ -1,12 +1,4 @@
-#include <unordered_map>
-
-#include "property_declarations.hh"
-
 #include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
-#include <dune/istl/bvector.hh>
-#include <dune/istl/bcrsmatrix.hh>
-
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/common/gridfactory.hh>
@@ -16,7 +8,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
-#include <dumux/multidomain/mortar/decomposition.hh>
 #include <dumux/multidomain/mortar/interfaceoperator.hh>
 #include <dumux/multidomain/mortar/model.hh>
 #include <dumux/multidomain/mortar/solvers.hh>

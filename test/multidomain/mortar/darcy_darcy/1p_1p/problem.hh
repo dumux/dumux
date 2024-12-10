@@ -13,21 +13,13 @@
 #ifndef DUMUX_MORTAR_DARCY_ONEP_TEST_PROBLEM_HH
 #define DUMUX_MORTAR_DARCY_ONEP_TEST_PROBLEM_HH
 
-#include <ranges>
-#include <optional>
-#include <unordered_map>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/facetgrid.hh>
-#include <dumux/discretization/traceoperator.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/multidomain/mortar/subdomainproblembase.hh>
-
-#include "property_declarations.hh"
 
 namespace Dumux {
 

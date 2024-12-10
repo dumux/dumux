@@ -6,12 +6,12 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
- * \ingroup MultiDomainTests
- * \brief Additional property declarations for the single-phase darcy-darcy mortar-coupling test
+ * \ingroup MultiDomain
+ * \ingroup MortarCoupling
+ * \brief Additional property declarations for mortar-coupling models.
  */
-#ifndef DUMUX_MORTAR_DARCY_ONEP_TEST_PROPERTY_DECLARATIONS_HH
-#define DUMUX_MORTAR_DARCY_ONEP_TEST_PROPERTY_DECLARATIONS_HH
+#ifndef DUMUX_MULTIDOMAIN_MORTAR_PROPERTIES_HH
+#define DUMUX_MULTIDOMAIN_MORTAR_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
 
