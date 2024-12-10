@@ -248,17 +248,23 @@ class Model
             numMortarDofs += mortar->numDofs();
 
             const auto id = decomposition_.id(*mortar);
-            decomposition_.visitCoupledSubDomainsOf(*mortar, [&] (const auto sd) {
-                decomposition_.visitSubDomainTraceWith(*mortar, *sd, [&] (auto tracePtr) {
-                    visitSolverFor_(*sd, [&] (auto& solver) {
-                        solver.registerMortarTrace(tracePtr, id);
-                    });
-                    std::derived_from<Projector<MortarSolutionVector>> auto p = projectorFactory(
-                        *mortar, *sd, *tracePtr, decomposition
-                    );
-                    projectors_.emplace_back(std::make_unique<std::remove_cvref_t<decltype(p)>>(std::move(p)));
-                    projectorMap_[decomposition_.id(*sd)][decomposition_.id(*mortar)] = projectors_.size() - 1;
-                });
+            decomposition_.visitCoupledSubDomainsOf(*mortar, [&] <typename SD> (const std::shared_ptr<const SD>& sd) {
+                decomposition_.visitSubDomainTraceWith(*mortar, *sd,
+                    [&] <typename TraceGrid> (const std::shared_ptr<TraceGrid>& tracePtr) {
+                        if constexpr (std::is_same_v<SD, typename TraceGrid::DomainGridGeometry>) {
+                            visitSolverFor_(*sd, [&] (auto& solver) {
+                                solver.registerMortarTrace(tracePtr, id);
+                            });
+                            std::derived_from<Projector<MortarSolutionVector>> auto p = projectorFactory(
+                                *mortar, *sd, *tracePtr, decomposition
+                            );
+                            projectors_.emplace_back(std::make_unique<std::remove_cvref_t<decltype(p)>>(std::move(p)));
+                            projectorMap_[decomposition_.id(*sd)][decomposition_.id(*mortar)] = projectors_.size() - 1;
+                        } else {
+                            DUNE_THROW(Dune::InvalidStateException, "Unexpected trace grid visited");
+                        }
+                    }
+                );
             });
         });
         std::exclusive_scan(
