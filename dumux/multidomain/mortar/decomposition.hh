@@ -79,7 +79,11 @@ class Decomposition
     std::size_t id(const GridGeometry& subDomain) const
     {
         auto it = std::ranges::find_if(subDomains_, [&] (const auto& sd) {
-            return std::visit([&] (const auto& ptr) { return ptr.get() == &subDomain; }, sd);
+            return std::visit([&] <typename G> (const std::shared_ptr<const G>& ptr) {
+                if constexpr (std::is_same_v<G, GridGeometry>)
+                    return ptr.get() == &subDomain;
+                return false;
+            }, sd);
         });
         if (it == subDomains_.end())
             DUNE_THROW(Dune::InvalidStateException, "Given grid geometry is not in this decomposition");
