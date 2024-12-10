@@ -1,0 +1,17 @@
+[Problem]
+EnableGravity = false
+EnableInertiaTerms = false
+
+[SpatialParams]
+Permeability = 1
+
+[LinearSolver]
+Preconditioner.Type = ilu
+Type = cgsolver
+
+[Vtk]
+AddVelocity = true
+
+[Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1
