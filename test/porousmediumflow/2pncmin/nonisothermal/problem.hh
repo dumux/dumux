@@ -12,11 +12,15 @@
 #ifndef DUMUX_SALINIZATION_PROBLEM_HH
 #define DUMUX_SALINIZATION_PROBLEM_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/math.hh>
+
+#include <dumux/discretization/method.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/io/gnuplotinterface.hh>
@@ -218,14 +222,6 @@ public:
             static const Scalar massFracRefH2O = refMoleToRefMassFrac_(moleFracRefH2O);
             static const Scalar boundaryLayerThickness = getParam<Scalar>("FreeFlow.BoundaryLayerThickness");
             static const Scalar massTransferCoefficient = getParam<Scalar>("FreeFlow.MassTransferCoefficient");
-            Scalar distancePmToInterface = 0.0;
-
-            if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
-            {
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                // distance from dof in pm to interface
-                distancePmToInterface = (globalPos - scv.dofPosition()).two_norm();
-            }
 
             // calculate mass fluxes
             // liquid phase
@@ -240,6 +236,8 @@ public:
                 if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
                 {
                     // take mean between porous medium and free-flow transmissibility
+                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    const Scalar distancePmToInterface = (globalPos - scv.dofPosition()).two_norm();
                     const Scalar molarDensityPM = volVars.molarDensity(gasPhaseIdx);
                     const Scalar massTransmissibilityPM = massTransferCoefficient
                                                         * volVars.diffusionCoefficient(gasPhaseIdx, AirIdx, H2OIdx)
@@ -249,6 +247,7 @@ public:
                     // (j1=t1(x1-xi), j2=t2(xi-x2), j=j1=j2) and elimination of unknown xi at interface
                     return 1.0/2.0 * Dumux::harmonicMean(massTransmissibilityPM,massTransmissibilityFF);
                 }
+                
                 // box-scheme  -> no mean value needed as dof lies directly on the interface
                 else if (GridGeometry::discMethod == DiscretizationMethods::box)
                     return massTransmissibilityFF;
