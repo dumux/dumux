@@ -297,6 +297,8 @@ public:
                 if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
                 {
                     // take mean between porous medium and free-flow transmissibility
+                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    const Scalar distancePmToInterface = (globalPos - scv.dofPosition()).two_norm();
                     const Scalar thermalConductivityPM = ThermalConductivityModel::effectiveThermalConductivity(volVars);
                     const Scalar thermalTransmissibilityPM = thermalConductivityPM/distancePmToInterface;
                     const Scalar thermalTransmissibilityFF = thermalConductivityFF/boundaryLayerThickness;
