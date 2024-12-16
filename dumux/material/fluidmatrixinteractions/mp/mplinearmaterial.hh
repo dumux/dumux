@@ -50,7 +50,7 @@ public:
     using BasicParams = Params;
     using Scalar = S;
 
-    MPLinearMaterial(const BasicParams& basicParams)
+    explicit MPLinearMaterial(const BasicParams& basicParams)
     : basicParams_(basicParams)
     {}
 

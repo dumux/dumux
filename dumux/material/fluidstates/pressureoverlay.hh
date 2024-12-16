@@ -40,7 +40,7 @@ public:
      * so it initially behaves exactly like the underlying fluid
      * state.
      */
-    PressureOverlayFluidState(const FluidState &fs)
+    explicit PressureOverlayFluidState(const FluidState &fs)
     : fs_(&fs)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

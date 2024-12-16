@@ -98,9 +98,9 @@ public:
     static constexpr int numFluidPhases()
     { return 2; }
 
-    MultiShapeTwoPLocalRules(const BasicParams& baseParams,
-                             //const RegularizationParams& regParams = {}, TODO
-                             const std::string& paramGroup = "")
+    explicit MultiShapeTwoPLocalRules(const BasicParams& baseParams,
+                                    //const RegularizationParams& regParams = {}, TODO
+                                      const std::string& paramGroup = "")
     {
         shape_ = baseParams.poreShape();
         switch (shape_)
