@@ -79,7 +79,8 @@ public:
         // CVFE schemes
         if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
             || GridGeometry::discMethod == DiscretizationMethods::fcdiamond
-            || GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+            || GridGeometry::discMethod == DiscretizationMethods::pq1bubble
+            || GridGeometry::discMethod == DiscretizationMethods::pq2)
         {
             const auto& fluxVarCache = elemFluxVarsCache[scvf];
             Dune::FieldVector<Scalar, dimWorld> gradConcentration(0.0);
