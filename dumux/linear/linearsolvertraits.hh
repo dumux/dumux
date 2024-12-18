@@ -136,6 +136,21 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ1Bubble>
     { return { gg.dofMapper() }; }
 };
 
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
+: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
+{
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+    using DofMapper = typename GridGeometry::DofMapper;
+
+    static constexpr bool canCommunicate =
+        Dumux::Detail::canCommunicate<Grid, Grid::dimension>
+        && Dumux::Detail::canCommunicate<Grid, 1> ;
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
+};
+
 //! Cell-centered tpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
