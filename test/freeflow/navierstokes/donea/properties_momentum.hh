@@ -51,6 +51,7 @@
 
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq2.hh>
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
