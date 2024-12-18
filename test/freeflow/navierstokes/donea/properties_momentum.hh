@@ -57,6 +57,7 @@
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
+#include <dumux/discretization/pq2.hh>
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
