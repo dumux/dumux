@@ -136,6 +136,27 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ1Bubble>
     { return { gg.dofMapper() }; }
 };
 
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    using DofMapper = typename GridGeometry::DofMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+
+    static constexpr int dofCodim = Grid::dimension;
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{ (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) };
+
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
+                                          && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
+};
+
 //! Cell-centered tpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
