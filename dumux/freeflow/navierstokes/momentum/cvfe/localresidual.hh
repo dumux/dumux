@@ -219,6 +219,7 @@ public:
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
                                            const ElementVolumeVariables& elemVolVars,
+                                           const ElementFluxVariablesCache& elemFluxVarsCache,
                                            const ElementBoundaryTypes &elemBcTypes) const
     {
         static const bool enableUnsymmetrizedVelocityGradient
@@ -274,7 +275,7 @@ public:
         }
 
         if(elemBcTypes.hasNeumann())
-            residual += evalNeumannSegments_(problem, element, fvGeometry, elemVolVars, elemBcTypes);
+            residual += evalNeumannSegments_(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, elemBcTypes);
     }
 
 private:
@@ -282,6 +283,7 @@ private:
                                                const Element& element,
                                                const FVElementGeometry& fvGeometry,
                                                const ElementVolumeVariables& elemVolVars,
+                                               const ElementFluxVariablesCache& elemFluxVarsCache,
                                                const ElementBoundaryTypes &elemBcTypes) const
     {
         ElementResidualVector flux(0.0);

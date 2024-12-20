@@ -145,7 +145,7 @@ public:
             this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
 
         // allow for additional contributions (e.g. hybrid CVFE schemes)
-        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes);
+        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
 
         return residual;
     }
@@ -165,6 +165,7 @@ public:
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
                                            const ElementVolumeVariables& curElemVolVars,
+                                           const ElementFluxVariablesCache& elemFluxVarsCache,
                                            const ElementBoundaryTypes &bcTypes) const
     {}
 
