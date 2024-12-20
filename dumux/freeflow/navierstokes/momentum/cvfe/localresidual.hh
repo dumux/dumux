@@ -69,7 +69,7 @@ class NavierStokesMomentumCVFELocalResidual
     using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using IpData = FEIntegrationPointData<GlobalPosition, LocalBasis>;
-    using FaceIpData = FEFaceIntegrationPointData<GlobalPosition, LocalBasis>;
+    using FaceIpData = FEFaceIntegrationPointData<GlobalPosition, LocalBasis, typename SubControlVolumeFace::Traits::BoundaryFlag>;
     using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
     using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVolumeVariables, IpData>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
@@ -314,7 +314,8 @@ private:
 
                 // get quadrature rule weight for intersection
                 Scalar qWeight = quadPoint.weight() * Extrusion::integrationElement(isGeometry, quadPoint.position());
-                FaceIpData faceIpData(geometry, local, localBasis, intersection.centerUnitOuterNormal());
+                FaceIpData faceIpData(geometry, local, localBasis, intersection.centerUnitOuterNormal(),
+                                      typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection });
 
                 for (const auto& localDof : hybridLocalDofs(fvGeometry))
                 {
