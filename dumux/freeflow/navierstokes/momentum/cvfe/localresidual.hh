@@ -296,8 +296,12 @@ private:
         const auto& geometry = element.geometry();
         for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
-            const auto bcTypes = problem.boundaryTypesAtPos(intersection.geometry().center());
-            if(!bcTypes.hasNeumann())
+            bool intersectionHasNeumannDof = false;
+            for (const auto& localDof : localDofs(fvGeometry, intersection))
+                if(elemBcTypes.get(fvGeometry, localDof).hasNeumann())
+                    intersectionHasNeumannDof = true;
+
+            if(!intersectionHasNeumannDof)
                 continue;
 
             // select quadrature rule for intersection faces (dim-1)
