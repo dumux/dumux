@@ -92,12 +92,29 @@ public:
     /*
      * \brief Access operator
      * \return BoundaryTypes
-     * \note yields undefined behaviour of the scv is not on the boundary
+     * \note yields undefined behaviour if the scv is not on the boundary
      */
-    template<class FVElementGeometry>
-    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::SubControlVolume& scv) const
+    template<class FVElementGeometry,
+             class SubControlVolume,
+             typename std::enable_if_t<std::is_same<SubControlVolume, typename FVElementGeometry::SubControlVolume>::value, int> = 0 >
+    const BoundaryTypes& get(const FVElementGeometry&, const SubControlVolume& scv) const
     {
         const auto localDofIdx = scv.localDofIndex();
+        assert(localDofIdx < bcTypes_.size());
+        return bcTypes_[localDofIdx];
+    }
+
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     * \note yields undefined behaviour if the dof is not on the boundary
+     */
+    template<class FVElementGeometry,
+             class LocalDof,
+             typename std::enable_if_t<!std::is_same<LocalDof, typename FVElementGeometry::SubControlVolume>::value, int> = 0 >
+    const BoundaryTypes& get(const FVElementGeometry&, const LocalDof& localDof) const
+    {
+        const auto localDofIdx = localDof.index();
         assert(localDofIdx < bcTypes_.size());
         return bcTypes_[localDofIdx];
     }
