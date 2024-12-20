@@ -71,6 +71,10 @@ public:
     const SubControlVolumeFace& scvf() const
     { return scvf_; }
 
+    //! Return the boundary flag
+    auto boundaryFlag() const
+    { return scvf_.boundaryFlag(); }
+
 private:
     const SubControlVolumeFace& scvf_;
 };
