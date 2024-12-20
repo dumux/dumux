@@ -127,6 +127,12 @@ public:
         );
     }
 
+    //! get local dof
+    auto localDof(LocalIndexType localDofIdx) const
+    {
+        return std::move(CVFE::LocalDof{ static_cast<LocalIndexType>(localDofIdx) });
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
