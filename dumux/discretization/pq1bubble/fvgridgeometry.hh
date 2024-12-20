@@ -222,6 +222,9 @@ public:
     friend inline LocalView localView(const PQ1BubbleFVGridGeometry& gg)
     { return { gg.cache_ }; }
 
+    static constexpr bool supportsHybridCVFE()
+    { return enableHybridCVFE; }
+
 private:
     class PQ1BubbleGridGeometryCache
     {

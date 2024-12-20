@@ -44,6 +44,14 @@ template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
 
+
+template<class Imp>
+using SupportsHybridCVFE = decltype( Imp::supportsHybridCVFE() );
+
+template<class Imp>
+constexpr inline bool supportsHybridCVFE()
+{ return Dune::Std::is_detected<SupportsHybridCVFE, Imp>::value; }
+
 } // end namespace Dumux::Detail
 
 
@@ -76,6 +84,8 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
+
+    static constexpr bool supportsHybridCVFE = Dumux::Detail::supportsHybridCVFE<GridGeometry>();
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -110,7 +120,8 @@ public:
             this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, localDof.scv());
 
         // allow for additional contributions (e.g. hybrid CVFE schemes)
-        this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
+        if constexpr (supportsHybridCVFE)
+            this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
 
         return residual;
     }
@@ -145,7 +156,8 @@ public:
             this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
 
         // allow for additional contributions (e.g. hybrid CVFE schemes)
-        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
+        if constexpr (supportsHybridCVFE)
+            this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
 
         return residual;
     }
