@@ -69,6 +69,7 @@ class NavierStokesMomentumCVFELocalResidual
     using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using IpData = FEIntegrationPointData<GlobalPosition, LocalBasis>;
+    using FaceIpData = FEFaceIntegrationPointData<GlobalPosition, LocalBasis>;
     using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
     using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVolumeVariables, IpData>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
@@ -263,12 +264,11 @@ public:
                 fluxAndSourceTerm += problem.pressure(element, fvGeometry, ipData.ipLocal()) * ipData.gradN(localDofIdx);
 
                 // finally add source and Neumann term and add everything to residual
-                // ToDo: generalize by not assuming that a sourceAtPos function must exist
-                const auto sourceAtPos = problem.sourceAtPos(ipData.ipGlobal());
+                const auto sourceAtIp = problem.source(element, fvGeometry, elemVolVars, localDof, ipData);
 
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                 {
-                    fluxAndSourceTerm[eqIdx] += ipData.shapeValue(localDofIdx) * sourceAtPos[eqIdx];
+                    fluxAndSourceTerm[eqIdx] += ipData.shapeValue(localDofIdx) * sourceAtIp[eqIdx];
                     residual[localDofIdx][eqIdx] += qWeight*fluxAndSourceTerm[eqIdx];
                 }
             }
@@ -310,13 +310,14 @@ private:
 
                 // get quadrature rule weight for intersection
                 Scalar qWeight = quadPoint.weight() * Extrusion::integrationElement(isGeometry, quadPoint.position());
-                IpData ipData(geometry, local, localBasis);
-
-                const auto& neumannFlux = qWeight*problem.neumannAtPos(ipData.ipGlobal());
+                FaceIpData faceIpData(geometry, local, localBasis, intersection.centerUnitOuterNormal());
 
                 for (const auto& localDof : hybridLocalDofs(fvGeometry))
+                {
+                    const auto& boundaryFlux = qWeight*problem.boundaryFlux(element, fvGeometry, elemVolVars, elemFluxVarsCache, localDof, faceIpData);
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                        flux[localDof.index()] += ipData.shapeValue(localDof.index()) * neumannFlux[eqIdx];
+                        flux[localDof.index()] += faceIpData.shapeValue(localDof.index()) * boundaryFlux[eqIdx];
+                }
 
             }
 
