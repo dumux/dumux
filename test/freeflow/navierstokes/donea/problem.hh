@@ -151,27 +151,29 @@ public:
     { return analyticalSolution(globalPos); }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     * \brief Evaluates the boundary flux related to a localDof at a given integration point.
      *
      * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param elemFaceVars The element face variables
-     * \param scvf The boundary sub control volume face
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param localDof The local dof
+     * \param faceIpData Integration point data
      */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    BoundaryFluxes neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const ElementFluxVariablesCache& elemFluxVarsCache,
-                           const SubControlVolumeFace& scvf) const
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache, class LocalDof, class FaceIpData>
+    BoundaryFluxes boundaryFlux(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const ElementFluxVariablesCache& elemFluxVarsCache,
+                                const LocalDof& localDof,
+                                const FaceIpData& faceIpData) const
     {
         BoundaryFluxes values(0.0);
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto x = scvf.ipGlobal()[0];
-            const auto y = scvf.ipGlobal()[1];
+            const auto x = faceIpData.ipGlobal()[0];
+            const auto y = faceIpData.ipGlobal()[1];
 
             Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
             momentumFlux[0][0] = -2.0*mu_*dxU_(x,y) + p_(x);
@@ -179,11 +181,12 @@ public:
             momentumFlux[1][0] = momentumFlux[0][1];
             momentumFlux[1][1] = -2.0*mu_*dyV_(x,y) + p_(x);
 
-            const auto normal = scvf.unitOuterNormal();
+            const auto normal = faceIpData.unitOuterNormal();
             momentumFlux.mv(normal, values);
         }
         else
         {
+            const auto& scvf = faceIpData.scvf();
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             if (addBoxStabilization_)
