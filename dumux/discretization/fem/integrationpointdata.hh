@@ -87,6 +87,37 @@ private:
     ShapeGradients shapeGradients_;
 };
 
+/*!
+ * \ingroup FEMDiscretization
+ * \brief Integration point data related to a face of an element
+ */
+template<class GlobalPosition, class LocalBasis>
+class FEFaceIntegrationPointData : public FEIntegrationPointData<GlobalPosition, LocalBasis>
+{
+    using ParentType = FEIntegrationPointData<GlobalPosition, LocalBasis>;
+    using LocalPosition = typename LocalBasis::Traits::DomainType;
+public:
+    // The default constructor
+    FEFaceIntegrationPointData() = delete;
+
+    // The constructor
+    template<class Geometry>
+    FEFaceIntegrationPointData(const Geometry& geometry,
+                               const LocalPosition& ipLocal,
+                               const LocalBasis& localBasis,
+                               const GlobalPosition& n)
+    : ParentType(geometry, ipLocal, localBasis), normal_(n)
+    {}
+
+    //! The unit outer normal vector at the quadrature point
+    const GlobalPosition& unitOuterNormal() const
+    { return normal_; }
+
+private:
+    const GlobalPosition& normal_;
+};
+
+
 } // end namespace Dumux
 
 #endif
