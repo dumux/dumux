@@ -140,6 +140,22 @@ public:
         );
     }
 
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry, const Intersection& intersection)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
+            [&](const auto i)
+            { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i)),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
+    }
+
     //! get local dof
     auto localDof(LocalIndexType localDofIdx) const
     {
