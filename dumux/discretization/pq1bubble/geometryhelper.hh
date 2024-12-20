@@ -376,6 +376,12 @@ public:
         return 0;
     }
 
+    //! Local dofs related to an intersection with index iIdx
+    static auto localDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
+    {
+        return  Dune::referenceElement<Scalar, dim>(type).subEntities(iIdx, 1, dim);
+    }
+
     template<class DofMapper>
     auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localScvIdx) const
     {
@@ -602,6 +608,12 @@ public:
     static std::size_t numHybridDofs(Dune::GeometryType type)
     {
         return 1;
+    }
+
+    //! Local dofs related to an intersection with index iIdx
+    static auto localDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
+    {
+        return  Dune::referenceElement<Scalar, dim>(type).subEntities(iIdx, 1, dim);
     }
 
     template<class DofMapper>
