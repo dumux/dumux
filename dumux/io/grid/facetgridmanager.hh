@@ -20,6 +20,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/geometry/geometricentityset.hh>
 #include "gridmanager.hh"
 
 namespace Dumux {
@@ -27,19 +28,22 @@ namespace Dumux {
 #ifndef DOXYGEN
 namespace FacetGridDetail {
 
-    template<typename Grid, typename HostGridView, typename Selector>
-    std::unique_ptr<Grid> makeFacetGrid(const HostGridView& hostGridView, Selector&& selector)
+    static constexpr std::size_t undefinedIndex = std::numeric_limits<std::size_t>::max();
+
+    template<typename Grid, typename HostGridView, typename HostGridVertexSet, typename Selector>
+    auto fillFactory(Dune::GridFactory<Grid>& factory,
+                     const HostGridView& hostGridView,
+                     const HostGridVertexSet& hostGridVertexSet,
+                     Selector&& selector)
     {
-        static constexpr std::size_t undefined = std::numeric_limits<std::size_t>::max();
         static constexpr int domainDim = HostGridView::dimension;
 
         Dune::MultipleCodimMultipleGeomTypeMapper elementMapper{hostGridView, Dune::mcmgElementLayout()};
 
         std::vector<unsigned int> localCornerStorage;
-        std::vector<std::size_t> domainToFacetVertex(hostGridView.size(domainDim), undefined);
+        std::vector<std::size_t> domainToFacetVertex(hostGridVertexSet.size(), undefinedIndex);
 
         std::size_t vertexCount = 0;
-        Dune::GridFactory<Grid> factory;
         for (const auto& element : elements(hostGridView))
         {
             const auto& refElement = Dune::referenceElement(element);
@@ -61,8 +65,8 @@ namespace FacetGridDetail {
                 for (int c = 0; c < isGeo.corners(); ++c)
                 {
                     const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, c, domainDim);
-                    const auto vIdxGlobal = hostGridView.indexSet().subIndex(element, vIdxLocal, domainDim);
-                    if (domainToFacetVertex.at(vIdxGlobal) == undefined)
+                    const auto vIdxGlobal = hostGridVertexSet.index(element.template subEntity<domainDim>(vIdxLocal));
+                    if (domainToFacetVertex.at(vIdxGlobal) == undefinedIndex)
                     {
                         factory.insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
                         domainToFacetVertex[vIdxGlobal] = vertexCount;
@@ -75,7 +79,7 @@ namespace FacetGridDetail {
             }
         }
 
-        return factory.createGrid();
+        return domainToFacetVertex;
     }
 
 }  // namespace FacetGridDetail
@@ -112,16 +116,31 @@ class FacetGridManager
 
     using HostElement = typename HostGrid::template Codim<0>::Entity;
     using HostIntersection = typename HostGrid::LeafGridView::Intersection;
+    using HostVertexSet = GridViewGeometricEntitySet<typename HostGrid::LeafGridView, HostGrid::dimension>;
 
 public:
     using Grid = FacetGrid;
+    using Vertex = typename Grid::template Codim<dim>::Entity;
+    using HostGridVertex = typename HostGrid::template Codim<dim+1>::Entity;
 
     //! Make the grid using an externally created host grid.
     template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
     void init(HostGrid& hostGrid, const Selector& selector)
     {
-        facetGrid_ = FacetGridDetail::template makeFacetGrid<Grid>(hostGrid.leafGridView(), selector);
+        hostVertexSet_ = std::make_unique<HostVertexSet>(hostGrid.leafGridView());
+        auto hostToFacetVertexInsertionIndex = FacetGridDetail::fillFactory(
+            facetGridFactory_,
+            hostGrid.leafGridView(),
+            *hostVertexSet_,
+            selector
+        );
+        facetGrid_ = facetGridFactory_.createGrid();
         loadBalance();
+
+        facetInsertionToHostVertexIndex_.resize(facetGrid_->leafGridView().size(dim));
+        for (std::size_t hostVertexIndex = 0; hostVertexIndex < hostToFacetVertexInsertionIndex.size(); ++hostVertexIndex)
+            if (hostToFacetVertexInsertionIndex[hostVertexIndex] != FacetGridDetail::undefinedIndex)
+                facetInsertionToHostVertexIndex_[hostToFacetVertexInsertionIndex[hostVertexIndex]] = hostVertexIndex;
     }
 
     //! Make the grid and create the host grid internally.
@@ -151,6 +170,10 @@ public:
     bool hasGridData() const
     { return false; }
 
+    //! Return the host grid vertex that overlaps with the given facet grid vertex
+    HostGridVertex hostGridVertex(const Vertex& v) const
+    { return hostVertexSet_->entity(facetInsertionToHostVertexIndex_.at(facetGridFactory_.insertionIndex(v))); }
+
 protected:
     void initHostGrid_(const std::string& paramGroup)
     {
@@ -161,8 +184,11 @@ protected:
     HostGrid& hostGrid_()
     { return hostGridManager_->grid(); }
 
+    Dune::GridFactory<Grid> facetGridFactory_;
     std::unique_ptr<Grid> facetGrid_{nullptr};
+    std::unique_ptr<HostVertexSet> hostVertexSet_{nullptr};
     std::unique_ptr<HostGridManager> hostGridManager_{nullptr};
+    std::vector<std::size_t> facetInsertionToHostVertexIndex_;
 };
 
 

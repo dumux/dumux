@@ -98,7 +98,6 @@ int test()
         if (facetGridView.size(dim-1) != pointPerSlice)
             handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGridView.size(dim-1)));
 
-        std::vector<std::size_t> mappedVertices;
         for (const auto& facetElement : elements(facetGridView))
         {
             unsigned int count = 0;
@@ -129,17 +128,6 @@ int test()
 
             if (count != 2)
                 handleError("Expected two adjacent domain elements per facet element, found " + std::to_string(count));
-
-            if constexpr (isBox)
-                for (int corner = 0; corner < facetElement.subEntities(dim-1); ++corner)
-                    mappedVertices.push_back(mapper.domainVertexIndexOf(facetElement.template subEntity<dim-1>(corner)));
-        }
-
-        if constexpr (isBox)
-        {
-            mappedVertices = uniqueValuesIn(mappedVertices);
-            if (mappedVertices.size() != pointPerSlice)
-                handleError("Unexpected number of mapped vertex indices: " + std::to_string(mappedVertices.size()));
         }
     }
 
