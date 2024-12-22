@@ -21,6 +21,13 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/io/grid/facetgridmanager.hh>
 
+template<typename T>
+void removeDuplicates(std::vector<T>& in)
+{
+    std::sort(in.begin(), in.end());
+    in.erase(std::unique(in.begin(), in.end()), in.end());
+}
+
 template<typename GridView>
 void write(const GridView& gridView, const std::string& filename)
 {
@@ -64,6 +71,13 @@ int test()
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGridView.size(0)));
         if (facetGridView.size(dim-1) != pointPerSlice)
             handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGridView.size(dim-1)));
+
+        std::vector<std::size_t> mappedHostGridVertexIndices;
+        for (const auto& v : vertices(facetGridView))
+            mappedHostGridVertexIndices.push_back(grid.leafGridView().indexSet().index(facetGridManager.hostGridVertex(v)));
+        removeDuplicates(mappedHostGridVertexIndices);
+        if (mappedHostGridVertexIndices.size() != pointPerSlice)
+            handleError("Mapping from facet to host vertices is not unique");
     }
 
     { // grid composed of boundary facets

@@ -91,9 +91,6 @@ class FVFacetGridMapper
         BoundingBoxTree<FacetEntitySet> bboxTree{facetEntitySet_};
         domainElementToCouplingData_.resize(domainGridGeometry_->gridView().size(0));
 
-        if (isCVFE)
-            facetToDomainVertex_.resize(facetGridView.size(FacetGridView::dimension), std::size_t{0});
-
         for (const auto& element : elements(domainGridGeometry_->gridView()))
         {
             // TODO: filter non-candidate elements to speed up computations?
@@ -110,20 +107,8 @@ class FVFacetGridMapper
                         );
                         facetElement.has_value()
                     )
-                    {
                         // TODO: localDofIndex robust?
                         domainElementToCouplingData_[eIdx][facetEntitySet_->index(*facetElement)].push_back(scv.localDofIndex());
-                        const auto& facetElementGeo = facetElement->geometry();
-                        const auto& facetRefElement = Dune::referenceElement(*facetElement);
-                        const auto& dofPosition = scv.dofPosition();
-                        for (unsigned int corner = 0; corner < facetElement->subEntities(facetDim); ++corner)
-                            if (Dune::FloatCmp::eq(
-                                facetElementGeo.global(facetRefElement.position(corner, facetDim)),
-                                dofPosition
-                            ))
-                                // TODO: `dofIndex` robust??
-                                facetToDomainVertex_[facetGridView.indexSet().subIndex(*facetElement, corner, facetDim)] = scv.dofIndex();
-                    }
             }
             else
             {
@@ -148,13 +133,6 @@ class FVFacetGridMapper
                     DUNE_THROW(Dune::InvalidStateException, "Found more than two neighbors to a facet element");
                 facetToDomainElements_[eIdxFacet].push_back(eIdxDomain);
             }
-    }
-
-    //! Return the index of the given vertex within the domain
-    std::size_t domainVertexIndexOf(const FacetVertex& v) const
-    {
-        static_assert(isCVFE, "Vertex mapping currently only implemented for CVFE methods");
-        return facetToDomainVertex_.at(facetGridView_.indexSet().index(v));
     }
 
     //! Return a range over all domain elements that overlap with the given facet grid element
@@ -194,7 +172,6 @@ class FVFacetGridMapper
     std::shared_ptr<const DomainGridGeometry> domainGridGeometry_;
     std::vector<FacetElementToScvfElementIndices> domainElementToCouplingData_;
     std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
-    std::vector<std::size_t> facetToDomainVertex_;
 };
 
 template<typename FGV, typename GG>
