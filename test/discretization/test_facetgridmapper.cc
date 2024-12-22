@@ -80,7 +80,7 @@ int test()
     static constexpr bool isBox = Dumux::DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
 
     const auto cellsPerSlice = std::pow(cellsPerSide, dim-1);
-    const auto pointPerSlice = std::pow(cellsPerSide+1, dim-1);
+    const auto pointsPerSlice = std::pow(cellsPerSide+1, dim-1);
     const auto numBoundaryCells = cellsPerSlice*dim*2;
     const auto numBoundaryPoints = grid.leafGridView().size(dim) - std::pow(cellsPerSide-1, dim);
     const auto numGridCellsTouchingBoundary = grid.leafGridView().size(0) - std::pow(cellsPerSide-2, dim);
@@ -101,7 +101,7 @@ int test()
 
         if (facetGridView.size(0) != cellsPerSlice)
             handleError("Unexpected number of facet grid cells: " + std::to_string(facetGridView.size(0)));
-        if (facetGridView.size(dim-1) != pointPerSlice)
+        if (facetGridView.size(dim-1) != pointsPerSlice)
             handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGridView.size(dim-1)));
 
         for (const auto& facetElement : elements(facetGridView))
