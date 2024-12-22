@@ -30,6 +30,7 @@
 #include <dumux/geometry/geometryintersection.hh>
 #include <dumux/geometry/volume.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/discretization/facetgridmapper.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
@@ -87,7 +88,7 @@ int test()
 
     int exitCode = 0;
     const auto handleError = [&] (std::string_view message) {
-        std::cout << message <<  " @ dim = " << dim << std::endl;
+        std::cout << Dumux::Fmt::format("{} @ dim = {}", message, dim) << std::endl;
         exitCode += 1;
     };
 
@@ -100,9 +101,9 @@ int test()
         Dumux::FVFacetGridMapper mapper{facetGridView, gridGeometry};
 
         if (facetGridView.size(0) != cellsPerSlice)
-            handleError("Unexpected number of facet grid cells: " + std::to_string(facetGridView.size(0)));
+            handleError(Dumux::Fmt::format("Unexpected number of facet grid cells: {}", facetGridView.size(0)));
         if (facetGridView.size(dim-1) != pointsPerSlice)
-            handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGridView.size(dim-1)));
+            handleError(Dumux::Fmt::format("Unexpected number of facet grid vertices: {}", facetGridView.size(dim-1)));
 
         for (const auto& facetElement : elements(facetGridView))
         {
@@ -124,10 +125,11 @@ int test()
 
                 const auto expectedNumSces = isBox ? std::pow(2, dim-1) : 1;
                 if (sceIndices.size() != expectedNumSces)
-                    handleError(
-                        "Unexpected number of adjacent sub-control entities: " + std::to_string(sceIndices.size())
-                        + " expected " + std::to_string(expectedNumSces)
-                    );
+                    handleError(Dumux::Fmt::format(
+                        "Unexpected number of adjacent sub-control entities: {}, expected {}",
+                        sceIndices.size(),
+                        expectedNumSces
+                    ));
 
                 const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
                 for (const auto sceIndex : sceIndices)
@@ -141,15 +143,16 @@ int test()
                     if (not isVolume.has_value())
                         handleError("Facet element and domain sce do not overlap");
                     if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
-                        handleError(
-                            "Unexpected area/volume of the intersection between sub-control entity and facet element: "
-                            + std::to_string(isVolume.value()) + " vs. " + std::to_string(expectedVolume)
-                        );
+                        handleError(Dumux::Fmt::format(
+                            "Unexpected area/volume of the intersection between sub-control entity and facet element: {}, expected {}",
+                            isVolume.value(),
+                            expectedVolume
+                        ));
                 }
             }
 
             if (elementCount != 2)
-                handleError("Expected two adjacent domain elements per facet element, found " + std::to_string(elementCount));
+                handleError(Dumux::Fmt::format("Expected two adjacent domain elements per facet element, found {}", elementCount));
         }
     }
 
@@ -160,9 +163,9 @@ int test()
         Dumux::FVFacetGridMapper mapper{facetGridView, gridGeometry};
 
         if (facetGridView.size(0) != numBoundaryCells)
-            handleError("Unexpected number of trace grid cells: " + std::to_string(facetGridView.size(0)));
+            handleError(Dumux::Fmt::format("Unexpected number of trace grid cells: {}", facetGridView.size(0)));
         if (facetGridView.size(dim-1) != numBoundaryPoints)
-            handleError("Unexpected number of trace grid vertices: " + std::to_string(facetGridView.size(dim-1)));
+            handleError(Dumux::Fmt::format("Unexpected number of trace grid vertices: {}", facetGridView.size(dim-1)));
 
         std::vector<std::size_t> adjacentElements;
         for (const auto& facetElement : elements(facetGridView))
