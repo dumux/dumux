@@ -18,6 +18,8 @@
 #include <numeric>
 #include <algorithm>
 #include <string_view>
+#include <iterator>
+#include <optional>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -25,35 +27,39 @@
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/common/initialize.hh>
+#include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/volume.hh>
+
 #include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/discretization/facetgridmapper.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
 
-template<typename T>
-std::vector<T> uniqueValuesIn(std::vector<T> in)
-{
-    std::sort(in.begin(), in.end());
-    in.erase(std::unique(in.begin(), in.end()), in.end());
-    return in;
-}
-
 template<typename FacetElementGeometry, typename DomainElementGeometry>
-bool overlap(const FacetElementGeometry& facetGeo, const DomainElementGeometry& domainGeo)
+std::optional<double> intersectionVolume(const FacetElementGeometry& facetGeo, const DomainElementGeometry& domainGeo)
 {
-    const auto cornersOf = [] (const auto& geo) {
-        return std::views::iota(0, geo.corners())
-            | std::views::transform([&] (int c) { return geo.corner(c); });
-    };
+    using Algorithm = Dumux::GeometryIntersection<FacetElementGeometry, DomainElementGeometry>;
+    typename Algorithm::Intersection intersection;
+    if (not Algorithm::intersection(facetGeo, domainGeo, intersection))
+        return {};
 
-    for (const auto& facetGeoCorner : cornersOf(facetGeo))
-        if (std::ranges::none_of(cornersOf(domainGeo), [&] (const auto& domainGeoCorner) {
-            return Dune::FloatCmp::eq(facetGeoCorner, domainGeoCorner);
-        }))
-            return false;
-
-    return true;
+    static constexpr int facetDim = FacetElementGeometry::mydimension;
+    static_assert(facetDim == 1 or facetDim == 2);
+    if constexpr (facetDim == 1)
+        return (intersection[1] - intersection[0]).two_norm();
+    else
+    {
+        if (intersection.size() != 4)
+            DUNE_THROW(Dune::InvalidStateException, "Expected quadrilateral intersection");
+        return Dumux::convexPolytopeVolume<facetDim>(
+            Dune::GeometryTypes::quadrilateral,
+            [&] (unsigned int i) {
+                static constexpr int map[4] = {0, 1, 3, 2};
+                return intersection[map[i]];
+            }
+        );
+    }
 }
 
 template<typename FacetGrid, template<typename> typename GG>
@@ -100,34 +106,50 @@ int test()
 
         for (const auto& facetElement : elements(facetGridView))
         {
-            unsigned int count = 0;
+            unsigned int elementCount = 0;
             for (const auto& domainElement : mapper.domainElementsAdjacentTo(facetElement))
             {
-                count++;
-                if (!overlap(facetElement.geometry(), domainElement.geometry()))
+                elementCount++;
+                if (not intersectionVolume(facetElement.geometry(), domainElement.geometry()).has_value())
                     handleError("Facet and domain element do not overlap");
 
-                if constexpr (!isBox)
-                {
-                    unsigned int scvfCount = 0;
-                    const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
-                    for (const auto scvfIdx : mapper.domainScvfsAdjacentTo(facetElement, domainElement))
-                    {
-                        scvfCount++;
-                        const auto& scvf = fvGeometry.scvf(scvfIdx);
-                        if (!overlap(fvGeometry.geometry(scvf), facetElement.geometry()))
-                            handleError("Facet element and domain scvf do not overlap");
-                        if (Dune::FloatCmp::ne(scvf.area(), facetElement.geometry().volume()))
-                            handleError("Facet element and scvf areas do not match");
-                    }
+                const auto sceIndices = [&] () {
+                    std::vector<std::size_t> result;
+                    if constexpr (isBox)
+                        std::ranges::copy(mapper.domainScvsAdjacentTo(facetElement, domainElement), std::back_inserter(result));
+                    else
+                        std::ranges::copy(mapper.domainScvfsAdjacentTo(facetElement, domainElement), std::back_inserter(result));
+                    return result;
+                } ();
 
-                    if (scvfCount != 1)
-                        handleError("Expected one adjacent domain scvf per facet element");
+                const auto expectedNumSces = isBox ? std::pow(2, dim-1) : 1;
+                if (sceIndices.size() != expectedNumSces)
+                    handleError(
+                        "Unexpected number of adjacent sub-control entities: " + std::to_string(sceIndices.size())
+                        + " expected " + std::to_string(expectedNumSces)
+                    );
+
+                const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
+                for (const auto sceIndex : sceIndices)
+                {
+                    const auto sce = [&] () {
+                        if constexpr (isBox) return fvGeometry.scv(sceIndex);
+                        else return fvGeometry.scvf(sceIndex);
+                    } ();
+                    const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(sce));
+                    const auto expectedVolume = facetElement.geometry().volume()/expectedNumSces;
+                    if (not isVolume.has_value())
+                        handleError("Facet element and domain sce do not overlap");
+                    if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
+                        handleError(
+                            "Unexpected area/volume of the intersection between sub-control entity and facet element: "
+                            + std::to_string(isVolume.value()) + " vs. " + std::to_string(expectedVolume)
+                        );
                 }
             }
 
-            if (count != 2)
-                handleError("Expected two adjacent domain elements per facet element, found " + std::to_string(count));
+            if (elementCount != 2)
+                handleError("Expected two adjacent domain elements per facet element, found " + std::to_string(elementCount));
         }
     }
 
@@ -146,7 +168,9 @@ int test()
         for (const auto& facetElement : elements(facetGridView))
             for (const auto& element : mapper.domainElementsAdjacentTo(facetElement))
                 adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
-        adjacentElements = uniqueValuesIn(adjacentElements);
+
+        std::ranges::sort(adjacentElements);
+        adjacentElements.erase(std::unique(adjacentElements.begin(), adjacentElements.end()), adjacentElements.end());
         if (adjacentElements.size() != numGridCellsTouchingBoundary)
             handleError("Unexpected number of adjacent domain elements");
     }
