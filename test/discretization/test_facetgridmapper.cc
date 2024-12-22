@@ -56,19 +56,22 @@ bool overlap(const FacetElementGeometry& facetGeo, const DomainElementGeometry& 
     return true;
 }
 
-template<typename FacetGrid, template<typename> typename GridGeometry>
+template<typename FacetGrid, template<typename> typename GG>
 int test()
 {
     static constexpr int dim = FacetGrid::dimensionworld;
     static_assert(dim > 1);
+    static_assert(dim == int(FacetGrid::dimension) + 1);
 
     const int cellsPerSide = 10;
     std::array<int, dim> cells; std::ranges::fill(cells, cellsPerSide);
     Dune::FieldVector<double, dim> size; std::ranges::fill(size, 1.0);
 
     using Grid = Dune::YaspGrid<dim>;
+    using GridGeometry = GG<typename Grid::LeafGridView>;
     Grid grid{size, cells};
-    auto gridGeometry = std::make_shared<GridGeometry<typename Grid::LeafGridView>>(grid.leafGridView());
+    auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
+    static constexpr bool isBox = Dumux::DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
 
     const auto cellsPerSlice = std::pow(cellsPerSide, dim-1);
     const auto pointPerSlice = std::pow(cellsPerSide+1, dim-1);
@@ -95,6 +98,7 @@ int test()
         if (facetGridView.size(dim-1) != pointPerSlice)
             handleError("Unexpected number of facet grid vertices: " + std::to_string(facetGridView.size(dim-1)));
 
+        std::vector<std::size_t> mappedVertices;
         for (const auto& facetElement : elements(facetGridView))
         {
             unsigned int count = 0;
@@ -104,24 +108,38 @@ int test()
                 if (!overlap(facetElement.geometry(), domainElement.geometry()))
                     handleError("Facet and domain element do not overlap");
 
-                unsigned int scvfCount = 0;
-                const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
-                for (const auto scvfIdx : mapper.domainScvfsAdjacentTo(facetElement, domainElement))
+                if constexpr (!isBox)
                 {
-                    scvfCount++;
-                    const auto& scvf = fvGeometry.scvf(scvfIdx);
-                    if (!overlap(fvGeometry.geometry(scvf), facetElement.geometry()))
-                        handleError("Facet element and domain scvf do not overlap");
-                    if (Dune::FloatCmp::ne(scvf.area(), facetElement.geometry().volume()))
-                        handleError("Facet element and scvf areas do not match");
-                }
+                    unsigned int scvfCount = 0;
+                    const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
+                    for (const auto scvfIdx : mapper.domainScvfsAdjacentTo(facetElement, domainElement))
+                    {
+                        scvfCount++;
+                        const auto& scvf = fvGeometry.scvf(scvfIdx);
+                        if (!overlap(fvGeometry.geometry(scvf), facetElement.geometry()))
+                            handleError("Facet element and domain scvf do not overlap");
+                        if (Dune::FloatCmp::ne(scvf.area(), facetElement.geometry().volume()))
+                            handleError("Facet element and scvf areas do not match");
+                    }
 
-                if (scvfCount != 1)
-                    handleError("Expected one adjacent domain scvf per facet element");
+                    if (scvfCount != 1)
+                        handleError("Expected one adjacent domain scvf per facet element");
+                }
             }
 
             if (count != 2)
-                handleError("Expected two adjacent domain elements per facet element");
+                handleError("Expected two adjacent domain elements per facet element, found " + std::to_string(count));
+
+            if constexpr (isBox)
+                for (int corner = 0; corner < facetElement.subEntities(dim-1); ++corner)
+                    mappedVertices.push_back(mapper.domainVertexIndexOf(facetElement.template subEntity<dim-1>(corner)));
+        }
+
+        if constexpr (isBox)
+        {
+            mappedVertices = uniqueValuesIn(mappedVertices);
+            if (mappedVertices.size() != pointPerSlice)
+                handleError("Unexpected number of mapped vertex indices: " + std::to_string(mappedVertices.size()));
         }
     }
 
@@ -160,12 +178,12 @@ int main(int argc, char** argv)
     {
         using Grid = Dune::FoamGrid<1, 2>;
         exitCode += test<Grid, TpfaGridGeometry>();
-        // exitCode += test<Grid, Dumux::BoxFVGridGeometry<double, typename Grid::LeafGridView>>();
+        exitCode += test<Grid, BoxGridGeometry>();
     }
     {
         using Grid = Dune::ALUGrid<2, 3, Dune::cube, Dune::nonconforming>;
         exitCode += test<Grid, TpfaGridGeometry>();
-        // exitCode += test<Grid, Dumux::BoxFVGridGeometry<double, typename Grid::LeafGridView>>();
+        exitCode += test<Grid, BoxGridGeometry>();
     }
     return exitCode;
 }
