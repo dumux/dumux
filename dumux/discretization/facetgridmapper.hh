@@ -25,10 +25,10 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/discretization/method.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectingentities.hh>
-#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -64,11 +64,18 @@ namespace FacetGridMapperDetail {
 template<typename FacetGridView, typename GG>
 class FVFacetGridMapper
 {
+    struct CouplingData
+    {
+        std::vector<std::size_t> scvfIndices;
+        std::vector<std::size_t> scvIndices;
+    };
+
     using FacetEntitySet = GridViewGeometricEntitySet<FacetGridView>;
-    using FacetElementToScvfElementIndices = std::unordered_map<std::size_t, std::vector<std::size_t>>;
+    using FacetElementToCouplingData = std::unordered_map<std::size_t, CouplingData>;
+
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GG::DiscretizationMethod>;
     static constexpr int domainDim = GG::GridView::dimension;
     static constexpr int facetDim = domainDim - 1;
-    static constexpr bool isCVFE = Dumux::DiscretizationMethods::isCVFE<typename GG::DiscretizationMethod>;
     static_assert(int(FacetGridView::dimension) == facetDim);
     static_assert(int(FacetGridView::dimensionworld) == GG::GridView::dimensionworld);
 
@@ -91,27 +98,23 @@ class FVFacetGridMapper
             // TODO: filter non-candidate elements to speed up computations?
             const auto eIdx = domainGridGeometry_->elementMapper().index(element);
             const auto fvGeometry = localView(*domainGridGeometry_).bindElement(element);
-            if constexpr (isCVFE)
-            {
-                for (const auto& scv : scvs(fvGeometry))
-                    for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
-                        fvGeometry.geometry(scv),
-                        facetGridView,
-                        bboxTree
-                    ))
-                        // TODO: localDofIndex robust?
-                        domainElementToCouplingData_[eIdx][facetElementIndex].push_back(scv.localDofIndex());
-            }
-            else
-            {
-                for (const auto& scvf : scvfs(fvGeometry))
-                    for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
-                        fvGeometry.geometry(scvf),
-                        facetGridView,
-                        bboxTree
-                    ))
-                        domainElementToCouplingData_[eIdx][facetElementIndex].push_back(scvf.index());
-            }
+            for (const auto& scv : scvs(fvGeometry))
+                for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
+                    fvGeometry.geometry(scv),
+                    facetGridView,
+                    bboxTree
+                ))
+                    domainElementToCouplingData_[eIdx][facetElementIndex].scvIndices.push_back([&] () {
+                        if constexpr (isCVFE) return scv.localDofIndex();
+                        else return scv.dofIndex();
+                    }());
+            for (const auto& scvf : scvfs(fvGeometry))
+                for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
+                    fvGeometry.geometry(scvf),
+                    facetGridView,
+                    bboxTree
+                ))
+                    domainElementToCouplingData_[eIdx][facetElementIndex].scvfIndices.push_back(scvf.index());
         }
 
         facetToDomainElements_.resize(domainGridGeometry_->gridView().size(0));
@@ -135,32 +138,33 @@ class FVFacetGridMapper
 
     //! Return a range over the indices of the scvfs that overlap with the given trace element from within the given domain element
     std::ranges::view auto domainScvfsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
-    {
-        static_assert(!isCVFE, "Scvf mapping unavailable for cvfe methods");
-        return domainScesAdjacentTo_(element, domainElement);
-    }
+    { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvfIndices; }); }
 
     //! Return a range over the indices of the scvs that overlap with the given trace element from within the given domain element
     std::ranges::view auto domainScvsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
-    {
-        static_assert(isCVFE, "Scv mapping only available for cvfe methods");
-        return domainScesAdjacentTo_(element, domainElement);
-    }
+    { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvIndices; }); }
+
+    //! Return the grid geometry of the domain
+    const DomainGridGeometry& domainGridGeometry() const
+    { return *domainGridGeometry_; }
 
  private:
-    std::ranges::view auto domainScesAdjacentTo_(const FacetElement& element, const DomainElement& domainElement) const
+    template<typename Accessor>
+    std::ranges::view auto domainScesAdjacentTo_(const FacetElement& element,
+                                                 const DomainElement& domainElement,
+                                                 const Accessor& accessor) const
     {
         const auto eIdx = facetEntitySet_->index(element);
         return domainElementToCouplingData_.at(domainGridGeometry_->elementMapper().index(domainElement))
-            | std::views::filter([e=eIdx] (const auto& facetElementToScvfs) { return facetElementToScvfs.first == e; })
-            | std::views::transform([&] (const auto& facetElementToScvfs) { return facetElementToScvfs.second; })
+            | std::views::filter([e=eIdx] (const auto& facetElementToCouplingData) { return facetElementToCouplingData.first == e; })
+            | std::views::transform([&] (const auto& facetElementToCouplingData) { return accessor(facetElementToCouplingData.second); })
             | std::views::join;
     }
 
     FacetGridView facetGridView_;
     std::shared_ptr<FacetEntitySet> facetEntitySet_;
     std::shared_ptr<const DomainGridGeometry> domainGridGeometry_;
-    std::vector<FacetElementToScvfElementIndices> domainElementToCouplingData_;
+    std::vector<FacetElementToCouplingData> domainElementToCouplingData_;
     std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
 };
 
