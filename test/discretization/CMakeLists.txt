@@ -10,11 +10,6 @@ add_subdirectory(projection)
 add_subdirectory(rotationsymmetry)
 add_input_file_links()
 
-dumux_add_test(NAME test_facetgrid
-               LABELS unit
-               SOURCES test_facetgrid.cc
-               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
-
 dumux_add_test(NAME test_facetgridmapper
                LABELS unit
                SOURCES test_facetgridmapper.cc
