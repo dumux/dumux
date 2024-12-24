@@ -18,13 +18,13 @@ struct Solver : public Dumux::Mortar::SubDomainSolver<MortarSolution, MortarGrid
 {
     using ParentType = Dumux::Mortar::SubDomainSolver<MortarSolution, MortarGrid, GridGeometry>;
     using ParentType::ParentType;
-    using typename ParentType::TraceGrid;
+    using typename ParentType::Trace;
 
     void solve() override {}
     virtual void setTraceVariables(std::size_t, MortarSolution) override {}
 
-    virtual void registerMortarTrace(std::shared_ptr<const TraceGrid> trace, std::size_t mortarId) override
-    { numberOfTraceElements[mortarId] = trace->gridView().size(0); }
+    virtual void registerMortarTrace(std::shared_ptr<const Trace> trace, std::size_t mortarId) override
+    { numberOfTraceElements[mortarId] = trace->grid().leafGridView().size(0); }
 
     virtual MortarSolution assembleTraceVariables(std::size_t mortarId) const override {
         MortarSolution result;
