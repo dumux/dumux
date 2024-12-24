@@ -13,8 +13,11 @@
 #ifndef DUMUX_MULTIDOMAIN_MORTAR_PROJECTORS_HH
 #define DUMUX_MULTIDOMAIN_MORTAR_PROJECTORS_HH
 
+#include <config.h>
+
 #include <memory>
 #include <utility>
+#include <type_traits>
 
 #include <dune/functions/functionspacebases/lagrangebasis.hh>
 
@@ -22,6 +25,7 @@
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectionentityset.hh>
 
+#include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/discretization/projection/projector.hh>
 #include <dumux/discretization/functionspacebasis.hh>
 
@@ -29,10 +33,14 @@
 
 namespace Dumux::Mortar {
 
+template<std::size_t o> struct MortarTraceOrder {};
+template<std::size_t o> struct ResidualTraceOrder {};
+
 /*!
  * \ingroup MultiDomain
  * \ingroup MortarCoupling
  * \brief Default projector for finite-volume schemes and mortars representing primary variables (e.g. pressure mortars).
+ *        Projects between a sub-domain trace and the mortar domain.
  */
 template<typename SolutionVector>
 class FVDefaultProjector : public Projector<SolutionVector>
@@ -43,43 +51,32 @@ class FVDefaultProjector : public Projector<SolutionVector>
 
  public:
     // TODO: can ordering of function space basis be different and break the mapping to boundaries later?
-    template<typename MortarGridGeometry, typename Grid, typename GridGeometry>
-        requires(!DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+    template<typename MortarGridGeometry, typename TraceGridManager, std::size_t M, std::size_t R>
     FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const FacetGrid<Grid, GridGeometry>& traceGrid)
+                       const TraceGridManager& traceGridManager,
+                       const MortarTraceOrder<M>&,
+                       const ResidualTraceOrder<R>&)
     : FVDefaultProjector(
         mortarGridGeometry,
-        traceGrid,
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()},
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()}
-    )
-    {}
-
-    template<typename MortarGridGeometry, typename Grid, typename GridGeometry>
-        requires(DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
-    FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const FacetGrid<Grid, GridGeometry>& traceGrid)
-    : FVDefaultProjector(
-        mortarGridGeometry,
-        traceGrid,
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 1>{traceGrid.gridView()}, // TODO: do not hardcode order?
-        Dune::Functions::LagrangeBasis<typename Grid::LeafGridView, 0>{traceGrid.gridView()}
+        traceGridManager,
+        Dune::Functions::LagrangeBasis<typename TraceGridManager::Grid::LeafGridView, M>{traceGridManager.grid().leafGridView()},
+        Dune::Functions::LagrangeBasis<typename TraceGridManager::Grid::LeafGridView, R>{traceGridManager.grid().leafGridView()}
     )
     {}
 
  private:
     template<typename MortarGridGeometry,
-             typename TraceGrid,
+             typename TraceGridManager,
              typename MortarTraceBasis,
              typename ResidualTraceBasis>
     FVDefaultProjector(const MortarGridGeometry& mortarGridGeometry,
-                       const TraceGrid& traceGrid,
+                       const TraceGridManager& traceGridManager,
                        const MortarTraceBasis& mortarTraceBasis,
                        const ResidualTraceBasis& residualTraceBasis)
     {
         using MortarEntitySet = typename std::remove_cvref_t<decltype(mortarGridGeometry.boundingBoxTree())>::EntitySet;
-        using TraceEntitySet = GridViewGeometricEntitySet<typename TraceGrid::GridView>;
-        BoundingBoxTree<TraceEntitySet> traceTree{std::make_shared<TraceEntitySet>(traceGrid.gridView())};
+        using TraceEntitySet = GridViewGeometricEntitySet<typename TraceGridManager::Grid::LeafGridView>;
+        BoundingBoxTree<TraceEntitySet> traceTree{std::make_shared<TraceEntitySet>(traceGridManager.grid().leafGridView())};
         IntersectionEntitySet<MortarEntitySet, TraceEntitySet> glue;
         glue.build(mortarGridGeometry.boundingBoxTree(), traceTree);
 

@@ -15,7 +15,7 @@
 
 #include <memory>
 
-#include <dumux/discretization/facetgrid.hh>
+#include <dumux/io/grid/facetgridmanager.hh>
 
 namespace Dumux::Mortar {
 
@@ -34,7 +34,7 @@ class SubDomainSolver
 {
  public:
     using GridGeometry = GG;
-    using TraceGrid = FacetGrid<MortarGrid, GridGeometry>;
+    using Trace = FacetGridManager<typename GG::GridView::Grid, MortarGrid>;
     using Element = typename GG::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 
@@ -50,7 +50,7 @@ class SubDomainSolver
     virtual void setTraceVariables(std::size_t, MortarSolutionVector) = 0;
 
     //! Register a trace coupling to the mortar with the given id
-    virtual void registerMortarTrace(std::shared_ptr<const TraceGrid>, std::size_t) = 0;
+    virtual void registerMortarTrace(std::shared_ptr<const Trace>, std::size_t) = 0;
 
     //! Assemble the variables on the trace overlapping with the given mortar domain
     virtual MortarSolutionVector assembleTraceVariables(std::size_t) const = 0;

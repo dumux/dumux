@@ -20,6 +20,7 @@
 #include <concepts>
 
 #include <dumux/parallel/parallel_for.hh>
+#include <dumux/discretization/method.hh>
 
 #include "decomposition.hh"
 #include "solverinterface.hh"
@@ -131,8 +132,8 @@ class Model
             const auto id = decomposition_.id(*mortar);
             decomposition_.visitCoupledSubDomainsOf(*mortar, [&] <typename SD> (const std::shared_ptr<const SD>& sd) {
                 decomposition_.visitSubDomainTraceWith(*mortar, *sd,
-                    [&] <typename TraceGrid> (const std::shared_ptr<TraceGrid>& tracePtr) {
-                        if constexpr (std::is_same_v<SD, typename TraceGrid::DomainGridGeometry>) {
+                    [&] <typename Trace> (const std::shared_ptr<Trace>& tracePtr) {
+                        if constexpr (std::is_same_v<typename SD::GridView::Grid, typename Trace::HostGrid>) {
                             visitSolverFor_(*sd, [&] (auto& solver) {
                                 solver.registerMortarTrace(tracePtr, id);
                             });
@@ -225,22 +226,21 @@ class ModelFactory
     ModelFactory& withSubDomain(std::shared_ptr<Solver> gg)
     { insertSubDomain(gg); return *this; }
 
-    //! Create a model from all inserted mortars & subdomains using default projectors
+    //! Create a model from all inserted mortars & subdomains using default projectors (uses FVDefaultProjector instances)
     Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...> make() const
     {
-        return {
-            decompositionFactory_.make(),
-            solvers_,
-            [] (const auto& mortarGG, const auto&, const auto& traceGrid, const auto&) {
-                return FVDefaultProjector<MortarSolutionVector>{mortarGG, traceGrid};
-            }
-        };
+        return make([] <typename SD> (const auto& mortarGG, const SD& subDomain, const auto& traceGrid, const auto&) {
+            if constexpr (DiscretizationMethods::isCVFE<typename SD::DiscretizationMethod>)
+                return FVDefaultProjector<MortarSolutionVector>{mortarGG, traceGrid, MortarTraceOrder<1>{}, ResidualTraceOrder<0>{}};
+            else
+                return FVDefaultProjector<MortarSolutionVector>{mortarGG, traceGrid, MortarTraceOrder<0>{}, ResidualTraceOrder<0>{}};
+        });
     }
 
     //! Create a model from all inserted mortars & subdomains with a custom projector factory
-    template<std::invocable T>
-    Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...> make(T&& t) const
-    { return {decompositionFactory_.make(), solvers_, std::forward<T>(t)}; }
+    template<typename F>  // TODO: MortarFactory concept
+    Model<MortarSolutionVector, MortarGridGeometry, SubDomainGridGeometries...> make(F&& projectorFactory) const
+    { return {decompositionFactory_.make(), solvers_, std::forward<F>(projectorFactory)}; }
 
  private:
     DecompositionFactory<MortarGridGeometry, SubDomainGridGeometries...> decompositionFactory_;
