@@ -76,10 +76,10 @@ int main(int argc, char** argv) {
 
     errors.clear();
     decomposition.visitSubDomainTraceWith(*mortarGG, *topGG, [&] (const auto& trace) {
-        errors.push_back(trace->gridView().size(0) != 10);
+        errors.push_back(trace->grid().leafGridView().size(0) != 10);
     });
     decomposition.visitSubDomainTraceWith(*mortarGG, *bottomGG, [&] (const auto& trace) {
-        errors.push_back(trace->gridView().size(0) != 10);
+        errors.push_back(trace->grid().leafGridView().size(0) != 10);
     });
     if (std::accumulate(errors.begin(), errors.end(), 0) > 0 || errors.size() != 2)
     {

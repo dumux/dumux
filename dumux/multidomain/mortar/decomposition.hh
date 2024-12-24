@@ -22,7 +22,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/discretization/facetgrid.hh>
+#include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/geometry/intersectingentities.hh>
 
 namespace Dumux::Mortar {
@@ -41,10 +41,8 @@ class DecompositionFactory;
 template<typename MortarGridGeometry, typename... GridGeometries>
 class Decomposition
 {
-    // The trace grid is currently fv-specific...
-    // If/once needed, we can introduce a trait and deduce the trace type from the grid geo
     using MortarGrid = typename MortarGridGeometry::GridView::Grid;
-    using SubDomainTrace = std::variant<std::shared_ptr<FacetGrid<MortarGrid, GridGeometries>>...>;
+    using SubDomainTrace = std::variant<std::shared_ptr<FacetGridManager<typename GridGeometries::GridView::Grid, MortarGrid>>...>;
 
  public:
     std::size_t numberOfMortars() const { return mortars_.size(); }
@@ -194,14 +192,15 @@ class DecompositionFactory
             std::size_t sdId = 0;
             for (const auto& sd : result.subDomains_)
             {
-                const bool intersect = std::visit([&] (const auto& sdPtr) {
-                    auto trace = makeFacetGrid<MortarGrid>(sdPtr, [&] (const auto& is) {
+                const bool intersect = std::visit([&] <typename SD> (const std::shared_ptr<const SD>& sdPtr) {
+                    FacetGridManager<typename SD::GridView::Grid, MortarGrid> facetGridManager;
+                    facetGridManager.init(sdPtr->gridView().grid(), [&] (const auto&, const auto& is) {
                         return !intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree()).empty();
                     });
-                    const bool intersects = trace.gridView().size(0) > 0;
+                    const bool intersects = facetGridManager.grid().leafGridView().size(0) > 0;
                     if (intersects)
                         result.subDomainToMortarTraces_[sdId].emplace_back(
-                            std::make_shared<std::remove_cvref_t<decltype(trace)>>(std::move(trace))
+                            std::make_shared<std::remove_cvref_t<decltype(facetGridManager)>>(std::move(facetGridManager))
                         );
                     return intersects;
                 }, sd);
