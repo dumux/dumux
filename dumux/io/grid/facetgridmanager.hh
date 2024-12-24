@@ -105,27 +105,29 @@ concept FacetSelector
  * \note Each facet is only visited from one side when selecting the facets to be extracted.
  * \note On surface grids as host grids, this implementation assumes that there are no bifurcations.
  */
-template<typename HostGrid, typename FacetGrid, typename HostGridManager = GridManager<HostGrid>>
+template<typename HG, typename FacetGrid, typename HostGridManager = GridManager<HG>>
 class FacetGridManager
 {
     static constexpr int dim = FacetGrid::dimension;
     static constexpr int dimWorld = FacetGrid::dimensionworld;
 
-    static_assert(dim == int(HostGrid::dimension) - 1, "Facet grids must have codimension 1 w.r.t host grid");
-    static_assert(dimWorld == int(HostGrid::dimensionworld), "Space dimensions of facet & host grid must match");
+    static_assert(dim == int(HG::dimension) - 1, "Facet grids must have codimension 1 w.r.t host grid");
+    static_assert(dimWorld == int(HG::dimensionworld), "Space dimensions of facet & host grid must match");
 
-    using HostElement = typename HostGrid::template Codim<0>::Entity;
-    using HostIntersection = typename HostGrid::LeafGridView::Intersection;
-    using HostVertexSet = GridViewGeometricEntitySet<typename HostGrid::LeafGridView, HostGrid::dimension>;
+    using HostElement = typename HG::template Codim<0>::Entity;
+    using HostIntersection = typename HG::LeafGridView::Intersection;
+    using HostVertexSet = GridViewGeometricEntitySet<typename HG::LeafGridView, HG::dimension>;
 
 public:
     using Grid = FacetGrid;
     using Vertex = typename Grid::template Codim<dim>::Entity;
+
+    using HostGrid = HG;
     using HostGridVertex = typename HostGrid::template Codim<dim+1>::Entity;
 
     //! Make the grid using an externally created host grid.
     template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
-    void init(HostGrid& hostGrid, const Selector& selector)
+    void init(const HostGrid& hostGrid, const Selector& selector)
     {
         hostVertexSet_ = std::make_unique<HostVertexSet>(hostGrid.leafGridView());
         auto hostToFacetVertexInsertionIndex = FacetGridDetail::fillFactory(
