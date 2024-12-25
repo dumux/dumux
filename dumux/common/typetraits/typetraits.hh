@@ -36,6 +36,59 @@ using Noop = decltype(noop);
 template<typename Default, typename T>
 using NonVoidOr = std::conditional_t<!std::is_void_v<T>, T, Default>;
 
+/*!
+ * \brief Type trait to check if a given type is contained in the provided list of types
+ */
+template<typename T, typename... Ts>
+struct IsAnyOf : std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<typename... T>
+struct TypeList {};
+
+// primary template / entry point
+template<typename T, typename... Ts>
+struct UniqueTypes {
+    using type = std::conditional_t<
+        IsAnyOf<T, Ts...>::value,
+        typename UniqueTypes<Ts...>::type,
+        typename UniqueTypes<TypeList<T>, Ts...>::type
+    >;
+};
+
+// primary template specialization for empty packs
+template<typename T>
+struct UniqueTypes<T> : std::type_identity<TypeList<T>> {};
+
+template<typename... Ts, typename T, typename... Rest>
+struct UniqueTypes<TypeList<Ts...>, T, Rest...> {
+    using type = std::conditional_t<
+        IsAnyOf<T, Ts...>::value,
+        typename UniqueTypes<TypeList<Ts...>, Rest...>::type,
+        typename UniqueTypes<TypeList<Ts..., T>, Rest...>::type
+    >;
+};
+
+// specizalization for stopping the recursion
+template<typename... Ts>
+struct UniqueTypes<TypeList<Ts...>> : std::type_identity<TypeList<Ts...>> {};
+
+template<template<typename...> typename T, typename Args>
+struct WithTemplateParameters;
+template<template<typename...> typename T, typename... Args>
+struct WithTemplateParameters<T, TypeList<Args...>> : std::type_identity<T<Args...>> {};
+
+}  // namespace Detail
+#endif  // DOXYGEN
+
+/*!
+ * \brief Type trait to expose a variadically templated type with unique template parameters.
+ */
+template<template<typename...> typename T, typename... Args>
+struct WithUniqueTemplateParameters : Detail::WithTemplateParameters<T, typename Detail::UniqueTypes<Args...>::type> {};
+
 } // end namespace Dumux
 
 #endif
