@@ -22,6 +22,7 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/geometry/intersectingentities.hh>
 
@@ -42,7 +43,14 @@ template<typename MortarGridGeometry, typename... GridGeometries>
 class Decomposition
 {
     using MortarGrid = typename MortarGridGeometry::GridView::Grid;
-    using SubDomainTrace = std::variant<std::shared_ptr<FacetGridManager<typename GridGeometries::GridView::Grid, MortarGrid>>...>;
+    using SubDomainTraceStorage = typename WithUniqueTemplateParameters<
+        std::variant,
+        std::shared_ptr<FacetGridManager<typename GridGeometries::GridView::Grid, MortarGrid>>...
+    >::type;
+    using SubDomainGridGeometryStorage = typename WithUniqueTemplateParameters<
+        std::variant,
+        std::shared_ptr<const GridGeometries>...
+    >::type;
 
  public:
     std::size_t numberOfMortars() const { return mortars_.size(); }
@@ -140,10 +148,10 @@ class Decomposition
     friend DecompositionFactory<MortarGridGeometry, GridGeometries...>;
     Decomposition() = default;
     std::vector<std::shared_ptr<const MortarGridGeometry>> mortars_;
-    std::vector<std::variant<std::shared_ptr<const GridGeometries>...>> subDomains_;
+    std::vector<SubDomainGridGeometryStorage> subDomains_;
     std::vector<std::vector<std::size_t>> mortarToSubDomains_; // TODO: could use ReservedVector<size_t, 2>?
     std::vector<std::vector<std::size_t>> subDomainsToMortar_;
-    std::vector<std::vector<SubDomainTrace>> subDomainToMortarTraces_;
+    std::vector<std::vector<SubDomainTraceStorage>> subDomainToMortarTraces_;
 };
 
 /*!
@@ -194,15 +202,14 @@ class DecompositionFactory
             for (const auto& sd : result.subDomains_)
             {
                 const bool intersect = std::visit([&] <typename SD> (const std::shared_ptr<const SD>& sdPtr) {
-                    FacetGridManager<typename SD::GridView::Grid, MortarGrid> facetGridManager;
-                    facetGridManager.init(sdPtr->gridView().grid(), [&] (const auto&, const auto& is) {
+                    using GridManager = FacetGridManager<typename SD::GridView::Grid, MortarGrid>;
+                    auto facetGridManager = std::make_shared<GridManager>();
+                    facetGridManager->init(sdPtr->gridView().grid(), [&] (const auto&, const auto& is) {
                         return !intersectingEntities(is.geometry(), mortarPtr->boundingBoxTree()).empty();
                     });
-                    const bool intersects = facetGridManager.grid().leafGridView().size(0) > 0;
+                    const bool intersects = facetGridManager->grid().leafGridView().size(0) > 0;
                     if (intersects)
-                        result.subDomainToMortarTraces_[sdId].emplace_back(
-                            std::make_shared<std::remove_cvref_t<decltype(facetGridManager)>>(std::move(facetGridManager))
-                        );
+                        result.subDomainToMortarTraces_[sdId].emplace_back(std::move(facetGridManager));
                     return intersects;
                 }, sd);
                 if (intersect)
