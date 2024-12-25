@@ -22,8 +22,6 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/facetgrid.hh>
-#include <dumux/discretization/traceoperator.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/multidomain/mortar/subdomainproblembase.hh>
 
