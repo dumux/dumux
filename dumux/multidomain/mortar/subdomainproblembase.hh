@@ -18,13 +18,44 @@
 #include <optional>
 #include <unordered_map>
 
+#include <dune/grid/common/mcmgmapper.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/io/grid/facetgridmanager.hh>
+
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/facetgrid.hh>
 #include <dumux/discretization/traceoperator.hh>
+#include <dumux/discretization/facetgridmapper.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux::Mortar {
+
+#ifndef DOXYGEN
+namespace Detail {
+
+template<typename GV>
+class TraceGridGeometryFacade
+{
+ public:
+    using GridView = GV;
+
+    TraceGridGeometryFacade(const GridView& gv)
+    : gridView_{gv}
+    , elementMapper_{gv, Dune::mcmgElementLayout()}
+    , vertexMapper_{gv, Dune::mcmgVertexLayout()}
+    {}
+
+    const GridView& gridView() const { return gridView_; }
+    const auto& elementMapper() const { return elementMapper_; }
+    const auto& vertexMapper() const { return vertexMapper_; }
+
+ private:
+    GridView gridView_;
+    Dune::MultipleCodimMultipleGeomTypeMapper<GridView> elementMapper_;
+    Dune::MultipleCodimMultipleGeomTypeMapper<GridView> vertexMapper_;
+};
+
+}  // namespace Detail
+#endif  // DOXYGEN
 
 /*!
  * \ingroup MultiDomain
@@ -43,9 +74,10 @@ class SubDomainFVProblemBase
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
-    using TraceGrid = FacetGrid<MortarGrid, GridGeometry>;
-    using BoundaryGrid = FVFacetGrid<MortarGrid, GridGeometry>;
-    using TraceOperator = FVTraceOperator<MortarGrid, GridGeometry>;
+    using TraceGridManager = FacetGridManager<typename GridView::Grid, MortarGrid>;
+    using TraceGridMapper = FVFacetGridMapper<typename MortarGrid::LeafGridView, GridGeometry>;
+    using TraceGridGeometry = Detail::TraceGridGeometryFacade<typename MortarGrid::LeafGridView>;
+    using TraceOperator = FVTraceOperator<TraceGridGeometry, GridGeometry>;
 
     static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
 
@@ -63,26 +95,29 @@ public:
     {}
 
     //! Register a trace with the mortar domain that has the given id
-    void registerMortarTrace(std::shared_ptr<const TraceGrid> traceGrid, std::size_t id)
+    void registerMortarTrace(std::shared_ptr<const TraceGridManager> traceGridManager, std::size_t id)
     {
-        BoundaryGrid facetGrid{traceGrid};
+        const auto& traceGridView = traceGridManager->grid().leafGridView();
+        auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry_);
+        auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
+
         std::vector<std::size_t> domainToTraceVertexIndexMap;
         if constexpr (isCVFE)
         {
             domainToTraceVertexIndexMap.resize(gridGeometry_->vertexMapper().size());
-            for (const auto& v : vertices(traceGrid->gridView()))
-                domainToTraceVertexIndexMap[traceGrid->domainVertexIndexOf(v)]
-                    = facetGrid.vertexMapper().index(v);
+            for (const auto& v : vertices(traceGridView))
+                domainToTraceVertexIndexMap[gridGeometry_->vertexMapper().index(traceGridManager->hostGridVertex(v))]
+                    = traceGridGeometry->vertexMapper().index(v);
         }
 
         coupledEntities_.resize(gridGeometry_->gridView().size(0));
-        for (const auto& mortarElement : elements(traceGrid->gridView()))
-            for (const auto& element : facetGrid.domainElementsAdjacentTo(mortarElement))
+        for (const auto& mortarElement : elements(traceGridView))
+            for (const auto& element : traceGridMapper->domainElementsAdjacentTo(mortarElement))
             {
                 const auto eIdx = gridGeometry_->elementMapper().index(element);
                 const auto fvGeometry = localView(*gridGeometry_).bindElement(element);
                 if constexpr(isCVFE)
-                    for (const auto scvfIdx : facetGrid.domainScvfsAdjacentTo(mortarElement, element))
+                    for (const auto scvfIdx : traceGridMapper->domainScvfsAdjacentTo(mortarElement, element))
                     {
                         const auto& scv = fvGeometry.scv(fvGeometry.scvf(scvfIdx).insideScvIdx());
                         coupledEntities_[eIdx].push_back({
@@ -92,15 +127,19 @@ public:
                         });
                     }
                 else
-                    for (const auto scvfIdx : facetGrid.domainScvfsAdjacentTo(mortarElement, element))
+                    for (const auto scvfIdx : traceGridMapper->domainScvfsAdjacentTo(mortarElement, element))
                         coupledEntities_[eIdx].push_back({
                             .sceIndex = subControlEntityIndex_(fvGeometry.scvf(scvfIdx)),
                             .mortarId = id,
-                            .traceDofIndex = facetGrid.elementMapper().index(mortarElement)
+                            .traceDofIndex = traceGridGeometry->elementMapper().index(mortarElement)
                         });
             }
-        mortarIdToFacetGrid_.emplace(std::make_pair(id, std::make_shared<BoundaryGrid>(std::move(facetGrid))));
-        mortarIdToTraceOperator_.emplace(std::make_pair(id, TraceOperator{mortarIdToFacetGrid_.at(id)}));
+        mortarIdToTraceOperator_.emplace(std::make_pair(
+            id,
+            TraceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& traceVertex) {
+                return traceGridManager->hostGridVertex(traceVertex);
+            }}
+        ));
     }
 
     //! Return true if the given element/sub-control volume face coincides with
@@ -172,7 +211,6 @@ private:
 
     std::shared_ptr<const GridGeometry> gridGeometry_;
     std::vector<std::vector<EntityCouplingMap>> coupledEntities_;
-    std::unordered_map<std::size_t, std::shared_ptr<BoundaryGrid>> mortarIdToFacetGrid_;
     std::unordered_map<std::size_t, TraceOperator> mortarIdToTraceOperator_;
     std::unordered_map<std::size_t, TraceSolutionVector> mortarBoundaryConditions_;
 };

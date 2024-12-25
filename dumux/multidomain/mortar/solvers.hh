@@ -20,7 +20,7 @@
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/facetgrid.hh>
+#include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
@@ -57,7 +57,7 @@ class DefaultSubDomainSolver : public SubDomainSolver<
 
  public:
     using typename ParentType::GridGeometry;
-    using typename ParentType::TraceGrid;
+    using typename ParentType::Trace;
     using typename ParentType::MortarSolutionVector;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -83,8 +83,8 @@ class DefaultSubDomainSolver : public SubDomainSolver<
     void setTraceVariables(std::size_t mortarId, MortarSolutionVector trace) override
     { problem_->setTraceVariables(mortarId, std::move(trace)); }
 
-    void registerMortarTrace(std::shared_ptr<const TraceGrid> traceGrid, std::size_t mortarId) override
-    { problem_->registerMortarTrace(traceGrid, mortarId); }
+    void registerMortarTrace(std::shared_ptr<const Trace> trace, std::size_t mortarId) override
+    { problem_->registerMortarTrace(trace, mortarId); }
 
     MortarSolutionVector assembleTraceVariables(std::size_t mortarId) const override
     { return problem_->assembleTraceVariables(mortarId, *gridVariables_, x_); }
@@ -145,7 +145,7 @@ class DefaultStaggeredFreeFlowSubDomainSolver : public SubDomainSolver<
 
  public:
     using typename ParentType::GridGeometry;
-    using typename ParentType::TraceGrid;
+    using typename ParentType::Trace;
 
     DefaultStaggeredFreeFlowSubDomainSolver(std::shared_ptr<const MomentumGridGeometry> momentumGridGeometry,
                                             std::shared_ptr<const MassGridGeometry> massGridGeometry)
@@ -180,8 +180,8 @@ class DefaultStaggeredFreeFlowSubDomainSolver : public SubDomainSolver<
     void setTraceVariables(std::size_t mortarId, MortarSolutionVector trace) override
     { momentumProblem_->setTraceVariables(mortarId, std::move(trace)); }
 
-    void registerMortarTrace(std::shared_ptr<const TraceGrid> traceGrid, std::size_t mortarId) override
-    { momentumProblem_->registerMortarTrace(traceGrid, mortarId); }
+    void registerMortarTrace(std::shared_ptr<const Trace> trace, std::size_t mortarId) override
+    { momentumProblem_->registerMortarTrace(trace, mortarId); }
 
     MortarSolutionVector assembleTraceVariables(std::size_t mortarId) const override
     { return momentumProblem_->assembleTraceVariables(mortarId, *momentumGridVariables_, x_[momentumIdx]); }
