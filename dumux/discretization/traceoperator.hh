@@ -19,7 +19,6 @@
 
 #include <dune/istl/bvector.hh>
 
-#include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/facetgridmapper.hh>
 
