@@ -31,12 +31,12 @@ concept TraceOperatorContext = requires(T& t, const A& arg) {
     { t.fvGeometry() };
 };
 
-// TODO: Default context for grid variables
+//! Default implementation for trace operator contexts for finite-volume schemes
 template<typename GridVariables, typename SolutionVector>
-class FVContext
+class FVTraceOperatorContext
 {
  public:
-    FVContext(const GridVariables& gv, const SolutionVector& x)
+    FVTraceOperatorContext(const GridVariables& gv, const SolutionVector& x)
     : x_{x}
     , fvGeometry_{localView(gv.curGridVolVars().problem().gridGeometry())}
     , elemVolVars_{localView(gv.curGridVolVars())}
