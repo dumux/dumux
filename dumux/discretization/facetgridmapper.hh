@@ -136,11 +136,11 @@ class FVFacetGridMapper
             });
     }
 
-    //! Return a range over the indices of the scvfs that overlap with the given trace element from within the given domain element
+    //! Return a range over the indices of the scvfs that overlap with the given facet element from within the given domain element
     std::ranges::view auto domainScvfsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
     { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvfIndices; }); }
 
-    //! Return a range over the indices of the scvs that overlap with the given trace element from within the given domain element
+    //! Return a range over the indices of the scvs that overlap with the given facet element from within the given domain element
     std::ranges::view auto domainScvsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
     { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvIndices; }); }
 

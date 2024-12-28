@@ -164,7 +164,7 @@ public:
     Grid& grid()
     { return *facetGrid_; }
 
-    //1 Returns a const reference to the grid.
+    //! Returns a const reference to the grid.
     const Grid& grid() const
     { return *facetGrid_; }
 

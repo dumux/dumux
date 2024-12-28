@@ -6,8 +6,7 @@
 //
 /*!
  * \file
- * \brief Test trace grid extraction from finite volume grid geometries.
- *
+ * \brief Test facet grid extraction & entity mapping from finite volume grid geometries.
  */
 #include <config.h>
 
