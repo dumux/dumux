@@ -28,15 +28,17 @@ public:
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for air in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      *
-     * Henry coefficient See:
-     * Stefan Finsterle (1993, page 33 Formula (2.9)) \cite finsterle1993 <BR>
-     * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
+     * Henry coefficient fitted with cubic function to data from
+     * Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985
+     * The data covers the interval from 0°C to 60°C. Outside, the quality of the extrapolation
+     * is unknown.
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {
-      using std::exp;
-      Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
+      Scalar t = temperature - 273.15; // convert from K to °C
+      Scalar r = (-5.55556E-6 * t*t*t + 0.000895238 * t*t - 0.0556825 * t + 2.30524) * 1e-5;
+      r /= 101325; // convert from atm to Pa
 
       return 1./r;
     }
