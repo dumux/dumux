@@ -44,6 +44,15 @@ template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
 
+template<class Imp>
+using FVLocalDofsDetector = decltype(
+    fvLocalDofs(std::declval<Imp>())
+);
+
+template<class Imp>
+constexpr inline bool hasFVLocalDofsInterface()
+{ return Dune::Std::is_detected<FVLocalDofsDetector, Imp>::value; }
+
 } // end namespace Dumux::Detail
 
 
@@ -106,8 +115,16 @@ public:
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& localDof : fvLocalDofs(fvGeometry))
-            this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, localDof.scv());
+        if constexpr (Detail::hasFVLocalDofsInterface<FVElementGeometry>())
+        {
+            for (const auto& localDof : fvLocalDofs(fvGeometry))
+                this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, localDof.scv());
+        }
+        else
+        {
+            for (const auto& scv : scvs(fvGeometry))
+                this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
+        }
 
         // allow for additional contributions (e.g. hybrid CVFE schemes)
         this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
@@ -137,8 +154,16 @@ public:
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& localDof : fvLocalDofs(fvGeometry))
-            this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, localDof.scv());
+        if constexpr (Detail::hasFVLocalDofsInterface<FVElementGeometry>())
+        {
+            for (const auto& localDof : fvLocalDofs(fvGeometry))
+                this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, localDof.scv());
+        }
+        else
+        {
+            for (const auto& scv : scvs(fvGeometry))
+                this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
+        }
 
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
