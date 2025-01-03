@@ -177,6 +177,10 @@ public:
                                      const ElementVolumeVariables& prevElemVolVars,
                                      const ElementVolumeVariables& curElemVolVars) const
     {
+        // Make sure we don't iterate over quadrature points if there are no hybrid dofs
+        if( hybridLocalDofs(fvGeometry).empty() )
+            return;
+
         static const auto intOrder
             = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderStorage", 4);
 
@@ -223,6 +227,10 @@ public:
                                            const ElementFluxVariablesCache& elemFluxVarsCache,
                                            const ElementBoundaryTypes &elemBcTypes) const
     {
+        // Make sure we don't iterate over quadrature points if there are no hybrid dofs
+        if( hybridLocalDofs(fvGeometry).empty() )
+            return;
+
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
         static const auto intOrder
