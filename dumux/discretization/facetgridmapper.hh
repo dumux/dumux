@@ -33,25 +33,25 @@
 namespace Dumux {
 
 #ifndef DOXYGEN
-namespace FacetGridMapperDetail {
+namespace Detail::FacetGridMapper {
 
-    template<typename Geometry, typename FacetGridView, typename FacetBoundingBoxTree>
-    auto overlappingFacetElementIndices(const Geometry& geometry,
-                                        const FacetGridView& facetGridView,
-                                        const FacetBoundingBoxTree& bboxTree)
-    {
-        std::vector<std::size_t> result;
-        const auto intersections = intersectingEntities(geometry, bboxTree);
-        if (intersections.empty())
-            return result;
-        result.resize(intersections.size());
-        std::ranges::copy(intersections | std::views::transform([&] (const auto& is) { return is.second(); }), result.begin());
-        std::ranges::sort(result);
-        result.erase(std::unique(result.begin(), result.end()), result.end());
+template<typename Geometry, typename FacetGridView, typename FacetBoundingBoxTree>
+auto overlappingFacetElementIndices(const Geometry& geometry,
+                                    const FacetGridView& facetGridView,
+                                    const FacetBoundingBoxTree& bboxTree)
+{
+    std::vector<std::size_t> result;
+    const auto intersections = intersectingEntities(geometry, bboxTree);
+    if (intersections.empty())
         return result;
-    }
+    result.resize(intersections.size());
+    std::ranges::copy(intersections | std::views::transform([&] (const auto& is) { return is.second(); }), result.begin());
+    std::ranges::sort(result);
+    result.erase(std::unique(result.begin(), result.end()), result.end());
+    return result;
+}
 
-}  // namespace FacetGridMapperDetail
+}  // end namespace Detail::FacetGridMapper
 #endif  // DOXYGEN
 
 /*!
@@ -99,7 +99,7 @@ class FVFacetGridMapper
             const auto eIdx = domainGridGeometry_->elementMapper().index(element);
             const auto fvGeometry = localView(*domainGridGeometry_).bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
+                for (const auto facetElementIndex : Detail::FacetGridMapper::overlappingFacetElementIndices(
                     fvGeometry.geometry(scv),
                     facetGridView,
                     bboxTree
@@ -109,7 +109,7 @@ class FVFacetGridMapper
                         else return scv.dofIndex();
                     }());
             for (const auto& scvf : scvfs(fvGeometry))
-                for (const auto facetElementIndex : FacetGridMapperDetail::overlappingFacetElementIndices(
+                for (const auto facetElementIndex : Detail::FacetGridMapper::overlappingFacetElementIndices(
                     fvGeometry.geometry(scvf),
                     facetGridView,
                     bboxTree

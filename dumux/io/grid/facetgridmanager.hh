@@ -26,63 +26,63 @@
 namespace Dumux {
 
 #ifndef DOXYGEN
-namespace FacetGridDetail {
+namespace Detail::FacetGrid {
 
-    static constexpr std::size_t undefinedIndex = std::numeric_limits<std::size_t>::max();
+static constexpr std::size_t undefinedIndex = std::numeric_limits<std::size_t>::max();
 
-    template<typename Grid, typename HostGridView, typename HostGridVertexSet, typename Selector>
-    auto fillFactory(Dune::GridFactory<Grid>& factory,
-                     const HostGridView& hostGridView,
-                     const HostGridVertexSet& hostGridVertexSet,
-                     Selector&& selector)
+template<typename Grid, typename HostGridView, typename HostGridVertexSet, typename Selector>
+auto fillFactory(Dune::GridFactory<Grid>& factory,
+                    const HostGridView& hostGridView,
+                    const HostGridVertexSet& hostGridVertexSet,
+                    Selector&& selector)
+{
+    static constexpr int domainDim = HostGridView::dimension;
+
+    Dune::MultipleCodimMultipleGeomTypeMapper elementMapper{hostGridView, Dune::mcmgElementLayout()};
+
+    std::vector<unsigned int> localCornerStorage;
+    std::vector<std::size_t> domainToFacetVertex(hostGridVertexSet.size(), undefinedIndex);
+
+    std::size_t vertexCount = 0;
+    for (const auto& element : elements(hostGridView))
     {
-        static constexpr int domainDim = HostGridView::dimension;
+        const auto& refElement = Dune::referenceElement(element);
+        const auto& elemGeo = element.geometry();
 
-        Dune::MultipleCodimMultipleGeomTypeMapper elementMapper{hostGridView, Dune::mcmgElementLayout()};
-
-        std::vector<unsigned int> localCornerStorage;
-        std::vector<std::size_t> domainToFacetVertex(hostGridVertexSet.size(), undefinedIndex);
-
-        std::size_t vertexCount = 0;
-        for (const auto& element : elements(hostGridView))
+        for (const auto& is : intersections(hostGridView, element))
         {
-            const auto& refElement = Dune::referenceElement(element);
-            const auto& elemGeo = element.geometry();
+            if (!selector(element, is))
+                continue;
 
-            for (const auto& is : intersections(hostGridView, element))
-            {
-                if (!selector(element, is))
+            // visit each facet only once
+            if (!is.boundary())
+                if (elementMapper.index(is.inside()) > elementMapper.index(is.outside()))
                     continue;
 
-                // visit each facet only once
-                if (!is.boundary())
-                    if (elementMapper.index(is.inside()) > elementMapper.index(is.outside()))
-                        continue;
-
-                const auto& isGeo = is.geometry();
-                localCornerStorage.clear();
-                localCornerStorage.reserve(isGeo.corners());
-                for (int c = 0; c < isGeo.corners(); ++c)
+            const auto& isGeo = is.geometry();
+            localCornerStorage.clear();
+            localCornerStorage.reserve(isGeo.corners());
+            for (int c = 0; c < isGeo.corners(); ++c)
+            {
+                const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, c, domainDim);
+                const auto vIdxGlobal = hostGridVertexSet.index(element.template subEntity<domainDim>(vIdxLocal));
+                if (domainToFacetVertex.at(vIdxGlobal) == undefinedIndex)
                 {
-                    const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, c, domainDim);
-                    const auto vIdxGlobal = hostGridVertexSet.index(element.template subEntity<domainDim>(vIdxLocal));
-                    if (domainToFacetVertex.at(vIdxGlobal) == undefinedIndex)
-                    {
-                        factory.insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
-                        domainToFacetVertex[vIdxGlobal] = vertexCount;
-                        vertexCount++;
-                    }
-                    localCornerStorage.push_back(domainToFacetVertex[vIdxGlobal]);
+                    factory.insertVertex(elemGeo.global(refElement.position(vIdxLocal, domainDim)));
+                    domainToFacetVertex[vIdxGlobal] = vertexCount;
+                    vertexCount++;
                 }
-
-                factory.insertElement(isGeo.type(), localCornerStorage);
+                localCornerStorage.push_back(domainToFacetVertex[vIdxGlobal]);
             }
-        }
 
-        return domainToFacetVertex;
+            factory.insertElement(isGeo.type(), localCornerStorage);
+        }
     }
 
-}  // namespace FacetGridDetail
+    return domainToFacetVertex;
+}
+
+}  // end namespace Detail::FacetGrid
 #endif  // DOXYGEN
 
 
@@ -130,7 +130,7 @@ public:
     void init(const HostGrid& hostGrid, const Selector& selector)
     {
         hostVertexSet_ = std::make_unique<HostVertexSet>(hostGrid.leafGridView());
-        auto hostToFacetVertexInsertionIndex = FacetGridDetail::fillFactory(
+        auto hostToFacetVertexInsertionIndex = Detail::FacetGrid::fillFactory(
             facetGridFactory_,
             hostGrid.leafGridView(),
             *hostVertexSet_,
@@ -141,7 +141,7 @@ public:
 
         facetInsertionToHostVertexIndex_.resize(facetGrid_->leafGridView().size(dim));
         for (std::size_t hostVertexIndex = 0; hostVertexIndex < hostToFacetVertexInsertionIndex.size(); ++hostVertexIndex)
-            if (hostToFacetVertexInsertionIndex[hostVertexIndex] != FacetGridDetail::undefinedIndex)
+            if (hostToFacetVertexInsertionIndex[hostVertexIndex] != Detail::FacetGrid::undefinedIndex)
                 facetInsertionToHostVertexIndex_[hostToFacetVertexInsertionIndex[hostVertexIndex]] = hostVertexIndex;
     }
 
@@ -194,6 +194,6 @@ protected:
 };
 
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif
