@@ -20,13 +20,15 @@ workflow:
     - if: $CI_PIPELINE_SOURCE=="parent_pipeline"
 
 
-# variables that should be overwritten by the trigger
+# variables that can be overwritten by the trigger
 variables:
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
   DUMUX_ENABLE_CPPCHECK: ""
   DUMUX_ENABLE_DOXYGEN_BUILD: ""
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
+  DUMUX_SKIP_TEST_SELECTION: "false"
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
 
 
 configure:
