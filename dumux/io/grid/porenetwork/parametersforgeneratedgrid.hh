@@ -410,7 +410,7 @@ private:
 
         const auto generateFunction = [&](auto& poreRadiusDist)
         {
-            return [=,this](const auto& vertex, const int poreLabel) mutable
+            return [=](const auto& vertex, const int poreLabel) mutable
             {
                 const auto radius = poreRadiusDist(generator);
 
@@ -570,7 +570,7 @@ private:
         // shape parameter for calculation of throat radius
         const Scalar throatN = getParamFromGroup<Scalar>(paramGroup_, prefix + "ThroatInscribedRadiusN", 0.1);
 
-        return [=,this](const Element& element)
+        return [=](const Element& element)
         {
             const Scalar delta = element.geometry().volume();
             const std::array<Vertex, 2> vertices = {element.template subEntity<dim>(0), element.template subEntity<dim>(1)};
