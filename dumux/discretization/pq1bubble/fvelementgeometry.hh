@@ -101,18 +101,40 @@ public:
     //! iterate over dof indices that belong to dofs associated with control volumes
     friend inline auto cvLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        return localDofs(fvGeometry);
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numLocalDofs()-GeometryHelper::numNonCVLocalDofs(fvGeometry.element().type())),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
+    }
+
+    //! iterate over dof indices that are treated as hybrid dofs using the finite element method
+    friend inline auto nonCVLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numLocalDofs()-GeometryHelper::numNonCVLocalDofs(fvGeometry.element().type()), fvGeometry.numLocalDofs()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
     }
 
     //! an iterator over all local dofs
     friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
         return Dune::transformedRangeView(
-            Dune::range(fvGeometry.numScv()),
+            Dune::range(fvGeometry.numLocalDofs()),
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -135,6 +157,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return GeometryHelper::numElementDofs(element().geometry().type());
     }
 
     //! The total number of sub control volumes
