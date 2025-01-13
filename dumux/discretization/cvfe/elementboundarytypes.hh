@@ -15,6 +15,7 @@
 #include <cassert>
 #include <vector>
 
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -47,16 +48,16 @@ public:
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& localDof : cvLocalDofs(fvGeometry))
         {
-            const auto scvIdxLocal = scv.localDofIndex();
-            bcTypes_[scvIdxLocal].reset();
+            const auto localIdx = localDof.indexInElement();
+            bcTypes_[localIdx].reset();
 
-            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+            if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
             {
-                bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
-                hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || bcTypes_[scvIdxLocal].hasNeumann();
+                bcTypes_[localIdx] = problem.boundaryTypes(element, localDof.scv());
+                hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
             }
         }
     }
@@ -92,12 +93,13 @@ public:
     /*
      * \brief Access operator
      * \return BoundaryTypes
-     * \note yields undefined behaviour of the scv is not on the boundary
+     * \note yields undefined behaviour if the scv is not on the boundary
      */
-    template<class FVElementGeometry>
-    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::SubControlVolume& scv) const
+    template<class FVElementGeometry,
+             class ScvOrLocalDof>
+    const BoundaryTypes& get(const FVElementGeometry&, const ScvOrLocalDof& scvOrLocalDof) const
     {
-        const auto localDofIdx = scv.localDofIndex();
+        const auto localDofIdx = scvOrLocalDof.indexInElement();
         assert(localDofIdx < bcTypes_.size());
         return bcTypes_[localDofIdx];
     }

@@ -14,8 +14,10 @@
 
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
+
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/localdoftraits.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -57,9 +59,10 @@ public:
     CVFEElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                         const FVElementGeometry& fvGeometry)
     {
-        priVars_.resize(fvGeometry.numScv());
-        for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
+        const auto locDofs = localDofs(fvGeometry);
+        priVars_.resize(locDofs.size());
+        for (const auto& localDof : locDofs)
+            priVars_[localDof.indexInElement()] = elemVolVars[localDof.indexInElement()].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
@@ -88,9 +91,10 @@ public:
     void update(const Element& element, const SolutionVector& sol,
                 const FVElementGeometry& fvGeometry)
     {
-        priVars_.resize(fvGeometry.numScv());
-        for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
+        const auto locDofs = localDofs(fvGeometry);
+        priVars_.resize(locDofs.size());
+        for (const auto& localDof : locDofs)
+            priVars_[localDof.indexInElement()] = sol[localDof.dofIndex()];
     }
 
     //! return the size of the element solution

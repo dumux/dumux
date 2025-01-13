@@ -16,11 +16,13 @@
 #include <type_traits>
 
 #include <dumux/parallel/parallel_for.hh>
+#include <dumux/common/typetraits/localdofs.hh>
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cvfe/elementvolumevariables.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -75,25 +77,26 @@ public:
             auto elemSol = elementSolution(element, sol, gridGeometry);
 
             // update the volvars of the element
-            volumeVariables_[eIdx].resize(fvGeometry.numScv());
-            for (const auto& scv : scvs(fvGeometry))
-                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem, element, scv);
+            const auto cvLocDofs = cvLocalDofs(fvGeometry);
+            volumeVariables_[eIdx].resize(cvLocDofs.size());
+            for (const auto& localDof : cvLocDofs)
+                volumeVariables_[eIdx][localDof.indexInElement()].update(elemSol, problem, element, localDof.scv());
         });
     }
 
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& volVars(const SubControlVolume& scv) const
-    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
+    const VolumeVariables& volVars(const ScvOrLocalDof& scvOrLocalDof) const
+    { return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()]; }
 
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& volVars(const SubControlVolume& scv)
-    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
+    VolumeVariables& volVars(const ScvOrLocalDof& scvOrLocalDof)
+    { return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()]; }
 
-    const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx) const
-    { return volumeVariables_[eIdx][scvIdx]; }
+    const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t localIdx) const
+    { return volumeVariables_[eIdx][localIdx]; }
 
-    VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx)
-    { return volumeVariables_[eIdx][scvIdx]; }
+    VolumeVariables& volVars(const std::size_t eIdx, const std::size_t localIdx)
+    { return volumeVariables_[eIdx][localIdx]; }
 
     const Problem& problem() const
     { return *problemPtr_; }
