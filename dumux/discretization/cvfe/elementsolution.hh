@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
@@ -59,9 +60,8 @@ public:
     CVFEElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                         const FVElementGeometry& fvGeometry)
     {
-        const auto locDofs = localDofs(fvGeometry);
-        priVars_.resize(locDofs.size());
-        for (const auto& localDof : locDofs)
+        priVars_.resize(Detail::numLocalDofs(fvGeometry));
+        for (const auto& localDof : localDofs(fvGeometry))
             priVars_[localDof.indexInElement()] = elemVolVars[localDof.indexInElement()].priVars();
     }
 
@@ -91,9 +91,8 @@ public:
     void update(const Element& element, const SolutionVector& sol,
                 const FVElementGeometry& fvGeometry)
     {
-        const auto locDofs = localDofs(fvGeometry);
-        priVars_.resize(locDofs.size());
-        for (const auto& localDof : locDofs)
+        priVars_.resize(Detail::numLocalDofs(fvGeometry));
+        for (const auto& localDof : localDofs(fvGeometry))
             priVars_[localDof.indexInElement()] = sol[localDof.dofIndex()];
     }
 

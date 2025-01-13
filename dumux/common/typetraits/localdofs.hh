@@ -20,6 +20,21 @@
 
 namespace Dumux::Detail {
 
+//! helper struct detecting if a fvElementGeometry object has a numLocalDofs() function
+template<class Imp>
+using NumLocalDofsDetector = decltype(
+    std::declval<Imp>().numLocalDofs()
+);
+
+template<typename FVElementGeometry>
+constexpr int numLocalDofs(const FVElementGeometry& fvGeometry)
+{
+    if constexpr (Dune::Std::is_detected<NumLocalDofsDetector, FVElementGeometry>::value)
+        return fvGeometry.numLocalDofs();
+    else
+        return fvGeometry.numScv();
+}
+
 //! helper struct detecting if a fvElementGeometry object has maxNumElementDofs
 template<class Imp>
 using MaxNumElementDofs = decltype( Imp::maxNumElementDofs );

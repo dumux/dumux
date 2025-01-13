@@ -77,9 +77,8 @@ public:
             auto elemSol = elementSolution(element, sol, gridGeometry);
 
             // update the volvars of the element
-            const auto cvLocDofs = cvLocalDofs(fvGeometry);
-            volumeVariables_[eIdx].resize(cvLocDofs.size());
-            for (const auto& localDof : cvLocDofs)
+            volumeVariables_[eIdx].resize(Detail::numLocalDofs(fvGeometry));
+            for (const auto& localDof : cvLocalDofs(fvGeometry))
                 volumeVariables_[eIdx][localDof.indexInElement()].update(elemSol, problem, element, localDof.scv());
         });
     }
