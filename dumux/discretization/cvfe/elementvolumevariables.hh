@@ -182,7 +182,7 @@ public:
         // update the volvars of the element
         volumeVariables_.resize(Detail::numLocalDofs(fvGeometry));
         for (const auto& localDof : cvLocalDofs(fvGeometry))
-            volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, localDof.scv());
+            volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, fvGeometry.scv(localDof.indexInElement()));
     }
 
     const VolumeVariables& operator [](std::size_t localIdx) const

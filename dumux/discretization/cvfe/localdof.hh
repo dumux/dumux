@@ -35,26 +35,6 @@ private:
     GridIndex eIdx_;
 };
 
-/*!
- * \ingroup CVFEDiscretization
- * \brief A local degree of freedom associated with a (sub-)control volume from an element perspective
- */
-template<class FVElementGeometry>
-class CVLocalDof : public LocalDof<typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::LocalIndex,
-                                   typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::GridIndex>
-{
-    using LocalIndex = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::LocalIndex;
-    using GridIndex = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::GridIndex;
-    using ParentType = LocalDof<LocalIndex, GridIndex>;
-public:
-    CVLocalDof(LocalIndex indexInElement, const FVElementGeometry& fvGeometry)
-    : ParentType(indexInElement, fvGeometry.scv(indexInElement).dofIndex(), fvGeometry.scv(indexInElement).elementIndex()), fvGeometry_(fvGeometry) {}
-
-    const typename FVElementGeometry::SubControlVolume& scv() const
-    { return fvGeometry_.scv(this->indexInElement()); }
-private:
-    const FVElementGeometry& fvGeometry_;
-};
 
 } // end namespace Dumux::CVFE
 
@@ -82,17 +62,8 @@ inline auto localDofs(const FVElementGeometry& fvGeometry)
 template<class FVElementGeometry>
 inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
 {
-    // If the fvGeometry does not provide this interface, we assume that all dofs are cv dofs
-    using LocalIndexType = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::LocalIndex;
-
-    return Dune::transformedRangeView(
-        Dune::range(fvGeometry.numScv()),
-        [&](const auto i) { return CVFE::CVLocalDof
-        {
-            static_cast<LocalIndexType>(i),
-            fvGeometry
-        }; }
-    );
+    // Default it that all dofs are cv dofs
+    return localDofs(fvGeometry);
 }
 
 } // end namespace Dumux

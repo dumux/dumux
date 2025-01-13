@@ -55,7 +55,7 @@ public:
 
             if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
             {
-                bcTypes_[localIdx] = problem.boundaryTypes(element, localDof.scv());
+                bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localDof.indexInElement()));
                 hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
             }

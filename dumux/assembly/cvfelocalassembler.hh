@@ -259,7 +259,7 @@ public:
         {
             for (const auto& localDofI : cvLocalDofs(this->fvGeometry()))
             {
-                const auto& scvI = localDofI.scv();
+                const auto& scvI = this->fvGeometry().scv(localDofI.indexInElement());
                 const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
                 if (bcTypes.hasDirichlet())
                 {
@@ -461,8 +461,8 @@ public:
         };
 
         // calculation of the derivatives
-        for (const auto& cvLocalDof : cvLocalDofs(fvGeometry))
-            assembleDerivative(cvLocalDof.scv());
+        for (const auto& localDof : cvLocalDofs(fvGeometry))
+            assembleDerivative(fvGeometry.scv(localDof.indexInElement()));
 
         // restore original state of the flux vars cache in case of global caching.
         // In the case of local caching this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
@@ -544,7 +544,7 @@ public:
         // calculation of the derivatives
         for (const auto& localDof : cvLocalDofs(fvGeometry))
         {
-            const auto& scv = localDof.scv();
+            const auto& scv = fvGeometry.scv(localDof.indexInElement());
             // dof index and corresponding actual pri vars
             const auto dofIdx = localDof.dofIndex();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
@@ -648,7 +648,7 @@ public:
         // calculation of the source and storage derivatives
         for (const auto& localDof : cvLocalDofs(fvGeometry))
         {
-            const auto& scv = localDof.scv();
+            const auto& scv = fvGeometry.scv(localDof.indexInElement());
             // dof index and corresponding actual pri vars
             const auto dofIdx = localDof.dofIndex();
             const auto& volVars = curElemVolVars[scv];
@@ -768,7 +768,7 @@ public:
         // calculation of the source and storage derivatives
         for (const auto& localDof : cvLocalDofs(fvGeometry))
         {
-            const auto& scv = localDof.scv();
+            const auto& scv = fvGeometry.scv(localDof.indexInElement());
             // dof index and corresponding actual pri vars
             const auto dofIdx = localDof.dofIndex();
             const auto& volVars = curElemVolVars[scv];
