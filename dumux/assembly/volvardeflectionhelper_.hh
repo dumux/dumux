@@ -16,6 +16,9 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
+
 #ifndef DOXYGEN
 
 namespace Dumux::Detail {
@@ -23,7 +26,7 @@ namespace Dumux::Detail {
 template<class VolVarAccessor, class FVElementGeometry>
 class VolVarsDeflectionHelper
 {
-    static constexpr int maxNumscvs = FVElementGeometry::maxNumElementScvs;
+    static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
 
     using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
     using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
@@ -40,45 +43,49 @@ public:
     , fvGeometry_(fvGeometry)
     {
         if (deflectAll_)
-            for (const auto& curScv : scvs(fvGeometry))
-                origVolVars_.push_back(accessor_(curScv));
+            for (const auto& localDof : cvLocalDofs(fvGeometry))
+                origVolVars_.push_back(accessor_(localDof.scv()));
     }
 
-    void setCurrent(const SubControlVolume& scv)
+    template<class ScvOrLocalDof>
+    void setCurrent(const ScvOrLocalDof& scvOrLocalDof)
     {
         if (!deflectAll_)
         {
             origVolVars_.clear();
-            origVolVars_.push_back(accessor_(scv));
+            origVolVars_.push_back(accessor_(scvOrLocalDof));
         }
     }
 
-    template<class ElementSolution, class Problem>
+    template<class ElementSolution,
+             class ScvOrLocalDof,
+             class Problem>
     void deflect(const ElementSolution& elemSol,
-                 const SubControlVolume& scv,
+                 const ScvOrLocalDof& scvOrLocalDof,
                  const Problem& problem)
     {
         if (deflectAll_)
-            for (const auto& curScv : scvs(fvGeometry_))
-                accessor_(curScv).update(elemSol, problem, fvGeometry_.element(), curScv);
+            for (const auto& localDof : cvLocalDofs(fvGeometry_))
+                accessor_(localDof.scv()).update(elemSol, problem, fvGeometry_.element(), localDof.scv());
         else
-            accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+            accessor_(scvOrLocalDof).update(elemSol, problem, fvGeometry_.element(), scvOrLocalDof);
     }
 
-    void restore(const SubControlVolume& scv)
+    template<class ScvOrLocalDof>
+    void restore(const ScvOrLocalDof& scvOrLocalDof)
     {
         if (!deflectAll_)
-            accessor_(scv) = origVolVars_[0];
+            accessor_(scvOrLocalDof) = origVolVars_[0];
         else
-            for (const auto& curScv : scvs(fvGeometry_))
-                accessor_(curScv) = origVolVars_[curScv.localDofIndex()];
+            for (const auto& localDof : cvLocalDofs(fvGeometry_))
+                accessor_(localDof.scv()) = origVolVars_[localDof.indexInElement()];
     }
 
 private:
     const bool deflectAll_;
     VolVarAccessor accessor_;
     const FVElementGeometry& fvGeometry_;
-    Dune::ReservedVector<VolumeVariables, maxNumscvs> origVolVars_;
+    Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
 };
 
 template<class Accessor, class FVElementGeometry>
