@@ -110,6 +110,9 @@ public:
         for (const auto& localDof : cvLocalDofs(fvGeometry))
             this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, fvGeometry.scv(localDof.indexInElement()));
 
+        // allow for additional contributions (e.g. hybrid CVFE schemes)
+        this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
+
         return residual;
     }
 
@@ -142,8 +145,30 @@ public:
         for (auto&& scvf : scvfs(fvGeometry))
             this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
 
+        // allow for additional contributions (e.g. hybrid CVFE schemes)
+        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
+
         return residual;
     }
+
+    //! add additional storage contributions (e.g. hybrid CVFE schemes)
+    void addToElementStorageResidual(ElementResidualVector& residual,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& prevElemVolVars,
+                                     const ElementVolumeVariables& curElemVolVars) const
+    {}
+
+    //! add additional flux and source contributions (e.g. hybrid CVFE schemes)
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& curElemVolVars,
+                                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           const ElementBoundaryTypes &bcTypes) const
+    {}
 
     //! evaluate flux residuals for one sub control volume face and add to residual
     void evalFlux(ElementResidualVector& residual,
