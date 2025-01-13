@@ -44,7 +44,7 @@ public:
     {
         if (deflectAll_)
             for (const auto& localDof : cvLocalDofs(fvGeometry))
-                origVolVars_.push_back(accessor_(localDof.scv()));
+                origVolVars_.push_back(accessor_(fvGeometry.scv(localDof.indexInElement())));
     }
 
     template<class ScvOrLocalDof>
@@ -66,7 +66,7 @@ public:
     {
         if (deflectAll_)
             for (const auto& localDof : cvLocalDofs(fvGeometry_))
-                accessor_(localDof.scv()).update(elemSol, problem, fvGeometry_.element(), localDof.scv());
+                accessor_(fvGeometry_.scv(localDof.indexInElement())).update(elemSol, problem, fvGeometry_.element(), fvGeometry_.scv(localDof.indexInElement()));
         else
             accessor_(scvOrLocalDof).update(elemSol, problem, fvGeometry_.element(), scvOrLocalDof);
     }
@@ -78,7 +78,7 @@ public:
             accessor_(scvOrLocalDof) = origVolVars_[0];
         else
             for (const auto& localDof : cvLocalDofs(fvGeometry_))
-                accessor_(localDof.scv()) = origVolVars_[localDof.indexInElement()];
+                accessor_(fvGeometry_.scv(localDof.indexInElement())) = origVolVars_[localDof.indexInElement()];
     }
 
 private:

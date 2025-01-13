@@ -101,14 +101,7 @@ public:
     //! iterate over dof indices that belong to dofs associated with control volumes
     friend inline auto cvLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
-        return Dune::transformedRangeView(
-            Dune::range(fvGeometry.numScv()),
-            [&](const auto i) { return CVFE::CVLocalDof
-            {
-                static_cast<LocalIndexType>(i),
-                fvGeometry
-            }; }
-        );
+        return localDofs(fvGeometry);
     }
 
     //! an iterator over all local dofs
