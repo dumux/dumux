@@ -33,7 +33,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/multidomain/freeflow/couplingmanager.hh>
+#include <dumux/multidomain/freeflow/couplingmanager_cvfe_simple.hh>
 #include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
@@ -82,7 +82,7 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DFGChannelTest>
 {
     using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
-    using type = FreeFlowCouplingManager<Traits>;
+    using type = CVFEFreeFlowCouplingManagerSimple<Traits>;
 };
 
 } // end namespace Dumux::Properties
