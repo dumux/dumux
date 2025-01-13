@@ -101,10 +101,7 @@ public:
               GridVariablesTuple&& gridVariables,
               const SolutionVector& curSol)
     {
-        this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
-        this->updateSolution(curSol);
-
-        computeCouplingStencils_();
+        init(momentumProblem, massProblem, curSol);
     }
 
     //! use as regular coupling manager in a transient setting
@@ -117,6 +114,28 @@ public:
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         prevSol_ = &prevSol;
         isTransient_ = true;
+    }
+
+    //! use as regular coupling manager
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
+              const SolutionVector& curSol)
+    {
+        this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
+        this->updateSolution(curSol);
+
+        computeCouplingStencils_();
+    }
+
+    //! use as sub coupling manager in a meta coupling manager
+    void init(std::shared_ptr<Problem<freeFlowMomentumIndex>> momentumProblem,
+              std::shared_ptr<Problem<freeFlowMassIndex>> massProblem,
+              const typename ParentType::SolutionVectorStorage& curSol)
+    {
+        this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
+        this->attachSolution(curSol);
+
+        computeCouplingStencils_();
     }
 
     /*!

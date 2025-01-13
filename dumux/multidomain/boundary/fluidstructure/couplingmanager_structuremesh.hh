@@ -53,6 +53,10 @@ class StructureMeshCouplingManager
 
     using GlobalPosition = typename Element<0>::Geometry::GlobalCoordinate;
 
+    // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
+    // to manager the solution vector storage outside this class
+    using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
+
 public:
     static constexpr auto structureIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto meshMotionIdx = typename MDTraits::template SubDomain<1>::Index();
@@ -183,6 +187,14 @@ public:
               const SolutionVector& curSol)
     {
         this->updateSolution(curSol);
+        this->setSubProblems(std::make_tuple(structureProblem, meshMotionProblem));
+    }
+
+    void init(std::shared_ptr<Problem<structureIdx>> structureProblem,
+              std::shared_ptr<Problem<meshMotionIdx>> meshMotionProblem,
+              const typename ParentType::SolutionVectorStorage& curSol)
+    {
+        this->attachSolution(curSol);
         this->setSubProblems(std::make_tuple(structureProblem, meshMotionProblem));
     }
 

@@ -6,10 +6,10 @@
 //
 /*!
  * \file
- * \brief Coupling manager for the Biot model
+ * \brief Coupling manager for fluid-structure interaction
  */
-#ifndef DUMUX_BIOT_COUPLINGMANAGER_HH
-#define DUMUX_BIOT_COUPLINGMANAGER_HH
+#ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FLUIDSTRUCTURE_COUPLINGMANAGER_HH
+#define DUMUX_MULTIDOMAIN_BOUNDARY_FLUIDSTRUCTURE_COUPLINGMANAGER_HH
 
 #include <memory>
 #include <tuple>
@@ -31,17 +31,19 @@
 
 #include <dumux/multidomain/couplingmanager.hh>
 
+#include <dumux/multidomain/boundary/fluidstructure/couplingmanager_structuremesh.hh>
+#include <dumux/multidomain/boundary/fluidstructure/couplingmanager_cvfe_simple.hh>
+
 namespace Dumux {
 
 template<class MDTraits>
-class BiotCouplingManager
+class FluidStructureCouplingManager
 : public CouplingManager<MDTraits>
 {
     using ParentType = CouplingManager<MDTraits>;
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
 
-    // the sub domain type tags
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
@@ -52,182 +54,144 @@ class BiotCouplingManager
     template<std::size_t id> using Indices
         = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>::VolumeVariables::Indices;
 
-    template<std::size_t id> using CouplingStencil = std::vector<GridIndex<id>>;
-
     using GlobalPosition = typename Element<0>::Geometry::GlobalCoordinate;
 
+    using StructureMeshMotionMDTraits = MultiDomainTraits<SubDomainTypeTag<0>, SubDomainTypeTag<1>>;
+    using FluidMDTraits = MultiDomainTraits<SubDomainTypeTag<2>, SubDomainTypeTag<3>>;
+
+    template<std::size_t id>
+    using SubSolutionVector = std::decay_t<decltype(std::declval<typename MDTraits::SolutionVector>()[Dune::index_constant<id>()])>;
+    using SolutionVectors = typename MDTraits::template TupleOfSharedPtr<SubSolutionVector>;
+
+    using CouplingStencil = std::vector<std::size_t>;
 public:
-    static constexpr auto mechanicsIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto flowIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto fluidMomentumIdx = typename MDTraits::template SubDomain<0>::Index();
+    static constexpr auto fluidMassIdx = typename MDTraits::template SubDomain<1>::Index();
+    static constexpr auto structureIdx = typename MDTraits::template SubDomain<2>::Index();
+    static constexpr auto meshMotionIdx = typename MDTraits::template SubDomain<3>::Index();
 
     //! export traits
     using MultiDomainTraits = MDTraits;
 
-    BiotCouplingManager() = default;
-
-    BiotCouplingManager(std::shared_ptr<GridGeometry<mechanicsIdx>> mechanicsGG,
-                        std::shared_ptr<GridGeometry<flowIdx>> flowGG)
+    FluidStructureCouplingManager()
+    : structureMeshMotionCouplingManager_()
+    , fluidCouplingManager_()
     {
-        const auto& mechanicsGridGeometry = *mechanicsGG;
-        const auto& flowGridGeometry = *flowGG;
-        auto mechanicsFVGeometry = localView(mechanicsGridGeometry);
-        auto flowFVGeometry = localView(flowGridGeometry);
-
-        flowToMechStencils_.clear();
-        flowToMechStencils_.resize(flowGridGeometry.gridView().size(0));
-
-        mechToFlowStencils_.clear();
-        mechToFlowStencils_.resize(mechanicsGridGeometry.gridView().size(0));
-
-        assert(flowToMechStencils_.size() == mechToFlowStencils_.size());
-
-        for (const auto& element : elements(mechanicsGridGeometry.gridView()))
+        using namespace Dune::Hybrid;
+        forEach(solutionVectors_, [&](auto&& solutionVector)
         {
-            mechanicsFVGeometry.bindElement(element);
-            flowFVGeometry.bindElement(element);
-            const auto eIdx = mechanicsFVGeometry.elementIndex();
+            solutionVector = std::make_shared<typename std::decay_t<decltype(solutionVector)>::element_type>();
+        });
+    };
 
-            for (const auto& scv : scvs(mechanicsFVGeometry))
-                flowToMechStencils_[eIdx].push_back(scv.dofIndex());
-
-            for (const auto& scv : scvs(flowFVGeometry))
-                mechToFlowStencils_[eIdx].push_back(scv.dofIndex());
-        }
+    FluidStructureCouplingManager(std::shared_ptr<GridGeometry<structureIdx>> structureGG,
+                                  std::shared_ptr<GridGeometry<meshMotionIdx>> meshMotionGG,
+                                  std::shared_ptr<GridGeometry<fluidMomentum>> fluidMomentumGG,
+                                  std::shared_ptr<GridGeometry<fluidMass>> fluidMassGG)
+    : structureMeshMotionCouplingManager_(structureGG, meshMotionGG)
+    , fluidCouplingManager_(fluidMomentumGG, fluidMassGG)
+    {
+        // compute coupling stencils for fluid mesh motion and fluid structure
     }
 
-    void init(std::shared_ptr<Problem<mechanicsIdx>> mechanicsProblem,
-              std::shared_ptr<Problem<flowIdx>> flowProblem,
+    void init(std::shared_ptr<Problem<structureIdx>> structureProblem,
+              std::shared_ptr<Problem<meshMotionIdx>> meshMotionProblem,
+              std::shared_ptr<Problem<fluidMomentum>> fluidMomentumProblem,
+              std::shared_ptr<Problem<fluidMass>> fluidMassProblem,
               const SolutionVector& curSol)
     {
         this->updateSolution(curSol);
-        this->setSubProblems(std::make_tuple(mechanicsProblem, flowProblem));
-    }
+        this->setSubProblems(std::make_tuple(structureProblem, meshMotionProblem, fluidMomentumProblem, fluidMassProblem));
 
-    template<std::size_t i, std::size_t j>
-    const std::vector<std::size_t>& couplingStencil(Dune::index_constant<i> domainI,
-                                                    const Element<i>& element,
-                                                    Dune::index_constant<j> domainJ) const
-    {
-        static_assert(i != j, "A domain cannot be coupled to itself!");
-
-        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
-        if constexpr (domainI == mechanicsIdx)
-            return mechToFlowStencils_[eIdx];
-        else
-            return flowToMechStencils_[eIdx];
-    }
-
-    auto divU(typename GridGeometry<flowIdx>::LocalView const& fvGeometry,
-              typename GridGeometry<flowIdx>::SubControlVolume const& scv) const
-    {
-        const auto& gg = this->problem(mechanicsIdx).gridGeometry();
-        const auto elemSol = elementSolution(fvGeometry.element(), curSol(mechanicsIdx), gg);
-
-        const auto gradU = evalGradients(
-            fvGeometry.element(),
-            fvGeometry.element().geometry(),
-            gg, elemSol,
-            scv.center()
+        using FFSol = typename CVFEFreeFlowCouplingManagerSimple<FluidMDTraits>::SolutionVectorStorage;
+        fluidCouplingManager_.init(
+            fluidMomentumProblem, fluidMassProblem,
+            FFSol{ std::get<fluidMomentumIndex>(this->curSol()), std::get<fluidwMassIndex>(this->curSol()) }
         );
 
-        double divU = 0.0;
-        for (int i = 0; i < gradU.size(); ++i)
-            divU += gradU[i][i];
-        return divU;
-    }
-
-    auto displacement(typename GridGeometry<flowIdx>::LocalView const& fvGeometry,
-                      typename GridGeometry<flowIdx>::SubControlVolumeFace const& scvf) const
-    {
-        const auto& gg = this->problem(mechanicsIdx).gridGeometry();
-        const auto elemSol = elementSolution(fvGeometry.element(), curSol(mechanicsIdx), gg);
-        return evalSolution(
-            fvGeometry.element(),
-            fvGeometry.element().geometry(),
-            gg, elemSol,
-            scvf.ipGlobal()
+        using SMSol = typename StructureMeshCouplingManager<StructureMeshMotionMDTraits>::SolutionVectorStorage;
+        structureMeshMotionCouplingManager_.init(
+            structureProblem, meshMotionProblem,
+            SMSol{ std::get<structureIdx>(this->curSol()), std::get<meshMotionIdx>(this->curSol()) }
         );
     }
 
-    auto totalPressure(typename GridGeometry<mechanicsIdx>::LocalView const& fvGeometry,
-                       typename GridGeometry<mechanicsIdx>::SubControlVolumeFace const& scvf) const
+    //! Update the solution vector before assembly
+    void updateSolution(const typename MDTraits::SolutionVector& curSol)
     {
-        const auto& gg = this->problem(flowIdx).gridGeometry();
-        const auto elemSol = elementSolution(fvGeometry.element(), curSol(flowIdx), gg);
-        return evalSolution(
-            fvGeometry.element(),
-            fvGeometry.element().geometry(),
-            gg, elemSol,
-            scvf.ipGlobal()
-        )[1];
-    }
-
-    /*!
-     * \brief the solution vector of the subproblem
-     * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     */
-    template<std::size_t i>
-    auto& curSol(Dune::index_constant<i> domainIdx)
-    { return ParentType::curSol(domainIdx); }
-
-    /*!
-     * \brief the solution vector of the subproblem
-     * \param domainIdx The domain index
-     * \note in case of numeric differentiation the solution vector always carries the deflected solution
-     */
-    template<std::size_t i>
-    const auto& curSol(Dune::index_constant<i> domainIdx) const
-    { return ParentType::curSol(domainIdx); }
-
-    /*!
-     * \brief Compute colors for multithreaded assembly
-     */
-    void computeColorsForAssembly()
-    { elementSets_ = computeColoring(this->problem(flowIdx).gridGeometry()).sets; }
-
-    /*!
-     * \brief Execute assembly kernel in parallel
-     *
-     * \param domainId the domain index of domain i
-     * \param assembleElement kernel function to execute for one element
-     */
-    template<std::size_t i, class AssembleElementFunc>
-    void assembleMultithreaded(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
-    {
-        if (elementSets_.empty())
-            DUNE_THROW(Dune::InvalidStateException,
-                "Call computeColorsForAssembly before assembling in parallel!");
-
-        // make this element loop run in parallel
-        // for this we have to color the elements so that we don't get
-        // race conditions when writing into the global matrix or modifying grid variable caches
-        // each color can be assembled using multiple threads
-        const auto& grid = this->problem(domainId).gridGeometry().gridView().grid();
-        for (const auto& elements : elementSets_)
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(solutionVectors_)), [&](const auto id)
         {
-            Dumux::parallelFor(elements.size(), [&](const std::size_t n)
-            {
-                const auto element = grid.entity(elements[n]);
-                assembleElement(element);
-            });
-        }
+            *std::get<id>(solutionVectors_) = curSol[id];
+        });
     }
+
+    /*!
+     * \brief Return the coupling element stencil in domain J for a given element in domain I
+     */
+    template<std::size_t i, class Entity, std::size_t j>
+    const auto& couplingStencil(Dune::index_constant<i> domainI,
+                                const Entity& entity,
+                                Dune::index_constant<j> domainJ) const
+    {
+        // if the domains are coupled according to the map, forward to sub-coupling manager
+        if constexpr (domainI == fluidMassIdx && domainJ == fluidMomentumIdx)
+            return fluidCouplingManager_.couplingStencil(domainI, entity, domainJ);
+        else if constexpr (domainI == fluidMomentumIdx && domainJ == fluidMassIdx)
+            return fluidCouplingManager_.couplingStencil(domainI, entity, domainJ);
+        else if constexpr (domainI == structureIdx && domainJ == meshMotionIdx)
+            return structureMeshMotionCouplingManager_.couplingStencil(domainI, entity, domainJ);
+        else if constexpr (domainI == meshMotionIdx && domainJ == structureIdx)
+            return structureMeshMotionCouplingManager_.couplingStencil(domainI, entity, domainJ);
+        else
+            return emptyStencil_;
+    }
+
+    // coupling quantity interfaces
+
+    // coupling quantity forward interfaces
+    auto displacement(typename GridGeometry<meshMotionIdx>::LocalView::Element const& element,
+                      typename GridGeometry<meshMotionIdx>::SubControlVolume const& scv) const
+    { return structureMeshMotionCouplingManager_.displacement(element, scv); }
+
+    Scalar pressure(const Element<fluidMomentumIdx>& element,
+                    const FVElementGeometry<fluidMomentumIdx>& fvGeometry,
+                    const SubControlVolumeFace<fluidMomentumIdx>& scvf,
+                    const bool considerPreviousTimeStep = false) const
+    { return fluidCouplingManager_.pressure(element, fvGeometry, scvf, considerPreviousTimeStep); }
+
+    Scalar pressure(const Element<fluidMomentumIdx>& element,
+                    const FVElementGeometry<fluidMomentumIdx>& fvGeometry,
+                    const SubControlVolume<fluidMomentumIdx>& scv,
+                    const bool considerPreviousTimeStep = false) const
+    { return fluidCouplingManager_.pressure(element, fvGeometry, scv, considerPreviousTimeStep); }
+
+    auto faceVelocity(const Element<fluidMassIdx>& element,
+                      const SubControlVolumeFace<fluidMassIdx>& scvf) const
+    { fluidCouplingManager_.faceVelocity(element, scvf); }
+
+    auto elementVelocity(const FVElementGeometry<fluidMassIdx>& fvGeometry) const
+    { fluidCouplingManager_.elementVelocity(fvGeometry); }
 
 protected:
-    using ParentType::curSol;
+    SolutionVectors& curSol()
+    { return solutionVectors_; }
+
+    const SolutionVectors& curSol() const
+    { return solutionVectors_; }
 
 private:
-    //! coloring for multithreaded assembly
-    std::deque<std::vector<ElementSeed<mechanicsIdx>>> elementSets_;
+    StructureMeshCouplingManager<StructureMeshMotionMDTraits> structureMeshMotionCouplingManager_;
+    CVFEFreeFlowCouplingManagerSimple<FluidMDTraits> fluidCouplingManager_;
 
-    std::vector<std::vector<std::size_t>> mechToFlowStencils_;
-    std::vector<std::vector<std::size_t>> flowToMechStencils_;
+    SolutionVectors solutionVectors_;
+
+    CouplingStencil emptyStencil_;
 };
 
 // we support multithreaded assembly
 template<class MDTraits>
-struct CouplingManagerSupportsMultithreadedAssembly<BiotCouplingManager<MDTraits>>
+struct CouplingManagerSupportsMultithreadedAssembly<FluidStructureCouplingManager<MDTraits>>
 : public std::true_type {};
 
 } // end namespace Dumux
