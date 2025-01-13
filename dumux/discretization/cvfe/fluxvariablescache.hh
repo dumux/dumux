@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
 
 #include <dune/common/fvector.hh>
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
@@ -76,9 +77,8 @@ public:
         localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
 
         // compute the gradN at for every scv/dof
-        const auto locDofs = localDofs(fvGeometry);
-        gradN_.resize(locDofs.size());
-        for (const auto& localDof: locDofs)
+        gradN_.resize(Detail::numLocalDofs(fvGeometry));
+        for (const auto& localDof: localDofs(fvGeometry))
             jacInvT_.mv(shapeJacobian_[localDof.indexInElement()][0], gradN_[localDof.indexInElement()]);
     }
 

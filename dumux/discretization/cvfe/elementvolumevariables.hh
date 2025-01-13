@@ -180,9 +180,8 @@ public:
         auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
 
         // update the volvars of the element
-        const auto cvLocDofs = cvLocalDofs(fvGeometry);
-        volumeVariables_.resize(cvLocDofs.size());
-        for (const auto& localDof : cvLocDofs)
+        volumeVariables_.resize(Detail::numLocalDofs(fvGeometry));
+        for (const auto& localDof : cvLocalDofs(fvGeometry))
             volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, localDof.scv());
     }
 
