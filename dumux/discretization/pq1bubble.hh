@@ -45,7 +45,9 @@ namespace Dumux::Properties {
 //! Type tag for the pq1bubble scheme.
 // Create new type tags
 namespace TTag {
-struct PQ1BubbleModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+struct PQ1BubbleBase { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+struct PQ1BubbleModel { using InheritsFrom = std::tuple<PQ1BubbleBase>; };
+struct PQ1BubbleHybridModel { using InheritsFrom = std::tuple<PQ1BubbleBase>; };
 } // end namespace TTag
 
 //! Set the default for the grid geometry
@@ -60,9 +62,22 @@ public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache>;
 };
 
+//! Set the default for the grid geometry for hybrid model
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PQ1BubbleHybridModel>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Traits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView>>;
+public:
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, Traits>;
+};
+
 //! The grid volume variables vector class
 template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleModel>
+struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleBase>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
@@ -75,7 +90,7 @@ public:
 
 //! The flux variables cache class
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::PQ1BubbleModel>
+struct FluxVariablesCache<TypeTag, TTag::PQ1BubbleBase>
 {
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -86,7 +101,7 @@ public:
 
 //! The grid flux variables cache vector class
 template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::PQ1BubbleModel>
+struct GridFluxVariablesCache<TypeTag, TTag::PQ1BubbleBase>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
@@ -102,7 +117,7 @@ public:
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::PQ1BubbleModel>
+struct ElementBoundaryTypes<TypeTag, TTag::PQ1BubbleBase>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
