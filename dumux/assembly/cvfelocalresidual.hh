@@ -82,6 +82,7 @@ public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
+    using ParentType::evalStorage;
     /*!
      * \brief Compute the storage local residual, i.e. the deviation of the
      *        storage term from zero for instationary problems.
@@ -94,7 +95,6 @@ public:
      * \param curElemVolVars The volume averaged variables for all
      *                       sub-control volumes of the element at the current  time level
      */
-    using ParentType::evalStorage;
     ElementResidualVector evalStorage(const Element& element,
                                       const FVElementGeometry& fvGeometry,
                                       const ElementVolumeVariables& prevElemVolVars,
@@ -119,8 +119,8 @@ public:
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
-     * \param curElemVolVars The volume averaged variables for all
-     *                       sub-control volumes of the element at the current  time level
+     * \param elemVolVars The volume averaged variables for all
+     *                    sub-control volumes of the element at the current  time level
      * \param elemFluxVarsCache The element flux variables cache
      * \param bcTypes The element boundary types
      */
