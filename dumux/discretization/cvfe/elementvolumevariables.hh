@@ -183,6 +183,13 @@ public:
         volumeVariables_.resize(Detail::numLocalDofs(fvGeometry));
         for (const auto& localDof : cvLocalDofs(fvGeometry))
             volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, fvGeometry.scv(localDof.indexInElement()));
+
+        if constexpr (Detail::hasNonCVLocalDofsInterface<FVElementGeometry>() )
+        {
+            // For non-cv dofs we need an update function that does not need an scv
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, localDof);
+        }
     }
 
     const VolumeVariables& operator [](std::size_t localIdx) const

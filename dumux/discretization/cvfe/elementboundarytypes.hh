@@ -60,6 +60,23 @@ public:
                 hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
             }
         }
+
+        if constexpr (Detail::hasNonCVLocalDofsInterface<FVElementGeometry>() )
+        {
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+            {
+                const auto localIdx = localDof.indexInElement();
+                bcTypes_[localIdx].reset();
+
+                if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
+                {
+                    // TODO: This only works since we currently also have scvs for such dofs
+                    bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localIdx));
+                    hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
+                }
+            }
+        }
     }
 
     /*!
