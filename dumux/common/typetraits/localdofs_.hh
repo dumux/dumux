@@ -36,6 +36,16 @@ constexpr int numLocalDofs(const FVElementGeometry& fvGeometry)
         return fvGeometry.numScv();
 }
 
+//! helper struct detecting if a fvElementGeometry object has a nonCVLocalDofs() function
+template<class Imp>
+using NonCVLocalDofsDetector = decltype(
+    nonCVLocalDofs(std::declval<Imp>())
+);
+
+template<class Imp>
+constexpr inline bool hasNonCVLocalDofsInterface()
+{ return Dune::Std::is_detected<NonCVLocalDofsDetector, Imp>::value; }
+
 //! helper struct detecting if a fvElementGeometry object has maxNumElementDofs
 template<class Imp>
 using MaxNumElementDofs = decltype( Imp::maxNumElementDofs );
