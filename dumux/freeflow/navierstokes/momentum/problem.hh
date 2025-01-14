@@ -18,6 +18,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 #include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
 
 namespace Dumux {
@@ -613,6 +614,33 @@ public:
     {}
 
     /*!
+     * \brief Evaluate the source term at a given integration point, related to the residual of a local dof
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param localDof The local dof
+     * \param ipData Integration point data
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     */
+    template<class LocalDof, class IpData>
+    Sources source(const Element &element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const LocalDof& localDof,
+                   const IpData& ipData) const
+    {
+        return asImp_().sourceAtPos(ipData.ipGlobal());
+    }
+
+    /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
@@ -637,7 +665,11 @@ public:
                    const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
-        return asImp_().sourceAtPos(scv.center());
+        return asImp_().source(element,
+                               fvGeometry,
+                               elemVolVars,
+                               fvGeometry.localDof(scv.localDofIndex()),
+                               Dumux::CVFE::IntegrationPointData<GlobalPosition>(scv.center()));
     }
 
     /*!
@@ -726,6 +758,64 @@ public:
         else
             return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
+
+    /*!
+     * \brief Evaluates the boundary flux related to a localDof at a given integration point.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param localDof The local dof
+     * \param faceIpData Face integration point data
+     */
+    template<class ElementFluxVariablesCache, class LocalDof, class FaceIpData>
+    BoundaryFluxes boundaryFlux(const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const ElementFluxVariablesCache& elemFluxVarsCache,
+                                const LocalDof& localDof,
+                                const FaceIpData& faceIpData) const
+    {
+        return asImp_().boundaryFluxAtPos(faceIpData.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The boundary sub control volume face
+     */
+    template<class ElementFluxVariablesCache>
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
+    {
+        using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<GlobalPosition, typename SubControlVolumeFace::Traits::LocalIndexType>;
+        return asImp_().boundaryFlux(element,
+                                     fvGeometry,
+                                     elemVolVars,
+                                     elemFluxVarsCache,
+                                     fvGeometry.localDof(fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()),
+                                     FaceIpData(scvf.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
+    }
+
+    /*!
+     * \brief Returns the neumann flux at a given position.
+     */
+    BoundaryFluxes neumannAtPos(const GlobalPosition& globalPos) const
+    { return asImp_().boundaryFluxAtPos(globalPos); } //! A default, i.e. if the user's does not overload any neumann method
+
+    /*!
+     * \brief Returns the boundary flux at a given position.
+     */
+    BoundaryFluxes boundaryFluxAtPos(const GlobalPosition& globalPos) const
+    { return BoundaryFluxes(0.0); } //! A default, i.e. if the user's does not overload any boundaryFlux method
 
     /*!
      * \brief Returns the acceleration due to gravity.
