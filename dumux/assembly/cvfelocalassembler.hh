@@ -257,7 +257,7 @@ public:
         // and set the residual to (privar - dirichletvalue)
         if (this->elemBcTypes().hasDirichlet())
         {
-            for (const auto& localDofI : cvLocalDofs(this->fvGeometry()))
+            for (const auto& localDofI : localDofs(this->fvGeometry()))
             {
                 const auto& scvI = this->fvGeometry().scv(localDofI.indexInElement());
                 const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
@@ -337,6 +337,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/t
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
@@ -463,6 +464,11 @@ public:
         // calculation of the derivatives
         for (const auto& localDof : cvLocalDofs(fvGeometry))
             assembleDerivative(fvGeometry.scv(localDof.indexInElement()));
+
+        if constexpr (Detail::hasNonCVLocalDofsInterface<FVElementGeometry>() )
+            // For non-cv dofs we need an to support interfaces that get a localDof
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                assembleDerivative(localDof);
 
         // restore original state of the flux vars cache in case of global caching.
         // In the case of local caching this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
