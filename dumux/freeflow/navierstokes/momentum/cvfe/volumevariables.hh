@@ -43,14 +43,14 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    template<class ElementSolution, class Problem, class Element, class ScvOrLocalDof>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
                 const Element& element,
-                const SubControlVolume& scv)
+                const ScvOrLocalDof& scvOrLocalDof)
     {
-        priVars_ = elemSol[scv.indexInElement()];
-        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
+        priVars_ = elemSol[scvOrLocalDof.indexInElement()];
+        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scvOrLocalDof, elemSol);
     }
 
     /*!
