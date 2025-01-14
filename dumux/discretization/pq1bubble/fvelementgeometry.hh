@@ -137,6 +137,16 @@ public:
         );
     }
 
+    //! get local dof
+    auto localDof(LocalIndexType localDofIdx) const
+    {
+        return CVFE::LocalDof{
+            static_cast<LocalIndexType>(localDofIdx),
+            static_cast<GridIndexType>(GeometryHelper::dofIndex(this->gridGeometry().dofMapper(), this->element(), localDofIdx)),
+            static_cast<GridIndexType>(this->elementIndex())
+        };
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
