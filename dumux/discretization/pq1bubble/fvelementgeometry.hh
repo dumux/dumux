@@ -79,6 +79,13 @@ public:
         return ggCache_->scvs(eIdx_)[scvIdx];
     }
 
+    //! Get the sub control volume that corresponds to a localDof (one-to-one map)
+    template<class LocalDof, typename std::enable_if_t<!std::is_integral<LocalDof>::value, int> = 0>
+    const SubControlVolume& scv(const LocalDof& localDof) const
+    {
+        return ggCache_->scvs(eIdx_)[localDof.index()];
+    }
+
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
     {
