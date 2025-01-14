@@ -119,6 +119,16 @@ public:
         );
     }
 
+    //! get local dof
+    auto localDof(LocalIndexType localDofIdx) const
+    {
+        return CVFE::LocalDof{
+            static_cast<LocalIndexType>(localDofIdx),
+            static_cast<GridIndexType>(this->scv(localDofIdx).dofIndex()),
+            static_cast<GridIndexType>(this->elementIndex())
+        };
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -136,6 +146,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return numScv();
     }
 
     //! The total number of sub control volumes
@@ -315,6 +331,16 @@ public:
         );
     }
 
+    //! get local dof
+    auto localDof(LocalIndexType localDofIdx) const
+    {
+        return CVFE::LocalDof{
+            static_cast<LocalIndexType>(localDofIdx),
+            static_cast<GridIndexType>(this->scv(localDofIdx).dofIndex()),
+            static_cast<GridIndexType>(this->elementIndex())
+        };
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -331,6 +357,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return numScv();
     }
 
     //! The total number of sub control volumes
