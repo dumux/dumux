@@ -65,8 +65,15 @@ public:
                  const Problem& problem)
     {
         if (deflectAll_)
+        {
             for (const auto& localDof : cvLocalDofs(fvGeometry_))
                 accessor_(fvGeometry_.scv(localDof.indexInElement())).update(elemSol, problem, fvGeometry_.element(), fvGeometry_.scv(localDof.indexInElement()));
+
+            if constexpr (Detail::hasNonCVLocalDofsInterface<FVElementGeometry>() )
+                // For non-cv dofs we need an to support interfaces that get a localDof
+                for (const auto& localDof : nonCVLocalDofs(fvGeometry_))
+                    accessor_(localDof).update(elemSol, problem, fvGeometry_.element(), localDof);
+        }
         else
             accessor_(scvOrLocalDof).update(elemSol, problem, fvGeometry_.element(), scvOrLocalDof);
     }
@@ -77,8 +84,14 @@ public:
         if (!deflectAll_)
             accessor_(scvOrLocalDof) = origVolVars_[0];
         else
+        {
             for (const auto& localDof : cvLocalDofs(fvGeometry_))
                 accessor_(fvGeometry_.scv(localDof.indexInElement())) = origVolVars_[localDof.indexInElement()];
+
+            if constexpr (Detail::hasNonCVLocalDofsInterface<FVElementGeometry>() )
+                for (const auto& localDof : nonCVLocalDofs(fvGeometry_))
+                    accessor_(localDof) = origVolVars_[localDof.indexInElement()];
+        }
     }
 
 private:
