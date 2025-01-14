@@ -100,6 +100,62 @@ int test()
         exitCode += 1;
     };
 
+    const auto testIntersections = [&] (const auto& facetElement,
+                                        const auto& domainElement,
+                                        const auto& mapper,
+                                        const bool isBoundary = false) {
+        if (not intersectionVolume(facetElement.geometry(), domainElement.geometry()).has_value())
+            handleError("Facet and domain element do not overlap");
+
+        const auto scvIndices = toVector(mapper.domainScvsAdjacentTo(facetElement, domainElement));
+        const auto expectedNumScvs = isBox ? std::pow(2, dim-1) : 1;
+        if (scvIndices.size() != expectedNumScvs)
+            handleError(Dumux::Fmt::format(
+                "Unexpected number of adjacent sub-control volumes: {}, expected {}",
+                scvIndices.size(),
+                expectedNumScvs
+            ));
+
+        const auto scvfIndices = toVector(mapper.domainScvfsAdjacentTo(facetElement, domainElement));
+        const auto expectedNumScvfs = isBox ? (isBoundary ? expectedNumScvs : 0) : 1;
+        if (scvfIndices.size() != expectedNumScvfs)
+            handleError(Dumux::Fmt::format(
+                "Unexpected number of adjacent sub-control volume faces: {}, expected {}",
+                scvfIndices.size(),
+                expectedNumScvfs
+            ));
+
+        const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
+        for (const auto scvIndex : scvIndices)
+        {
+            const auto& scv = fvGeometry.scv(scvIndex);
+            const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
+            const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvs;
+            if (not isVolume.has_value())
+                handleError("Facet element and domain scv do not overlap");
+            if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
+                handleError(Dumux::Fmt::format(
+                    "Unexpected area/volume of the intersection between sub-control volume and facet element: {}, expected {}",
+                    isVolume.value(),
+                    expectedVolume
+                ));
+        }
+        for (const auto scvfIndex : scvfIndices)
+        {
+            const auto& scv = fvGeometry.scvf(scvfIndex);
+            const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
+            const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvfs;
+            if (not isVolume.has_value())
+                handleError("Facet element and domain scvf do not overlap");
+            if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
+                handleError(Dumux::Fmt::format(
+                    "Unexpected area/volume of the intersection between sub-control volume face and facet element: {}, expected {}",
+                    isVolume.value(),
+                    expectedVolume
+                ));
+        }
+    };
+
     { // grid composed of interior facets
         Dumux::FacetGridManager<Grid, FacetGrid> facetGridManager;
         facetGridManager.init(grid, [] (const auto&, const auto& is) {
@@ -119,56 +175,7 @@ int test()
             for (const auto& domainElement : mapper.domainElementsAdjacentTo(facetElement))
             {
                 elementCount++;
-                if (not intersectionVolume(facetElement.geometry(), domainElement.geometry()).has_value())
-                    handleError("Facet and domain element do not overlap");
-
-                const auto scvIndices = toVector(mapper.domainScvsAdjacentTo(facetElement, domainElement));
-                const auto expectedNumScvs = isBox ? std::pow(2, dim-1) : 1;
-                if (scvIndices.size() != expectedNumScvs)
-                    handleError(Dumux::Fmt::format(
-                        "Unexpected number of adjacent sub-control volumes: {}, expected {}",
-                        scvIndices.size(),
-                        expectedNumScvs
-                    ));
-
-                const auto scvfIndices = toVector(mapper.domainScvfsAdjacentTo(facetElement, domainElement));
-                const auto expectedNumScvfs = isBox ? 0 : 1;
-                if (scvfIndices.size() != expectedNumScvfs)
-                    handleError(Dumux::Fmt::format(
-                        "Unexpected number of adjacent sub-control volume faces: {}, expected {}",
-                        scvfIndices.size(),
-                        expectedNumScvfs
-                    ));
-
-                const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
-                for (const auto scvIndex : scvIndices)
-                {
-                    const auto& scv = fvGeometry.scv(scvIndex);
-                    const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
-                    const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvs;
-                    if (not isVolume.has_value())
-                        handleError("Facet element and domain scv do not overlap");
-                    if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
-                        handleError(Dumux::Fmt::format(
-                            "Unexpected area/volume of the intersection between sub-control volume and facet element: {}, expected {}",
-                            isVolume.value(),
-                            expectedVolume
-                        ));
-                }
-                for (const auto scvfIndex : scvfIndices)
-                {
-                    const auto& scv = fvGeometry.scvf(scvfIndex);
-                    const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
-                    const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvfs;
-                    if (not isVolume.has_value())
-                        handleError("Facet element and domain scvf do not overlap");
-                    if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
-                        handleError(Dumux::Fmt::format(
-                            "Unexpected area/volume of the intersection between sub-control volume face and facet element: {}, expected {}",
-                            isVolume.value(),
-                            expectedVolume
-                        ));
-                }
+                testIntersections(facetElement, domainElement, mapper);
             }
 
             if (elementCount != 2)
@@ -190,7 +197,10 @@ int test()
         std::vector<std::size_t> adjacentElements;
         for (const auto& facetElement : elements(facetGridView))
             for (const auto& element : mapper.domainElementsAdjacentTo(facetElement))
+            {
                 adjacentElements.push_back(grid.leafGridView().indexSet().index(element));
+                testIntersections(facetElement, element, mapper, true);
+            }
 
         std::ranges::sort(adjacentElements);
         adjacentElements.erase(std::unique(adjacentElements.begin(), adjacentElements.end()), adjacentElements.end());
