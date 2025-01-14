@@ -84,6 +84,89 @@ private:
 
 /*!
  * \ingroup NavierStokesModel
+ * \brief Context for interpolating data on integration points
+ *
+ * \tparam Problem the problem type to solve
+ * \tparam FVElementGeometry the element geometry type
+ * \tparam ElementVolumeVariables the element volume variables type
+ * \tparam IpData the integration point data type
+ */
+template<class Problem,
+         class FVElementGeometry,
+         class ElementVolumeVariables,
+         class IpData>
+class NavierStokesMomentumFluxFunctionContext
+{
+    using Element = typename FVElementGeometry::Element;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    static constexpr int dim = FVElementGeometry::GridGeometry::GridView::dimension;
+    static constexpr int dimWorld = FVElementGeometry::GridGeometry::GridView::dimensionworld;
+
+    using Tensor = Dune::FieldMatrix<typename GlobalPosition::value_type, dim, dimWorld>;
+
+public:
+
+    //! Initialize the flux variables storing some temporary pointers
+    NavierStokesMomentumFluxFunctionContext(
+        const Problem& problem,
+        const FVElementGeometry& fvGeometry,
+        const ElementVolumeVariables& elemVolVars,
+        const IpData& ipData
+    )
+    : problem_(problem)
+    , fvGeometry_(fvGeometry)
+    , elemVolVars_(elemVolVars)
+    , ipData_(ipData)
+    {}
+
+    const Problem& problem() const
+    { return problem_; }
+
+    const Element& element() const
+    { return fvGeometry_.element(); }
+
+    const FVElementGeometry& fvGeometry() const
+    { return fvGeometry_; }
+
+    const ElementVolumeVariables& elemVolVars() const
+    { return elemVolVars_; }
+
+    const IpData& ipData() const
+    { return ipData_; }
+
+    GlobalPosition velocity() const
+    {
+        GlobalPosition v(0.0);
+        const auto& shapeValues = ipData_.shapeValues();
+        for (const auto& localDof : localDofs(fvGeometry_))
+            v.axpy(shapeValues[localDof.indexInElement()][0], elemVolVars_[localDof.indexInElement()].velocity());
+
+        return v;
+    }
+
+    Tensor gradVelocity() const
+    {
+        Tensor gradV(0.0);
+        for (const auto& localDof : localDofs(fvGeometry_))
+        {
+            const auto& volVars = elemVolVars_[localDof.indexInElement()];
+            for (int dir = 0; dir < dim; ++dir)
+                gradV[dir].axpy(volVars.velocity(dir), ipData_.gradN(localDof.indexInElement()));
+        }
+        return gradV;
+    }
+
+private:
+    const Problem& problem_;
+    const FVElementGeometry& fvGeometry_;
+    const ElementVolumeVariables& elemVolVars_;
+    const IpData& ipData_;
+};
+
+/*!
+ * \ingroup NavierStokesModel
  * \brief The flux variables class for the Navier-Stokes model using control-volume finite element schemes
  */
 template<class GridGeometry, class NumEqVector>
@@ -119,8 +202,8 @@ public:
 
         // interpolate velocity at scvf
         NumEqVector v(0.0);
-        for (const auto& scv : scvs(fvGeometry))
-            v.axpy(shapeValues[scv.indexInElement()][0], elemVolVars[scv].velocity());
+        for (const auto& localDof : localDofs(fvGeometry))
+            v.axpy(shapeValues[localDof.indexInElement()][0], elemVolVars[localDof].velocity());
 
         // get density from the problem
         const Scalar density = context.problem().density(context.element(), context.fvGeometry(), scvf);
@@ -150,11 +233,11 @@ public:
 
         // interpolate velocity gradient at scvf
         Tensor gradV(0.0);
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& localDof : localDofs(fvGeometry))
         {
-            const auto& volVars = elemVolVars[scv];
+            const auto& volVars = elemVolVars[localDof];
             for (int dir = 0; dir < dim; ++dir)
-                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.indexInElement()));
         }
 
         // get viscosity from the problem
