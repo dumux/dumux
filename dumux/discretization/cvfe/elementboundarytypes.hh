@@ -43,21 +43,40 @@ public:
                 const typename FVElementGeometry::Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-        bcTypes_.resize(fvGeometry.numScv());
-
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        for (const auto& scv : scvs(fvGeometry))
+        if constexpr (!Detail::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
-            const auto localIdx = scv.localDofIndex();
-            bcTypes_[localIdx].reset();
-
-            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+            bcTypes_.resize(fvGeometry.numScv());
+            for (const auto& scv : scvs(fvGeometry))
             {
-                bcTypes_[localIdx] = problem.boundaryTypes(element, scv);
-                hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
+                const auto localIdx = scv.localDofIndex();
+                bcTypes_[localIdx].reset();
+
+                if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+                {
+                    bcTypes_[localIdx] = problem.boundaryTypes(element, scv);
+                    hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
+                }
+            }
+        }
+        else
+        {
+            bcTypes_.resize(Detail::numLocalDofs(fvGeometry));
+            for (const auto& localDof : localDofs(fvGeometry))
+            {
+                const auto localIdx = localDof.index();
+                bcTypes_[localIdx].reset();
+
+                if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
+                {
+                    // for non-cv dofs boundaryTypes(fvGeometry, localDof) always needs to be implemented
+                    bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, localDof);
+                    hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
+                    hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
+                }
             }
         }
     }

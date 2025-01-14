@@ -176,10 +176,27 @@ public:
         // get the solution at the dofs of the element
         auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
 
-        // resize volume variables to the required size
-        volumeVariables_.resize(fvGeometry.numScv());
-        for (auto&& scv : scvs(fvGeometry))
-            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
+        if constexpr (!Detail::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        {
+            // resize volume variables to the required size
+            volumeVariables_.resize(fvGeometry.numScv());
+            for (auto&& scv : scvs(fvGeometry))
+                volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
+        }
+        else
+        {
+            // resize volume variables to the required size
+            volumeVariables_.resize(Detail::numLocalDofs(fvGeometry));
+
+            // ToDo: hybrid schemes currently only work if for each cv local dof there is exactly one scv
+            // update cv related dofs where there exists a scv
+            for (const auto& localDof : cvLocalDofs(fvGeometry))
+                volumeVariables_[localDof.index()].update(elemSol, gridVolVars().problem(), element, fvGeometry.scv(localDof));
+
+            // for non-cv dofs we need an update function that does not need an scv
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                volumeVariables_[localDof.index()].update(elemSol, gridVolVars().problem(), element, localDof);
+        }
     }
 
     const VolumeVariables& operator [](std::size_t localIdx) const
