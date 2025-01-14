@@ -100,6 +100,12 @@ public:
         return gridGeometry().feCache().get(element().type()).localBasis();
     }
 
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return numScv();
+    }
+
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {
