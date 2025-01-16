@@ -43,7 +43,7 @@ public:
                 const typename FVElementGeometry::Element& element,
                 const FVElementGeometry& fvGeometry)
     {
-        bcTypes_.resize(fvGeometry.numScv());
+        bcTypes_.resize(Detail::numLocalDofs(fvGeometry));
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
@@ -55,7 +55,10 @@ public:
 
             if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
             {
-                bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localDof.indexInElement()));
+                if constexpr (Detail::hasProblemBoundaryTypesForLocalDofs<Problem, FVElementGeometry>())
+                    bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, localDof);
+                else
+                    bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localDof.indexInElement()));
                 hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
             }
@@ -70,8 +73,8 @@ public:
 
                 if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
                 {
-                    // TODO: This only works since we currently also have scvs for such dofs
-                    bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localIdx));
+                    // for non-cv dofs boundaryTypes(fvGeometry, localDof) always needs to be implemented
+                    bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, localDof);
                     hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
                     hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
                 }

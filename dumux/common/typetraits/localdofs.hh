@@ -58,6 +58,38 @@ constexpr int maxNumLocalDofs()
         return FVElementGeometry::maxNumElementScvs;
 }
 
+//! helper struct detecting if a fvElementGeometry object defines its own local dof type
+template<class FVG>
+using SpecifiesLocalDof = typename FVG::LocalDof;
+
+template<class FVG>
+using LocalDof_t = Dune::Std::detected_or_t<
+    Dumux::CVFE::LocalDof<typename IndexTraits<typename FVG::GridGeometry::GridView>::LocalIndex,
+                          typename IndexTraits<typename FVG::GridGeometry::GridView>::GridIndex >,
+    SpecifiesLocalDof,
+    FVG
+>;
+
+//! helper struct detecting if a problem has new boundary-related function that get a local dof
+template<class P, class FVG, class LocalDof>
+using BoundaryTypesForLocalDofsDetector = decltype(
+    std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<LocalDof>())
+);
+
+template<class P, class FVG, class LocalDof = LocalDof_t<FVG>>
+constexpr inline bool hasProblemBoundaryTypesForLocalDofs()
+{ return Dune::Std::is_detected<BoundaryTypesForLocalDofsDetector, P, FVG, LocalDof>::value; }
+
+//! helper struct detecting if a problem has new initial function that get a local dof
+template<class P, class FVG, class LocalDof>
+using InitialForLocalDofsDetector = decltype(
+    std::declval<P>().initial(std::declval<FVG>(), std::declval<LocalDof>())
+);
+
+template<class P, class FVG, class LocalDof = LocalDof_t<FVG>>
+constexpr inline bool hasProblemInitialForLocalDofs()
+{ return Dune::Std::is_detected<InitialForLocalDofsDetector, P, FVG, LocalDof>::value; }
+
 } // end namespace Dumux::Detail
 
 #endif

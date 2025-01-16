@@ -16,6 +16,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/integrationpointdata.hh>
@@ -691,14 +692,32 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
+     * \param fvGeometry The finite-volume geometry
+     * \param localDof The local dof
+     */
+    template<class LocalDof>
+    BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
+                                const LocalDof& localDof) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().boundaryTypesAtPos(fvGeometry.dofPosition(localDof));
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
      * \param element The finite element
      * \param scv The sub control volume
      */
+    [[deprecated("Use new interface boundaryTypes(fvGeometry, localDof). Will be removed after release 3.10.")]]
     BoundaryTypes boundaryTypes(const Element& element,
                                 const SubControlVolume& scv) const
     {
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bind(element);
         // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(scv.dofPosition());
+        return asImp_().boundaryTypes(fvGeometry, fvGeometry.localDof(scv.localDofIndex()));
     }
 
     /*!
@@ -716,16 +735,32 @@ public:
     }
 
     /*!
+     * \brief Evaluate Dirichlet boundary conditions for a local dof
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param localDof The local dof
+     */
+    template<class LocalDof>
+    DirichletValues dirichlet(const FVElementGeometry& fvGeometry, const LocalDof& localDof) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().dirichletAtPos(fvGeometry.dofPosition(localDof));
+    }
+
+    /*!
      * \brief Evaluate the boundary conditions for a Dirichlet
      *        control volume.
      *
      * \param element The finite element
      * \param scv the sub control volume
      */
+    [[deprecated("Use new interface dirichlet(fvGeometry, localDof). Will be removed after release 3.10.")]]
     DirichletValues dirichlet(const Element& element, const SubControlVolume& scv) const
     {
+        auto fvGeometry = localView(this->gridGeometry());
+        fvGeometry.bind(element);
         // forward it to the method which only takes the global coordinate
-        return asImp_().dirichletAtPos(scv.dofPosition());
+        return asImp_().dirichlet(fvGeometry, fvGeometry.localDof(scv.localDofIndex()));
     }
 
     /*!
@@ -986,20 +1021,26 @@ public:
     template<class SolutionVector>
     void applyInitialSolution(SolutionVector& sol) const
     {
-        static_assert(GridGeometry::discMethod == DiscretizationMethods::CVFE<DM>{});
         sol.resize(this->gridGeometry().numDofs());
         std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
         auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& localDof : localDofs(fvGeometry))
             {
-                const auto dofIdx = scv.dofIndex();
+                const auto dofIdx = localDof.dofIndex();
                 if (!dofHandled[dofIdx])
                 {
                     dofHandled[dofIdx] = true;
-                    sol[dofIdx] = asImp_().initial(scv);
+                    if constexpr (Detail::hasProblemInitialForLocalDofs<Implementation, FVElementGeometry>())
+                        sol[dofIdx] = asImp_().initial(fvGeometry, localDof);
+                    else
+                    {
+                        assert(localDof.indexInElement() < fvGeometry.numScv());
+                        sol[dofIdx] = asImp_().initial(fvGeometry.scv(localDof.indexInElement()));
+                    }
+
                 }
             }
         }
@@ -1008,6 +1049,7 @@ public:
     /*!
      * \brief Evaluate the initial value at an sub control volume
      */
+    [[deprecated("Implement new interface initial(fvGeometry, localDof). Will be removed after release 3.10.")]]
     InitialValues initial(const SubControlVolume& scv) const
     {
         static_assert(GridGeometry::discMethod == DiscretizationMethods::CVFE<DM>{});
