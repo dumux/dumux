@@ -97,6 +97,13 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return this->element().geometry().corner(localDof.index());
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -277,6 +284,13 @@ public:
     {
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         return Dune::IteratorRange<Iter>(fvGeometry.scvs_.begin(), fvGeometry.scvs_.end());
+    }
+
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return this->element().geometry().corner(localDof.index());
     }
 
     //! iterator range for sub control volumes faces. Iterates over
