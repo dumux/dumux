@@ -129,6 +129,14 @@ public:
         };
     }
 
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return this->element().geometry().corner(localDof.indexInElement());
+    }
+
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -340,6 +348,14 @@ public:
             static_cast<GridIndexType>(this->elementIndex())
         };
     }
+
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return this->element().geometry().corner(localDof.indexInElement());
+    }
+
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
