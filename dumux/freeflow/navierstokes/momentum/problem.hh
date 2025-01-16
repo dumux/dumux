@@ -532,7 +532,7 @@ private:
 };
 
 /*!
- * \brief Navier-Stokes default problem implementation for FCDiamond discretizations
+ * \brief Navier-Stokes default problem implementation for CVFE discretizations
  */
 template<class TypeTag, class DM>
 class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::CVFE<DM>>
@@ -564,10 +564,6 @@ class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::CVFE<DM>>
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
-
-    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<
-        typename GridGeometry::DiscretizationMethod
-    >;
 
 public:
     //! These types are used in place of the typical NumEqVector type.
@@ -701,10 +697,6 @@ public:
     BoundaryTypes boundaryTypes(const Element& element,
                                 const SubControlVolume& scv) const
     {
-        if (!isCVFE)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scv) called for for a non CVFE method.");
-
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scv.dofPosition());
     }
@@ -719,10 +711,6 @@ public:
     BoundaryTypes boundaryTypes(const Element& element,
                                 const SubControlVolumeFace& scvf) const
     {
-        if (isCVFE)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "boundaryTypes(..., scvf) called for a CVFE method.");
-
         // forward it to the method which only takes the global coordinate
         return asImp_().boundaryTypesAtPos(scvf.ipGlobal());
     }
@@ -737,10 +725,7 @@ public:
     DirichletValues dirichlet(const Element& element, const SubControlVolume& scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isCVFE)
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for a non CVFE method.");
-        else
-            return asImp_().dirichletAtPos(scv.dofPosition());
+        return asImp_().dirichletAtPos(scv.dofPosition());
     }
 
     /*!
@@ -753,10 +738,7 @@ public:
     DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
         // forward it to the method which only takes the global coordinate
-        if (isCVFE)
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scvf) called for CVFE method.");
-        else
-            return asImp_().dirichletAtPos(scvf.ipGlobal());
+        return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
 
     /*!
