@@ -23,6 +23,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/typetraits/localdofs.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -65,12 +66,14 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CVFELocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
@@ -160,12 +163,12 @@ public:
             });
         }
 
-        auto applyDirichlet = [&] (const auto& scvOrLocalDofI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
+        auto applyConstraint = [&] (const auto& scvOrLocalDofI,
+                                    const auto& values,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
         {
-            res[scvOrLocalDofI.dofIndex()][eqIdx] = this->curElemVolVars()[scvOrLocalDofI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            res[scvOrLocalDofI.dofIndex()][eqIdx] = this->curElemVolVars()[scvOrLocalDofI].priVars()[pvIdx] - values[pvIdx];
 
             auto& row = jac[scvOrLocalDofI.dofIndex()];
             for (auto col = row.begin(); col != row.end(); ++col)
@@ -177,7 +180,7 @@ public:
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvOrLocalDofI.dofIndex()))
             {
                 const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvOrLocalDofI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - values[pvIdx];
 
                 auto& rowP = jac[periodicDof];
                 for (auto col = rowP.begin(); col != rowP.end(); ++col)
@@ -187,7 +190,7 @@ public:
             }
         };
 
-        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyConstraint);
     }
 
     /*!
@@ -199,10 +202,10 @@ public:
         this->asImp_().bindLocalViews();
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
 
-        auto applyDirichlet = [&] (const auto& scvOrLocalDofI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
+        auto applyConstraint = [&] (const auto& scvOrLocalDofI,
+                                    const auto& dirichletValues,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
         {
             auto& row = jac[scvOrLocalDofI.dofIndex()];
             for (auto col = row.begin(); col != row.end(); ++col)
@@ -211,7 +214,7 @@ public:
             jac[scvOrLocalDofI.dofIndex()][scvOrLocalDofI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
-        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyConstraint);
     }
 
     /*!
@@ -226,25 +229,25 @@ public:
         for (const auto& localDof : localDofs(this->fvGeometry()))
             res[localDof.dofIndex()] += residual[localDof.indexInElement()];
 
-        auto applyDirichlet = [&] (const auto& scvOrLocalDofI,
-                                   const auto& dirichletValues,
-                                   const auto eqIdx,
-                                   const auto pvIdx)
+        auto applyConstraint = [&] (const auto& scvOrLocalDofI,
+                                    const auto& values,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
         {
-            res[scvOrLocalDofI.dofIndex()][eqIdx] = this->curElemVolVars()[scvOrLocalDofI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            res[scvOrLocalDofI.dofIndex()][eqIdx] = this->curElemVolVars()[scvOrLocalDofI].priVars()[pvIdx] - values[pvIdx];
         };
 
-        this->asImp_().enforceDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceDirichletConstraints(applyConstraint);
     }
 
     //! Enforce Dirichlet constraints
     template<typename ApplyFunction>
-    void enforceDirichletConstraints(const ApplyFunction& applyDirichlet)
+    void enforceDirichletConstraints(const ApplyFunction& applyConstraint)
     {
         // enforce Dirichlet boundary conditions
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+        this->asImp_().evalDirichletBoundaries(applyConstraint);
         // take care of internal Dirichlet constraints (if enabled)
-        this->asImp_().enforceInternalDirichletConstraints(applyDirichlet);
+        this->asImp_().enforceInternalDirichletConstraints(applyConstraint);
     }
 
     /*!
@@ -257,22 +260,47 @@ public:
         // and set the residual to (privar - dirichletvalue)
         if (this->elemBcTypes().hasDirichlet())
         {
-            for (const auto& localDofI : localDofs(this->fvGeometry()))
+            if constexpr (Detail::hasProblemBoundaryTypesForLocalDofs<Problem, FVElementGeometry>())
             {
-                const auto& scvI = this->fvGeometry().scv(localDofI.indexInElement());
-                const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
-                if (bcTypes.hasDirichlet())
+                for (const auto& localDofI : localDofs(this->fvGeometry()))
                 {
-                    const auto dirichletValues = this->asImp_().problem().dirichlet(this->element(), scvI);
-
-                    // set the Dirichlet conditions in residual and jacobian
-                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), localDofI);
+                    if (bcTypes.hasDirichlet())
                     {
-                        if (bcTypes.isDirichlet(eqIdx))
+                        const auto dirichletValues = this->asImp_().problem().dirichlet(this->fvGeometry(), localDofI);
+
+                        // set the Dirichlet conditions in residual and jacobian
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                         {
-                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                            assert(0 <= pvIdx && pvIdx < numEq);
-                            applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
+                            if (bcTypes.isDirichlet(eqIdx))
+                            {
+                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                                assert(0 <= pvIdx && pvIdx < numEq);
+                                applyDirichlet(localDofI, dirichletValues, eqIdx, pvIdx);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (const auto& localDofI : cvLocalDofs(this->fvGeometry()))
+                {
+                    const auto& scvI = this->fvGeometry().scv(localDofI.indexInElement());
+                    const auto bcTypes = this->elemBcTypes().get(this->element(), scvI);
+                    if (bcTypes.hasDirichlet())
+                    {
+                        const auto dirichletValues = this->asImp_().problem().dirichlet(this->element(), scvI);
+
+                        // set the Dirichlet conditions in residual and jacobian
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                        {
+                            if (bcTypes.isDirichlet(eqIdx))
+                            {
+                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                                assert(0 <= pvIdx && pvIdx < numEq);
+                                applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
+                            }
                         }
                     }
                 }
