@@ -91,6 +91,13 @@ public:
         };
     }
 
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return GeometryHelper::facetCenter(this->element(), localDof.index());
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
