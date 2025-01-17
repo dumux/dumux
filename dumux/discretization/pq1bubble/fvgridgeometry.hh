@@ -128,8 +128,6 @@ class PQ1BubbleFVGridGeometry
 
     static_assert(dim > 1, "Only implemented for dim > 1");
 
-    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::PQ1Bubble;
@@ -306,10 +304,9 @@ private:
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
-            // ToDo: Currently we still create scvs also for Fe dofs
-            numScv_ += GeometryHelper::numElementDofs(elementGeometry.type());
+            numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
-            cache_.scvs_[eIdx].resize(GeometryHelper::numElementDofs(elementGeometry.type()));
+            cache_.scvs_[eIdx].resize(geometryHelper.numScv());
 
             // Scvs related to control volumes
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
@@ -323,23 +320,6 @@ private:
                     eIdx,
                     GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
-                );
-            }
-
-            // Hybrid scvs, i.e. Fem dofs
-            if constexpr (enableHybridCVFE)
-            {
-                // We add the additional Fe dof
-                // ToDo: get rid of building scvs for Fe dofs
-                LocalIndexType scvLocalIdx = geometryHelper.numScv();
-                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
-                    elementGeometry.volume(),
-                    elementGeometry.center(),
-                    elementGeometry.center(),
-                    scvLocalIdx,
-                    eIdx,
-                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
-                    true
                 );
             }
 
