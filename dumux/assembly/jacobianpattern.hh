@@ -210,12 +210,12 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& localDof : localDofs(fvGeometry))
             {
-                const auto globalI = scv.dofIndex();
-                for (const auto& scvJ : scvs(fvGeometry))
+                const auto globalI = localDof.dofIndex();
+                for (const auto& localDofJ : localDofs(fvGeometry))
                 {
-                    const auto globalJ = scvJ.dofIndex();
+                    const auto globalJ = localDofJ.dofIndex();
                     pattern.add(globalI, globalJ);
 
                     if (gridGeometry.isPeriodic())
