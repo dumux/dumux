@@ -16,6 +16,20 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
 
+    // function with zero argument
+    {
+        const std::string str = "sin(0.5*pi)";
+        FunctionFromStringExpression<0> func(str, "");
+        if (Dune::FloatCmp::ne<double>(func(), 1.0))
+                DUNE_THROW(Dune::Exception, "Results do not match: "
+                    << func() << " " << 1.0);
+
+        // using convenience function
+        if (Dune::FloatCmp::ne<double>(evalStringExpression(str), 1.0))
+                DUNE_THROW(Dune::Exception, "Results do not match: "
+                    << evalStringExpression(str) << " " << 1.0);
+    }
+
     constexpr std::size_t numSamples = 100;
     const auto values0 = linspace(-M_PI, M_PI, numSamples);
     const auto values1 = linspace(-1.0, 1.0, numSamples);
