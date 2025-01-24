@@ -91,10 +91,15 @@ private:
     template<class RandomAccessContainer>
     Scalar evalRandomAcessImpl_(const RandomAccessContainer& params) const
     {
-        std::lock_guard lock(evalMutex_);
-        for (std::size_t i = 0; i < numVars; ++i)
-            variables_[i] = params[i];
-        return expression_.value();
+        if constexpr (numVars > 0)
+        {
+            std::lock_guard lock(evalMutex_);
+            for (std::size_t i = 0; i < numVars; ++i)
+                variables_[i] = params[i];
+            return expression_.value();
+        }
+        else
+            return expression_.value();
     }
 
     template<std::size_t... I>
@@ -153,6 +158,19 @@ private:
     mutable std::array<Scalar, numVars> variables_;
     mutable std::mutex evalMutex_;
 };
+
+/*!
+ * \ingroup Core
+ * \brief Evaluating simple string math expressions
+ * \tparam Scalar type of expression evaluation result
+ */
+template<class Scalar = double>
+Scalar evalStringExpression(const std::string& expression, int verbosity = 0)
+{
+    FunctionFromStringExpression<0, Scalar> f{ expression, "" };
+    f.setVerbosity(verbosity);
+    return f();
+}
 
 } // end namespace Dumux
 
