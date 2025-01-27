@@ -28,7 +28,418 @@
 #include <dune/grid/common/gridfactory.hh>
 
 #include <dumux/io/container.hh>
+
+#if DUMUX_HAVE_GRIDFORMAT
+
+#include <gridformat/gridformat.hpp>
+#include <gridformat/traits/dune.hpp>
+#include <gridformat/reader.hpp>
+
+namespace Dumux::Detail::VTKReader {
+
+// factory adapter that fulfills the GridFormat::Concepts::GridFactory concept
+template<typename Grid>
+class GridFactoryAdapter : public GridFormat::Dune::GridFactoryAdapter<Grid>
+{
+    using ParentType = GridFormat::Dune::GridFactoryAdapter<Grid>;
+public:
+    GridFactoryAdapter(Dune::GridFactory<Grid>& factory)
+    : ParentType(factory)
+    {}
+
+    void insert_cell(const GridFormat::CellType& ct, const std::vector<std::size_t>& corners)
+    {
+        // special treatment for polylines not supported by the Dune adapter supplied by gridformat
+        if (ct == GridFormat::CellType::polyline && corners.size() > 2)
+            for (std::size_t i = 1; i < corners.size(); ++i)
+                ParentType::insert_cell(GridFormat::CellType::segment, {corners[i-1], corners[i]});
+
+        else
+            ParentType::insert_cell(ct, corners);
+    }
+};
+
+// reader adapter that fulfills the GridFormat::GridReader concept
+// and can read polylines as separate cells
+class VTPReader : public GridFormat::GridReader {
+ private:
+    void _open(const std::string& filename, typename GridReader::FieldNames& fields) override {
+        auto helper = GridFormat::VTK::XMLReaderHelper::make_from(filename, "PolyData");
+
+        _num_points = GridFormat::from_string<std::size_t>(helper.get("PolyData/Piece").get_attribute("NumberOfPoints"));
+        _num_verts = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfVerts");
+        _num_polylines = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfLines");
+        _num_segments = 0; // initialize to zero and compute later
+        _num_strips = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfStrips");
+        _num_polys = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfPolys");
+
+        if (_num_strips > 0)
+            throw GridFormat::NotImplemented("Triangle strips are not (yet) supported");
+
+        GridFormat::VTK::XMLDetail::copy_field_names_from(helper.get("PolyData"), fields);
+        _helper.emplace(std::move(helper));
+
+        if (_num_polylines > 0)
+            _visit_cells("Lines", GridFormat::CellType::polyline, _num_polylines, // count segments in polylines
+                [&](const GridFormat::CellType& ct, const std::vector<std::size_t>& corners) {
+                    _num_segments += corners.size() - 1;
+                }
+            );
+    }
+
+    void _close() override {
+        _helper.reset();
+        _num_points = 0;
+        _num_verts = 0;
+        _num_polylines = 0;
+        _num_segments = 0;
+        _num_strips = 0;
+        _num_polys = 0;
+    }
+
+    std::string _name() const override {
+        return "VTPReader";
+    }
+
+    std::size_t _number_of_cells() const override {
+        return _num_verts + _num_segments + _num_strips + _num_polys;
+    }
+
+    std::size_t _number_of_points() const override {
+        return _num_points;
+    }
+
+    std::size_t _number_of_pieces() const override {
+        return 1;
+    }
+
+    bool _is_sequence() const override {
+        return false;
+    }
+
+    GridFormat::FieldPtr _points() const override {
+        return _helper.value().make_points_field("PolyData/Piece/Points", _number_of_points());
+    }
+
+    void _visit_cells(const typename GridFormat::GridReader::CellVisitor& visitor) const override {
+        if (_num_verts > 0)
+            _visit_cells("Verts", GridFormat::CellType::vertex, _num_verts, visitor);
+        if (_num_polylines > 0)
+            _visit_cells("Lines", GridFormat::CellType::polyline, _num_polylines, visitor);
+        if (_num_polys > 0)
+            _visit_cells("Polys", GridFormat::CellType::polygon, _num_polys, visitor);
+    }
+
+    GridFormat::FieldPtr _cell_field(std::string_view name) const override {
+        const auto num_vtk_cells = _num_verts + _num_polylines + _num_strips + _num_polys;
+        const auto field_ptr = _helper.value().make_data_array_field(name, "PolyData/Piece/CellData", num_vtk_cells);
+        if (_num_polylines == 0)
+            return field_ptr;
+
+        // make a field that wraps the usual field and repeats entries for polylines
+        std::vector<std::size_t> extents(field_ptr->layout().dimension(), _number_of_cells());
+        std::ranges::copy(field_ptr->layout() | std::views::drop(1), extents.begin() + 1);
+        const auto precision = field_ptr->precision();
+
+        return make_field_ptr(GridFormat::LazyField{
+            std::move(field_ptr),
+            GridFormat::MDLayout{extents},
+            precision,
+            [this, _nv=_number_of_cells()] (const auto& fp) {
+                GridFormat::Serialization result{_nv*fp->precision().size_in_bytes()};
+                std::size_t in = 0, out = 0;
+                fp->precision().visit([&] <typename T> (const GridFormat::Precision<T>& p) {
+                    const auto source = fp->template export_to<std::vector<T>>();
+                    auto target = result.as_span_of(p);
+                    _visit_cells([&] (const auto& ct, const auto& corners) {
+                        if (ct == GridFormat::CellType::polyline) { // repeat source value for each segment
+                            for (const auto endIdx = out + corners.size()-1; out < endIdx; ++out)
+                                target[out] = source[in];
+                            ++in;
+                        } else {
+                            target[out++] = source[in++];
+                        }
+                    });
+                });
+
+                return result;
+            }
+        });
+    }
+
+    GridFormat::FieldPtr _point_field(std::string_view name) const override {
+        return _helper.value().make_data_array_field(name, "PolyData/Piece/PointData", _number_of_points());
+    }
+
+    GridFormat::FieldPtr _meta_data_field(std::string_view name) const override {
+        return _helper.value().make_data_array_field(name, "PolyData/FieldData");
+    }
+
+    void _visit_cells(std::string_view type_name,
+                      const GridFormat::CellType& cell_type,
+                      const std::size_t expected_size,
+                      const typename GridFormat::GridReader::CellVisitor& visitor) const {
+        const std::string path = "PolyData/Piece/" + std::string{type_name};
+        const auto offsets = _helper.value().make_data_array_field(
+            "offsets", path, expected_size
+        )->template export_to<std::vector<std::size_t>>();
+        const auto connectivity = _helper.value().make_data_array_field(
+            "connectivity", path
+        )->template export_to<std::vector<std::size_t>>();
+
+        std::vector<std::size_t> corners;
+        for (std::size_t i = 0; i < expected_size; ++i) {
+            corners.clear();
+            const std::size_t offset_begin = (i == 0 ? 0 : offsets.at(i-1));
+            const std::size_t offset_end = offsets.at(i);
+            if (connectivity.size() < offset_end)
+                throw GridFormat::SizeError("Connectivity array read from the file is too small");
+            if (offset_end < offset_begin)
+                throw GridFormat::ValueError("Invalid offset array");
+            std::copy_n(connectivity.begin() + offset_begin, offset_end - offset_begin, std::back_inserter(corners));
+
+            // look for cell types that allow for a more specific classification
+            const GridFormat::CellType ct = cell_type == GridFormat::CellType::polygon ? (
+                    corners.size() == 3 ? GridFormat::CellType::triangle
+                                        : (corners.size() == 4 ? GridFormat::CellType::quadrilateral : cell_type)
+                ) : (cell_type == GridFormat::CellType::polyline ? (
+                    corners.size() == 2 ? GridFormat::CellType::segment
+                                        : cell_type
+                ) : cell_type);
+
+            visitor(ct, corners);
+        }
+    }
+
+    std::optional<GridFormat::VTK::XMLReaderHelper> _helper;
+    std::size_t _num_points;
+    std::size_t _num_verts;
+    std::size_t _num_polylines;
+    std::size_t _num_segments;
+    std::size_t _num_strips;
+    std::size_t _num_polys;
+};
+
+template<GridFormat::Concepts::Communicator C>
+auto makeGridformatReaderFactory(const C& c) {
+    return [fac = GridFormat::AnyReaderFactory<C>{c}] (const std::string& f)
+    -> std::unique_ptr<GridFormat::GridReader>
+    {
+        // custom reader for vtp files
+        if (f.ends_with(".vtp"))
+            return std::make_unique<::Dumux::Detail::VTKReader::VTPReader>();
+        return fac.make_for(f);
+    };
+}
+
+} // end namespace Dumux::Detail::VTKReader
+
+namespace Dumux {
+
+/*!
+ * \ingroup InputOutput
+ * \brief A vtk file reader using gridformat
+ */
+class VTKReader
+{
+public:
+    enum class DataType { cellData, pointData, fieldData };
+
+    //! the cell / point data type for point data read from a grid file
+    using Data = std::unordered_map<std::string, std::vector<double>>;
+
+    explicit VTKReader(const std::string& fileName)
+    : reader_(GridFormat::Reader::from(fileName,
+        Detail::VTKReader::makeGridformatReaderFactory(
+            Dune::MPIHelper::instance().getCommunicator()
+        )
+    ))
+    {}
+
+    /*!
+     * \brief Reviews data from the vtk file to check if there is a data array with a specified name
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    bool hasData(const std::string& name, const DataType& type) const
+    {
+        if (type == DataType::cellData)
+            return std::ranges::any_of(
+                cell_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else if (type == DataType::pointData)
+            return std::ranges::any_of(
+                point_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else if (type == DataType::fieldData)
+            return std::ranges::any_of(
+                meta_data_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else
+            DUNE_THROW(Dune::IOError, "Unknown data type for field '" << name << "'");
+    }
+
+    /*!
+     * \brief read data from the vtk file to a container, e.g. std::vector<double>
+     * \tparam Container a container type that has begin(), end(), push_back(), e.g. std::vector<>
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    template<class Container>
+    Container readData(const std::string& name, const DataType& type) const
+    {
+        if (type == DataType::cellData)
+        {
+            Container values(reader_.number_of_cells());
+            reader_.cell_field(name)->export_to(values);
+            return values;
+        }
+        else if (type == DataType::pointData)
+        {
+            Container values(reader_.number_of_points());
+            reader_.point_field(name)->export_to(values);
+            return values;
+        }
+        else if (type == DataType::fieldData)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Reading meta data not yet implemented");
+        }
+        else
+            DUNE_THROW(Dune::IOError, "Unknown data type for field '" << name << "'");
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \param verbose if the output should be verbose
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(bool verbose = false) const
+    {
+        Dune::GridFactory<Grid> factory;
+        return readGrid(factory, verbose);
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \note use this signature if the factory might be needed outside to interpret the data via the factory's insertion indices
+     * \param verbose if the output should be verbose
+     * \param factory the (empty) grid factory
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, bool verbose = false) const
+    {
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_.filename() << "." << std::endl;
+
+            {
+                Dumux::Detail::VTKReader::GridFactoryAdapter adapter{ factory };
+                reader_.export_grid(adapter);
+            }
+        }
+
+        return std::unique_ptr<Grid>(factory.createGrid());
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, reading all cell and point data
+     * \note the factory will be needed outside to interpret the data via the factory's insertion indices
+     * \param factory the (empty) grid factory
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
+    {
+        auto grid = readGrid(factory, verbose);
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            for (const auto& [name, field_ptr] : cell_fields(reader_))
+                field_ptr->export_to(cellData[name]);
+
+            for (const auto& [name, field_ptr] : point_fields(reader_))
+                field_ptr->export_to(pointData[name]);
+        }
+        return std::unique_ptr<Grid>(std::move(grid));
+    }
+
+private:
+    GridFormat::Reader reader_;
+};
+
+} // namespace Dumux
+
+#else // DUMUX_HAVE_GRIDFORMAT
+
 #include <dumux/io/xml/tinyxml2.h>
+// fallback to simple vtk reader using tinyxml2
+// this reader only support ascii files and limited VTK file formats
+
+namespace Dumux::Detail::VTKReader {
+
+/*!
+ * \brief Get the piece node an xml document
+ * \note Returns nullptr if the piece node wasn't found
+ * \param doc an xml document
+ * \param fileName a file name the doc was created from
+ */
+const tinyxml2::XMLElement* getPieceNode(const tinyxml2::XMLDocument& doc, const std::string& fileName)
+{
+    using namespace tinyxml2;
+
+    const XMLElement* pieceNode = doc.FirstChildElement("VTKFile");
+    if (pieceNode == nullptr)
+        DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName << ".");
+
+    pieceNode = pieceNode->FirstChildElement("UnstructuredGrid");
+    if (pieceNode == nullptr)
+        pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PolyData");
+    if (pieceNode == nullptr)
+        pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PUnstructuredGrid");
+    if (pieceNode == nullptr)
+        pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PPolyData");
+    if (pieceNode == nullptr)
+        DUNE_THROW(Dune::IOError, "Couldn't get 'UnstructuredGrid', 'PUnstructuredGrid', 'PolyData', or 'PPolyData' node in " << fileName << ".");
+
+    return pieceNode->FirstChildElement("Piece");
+}
+
+/*!
+ * \brief get the vtk filename for the current processor
+ */
+std::string getProcessPieceFileName(const std::string& pvtkFileName)
+{
+    using namespace tinyxml2;
+
+    XMLDocument pDoc;
+    const auto eResult = pDoc.LoadFile(pvtkFileName.c_str());
+    if (eResult != XML_SUCCESS)
+        DUNE_THROW(Dune::IOError, "Couldn't open XML file " << pvtkFileName << ".");
+
+    // get the first piece node
+    const XMLElement* pieceNode = getPieceNode(pDoc, pvtkFileName);
+    const auto myrank = Dune::MPIHelper::instance().rank();
+    for (int rank = 0; rank < myrank; ++rank)
+    {
+        pieceNode = pieceNode->NextSiblingElement("Piece");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't find 'Piece' node for rank "
+                                    << rank << " in " << pvtkFileName << ".");
+    }
+
+    const char *vtkFileName = pieceNode->Attribute("Source");
+    if (vtkFileName == nullptr)
+        DUNE_THROW(Dune::IOError, "Couldn't get 'Source' attribute of 'Piece' node no. " << myrank << " in " << pvtkFileName);
+
+    return vtkFileName;
+}
+
+} // end namespace Dumux::Detail::VTKReader
 
 namespace Dumux {
 
@@ -58,7 +469,7 @@ public:
         // read only the piece belonging to the own process. For this to work, the files
         // have to have exactly the same amount of pieces than processes.
         fileName_ = Dune::MPIHelper::instance().size() > 1 && ext[1] == 'p' ?
-                        getProcessFileName_(fileName) : fileName;
+            Detail::VTKReader::getProcessPieceFileName(fileName) : fileName;
 
         const auto eResult = doc_.LoadFile(fileName_.c_str());
         if (eResult != tinyxml2::XML_SUCCESS)
@@ -182,36 +593,6 @@ public:
     }
 
 private:
-    /*!
-     * \brief get the vtk filename for the current processor
-     */
-    std::string getProcessFileName_(const std::string& pvtkFileName)
-    {
-        using namespace tinyxml2;
-
-        XMLDocument pDoc;
-        const auto eResult = pDoc.LoadFile(pvtkFileName.c_str());
-        if (eResult != XML_SUCCESS)
-            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << pvtkFileName << ".");
-
-        // get the first piece node
-        const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
-        const auto myrank = Dune::MPIHelper::instance().rank();
-        for (int rank = 0; rank < myrank; ++rank)
-        {
-            pieceNode = pieceNode->NextSiblingElement("Piece");
-            if (pieceNode == nullptr)
-                DUNE_THROW(Dune::IOError, "Couldn't find 'Piece' node for rank "
-                                          << rank << " in " << pvtkFileName << ".");
-        }
-
-        const char *vtkFileName = pieceNode->Attribute("Source");
-        if (vtkFileName == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'Source' attribute of 'Piece' node no. " << myrank << " in " << pvtkFileName);
-
-        return vtkFileName;
-    }
-
     /*!
      * \brief Read a grid from a vtk/vtu/vtp file
      * \param factory the (empty) grid factory
@@ -423,34 +804,7 @@ private:
      * \note Returns nullptr if the piece node wasn't found
      */
     const tinyxml2::XMLElement* getPieceNode_() const
-    { return getPieceNode_(doc_, fileName_); }
-
-    /*!
-     * \brief Get the piece node an xml document
-     * \note Returns nullptr if the piece node wasn't found
-     * \param doc an xml document
-     * \param fileName a file name the doc was created from
-     */
-    const tinyxml2::XMLElement* getPieceNode_(const tinyxml2::XMLDocument& doc, const std::string& fileName) const
-    {
-        using namespace tinyxml2;
-
-        const XMLElement* pieceNode = doc.FirstChildElement("VTKFile");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName << ".");
-
-        pieceNode = pieceNode->FirstChildElement("UnstructuredGrid");
-        if (pieceNode == nullptr)
-            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PolyData");
-        if (pieceNode == nullptr)
-            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PUnstructuredGrid");
-        if (pieceNode == nullptr)
-            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PPolyData");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'UnstructuredGrid', 'PUnstructuredGrid', 'PolyData', or 'PPolyData' node in " << fileName << ".");
-
-        return pieceNode->FirstChildElement("Piece");
-    }
+    { return Detail::VTKReader::getPieceNode(doc_, fileName_); }
 
     /*!
      * \brief Get the piece node of the XMLDocument
@@ -552,5 +906,7 @@ private:
 };
 
 } // end namespace Dumux
+
+#endif // DUMUX_HAVE_GRIDFORMAT
 
 #endif
