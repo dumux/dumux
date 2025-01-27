@@ -28,6 +28,161 @@
 #include <dune/grid/common/gridfactory.hh>
 
 #include <dumux/io/container.hh>
+
+#if DUMUX_HAVE_GRIDFORMAT
+
+#include <gridformat/gridformat.hpp>
+#include <gridformat/traits/dune.hpp>
+
+namespace Dumux {
+
+/*!
+ * \ingroup InputOutput
+ * \brief A vtk file reader using gridformat
+ */
+class VTKReader
+{
+public:
+    enum class DataType { cellData, pointData, fieldData };
+
+    //! the cell / point data type for point data read from a grid file
+    using Data = std::unordered_map<std::string, std::vector<double>>;
+
+    explicit VTKReader(const std::string& fileName)
+    : reader_(GridFormat::Reader::from(fileName))
+    {}
+
+    /*!
+     * \brief Reviews data from the vtk file to check if there is a data array with a specified name
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    bool hasData(const std::string& name, const DataType& type) const
+    {
+        if (type == DataType::cellData)
+            return std::ranges::any_of(
+                cell_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else if (type == DataType::pointData)
+            return std::ranges::any_of(
+                point_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else if (type == DataType::fieldData)
+            return std::ranges::any_of(
+                meta_data_field_names(reader_),
+                [&] (const auto& n) { return name == n; }
+            );
+        else
+            DUNE_THROW(Dune::IOError, "Unknown data type for field '" << name << "'");
+    }
+
+    /*!
+     * \brief read data from the vtk file to a container, e.g. std::vector<double>
+     * \tparam Container a container type that has begin(), end(), push_back(), e.g. std::vector<>
+     * \param name the name attribute of the data array to read
+     * \param type the data array type
+     */
+    template<class Container>
+    Container readData(const std::string& name, const DataType& type) const
+    {
+        if (type == DataType::cellData)
+        {
+            Container values(reader_.number_of_cells());
+            reader_.cell_field(name)->export_to(values);
+            return values;
+        }
+        else if (type == DataType::pointData)
+        {
+            Container values(reader_.number_of_points());
+            reader_.point_field(name)->export_to(values);
+            return values;
+        }
+        else if (type == DataType::fieldData)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Reading meta data not yet implemented");
+        }
+        else
+            DUNE_THROW(Dune::IOError, "Unknown data type for field '" << name << "'");
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \param verbose if the output should be verbose
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(bool verbose = false) const
+    {
+        Dune::GridFactory<Grid> factory;
+        return readGrid(factory, verbose);
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \note use this signature if the factory might be needed outside to interpret the data via the factory's insertion indices
+     * \param verbose if the output should be verbose
+     * \param factory the (empty) grid factory
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, bool verbose = false) const
+    {
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_.filename() << "." << std::endl;
+
+            {
+                GridFormat::Dune::GridFactoryAdapter adapter{ factory };
+                reader_.export_grid(adapter);
+            }
+        }
+
+        return std::unique_ptr<Grid>(factory.createGrid());
+    }
+
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file, reading all cell and point data
+     * \note the factory will be needed outside to interpret the data via the factory's insertion indices
+     * \param factory the (empty) grid factory
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
+     */
+    template<class Grid>
+    std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
+    {
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            if (verbose)
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_.filename() << "." << std::endl;
+
+            {
+                GridFormat::Dune::GridFactoryAdapter adapter{ factory };
+                reader_.export_grid(adapter);
+            }
+
+            for (const auto& [name, field_ptr] : cell_fields(reader_))
+                field_ptr->export_to(cellData[name]);
+
+            for (const auto& [name, field_ptr] : point_fields(reader_))
+                field_ptr->export_to(pointData[name]);
+        }
+
+        return std::unique_ptr<Grid>(factory.createGrid());
+    }
+
+private:
+    GridFormat::Reader reader_;
+};
+
+} // namespace Dumux
+
+#else
+
+// fallback to simple vtk reader using tinyxml2
+// this reader only support ascii files and limited VTK file formats
+
 #include <dumux/io/xml/tinyxml2.h>
 
 namespace Dumux {
@@ -552,5 +707,7 @@ private:
 };
 
 } // end namespace Dumux
+
+#endif // DUMUX_HAVE_GRIDFORMAT
 
 #endif
