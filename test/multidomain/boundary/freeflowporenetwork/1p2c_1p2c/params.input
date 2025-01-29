@@ -1,6 +1,6 @@
 [TimeLoop]
 TEnd = 10
-DtInitial = 1e-5
+DtInitial = 1e-2
 MaxTimeStepSize = 1
 
 [PNM.Grid]
@@ -23,7 +23,7 @@ Cells1 = 10
 
 [Problem]
 EnableGravity = false
-Advection = false #only diffusion test
+OnlyDiffusion = false
 
 [FreeFlow.Problem]
 Name = ff
@@ -39,7 +39,7 @@ MoleFractionBottom = 2e-3
 InitialMoleFraction = 2e-3
 
 [Vtk]
-OutputName = test_diffusion
+OutputName = test_advection
 AddVelocity = true
 
 [Assembly]
