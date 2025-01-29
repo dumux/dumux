@@ -61,7 +61,7 @@ public:
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 0.001);
-        advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
+        onlyDiffusion_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.OnlyDiffusion", false);
 
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
@@ -103,7 +103,7 @@ public:
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
             }
-            else if (advection_ && onUpperBoundary_(globalPos))
+            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
                 values.setAllNeumann();
             else
                 values.setAllDirichlet();
@@ -163,7 +163,7 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else if (advection_ && onUpperBoundary_(globalPos))
+            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
@@ -187,7 +187,7 @@ public:
                     fvGeometry, scvf, elemVolVars);
 #endif
             }
-            else if (advection_ && onUpperBoundary_(globalPos))
+            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
@@ -278,7 +278,7 @@ private:
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
 
-    bool advection_;
+    bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
 #endif
