@@ -20,6 +20,7 @@
 #include <execution>
 #include <type_traits>
 
+#include <gridformat/common/type_traits.hpp>
 #include <gridformat/gridformat.hpp>
 #include <gridformat/traits/dune.hpp>
 
@@ -363,9 +364,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         if (values.size() != gridVariables_.gridGeometry().vertexMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of points in the grid");
 
-        this->setPointField(name, [&] (const auto& vertex) -> std::ranges::range_value_t<C> {
-            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
-        }, prec);
+        addPointField_(values, name, prec);
     }
 
     /*!
@@ -391,9 +390,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         if (values.size() != gridVariables_.gridGeometry().elementMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of cells in the grid");
 
-        this->setCellField(name, [&] (const auto& element) -> std::ranges::range_value_t<C> {
-            return values[gridVariables_.gridGeometry().elementMapper().index(element)];
-        }, prec);
+        addCellField_(values, name, prec);
     }
 
     /*!
@@ -425,7 +422,43 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         volVarFields_.clear();
     }
 
- private:
+private:
+    // reproduce behaviour of VtkOutputModule that flattens vectors of size 1
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+        requires(GridFormat::has_sub_range<C> && std::ranges::range_value_t<C>::size() == 1)
+    void addPointField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        this->setPointField(name, [&] (const auto& vertex) -> T {
+            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)][0];
+        }, prec);
+    }
+
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addPointField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        this->setPointField(name, [&] (const auto& vertex) -> std::ranges::range_value_t<C> {
+            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
+        }, prec);
+    }
+
+    // reproduce behaviour of VtkOutputModule that flattens vectors of size 1
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+        requires(GridFormat::has_sub_range<C> && std::ranges::range_value_t<C>::size() == 1)
+    void addCellField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        this->setCellField(name, [&] (const auto& element) -> T {
+            return values[gridVariables_.gridGeometry().elementMapper().index(element)][0];
+        }, prec);
+    }
+
+    template<Detail::Container C, GridFormat::Concepts::Scalar T>
+    void addCellField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
+    {
+        this->setCellField(name, [&] (const auto& element) -> std::ranges::range_value_t<C> {
+            return values[gridVariables_.gridGeometry().elementMapper().index(element)];
+        }, prec);
+    }
+
     template<typename ResultType, typename Id>
     void setVolVarField_(const std::string& name, Id&& volVarFieldId)
     {
