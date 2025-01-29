@@ -363,7 +363,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         if (values.size() != gridVariables_.gridGeometry().vertexMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of points in the grid");
 
-        this->setPointField(name, [&] (const auto& vertex) {
+        this->setPointField(name, [&] (const auto& vertex) -> std::ranges::range_value_t<C> {
             return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
         }, prec);
     }
@@ -391,7 +391,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
         if (values.size() != gridVariables_.gridGeometry().elementMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of cells in the grid");
 
-        this->setCellField(name, [&] (const auto& element) {
+        this->setCellField(name, [&] (const auto& element) -> std::ranges::range_value_t<C> {
             return values[gridVariables_.gridGeometry().elementMapper().index(element)];
         }, prec);
     }
