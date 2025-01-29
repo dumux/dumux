@@ -39,7 +39,7 @@ MoleFractionBottom = 2e-3
 InitialMoleFraction = 2e-3
 
 [Vtk]
-OutputName = test_advection
+OutputName = test_isothermal
 AddVelocity = true
 
 [Assembly]
