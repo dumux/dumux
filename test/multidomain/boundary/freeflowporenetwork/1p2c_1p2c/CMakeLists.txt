@@ -14,7 +14,7 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_ff-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_ff-00001.vtu
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_pnm.vtp
-                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_pnm-00001.vtp
+                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_pnm-00001.vtp
                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c params.input
                                      -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c")
 
@@ -28,11 +28,21 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c_diffusion
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_ff-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_ff-00001.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_pnm.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_pnm-00001.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_pnm-00001.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c params.input
                                     -Problem.OnlyDiffusion true -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c")
 
-########## NON-ISOTHERMAL ##########
+########## NON-ISOTHERMAL #########
 dumux_add_test(NAME test_md_boundary_ff1p2cni_pnm1p2cni
+                LABELS multidomain multidomain_boundary freeflowpnm 1pnc navierstokes porenetwork
                 SOURCES main.cc
-                COMPILE_DEFINITIONS ISOTHERMAL=0) #TODO: add reference files as soon as solutions seem reasonable)
+                COMPILE_DEFINITIONS ISOTHERMAL=0
+                CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
+                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2cni_pnm1p2cni_ff-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_ff-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2cni_pnm1p2cni_pnm.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_pnm-00001.vtp
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c paramsni.input
+                                    -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c")
