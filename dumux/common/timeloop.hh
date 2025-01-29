@@ -673,7 +673,7 @@ public:
 
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
-    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
+    { return Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::CmpStyle::absolute>(t0, t1, 1e-14); }
 
     void setPeriodicCheckPoint_(Scalar interval, Scalar offset = 0.0)
     {
