@@ -51,7 +51,7 @@ public:
     {
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
-        advection_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.Advection", false);
+        onlyDiffusion_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.OnlyDiffusion", false);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
 #endif
@@ -91,7 +91,7 @@ public:
             bcTypes.setAllCouplingNeumann();
         else
         {
-            if (advection_ && onLowerBoundary_(scv))
+            if (!onlyDiffusion_ && onLowerBoundary_(scv))
                 bcTypes.setAllDirichlet();
             else
                 bcTypes.setAllNeumann();
@@ -113,7 +113,7 @@ public:
         PrimaryVariables priVars = initialAtPos(scv.dofPosition());
         static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 1e5);
         static const Scalar moleFractionBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MoleFractionBottom", 1e-3);
-        if (advection_ && onLowerBoundary_(scv))
+        if (!onlyDiffusion_ && onLowerBoundary_(scv))
         {
             priVars[Indices::pressureIdx] = pressureBottom;
             priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
@@ -174,7 +174,7 @@ public:
                 elemVolVars);
 #endif
         }
-        else if (!advection_ && onLowerBoundary_(scv))
+        else if (onlyDiffusion_ && onLowerBoundary_(scv))
         {
             values[Indices::conti0EqIdx] = 0.0;
             values[Indices::conti0EqIdx + 1] = 1e-7; //random value in the order to have a compositional source term
@@ -217,7 +217,7 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
-    bool advection_;
+    bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
 #endif
