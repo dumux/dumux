@@ -17,6 +17,8 @@ find_package(PVPython QUIET)
 find_package(Kokkos QUIET)
 include(AddKokkosFlags)
 
+include(CheckCXXSymbolExists)
+
 # possibly link against TBB
 # even if an older version is found
 # otherwise we get linker errors
