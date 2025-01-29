@@ -10,3 +10,4 @@ DuMux programs in parallel.
 * @ref running-in-parallel
 * @ref input-and-output-formats
 * @ref directory-structure
+* @ref cheatsheet
