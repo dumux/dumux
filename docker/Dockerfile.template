@@ -4,7 +4,7 @@
 # ${modName} docker container
 # see https://github.com/phusion/baseimage-docker for information on the base image
 # It is Ubuntu LTS customized for better Docker compatibility
-FROM phusion/baseimage:focal-1.1.0
+FROM phusion/baseimage:jammy-1.0.4
 MAINTAINER ${modMaintainer}
 
 # run Ubuntu update as advised on https://github.com/phusion/baseimage-docker
