@@ -278,7 +278,7 @@ public:
                     fluxAndSourceTerm += problem.pressure(element, fvGeometry, ipData.ipLocal()) * ipData.gradN(localDofIdx);
 
                     // finally add source and Neumann term and add everything to residual
-                    const auto sourceAtIp = problem.source(element, fvGeometry, elemVolVars, localDof, ipData);
+                    const auto sourceAtIp = problem.source(fvGeometry, elemVolVars, ipData);
 
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
@@ -334,7 +334,7 @@ private:
 
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
                 {
-                    const auto& boundaryFlux = qWeight*problem.boundaryFlux(element, fvGeometry, elemVolVars, elemFluxVarsCache, localDof, faceIpData);
+                    const auto& boundaryFlux = qWeight*problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache, faceIpData);
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                         flux[localDof.indexInElement()] += faceIpData.shapeValue(localDof.indexInElement()) * boundaryFlux[eqIdx];
                 }
