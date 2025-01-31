@@ -191,6 +191,8 @@ public:
         };
 
         this->asImp_().enforceDirichletConstraints(applyConstraint);
+        // take care of constraints (if enabled), which is the new interface and generalizes internal Dirichlet constraints
+        this->asImp_().enforceConstraints(applyConstraint);
     }
 
     /*!
@@ -215,6 +217,8 @@ public:
         };
 
         this->asImp_().enforceDirichletConstraints(applyConstraint);
+        // take care of constraints (if enabled), which is the new interface and generalizes internal Dirichlet constraints
+        this->asImp_().enforceConstraints(applyConstraint);
     }
 
     /*!
@@ -238,6 +242,8 @@ public:
         };
 
         this->asImp_().enforceDirichletConstraints(applyConstraint);
+        // take care of constraints (if enabled), which is the new interface and generalizes internal Dirichlet constraints
+        this->asImp_().enforceConstraints(applyConstraint);
     }
 
     //! Enforce Dirichlet constraints

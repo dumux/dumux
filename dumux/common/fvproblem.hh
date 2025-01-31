@@ -243,6 +243,25 @@ public:
     { return false; }
 
     /*!
+     * \brief If internal or boundary constraints are enabled
+     * Enables / disables internal or boundary constraints. If this is overloaded
+     * to return true, the assembler calls problem.constraintInfo(fvGeometry, localDof).
+     * This means you have to implement the following member function
+     *
+     *    ConstraintInfo constraintInfo(const FVElementGeometry& fvGeometry, const LocalDof& localDof) const;
+     *
+     * where ConstraintInfo is used to set the constraints for primary variables and to replace balance equations by such constraints.
+     * If a constraint is set for a dof, the assembler calls
+     * problem.constraint(fvGeometry, localDof). This means you have to additionally implement the following member function
+     *
+     *    ConstraintValues constraint(const FVElementGeometry& fvGeometry, const LocalDof& localDof, const ConstraintInfo& constraintInfo) const;
+     *
+     * which returns the enforced constraint values for the associated dof.
+     */
+    static constexpr bool enableConstraints()
+    { return false; }
+
+    /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
