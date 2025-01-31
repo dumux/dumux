@@ -21,6 +21,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 namespace Dumux::Detail {
 
@@ -43,6 +44,16 @@ using SCVFIsOverlappingDetector = decltype(
 template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
+
+//! helper struct detecting if a problem has new boundaryFlux function
+template<class P, class FVG, class EV, class EFVC, class IP>
+using BoundaryFluxFunctionDetector = decltype(
+    std::declval<P>().boundaryFlux(std::declval<FVG>(), std::declval<EV>(), std::declval<EFVC>(), std::declval<IP>())
+);
+
+template<class P, class FVG, class EV, class EFVC, class IP>
+constexpr inline bool hasProblemBoundaryFluxFunction()
+{ return Dune::Std::is_detected<BoundaryFluxFunctionDetector, P, FVG, EV, EFVC, IP>::value; }
 
 } // end namespace Dumux::Detail
 
@@ -76,6 +87,9 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
+
+    using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<typename Element::Geometry::GlobalCoordinate,
+                                                             typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -179,7 +193,7 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+        const auto flux = this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
         if (!scvf.boundary())
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -228,15 +242,19 @@ public:
             // are enforced strongly by replacing the residual entry afterwards.
             if (bcTypes.hasNeumann())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                NumEqVector boundaryFluxes;
+                if constexpr (Detail::hasProblemBoundaryFluxFunction<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, FaceIpData>())
+                    boundaryFluxes = problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache, FaceIpData(scvf.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
+                else
+                    boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
+                boundaryFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     if (bcTypes.isNeumann(eqIdx))
-                        flux[eqIdx] += neumannFluxes[eqIdx];
+                        flux[eqIdx] += boundaryFluxes[eqIdx];
             }
         }
 
