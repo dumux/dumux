@@ -874,6 +874,318 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_ = {};
 };
 
+
+/*!
+ * \brief Navier-Stokes default problem implementation for CVFE discretizations
+ */
+template<class TypeTag>
+class CVFENavierStokesMomentumProblem
+: public FVProblemWithSpatialParams<TypeTag>
+{
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using Implementation = GetPropType<TypeTag, Properties::Problem>;
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GlobalPosition = typename FVElementGeometry::SubControlVolumeFace::GlobalPosition;
+    using LocalPosition = typename Element::Geometry::LocalCoordinate;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+public:
+    using InitialValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using Sources = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using DirichletValues = Dune::FieldVector<Scalar, dimWorld>;
+    using BoundaryFluxes = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+
+    //! Export the boundary types.
+    using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::dim()>;
+
+    //! This problem is used for the momentum balance model.
+    static constexpr bool isMomentumProblem() { return true; }
+
+    /*!
+     * \brief The constructor
+     * \param gridGeometry The finite volume grid geometry
+     * \param couplingManager A coupling manager (in case this problem is a coupled "mass-momentum"/full Navier-Stokes problem)
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    CVFENavierStokesMomentumProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                                    std::shared_ptr<CouplingManager> couplingManager,
+                                    const std::string& paramGroup = "")
+    : ParentType(gridGeometry, paramGroup)
+    , gravity_(0.0)
+    , couplingManager_(couplingManager)
+    {
+        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
+            gravity_[dim-1]  = -9.81;
+
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
+    }
+
+    /*!
+     * \brief The constructor for usage without a coupling manager
+     * \param gridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    CVFENavierStokesMomentumProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                                    const std::string& paramGroup = "")
+    : CVFENavierStokesMomentumProblem(gridGeometry, {}, paramGroup)
+    {}
+
+    /*!
+     * \brief Evaluate the source term at a given integration point, related to the residual of a local dof
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All volume variables for the element
+     * \param ipData Integration point data
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     */
+    template<class ElementVariables, class IpData>
+    Sources source(const FVElementGeometry& fvGeometry,
+                   const ElementVariables& elemVars,
+                   const IpData& ipData) const
+    {
+        return asImp_().sourceAtPos(ipData.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases at a given position
+     *
+     * \param globalPos The position of the center of the finite volume
+     *            for which the source term ought to be
+     *            specified in global coordinates
+     *
+     * For this method, the values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
+    {
+        //! As a default, i.e. if the user's problem does not overload any source method
+        //! return 0.0 (no source terms)
+        return Sources(0.0);
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary face.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param intersection The boundary intersection
+     */
+    template<class Intersection>
+    BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
+                                const Intersection& intersection) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().boundaryTypesAtPos(intersection.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a Dirichlet
+     *        control volume.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param faceIpData Face integration point data
+     */
+    template<class FaceIpData>
+    DirichletValues dirichlet(const FVElementGeometry& fvGeometry,
+                              const FaceIpData& faceIpData) const
+    {
+        // forward it to the method which only takes the global coordinate
+        return asImp_().dirichletAtPos(faceIpData.ipGlobal());
+    }
+
+    /*!
+     * \brief Evaluates the boundary flux related to a localDof at a given integration point.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param faceIpData Face integration point data
+     */
+    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
+    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
+                                const ElementVariables& elemVars,
+                                const ElementFluxVariablesCache& elemFluxVarsCache,
+                                const FaceIpData& faceIpData) const
+    {
+        return asImp_().boundaryFluxAtPos(faceIpData.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the boundary flux at a given position.
+     */
+    BoundaryFluxes boundaryFluxAtPos(const GlobalPosition& globalPos) const
+    { return BoundaryFluxes(0.0); } //! A default, i.e. if the user's does not overload any boundaryFlux method
+
+    /*!
+     * \brief Returns the acceleration due to gravity.
+     *
+     * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
+     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
+     */
+    const GravityVector& gravity() const
+    { return gravity_; }
+
+    /*!
+     * \brief Returns whether inertia terms should be considered.
+     */
+    bool enableInertiaTerms() const
+    { return enableInertiaTerms_; }
+
+    /*!
+     * \brief Returns a reference pressure
+     *        This pressure is subtracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
+     * \note  Overload this for reference pressures other than zero.
+     */
+    Scalar referencePressure() const
+    { return 0.0; }
+
+    /*!
+     * \brief Returns the pressure at given integration point data.
+     * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
+     */
+    template<class IpData>
+    Scalar pressure(const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const IpData& ipData,
+                    const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().pressureAtPos(ipData.ipGlobal());
+        else
+            return couplingManager_->pressure(element, fvGeometry, ipData, isPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the pressure at a given position.
+     */
+    Scalar pressureAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "pressureAtPos not implemented");
+    }
+
+    /*!
+     * \brief Returns the density at given integration point data.
+     * \note  Overload this if a fixed density shall be prescribed.
+     */
+    template<class IpData>
+    Scalar density(const Element& element,
+                   const FVElementGeometry& fvGeometry,
+                   const IpData& ipData,
+                   const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().densityAtPos(ipData.ipGlobal());
+        else
+            return couplingManager_->density(element, fvGeometry, ipData, isPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the density at a given position.
+     */
+    Scalar densityAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "densityAtPos not implemented");
+    }
+
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given position.
+     * \note  Overload this if a fixed viscosity shall be prescribed.
+     */
+    template<class IpData>
+    Scalar effectiveViscosity(const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const IpData& ipData,
+                              const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().effectiveViscosityAtPos(ipData.ipGlobal());
+        else
+            return couplingManager_->effectiveViscosity(element, fvGeometry, ipData, isPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the effective dynamic viscosity at a given position.
+     */
+    Scalar effectiveViscosityAtPos(const GlobalPosition&) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "effectiveViscosityAtPos not implemented");
+    }
+
+    /*!
+     * \brief Applies the initial solution for all degrees of freedom of the grid.
+     * \param sol the initial solution vector
+     */
+    template<class SolutionVector>
+    void applyInitialSolution(SolutionVector& sol) const
+    {
+        sol.resize(this->gridGeometry().numDofs());
+        std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& localDof : localDofs(fvGeometry))
+            {
+                const auto dofIdx = localDof.dofIndex();
+                if (!dofHandled[dofIdx])
+                {
+                    dofHandled[dofIdx] = true;
+                    sol[dofIdx] = asImp_().initial(fvGeometry, ipData(fvGeometry, localDof));
+                }
+            }
+        }
+    }
+
+    /*!
+     * \brief Evaluate the initial value at an integration point
+     */
+    template<class IpData>
+    InitialValues initial(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        return asImp_().initialAtPos(ipData.ipGlobal());
+    }
+
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
+    GravityVector gravity_;
+    bool enableInertiaTerms_;
+    std::shared_ptr<CouplingManager> couplingManager_ = {};
+};
+
 /*!
  * \ingroup NavierStokesModel
  * \brief Navier-Stokes momentum problem class
