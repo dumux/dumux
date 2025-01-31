@@ -279,6 +279,9 @@ public:
                     // add pressure term
                     fluxAndSourceTerm += problem.pressure(element, fvGeometry, ipData.ipLocal()) * ipData.gradN(localDofIdx);
 
+                    // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
+                    fluxAndSourceTerm += density * problem.gravity();
+
                     // finally add source and Neumann term and add everything to residual
                     const auto sourceAtIp = problem.source(fvGeometry, elemVolVars, ipData);
 
