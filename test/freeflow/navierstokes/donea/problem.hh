@@ -160,12 +160,10 @@ public:
      * \param localDof The local dof
      * \param faceIpData Integration point data
      */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache, class LocalDof, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const Element& element,
-                                const FVElementGeometry& fvGeometry,
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache, class FaceIpData>
+    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
                                 const ElementVolumeVariables& elemVolVars,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
-                                const LocalDof& localDof,
                                 const FaceIpData& faceIpData) const
     {
         BoundaryFluxes values(0.0);
@@ -188,9 +186,9 @@ public:
         {
             const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            values[Indices::conti0EqIdx] = this->faceVelocity(fvGeometry.element(), fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             if (addBoxStabilization_)
-                values[Indices::conti0EqIdx] += stabilizationFlux_(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                values[Indices::conti0EqIdx] += stabilizationFlux_(fvGeometry.element(), fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
         }
 
         return values;
