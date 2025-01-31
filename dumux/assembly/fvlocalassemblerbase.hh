@@ -225,6 +225,38 @@ public:
     void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
     {}
 
+    /*!
+     * \brief Enforces constraints if constraintInfo function exists in problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableConstraints(), int> = 0>
+    void enforceConstraints(const ApplyFunction& applyConstraint)
+    {
+        // enforce constraints strongly by replacing balance equations by the given constraints
+        // this means to set the residual to (privar - value)
+        for (const auto& localDof : localDofs(this->fvGeometry()))
+        {
+            const auto constraintInfo = asImp_().problem().constraintInfo(this->fvGeometry(), localDof);
+            if (constraintInfo.hasConstraint())
+            {
+                const auto values = asImp_().problem().constraint(this->fvGeometry(), localDof, constraintInfo);
+                // set the constraint in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    if (constraintInfo.isConstraint(eqIdx))
+                    {
+                        const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < numEq);
+                        applyConstraint(localDof, values, eqIdx, pvIdx);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableConstraints(), int> = 0>
+    void enforceConstraints(const ApplyFunction& applyConstraint)
+    {}
+
     //! The problem
     const Problem& problem() const
     { return assembler_.problem(); }
