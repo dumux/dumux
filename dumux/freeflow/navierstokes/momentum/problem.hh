@@ -617,21 +617,17 @@ public:
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param element The element for which the Neumann boundary condition is set
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param localDof The local dof
      * \param ipData Integration point data
      *
      * For this method, the return parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      */
-    template<class LocalDof, class IpData>
-    Sources source(const Element &element,
-                   const FVElementGeometry& fvGeometry,
+    template<class IpData>
+    Sources source(const FVElementGeometry& fvGeometry,
                    const ElementVolumeVariables& elemVolVars,
-                   const LocalDof& localDof,
                    const IpData& ipData) const
     {
         return asImp_().sourceAtPos(ipData.ipGlobal());
@@ -662,10 +658,8 @@ public:
                    const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
-        return asImp_().source(element,
-                               fvGeometry,
+        return asImp_().source(fvGeometry,
                                elemVolVars,
-                               fvGeometry.localDof(scv.localDofIndex()),
                                Dumux::CVFE::IntegrationPointData<GlobalPosition>(scv.center()));
     }
 
@@ -786,12 +780,10 @@ public:
      * \param localDof The local dof
      * \param faceIpData Face integration point data
      */
-    template<class ElementFluxVariablesCache, class LocalDof, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const Element& element,
-                                const FVElementGeometry& fvGeometry,
+    template<class ElementFluxVariablesCache, class FaceIpData>
+    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
                                 const ElementVolumeVariables& elemVolVars,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
-                                const LocalDof& localDof,
                                 const FaceIpData& faceIpData) const
     {
         return asImp_().boundaryFluxAtPos(faceIpData.ipGlobal());
@@ -814,11 +806,9 @@ public:
                            const SubControlVolumeFace& scvf) const
     {
         using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<GlobalPosition, typename SubControlVolumeFace::Traits::LocalIndexType>;
-        return asImp_().boundaryFlux(element,
-                                     fvGeometry,
+        return asImp_().boundaryFlux(fvGeometry,
                                      elemVolVars,
                                      elemFluxVarsCache,
-                                     fvGeometry.localDof(fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()),
                                      FaceIpData(scvf.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
     }
 
