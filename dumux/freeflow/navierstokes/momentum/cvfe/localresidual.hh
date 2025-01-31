@@ -23,11 +23,26 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fem/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+//! helper struct detecting if a problem has new source interface
+template<class P, class FVG, class EV, class IPD>
+using SourceWithIpDataInterface = decltype(
+    std::declval<P>().source(std::declval<FVG>(), std::declval<EV>(), std::declval<IPD>())
+);
+
+template<class P, class FVG, class EV, class IPD>
+constexpr inline bool hasProblemSourceWithIpDataInterface()
+{ return Dune::Std::is_detected<SourceWithIpDataInterface, P, FVG, EV, IPD>::value; }
+
+} // end namespace Detail
 
 /*!
  * \ingroup NavierStokesModel
@@ -117,7 +132,21 @@ public:
                               const ElementVolumeVariables& elemVolVars,
                               const SubControlVolume& scv) const
     {
-        NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
+        NumEqVector source;
+
+        if constexpr (Detail::hasProblemSourceWithIpDataInterface<Problem, FVElementGeometry, ElementVolumeVariables,
+                                                                  Dumux::CVFE::IntegrationPointData<GlobalPosition>>())
+        {
+            source = problem.source(fvGeometry, elemVolVars, Dumux::CVFE::IntegrationPointData<GlobalPosition>(scv.center()));
+
+            // ToDo: point source data with ipData
+            // add contribution from possible point sources
+            if (!problem.pointSourceMap().empty())
+                source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
+        }
+        else
+            source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
+
 
         // add rho*g (note that gravity might be zero in case it's disabled in the problem)
         const auto& data = ipData(fvGeometry, scv);
