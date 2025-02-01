@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <array>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!
@@ -367,6 +369,94 @@ protected:
 
     std::array<BoundaryInfo, numEq> boundaryInfo_;
     std::array<unsigned int, numEq> eq2pvIdx_, pv2eqIdx_;
+};
+
+/*!
+ * \ingroup Core
+ * \brief Class to specify everywhere Neumann conditions
+ */
+template <int numEq>
+class BoundaryTypesAllNeumann
+{
+public:
+    BoundaryTypesAllNeumann(bool onBoundary = false) : onBoundary_(onBoundary)
+    { }
+
+
+    //! we have a boundary condition for each equation
+    static constexpr int size()
+    { return numEq; }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Dirichlet condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isDirichlet(unsigned eqIdx) const
+    { return false; }
+
+    /*!
+     * \brief Returns true if all equations are used to specify a
+     *        Dirichlet condition.
+     */
+    bool hasOnlyDirichlet() const
+    { return false; }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        Dirichlet condition.
+     */
+    bool hasDirichlet() const
+    { return false; }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Neumann condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isNeumann(unsigned eqIdx) const
+    { return onBoundary_; }
+
+    /*!
+     * \brief Returns true if all equations are used to specify a
+     *        Neumann condition.
+     */
+    bool hasOnlyNeumann() const
+    { return onBoundary_; }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        Neumann condition.
+     */
+    bool hasNeumann() const
+    { return onBoundary_; }
+
+    /*!
+     * \brief Returns the index of the equation which should be used
+     *        for the Dirichlet condition of the pvIdx's primary
+     *        variable.
+     *
+     * \param pvIdx The index of the primary variable which is be set
+     *              by the Dirichlet condition.
+     */
+    unsigned dirichletToEqIndex(unsigned pvIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Call dirichletToEqIndex(pvIdx) for pure Neumann conditions."); }
+
+    /*!
+     * \brief Returns the index of the primary variable which should
+     *        be used for the Dirichlet condition given an equation
+     *        index.
+     *
+     * \param eqIdx The index of the equation which is used to set
+     *              the Dirichlet condition.
+     */
+    unsigned eqToDirichletIndex(unsigned eqIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Call eqToDirichletIndex(eqIdx) for pure Neumann conditions.");  }
+
+private:
+    bool onBoundary_;
 };
 
 } // end namespace Dumux
