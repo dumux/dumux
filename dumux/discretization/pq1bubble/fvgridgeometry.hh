@@ -137,6 +137,8 @@ public:
     using DiscretizationMethod = DiscretizationMethods::PQ1Bubble;
     static constexpr DiscretizationMethod discMethod{};
 
+    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
+
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
