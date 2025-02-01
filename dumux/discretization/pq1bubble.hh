@@ -114,7 +114,7 @@ public:
 
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::PQ1BubbleBase>
+struct ElementBoundaryTypes<TypeTag, TTag::PQ1BubbleModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -122,6 +122,12 @@ private:
 public:
     using type = CVFEElementBoundaryTypes<BoundaryTypes>;
 };
+
+//! Set the default for the ElementBoundaryTypes for hybrid model
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::PQ1BubbleHybridModel>
+{ using type = CVFEElementBoundaryTypesAllNeumann<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+
 
 //! Set the BaseLocalResidual to CVFELocalResidual
 template<class TypeTag>
