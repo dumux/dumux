@@ -111,6 +111,7 @@ public:
     }
 
     //! iterate over dof indices that are treated as hybrid dofs using the finite element method
+    template<bool enable = GridGeometry::enableHybridCVFE, std::enable_if_t<enable, int> = 0>
     friend inline auto nonCVLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
     {
         return Dune::transformedRangeView(
