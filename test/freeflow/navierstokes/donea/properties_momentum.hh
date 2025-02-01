@@ -28,6 +28,10 @@
 #define DISCRETIZATION_MODEL FaceCenteredStaggeredModel
 #endif
 
+#ifndef NEW_PROBLEM_INTERFACE
+#define NEW_PROBLEM_INTERFACE 0
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -44,6 +48,7 @@
 #include <dumux/discretization/pq1bubble.hh>
 
 #include "problem.hh"
+#include "problem_newinterface.hh"
 
 namespace Dumux::Properties {
 
@@ -56,7 +61,11 @@ struct DoneaTestMomentum { using InheritsFrom = std::tuple<NAVIER_STOKES_MODEL, 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMomentum>
 {
+#if NEW_PROBLEM_INTERFACE
+    using type = Dumux::DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>;
+#else
     using type = Dumux::DoneaTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>;
+#endif
 };
 
 // the fluid system
