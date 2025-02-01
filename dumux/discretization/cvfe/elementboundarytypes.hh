@@ -15,6 +15,7 @@
 #include <cassert>
 #include <vector>
 
+#include <dumux/common/boundarytypes.hh>
 #include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/discretization/method.hh>
 
@@ -127,6 +128,76 @@ public:
 private:
     std::vector<BoundaryTypes> bcTypes_;
     bool hasDirichlet_ = false;
+    bool hasNeumann_ = false;
+};
+
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief This class sets everywhere Neumann at boundary dofs and provides an interface required by the assembler
+ */
+template <int numEq>
+class CVFEElementBoundaryTypesAllNeumann
+{
+public:
+    using BoundaryTypes = BoundaryTypesAllNeumann<numEq>;
+
+    /*!
+     * \brief Update the boundary types for all vertices of an element.
+     *
+     * \param problem The problem object which needs to be simulated
+     * \param element The DUNE Codim<0> entity for which the boundary
+     *                types should be collected
+     * \param fvGeometry The element's finite volume geometry
+     */
+    template<class Problem, class FVElementGeometry>
+    void update(const Problem& problem,
+                const typename FVElementGeometry::Element& element,
+                const FVElementGeometry& fvGeometry)
+    {
+        bcTypes_.resize(Detail::numLocalDofs(fvGeometry));
+        hasNeumann_ = false;
+
+        for (const auto& localDof : localDofs(fvGeometry))
+        {
+            if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
+            {
+                hasNeumann_ = true;
+                // We set everywhere Neumann
+                bcTypes_[localDof.indexInElement()] = BoundaryTypes(true);
+            }
+        }
+    }
+
+    /*!
+     * \brief Returns whether the element has a vertex which contains
+     *        a Dirichlet value.
+     */
+    bool hasDirichlet() const
+    { return false; }
+
+    /*!
+     * \brief Returns whether the element potentially features a
+     *        Neumann boundary segment.
+     */
+    bool hasNeumann() const
+    { return hasNeumann_; }
+
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     * \note yields undefined behaviour if the scv is not on the boundary
+     */
+    template<class FVElementGeometry,
+             class ScvOrLocalDof>
+    const BoundaryTypes& get(const FVElementGeometry&, const ScvOrLocalDof& scvOrLocalDof) const
+    {
+        const auto localDofIdx = scvOrLocalDof.indexInElement();
+        assert(localDofIdx < bcTypes_.size());
+        return bcTypes_[localDofIdx];
+    }
+
+private:
+    std::vector<BoundaryTypes> bcTypes_;
     bool hasNeumann_ = false;
 };
 
