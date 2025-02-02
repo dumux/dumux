@@ -445,16 +445,17 @@ public:
                               const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
                               const CouplingContext& context)
     {
-        Scalar temperature(0.0);
+        Scalar sumTemperature(0.0);
+        Scalar sumWeight(0.0);
 
-        int count = 0;
         for(const auto& c : context)
         {
-            temperature += c.volVars.temperature();
-            count++;
+            Scalar averagingWeight = c.scvf.area();
+            sumTemperature +=  (averagingWeight * c.volVars.temperature());
+            sumWeight + = averagingWeight;
         }
 
-        return temperature / count; // average temperature
+        return sumTemperature / sumWeight; // average temperature
     }
 
     /*!
@@ -666,16 +667,17 @@ public:
                               const ElementVolumeVariables<ParentType::poreNetworkIndex>& insideVolVars,
                               const CouplingContext& context)
     {
-        Scalar temperature(0.0);
+        Scalar sumTemperature(0.0);
+        Scalar sumWeight(0.0);
 
-        int count = 0;
         for(const auto& c : context)
         {
-            temperature += c.volVars.temperature();
-            count++;
+            Scalar averagingWeight = c.scvf.area();
+            sumTemperature +=  (averagingWeight * c.volVars.temperature());
+            sumWeight + = averagingWeight;
         }
 
-        return temperature / count;
+        return sumTemperature / sumWeight; // average temperature
     }
 
     /*!
