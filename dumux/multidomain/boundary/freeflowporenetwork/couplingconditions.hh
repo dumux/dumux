@@ -325,6 +325,8 @@ public:
                                         const CouplingContext& context)
     {
         Scalar massFlux(0.0);
+        const auto& pnmVolVars = insideVolVars[scv.indexInElement()];
+
 
         for (const auto& c : context)
         {
@@ -335,13 +337,9 @@ public:
             // positive values of normal pnm velocity indicate flux leaving the pnm into the free-flow region
             const Scalar normalPNMVelocity = -normalFFVelocity;
             const bool pnmIsUpstream = std::signbit(normalFFVelocity);
-
-            const Scalar pnmDensity = insideVolVars[scv].density(couplingPhaseIdx(ParentType::poreNetworkIndex));
-            const Scalar ffDensity = c.volVars.density(couplingPhaseIdx(ParentType::freeFlowMassIndex));
             const Scalar area = c.scvf.area() * c.volVars.extrusionFactor();
 
-            auto flux = ParentType::advectiveFlux(pnmDensity, ffDensity, normalPNMVelocity, pnmIsUpstream);
-
+            auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalPNMVelocity, pnmIsUpstream);
             // flux is used as source term: positive values mean influx
             // thus, it is multiplied with area and we flip the sign
             flux *= area;
@@ -367,12 +365,11 @@ public:
         // positive values indicate flux into pore-network region
         const Scalar normalFFVelocity = context.velocity * scvf.unitOuterNormal();
         const bool ffIsUpstream = !std::signbit(normalFFVelocity);
-
-        const Scalar ffDensity = insideVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(ParentType::freeFlowMassIndex));
-        const Scalar pnmDensity = context.volVars.density(couplingPhaseIdx(ParentType::poreNetworkIndex));
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& ffVolVars = insideVolVars[scvf.insideScvIdx()];
 
         // flux is used in Neumann condition: positive values mean flux out of free-flow domain
-        return ParentType::advectiveFlux(ffDensity, pnmDensity, normalFFVelocity, ffIsUpstream);
+        return massFlux_(domainI, domainJ, scvf, insideScv, context.scv, ffVolVars, context.volVars, normalFFVelocity, ffIsUpstream);
     }
 
     /*!
@@ -452,7 +449,7 @@ public:
         {
             Scalar averagingWeight = c.scvf.area();
             sumTemperature +=  (averagingWeight * c.volVars.temperature());
-            sumWeight + = averagingWeight;
+            sumWeight += averagingWeight;
         }
 
         return sumTemperature / sumWeight; // average temperature
@@ -474,6 +471,29 @@ public:
 
 private:
 
+    /*!
+     * \brief Evaluate the compositional mole/mass flux across the interface.
+     */
+    template<std::size_t i, std::size_t j>
+    static Scalar massFlux_(Dune::index_constant<i> domainI,
+                                   Dune::index_constant<j> domainJ,
+                                   const SubControlVolumeFace<ParentType::freeFlowMassIndex>& scvf,
+                                   const SubControlVolume<i>& scvI,
+                                   const SubControlVolume<j>& scvJ,
+                                   const VolumeVariables<i>& insideVolVars,
+                                   const VolumeVariables<j>& outsideVolVars,
+                                   const Scalar velocity,
+                                   const bool insideIsUpstream)
+    {
+        Scalar flux(0.0);
+
+        const Scalar insideDensity = insideVolVars.density(couplingPhaseIdx(domainI));
+        const Scalar outsideDensity = outsideVolVars.density(couplingPhaseIdx(domainJ));
+
+        flux = ParentType::advectiveFlux(insideDensity, outsideDensity, velocity, insideIsUpstream);
+
+        return flux;
+    }
     /*!
      * \brief Evaluate the energy flux across the interface.
      */
@@ -674,7 +694,7 @@ public:
         {
             Scalar averagingWeight = c.scvf.area();
             sumTemperature +=  (averagingWeight * c.volVars.temperature());
-            sumWeight + = averagingWeight;
+            sumWeight += averagingWeight;
         }
 
         return sumTemperature / sumWeight; // average temperature
