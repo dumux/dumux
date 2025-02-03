@@ -62,7 +62,7 @@ public:
     {
         priVars_.resize(Detail::numLocalDofs(fvGeometry));
         for (const auto& localDof : localDofs(fvGeometry))
-            priVars_[localDof.indexInElement()] = elemVolVars[localDof.indexInElement()].priVars();
+            priVars_[localDof.index()] = elemVolVars[localDof.indexInElement()].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
@@ -93,7 +93,7 @@ public:
     {
         priVars_.resize(Detail::numLocalDofs(fvGeometry));
         for (const auto& localDof : localDofs(fvGeometry))
-            priVars_[localDof.indexInElement()] = sol[localDof.dofIndex()];
+            priVars_[localDof.index()] = sol[localDof.dofIndex()];
     }
 
     //! return the size of the element solution
