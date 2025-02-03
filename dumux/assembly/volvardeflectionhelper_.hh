@@ -78,7 +78,7 @@ public:
             accessor_(scvOrLocalDof) = origVolVars_[0];
         else
             for (const auto& localDof : cvLocalDofs(fvGeometry_))
-                accessor_(fvGeometry_.scv(localDof.indexInElement())) = origVolVars_[localDof.indexInElement()];
+                accessor_(fvGeometry_.scv(localDof.indexInElement())) = origVolVars_[localDof.index()];
     }
 
 private:
