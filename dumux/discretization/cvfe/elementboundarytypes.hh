@@ -48,14 +48,14 @@ public:
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        for (const auto& localDof : cvLocalDofs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
         {
-            const auto localIdx = localDof.indexInElement();
+            const auto localIdx = scv.localDofIndex();
             bcTypes_[localIdx].reset();
 
-            if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
+            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
             {
-                bcTypes_[localIdx] = problem.boundaryTypes(element, fvGeometry.scv(localDof.indexInElement()));
+                bcTypes_[localIdx] = problem.boundaryTypes(element, scv);
                 hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
                 hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
             }
@@ -99,7 +99,7 @@ public:
              class ScvOrLocalDof>
     const BoundaryTypes& get(const FVElementGeometry&, const ScvOrLocalDof& scvOrLocalDof) const
     {
-        const auto localDofIdx = scvOrLocalDof.indexInElement();
+        const auto localDofIdx = Detail::index(scvOrLocalDof);
         assert(localDofIdx < bcTypes_.size());
         return bcTypes_[localDofIdx];
     }
