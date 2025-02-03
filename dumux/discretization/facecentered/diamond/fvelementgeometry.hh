@@ -83,26 +83,6 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
-    //! iterate over dof indices that belong to dofs associated with control volumes
-    friend inline auto cvLocalDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
-    {
-        return localDofs(fvGeometry);
-    }
-
-    //! an iterator over all local dofs
-    friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(fvGeometry.numScv()),
-            [&](const auto i) { return CVFE::LocalDof
-            {
-                static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
-                static_cast<GridIndexType>(fvGeometry.elementIndex())
-            }; }
-        );
-    }
-
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
