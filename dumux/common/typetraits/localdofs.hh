@@ -48,6 +48,21 @@ constexpr int maxNumLocalDofs()
         return FVElementGeometry::maxNumElementScvs;
 }
 
+//! helper struct detecting if a class has a localDofIndex() function
+template<class Imp>
+using LocalDofIndexDetector = decltype(
+    std::declval<Imp>().localDofIndex()
+);
+
+template<class ScvOrLocalDof>
+inline auto index(const ScvOrLocalDof& scvOrLocalDof)
+{
+    if constexpr (Dune::Std::is_detected<LocalDofIndexDetector, ScvOrLocalDof>::value)
+        return scvOrLocalDof.localDofIndex();
+    else
+        return scvOrLocalDof.index();
+}
+
 } // end namespace Dumux::Detail
 
 #endif
