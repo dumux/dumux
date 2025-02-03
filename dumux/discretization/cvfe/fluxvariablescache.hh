@@ -79,7 +79,7 @@ public:
         // compute the gradN at for every scv/dof
         gradN_.resize(Detail::numLocalDofs(fvGeometry));
         for (const auto& localDof: localDofs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[localDof.indexInElement()][0], gradN_[localDof.indexInElement()]);
+            jacInvT_.mv(shapeJacobian_[localDof.index()][0], gradN_[localDof.indexInElement()]);
     }
 
     //! returns the global position for which this cache has been updated
