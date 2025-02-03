@@ -448,4 +448,4 @@ dumux_add_test(SOURCES test_pnm_subgriddata.cc
 
 dumux_add_test(SOURCES test_facetgridmanager.cc
                LABELS unit io
-               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )")
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND dune-alugrid_VERSION VERSION_GREATER 2.10 )")
