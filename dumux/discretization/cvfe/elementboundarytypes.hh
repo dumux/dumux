@@ -50,7 +50,7 @@ public:
 
         for (const auto& localDof : cvLocalDofs(fvGeometry))
         {
-            const auto localIdx = localDof.indexInElement();
+            const auto localIdx = localDof.index();
             bcTypes_[localIdx].reset();
 
             if (fvGeometry.gridGeometry().dofOnBoundary(localDof.dofIndex()))
@@ -99,7 +99,7 @@ public:
              class ScvOrLocalDof>
     const BoundaryTypes& get(const FVElementGeometry&, const ScvOrLocalDof& scvOrLocalDof) const
     {
-        const auto localDofIdx = scvOrLocalDof.indexInElement();
+        const auto localDofIdx = Detail::index(scvOrLocalDof);
         assert(localDofIdx < bcTypes_.size());
         return bcTypes_[localDofIdx];
     }
