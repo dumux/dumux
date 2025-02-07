@@ -42,12 +42,13 @@ class EnergyLocalResidualImplementation<TypeTag, false>
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
 
 public:
+    template <typename T = void>
     static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        static_assert("Deprecated interface that has been removed!");
+        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead.");
     }
 
     /*!
@@ -150,12 +151,13 @@ public:
                                 * (volVars.internalEnergy(phaseIdx) - gravityPotential);
     }
 
+    template <typename T = void>
     static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        static_assert("Deprecated interface that has been removed!");
+        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead.");
     }
 
     /*!
