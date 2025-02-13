@@ -283,7 +283,7 @@ public:
                     if constexpr (isBox<lowDimIdx>())
                     {
                         ShapeValues shapeValues;
-                        this->getShapeValues(lowDimIdx, lowDimGridGeometry, intersectionGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimElement.geometry(), globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else

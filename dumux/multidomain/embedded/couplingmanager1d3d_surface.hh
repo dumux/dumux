@@ -283,7 +283,7 @@ public:
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
-                            this->getShapeValues(lowDimIdx, lowDimGridGeometry, intersectionGeometry, globalPos, shapeValues);
+                            this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimElement.geometry(), globalPos, shapeValues);
                             psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
