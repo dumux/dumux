@@ -62,12 +62,16 @@ public:
                            const SubControlVolume& scv,
                            const ElementSolution& elemSol) const
     {
+    #if DISABLE_FRACTURES
+        return 1.0;
+    #else
         // In the box-scheme, we compute fluxes etc element-wise,
         // thus per element we compute only half a fracture !!!
         static const Scalar aHalf = getParam<Scalar>("SpatialParams.FractureAperture")/2.0;
         if (scv.isOnFracture())
             return aHalf;
         return 1.0;
+    #endif
     }
 
     /*!
@@ -84,10 +88,14 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
+    #if DISABLE_FRACTURES
+        return 1e-12;
+    #else
         if (scv.isOnFracture())
             return 5e-10;
         else
             return 1e-12;
+    #endif
     }
 
 
@@ -104,10 +112,14 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
+    #if DISABLE_FRACTURES
+        return 0.15;
+    #else
         if (scv.isOnFracture())
             return 0.6;
         else
             return 0.15;
+    #endif
     }
 
     /*!
@@ -124,10 +136,14 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
+    #if DISABLE_FRACTURES
+        return makeFluidMatrixInteraction(pcKrSwMatrix_);
+    #else
         if (scv.isOnFracture())
             return makeFluidMatrixInteraction(pcKrSwFracture_);
         else
             return makeFluidMatrixInteraction(pcKrSwMatrix_);
+    #endif
     }
 
     /*!

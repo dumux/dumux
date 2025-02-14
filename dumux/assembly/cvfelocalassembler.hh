@@ -34,6 +34,10 @@
 
 #include "volvardeflectionhelper_.hh"
 
+#ifndef IGNORE_FRACTURE_DOFS
+#define IGNORE_FRACTURE_DOFS 0
+#endif
+
 namespace Dumux {
 
 #ifndef DOXYGEN
@@ -107,9 +111,18 @@ public:
         else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
+
+#if IGNORE_FRACTURE_DOFS
+            for (int idx=0; idx < this->element().geometry().corners(); idx++)
+            {
+                const auto& scv = this->fvGeometry().scv(idx);
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
+            }
+#else
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
+#endif
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
             maybeAssembleCouplingBlocks(residual);
         }
@@ -382,9 +395,15 @@ public:
             updateAllVolVars
         );
 
+#if IGNORE_FRACTURE_DOFS
         // calculation of the derivatives
-        for (const auto& scv : scvs(fvGeometry))
+        for (int idx=0; idx < element.geometry().corners(); idx++)
         {
+            const auto& scv = fvGeometry.scv(idx);
+#else
+        for (const auto& scv : scvs(this->fvGeometry()))
+        {
+#endif
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
             deflectionHelper.setCurrent(scv);
@@ -415,9 +434,16 @@ public:
                 NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
+#if IGNORE_FRACTURE_DOFS
                 // update the global stiffness matrix with the current partial derivatives
-                for (const auto& scvJ : scvs(fvGeometry))
+                for (int idxJ=0; idxJ < element.geometry().corners(); idxJ++)
                 {
+                    const auto& scvJ = fvGeometry.scv(idxJ);
+#else
+                for (const auto& scvJ : scvs(this->fvGeometry()))
+                {
+#endif
+                    // dof index and corresponding actual pri
                     // don't add derivatives for green dofs
                     if (!partialReassembler
                         || partialReassembler->dofColor(scvJ.dofIndex()) != EntityColor::green)
