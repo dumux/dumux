@@ -7,11 +7,11 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief Pore-network sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief Pore-network sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  */
 
-#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_PNM_HH
-#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_PNM_HH
+#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_PNM_HH
+#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_PNM_HH
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
@@ -52,6 +52,7 @@ public:
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
         onlyDiffusion_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.OnlyDiffusion", false);
+        source_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Source", 1e-7);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
 #endif
@@ -177,7 +178,7 @@ public:
         else if (onlyDiffusion_ && onLowerBoundary_(scv))
         {
             values[Indices::conti0EqIdx] = 0.0;
-            values[Indices::conti0EqIdx + 1] = 1e-7; //random value in the order to have a compositional source term
+            values[Indices::conti0EqIdx + 1] = source_;
         }
         values /= this->gridGeometry().poreVolume(scv.dofIndex());
 
@@ -214,13 +215,14 @@ private:
     bool onLowerBoundary_(const SubControlVolume& scv) const
     { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; }
 
-    std::shared_ptr<CouplingManager> couplingManager_;
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
     bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
 #endif
+    Scalar source_;
+    std::shared_ptr<CouplingManager> couplingManager_;
 };
 
 } // end namespace Dumux

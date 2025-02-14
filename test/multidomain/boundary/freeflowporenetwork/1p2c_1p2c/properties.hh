@@ -9,8 +9,8 @@
  * \ingroup BoundaryTests
  * \brief The properties for a simple Darcy test (cell-centered finite volume method)
  */
-#ifndef DUMUX_PNMSTOKES_PROPERTIES_HH
-#define DUMUX_PNMSTOKES_PROPERTIES_HH
+#ifndef DUMUX_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROPERTIES_HH
+#define DUMUX_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROPERTIES_HH
 
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/grid/yaspgrid.hh>

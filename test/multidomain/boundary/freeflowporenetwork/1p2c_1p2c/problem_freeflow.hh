@@ -7,11 +7,11 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief Free-flow sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  */
 
-#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_FREEFLOW_HH
-#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_FREEFLOW_HH
+#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_FREEFLOW_HH
+#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_FREEFLOW_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
@@ -22,7 +22,7 @@ namespace Dumux {
 
 /*!
  * \ingroup BoundaryTests
- * \brief  Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief  Free-flow sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  *         A two-dimensional Stokes flow region coupled to a pore-network model.
  */
 template <class TypeTag, class BaseProblem>
@@ -247,7 +247,7 @@ public:
     Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
         const Scalar radius = couplingManager_->coupledPoreInscribedRadius(fvGeometry, scvf);
-        return 5.73 / radius; // this values is only an approximation of wall friction is considered
+        return 5.73 / radius; // in this values only an approximation of wall friction is considered
     }
 
     /*!
@@ -273,11 +273,9 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
-
     Scalar deltaP_;
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
-
     bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;

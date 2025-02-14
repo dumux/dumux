@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief A test problem for the coupled Free-Flow/PNM problem (1p).
+ * \brief A test problem for the coupled Free-Flow/PNM problem (1p2c).
  */
 
 #include <config.h>
