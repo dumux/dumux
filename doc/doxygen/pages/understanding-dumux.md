@@ -9,3 +9,4 @@ of the conventions and concepts.
 * @ref running-in-parallel
 * @ref input-and-output-formats
 * @ref directory-structure
+* @ref cheatsheet
