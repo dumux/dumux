@@ -1,8 +1,7 @@
 # Cheatsheet
 
 ## CMake Commands
-* Setting debug option within a test, options for `[BUILD_TYPE]`: `'Debug'`, `'RelWithDebInfo'`:
-
+* Setting debug option within the `CMakeLists.txt` file for a test, options for `[BUILD_TYPE]`: `Debug`, `RelWithDebInfo`:
 ```cmake
 set(CMAKE_BUILD_TYPE [BUILD_TYPE])
 ```
@@ -39,11 +38,6 @@ mpirun -np [n_cores] [executable_name]
 DUMUX_NUM_THREADS=[num_threads] ./test_executable
 ```
 
-* Creating a new Dune module:
-```bash
-./dune-common/bin/duneproject
-```
-
 * Passing run-time parameters per command line:
 ```bash
 ./dummy_test -GroupName.ParameterName parameterValue
@@ -52,6 +46,26 @@ DUMUX_NUM_THREADS=[num_threads] ./test_executable
 * Build documentation locally. In `build-cmake/`:
 ```bash
 make doc
+```
+
+* Creating a new Dune module:
+```bash
+./dune-common/bin/duneproject
+```
+
+* Extract test(s) as extra module:
+```bash
+./dumux/bin/extractmodule/extract_as_new_module.py module_dir SUBFOLDER_1 [SUBFOLDER_2 ...]
+```
+
+* Create install script for a module:
+```bash
+./dumux/bin/extractmodule/make_installscript.py -p module_dir
+```
+
+* Create docker image of a module:
+```bash
+./dumux/bin/extractmodule/create_dockerimage.py -m module_dir -i path_to_installscript
 ```
 Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen/html/index.html` and opened via a browser.
 
@@ -104,26 +118,32 @@ scv.dofPosition();   // position of DOF the scv is embedded in
 * Creating and accessing volume variables:
 ```cpp
 using VolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::VolumeVariables;
-
 VolumeVariables volVars;
-const auto elemSol = elementSolution(element, solutionVector, gridGeometry);
-volVars.update(elemSol, problem, element, scv);
-Scalar pressure_phase = volVars.pressure(phaseIdx);
-Scalar density_phase = volVars.density(phaseIdx);
+auto fvGeometry = localView(gridGeometry);
+for (const auto& element : elements(gridGeometry.gridView()))
+{
+    fvGeometry.bind(element);
+    const auto elemSol = elementSolution(element, solutionVector, gridGeometry);
+    for (const auto& scv : scvs(fvGeometry))
+    {
+        volVars.update(elemSol, problem, element, scv);
+        Scalar pressure_phase = volVars.pressure(phaseIdx);
+        Scalar density_phase = volVars.density(phaseIdx);
+    }
+}
 ```
 
 * Creating and accessing flux volume variables, CCTPFA example:
 ```cpp
 using FluxVariables =  GetPropType<TypeTag, Properties::FluxVariables>;
 auto upwindTerm = [](const auto& volVars) { return volVars.mobility(Indices::conti0EqIdx); };
-
 auto fvGeometry = localView(gridGeometry);
 auto elemVolVars = localView(gridVariables.curGridVolVars());
 auto elemFluxVars = localView(gridVariables.gridFluxVarsCache());
 for (const auto& element : elements(gridGeometry.gridView()))
 {
     fvGeometry.bind(element);
-    elemVolVars.bind(element, fvGeometry, sol);
+    elemVolVars.bind(element, fvGeometry, solutionVector);
     elemFluxVars.bind(element, fvGeometry, elemVolVars);
 
     for (const auto& scvf : scvfs(fvGeometry))
