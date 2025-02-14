@@ -196,6 +196,7 @@ doxygen:
   artifacts:
     paths:
       - build-cmake/doc/doxygen
+    expire_in: 3 hours
 
 
 compile cpp:
@@ -254,6 +255,7 @@ test cpp:
   artifacts:
     reports:
       junit: junit/dumux-cmake.xml
+    expire_in: 3 hours
 
 
 test python:
