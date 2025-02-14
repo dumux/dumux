@@ -5,7 +5,7 @@
 
 You created the Docker image ${dockerTag}. Next steps:
 
-* Try your container by running docker_${dockerTag}.sh open
+* Try your container by running ./docker_${dockerTag}.sh open
   See below for instructions how to share files with the host system.
 * Push the docker image to DockerHub or the GitLab Docker registry of your dumux module.
   Look at the Registry tab of your dumux module for help.
