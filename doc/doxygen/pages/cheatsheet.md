@@ -49,6 +49,12 @@ DUMUX_NUM_THREADS=[num_threads] ./test_executable
 ./dummy_test -GroupName.ParameterName parameterValue
 ```
 
+* Build documentation locally. In `build-cmake/`:
+```bash
+make doc
+```
+Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen/html/index.html` and opened via a browser.
+
 ## C++ Code
 * Iterating over grid elements:
 ```cpp
