@@ -591,7 +591,6 @@ public:
             auto flux = massFlux_(domainI, domainJ, c.scvf, scv, c.scv, pnmVolVars, c.volVars, normalPNMVelocity, pnmIsUpstream);
 
             flux *= area;
-            // TODO: check it
             flux *= -1.0; // flip the sign because the flux is used as a source term (different sign convention)
             // flux is used as source term: positive values mean influx
             massFlux += flux;
