@@ -16,10 +16,7 @@
 #include <utility>
 #include <vector>
 
-#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cvfe/localdof.hh>
-
 namespace Dumux {
 
 /*!
@@ -54,9 +51,9 @@ public:
     const VolumeVariables& operator [](std::size_t scvOrLocalDofIdx) const
     { return gridVolVars().volVars(eIdx_, scvOrLocalDofIdx); }
 
-    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
-    const VolumeVariables& operator [](const ScvOrLocalDof& scvOrLocalDof) const
-    { return gridVolVars().volVars(eIdx_, scvOrLocalDof.indexInElement()); }
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return gridVolVars().volVars(eIdx_, scv.indexInElement()); }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -179,10 +176,10 @@ public:
         // get the solution at the dofs of the element
         auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
 
-        // update the volvars of the element
-        volumeVariables_.resize(Detail::numLocalDofs(fvGeometry));
-        for (const auto& localDof : cvLocalDofs(fvGeometry))
-            volumeVariables_[localDof.indexInElement()].update(elemSol, gridVolVars().problem(), element, fvGeometry.scv(localDof.indexInElement()));
+        // resize volume variables to the required size
+        volumeVariables_.resize(fvGeometry.numScv());
+        for (auto&& scv : scvs(fvGeometry))
+            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
     }
 
     const VolumeVariables& operator [](std::size_t localIdx) const
@@ -191,13 +188,13 @@ public:
     VolumeVariables& operator [](std::size_t localIdx)
     { return volumeVariables_[localIdx]; }
 
-    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
-    const VolumeVariables& operator [](const ScvOrLocalDof& scvOrLocalDof) const
-    { return volumeVariables_[scvOrLocalDof.indexInElement()]; }
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    const VolumeVariables& operator [](const SubControlVolume& scv) const
+    { return volumeVariables_[scv.indexInElement()]; }
 
-    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
-    VolumeVariables& operator [](const ScvOrLocalDof& scvOrLocalDof)
-    { return volumeVariables_[scvOrLocalDof.indexInElement()]; }
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    VolumeVariables& operator [](const SubControlVolume& scv)
+    { return volumeVariables_[scv.indexInElement()]; }
 
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
