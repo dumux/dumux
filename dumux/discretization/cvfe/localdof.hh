@@ -24,13 +24,13 @@ template<class LocalIndex, class GridIndex>
 class LocalDof
 {
 public:
-    LocalDof(LocalIndex indexInElement, GridIndex dofIndex, GridIndex eIdx)
-    : indexInElement_(indexInElement), dofIndex_(dofIndex), eIdx_(eIdx) {}
-    LocalIndex indexInElement() const { return indexInElement_; }
+    LocalDof(LocalIndex index, GridIndex dofIndex, GridIndex eIdx)
+    : index_(index), dofIndex_(dofIndex), eIdx_(eIdx) {}
+    LocalIndex index() const { return index_; }
     GridIndex dofIndex() const { return dofIndex_; }
     GridIndex elementIndex() const { return eIdx_; }
 private:
-    LocalIndex indexInElement_;
+    LocalIndex index_;
     GridIndex dofIndex_;
     GridIndex eIdx_;
 };
