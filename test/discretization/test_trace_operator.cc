@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     {
         std::cout << "Testing scv assembly" << std::endl;
         const auto x = makeSolutionVector(*gridGeometry);
-        const auto traceX = traceOperator.assembleScvVariables([&] (const auto& scv) {
+        const auto traceX = traceOperator.assembleScvVariables([&] (const auto& scv, const auto&) {
             return Dune::FieldVector<double, 2>({x[scv.dofIndex()], 0.0});
         });
         for (const auto& v : vertices(traceGridView))
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 
     {
         std::cout << "Testing scvf assembly" << std::endl;
-        const auto traceX = traceOperator.assembleScvfVariables([&] (const auto& scvf) {
+        const auto traceX = traceOperator.assembleScvfVariables([&] (const auto& scvf, const auto&) {
             return Dune::FieldVector<double, 2>({testField(scvf.center()), 0.0});
         });
         for (const auto& e : elements(traceGridView))
