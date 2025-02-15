@@ -23,73 +23,156 @@
 
 namespace Dumux::Detail {
 
-template<class VolVarAccessor, class FVElementGeometry>
-class VolVarsDeflectionHelper
-{
-    static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
+    template<class VolVarAccessor, class FVElementGeometry, bool scvsForLocalDofs>
+    class VolVarsDeflectionHelperImpl;
 
-    using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
-    using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
-    using VolumeVariables = std::decay_t<VolumeVariablesRef>;
-    static_assert(std::is_lvalue_reference_v<VolumeVariablesRef>
-                  && !std::is_const_v<std::remove_reference_t<VolumeVariablesRef>>);
-
-public:
-    VolVarsDeflectionHelper(VolVarAccessor&& accessor,
-                            const FVElementGeometry& fvGeometry,
-                            bool deflectAllVolVars)
-    : deflectAll_(deflectAllVolVars)
-    , accessor_(std::move(accessor))
-    , fvGeometry_(fvGeometry)
+    // Class where we assume that for each localDof
+    template<class VolVarAccessor, class FVElementGeometry>
+    class VolVarsDeflectionHelperImpl<VolVarAccessor, FVElementGeometry, false>
     {
-        if (deflectAll_)
-            for (const auto& localDof : cvLocalDofs(fvGeometry))
-                origVolVars_.push_back(accessor_(fvGeometry.scv(localDof.indexInElement())));
-    }
+        static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
 
-    template<class ScvOrLocalDof>
-    void setCurrent(const ScvOrLocalDof& scvOrLocalDof)
-    {
-        if (!deflectAll_)
+        using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
+        using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
+        using VolumeVariables = std::decay_t<VolumeVariablesRef>;
+        static_assert(std::is_lvalue_reference_v<VolumeVariablesRef>
+                      && !std::is_const_v<std::remove_reference_t<VolumeVariablesRef>>);
+
+    public:
+        VolVarsDeflectionHelperImpl(VolVarAccessor&& accessor,
+                                const FVElementGeometry& fvGeometry,
+                                bool deflectAllVolVars)
+        : deflectAll_(deflectAllVolVars)
+        , accessor_(std::move(accessor))
+        , fvGeometry_(fvGeometry)
         {
-            origVolVars_.clear();
-            origVolVars_.push_back(accessor_(scvOrLocalDof));
+            if (deflectAll_)
+                for (const auto& scv : scvs(fvGeometry))
+                    origVolVars_.push_back(accessor_(scv));
         }
-    }
 
-    template<class ElementSolution,
-             class ScvOrLocalDof,
-             class Problem>
-    void deflect(const ElementSolution& elemSol,
-                 const ScvOrLocalDof& scvOrLocalDof,
-                 const Problem& problem)
+        template<class LocalDof>
+        void setCurrent(const LocalDof& localDof)
+        {
+            if (!deflectAll_)
+            {
+                origVolVars_.clear();
+                origVolVars_.push_back(accessor_(fvGeometry_.scv(localDof.index())));
+            }
+        }
+
+        template<class ElementSolution,
+                 class LocalDof,
+                 class Problem>
+        void deflect(const ElementSolution& elemSol,
+                     const LocalDof& localDof,
+                     const Problem& problem)
+        {
+            if (deflectAll_)
+                for (const auto& scv : scvs(fvGeometry_))
+                    accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+            else
+                accessor_(fvGeometry_.scv(localDof.index())).update(elemSol, problem, fvGeometry_.element(), fvGeometry_.scv(localDof.index()));
+        }
+
+        template<class LocalDof>
+        void restore(const LocalDof& localDof)
+        {
+            if (!deflectAll_)
+                accessor_(fvGeometry_.scv(localDof.index())) = origVolVars_[0];
+            else
+                for (const auto& scv : scvs(fvGeometry_))
+                    accessor_(scv) = origVolVars_[scv.indexInElement()];
+        }
+
+    private:
+        const bool deflectAll_;
+        VolVarAccessor accessor_;
+        const FVElementGeometry& fvGeometry_;
+        Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
+    };
+
+    template<class VolVarAccessor, class FVElementGeometry>
+    class VolVarsDeflectionHelperImpl<VolVarAccessor, FVElementGeometry, true>
     {
-        if (deflectAll_)
-            for (const auto& localDof : cvLocalDofs(fvGeometry_))
-                accessor_(fvGeometry_.scv(localDof.indexInElement())).update(elemSol, problem, fvGeometry_.element(), fvGeometry_.scv(localDof.indexInElement()));
-        else
-            accessor_(scvOrLocalDof).update(elemSol, problem, fvGeometry_.element(), scvOrLocalDof);
-    }
+        static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
 
-    template<class ScvOrLocalDof>
-    void restore(const ScvOrLocalDof& scvOrLocalDof)
-    {
-        if (!deflectAll_)
-            accessor_(scvOrLocalDof) = origVolVars_[0];
-        else
-            for (const auto& localDof : cvLocalDofs(fvGeometry_))
-                accessor_(fvGeometry_.scv(localDof.indexInElement())) = origVolVars_[localDof.index()];
-    }
+        using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
+        using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
+        using VolumeVariables = std::decay_t<VolumeVariablesRef>;
+        static_assert(std::is_lvalue_reference_v<VolumeVariablesRef>
+                      && !std::is_const_v<std::remove_reference_t<VolumeVariablesRef>>);
 
-private:
-    const bool deflectAll_;
-    VolVarAccessor accessor_;
-    const FVElementGeometry& fvGeometry_;
-    Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
-};
+    public:
+        VolVarsDeflectionHelperImpl(VolVarAccessor&& accessor,
+                                    const FVElementGeometry& fvGeometry,
+                                    bool deflectAllVolVars)
+        : deflectAll_(deflectAllVolVars)
+        , accessor_(std::move(accessor))
+        , fvGeometry_(fvGeometry)
+        {
+            if (deflectAll_)
+                for (const auto& scv : scvs(fvGeometry))
+                    origVolVars_.push_back(accessor_(scv));
+        }
 
-template<class Accessor, class FVElementGeometry>
-VolVarsDeflectionHelper(Accessor&&, FVElementGeometry&&) -> VolVarsDeflectionHelper<Accessor, std::decay_t<FVElementGeometry>>;
+        template<class LocalDof>
+        void setCurrent(const LocalDof& localDof)
+        {
+            if (!deflectAll_)
+            {
+                origVolVars_.clear();
+                for(const auto& scv : scvs(fvGeometry_, localDof))
+                {
+                    origVolVars_.push_back(accessor_(scv));
+                }
+            }
+        }
+
+        template<class ElementSolution,
+                 class LocalDof,
+                 class Problem>
+        void deflect(const ElementSolution& elemSol,
+                     const LocalDof& localDof,
+                     const Problem& problem)
+        {
+            if (deflectAll_)
+                for (const auto& scv : scvs(fvGeometry_))
+                    accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+            else
+            {
+                for(const auto& scv : scvs(fvGeometry_, localDof))
+                    accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+            }
+        }
+
+        template<class LocalDof>
+        void restore(const LocalDof& localDof)
+        {
+            if (!deflectAll_)
+            {
+                unsigned int idx = 0;
+                for(const auto& scv : scvs(fvGeometry_, localDof))
+                {
+                    accessor_(scv) = origVolVars_[idx];
+                    idx++;
+                }
+            }
+            else
+                for (const auto& scv : scvs(fvGeometry_))
+                    accessor_(scv) = origVolVars_[scv.indexInElement()];
+        }
+
+    private:
+        const bool deflectAll_;
+        VolVarAccessor accessor_;
+        const FVElementGeometry& fvGeometry_;
+        Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
+    };
+
+    template<class Accessor, class FVG>
+    auto VolVarsDeflectionHelper(Accessor&& accessor, const FVG& fvg, bool deflectAllVolVars)
+    { return VolVarsDeflectionHelperImpl<Accessor, FVG, hasScvsForLocalDofs<FVG>()>(std::move(accessor), fvg, deflectAllVolVars); };
 
 } // end namespace Dumux::Detail
 
