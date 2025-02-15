@@ -63,6 +63,18 @@ inline auto index(const ScvOrLocalDof& scvOrLocalDof)
         return scvOrLocalDof.index();
 }
 
+//! helper struct detecting if a fvElementGeometry object defines its own local dof type
+template<class FVG>
+using SpecifiesLocalDof = typename FVG::LocalDof;
+
+template<class FVG>
+using LocalDof_t = Dune::Std::detected_or_t<
+    Dumux::CVFE::LocalDof<typename IndexTraits<typename FVG::GridGeometry::GridView>::LocalIndex,
+                          typename IndexTraits<typename FVG::GridGeometry::GridView>::GridIndex >,
+    SpecifiesLocalDof,
+    FVG
+>;
+
 } // end namespace Dumux::Detail
 
 #endif
