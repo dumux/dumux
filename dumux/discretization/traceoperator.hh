@@ -84,6 +84,7 @@ class FVTraceOperator {
  public:
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Vertex = typename GridGeometry::GridView::template Codim<dim>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using TraceVertex = typename TraceGridGeometry::GridView::template Codim<traceDim>::Entity;
@@ -112,11 +113,11 @@ class FVTraceOperator {
      * \brief Assemble vertex-wise variables on the trace from overlapping sub-control volumes (CVFE methods only).
      * \param f Functor to assemble the desired variables in boundary scvs
      */
-    template<std::invocable<const SubControlVolume&> F>
+    template<std::invocable<const SubControlVolume&, const FVElementGeometry&> F>
     auto assembleScvVariables(F&& f) const
     {
         return assembleScvVariables(
-            [&] (const auto& scv, const auto&) { return f(scv); },
+            [&] (const auto& scv, const auto& fvGeometry) { return f(scv, fvGeometry); },
             DefaultContext{localView(traceGridMapper_->domainGridGeometry())}
         );
     }
@@ -166,11 +167,11 @@ class FVTraceOperator {
      * \param f Functor to assemble the desired variables at boundary scvfs
      * \param context A context class that will be bound per visited domain element and passed to f
      */
-    template<std::invocable<const SubControlVolumeFace&> F>
+    template<std::invocable<const SubControlVolumeFace&, const FVElementGeometry&> F>
     auto assembleScvfVariables(F&& f) const
     {
         return assembleScvfVariables(
-            [&] (const auto& scvf, const auto&) { return f(scvf); },
+            [&] (const auto& scvf, const auto& fvGeometry) { return f(scvf, fvGeometry); },
             DefaultContext{localView(traceGridMapper_->domainGridGeometry())}
         );
     }
