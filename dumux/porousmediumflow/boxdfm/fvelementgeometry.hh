@@ -19,10 +19,13 @@
 
 #include <optional>
 #include <utility>
+#include <ranges>
 
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include "geometryhelper.hh"
 
@@ -47,7 +50,8 @@ class BoxDfmFVElementGeometry<GG, true>
     using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
 public:
@@ -93,6 +97,41 @@ public:
     }
 
    /*!
+    * \brief Iterator range for sub control volumes for a local dof.
+    */
+   template<class LocalDof>
+   friend inline auto
+   scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
+   {
+       return std::views::iota(0u, fvGeometry.numScv())
+            | std::views::filter([fvGeometry, localDof](std::size_t i) { return fvGeometry.scv(i).localDofIndex() == localDof.index(); })
+            | std::views::transform([fvGeometry](std::size_t i) {return  fvGeometry.scv(i); });
+   }
+
+    //! range over local dofs
+    template<class FVElementGeometry>
+    inline auto localDofs(const FVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(numLocalDofs()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
+                static_cast<GridIndexType>(fvGeometry.scv(i).elementIndex())
+            }; }
+        );
+    }
+
+    //! range over control-volume local dofs
+    template<class FVElementGeometry>
+    inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
+    {
+        // Default it that all dofs are cv dofs
+        return localDofs(fvGeometry);
+    }
+
+   /*!
     * \brief Iterator range for sub control volumes faces.
     *
     * Iterates over all scvfs of the bound element.
@@ -115,6 +154,10 @@ public:
     //! The total number of sub control volumes
     std::size_t numScv() const
     { return gridGeometry().scvs(eIdx_).size(); }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    { return element().geometry().corners(); }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
@@ -215,7 +258,8 @@ class BoxDfmFVElementGeometry<GG, false>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
     using CoordScalar = typename GridView::ctype;
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
@@ -261,6 +305,41 @@ public:
     }
 
    /*!
+    * \brief Iterator range for sub control volumes for a local dof.
+    */
+   template<class LocalDof>
+   friend inline auto
+   scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
+   {
+       return std::views::iota(0u, fvGeometry.numScv())
+            | std::views::filter([fvGeometry, localDof](std::size_t i) { return fvGeometry.scv(i).localDofIndex() == localDof.index(); })
+            | std::views::transform([fvGeometry](std::size_t i) {return fvGeometry.scv(i); });
+   }
+
+    //! range over local dofs
+    template<class FVElementGeometry>
+    inline auto localDofs(const FVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(numLocalDofs()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
+                static_cast<GridIndexType>(fvGeometry.scv(i).elementIndex())
+            }; }
+        );
+    }
+
+    //! range over control-volume local dofs
+    template<class FVElementGeometry>
+    inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
+    {
+        // Default it that all dofs are cv dofs
+        return localDofs(fvGeometry);
+    }
+
+   /*!
     * \brief Iterator range for sub control volumes faces.
     *
     * Iterates over all scvfs of the bound element.
@@ -282,6 +361,12 @@ public:
     //! The total number of sub control volumes
     std::size_t numScv() const
     { return scvs_.size(); }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return element().geometry().corners();
+    }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
