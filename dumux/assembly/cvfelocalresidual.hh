@@ -103,12 +103,12 @@ public:
         assert(!this->isStationary() && "no time loop set for storage term evaluation");
 
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv());
+        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& localDof : cvLocalDofs(fvGeometry))
-            this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, fvGeometry.scv(localDof.indexInElement()));
+        for (const auto& scv : scvs(fvGeometry))
+            this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
 
         return residual;
     }
@@ -131,12 +131,12 @@ public:
                                             const ElementBoundaryTypes &bcTypes) const
     {
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv());
+        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& localDof : cvLocalDofs(fvGeometry))
-            this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, fvGeometry.scv(localDof.indexInElement()));
+        for (const auto& scv : scvs(fvGeometry))
+            this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
 
         // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
