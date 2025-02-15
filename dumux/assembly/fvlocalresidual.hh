@@ -15,6 +15,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/reservedblockvector.hh>
@@ -93,7 +94,7 @@ public:
         const auto fvGeometry = localView(gridGeometry).bind(element);
         const auto elemVolVars = localView(gridVariables.curGridVolVars()).bind(element, fvGeometry, sol);
 
-        ElementResidualVector storage(fvGeometry.numScv());
+        ElementResidualVector storage(Detail::numLocalDofs(fvGeometry));
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
@@ -136,7 +137,7 @@ public:
         assert(timeLoop_ && "no time loop set for storage term evaluation");
 
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv());
+        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
@@ -153,7 +154,7 @@ public:
                                             const ElementBoundaryTypes &bcTypes) const
     {
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv());
+        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
