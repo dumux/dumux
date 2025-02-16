@@ -46,7 +46,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_alu
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu-00064.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu-00045.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu params.input -Problem.Name test_2p_boxdfm_trias_alu -Grid.File grids/durlofsky.msh -Assembly.BoxVolVarsDependOnAllElementDofs true")
 
 # triangles ug
@@ -62,24 +62,22 @@ dumux_add_test(NAME test_2p_boxdfm_trias_ug
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug-00064.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug-00066.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug params.input -Problem.Name test_2p_boxdfm_trias_ug -Grid.File grids/durlofsky.msh -Assembly.BoxVolVarsDependOnAllElementDofs true")
 
-# triangles ug
-dumux_add_test(NAME test_2p_boxdfm_trias_ug_new_assembly
-              LABELS porousmediumflow 2p boxdfm
-              TIMEOUT 3600
-             SOURCES main.cc
-             CMAKE_GUARD dune-uggrid_FOUND
-             CMAKE_GUARD dune-foamgrid_FOUND
-             COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-             COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
-             COMPILE_DEFINITIONS IGNORE_FRACTURE_DOFS=1
-             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-             CMD_ARGS --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_trias_ug_new_assembly-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug_new_assembly-00081.vtu
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug_new_assembly params.input -Problem.Name test_2p_boxdfm_trias_ug_new_assembly -Grid.File grids/durlofsky.msh -Assembly.BoxVolVarsDependOnAllElementDofs true")
+dumux_add_test(NAME test_2p_boxdfm_trias_ug_old
+                LABELS porousmediumflow 2p boxdfm
+                TIMEOUT 3600
+               SOURCES main.cc
+               CMAKE_GUARD dune-uggrid_FOUND
+               CMAKE_GUARD dune-foamgrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+               COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference-old.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug_old-00064.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug_old params.input -Problem.Name test_2p_boxdfm_trias_ug_old -Grid.File grids/durlofsky.msh -SpatialParams.FractureAperture 1e-3")
 
 
 # triangles ug boxdfm disable fractures
