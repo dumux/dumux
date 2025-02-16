@@ -43,7 +43,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_alu
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu-00064.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu-00046.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu params.input -Problem.Name test_2p_boxdfm_trias_alu -Grid.File grids/durlofsky.msh")
 
 # triangles ug
@@ -58,7 +58,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_ug
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug-00064.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug-00046.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_ug params.input -Problem.Name test_2p_boxdfm_trias_ug -Grid.File grids/durlofsky.msh")
 
 # tetrahedra alu
