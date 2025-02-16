@@ -42,7 +42,7 @@ dumux_add_test(NAME test_2p_boxdfm_trias_alu
              COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-reference.vtu
+                      --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_trias-alu-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu-00065.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_trias_alu params.input -Problem.Name test_2p_boxdfm_trias_alu -Grid.File grids/durlofsky.msh")
 
