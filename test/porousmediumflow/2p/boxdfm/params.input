@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2500 # [s]
-MaxTimeStepSize = 200
+MaxTimeStepSize = 100
 
 [Grid]
 File = grids/durlofsky.msh
