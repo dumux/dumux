@@ -40,7 +40,7 @@ Download: https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
 ## Parallel computing (shared memory)
 
-If one of the following libraries is installation, multi-threaded code is enabled in DuMux:
+If one of the following libraries is installed, multi-threaded code is enabled in DuMux:
 
 * `OpenMP`: OpenMP usually comes with the compiler
 * `OneTBB`: TBB, see https://github.com/oneapi-src/oneTBB
@@ -52,7 +52,7 @@ or by modifying it in the CMake cache (in `dumux/build-cmake` run `ccmake .`).
 When running `dunecontrol` or CMake, the output contains a line like
 
 ```
--- Dumux multithreading backed: TBB
+-- Dumux multithreading backend: TBB
 ```
 
 which in this case shows that the selected backend is TBB.

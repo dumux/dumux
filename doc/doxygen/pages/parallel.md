@@ -89,11 +89,11 @@ Some parts of Dumux application can exploit parallelism with the shared memory m
 
 Multithreading is enabled if a multi-threading backend is found. Currently, we support one of `OpenMP`, `TBB`,  C++ parallel algorithms, `Kokkos`. The backend is selected by `CMake` during configure and stored in the variable `DUMUX_MULTITHREADING_BACKEND`. In the `CMake` terminal output during `dunecontrol` (see @ref installation), you may see
 
-    -- Dumux multithreading backed: TBB
+    -- Dumux multithreading backend: TBB
 
 or
 
-    -- Dumux multithreading backed: Serial
+    -- Dumux multithreading backend: Serial
 
 if no suitable backend could be found. You can switch backends after DuMu<sup>x</sup> has been configured by running in the build folder (e.g. `dumux/build-cmake`)
 
