@@ -96,17 +96,21 @@ public:
         return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
     }
 
-   /*!
-    * \brief Iterator range for sub control volumes for a local dof.
-    */
-   template<class LocalDof>
-   friend inline auto
-   scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
-   {
-       return std::views::iota(0u, fvGeometry.numScv())
-            | std::views::filter([fvGeometry, localDof](std::size_t i) { return fvGeometry.scv(i).localDofIndex() == localDof.index(); })
-            | std::views::transform([fvGeometry](std::size_t i) {return  fvGeometry.scv(i); });
-   }
+    //! range over sub control volumes related to a local dof.
+    template<class LocalDof>
+    friend inline auto
+    scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        std::vector<std::size_t> indices;
+        for(std::size_t i = 0; i<fvGeometry.numScv(); i++)
+            if(fvGeometry.scv(i).localDofIndex() == localDof.index())
+                indices.push_back(fvGeometry.scv(i).indexInElement());
+
+        return Dune::transformedRangeView(
+            std::move(indices),
+            [&](const auto idx) { return fvGeometry.scv(idx); }
+        );
+    }
 
     //! range over local dofs
     template<class FVElementGeometry>
@@ -304,17 +308,21 @@ public:
         return Dune::IteratorRange<Iter>(fvGeometry.scvs_.begin(), fvGeometry.scvs_.end());
     }
 
-   /*!
-    * \brief Iterator range for sub control volumes for a local dof.
-    */
-   template<class LocalDof>
-   friend inline auto
-   scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
-   {
-       return std::views::iota(0u, fvGeometry.numScv())
-            | std::views::filter([fvGeometry, localDof](std::size_t i) { return fvGeometry.scv(i).localDofIndex() == localDof.index(); })
-            | std::views::transform([fvGeometry](std::size_t i) {return fvGeometry.scv(i); });
-   }
+    //! range over sub control volumes related to a local dof.
+    template<class LocalDof>
+    friend inline auto
+    scvs(const BoxDfmFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        std::vector<std::size_t> indices;
+        for(std::size_t i = 0; i<fvGeometry.numScv(); i++)
+            if(fvGeometry.scv(i).localDofIndex() == localDof.index())
+                indices.push_back(fvGeometry.scv(i).indexInElement());
+
+        return Dune::transformedRangeView(
+            std::move(indices),
+            [&](const auto idx) { return fvGeometry.scv(idx); }
+        );
+    }
 
     //! range over local dofs
     template<class FVElementGeometry>
