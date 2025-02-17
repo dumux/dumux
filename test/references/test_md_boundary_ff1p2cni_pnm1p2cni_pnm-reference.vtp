@@ -39,7 +39,7 @@
       </PointData>
       <CellData Scalars="process rank" Vectors="velocity_gas (m/s)">
         <DataArray type="Float32" Name="velocity_gas (m/s)" NumberOfComponents="3" format="ascii">
-          -0 -1.62695e-12 0
+          -0 -2.16927e-12 0
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0
@@ -57,7 +57,7 @@
           6.01603e-15
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
-          2.85316e-20
+          3.80421e-20
         </DataArray>
       </CellData>
       <Points>

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-set(CMAKE_BUILD_TYPE Debug)
+
 ########## ISOTHERMAL ##########
 dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c
                 LABELS multidomain multidomain_boundary freeflowpnm 1pnc navierstokes porenetwork
