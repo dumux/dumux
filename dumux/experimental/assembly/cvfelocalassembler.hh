@@ -56,7 +56,7 @@ auto VolVarsDeflectionHelper(Accessor&& accessor, const FVG& fvg, bool deflectAl
     if constexpr (definesVolVarsDeflectionHelper<ElemVolVars>())
         return ElemVolVars::deflectionHelper(std::move(accessor), fvg, deflectAllVolVars);
     else
-        return Dumux::Detail::VolVarsDeflectionHelper(std::move(accessor), fvg, deflectAllVolVars);
+        return Dumux::Detail::VolVarsDeflectionHelper<Accessor, FVG>(std::move(accessor), fvg, deflectAllVolVars);
 };
 
 } // end namespace Detail::CVFE
