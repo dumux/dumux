@@ -11,8 +11,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pnm1p_transient
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_transient_ff-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_transient_ff-00019.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_transient_ff-00020.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_transient_pnm-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_transient_pnm-00019.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_transient_pnm-00020.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_transient params.input
                                    -Vtk.OutputName test_md_boundary_ff1p_pnm1p_transient")

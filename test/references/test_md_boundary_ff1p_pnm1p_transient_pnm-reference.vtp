@@ -4,7 +4,7 @@
     <Piece NumberOfLines="10" NumberOfPoints="9">
       <PointData Scalars="p">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
-          0.562716 0.625432 0.5 0.5 0.437284 0.374568 0.81358 0.5 0.18642
+          100566 100632 100500 100500 100434 100368 100830 100500 100170
         </DataArray>
         <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
           0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005 0.0005
@@ -33,7 +33,7 @@
           8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12 8.80282e-12
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
-          5.52078e-10 0 5.52078e-10 1.10416e-09 5.52078e-10 5.52078e-10 1.10416e-09 1.65623e-09 0 1.65623e-09
+          5.81589e-07 0 5.81589e-07 1.16318e-06 5.81589e-07 5.81589e-07 1.16318e-06 1.74477e-06 1.28098e-19 1.74477e-06
         </DataArray>
       </CellData>
       <Points>
