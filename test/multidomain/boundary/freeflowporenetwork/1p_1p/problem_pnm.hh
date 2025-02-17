@@ -54,12 +54,10 @@ public:
 
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1e5);
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
 
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
         inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature", 273.15 + 20);
-        outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OuletTemperature", 273.15 + 20);
 #endif
     }
 
@@ -235,12 +233,10 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     Scalar initialPressure_;
     Scalar inletPressure_;
-    Scalar outletPressure_;
     bool verticalFlow_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
     Scalar inletTemperature_;
-    Scalar outletTemperature_;
 #endif
 
 };

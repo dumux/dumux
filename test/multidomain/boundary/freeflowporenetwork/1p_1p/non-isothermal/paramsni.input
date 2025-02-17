@@ -1,7 +1,7 @@
 [TimeLoop]
-TEnd = 1e5
+TEnd = 1e2
 DtInitial = 1e1
-MaxTimeStepSize = 1e3
+MaxTimeStepSize = 1e1
 
 [PNM.Grid]
 NumPores = 2
@@ -16,10 +16,10 @@ PriorityList = 2 3 0 1
 [FreeFlow.Grid]
 LowerLeft = 0 2e-3
 UpperRight = 5e-3 4e-3
-UpstreamCells0 = 5
-CellsPerPore = 3
-DownstreamCells0 = 5
-Cells1 = 6
+UpstreamCells0 = 10
+CellsPerPore = 5
+DownstreamCells0 = 10
+Cells1 = 20
 
 [Problem]
 EnableGravity = false
@@ -30,20 +30,18 @@ Name = ff
 InitialPressure = 1e5 # [Pa]
 InletPressure = 1e5
 OutletPressure = 1e5
-InitialTemperature = 298.15 # [K]
+InitialTemperature = 328.15 # [K]
 InletTemperature = 308.15
-OutletTemperature = 298.15
+OutletTemperature = 328.15
 EnableInertiaTerms = false
 VerticalFlow = true
 
 [PNM.Problem]
 Name = pnm
-InitialTemperature = 328.15 # [K]
-InletTemperature = 328.15
-OutletTemperature = 318.15
-InitialPressure = 1e5 # [Pa]
-InletPressure = 1e5
-OutletPressure = 1e5
+InitialTemperature = 298.15 # [K]
+InletTemperature = 298.15
+InitialPressure = 1.1e5 # [Pa]
+InletPressure = 1.1e5
 VerticalFlow = true
 
 [Vtk]
