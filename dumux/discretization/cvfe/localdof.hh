@@ -66,5 +66,17 @@ inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
     return localDofs(fvGeometry);
 }
 
+//! range over sub control volumes related to a local dof.
+template<class FVElementGeometry, class LocalDof>
+inline auto
+scvs(const FVElementGeometry& fvGeometry, const LocalDof& localDof)
+{
+    assert(fvGeometry.numScv() > localDof.index());
+    return Dune::transformedRangeView(
+        Dune::range(1),
+        [&](const auto i) { return fvGeometry.scv(localDof.index()); }
+    );
+}
+
 } // end namespace Dumux
 #endif
