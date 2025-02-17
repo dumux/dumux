@@ -190,7 +190,7 @@ int main(int argc, char** argv)
     // timeloop
     timeLoop->start(); do
     {
-        // solve the non-linear system iwth time step control
+        // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
 
         // make the new solution the old solution.

@@ -56,7 +56,7 @@ LiquidKinematicViscosity = 1e-6
 LiquidHeatCapacity = 4184.0 # [J/(kg K)]
 LiquidThermalConductivity = 0.68
 
-[Component] #solid (for compatability)
+[Component] #solid (for compatibility)
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790

@@ -41,7 +41,7 @@ InitialMoleFraction = 2e-3
 OutputName = test_nonisothermal
 AddVelocity = true
 
-[Component] #solid (for compatability)
+[Component] #solid (for compatibility)
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
