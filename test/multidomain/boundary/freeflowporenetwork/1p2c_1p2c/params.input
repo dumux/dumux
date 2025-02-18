@@ -5,21 +5,21 @@ MaxTimeStepSize = 1
 
 [PNM.Grid]
 NumPores = 2
-LowerLeft = 0.5e-3 -1e-3
-UpperRight = 0.5e-3 0.0
+LowerLeft = 2.5e-3 0
+UpperRight = 2.5e-3 2e-3
 PoreInscribedRadius = 1e-4
-PoreGeometry = Sphere
-ThroatCrossSectionShape = Circle
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
 BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
 PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
-LowerLeft = 0 0
-UpperRight = 1e-3 1e-3
-UpstreamCells0 = 5
-CellsPerPore = 5
-DownstreamCells0 = 5
-Cells1 = 10
+LowerLeft = 0 2e-3
+UpperRight = 5e-3 4e-3
+UpstreamCells0 = 10
+CellsPerPore = 3
+DownstreamCells0 = 10
+Cells1 = 20
 
 [Problem]
 EnableGravity = false
@@ -27,16 +27,16 @@ OnlyDiffusion = false
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 1000
+PressureDifference = 10
 InitialPressure = 1e5
-InitialMoleFraction = 1e-3
+InitialMoleFraction = 0.0
 EnableInertiaTerms = false
 
 [PNM.Problem]
 Name = pnm
-PressureBottom = 1.02e5
-MoleFractionBottom = 2e-3
+InitialPressure = 1.01e5
 InitialMoleFraction = 2e-3
+Source = 1e-10
 
 [Vtk]
 OutputName = test_isothermal

@@ -51,8 +51,8 @@ public:
     {
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
-        onlyDiffusion_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.OnlyDiffusion", false);
         source_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.Source", 1e-7);
+        onlyDiffusion_ = getParam<bool>("Problem.OnlyDiffusion", false);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
 #endif
@@ -90,14 +90,14 @@ public:
         BoundaryTypes bcTypes;
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
             bcTypes.setAllCouplingNeumann();
-        else
+        else if (onLowerBoundary_(scv))
         {
-            if (!onlyDiffusion_ && onLowerBoundary_(scv))
+            if (!onlyDiffusion_ )
                 bcTypes.setAllDirichlet();
             else
                 bcTypes.setAllNeumann();
 #if !ISOTHERMAL
-                bcTypes.setDirichlet(Indices::temperatureIdx);
+            bcTypes.setDirichlet(Indices::temperatureIdx);
 #endif
         }
 
@@ -111,19 +111,7 @@ public:
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
-        PrimaryVariables priVars = initialAtPos(scv.dofPosition());
-        static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 1e5);
-        static const Scalar moleFractionBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.MoleFractionBottom", 1e-3);
-        if (!onlyDiffusion_ && onLowerBoundary_(scv))
-        {
-            priVars[Indices::pressureIdx] = pressureBottom;
-            priVars[Indices::conti0EqIdx +1] = moleFractionBottom;
-        }
-#if !ISOTHERMAL
-            priVars[Indices::temperatureIdx] = initialTemperature_;
-#endif
-
-        return priVars;
+        return initialAtPos(scv.dofPosition());
     }
 
     // \}
@@ -174,11 +162,6 @@ public:
                 scv,
                 elemVolVars);
 #endif
-        }
-        else if (onlyDiffusion_ && onLowerBoundary_(scv))
-        {
-            values[Indices::conti0EqIdx] = 0.0;
-            values[Indices::conti0EqIdx + 1] = source_;
         }
         values /= this->gridGeometry().poreVolume(scv.dofIndex());
 

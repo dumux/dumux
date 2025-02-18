@@ -12,9 +12,9 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS  --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_ff-reference.vtu
-                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_ff-00018.vtu
+                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_ff-00019.vtu
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_pnm-reference.vtp
-                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_pnm-00018.vtp
+                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_pnm-00019.vtp
                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c params.input
                                      -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c")
 
@@ -25,12 +25,13 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c_diffusion
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_diffusion_ff-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion_ff-00042.vtu
-                                ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_diffusion_pnm-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion_pnm-00042.vtp
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion params.input
-                                    -Problem.OnlyDiffusion true -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c_diffusion")
+                          --ignore "velocity_gas (m/s)"
+                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_diffusion_ff-reference.vtu
+                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion_ff-00018.vtu
+                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_diffusion_pnm-reference.vtp
+                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion_pnm-00018.vtp
+                          --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_diffusion params.input
+                                    -Problem.OnlyDiffusion true -PNM.Problem.InitialPressure 1e5 -Vtk.OutputName test_md_boundary_ff1p2c_pnm1p2c_diffusion")
 
 ########## NON-ISOTHERMAL #########
 dumux_add_test(NAME test_md_boundary_ff1p2cni_pnm1p2cni
@@ -41,8 +42,8 @@ dumux_add_test(NAME test_md_boundary_ff1p2cni_pnm1p2cni
                 COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                 CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2cni_pnm1p2cni_ff-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_ff-00018.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_ff-00019.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2cni_pnm1p2cni_pnm-reference.vtp
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_pnm-00018.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_pnm-00019.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni paramsni.input
                                     -Vtk.OutputName test_md_boundary_ff1p2cni_pnm1p2cni")

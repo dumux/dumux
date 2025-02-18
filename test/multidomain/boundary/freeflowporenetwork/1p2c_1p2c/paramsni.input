@@ -16,10 +16,10 @@ PriorityList = 2 3 0 1
 [FreeFlow.Grid]
 LowerLeft = 0 2e-3
 UpperRight = 5e-3 4e-3
-UpstreamCells0 = 5
+UpstreamCells0 = 10
 CellsPerPore = 3
-DownstreamCells0 = 5
-Cells1 = 6
+DownstreamCells0 = 10
+Cells1 = 20
 
 [Problem]
 EnableGravity = false
@@ -27,13 +27,14 @@ EnableGravity = false
 [FreeFlow.Problem]
 Name = ff
 InitialPressure = 1e5
-InitialMoleFraction = 1e-3
+PressureDifference = 10
+InitialMoleFraction = 0.0
 InitialTemperature = 298.15 # [K]
 EnableInertiaTerms = false
 
 [PNM.Problem]
 Name = pnm
-InitialPressure = 1e5 # [Pa]
+InitialPressure = 1.01e5 # [Pa]
 InitialTemperature = 328.15 # [K]
 InitialMoleFraction = 2e-3
 

@@ -61,7 +61,8 @@ public:
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 0.001);
-        onlyDiffusion_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.OnlyDiffusion", false);
+        onlyDiffusion_ = getParam<bool>("Problem.OnlyDiffusion", false);
+        pressureDifference_ = onlyDiffusion_ ? 0.0 : getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 10);
 
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
@@ -103,7 +104,7 @@ public:
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
             }
-            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
+            else if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
                 values.setAllNeumann();
             else
                 values.setAllDirichlet();
@@ -112,6 +113,8 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
                 values.setAllCouplingNeumann();
+            else if (!onlyDiffusion_ && onLeftBoundary_(globalPos))
+                values.setAllDirichlet();
             else
                 values.setAllNeumann();
         }
@@ -163,7 +166,14 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
+            else if (onLeftBoundary_(globalPos))
+            {
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars,
+                    elemFluxVarsCache, initialPressure_ + pressureDifference_, true /*zeroNormalVelocityGradient*/
+                );
+            }
+            else if (onRightBoundary_(globalPos))
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
@@ -187,7 +197,7 @@ public:
                     fvGeometry, scvf, elemVolVars);
 #endif
             }
-            else if (!onlyDiffusion_ && onUpperBoundary_(globalPos))
+            else if (!onlyDiffusion_ && onRightBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
@@ -275,6 +285,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     Scalar deltaP_;
     Scalar initialPressure_;
+    Scalar pressureDifference_;
     Scalar initialMoleFraction_;
     bool onlyDiffusion_;
 #if !ISOTHERMAL
