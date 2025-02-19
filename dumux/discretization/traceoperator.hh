@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Discretization
- * \brief Class to assemble primary variables and/or fluxes on boundaries.
+ * \brief Classes to compute trace & normal traces of grid functions.
  */
 #ifndef DUMUX_DISCRETIZATION_TRACE_OPERATOR_HH
 #define DUMUX_DISCRETIZATION_TRACE_OPERATOR_HH
@@ -28,10 +28,10 @@ namespace Dumux {
 template<typename T, typename A>
 concept TraceOperatorContext = requires(T& t, const A& arg) {
     { t.bind(arg) };
-    { t.fvGeometry() };
+    { t.gridGeometryLocalView() };
 };
 
-//! Default implementation for trace operator contexts for finite-volume schemes
+//! Convenience implementation for trace operator contexts for finite-volume schemes
 template<typename GridVariables, typename SolutionVector>
 class FVTraceOperatorContext
 {
@@ -50,7 +50,7 @@ class FVTraceOperatorContext
         elemFluxVarsCache_.bind(element, fvGeometry_, elemVolVars_);
     }
 
-    const auto& fvGeometry() const { return fvGeometry_; }
+    const auto& gridGeometryLocalView() const { return fvGeometry_; }
     const auto& elemVolVars() const { return elemVolVars_; }
     const auto& elemFluxVarsCache() const { return elemFluxVarsCache_; }
 
@@ -61,168 +61,294 @@ class FVTraceOperatorContext
     typename GridVariables::GridFluxVariablesCache::LocalView elemFluxVarsCache_;
 };
 
-/*!
- * \ingroup Discretization
- * \brief Assembles primary variables and/or fluxes on traces.
- * \note This assumes that the provided trace grid only contains boundary facets. If it contains interior
- *       ones, continuity of variables/fluxes is assumed, and only one side of the facets will be visited.
- */
-template<typename TraceGridGeometry, typename GridGeometry>
-class FVTraceOperator {
-    using TraceGridView = typename TraceGridGeometry::GridView;
-    static constexpr int dim = GridGeometry::GridView::dimension;
-    static constexpr int traceDim = TraceGridGeometry::GridView::dimension;
+#ifndef DOXYGEN
+namespace TraceOperatorDetail {
 
-    struct DefaultContext
+template<typename GridGeometry>
+struct DefaultContext
+{
+    typename GridGeometry::LocalView localView;
+    void bind(const auto& element) { localView.bind(element); }
+    const auto& gridGeometryLocalView() const { return localView; }
+};
+
+template<typename GridGeometry>
+using VolumeType = std::remove_cvref_t<decltype(
+    GridGeometry::Extrusion::area(
+        std::declval<const typename GridGeometry::LocalView&>(),
+        std::declval<const typename GridGeometry::SubControlVolumeFace&>()
+    )
+)>;
+
+template<typename TraceGridGeometry, typename TraceGridMapper, typename TraceToDomainVertex>
+std::vector<std::size_t> makeDomainToTraceVertexMap(const TraceGridGeometry& traceGridGeometry,
+                                                    const TraceGridMapper& traceGridMapper,
+                                                    const TraceToDomainVertex& traceToDomainVertex)
+{
+    std::vector<std::size_t> map;
+    map.resize(traceGridMapper.domainGridGeometry().vertexMapper().size());
+    for (const auto& v : vertices(traceGridGeometry.gridView()))
+        map[
+            traceGridMapper.domainGridGeometry().vertexMapper().index(traceToDomainVertex(v))
+        ] = traceGridGeometry.vertexMapper().index(v);
+    return map;
+}
+
+template<typename TraceGridGeometry, typename TraceGridMapper, typename LocalContext, typename F>
+auto elementWiseAreaWeightedAverage(const TraceGridGeometry& traceGridGeometry,
+                                    const TraceGridMapper& traceGridMapper,
+                                    LocalContext context,
+                                    F&& f)
+{
+    using GG = typename TraceGridMapper::DomainGridGeometry;
+    using T = std::invoke_result_t<F, const typename GG::SubControlVolumeFace&, const LocalContext&>;
+
+    Dune::BlockVector<T> result;
+    result.resize(traceGridGeometry.elementMapper().size());
+    for (const auto& traceElement : elements(traceGridGeometry.gridView()))
     {
-        typename GridGeometry::LocalView localView;
+        VolumeType<GG> area = 0.0;
+        auto& entry = result[traceGridGeometry.elementMapper().index(traceElement)];
+        for (const auto& domainElement : traceGridMapper.domainElementsAdjacentTo(traceElement) | std::views::take(1))
+        {
+            context.bind(domainElement);
+            for (const auto& scvfIdx : traceGridMapper.domainScvfsAdjacentTo(traceElement, domainElement))
+            {
+                const auto& scvf = context.gridGeometryLocalView().scvf(scvfIdx);
+                const auto scvfArea = GG::Extrusion::area(context.gridGeometryLocalView(), scvf);
+                auto scvfContribution = f(scvf, context);
+                scvfContribution *= scvfArea;
+                entry += scvfContribution;
+                area += scvfArea;
+            }
+        }
+        entry /= area;
+    }
+    return result;
+}
 
-        void bind(const auto& element) { localView.bind(element); }
-        const auto& fvGeometry() const { return localView; }
-    };
+}  // namespace TraceOperatorDetail
+#endif  // DOXYGEN
+
+template<typename TraceGridGeometry,
+         typename TraceGridMapper,
+         typename Implementation>
+class TraceOperatorBase
+{
+    using GridGeometry = typename TraceGridMapper::DomainGridGeometry;
+    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
+
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
+
+    using TraceGridView = typename TraceGridGeometry::GridView;
+    using TraceVertex = TraceGridView::template Codim<TraceGridView::dimension>::Entity;
 
  public:
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
-    using Vertex = typename GridGeometry::GridView::template Codim<dim>::Entity;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using TraceVertex = typename TraceGridGeometry::GridView::template Codim<traceDim>::Entity;
+    using DefaultContext = TraceOperatorDetail::DefaultContext<GridGeometry>;
 
-    template<std::invocable<const TraceVertex&> TraceToDomainVertexMap>
-        requires(std::convertible_to<std::invoke_result_t<TraceToDomainVertexMap, const TraceVertex&>, const Vertex&>)
-    FVTraceOperator(std::shared_ptr<const TraceGridGeometry> traceGridGeometry,
-                    std::shared_ptr<const FVFacetGridMapper<TraceGridView, GridGeometry>> traceGridMapper,
-                    const TraceToDomainVertexMap& traceToDomainVertex)
-    : FVTraceOperator{std::move(traceGridGeometry), std::move(traceGridMapper)}
-    {
-        domainToTraceVertex_.resize(traceGridMapper_->domainGridGeometry().vertexMapper().size());
-        for (const auto& v : vertices(traceGridGeometry_->gridView()))
-            domainToTraceVertex_[
-                traceGridMapper_->domainGridGeometry().vertexMapper().index(traceToDomainVertex(v))
-            ] = traceGridGeometry_->vertexMapper().index(v);
-    }
-
-    FVTraceOperator(std::shared_ptr<const TraceGridGeometry> traceGridGeometry,
-                    std::shared_ptr<const FVFacetGridMapper<TraceGridView, GridGeometry>> traceGridMapper)
+    TraceOperatorBase(std::shared_ptr<const TraceGridGeometry> traceGridGeometry,
+                      std::shared_ptr<const TraceGridMapper> traceGridMapper)
     : traceGridGeometry_{std::move(traceGridGeometry)}
     , traceGridMapper_{std::move(traceGridMapper)}
     {}
 
-    /*!
-     * \brief Assemble vertex-wise variables on the trace from overlapping sub-control volumes (CVFE methods only).
-     * \param f Functor to assemble the desired variables in boundary scvs
-     */
-    template<std::invocable<const SubControlVolume&, const FVElementGeometry&> F>
-    auto assembleScvVariables(F&& f) const
-    {
-        return assembleScvVariables(
-            [&] (const auto& scv, const auto& fvGeometry) { return f(scv, fvGeometry); },
-            DefaultContext{localView(traceGridMapper_->domainGridGeometry())}
-        );
-    }
+    TraceOperatorBase(std::shared_ptr<const TraceGridGeometry> traceGridGeometry,
+                      std::shared_ptr<const TraceGridMapper> traceGridMapper,
+                      std::shared_ptr<const std::vector<std::size_t>> domainToTraceVertex)
+    : traceGridGeometry_{std::move(traceGridGeometry)}
+    , traceGridMapper_{std::move(traceGridMapper)}
+    , domainToTraceVertex_{std::move(domainToTraceVertex)}
+    {}
 
-    /*!
-     * \brief Assemble vertex-wise variables on the trace from overlapping sub-control volumes (CVFE methods only).
-     * \param f Functor to assemble the desired variables at boundary scvs
-     * \param context A context class that will be bound per visited domain element and passed to f
-     * \note the context may be used to pre-bind elemVolVars or precompute other element-local variables.
-     */
-    template<typename F, TraceOperatorContext<Element> LocalContext>
-        requires(
-            std::is_invocable_v<F, const SubControlVolume&, const LocalContext&> and
-            DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>
+    template<std::invocable<const TraceVertex&> TraceToDomainVertex>
+        requires(std::convertible_to<std::invoke_result_t<TraceToDomainVertex, const TraceVertex&>, const Vertex&>)
+    TraceOperatorBase(std::shared_ptr<const TraceGridGeometry> traceGridGeometry,
+                      std::shared_ptr<const TraceGridMapper> traceGridMapper,
+                      const TraceToDomainVertex& mapper)
+    : TraceOperatorBase{
+        traceGridGeometry,
+        traceGridMapper,
+        std::make_shared<std::vector<std::size_t>>(
+            TraceOperatorDetail::makeDomainToTraceVertexMap(*traceGridGeometry, *traceGridMapper, mapper)
         )
-    auto assembleScvVariables(F&& f, LocalContext context) const
-    {
-        static_assert(
-            DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>,
-            "Scv-wise assembly is only available with CVFE methods"
-        );
-
-        if (domainToTraceVertex_.empty())
-            DUNE_THROW(
-                Dune::InvalidStateException,
-                "Trace operator has not been constructed with a provided vertex mapping. This is required for scv-wise trace assembly."
-            );
-
-        using T = std::invoke_result_t<F, const SubControlVolume&, const LocalContext&>;
-        Dune::BlockVector<T> result;
-        result.resize(traceGridGeometry_->vertexMapper().size());
-        for (const auto& traceElement : elements(traceGridGeometry_->gridView()))
-            for (const auto& domainElement : traceGridMapper_->domainElementsAdjacentTo(traceElement) | std::views::take(1))
-            {
-                context.bind(domainElement);
-                for (const auto& scvfIdx : traceGridMapper_->domainScvfsAdjacentTo(traceElement, domainElement))
-                {
-                    const auto& scv = context.fvGeometry().scv(context.fvGeometry().scvf(scvfIdx).insideScvIdx());
-                    result[domainToTraceVertex_[scv.dofIndex()]] = f(scv, context);
-                }
-            }
-        return result;
     }
+    {}
 
     /*!
-     * \brief Assemble element-wise variables on the trace from overlapping sub-control volume faces
-     * \param f Functor to assemble the desired variables at boundary scvfs
-     * \param context A context class that will be bound per visited domain element and passed to f
+     * \brief Compute the trace coefficients for a given grid function.
+     * \param f Functor to retrieve the grid function values at trace scvfs
      */
-    template<std::invocable<const SubControlVolumeFace&, const FVElementGeometry&> F>
-    auto assembleScvfVariables(F&& f) const
-    {
-        return assembleScvfVariables(
-            [&] (const auto& scvf, const auto& fvGeometry) { return f(scvf, fvGeometry); },
-            DefaultContext{localView(traceGridMapper_->domainGridGeometry())}
-        );
-    }
+    template<std::invocable<const SubControlVolumeFace&, const DefaultContext&> F>
+    auto apply(F&& f) const
+    { return apply(std::forward<F>(f), DefaultContext{localView(traceGridMapper_->domainGridGeometry())}); }
 
     /*!
-     * \brief Assemble element-wise variables on the trace from overlapping sub-control volume faces
-     * \param f Functor to assemble the desired variables at boundary scvfs
+     * \brief Compute the trace coefficients for a given grid function.
+     * \param f Functor to retrieve the grid function values at trace scvfs
      * \param context A context class that will be bound per visited domain element and passed to f
      * \note the context may be used to pre-bind elemVolVars or precompute other element-local variables.
      */
     template<typename F, TraceOperatorContext<Element> LocalContext>
         requires(std::is_invocable_v<F, const SubControlVolumeFace&, const LocalContext&>)
-    auto assembleScvfVariables(F&& f, LocalContext context) const
+    auto apply(F&& f, LocalContext context) const
+    { return static_cast<const Implementation&>(*this).apply_(std::forward<F>(f), std::move(context)); }
+
+ protected:
+    const auto& domainToTraceVertexMap_() const
     {
-        using T = std::invoke_result_t<F, const SubControlVolumeFace&, const LocalContext&>;
+        if (not domainToTraceVertex_)
+            DUNE_THROW(Dune::InvalidStateException, "Trace operator has not been constructed with a trace vertex map");
+        return *domainToTraceVertex_;
+    }
 
-        Dune::BlockVector<T> result;
-        result.resize(traceGridGeometry_->elementMapper().size());
-        for (const auto& traceElement : elements(traceGridGeometry_->gridView()))
+    std::shared_ptr<const TraceGridGeometry> traceGridGeometry_;
+    std::shared_ptr<const TraceGridMapper> traceGridMapper_;
+
+ private:
+    std::shared_ptr<const std::vector<std::size_t>> domainToTraceVertex_{nullptr};
+};
+
+//! Computes the trace of a grid function
+template<typename TraceGridGeometry, typename TraceGridMapper>
+class TraceOperator;
+
+template<typename TGG, typename TGM, typename... Args>
+TraceOperator(std::shared_ptr<TGG>, std::shared_ptr<TGM>, Args&&...)
+-> TraceOperator<std::remove_cvref_t<TGG>, std::remove_cvref_t<TGM>>;
+
+// Specialization for cell-centered schemes
+template<typename TraceGridGeometry, typename TraceGridMapper>
+    requires(
+        TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+        TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::ccmpfa
+    )
+class TraceOperator<TraceGridGeometry, TraceGridMapper>
+: public TraceOperatorBase<TraceGridGeometry, TraceGridMapper, TraceOperator<TraceGridGeometry, TraceGridMapper>>
+{
+    using Base = TraceOperatorBase<TraceGridGeometry, TraceGridMapper, TraceOperator<TraceGridGeometry, TraceGridMapper>>;
+
+ public:
+    using Base::Base;
+
+ private:
+    friend Base;
+
+    template<typename F, typename LocalContext>
+    auto apply_(F&& f, LocalContext context) const
+    {
+        return TraceOperatorDetail::elementWiseAreaWeightedAverage(
+            *this->traceGridGeometry_,
+            *this->traceGridMapper_,
+            std::move(context),
+            std::forward<F>(f)
+        );
+    }
+};
+
+// Specialization for the box scheme
+template<typename TraceGridGeometry, typename TraceGridMapper>
+    requires(TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::box)
+class TraceOperator<TraceGridGeometry, TraceGridMapper>
+: public TraceOperatorBase<TraceGridGeometry, TraceGridMapper, TraceOperator<TraceGridGeometry, TraceGridMapper>>
+{
+    using Base = TraceOperatorBase<TraceGridGeometry, TraceGridMapper, TraceOperator<TraceGridGeometry, TraceGridMapper>>;
+    using GG = TraceGridMapper::DomainGridGeometry;
+
+ public:
+    using Base::Base;
+
+ private:
+    friend Base;
+
+    template<typename F, typename LocalContext>
+    auto apply_(F&& f, LocalContext context) const
+    {
+        Dune::BlockVector<
+            std::invoke_result_t<F, const typename GG::SubControlVolumeFace&, const LocalContext&>
+        > result;
+        result.resize(this->traceGridGeometry_->vertexMapper().size());
+        for (const auto& traceElement : elements(this->traceGridGeometry_->gridView()))
         {
-            const auto traceElementIndex = traceGridGeometry_->elementMapper().index(traceElement);
-
-            result[traceElementIndex] = 0;
-            double area = 0.0;
-            for (const auto& domainElement : traceGridMapper_->domainElementsAdjacentTo(traceElement) | std::views::take(1))
+            for (const auto& domainElement : this->traceGridMapper_->domainElementsAdjacentTo(traceElement) | std::views::take(1))
             {
                 context.bind(domainElement);
-                for (const auto& scvfIdx : traceGridMapper_->domainScvfsAdjacentTo(traceElement, domainElement))
+                for (const auto& scvfIdx : this->traceGridMapper_->domainScvfsAdjacentTo(traceElement, domainElement))
                 {
-                    const auto& scvf = context.fvGeometry().scvf(scvfIdx);
-                    const auto scvfArea = GridGeometry::Extrusion::area(context.fvGeometry(), scvf);
-                    T scvfContribution = f(scvf, context);
-                    scvfContribution *= scvfArea;
-                    result[traceElementIndex] += scvfContribution;
-                    area += scvfArea;
+                    const auto& scvf = context.gridGeometryLocalView().scvf(scvfIdx);
+                    const auto& scv = context.gridGeometryLocalView().scv(scvf.insideScvIdx());
+                    result[this->domainToTraceVertexMap_()[scv.dofIndex()]] = f(scvf, context);
                 }
             }
-            result[traceElementIndex] /= area;
         }
         return result;
     }
-
- private:
-    std::shared_ptr<const TraceGridGeometry> traceGridGeometry_;
-    std::shared_ptr<const FVFacetGridMapper<TraceGridView, GridGeometry>> traceGridMapper_;
-    std::vector<std::size_t> domainToTraceVertex_;
 };
 
-template<typename TGG, typename Mapper, typename... Args>
-FVTraceOperator(std::shared_ptr<TGG>, std::shared_ptr<Mapper>, Args&&...)
--> FVTraceOperator<std::remove_const_t<TGG>, typename std::remove_const_t<Mapper>::DomainGridGeometry>;
+
+//! Computes the normal trace of a grid function
+template<typename TraceGridGeometry, typename TraceGridMapper>
+class NormalTraceOperator;
+
+template<typename TGG, typename TGM, typename... Args>
+NormalTraceOperator(std::shared_ptr<TGG>, std::shared_ptr<TGM>, Args&&...)
+-> NormalTraceOperator<std::remove_cvref_t<TGG>, std::remove_cvref_t<TGM>>;
+
+// Specialization for cell-centered schemes
+template<typename TraceGridGeometry, typename TraceGridMapper>
+    requires(
+        TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::cctpfa ||
+        TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::ccmpfa
+    )
+class NormalTraceOperator<TraceGridGeometry, TraceGridMapper>
+: public TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>
+{
+    using Base = TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>;
+
+ public:
+    using Base::Base;
+
+ private:
+    friend Base;
+
+    template<typename F, typename LocalContext>
+    auto apply_(F&& f, LocalContext context) const
+    {
+        return TraceOperatorDetail::elementWiseAreaWeightedAverage(
+            *this->traceGridGeometry_,
+            *this->traceGridMapper_,
+            std::move(context),
+            std::forward<F>(f)
+        );
+    }
+};
+
+// Specialization for the box scheme
+template<typename TraceGridGeometry, typename TraceGridMapper>
+    requires(TraceGridMapper::DomainGridGeometry::discMethod == DiscretizationMethods::box)
+class NormalTraceOperator<TraceGridGeometry, TraceGridMapper>
+: public TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>
+{
+    using Base = TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>;
+
+ public:
+    using Base::Base;
+
+ private:
+    friend Base;
+
+    template<typename F, typename LocalContext>
+    auto apply_(F&& f, LocalContext context) const
+    {
+        return TraceOperatorDetail::elementWiseAreaWeightedAverage(
+            *this->traceGridGeometry_,
+            *this->traceGridMapper_,
+            std::move(context),
+            std::forward<F>(f)
+        );
+    }
+};
 
 } // end namespace Dumux
 

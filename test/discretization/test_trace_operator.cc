@@ -50,22 +50,10 @@ int main(int argc, char** argv)
 
     using Grid = Dune::YaspGrid<2>;
     using GridView = typename Grid::LeafGridView;
-    using GridGeometry = BoxFVGridGeometry<double, GridView>;
     using TraceGrid = Dune::FoamGrid<1, 2>;
     using TraceGridGeometry = CCTpfaFVGridGeometry<typename TraceGrid::LeafGridView>;
-    using TraceGridMapper = FVFacetGridMapper<typename TraceGrid::LeafGridView, GridGeometry>;
 
     Grid grid{{1.0, 1.0}, {10, 10}};
-    auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
-
-    FacetGridManager<Grid, TraceGrid> traceGridManager;
-    traceGridManager.init(grid, [] (const auto&, const auto& is) { return is.boundary(); });
-    const auto& traceGridView = traceGridManager.grid().leafGridView();
-    auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
-    auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry);
-    FVTraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
-        return traceGridManager.hostGridVertex(v);
-    }};
 
     int exitCode = 0;
     const auto handleError = [&] (std::string_view message) {
@@ -74,24 +62,103 @@ int main(int argc, char** argv)
     };
 
     {
-        std::cout << "Testing scv assembly" << std::endl;
-        const auto x = makeSolutionVector(*gridGeometry);
-        const auto traceX = traceOperator.assembleScvVariables([&] (const auto& scv, const auto&) {
-            return Dune::FieldVector<double, 2>({x[scv.dofIndex()], 0.0});
-        });
-        for (const auto& v : vertices(traceGridView))
-            if (Dune::FloatCmp::ne(traceX[traceGridGeometry->vertexMapper().index(v)][0], testField(v.geometry().center())))
-                handleError("Unexpected trace value (scv assembly)");
+        std::cout << "Testing box trace operator" << std::endl;
+        using GridGeometry = BoxFVGridGeometry<double, GridView>;
+        using TraceGridMapper = FVFacetGridMapper<typename TraceGrid::LeafGridView, GridGeometry>;
+        auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
+
+        FacetGridManager<Grid, TraceGrid> traceGridManager;
+        traceGridManager.init(grid, [] (const auto&, const auto& is) { return is.boundary(); });
+        const auto& traceGridView = traceGridManager.grid().leafGridView();
+
+        auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
+        auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry);
+
+        {
+            std::cout << " -- testing trace operator" << std::endl;
+            TraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
+                return traceGridManager.hostGridVertex(v);
+            }};
+            const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto& context) {
+                return Dune::FieldVector<double, 2>({
+                    testField(context.gridGeometryLocalView().scv(scvf.insideScvIdx()).dofPosition()),
+                    0.0
+                });
+            });
+            if (traceX.size() != traceGridGeometry->vertexMapper().size())
+                handleError("Unexpected trace coefficient vector size (box)");
+            else
+                for (const auto& v : vertices(traceGridView))
+                {
+                    const auto x = traceX[traceGridGeometry->vertexMapper().index(v)][0];
+                    const auto expected = testField(v.geometry().center());
+                    if (Dune::FloatCmp::ne(x, expected))
+                        handleError("Unexpected trace value (box): " + std::to_string(x) + " vs " + std::to_string(expected));
+                }
+        }
+
+        {
+            std::cout << " -- testing normal trace operator" << std::endl;
+            NormalTraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
+                return traceGridManager.hostGridVertex(v);
+            }};
+            const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto&) {
+                return testField(scvf.center());
+            });
+            for (const auto& e : elements(traceGridView))
+                if (Dune::FloatCmp::ne(traceX[traceGridGeometry->elementMapper().index(e)], testField(e.geometry().center())))
+                    handleError("Unexpected normal trace value (box)");
+        }
     }
 
     {
-        std::cout << "Testing scvf assembly" << std::endl;
-        const auto traceX = traceOperator.assembleScvfVariables([&] (const auto& scvf, const auto&) {
-            return Dune::FieldVector<double, 2>({testField(scvf.center()), 0.0});
-        });
-        for (const auto& e : elements(traceGridView))
-            if (Dune::FloatCmp::ne(traceX[traceGridGeometry->elementMapper().index(e)][0], testField(e.geometry().center())))
-                handleError("Unexpected trace value (scvf assembly)");
+        std::cout << "Testing cc trace operator" << std::endl;
+        using GridGeometry = CCTpfaFVGridGeometry<GridView>;
+        using TraceGridMapper = FVFacetGridMapper<typename TraceGrid::LeafGridView, GridGeometry>;
+        auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
+
+        FacetGridManager<Grid, TraceGrid> traceGridManager;
+        traceGridManager.init(grid, [] (const auto&, const auto& is) { return is.boundary(); });
+        const auto& traceGridView = traceGridManager.grid().leafGridView();
+
+        auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
+        auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry);
+        TraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
+            return traceGridManager.hostGridVertex(v);
+        }};
+
+        {
+            std::cout << " -- testing trace operator" << std::endl;
+            const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto& context) {
+                return Dune::FieldVector<double, 2>({
+                    testField(scvf.center()),
+                    0.0
+                });
+            });
+            if (traceX.size() != traceGridGeometry->elementMapper().size())
+                handleError("Unexpected trace coefficient vector size (tpfa)");
+            else
+                for (const auto& e : elements(traceGridView))
+                {
+                    const auto x = traceX[traceGridGeometry->elementMapper().index(e)][0];
+                    const auto expected = testField(e.geometry().center());
+                    if (Dune::FloatCmp::ne(x, expected))
+                        handleError("Unexpected trace value (tpfa): " + std::to_string(x) + " vs " + std::to_string(expected));
+                }
+        }
+
+        {
+            std::cout << " -- testing normal trace operator" << std::endl;
+            NormalTraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
+                return traceGridManager.hostGridVertex(v);
+            }};
+            const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto&) {
+                return testField(scvf.center());
+            });
+            for (const auto& e : elements(traceGridView))
+                if (Dune::FloatCmp::ne(traceX[traceGridGeometry->elementMapper().index(e)], testField(e.geometry().center())))
+                    handleError("Unexpected normal trace value (box)");
+        }
     }
 
     return exitCode;
