@@ -73,12 +73,13 @@ int main(int argc, char** argv)
 
         auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
         auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry);
+        TraceOperatorFactory factory{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
+            return traceGridManager.hostGridVertex(v);
+        }};
 
         {
             std::cout << " -- testing trace operator" << std::endl;
-            TraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
-                return traceGridManager.hostGridVertex(v);
-            }};
+            auto traceOperator = factory.traceOperator();
             const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto& context) {
                 return Dune::FieldVector<double, 2>({
                     testField(context.gridGeometryLocalView().scv(scvf.insideScvIdx()).dofPosition()),
@@ -99,9 +100,7 @@ int main(int argc, char** argv)
 
         {
             std::cout << " -- testing normal trace operator" << std::endl;
-            NormalTraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
-                return traceGridManager.hostGridVertex(v);
-            }};
+            auto traceOperator = factory.normalTraceOperator();
             const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto&) {
                 return testField(scvf.center());
             });
@@ -123,12 +122,11 @@ int main(int argc, char** argv)
 
         auto traceGridGeometry = std::make_shared<TraceGridGeometry>(traceGridView);
         auto traceGridMapper = std::make_shared<TraceGridMapper>(traceGridView, gridGeometry);
-        TraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
-            return traceGridManager.hostGridVertex(v);
-        }};
+        TraceOperatorFactory factory{traceGridGeometry, traceGridMapper};
 
         {
             std::cout << " -- testing trace operator" << std::endl;
+            auto traceOperator = factory.traceOperator();
             const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto& context) {
                 return Dune::FieldVector<double, 2>({
                     testField(scvf.center()),
@@ -149,15 +147,13 @@ int main(int argc, char** argv)
 
         {
             std::cout << " -- testing normal trace operator" << std::endl;
-            NormalTraceOperator traceOperator{traceGridGeometry, traceGridMapper, [&] (const auto& v) {
-                return traceGridManager.hostGridVertex(v);
-            }};
+            auto traceOperator = factory.normalTraceOperator();
             const auto traceX = traceOperator.apply([&] (const auto& scvf, const auto&) {
                 return testField(scvf.center());
             });
             for (const auto& e : elements(traceGridView))
                 if (Dune::FloatCmp::ne(traceX[traceGridGeometry->elementMapper().index(e)], testField(e.geometry().center())))
-                    handleError("Unexpected normal trace value (box)");
+                    handleError("Unexpected normal trace value (tpfa)");
         }
     }
 

@@ -196,6 +196,9 @@ class TraceOperatorBase
     { return static_cast<const Implementation&>(*this).apply_(std::forward<F>(f), std::move(context)); }
 
  protected:
+    const auto& domainToTraceVertexMapPtr_() const
+    { return domainToTraceVertex_; }
+
     const auto& domainToTraceVertexMap_() const
     {
         if (not domainToTraceVertex_)
@@ -349,6 +352,40 @@ class NormalTraceOperator<TraceGridGeometry, TraceGridMapper>
         );
     }
 };
+
+
+//! Factory for different trace operators
+template<typename TraceGridGeometry, typename TraceGridMapper>
+class TraceOperatorFactory
+: private TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>
+{
+    using Base = TraceOperatorBase<TraceGridGeometry, TraceGridMapper, NormalTraceOperator<TraceGridGeometry, TraceGridMapper>>;
+
+ public:
+    using Base::Base;
+
+    //! Return the trace operator for this trace grid geometry & mapping
+    TraceOperator<TraceGridGeometry, TraceGridMapper> traceOperator() const
+    {
+        auto ptr = this->domainToTraceVertexMapPtr_();
+        if (ptr)
+            return {this->traceGridGeometry_, this->traceGridMapper_, std::move(ptr)};
+        return {this->traceGridGeometry_, this->traceGridMapper_};
+    }
+
+    //! Return the normal trace operator for this trace grid geometry & mapping
+    NormalTraceOperator<TraceGridGeometry, TraceGridMapper> normalTraceOperator() const
+    {
+        auto ptr = this->domainToTraceVertexMapPtr_();
+        if (ptr)
+            return {this->traceGridGeometry_, this->traceGridMapper_, std::move(ptr)};
+        return {this->traceGridGeometry_, this->traceGridMapper_};
+    }
+};
+
+template<typename TGG, typename TGM, typename... Args>
+TraceOperatorFactory(std::shared_ptr<TGG>, std::shared_ptr<TGM>, Args&&...)
+-> TraceOperatorFactory<std::remove_cvref_t<TGG>, std::remove_cvref_t<TGM>>;
 
 } // end namespace Dumux
 
