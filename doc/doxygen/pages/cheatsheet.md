@@ -224,11 +224,11 @@ vtkWriter.addField(<dataField>, "<fieldName>");
   [https://dumux.org/docs/doxygen/master/parameterlist_8txt.html](https://dumux.org/docs/doxygen/master/parameterlist_8txt.html)
 
 ## General Remarks
-- Ensure that an object is a pointer or a reference before calling functions on it.
+- Clarify whether an object is a pointer or a reference before calling functions on it.
   - Use `->` for pointers and `.` for references when calling functions on objects.
   - Example: `gridGeometry->gridView()` vs. `gridGeometry.gridView()`
 
-- Solution vector structure for Darcy model:
+- Solution vector structure for 2p Darcy model:
 ```cpp
 {{pw1, sn1},
  {pw2, sn2},
