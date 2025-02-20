@@ -72,8 +72,34 @@ Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen
 ## C++ Code
 * Iterating over grid elements:
 ```cpp
-for (const auto& element : elements(problem.gridGeometry().gridView()))
-    // do something
+for (const auto& element : elements(gridGeometry.gridView()))
+{
+    auto elementPos = element.geometry().center();
+    ...
+}
+```
+
+* Iterating over vertices:
+```cpp
+for (const auto& vertex : vertices(gridGeometry.gridView()))
+{
+    auto vertexPos = vertex.geometry().center();
+    ...
+}
+```
+
+* Iterating over local vertices of an element:
+```cpp
+using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+constexpr int dim = GridView::dimension;
+for (const auto& element : elements(gridGeometry.gridView()))
+{
+    for (const auto& vertex : Dune::subEntities(element, Dune::Codim<dim>{}))
+    {
+        auto vertexPos = vertex.geometry().center();
+        ...
+    }
+}
 ```
 
 * Frequent calls on an element:
@@ -84,12 +110,15 @@ element.level();              // refinement level
 
 // access global element index
 unsigned int elementIdx = gridGeometry.elementMapper().index(element);
+// access element given global element index
+auto element = gridGeometry.element(elementIdx);
 ```
 
 * Frequent calls on a grid geometry:
 ```cpp
-gridGeometry.numScv();   // total number of sub-control volumes
-gridGeometry.numScvf();  // total number of sub-control volume faces
+gridGeometry.numScv();                      // total number of sub-control volumes
+gridGeometry.numScvf();                     // total number of sub-control volume faces
+auto gridGeometry = problem.gridGeometry(); // can be accessed via problem
 ```
 
 * Iterating over all sub-control volumes:
