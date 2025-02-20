@@ -12,10 +12,10 @@ set(CMAKE_BUILD_TYPE [BUILD_TYPE])
 ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
 ```
 ```bash
-./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --only=<moduleName> all
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --only=<module_dir> all
 ```
 ```bash
-./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --build-dir=<buildDirectoryPath> all
+./dune-common/bin/dunecontrol --opts=dumux/cmake.opts --build-dir=<build_directory_path> all
 ```
 
 * Removing cache before reconfiguring:
@@ -30,12 +30,12 @@ rm -rf d*/build-cmake
 
 * Running executable with MPI (distributed-memory parallelism):
 ```bash
-mpirun -np [n_cores] [executable_name]
+mpirun -np <n_cores> <executable_name>
 ```
 
 * Running executable with shared-memory parallelism:
 ```bash
-DUMUX_NUM_THREADS=[num_threads] ./test_executable
+DUMUX_NUM_THREADS=<num_threads> ./<executable_name>
 ```
 
 * Passing run-time parameters per command line:
@@ -47,6 +47,7 @@ DUMUX_NUM_THREADS=[num_threads] ./test_executable
 ```bash
 make doc
 ```
+Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen/html/index.html` and opened via a browser.
 
 * Creating a new Dune module:
 ```bash
@@ -55,19 +56,18 @@ make doc
 
 * Extract test(s) as extra module:
 ```bash
-./dumux/bin/extractmodule/extract_as_new_module.py module_dir SUBFOLDER_1 [SUBFOLDER_2 ...]
+./dumux/bin/extractmodule/extract_as_new_module.py <module_dir> <sub_folder_1> <[sub_folder_2 ...]>
 ```
 
 * Create install script for a module:
 ```bash
-./dumux/bin/extractmodule/make_installscript.py -p module_dir
+./dumux/bin/extractmodule/make_installscript.py -p <module_dir>
 ```
 
 * Create docker image of a module:
 ```bash
-./dumux/bin/extractmodule/create_dockerimage.py -m module_dir -i path_to_installscript
+./dumux/bin/extractmodule/create_dockerimage.py -m <module_dir> -i <path_to_installscript>
 ```
-Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen/html/index.html` and opened via a browser.
 
 ## C++ Code
 * Iterating over grid elements:
