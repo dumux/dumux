@@ -75,6 +75,8 @@ public:
                 std::cout << "\n *** WARNING: global capillary pressure defined in the problem but InvasionState.RestrictInvasionToGlobalCapillaryPressure is set to false.\n"
                           << "     Invasion behavior will NOT be restricted! ***\n" << std::endl;
         }
+        invasionRelativePcThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionRelativePcThreshold", 1e-6);
+        snapoffRelativePcThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffRelativePcThreshold", 1e-6);
     }
 
     //! Return whether a given throat is invaded or not.
@@ -240,9 +242,9 @@ private:
             return Result{}; //nothing happened
         }
 
-        if (*pcMax > pcEntry)
+        if (*pcMax - pcEntry >  -invasionRelativePcThreshold_*pcEntry)
            invadedAfterSwitch = true;
-        else if (*pcMax <= pcSnapoff)
+        else if (*pcMax - pcSnapoff < snapoffRelativePcThreshold_*pcSnapoff)
            invadedAfterSwitch = false;
 
         invadedCurrentIteration_[eIdx] = invadedAfterSwitch;
@@ -299,6 +301,8 @@ private:
     std::size_t numThroatsInvaded_;
     bool verbose_;
     bool restrictToGlobalCapillaryPressure_;
+    double invasionRelativePcThreshold_;
+    double snapoffRelativePcThreshold_;
 
     const Problem& problem_;
 };
@@ -430,7 +434,7 @@ private:
         if(!fluxVarsCache.invaded())
             invadedCur = theta > invasionThetaThreshold_ || *pcMax - pcEntry >  -invasionRelativePcThreshold_*pcEntry;
         else
-            invadedCur = theta > snapoffThetaThreshold_ || *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*pcSnapoff;
+            invadedCur = theta > snapoffThetaThreshold_ || *pcMax - pcSnapoff <  snapoffRelativePcThreshold_*pcSnapoff;
 
         invaded_[eIdx] = invadedCur;
 
