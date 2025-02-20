@@ -322,6 +322,8 @@ public:
     {
         invasionThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionThetaThreshold", 1e-10);
         snapoffThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffThetaThreshold", 1-1e-10);
+        invasionRelativePcThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionRelativePcThreshold", 1e-6);
+        snapoffRelativePcThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffRelativePcThreshold", 1e-6);
 
         // initialize the invasion state
         invaded_.resize(problem.gridGeometry().gridView().size(0));
@@ -421,10 +423,14 @@ private:
         const auto throatPc = fluxVarsCache.pc();
         const auto theta = problem_.theta(element, fvGeometry, elemVolVars, fluxVarsCache, scvf);
 
+        const auto pcMax = std::max_element(pc.begin(), pc.end());
+        const Scalar pcEntry = fluxVarsCache.pcEntry();
+        const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
+
         if(!fluxVarsCache.invaded())
-            invadedCur = theta > invasionThetaThreshold_;
+            invadedCur = theta > invasionThetaThreshold_ || *pcMax - pcEntry >  -invasionRelativePcThreshold_*pcEntry;
         else
-            invadedCur = theta > snapoffThetaThreshold_;
+            invadedCur = theta > snapoffThetaThreshold_ || *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*pcSnapoff;
 
         invaded_[eIdx] = invadedCur;
 
@@ -466,6 +472,8 @@ private:
 
     double invasionThetaThreshold_;
     double snapoffThetaThreshold_;
+    double invasionRelativePcThreshold_;
+    double snapoffRelativePcThreshold_;
     std::vector<bool> invaded_;
     std::size_t numThroatsInvaded_;
     bool verbose_;
