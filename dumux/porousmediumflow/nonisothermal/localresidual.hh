@@ -213,6 +213,13 @@ public:
         flux[energyEqIdx] += fluxVars.heatConductionFlux();
     }
 
+    static void heatMolecularDiffusionFlux(NumEqVector& flux,
+                                           FluxVariables& fluxVars,
+                                           int phaseIdx)
+    {
+        flux[energyEqIdx] += fluxVars.heatMolecularDiffusionFlux(phaseIdx);
+    }
+
     /*!
      * \brief The dispersive energy fluxes
      *

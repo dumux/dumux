@@ -188,6 +188,37 @@ public:
             return 0.0;
     }
 
+    Scalar heatMolecularDiffusionFlux([[maybe_unused]] const int phaseIdx) const
+    {
+
+    /*!
+     * \brief Returns the heat molecular diffusive fluxes computed by the respective law.
+     */
+        if constexpr (enableEnergyBalance && enableMolecularDiffusion)
+        {
+            Scalar flux(0.0);
+            const auto& elemVolVars = this->elemVolVars();
+
+            const auto diffusiveFlux = molecularDiffusionFlux(phaseIdx);
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                // define the upstream direction according to the sign of the diffusive flux
+                using std::signbit;
+                const bool insideIsUpstream = !signbit(diffusiveFlux[compIdx]);
+                const auto& upstreamVolVars = insideIsUpstream ? elemVolVars[scvf.insideScvIdx()] : elemVolVars[scvf.outsideScvIdx()];
+
+                if (MolecularDiffusionType::referenceSystemFormulation() == ReferenceSystemFormulation::massAveraged)
+                    flux += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx);
+                else
+                    flux += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx)* elemVolVars[scvf.insideScvIdx()].molarMass(compIdx);
+            }
+        }
+        else
+            return 0.0;
+    }
+
+    }
+
 private:
     //! simple caching if advection flux is used twice with different upwind function
     mutable std::bitset<numPhases> advFluxIsCached_;
