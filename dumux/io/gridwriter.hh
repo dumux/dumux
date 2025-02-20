@@ -25,6 +25,9 @@
 #include <gridformat/traits/dune.hpp>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/timer.hh>
+
+#include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux::IO {
@@ -236,6 +239,8 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
 
     class VolVarFieldStorage;
 
+    static constexpr int defaultVerbosity_ = 1;
+
  public:
     using VolumeVariables = VolVar;
 
@@ -256,7 +261,9 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     : ParentType{defaultFileFormat, gridVariables.gridGeometry().gridView(), filename, order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
-    {}
+    {
+        setVerbosity(defaultVerbosity_);
+    }
 
     /*!
      * \brief Constructor for stationary file formats.
@@ -269,7 +276,9 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     : ParentType{fmt, gridVariables.gridGeometry().gridView(), order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
-    {}
+    {
+        setVerbosity(defaultVerbosity_);
+    }
 
     /*!
      * \brief Constructor for transient file formats, i.e. time series.
@@ -283,7 +292,9 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     : ParentType{fmt, gridVariables.gridGeometry().gridView(), filename, order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
-    {}
+    {
+        setVerbosity(defaultVerbosity_);
+    }
 
     /*!
      * \brief Register a volume variable to be added to the output.
@@ -398,9 +409,19 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
      */
     std::string write(const std::string& name)
     {
+        Dune::Timer timer;
+
         volVarFields_.updateFieldData(gridVariables_, solutionVector_);
         auto filename = ParentType::write(name);
         volVarFields_.clearFieldData();
+
+        timer.stop();
+        if (verbosity_ > 0)
+            std::cout << Fmt::format(
+                "Writing output to \"{}\". Took {:.2g} seconds.\n",
+                filename, timer.elapsed()
+            );
+
         return filename;
     }
 
@@ -410,9 +431,19 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<std::floating_point T>
     std::string write(T time)
     {
+        Dune::Timer timer;
+
         volVarFields_.updateFieldData(gridVariables_, solutionVector_);
         auto filename = ParentType::write(time);
         volVarFields_.clearFieldData();
+
+        timer.stop();
+        if (verbosity_ > 0)
+            std::cout << Fmt::format(
+                "Writing output to \"{}\". Took {:.2g} seconds.\n",
+                filename, timer.elapsed()
+            );
+
         return filename;
      }
 
@@ -420,6 +451,12 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     void clear() {
         ParentType::clear();
         volVarFields_.clear();
+    }
+
+    void setVerbosity(int verbosity)
+    {
+        if (gridVariables_.gridGeometry().gridView().comm().rank() == 0)
+            verbosity_ = verbosity;
     }
 
 private:
@@ -474,6 +511,7 @@ private:
     const GridVariables& gridVariables_;
     const SolutionVector& solutionVector_;
     VolVarFieldStorage volVarFields_;
+    int verbosity_ = 0;
 };
 
 // Class to store vol var fields; implementation detail of the OutputModule class
