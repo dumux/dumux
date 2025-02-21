@@ -80,12 +80,18 @@ public:
         if (!materialInterfaces.isOnMaterialInterface(scv))
             return sn;
 
-        // compute capillary pressure using material parameters associated with the dof
+        // pc-sw curve associated with the dof
         const auto& interfacePcSw = materialInterfaces.pcSwAtDof(scv);
-        const auto pc = interfacePcSw.pc(/*ww=*/1.0 - sn);
+        // pc-sw curve related to scv
+        const auto& pcSw = spatialParams.fluidMatrixInteraction(element, scv, elemSol).pcSwCurve();
+
+        if (interfacePcSw == pcSw)
+            return sn;
+
+        // compute capillary pressure using material parameters associated with the dof
+        const auto pc = interfacePcSw.pc(/*sw=*/1.0 - sn);
 
         // reconstruct by inverting the pc-sw curve
-        const auto& pcSw = spatialParams.fluidMatrixInteraction(element, scv, elemSol).pcSwCurve();
         const auto pcMin = pcSw.endPointPc();
 
         if (pc < pcMin && pcMin > 0.0)
