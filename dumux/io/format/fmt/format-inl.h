@@ -1,5 +1,5 @@
 //
-// SPDX-FileCopyrightInfo: Copyright (c) 2012 - 2016, Victor Zverovich
+// SPDX-FileCopyrightText: Copyright (c) 2012 - 2016, Victor Zverovich
 // SPDX-License-Identifier: LicenseRef-fmt
 //
 // Formatting library for C++ - implementation

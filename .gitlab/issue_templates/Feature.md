@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 SPDX-License-Identifier: CC0-1.0
 -->
 

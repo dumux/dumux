@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightInfo: Copyright (c) Lee Thomason
+// SPDX-FileCopyrightText: Copyright (c) Lee Thomason
 // SPDX-License-Identifier: Zlib
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
