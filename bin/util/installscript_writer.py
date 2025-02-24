@@ -211,16 +211,13 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
 
 
             def installModule(subFolder, url, branch, revision):
-                targetFolder = url.split("/")[-1]
-                if targetFolder.endswith(".git"):
-                    targetFolder = targetFolder[:-4]
-                if not os.path.exists(targetFolder):
-                    runFromSubFolder(['git', 'clone', url, targetFolder], '.')
+                if not os.path.exists(subFolder):
+                    runFromSubFolder(['git', 'clone', url, subFolder], '.')
                     runFromSubFolder(['git', 'checkout', branch], subFolder)
                     runFromSubFolder(['git', 'reset', '--hard', revision], subFolder)
                 else:
                     print(
-                        f"Skip cloning {{url}} since target '{{targetFolder}}' already exists."
+                        f"Skip cloning {{url}} since target '{{subFolder}}' already exists."
                     )
 
 
