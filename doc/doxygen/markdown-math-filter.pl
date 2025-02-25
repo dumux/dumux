@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightInfo: Copyright 2017 - 2023 Simulating eXtreme Spacetimes Collaboration
+# SPDX-FileCopyrightText: Copyright 2017 - 2023 Simulating eXtreme Spacetimes Collaboration
 # SPDX-License-Identifier: MIT
 # Based on the original by Simulating eXtreme Spacetimes Collaboration,
 # licensed under MIT. All Changes are licensed under GPL-3.0-or-later.

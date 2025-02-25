@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightInfo: Copyright (c) 2020 Andrew Scott
+# SPDX-FileCopyrightText: Copyright (c) 2020 Andrew Scott
 # SPDX-License-Identifier: MIT
 # The class TarSafe is adapted from https://github.com/beatsbears/tarsafe, licensed under MIT. All
 # Changes are licensed under GPL-3.0-or-later.
