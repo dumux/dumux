@@ -8,7 +8,7 @@ Users typically collect their property customizations in a `properties.hh` file 
 A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms. It is recommended to save all specifications of the initial and boundary conditions in one file e.g. `problem.hh`.
 
 ## SpatialParams
-The SpatialParams define parameters which can be dependent on the location in space within the computational domain. For a Darcy-scale porous-medium simulation, these are typically porosity and permeability as well as parameters appearing in the constitutive relations, such as the capillary entry pressure.The specified spatial parameters are usually stored in a `spatialparams.hh` file. More information can be found @ref SpatialParameters.
+The SpatialParams define parameters which can be dependent on the location in space within the computational domain. For a Darcy-scale porous-medium simulation, these are typically porosity and permeability as well as parameters appearing in the constitutive relations, such as the capillary entry pressure. The specified spatial parameters are usually stored in a `spatialparams.hh` file. More information can be found @ref SpatialParameters.
 
 ## Grid
 ### GridManager
@@ -19,12 +19,13 @@ A GridView allows for read-only access to a certain part of a possibly hierarchi
 
 
 ### GridGeometry
-The GridGeometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations. It is dependent on the selected spatial discretization method.
+The GridGeometry constructs, from a GridView, all the geometrical and topological data necessary to evaluate the discrete equations. It is dependent on the selected spatial discretization method. The algorithms for the geometry computations are listed in @ref Geometry.
 
 ## Assembly
+For more information also check @ref Assembly.
 
 ### LocalResidual
-The LocalResidual is the implementation of a how a residual is evaluated on an element. It relies on the concept that each PDE has a storage, flux and source term. The storage and source terms are evaluated on the sub-control-volumes of an element and the flux term on the relevant faces of these sub-control-volumes.
+The LocalResidual is the implementation of how a residual is evaluated on an element. It relies on the concept that each PDE has a storage, flux and source term. The storage and source terms are evaluated on the sub-control-volumes of an element and the flux term on the relevant faces of these sub-control-volumes.
 
 ### LocalAssembler
 The LocalAssembler is responsible for calculating the local residual vector and the local Jacobian matrix. The local residual vector is the vector of residuals for each element. The local Jacobian matrix is the partial derivative of the local residual with respect to each entry of the solution vector. The local assembler is discretization-specific.
@@ -35,7 +36,7 @@ The Assembler is responsible for calculating the global residual vector and the 
 ## Solving
 
 ### LinearSolver
-The LinearSolver is a wrapper for a DUNE-ISTL preconditioned linear solver and used to solve the linear system of equations. It provides a common interface for different linear solvers.
+The LinearSolver is a wrapper for a DUNE-ISTL preconditioned linear solver and used to solve the linear system of equations. It provides a common interface for different linear solvers. More information is provided here: @ref Linear.
 
 ### PDESolver
-The PDESolver manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria.
+The PDESolver manages the iterative refinement of solutions by assembling the Jacobian and residuals, solving the linearized equations, and applying the solution updates. Furthermore, it handles solution acceptance criteria. Additional information about the PDESolver is given in the description of the @ref Nonlinear solver, and the option to run in parallel is described in Section @ref Parallel solvers.
