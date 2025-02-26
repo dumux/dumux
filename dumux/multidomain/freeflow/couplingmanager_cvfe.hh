@@ -123,6 +123,9 @@ public:
               GridVariablesTuple&& gridVariables,
               const SolutionVector& curSol)
     {
+        this->momentumCouplingContext_().clear();
+        this->massAndEnergyCouplingContext_().clear();
+
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->updateSolution(curSol);
@@ -148,6 +151,9 @@ public:
               GridVariablesTuple&& gridVariables,
               const typename ParentType::SolutionVectorStorage& curSol)
     {
+        this->momentumCouplingContext_().clear();
+        this->massAndEnergyCouplingContext_().clear();
+
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->attachSolution(curSol);
@@ -742,21 +748,14 @@ private:
     std::vector<CouplingStencilType> momentumToMassAndEnergyStencils_;
     std::vector<CouplingStencilType> massAndEnergyToMomentumStencils_;
 
-    // the coupling context exists for each thread
-    // TODO this is a bad pattern, just like mutable caches
-    // we should really construct and pass the context and not store it globally
     std::vector<MomentumCouplingContext>& momentumCouplingContext_() const
-    {
-        thread_local static std::vector<MomentumCouplingContext> c;
-        return c;
-    }
+    { return momentumCouplingContextImpl_; }
 
-    // the coupling context exists for each thread
     std::vector<MassAndEnergyCouplingContext>& massAndEnergyCouplingContext_() const
-    {
-        thread_local static std::vector<MassAndEnergyCouplingContext> c;
-        return c;
-    }
+    { return massAndEnergyCouplingContextImpl_; }
+
+    mutable std::vector<MassAndEnergyCouplingContext> massAndEnergyCouplingContextImpl_;
+    mutable std::vector<MomentumCouplingContext> momentumCouplingContextImpl_;
 
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
@@ -773,11 +772,7 @@ namespace Detail {
 template<class Traits, class DiscretizationMethod = typename Detail::MomentumDiscretizationMethod<Traits>::type>
 struct CouplingManagerSupportsMultithreadedAssemblySelector;
 
-// disabled for now
-// the infrastructure for multithreaded assembly is implemented (see code in the class above)
-// but the current implementation seems to have a bug and may cause race conditions.
-// The result is different when running in parallel. After this has been fixed activate multithreaded assembly
-// by removing this specialization
+// multi-threading is not supported because we have only one coupling context instance and a mutable cache
 template<class Traits, class D>
 struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::CVFE<D>>
 { using type = std::false_type; };
