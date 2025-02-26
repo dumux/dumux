@@ -22,6 +22,20 @@
 
 namespace Dumux {
 namespace BinaryCoeff {
+namespace Detail {
+namespace H2O_Air {
+    // Enum definition in detail namespace
+    enum class HenryRules {
+        Finsterle,
+        Mixture
+    };
+    // Concept definitions
+    template<HenryRules rule>
+    concept IsFinsterle = rule == HenryRules::Finsterle;
+    template<HenryRules rule>
+    concept IsMixture = rule == HenryRules::Mixture;
+} // end namespace H2O_Air
+} // end namespace Detail
 
 /*!
  * \ingroup Binarycoefficients
@@ -30,6 +44,8 @@ namespace BinaryCoeff {
 class H2O_Air
 {
 public:
+
+    using implementedHenryRules = Detail::H2O_Air::HenryRules;
     /*!
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for air in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
@@ -38,25 +54,28 @@ public:
      * Stefan Finsterle (1993, page 33 Formula (2.9)) \cite finsterle1993 <BR>
      * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985 )
      */
-    template <class Scalar>
-    [[deprecated("Will be renamed to henryFinsterle after 3.10. A new henryMixture function will be the expected function.")]]
-    static Scalar henry(Scalar temperature)
-    {
-      using std::exp;
-      Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
-
-      return 1./r;
+    template <typename Scalar>
+    static Scalar henry(Scalar temperature) {
+        // Print warning - only once
+        static bool warningPrinted = []() {
+            std::cout << "Warning: henry() now defaults to Finsterle implementation. It will default to the Mixture implementation after 3.10.\n";
+            return true;
+        }();
+        (void)warningPrinted;
+        return henry<Scalar, Detail::H2O_Air::HenryRules::Mixture>(temperature);
     }
-    template <class Scalar>
-    static Scalar henryFinsterle(Scalar temperature)
+    template <typename Scalar, Detail::H2O_Air::HenryRules rule>
+    requires Detail::H2O_Air::IsFinsterle<rule>
+    static Scalar henry(Scalar temperature)
     {
         using std::exp;
         Scalar r = (0.8942+1.47*exp(-0.04394*(temperature-273.15)))*1.E-10;
 
         return 1./r;
     }
-    template <class Scalar>
-    static Scalar henryMixture(Scalar temperature)
+    template <typename Scalar, Detail::H2O_Air::HenryRules rule>
+    requires Detail::H2O_Air::IsMixture<rule>
+    static Scalar henry(Scalar temperature)
     {
         static constexpr Scalar yO2_air=Dumux::Components::Air<Scalar>::airMoleFraction::O2;
         static constexpr Scalar yN2_air=Dumux::Components::Air<Scalar>::airMoleFraction::N2;
