@@ -36,10 +36,11 @@ class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
@@ -49,8 +50,15 @@ public:
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
-        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 0.0);
-        singleThroatTest_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.SingleThroatTest", true);
+        verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", true);
+
+        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
+        inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
+
+#if !ISOTHERMAL
+        initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
+        inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature", 273.15 + 20);
+#endif
     }
 
     /*!
@@ -85,10 +93,13 @@ public:
         BoundaryTypes bcTypes;
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
             bcTypes.setAllCouplingNeumann();
-
-        if (singleThroatTest_ && scv.dofIndex() == 0)
-            bcTypes.setAllDirichlet();
-
+        else
+        {
+            if(onInlet_(scv))
+                bcTypes.setAllDirichlet(); //pressure (and Temperature) fixed for inflow from bottom
+            else
+                bcTypes.setAllNeumann();
+        }
         return bcTypes;
     }
 
@@ -99,8 +110,15 @@ public:
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
-        static const Scalar pressureBottom = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureBottom", 10.0);
-        return PrimaryVariables(pressureBottom);
+        PrimaryVariables priVars = initialAtPos(scv.dofPosition());
+        if(onInlet_(scv))
+        {
+            priVars[Indices::pressureIdx] = inletPressure_;
+#if !ISOTHERMAL
+            priVars[Indices::temperatureIdx] = inletTemperature_;
+#endif
+        }
+        return priVars;
     }
 
     // \}
@@ -138,12 +156,20 @@ public:
 
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
         {
-            values = couplingManager().massCouplingCondition(
+            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
                 CouplingManager::poreNetworkIndex,
                 CouplingManager::freeFlowMassIndex, fvGeometry,
                 scv,
-                elemVolVars) / this->gridGeometry().poreVolume(scv.dofIndex());
+                elemVolVars);
+#if !ISOTHERMAL
+            values[Indices::energyEqIdx] = couplingManager().energyCouplingCondition(
+                CouplingManager::poreNetworkIndex,
+                CouplingManager::freeFlowMassIndex, fvGeometry,
+                scv,
+                elemVolVars);
+#endif
         }
+        values /= this->gridGeometry().poreVolume(scv.dofIndex());
 
         return values;
     }
@@ -157,11 +183,12 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& pos) const
     {
         PrimaryVariables values(0.0);
-        values = initialPressure_;
+        values[Indices::pressureIdx] = initialPressure_;
+#if !ISOTHERMAL
+        values[Indices::temperatureIdx] = initialTemperature_;
+#endif
         return values;
     }
-
-    // \}
 
     // \}
 
@@ -174,9 +201,44 @@ public:
     { return *couplingManager_; }
 
 private:
+    bool onInlet_(const SubControlVolume& scv) const
+    {
+        if (verticalFlow_)
+            return onLowerBoundary_(scv);
+        else
+            return onLeftBoundary_(scv);
+    }
+
+    bool onOutlet_(const SubControlVolume& scv) const
+    {
+        if (verticalFlow_)
+            return 0;
+        else
+            return onRightBoundary_(scv);
+    }
+
+    bool onLeftBoundary_(const SubControlVolume& scv) const
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 0; }
+
+    bool onRightBoundary_(const SubControlVolume& scv) const
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 1; }
+
+    bool onLowerBoundary_(const SubControlVolume& scv) const
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; }
+
+    bool onUpperBoundary_(const SubControlVolume& scv) const
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 3; }
+
+
     std::shared_ptr<CouplingManager> couplingManager_;
-    bool singleThroatTest_;
     Scalar initialPressure_;
+    Scalar inletPressure_;
+    bool verticalFlow_;
+#if !ISOTHERMAL
+    Scalar initialTemperature_;
+    Scalar inletTemperature_;
+#endif
+
 };
 
 } // end namespace Dumux

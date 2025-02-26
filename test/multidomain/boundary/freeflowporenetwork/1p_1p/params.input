@@ -5,7 +5,8 @@ NumPores = 3 3
 PoreInscribedRadius = 5e-4
 ThroatInscribedRadius = 5e-4
 SubstractRadiiFromThroatLength = true
-BoundaryPoreLabels = xMin:1 xMax:1 yMin:1 yMax:1
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
 DeletionProbability = 0 0 1 1
 RemoveThroatsOnBoundary = 3
 PoreGeometry = Cube
@@ -26,12 +27,19 @@ SingleThroatTest = false
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 1
+InitialPressure = 1e5
+InletPressure = 1.1e5
+OutletPressure = 1e5
 EnableInertiaTerms = false
 Height = 10e-4
+VerticalFlow = false
 
 [PNM.Problem]
 Name = pnm
+InitialPressure = 1e5
+InletPressure = 1.1e5
+OutletPressure = 1e5
+VerticalFlow = true
 
 [Vtk]
 OutputName = test

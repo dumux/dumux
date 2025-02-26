@@ -15,7 +15,6 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/initialize.hh>
@@ -25,7 +24,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/vtk/intersectionwriter.hh>
 #include <dumux/io/vtkoutputmodule.hh>

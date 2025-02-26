@@ -5,6 +5,8 @@ UpperRight = 0.5e-3 0.0
 PoreInscribedRadius = 1e-4
 PoreGeometry = Sphere
 ThroatCrossSectionShape = TwoPlates
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
 
 [FreeFlow.Grid]
 LowerLeft = 0 0
@@ -21,12 +23,13 @@ SingleThroat = true
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 1000
 EnableInertiaTerms = false
+VerticalFlow = True
 
 [PNM.Problem]
 Name = pnm
-PressureBottom = 1
+VerticalFlow = True
+InletPressure = 1.01e5
 
 [Vtk]
 OutputName = test

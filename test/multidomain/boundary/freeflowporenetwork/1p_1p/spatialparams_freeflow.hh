@@ -36,9 +36,7 @@ public:
     ChannelSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        singleThroatTest_ = getParam<bool>("Problem.SingleThroatTest", true);
-        enablePseudoThreeDWallFriction_ = !singleThroatTest_;
-        extrusionFactor_ = enablePseudoThreeDWallFriction_ ? getParam<Scalar>("FreeFlow.Problem.Height") : 1.0;
+        extrusionFactor_ = getParam<Scalar>("FreeFlow.Problem.Height", 1.0);
     }
 
     /*!
@@ -57,8 +55,6 @@ public:
     { return extrusionFactor_; }
 
 private:
-    bool singleThroatTest_;
-    bool enablePseudoThreeDWallFriction_;
     Scalar extrusionFactor_;
 };
 
