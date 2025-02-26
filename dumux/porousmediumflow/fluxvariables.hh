@@ -19,6 +19,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/flux/upwindscheme.hh>
+#include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux {
 
@@ -188,6 +189,10 @@ public:
             return 0.0;
     }
 
+    /*!
+     * \brief Returns the heat flux related to molecular diffusion computed by the respective law.
+     * \note This overload is used in models considering local thermal nonequilibrium
+     */
     Scalar heatMolecularDiffusionFlux([[maybe_unused]] const int phaseIdx) const
     {
 
@@ -198,6 +203,7 @@ public:
         {
             Scalar flux(0.0);
             const auto& elemVolVars = this->elemVolVars();
+            const auto& scvf = this->scvFace();
 
             const auto diffusiveFlux = molecularDiffusionFlux(phaseIdx);
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -215,8 +221,6 @@ public:
         }
         else
             return 0.0;
-    }
-
     }
 
 private:
