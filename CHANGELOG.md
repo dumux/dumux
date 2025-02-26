@@ -14,6 +14,7 @@ C++20 mode is enforced through CMake.
 - __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. `GridFormat` is added as a submodule and can be pulled in with `git submodule update --init`.
 - __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
 - __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
+- __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
