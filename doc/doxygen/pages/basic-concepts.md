@@ -5,7 +5,7 @@ In DuMuX, the property system provides a flexible way to configure simulations a
 Users typically collect their property customizations in a `properties.hh` file specific to their simulation setup. For more detailed and technical information about the property system, see @ref Properties.
 
 ## Problem
-A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms. It is recommended to save all specification of the initial and boundary conditions in one file e.g. `problem.hh`.
+A Problem in DuMux represents the conceptual framework where the scenario being simulated is characterized through the specification of initial and boundary conditions, as well as source terms. It is recommended to save all specifications of the initial and boundary conditions in one file e.g. `problem.hh`.
 
 ## SpatialParams
 The SpatialParams define parameters which can be dependent on the location in space within the computational domain. For a Darcy-scale porous-medium simulation, these are typically porosity and permeability as well as parameters appearing in the constitutive relations, such as the capillary entry pressure.The specified spatial parameters are usually stored in a `spatialparams.hh` file. More information can be found @ref SpatialParameters.
