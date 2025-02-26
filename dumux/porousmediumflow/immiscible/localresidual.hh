@@ -116,6 +116,7 @@ public:
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+            EnergyLocalResidual::heatMolecularDiffusionFlux(flux, fluxVars, phaseIdx);
         }
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.

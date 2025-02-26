@@ -96,6 +96,17 @@ public:
     {}
 
     /*!
+     * \brief The energy fluxes related to molecular diffusion
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
+    static void heatMolecularDiffusionFlux(NumEqVector& flux,
+                                           FluxVariables& fluxVars,
+                                           int phaseIdx)
+    {}
+
+    /*!
      * \brief The dispersive energy fluxes
      *
      * \param flux The flux
@@ -213,6 +224,12 @@ public:
         flux[energyEqIdx] += fluxVars.heatConductionFlux();
     }
 
+    /*!
+     * \brief The energy fluxes related to molecular diffusion
+     *
+     * \param flux The flux
+     * \param fluxVars The flux variables.
+     */
     static void heatMolecularDiffusionFlux(NumEqVector& flux,
                                            FluxVariables& fluxVars,
                                            int phaseIdx)
