@@ -48,7 +48,7 @@ public:
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead.");
+        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead. Will be entirely removed after release 3.10.");
     }
 
     /*!
@@ -157,7 +157,7 @@ public:
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {
-        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead.");
+        static_assert(AlwaysFalse<T>::value, "Deprecated interface that has been removed! Use new interface with additional argument problem instead. Will be entirely removed after release 3.10.");
     }
 
     /*!
