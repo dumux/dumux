@@ -1,13 +1,13 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief A test problem for the coupled Free-Flow/PNM problem (1p).
+ * \brief A test problem for the coupled Free-Flow/PNM problem (1p2c).
  */
 
 #include <config.h>
@@ -15,7 +15,6 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
 
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/common/initialize.hh>
@@ -23,22 +22,19 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/vtk/intersectionwriter.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/snappygridmanager.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include "../properties.hh"
+#include "properties.hh"
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
@@ -75,9 +71,9 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using FreeFlowMomentumTypeTag = Properties::TTag::FreeFlowOnePMomentum;
-    using FreeFlowMassTypeTag = Properties::TTag::FreeFlowOnePMass;
-    using PoreNetworkTypeTag = Properties::TTag::PNMOnePModel;
+    using FreeFlowMomentumTypeTag = Properties::TTag::FreeFlowOnePNCMomentum;
+    using FreeFlowMassTypeTag = Properties::TTag::FreeFlowOnePNCMass;
+    using PoreNetworkTypeTag = Properties::TTag::PNMOnePNCModel;
 
     using PNMGridManager = Dumux::PoreNetwork::GridManager<2>;
     PNMGridManager pnmGridManager;

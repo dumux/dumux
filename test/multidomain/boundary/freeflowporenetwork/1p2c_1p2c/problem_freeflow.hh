@@ -1,34 +1,32 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief Free-flow sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  */
 
-#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_FREEFLOW_HH
-#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_FREEFLOW_HH
+#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_FREEFLOW_HH
+#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_FREEFLOW_HH
 
 #include <dumux/common/properties.hh>
-
-#include <dumux/freeflow/navierstokes/boundarytypes.hh>
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
-#include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
+#include <dumux/freeflow/navierstokes/mass/1pnc/advectiveflux.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup BoundaryTests
- * \brief  Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief  Free-flow sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  *         A two-dimensional Stokes flow region coupled to a pore-network model.
  */
 template <class TypeTag, class BaseProblem>
-class FreeFlowOnePTestProblem :  public BaseProblem
+class FreeFlowOnePNCTestProblem :  public BaseProblem
 {
     using ParentType = BaseProblem;
 
@@ -53,20 +51,21 @@ class FreeFlowOnePTestProblem :  public BaseProblem
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    static constexpr bool useMoles = ModelTraits::useMoles();
+
 public:
-    FreeFlowOnePTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    FreeFlowOnePNCTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager, "FreeFlow")
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
-        inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-        verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 0.001);
+        onlyDiffusion_ = getParam<bool>("Problem.OnlyDiffusion", false);
+        pressureDifference_ = onlyDiffusion_ ? 0.0 : getParamFromGroup<Scalar>(this->paramGroup(), "Problem.PressureDifference", 10);
+
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20.0);
-        inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature", 273.15 + 20.0);
-        outletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletTemperature", 273.15 + 20.0);
 #endif
     }
 
@@ -102,24 +101,22 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                values.setCouplingNeumann(Indices::momentumXBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+                values.setCouplingNeumann(Indices::momentumXBalanceIdx);
             }
-            else if (onInlet_(globalPos) || onOutlet_(globalPos))
+            else if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
                 values.setAllNeumann();
             else
-                values.setAllDirichlet(); //e.g. fixed velocities at walls
+                values.setAllDirichlet();
         }
         else
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
-                values.setAllCouplingNeumann(); //mass and energy coupling
-            else if (onInlet_(globalPos))
+                values.setAllCouplingNeumann();
+            else if (!onlyDiffusion_ && onLeftBoundary_(globalPos))
                 values.setAllDirichlet();
-            else if (onOutlet_(globalPos))
-                values.setAllNeumann();
             else
-                values.setAllNeumann(); //outflow or zero flux BCs for p,T
+                values.setAllNeumann();
         }
         return values;
     }
@@ -131,43 +128,17 @@ public:
      */
     DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        DirichletValues values(0.0); //velocity is 0.0
-
-        if constexpr (!ParentType::isMomentumProblem())
-        {
-            if (onInlet_(globalPos))
-            {
-                values[Indices::pressureIdx] = inletPressure_;
-#if !ISOTHERMAL
-                values[Indices::temperatureIdx] = inletTemperature_;
-#endif
-            }
-            else if (onOutlet_(globalPos))
-            {
-                values[Indices::pressureIdx] = outletPressure_;
-#if !ISOTHERMAL
-                values[Indices::temperatureIdx] = outletTemperature_;
-#endif
-            }
-        }
-        return values;
+        return initialAtPos(globalPos);
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment/ control volume.
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
      *
-     * This is the method for the case where the Neumann condition is
-     * potentially solution dependent
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elemFluxVarsCache Flux variables caches for all faces in stencil
-     * \param scvf The sub control volume face
-     *
-     * Negative values mean influx.
-     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeometry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param elemFaceVars The element face variables
+     * \param scvf The boundary sub control volume face
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     BoundaryFluxes neumann(const Element& element,
@@ -195,18 +166,18 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            else if (onInlet_(globalPos))
+            else if (onLeftBoundary_(globalPos))
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, inletPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_ + pressureDifference_, true /*zeroNormalVelocityGradient*/
                 );
             }
-            else if (onOutlet_(globalPos))
+            else if (onRightBoundary_(globalPos))
             {
                 values = FluxHelper::fixedPressureMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars,
-                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
+                    elemFluxVarsCache, initialPressure_, true /*zeroNormalVelocityGradient*/
                 );
             }
         }
@@ -214,15 +185,19 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
             {
-                values[Indices::conti0EqIdx] = couplingManager_->massCouplingCondition(
+                const auto& massCouplingCondition = couplingManager_->massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
-                    fvGeometry, scvf, elemVolVars);
+                    fvGeometry, scvf, elemVolVars
+                );
+                values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
+                values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
+
 #if !ISOTHERMAL
                 values[Indices::energyEqIdx] = couplingManager_->energyCouplingCondition(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars);
 #endif
             }
-            else if (onOutlet_(globalPos))
+            else if (!onlyDiffusion_ && onRightBoundary_(globalPos))
             {
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 DirichletValues outsideBoundaryPriVars = initialAtPos(globalPos);
@@ -246,6 +221,7 @@ public:
                        const SubControlVolume& scv) const
     {
         auto source = Sources(0.0);
+
         return source;
     }
 
@@ -257,10 +233,12 @@ public:
         if constexpr (!ParentType::isMomentumProblem())
         {
             values[Indices::pressureIdx] = initialPressure_;
+            values[Indices::conti0EqIdx +1] = initialMoleFraction_;
 #if !ISOTHERMAL
             values[Indices::temperatureIdx] = initialTemperature_;
 #endif
         }
+
         return values;
     }
 
@@ -279,7 +257,7 @@ public:
     Scalar betaBJ(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf, const GlobalPosition& tangentialVector) const
     {
         const Scalar radius = couplingManager_->coupledPoreInscribedRadius(fvGeometry, scvf);
-        return 5.73 / radius; // this value is only an approximation of wall friction is considered
+        return 5.73 / radius; // this value only an approximation of wall friction is considered
     }
 
     /*!
@@ -294,22 +272,6 @@ public:
 
 private:
 
-    bool onInlet_(const GlobalPosition &globalPos) const
-    {
-        if (verticalFlow_)
-            return 0;
-        else
-            return onLeftBoundary_(globalPos);
-    }
-
-    bool onOutlet_(const GlobalPosition &globalPos) const
-    {
-        if (verticalFlow_)
-            return onUpperBoundary_(globalPos);
-        else
-            return onRightBoundary_(globalPos);
-    }
-
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
 
@@ -321,16 +283,14 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
+    Scalar deltaP_;
     Scalar initialPressure_;
-    Scalar inletPressure_;
-    Scalar outletPressure_;
-    bool verticalFlow_;
+    Scalar pressureDifference_;
+    Scalar initialMoleFraction_;
+    bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
-    Scalar inletTemperature_;
-    Scalar outletTemperature_;
 #endif
-
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } // end namespace Dumux

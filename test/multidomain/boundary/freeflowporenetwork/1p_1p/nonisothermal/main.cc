@@ -22,7 +22,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/vtk/intersectionwriter.hh>
@@ -30,13 +29,12 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/multidomain/boundary/freeflowporenetwork/snappygridmanager.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include "properties.hh"
+#include "../properties.hh"
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
@@ -84,8 +82,6 @@ int main(int argc, char** argv)
     using FreeFlowGridManager = Dumux::PoreNetwork::SnappyGridManager<2, PNMGridManager>;
     FreeFlowGridManager freeflowGridManager;
     freeflowGridManager.init(pnmGridManager.grid(), *(pnmGridManager.getGridData()), "FreeFlow");
-    const auto data = freeflowGridManager.getGridConstructionData();
-    const auto auxiliaryPositions = data.interfacePositions[0/*dimIdx*/].value();
 
     // create the free flow grid geometries
     using FreeFlowMomentumGridGeometry = GetPropType<FreeFlowMomentumTypeTag, Properties::GridGeometry>;
@@ -109,9 +105,9 @@ int main(int argc, char** argv)
     auto freeFlowMassProblem = std::make_shared<FreeFlowMassProblem>(freeFlowMassGridGeometry, couplingManager);
 
     using PoreNetworkSpatialParams = GetPropType<PoreNetworkTypeTag, Properties::SpatialParams>;
-    auto lowDimspatialParams = std::make_shared<PoreNetworkSpatialParams>(pnmGridGeometry);
+    auto pnmSpatialParams = std::make_shared<PoreNetworkSpatialParams>(pnmGridGeometry);
     using PNMProblem = GetPropType<PoreNetworkTypeTag, Properties::Problem>;
-    auto pnmProblem = std::make_shared<PNMProblem>(pnmGridGeometry, lowDimspatialParams, couplingManager);
+    auto pnmProblem = std::make_shared<PNMProblem>(pnmGridGeometry, pnmSpatialParams, couplingManager);
 
     // the indices
     constexpr auto freeFlowMomentumIndex = CouplingManager::freeFlowMomentumIndex;
@@ -124,6 +120,10 @@ int main(int argc, char** argv)
     sol[freeFlowMomentumIndex].resize(freeFlowMomentumGridGeometry->numDofs());
     sol[freeFlowMassIndex].resize(freeFlowMassGridGeometry->numDofs());
     sol[poreNetworkIndex].resize(pnmGridGeometry->numDofs());
+    freeFlowMassProblem->applyInitialSolution(sol[freeFlowMassIndex]);
+    freeFlowMomentumProblem->applyInitialSolution(sol[freeFlowMomentumIndex]);
+    pnmProblem->applyInitialSolution(sol[poreNetworkIndex]);
+    auto solOld = sol;
 
     // the grid variables
     using FreeFlowMomentumGridVariables = GetPropType<FreeFlowMomentumTypeTag, Properties::GridVariables>;
@@ -136,20 +136,20 @@ int main(int argc, char** argv)
 
     couplingManager->init(freeFlowMomentumProblem, freeFlowMassProblem, pnmProblem,
                           std::make_tuple(freeFlowMomentumGridVariables, freeFlowMassGridVariables, pnmGridVariables),
-                          sol);
+                          sol, solOld);
 
     freeFlowMomentumGridVariables->init(sol[freeFlowMomentumIndex]);
     freeFlowMassGridVariables->init(sol[freeFlowMassIndex]);
     pnmGridVariables->init(sol[poreNetworkIndex]);
 
-    // initialize the vtk output module
-    VtkOutputModule vtkWriterFF(*freeFlowMassGridVariables, sol[freeFlowMassIndex], freeFlowMassProblem->name());
-    GetPropType<FreeFlowMassTypeTag, Properties::IOFields>::initOutputModule(vtkWriterFF); // Add model specific output fields
-    vtkWriterFF.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<FreeFlowMassGridVariables>>());
-
-    using PoreNetworkOutputModule = PoreNetwork::VtkOutputModule<PoreNetworkgridVariables, GetPropType<PoreNetworkTypeTag, Properties::FluxVariables>, std::decay_t<decltype(sol[poreNetworkIndex])>>;
-    PoreNetworkOutputModule pmVtkWriter(*pnmGridVariables, sol[poreNetworkIndex], pnmProblem->name());
-    GetPropType<PoreNetworkTypeTag, Properties::IOFields>::initOutputModule(pmVtkWriter);
+    // We get some time loop parameters from the input file
+    // and instantiate the time loop
+    using Scalar = typename Traits::Scalar;
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler for a stationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -160,26 +160,55 @@ int main(int argc, char** argv)
                                                  std::make_tuple(freeFlowMomentumGridVariables,
                                                                  freeFlowMassGridVariables,
                                                                  pnmGridVariables),
-                                                 couplingManager);
+                                                 couplingManager, timeLoop, solOld);
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // write vtk output
-    vtkWriterFF.write(0.0);
-    pmVtkWriter.write(0.0);
-
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // solve the non-linear system
-    nonLinearSolver.solve(sol);
+    // initialize the vtk output module
+    VtkOutputModule vtkWriterFFMass(*freeFlowMassGridVariables, sol[freeFlowMassIndex], freeFlowMassProblem->name());
+    GetPropType<FreeFlowMassTypeTag, Properties::IOFields>::initOutputModule(vtkWriterFFMass);
+    vtkWriterFFMass.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<FreeFlowMassGridVariables>>());
+
+    using PoreNetworkOutputModule = PoreNetwork::VtkOutputModule<PoreNetworkgridVariables, GetPropType<PoreNetworkTypeTag, Properties::FluxVariables>, std::decay_t<decltype(sol[poreNetworkIndex])>>;
+    PoreNetworkOutputModule pmVtkWriter(*pnmGridVariables, sol[poreNetworkIndex], pnmProblem->name());
+    GetPropType<PoreNetworkTypeTag, Properties::IOFields>::initOutputModule(pmVtkWriter);
 
     // write vtk output
-    vtkWriterFF.write(1.0);
-    pmVtkWriter.write(1.0);
+    vtkWriterFFMass.write(0.0);
+    pmVtkWriter.write(0.0);
+
+    // timeloop
+    timeLoop->start(); do
+    {
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(sol, *timeLoop);
+
+        // make the new solution the old solution.
+        solOld = sol;
+        freeFlowMassGridVariables->advanceTimeStep();
+        freeFlowMomentumGridVariables->advanceTimeStep();
+        pnmGridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step.
+        timeLoop->advanceTimeStep();
+
+        // write vtk output for each time step.
+        vtkWriterFFMass.write(timeLoop->time());
+        pmVtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step.
+        timeLoop->reportTimeStep();
+
+        // set a new dt as suggested by the newton solver for the next time step.
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
 
     std::vector<Dune::FieldVector<double, 2>> faceVelocity(sol[freeFlowMomentumIndex].size());
     updateVelocities(faceVelocity, *freeFlowMomentumGridGeometry, *freeFlowMomentumGridVariables, sol[freeFlowMomentumIndex]);
@@ -187,42 +216,6 @@ int main(int argc, char** argv)
     ConformingIntersectionWriter faceVtk(freeFlowMomentumGridGeometry->gridView());
     faceVtk.addField(faceVelocity, "velocityVector");
     faceVtk.write("face_velocities");
-
-    const auto pnmBoundaryFlux = Dumux::PoreNetwork::BoundaryFlux(*pnmGridVariables, assembler->localResidual(poreNetworkIndex), sol[poreNetworkIndex]);
-    auto fluxOverSurface = FluxOverAxisAlignedSurface(*freeFlowMassGridVariables, sol[freeFlowMassIndex], assembler->localResidual(freeFlowMassIndex));
-    using GlobalPosition = typename FreeFlowMassGridGeometry::SubControlVolume::GlobalPosition;
-
-    if (getParam<bool>("Problem.SingleThroatTest", true))
-    {
-        const auto lowerLeft = GlobalPosition{freeFlowMassGridGeometry->bBoxMin()[0], freeFlowMassGridGeometry->bBoxMax()[1]};
-        const auto upperRight = freeFlowMassGridGeometry->bBoxMax();
-        fluxOverSurface.addAxisAlignedSurface("outlet", lowerLeft, upperRight);
-        fluxOverSurface.calculateAllFluxes();
-
-        std::cout << "PNM boundary flux at bottom pore is " << pnmBoundaryFlux.getFlux("min", 1, false) << std::endl;
-        std::cout << "PNM boundary flux at top pore is " << pnmBoundaryFlux.getFlux("max", 1, false) << std::endl;
-        std::cout << "FreeFlow outflow " << fluxOverSurface.flux("outlet") << std::endl;
-    }
-    else
-    {
-        int c = 0;
-        for (int i = 0; i < auxiliaryPositions.size() - 1; i += 2)
-        {
-            const auto lowerLeft = GlobalPosition{auxiliaryPositions[i], pnmGridGeometry->bBoxMax()[1]};
-            const auto upperRight = GlobalPosition{auxiliaryPositions[i+1], pnmGridGeometry->bBoxMax()[1]};
-            fluxOverSurface.addAxisAlignedSurface("couplingPore_" + std::to_string(c++), lowerLeft, upperRight);
-        }
-
-        fluxOverSurface.addAxisAlignedPlane("afterFirstPore", 0.25*(pnmGridGeometry->bBoxMin() + pnmGridGeometry->bBoxMax()), 0/*normalAxis*/);
-        fluxOverSurface.addAxisAlignedPlane("center", 0.5*(pnmGridGeometry->bBoxMin() + pnmGridGeometry->bBoxMax()), 0/*normalAxis*/);
-        fluxOverSurface.addAxisAlignedPlane("outlet", freeFlowMassGridGeometry->bBoxMax(), 0/*normalAxis*/);
-
-        fluxOverSurface.calculateAllFluxes();
-
-        std::cout << "PNM boundary flux at top pores is " << pnmBoundaryFlux.getFlux("max", 1, false) << std::endl;
-
-        fluxOverSurface.printAllFluxes();
-    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

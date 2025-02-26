@@ -1,0 +1,63 @@
+[TimeLoop]
+TEnd = 1e2
+DtInitial = 1e1
+MaxTimeStepSize = 1e1
+
+[PNM.Grid]
+NumPores = 2
+LowerLeft = 2.5e-3 0
+UpperRight = 2.5e-3 2e-3
+PoreInscribedRadius = 1e-4
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
+
+[FreeFlow.Grid]
+LowerLeft = 0 2e-3
+UpperRight = 5e-3 4e-3
+UpstreamCells0 = 10
+CellsPerPore = 5
+DownstreamCells0 = 10
+Cells1 = 20
+
+[Problem]
+EnableGravity = false
+VerticalFlow = false
+
+[FreeFlow.Problem]
+Name = ff
+InitialPressure = 1e5 # [Pa]
+InletPressure = 1e5
+OutletPressure = 1e5
+InitialTemperature = 328.15 # [K]
+InletTemperature = 308.15
+OutletTemperature = 328.15
+EnableInertiaTerms = false
+VerticalFlow = true
+
+[PNM.Problem]
+Name = pnm
+InitialTemperature = 298.15 # [K]
+InletTemperature = 298.15
+InitialPressure = 1.1e5 # [Pa]
+InletPressure = 1.1e5
+VerticalFlow = true
+
+[Vtk]
+OutputName = test_conduction
+AddVelocity = true
+
+[Component] #water
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+LiquidHeatCapacity = 4184.0 # [J/(kg K)]
+LiquidThermalConductivity = 0.68
+
+[Component] #solid (for compatibility)
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4

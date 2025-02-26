@@ -1,17 +1,17 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
  * \file
  * \ingroup BoundaryTests
- * \brief Pore-network sub-problem for the coupled 1p_1p free-flow/pore-network-model test
+ * \brief Pore-network sub-problem for the coupled 1p2c_1p2c free-flow/pore-network-model test
  */
 
-#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_PNM_HH
-#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_PROBLEM_PNM_HH
+#ifndef DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_PNM_HH
+#define DUMUX_TEST_MULTIDOMAIN_BOUNDARY_FREEFLOW_PORE_NETWORK_ONEPTWOC_PROBLEM_PNM_HH
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
@@ -27,7 +27,7 @@ namespace Dumux {
  *         A two-dimensional pore-network region coupled to a free-flow model.
  */
 template <class TypeTag>
-class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
+class PNMOnePNCProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -36,28 +36,24 @@ class PNMOnePProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     template<class SpatialParams>
-    PNMOnePProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+    PNMOnePNCProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<SpatialParams> spatialParams,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
-        verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", true);
-
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
-        inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
-
+        initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
+        onlyDiffusion_ = getParam<bool>("Problem.OnlyDiffusion", false);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
-        inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature", 273.15 + 20);
 #endif
     }
 
@@ -93,13 +89,17 @@ public:
         BoundaryTypes bcTypes;
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
             bcTypes.setAllCouplingNeumann();
-        else
+        else if (onLowerBoundary_(scv))
         {
-            if(onInlet_(scv))
-                bcTypes.setAllDirichlet(); //pressure (and Temperature) fixed for inflow from bottom
+            if (!onlyDiffusion_ )
+                bcTypes.setAllDirichlet();
             else
                 bcTypes.setAllNeumann();
+#if !ISOTHERMAL
+            bcTypes.setDirichlet(Indices::temperatureIdx);
+#endif
         }
+
         return bcTypes;
     }
 
@@ -110,15 +110,7 @@ public:
     PrimaryVariables dirichlet(const Element& element,
                                const SubControlVolume& scv) const
     {
-        PrimaryVariables priVars = initialAtPos(scv.dofPosition());
-        if(onInlet_(scv))
-        {
-            priVars[Indices::pressureIdx] = inletPressure_;
-#if !ISOTHERMAL
-            priVars[Indices::temperatureIdx] = inletTemperature_;
-#endif
-        }
-        return priVars;
+        return initialAtPos(scv.dofPosition());
     }
 
     // \}
@@ -156,11 +148,12 @@ public:
 
         if (couplingManager().isCoupled(CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex, scv))
         {
-            values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
-                CouplingManager::poreNetworkIndex,
-                CouplingManager::freeFlowMassIndex, fvGeometry,
-                scv,
-                elemVolVars);
+            const auto& massCouplingCondition = couplingManager().massCouplingCondition(
+                CouplingManager::poreNetworkIndex, CouplingManager::freeFlowMassIndex,
+                fvGeometry, scv, elemVolVars
+            );
+            values[Indices::conti0EqIdx] = massCouplingCondition[Indices::conti0EqIdx];
+            values[Indices::conti0EqIdx + 1] = massCouplingCondition[Indices::conti0EqIdx + 1];
 #if !ISOTHERMAL
             values[Indices::energyEqIdx] = couplingManager().energyCouplingCondition(
                 CouplingManager::poreNetworkIndex,
@@ -184,13 +177,13 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = initialPressure_;
+        values[Indices::conti0EqIdx + 1] = initialMoleFraction_;
+
 #if !ISOTHERMAL
         values[Indices::temperatureIdx] = initialTemperature_;
 #endif
         return values;
     }
-
-    // \}
 
     //! Set the coupling manager
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
@@ -201,44 +194,16 @@ public:
     { return *couplingManager_; }
 
 private:
-    bool onInlet_(const SubControlVolume& scv) const
-    {
-        if (verticalFlow_)
-            return onLowerBoundary_(scv);
-        else
-            return onLeftBoundary_(scv);
-    }
-
-    bool onOutlet_(const SubControlVolume& scv) const
-    {
-        if (verticalFlow_)
-            return 0;
-        else
-            return onRightBoundary_(scv);
-    }
-
-    bool onLeftBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 0; }
-
-    bool onRightBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 1; }
-
     bool onLowerBoundary_(const SubControlVolume& scv) const
     { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; }
 
-    bool onUpperBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 3; }
-
-
-    std::shared_ptr<CouplingManager> couplingManager_;
     Scalar initialPressure_;
-    Scalar inletPressure_;
-    bool verticalFlow_;
+    Scalar initialMoleFraction_;
+    bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;
-    Scalar inletTemperature_;
 #endif
-
+    std::shared_ptr<CouplingManager> couplingManager_;
 };
 
 } // end namespace Dumux

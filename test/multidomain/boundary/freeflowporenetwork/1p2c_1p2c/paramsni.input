@@ -1,0 +1,51 @@
+[TimeLoop]
+TEnd = 10
+DtInitial = 1e-2
+MaxTimeStepSize = 1
+
+[PNM.Grid]
+NumPores = 2
+LowerLeft = 2.5e-3 0
+UpperRight = 2.5e-3 2e-3
+PoreInscribedRadius = 1e-4
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3
+PriorityList = 2 3 0 1
+
+[FreeFlow.Grid]
+LowerLeft = 0 2e-3
+UpperRight = 5e-3 4e-3
+UpstreamCells0 = 10
+CellsPerPore = 3
+DownstreamCells0 = 10
+Cells1 = 20
+
+[Problem]
+EnableGravity = false
+
+[FreeFlow.Problem]
+Name = ff
+InitialPressure = 1e5
+PressureDifference = 10
+InitialMoleFraction = 0.0
+InitialTemperature = 298.15 # [K]
+EnableInertiaTerms = false
+
+[PNM.Problem]
+Name = pnm
+InitialPressure = 1.01e5 # [Pa]
+InitialTemperature = 328.15 # [K]
+InitialMoleFraction = 2e-3
+
+[Vtk]
+OutputName = test_nonisothermal
+AddVelocity = true
+
+[Component] #solid (for compatibility)
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
