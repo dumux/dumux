@@ -166,7 +166,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Nonlinear
- * \brief An implementation of a Newton solver
+ * \brief An implementation of a Newton solver.
  * \tparam Assembler the assembler
  * \tparam LinearSolver the linear solver
  * \tparam Comm the communication object used to communicate with all processes
