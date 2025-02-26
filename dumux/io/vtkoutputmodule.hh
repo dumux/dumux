@@ -143,9 +143,9 @@ public:
 
         // add the appropriate field
         if (fieldType == Vtk::FieldType::element)
-            fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.elementMapper(), v, name, nComp, 0, dm_, precision);
+            addField(Field(gridGeometry_.gridView(), gridGeometry_.elementMapper(), v, name, nComp, 0, dm_, precision));
         else
-            fields_.emplace_back(gridGeometry_.gridView(), gridGeometry_.vertexMapper(), v, name, nComp, dim, dm_, precision);
+            addField(Field(gridGeometry_.gridView(), gridGeometry_.vertexMapper(), v, name, nComp, dim, dm_, precision));
     }
 
     /*!
@@ -154,6 +154,23 @@ public:
      */
     void addField(Field&& field)
     {
+        // data arrays in the vtk output have to be unique within cell and point data
+        // look if we have a field by the same name with the same codim, if so, replace it
+        for (auto i = 0UL; i < fields_.size(); ++i)
+        {
+            if (fields_[i].name() == field.name() && fields_[i].codim() == field.codim())
+            {
+                fields_[i] = std::move(field);
+                std::cout << Fmt::format(
+                    "VtkOutputModule: Replaced field \"{}\" (codim {}). "
+                    "A field by the same name & codim had already been registered previously.\n",
+                    field.name(), field.codim()
+                );
+                return;
+            }
+        }
+
+        // otherwise add it to the end of the fields
         fields_.push_back(std::move(field));
     }
 
@@ -193,6 +210,29 @@ protected:
 
     const std::vector<Field>& fields() const { return fields_; }
 
+    void addCellData(const Field& field)
+    {
+        if (std::ranges::find(addedCellData_, field.name()) == addedCellData_.end())
+        {
+            this->sequenceWriter().addCellData(field.get());
+            addedCellData_.push_back(field.name());
+        }
+    }
+
+    void addVertexData(const Field& field)
+    {
+        if (std::ranges::find(addedVertexData_, field.name()) == addedVertexData_.end())
+        {
+            this->sequenceWriter().addVertexData(field.get());
+            addedVertexData_.push_back(field.name());
+        }
+    }
+
+    // keep track of what has been already added because Dune::VTK::Writer
+    // potentially adds the same field twice which is not allowed in VTK/Paraview
+    std::vector<std::string> addedCellData_;
+    std::vector<std::string> addedVertexData_;
+
 private:
     //! Assembles the fields and adds them to the writer (conforming output)
     virtual void writeConforming_(double time, Dune::VTK::OutputType type)
@@ -227,15 +267,15 @@ private:
 
             // the process rank
             if (addProcessRank_)
-                this->sequenceWriter().addCellData(Field(gridGeometry_.gridView(), gridGeometry_.elementMapper(), rank, "process rank", 1, 0).get());
+                this->addCellData(Field(gridGeometry_.gridView(), gridGeometry_.elementMapper(), rank, "process rank", 1, 0));
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
             {
                 if (field.codim() == 0)
-                    this->sequenceWriter().addCellData(field.get());
+                    this->addCellData(field);
                 else if (field.codim() == dim)
-                    this->sequenceWriter().addVertexData(field.get());
+                    this->addVertexData(field);
                 else
                     DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
             }
@@ -250,6 +290,9 @@ private:
         //! (3) Clear the writer
         //////////////////////////////////////////////////////////////
         this->writer().clear();
+
+        this->addedCellData_.clear();
+        this->addedVertexData_.clear();
     }
 
     //! Assembles the fields and adds them to the writer (nonconforming output)
@@ -364,6 +407,23 @@ public:
     void addVolumeVariable(std::function<Scalar(const VolumeVariables&)>&& f,
                                                 const std::string& name)
     {
+        // data arrays in the vtk output have to be unique within cell and point data
+        // look if we have a field by the same name with the same codim, if so, replace it
+        for (auto i = 0UL; i < volVarScalarDataInfo_.size(); ++i)
+        {
+            if (volVarScalarDataInfo_[i].name == name)
+            {
+                volVarScalarDataInfo_[i] = VolVarScalarDataInfo{f, name, this->precision()};
+                std::cout << Fmt::format(
+                    "VtkOutputModule: Replaced volume variable output \"{}\". "
+                    "A field by the same name had already been registered previously.\n",
+                    name
+                );
+                return;
+            }
+        }
+
+        // otherwise add it to the end of the fields
         volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name, this->precision()});
     }
 
@@ -375,6 +435,23 @@ public:
     void addVolumeVariable(std::function<VolVarsVector(const VolumeVariables&)>&& f,
                                                        const std::string& name)
     {
+        // data arrays in the vtk output have to be unique within cell and point data
+        // look if we have a field by the same name with the same codim, if so, replace it
+        for (auto i = 0UL; i < volVarVectorDataInfo_.size(); ++i)
+        {
+            if (volVarVectorDataInfo_[i].name == name)
+            {
+                volVarVectorDataInfo_[i] = VolVarVectorDataInfo{f, name, this->precision()};
+                std::cout << Fmt::format(
+                    "VtkOutputModule: Replaced volume variable output \"{}\". "
+                    "A field by the same name had already been registered previously.\n",
+                    name
+                );
+                return;
+            }
+        }
+
+        // otherwise add it to the end of the fields
         volVarVectorDataInfo_.push_back(VolVarVectorDataInfo{f, name, this->precision()});
     }
 
@@ -506,31 +583,31 @@ private:
             if constexpr (isBox || isPQ1Bubble)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
-                                                         volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm, this->precision()).get() );
+                    this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
+                                          volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, dm, this->precision()) );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
-                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()).get() );
+                    this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
+                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()) );
 
                 if constexpr (isPQ1Bubble)
                 {
                     for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
-                                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()).get() );
+                        this->addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
+                                            volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()) );
                     for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
-                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()).get() );
+                        this->addCellData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarVectorData[i],
+                                            volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()) );
                 }
 
             }
             else
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
-                                                       volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()).get() );
+                    this->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarScalarData[i],
+                                        volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0,dm, this->precision()) );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
-                                                       volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()).get() );
+                    this->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), volVarVectorData[i],
+                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0,dm, this->precision()) );
             }
 
             // the velocity field
@@ -540,31 +617,31 @@ private:
                     || ( (velocityOutput_->fieldType() == VelocityOutput::FieldType::automatic) && dim > 1 && isBox ))
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                             /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()).get() );
+                        this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
+                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
+                                              /*numComp*/dimWorld, /*codim*/dim, dm, this->precision()) );
                 }
                 // cell-centered models
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                                           /*numComp*/dimWorld, /*codim*/0, dm, this->precision()).get() );
+                        this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
+                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
+                                              /*numComp*/dimWorld, /*codim*/0, dm, this->precision()) );
                 }
             }
 
             // the process rank
             if (addProcessRank_)
-                this->sequenceWriter().addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0).get());
+                this->addCellData(Field(gridGeometry().gridView(), gridGeometry().elementMapper(), rank, "process rank", 1, 0));
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : this->fields())
             {
                 if (field.codim() == 0)
-                    this->sequenceWriter().addCellData(field.get());
+                    this->addCellData(field);
                 else if (field.codim() == dim)
-                    this->sequenceWriter().addVertexData(field.get());
+                    this->addVertexData(field);
                 else
                     DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
             }
@@ -579,6 +656,9 @@ private:
         //! (3) Clear the writer
         //////////////////////////////////////////////////////////////
         this->writer().clear();
+
+        this->addedCellData_.clear();
+        this->addedVertexData_.clear();
     }
 
     //! Assembles the fields and adds them to the writer (nonconforming output)
@@ -706,18 +786,18 @@ private:
             // volume variables if any
             static constexpr int dofLocCodim = isDiamond ? 1 : dim;
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                this->sequenceWriter().addVertexData(Field(
+                this->addVertexData(Field(
                     gridGeometry().gridView(), gridGeometry().elementMapper(),
                     volVarScalarData[i], volVarScalarDataInfo_[i].name,
                     /*numComp*/1, /*codim*/dofLocCodim, /*nonconforming*/dm, this->precision()
-                ).get());
+                ));
 
             for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                this->sequenceWriter().addVertexData(Field(
+                this->addVertexData(Field(
                     gridGeometry().gridView(), gridGeometry().elementMapper(),
                     volVarVectorData[i], volVarVectorDataInfo_[i].name,
                     /*numComp*/dimWorld, /*codim*/dofLocCodim, /*nonconforming*/dm, this->precision()
-                ).get());
+                ));
 
             // the velocity field
             if (velocityOutput_->enableOutput())
@@ -725,37 +805,37 @@ private:
                 // node-wise velocities
                 if (dim > 1 && !isDiamond)
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addVertexData(Field(
+                        this->addVertexData(Field(
                             gridGeometry().gridView(), gridGeometry().vertexMapper(), velocity[phaseIdx],
                             "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                             /*numComp*/dimWorld, /*codim*/dofLocCodim, dm, this->precision()
-                        ).get());
+                        ));
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->sequenceWriter().addCellData(Field(
+                        this->addCellData(Field(
                             gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
                             "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
                             /*numComp*/dimWorld, /*codim*/0, dm, this->precision()
-                        ).get());
+                        ));
             }
         }
 
         // the process rank
         if (addProcessRank_)
-            this->sequenceWriter().addCellData(Field(
+            this->addCellData(Field(
                 gridGeometry().gridView(), gridGeometry().elementMapper(),
                 rank, "process rank", /*numComp*/1, /*codim*/0
-            ).get());
+            ));
 
         // also register additional (non-standardized) user fields if any
         for (const auto& field : this->fields())
         {
             if (field.codim() == 0)
-                this->sequenceWriter().addCellData(field.get());
+                this->addCellData(field);
             else if (field.codim() == dim || field.codim() == 1)
-                this->sequenceWriter().addVertexData(field.get());
+                this->addVertexData(field);
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
         }
@@ -769,6 +849,9 @@ private:
         //! (3) Clear the writer
         //////////////////////////////////////////////////////////////
         this->writer().clear();
+
+        this->addedCellData_.clear();
+        this->addedVertexData_.clear();
     }
 
     //! return the number of dofs, we only support vertex and cell data
