@@ -235,12 +235,12 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary.
      */
-    auto massCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI, Dune::index_constant<freeFlowMassIndex> domainJ,
+    auto massCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI,
+                               Dune::index_constant<freeFlowMassIndex> domainJ,
                                const FVElementGeometry<poreNetworkIndex>& fvGeometry,
                                const typename FVElementGeometry<poreNetworkIndex>::SubControlVolume& scv,
                                const ElementVolumeVariables<poreNetworkIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scv);
         });
@@ -261,18 +261,61 @@ public:
     /*!
      * \brief Returns the mass flux across the coupling boundary.
      */
-    auto massCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI, Dune::index_constant<poreNetworkIndex> domainJ,
+    auto massCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI,
+                               Dune::index_constant<poreNetworkIndex> domainJ,
                                const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
                                const typename FVElementGeometry<freeFlowMassIndex>::SubControlVolumeFace& scvf,
                                const ElementVolumeVariables<freeFlowMassIndex>& elemVolVars) const
     {
-
         const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
             return cm.couplingContext(ii, fvGeometry, scvf);
         });
 
         couplingContext.velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(fvGeometry.element(), scvf);
         return CouplingConditions::massCouplingCondition(domainI, domainJ, fvGeometry, scvf, elemVolVars, couplingContext);
+    }
+
+    /*!
+     * \brief Returns the energy flux across the coupling boundary.
+     */
+    auto energyCouplingCondition(Dune::index_constant<poreNetworkIndex> domainI,
+                                 Dune::index_constant<freeFlowMassIndex> domainJ,
+                                 const FVElementGeometry<poreNetworkIndex>& fvGeometry,
+                                 const typename FVElementGeometry<poreNetworkIndex>::SubControlVolume& scv,
+                                 const ElementVolumeVariables<poreNetworkIndex>& elemVolVars) const
+    {
+        const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+            return cm.couplingContext(ii, fvGeometry, scv);
+        });
+
+        const auto& freeFlowMassGridGeometry = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+            return cm.problem(jj).gridGeometry();
+        });
+
+        for (auto& c : couplingContext)
+        {
+            const auto& freeFlowElement = freeFlowMassGridGeometry.element(c.scv.elementIndex());
+            c.velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(freeFlowElement, c.scvf);
+        }
+
+        return CouplingConditions::energyCouplingCondition(domainI, domainJ, fvGeometry, scv, elemVolVars, couplingContext);
+    }
+
+    /*!
+     * \brief Returns the energy flux across the coupling boundary.
+     */
+    auto energyCouplingCondition(Dune::index_constant<freeFlowMassIndex> domainI,
+                                 Dune::index_constant<poreNetworkIndex> domainJ,
+                                 const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
+                                 const typename FVElementGeometry<freeFlowMassIndex>::SubControlVolumeFace& scvf,
+                                 const ElementVolumeVariables<freeFlowMassIndex>& elemVolVars) const
+    {
+        const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) -> const auto& {
+            return cm.couplingContext(ii, fvGeometry, scvf);
+        });
+
+        couplingContext.velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).faceVelocity(fvGeometry.element(), scvf);
+        return CouplingConditions::energyCouplingCondition(domainI, domainJ, fvGeometry, scvf, elemVolVars, couplingContext);
     }
 
     //////////////////////// Conditions for FreeFlowMomentum - PoreNetwork coupling //////////
@@ -443,19 +486,6 @@ public:
             return cm.isCoupled(ii, scv);
         });
     }
-
-    // /*!
-    //  * \brief Returns whether a given scvf is coupled to the other domain
-    //  */
-    // bool isCoupledLateralScvf(Dune::index_constant<freeFlowMomentumIndex> domainI,
-    //                           Dune::index_constant<poreNetworkIndex> domainJ,
-    //                           const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
-    // {
-    //     return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
-    //         return cm.isCoupledLateralScvf(ii, scvf);
-    //     });
-    // }
-
 
     using ParentType::couplingStencil;
     /*!
