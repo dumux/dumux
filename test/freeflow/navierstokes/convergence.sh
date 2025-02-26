@@ -1,5 +1,5 @@
 #! /bin/bash
-# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # usage: build the executable in the build directory, copy the file to the folder with the executable, an example command to run the script is ./convergence.sh test_ff_stokes_donea ./params.input 2 4

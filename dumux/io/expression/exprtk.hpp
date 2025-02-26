@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightInfo: Copyright (c) 1999-2024 Arash Partow
+// SPDX-FileCopyrightText: Copyright (c) 1999-2024 Arash Partow
 // SPDX-License-Identifier: MIT
 //
 // The following code is a copy of the original code version that can be

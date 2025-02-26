@@ -1,7 +1,7 @@
 <!--
-SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 SPDX-License-Identifier: CC-BY-4.0
-SPDX-FileCopyrightInfo: Copyright © 2014 Coraline Ada Ehmke
+SPDX-FileCopyrightText: Copyright © 2014 Coraline Ada Ehmke
 SPDX-License-Identifier: CC-BY-4.0
 Contributor Covenant is licensed under CC-BY-4.0. All Changes are licensed under CC-BY-4.0.
 -->
