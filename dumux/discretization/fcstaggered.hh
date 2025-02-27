@@ -94,10 +94,6 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to FaceCenteredLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::FaceCenteredStaggeredModel> { using type = FaceCenteredLocalResidual<TypeTag>; };
-
 //! Set the default for the ElementBoundaryTypes
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::FaceCenteredStaggeredModel>

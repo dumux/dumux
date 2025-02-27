@@ -39,10 +39,6 @@ namespace TTag {
 struct CCMpfaFacetCouplingModel { using InheritsFrom = std::tuple<CCMpfaModel>; };
 } // end namespace TTag
 
-//! Use the cc local residual for models with facet coupling
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::CCMpfaFacetCouplingModel> { using type = CCFacetCouplingLocalResidual<TypeTag>; };
-
 //! Use the facet coupling-specific mpfa-o interaction volume
 template<class TypeTag>
 struct PrimaryInteractionVolume<TypeTag, TTag::CCMpfaFacetCouplingModel>

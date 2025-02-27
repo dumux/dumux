@@ -110,11 +110,6 @@ public:
     using type = CVFEElementBoundaryTypes<BoundaryTypes>;
 };
 
-//! Set the BaseLocalResidual to CVFELocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::PQ1BubbleModel>
-{ using type = CVFELocalResidual<TypeTag>; };
-
 } // namespace Dumux::Properties
 
 namespace Dumux::Detail {
