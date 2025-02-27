@@ -34,6 +34,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 // [[/details]]
 //
 // ## 1. Property Tag
@@ -129,18 +130,19 @@ private:
 //
 // [[content]]
 //
-// The class `CahnHilliardModelLocalResidual` inherits from a base class set in
-// the model properties, depending on the discretization scheme.
+// The class `CahnHilliardModelLocalResidual` inherits from a base class
+// which is determined depending on the discretization scheme.
 // See [examples/diffusion/doc/model.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/doc/main.md)
-// for details on the `BaseLocalResidual`.
+// for details.
 namespace Dumux {
 template<class TypeTag>
 class CahnHilliardModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
     // [[exclude]]
-    // the base local residual is selected depending on the chosen discretization scheme
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    // the base local operator is selected depending on the chosen discretization scheme
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
+
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;

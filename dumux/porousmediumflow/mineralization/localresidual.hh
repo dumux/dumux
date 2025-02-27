@@ -25,7 +25,7 @@ namespace Dumux
  *        using a one/two-phase n-component mineralization model.
  */
 template<class TypeTag>
-class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
+class MineralizationLocalResidual : public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
