@@ -17,6 +17,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/balanceequationopts.hh>
 #include <dumux/io/defaultiofields.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 // Forward declaration
 namespace Dune { class ParameterTree; }
@@ -45,6 +46,26 @@ struct IOFields<TypeTag, TTag::ModelProperties> { using type = DefaultIOFields; 
 //! Set the default class for the balance equation options
 template<class TypeTag>
 struct BalanceEqOpts<TypeTag, TTag::ModelProperties> { using type = BalanceEquationOptions<TypeTag>; };
+
+template<class TypeTag>
+class DeprecatedBaseLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
+{
+    struct [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10.")]] PropertyBaseLocalResidual {};
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
+public:
+    using ParentType::ParentType;
+private:
+    PropertyBaseLocalResidual deprecated_ = {};
+};
+
+//! Deprecation helper for BaseLocalResidual
+template<class TypeTag>
+struct [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10.")]]
+BaseLocalResidual<TypeTag, TTag::ModelProperties>
+{
+    using type [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10.")]]
+        = DeprecatedBaseLocalResidual<TypeTag>;
+};
 
 } // namespace Properties
 } // namespace Dumux

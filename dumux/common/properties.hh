@@ -37,12 +37,11 @@ DUMUX_DEFINE_PROPERTY(Problem)                //!< Property to specify the type 
 DUMUX_DEFINE_PROPERTY(PointSource)            //!< Property defining the type of point source used
 DUMUX_DEFINE_PROPERTY(PointSourceHelper)      //!< Property defining the class that computes which sub control volume point sources belong to
 DUMUX_DEFINE_PROPERTY(IOFields)               //!< A class helping models to define input and output fields
-DUMUX_DEFINE_PROPERTY(BaseLocalResidual)      //!< The type of the base class of the local residual (specific to a discretization scheme)
+DUMUX_DEFINE_PROPERTY(BaseLocalResidual)      //!< The type of the base class of the local residual (DEPRECATED. Will be removed after 3.10)
 DUMUX_DEFINE_PROPERTY(JacobianMatrix)         //!< Type of the global jacobian matrix
 DUMUX_DEFINE_PROPERTY(SolutionVector)         //!< Vector containing all primary variable vector of the grid
 
-//! The type of the local residual function, i.e. the equation to be solved. Must inherit
-//! from the BaseLocalResidual property and fulfill its interfaces.
+//! The type of the local residual function, i.e. the equation to be solved
 DUMUX_DEFINE_PROPERTY(LocalResidual)
 
 ////////////////////////////////////////////////
