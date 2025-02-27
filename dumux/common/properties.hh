@@ -45,9 +45,6 @@ DUMUX_DEFINE_PROPERTY(SolutionVector)         //!< Vector containing all primary
 //! from the BaseLocalResidual property and fulfill its interfaces.
 DUMUX_DEFINE_PROPERTY(LocalResidual)
 
-//! TODO: Remove this property as soon as the decoupled models are integrated
-DUMUX_DEFINE_PROPERTY(LinearSolver)
-
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////

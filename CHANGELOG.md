@@ -17,6 +17,9 @@ C++20 mode is enforced through CMake.
 - __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+-__Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and
+only a left-over from old IMPES-style models. The linear solver type is chosen in the main file and
+idenpendently of the property system.
 
 - __Property DefaultModelParameters__: Has been removed without replacement. Introduced in 3.0, we are not aware of any use case so far. If you have used this feature, please get in touch with us. This feature can easily be realized by a simple traits mechanism.
 
