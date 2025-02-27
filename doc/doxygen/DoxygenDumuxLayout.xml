@@ -35,6 +35,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
       <tab type="user" url="@ref changing-property-name" visible="yes" title="Changing property name" intro=""/>
       <tab type="user" url="@ref custom-input-data" visible="yes" title="Custom input data" intro=""/>
+      <tab type="user" url="@ref gmsh-with-alugrid" visible="yes" title="Gmsh with ALUGrid" intro=""/>
     </tab>
     <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
     <tab type="namespaces" visible="yes" title="">
