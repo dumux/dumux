@@ -689,7 +689,23 @@ private:
         // conductive fluxes
         flux += ParentType::conductiveEnergyFlux(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
 
-        // TODO: add contribution from diffusive fluxes
+        // diffusive energy flux
+        auto diffusiveFlux = diffusiveMolecularFlux_(domainI, domainJ, scvf, scvI, scvJ, insideVolVars, outsideVolVars);
+        for (int compIdx = 0; compIdx < diffusiveFlux.size(); ++compIdx)
+        {
+            const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+            const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
+
+            const bool insideDiffFluxIsUpstream = diffusiveFlux[domainICompIdx] > 0.0;
+            const Scalar componentEnthalpy = insideDiffFluxIsUpstream ?
+                                             getComponentEnthalpy_(insideVolVars, couplingPhaseIdx(domainI), domainICompIdx)
+                                           : getComponentEnthalpy_(outsideVolVars, couplingPhaseIdx(domainJ), domainJCompIdx);
+
+           if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+               flux += diffusiveFlux[domainICompIdx] * componentEnthalpy;
+           else
+               flux += diffusiveFlux[domainICompIdx] * FluidSystem<i>::molarMass(domainICompIdx) * componentEnthalpy;
+        }
 
         return flux;
     }
