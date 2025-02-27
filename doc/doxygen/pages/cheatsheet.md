@@ -225,6 +225,8 @@ set(CMAKE_BUILD_TYPE [BUILD_TYPE])
   [https://dumux.org/](https://dumux.org/)
 - **DuMuX documentation:**
   [https://dumux.org/docs/doxygen/master/](https://dumux.org/docs/doxygen/master/)
+- **DuMuX Wiki:**
+  [https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/home](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/home)
 - **DuMuX course:**
   [https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course)
 - **Installation instructions:**
