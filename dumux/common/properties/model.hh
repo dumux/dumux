@@ -38,13 +38,6 @@ template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::ModelProperties> { using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
                                                                                          GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
 
-//! do not specific any model-specific default parameters here
-template<class TypeTag>
-struct ModelDefaultParameters<TypeTag, TTag::ModelProperties>
-{
-    static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
-};
-
 //! Set the default to an implementation throwing a NotImplemented error
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::ModelProperties> { using type = DefaultIOFields; };

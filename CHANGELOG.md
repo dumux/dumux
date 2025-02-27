@@ -18,6 +18,8 @@ C++20 mode is enforced through CMake.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 
+- __Property DefaultModelParameters__: Has been removed without replacement. Introduced in 3.0, we are not aware of any use case so far. If you have used this feature, please get in touch with us. This feature can easily be realized by a simple traits mechanism.
+
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:
 
 
