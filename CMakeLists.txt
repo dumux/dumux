@@ -79,7 +79,6 @@ target_compile_features(dumux PUBLIC cxx_std_20)
 
 # check multithreading features
 include(DumuxMultithreadingBackend)
-target_compile_definitions(dumux PUBLIC DUMUX_MULTITHREADING_BACKEND=${DUMUX_MULTITHREADING_BACKEND})
 
 if (DUMUX_HAVE_GRIDFORMAT)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_GRIDFORMAT=1)
