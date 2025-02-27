@@ -29,7 +29,6 @@ namespace Dumux::Properties {
 // Basic properties of numeric models:
 ///////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(Scalar)                 //!< Property to specify the type of scalar values.
-DUMUX_DEFINE_PROPERTY(ModelDefaultParameters) //!< Property which defines the group that is queried for parameters by default
 DUMUX_DEFINE_PROPERTY(Grid)                   //!< The DUNE grid type
 DUMUX_DEFINE_PROPERTY(PrimaryVariables)       //!< A vector of primary variables
 DUMUX_DEFINE_PROPERTY(ModelTraits)            //!< Traits class encapsulating model specifications
