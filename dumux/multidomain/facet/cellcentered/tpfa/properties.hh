@@ -17,8 +17,11 @@
 #ifndef DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
 #define DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
 
+#include <type_traits>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/multidomain/facet/cellcentered/upwindscheme.hh>
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>
@@ -73,6 +76,20 @@ struct FluxVariables<TypeTag, TTag::CCTpfaFacetCouplingModel>
 };
 
 } // namespace Properties
+
+namespace Detail {
+
+template<class T>
+concept CCTpfaFacetCouplingModel = CCTpfaModel<T> && Dumux::Properties::inheritsFrom<Properties::TTag::CCTpfaFacetCouplingModel, T>();
+
+template<CCTpfaFacetCouplingModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CCFacetCouplingLocalResidual<TypeTag>;
+};
+
+} // end namespace Detail
+
 } // namespace Dumux
 
 #endif

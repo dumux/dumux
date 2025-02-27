@@ -13,6 +13,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HH
 
+#include <type_traits>
+
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/properties.hh>
@@ -21,7 +23,9 @@
 
 #include <dumux/assembly/cclocalresidual.hh>
 
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
@@ -169,6 +173,18 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scvf)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+};
+
+template<class TypeTag>
+concept CCMpfaModel = std::is_same_v<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    DiscretizationMethods::CCMpfa
+>;
+
+template<CCMpfaModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CCLocalResidual<TypeTag>;
 };
 
 } // end namespace Detail

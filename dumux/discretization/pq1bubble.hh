@@ -27,6 +27,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/localdoftraits.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
@@ -136,6 +137,18 @@ struct LocalDofTraits<GridView, DiscretizationMethods::PQ1Bubble>
     static constexpr int dim = GridView::dimension;
     // Dofs are located at the vertices and element
     static constexpr int numCubeElementDofs = (1<<dim) + 1;
+};
+
+template<class TypeTag>
+concept PQ1BubbleModel = std::is_same_v<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    DiscretizationMethods::PQ1Bubble
+>;
+
+template<PQ1BubbleModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CVFELocalResidual<TypeTag>;
 };
 
 } // end namespace Dumux::Detail
