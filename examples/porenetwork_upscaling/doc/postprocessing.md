@@ -118,6 +118,7 @@ The pipeline browser and the properties panel should in the end look something l
         </figcaption>
     </center>
 </figure>
+
 | [:arrow_left: Back to the main documentation](../README.md) | [:arrow_left: Go back to part 3](upscalinghelper.md) |
 |---|---:|
 
