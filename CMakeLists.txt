@@ -152,5 +152,9 @@ if (OpenMP_FOUND)
     "find_dependency(OpenMP)"
   )
 endif()
+string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+  "# Propagate the multithreading backend"
+  "set(DUMUX_MULTITHREADING_BACKEND ${DUMUX_MULTITHREADING_BACKEND})"
+)
 
 finalize_dune_project()
