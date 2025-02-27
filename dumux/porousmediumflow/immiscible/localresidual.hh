@@ -15,6 +15,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 namespace Dumux {
 
@@ -24,9 +25,11 @@ namespace Dumux {
  *        using the n-phase immiscible fully implicit models.
  */
 template<class TypeTag>
-class ImmiscibleLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class ImmiscibleLocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using ThisType = ImmiscibleLocalResidual<TypeTag>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
@@ -34,10 +37,11 @@ class ImmiscibleLocalResidual : public GetPropType<TypeTag, Properties::BaseLoca
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using EnergyLocalResidual = GetPropType<TypeTag, Properties::EnergyLocalResidual>;
 
@@ -56,9 +60,6 @@ public:
      * \param problem the problem
      * \param scv The sub control volume
      * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,

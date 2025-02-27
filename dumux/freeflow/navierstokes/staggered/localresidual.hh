@@ -12,6 +12,8 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
+#include <type_traits>
+
 #include <dune/common/hybridutilities.hh>
 
 #include <dumux/common/properties.hh>
@@ -362,14 +364,6 @@ private:
             }
         }
     }
-
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 };
 
 } // end namespace Dumux

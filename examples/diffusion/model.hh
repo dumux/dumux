@@ -26,6 +26,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/volumevariables.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 // [[/details]]
 //
 // ## 1. Property Tag
@@ -55,21 +56,23 @@ struct DiffusionModel {};
 //
 // [[content]]
 //
-// The class `DiffusionModelLocalResidual` inherits from something called `BaseLocalResidual`.
+// The class `DiffusionModelLocalResidual` inherits from something called `DiscretizationDefaultLocalOperator`.
 // This base class differs depending on the chosen discretization scheme. For the box method
-// (which is a control-volume finite element scheme) used in this example, the property
-// `BaseLocalResidual` is specialized to `CVFELocalResidual<TypeTag>`
+// (which is a control-volume finite element scheme) used in this example,
+// `DiscretizationDefaultLocalOperator` is specialized to `CVFELocalResidual`
 // in [dumux/discretization/box.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/dumux/discretization/box.hh).
-// Since this local residual only works with control-volume finite element schemes due to
-// the flux implementation, we could have also chosen to inherit from `public CVFELocalResidual<TypeTag>`.
+// Since the following implementation only works with control-volume finite element schemes due to
+// the chosen flux implementation, we could have also chosen to
+// directly inherit from `public CVFELocalResidual<TypeTag>`.
 namespace Dumux {
 template<class TypeTag>
 class DiffusionModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
     // [[exclude]]
-    // the base local residual is selected depending on the chosen discretization scheme
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    // the base local operator is selected depending on the chosen discretization scheme
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
+
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;

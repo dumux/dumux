@@ -21,6 +21,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 namespace Dumux {
 
@@ -50,9 +51,9 @@ static constexpr bool hasAcceleration()
  */
 template<class TypeTag>
 class HyperelasticLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;

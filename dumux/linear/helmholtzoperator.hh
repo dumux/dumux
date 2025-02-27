@@ -16,6 +16,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -43,9 +44,9 @@ private:
 
 template<class TypeTag>
 class HelmholtzModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public Dumux::DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using ParentType = Dumux::DiscretizationDefaultLocalOperator<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;

@@ -20,6 +20,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
 namespace Dumux::Detail {
@@ -42,11 +43,11 @@ namespace Dumux {
  *        using the Richards fully implicit models.
  */
 template<class TypeTag>
-class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class RichardsLocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
-
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
@@ -54,7 +55,6 @@ class RichardsLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalR
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
@@ -464,13 +464,6 @@ public:
         )
             problem.addRobinFluxDerivatives(derivativeMatrices, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
     }
-
-private:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
 } // end namespace Dumux
