@@ -208,7 +208,14 @@ public:
                     const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
-                        flux[compIdx] += dispersionFluxes[compIdx];
+                        //check for the reference system and adapt units of the dispersive flux accordingly.
+                        if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                            flux[replaceCompEqIdx] += useMoles ? dispersionFluxes[compIdx]/FluidSystem::molarMass(compIdx) : dispersionFluxes[compIdx];
+                        else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                            flux[replaceCompEqIdx] += useMoles ? dispersionFluxes[compIdx]
+                                                    : dispersionFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                        else
+                            DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
                     }
                 }
                 else

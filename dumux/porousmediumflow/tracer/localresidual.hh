@@ -171,9 +171,29 @@ public:
         if constexpr (ModelTraits::enableCompositionalDispersion())
         {
             const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            if (useMoles) // formulation with mole balances
             {
-                flux[compIdx] += dispersionFluxes[compIdx];
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[compIdx] += dispersionFluxes[compIdx]/FluidSystem::molarMass(compIdx);
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                        flux[compIdx] += dispersionFluxes[compIdx];
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                }
+            }
+            else // formulation with mass balances
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                        flux[compIdx] += dispersionFluxes[compIdx];
+                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                        flux[compIdx] += dispersionFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+                    else
+                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                }
             }
         }
 
