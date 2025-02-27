@@ -137,20 +137,37 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
+        static constexpr auto referenceSystemFormulationDiffusion = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
         // get upwind weights into local scope
         NumEqVector flux(0.0);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        const auto massOrMoleFraction = [](const auto& volVars, const int phaseIdx, const int compIdx)
         { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
 
-        // advective fluxes
+        // Check for the reference system and adapt units of the flux accordingly.
+        const auto adaptFluxUnits = [](const Scalar referenceFlux, const Scalar molarMass,
+                                       const ReferenceSystemFormulation referenceSystemFormulation)
+        {
+            if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                return useMoles ? referenceFlux/molarMass
+                                : referenceFlux;
+            else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                return useMoles ? referenceFlux
+                                : referenceFlux*molarMass;
+            else
+                DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+        };
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
+            auto dispersiveFluxes = decltype(diffusiveFluxes)(0.0);
+            if constexpr (ModelTraits::enableCompositionalDispersion())
+                dispersiveFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
+
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 // get equation index
@@ -160,22 +177,26 @@ public:
                 const auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, phaseIdx, compIdx] (const auto& volVars)
                 { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
+                // advective fluxes (only for the component balances)
                 if (eqIdx != replaceCompEqIdx)
                     flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
-                // diffusive fluxes (only for the component balances)
-                if(eqIdx != replaceCompEqIdx)
+                // diffusive and dispersive fluxes
+                auto diffusiveAndDispersiveFluxes = adaptFluxUnits(diffusiveFluxes[compIdx],
+                                                                   FluidSystem::molarMass(compIdx),
+                                                                   referenceSystemFormulationDiffusion);
+                if constexpr (ModelTraits::enableCompositionalDispersion())
                 {
-                    //check for the reference system and adapt units of the diffusive flux accordingly.
-                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx)
-                                            : diffusiveFluxes[compIdx];
-                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                        flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                            : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                    else
-                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+                    static constexpr auto referenceSystemFormulationDispersion =
+                        FluxVariables::DispersionFluxType::referenceSystemFormulation();
+                    diffusiveAndDispersiveFluxes += adaptFluxUnits(dispersiveFluxes[compIdx],
+                                                                   FluidSystem::molarMass(compIdx),
+                                                                   referenceSystemFormulationDispersion);
                 }
+                if(eqIdx != replaceCompEqIdx)
+                    flux[eqIdx] += diffusiveAndDispersiveFluxes;
+                if (useTotalMoleOrMassBalance)
+                    flux[replaceCompEqIdx] += diffusiveAndDispersiveFluxes;
             }
 
             // in case one balance is substituted by the total mole balance
@@ -186,32 +207,10 @@ public:
                 { return massOrMoleDensity(volVars, phaseIdx)*volVars.mobility(phaseIdx); };
 
                 flux[replaceCompEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    //check for the reference system and adapt units of the diffusive flux accordingly.
-                    if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx) : diffusiveFluxes[compIdx];
-                    else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                        flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
-                                                : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                    else
-                        DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-                }
             }
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
-
-            if constexpr (ModelTraits::enableCompositionalDispersion())
-            {
-                const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    flux[compIdx] += dispersionFluxes[compIdx];
-                }
-            }
-
         }
 
         //! Add diffusive and dispersive energy fluxes. For isothermal model the contribution is zero.
