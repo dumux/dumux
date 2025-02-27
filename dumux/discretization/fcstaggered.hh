@@ -15,6 +15,8 @@
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_HH
 
+#include <type_traits>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/problem.hh>
 
@@ -122,6 +124,12 @@ public:
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
 };
+
+template<class TypeTag>
+concept FaceCenteredStaggeredModel = std::is_same_v<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    DiscretizationMethods::FCStaggered
+>;
 
 } // end namespace Detail
 
