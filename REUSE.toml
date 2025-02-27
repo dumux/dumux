@@ -1,0 +1,41 @@
+version = 1
+
+[[annotations]]
+path = "**/*.input"
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "test/references/**"
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+    "test/**.pbm",
+    "test/**.pgm",
+    "test/**.geo",
+    "test/**.msh",
+]
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = [
+    "**.png",
+    "**.svg",
+    "**.eps",
+    "**.gif",
+]
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = "**.pdf"
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = "**.md"
+SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
+SPDX-License-Identifier = "CC-BY-4.0"
