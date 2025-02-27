@@ -125,57 +125,54 @@ public:
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        static constexpr auto referenceSystemFormulationDiffusion = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
 
         NumEqVector flux(0.0);
+
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+        const auto massOrMoleFraction = [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // Check for the reference system and adapt units of the flux accordingly.
+        const auto adaptFluxUnits = [](const Scalar referenceFlux, const Scalar molarMass,
+                                       const ReferenceSystemFormulation referenceSystemFormulation)
+        {
+            if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
+                return useMoles ? referenceFlux/molarMass
+                                : referenceFlux;
+            else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
+                return useMoles ? referenceFlux
+                                : referenceFlux*molarMass;
+            else
+                DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
+        };
+
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-
-        static constexpr auto referenceSystemFormulation = FluxVariables::MolecularDiffusionType::referenceSystemFormulation();
-
-        if (useMoles) // formulation with mole balances
-        {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const auto& volVars)
-                { return volVars.molarDensity()*volVars.moleFraction(phaseIdx, compIdx); };
-
-                // advective fluxes
-                flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                // diffusive fluxes
-                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                    flux[compIdx] += diffusiveFluxes[compIdx]/FluidSystem::molarMass(compIdx);
-                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                    flux[compIdx] += diffusiveFluxes[compIdx];
-                else
-                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-            }
-        }
-        else // formulation with mass balances
-        {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                // the physical quantities for which we perform upwinding
-                auto upwindTerm = [compIdx](const auto& volVars)
-                { return volVars.density()*volVars.massFraction(phaseIdx, compIdx); };
-
-                // advective fluxes
-                flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                // diffusive fluxes
-                if (referenceSystemFormulation == ReferenceSystemFormulation::massAveraged)
-                    flux[compIdx] += diffusiveFluxes[compIdx];
-                else if (referenceSystemFormulation == ReferenceSystemFormulation::molarAveraged)
-                    flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                else
-                    DUNE_THROW(Dune::NotImplemented, "other reference systems than mass and molar averaged are not implemented");
-            }
-        }
-
+        auto dispersiveFluxes = decltype(diffusiveFluxes)(0.0);
         if constexpr (ModelTraits::enableCompositionalDispersion())
+            dispersiveFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            // the physical quantities for which we perform upwinding
+            auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, compIdx](const auto& volVars)
+            { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx); };
+
+            // advective fluxes
+            flux[compIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+            // diffusive and dispersive fluxes
+            flux[compIdx] += adaptFluxUnits(diffusiveFluxes[compIdx],
+                                            FluidSystem::molarMass(compIdx),
+                                            referenceSystemFormulationDiffusion);
+            if constexpr (ModelTraits::enableCompositionalDispersion())
             {
-                flux[compIdx] += dispersionFluxes[compIdx];
+                static constexpr auto referenceSystemFormulationDispersion =
+                    FluxVariables::DispersionFluxType::referenceSystemFormulation();
+                flux[compIdx] += adaptFluxUnits(dispersiveFluxes[compIdx],
+                                                FluidSystem::molarMass(compIdx),
+                                                referenceSystemFormulationDispersion);
             }
         }
 
