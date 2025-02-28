@@ -150,10 +150,7 @@ public:
             auto diffusiveAndDispersiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
             if constexpr (ModelTraits::enableCompositionalDispersion())
             {
-                if constexpr (FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box && numPhases == 1)
-                    diffusiveAndDispersiveFluxes += fluxVars.compositionalDispersionFlux(phaseIdx);
-                else
-                    DUNE_THROW(Dune::NotImplemented, "Dispersion Fluxes are only implemented for single phase flows using the Box method.");
+                diffusiveAndDispersiveFluxes += fluxVars.compositionalDispersionFlux(phaseIdx);
             }
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
