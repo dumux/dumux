@@ -109,6 +109,10 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
+
             // collect the dispersion tensor, the fluxVarsCache and the shape values
             const auto& dispersionTensor = [&]()
             {
@@ -139,8 +143,9 @@ public:
 
             // compute the dispersion flux
             componentFlux[compIdx] = -1.0 * rhoMassOrMole * vtmv(scvf.unitOuterNormal(), dispersionTensor, gradX)*Extrusion::area(fvGeometry, scvf);
-            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
-                componentFlux[phaseIdx] -= componentFlux[compIdx];
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
         return componentFlux;
     }
