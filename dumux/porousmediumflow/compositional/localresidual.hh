@@ -205,16 +205,11 @@ public:
 
             if constexpr (ModelTraits::enableCompositionalDispersion())
             {
-                if constexpr (FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box && numPhases == 1)
+                const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
-                    const auto dispersionFluxes = fluxVars.compositionalDispersionFlux(phaseIdx);
-                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    {
-                        flux[compIdx] += dispersionFluxes[compIdx];
-                    }
+                    flux[compIdx] += dispersionFluxes[compIdx];
                 }
-                else
-                    DUNE_THROW(Dune::NotImplemented, "Dispersion Fluxes are only implemented for single phase flows using the Box method.");
             }
 
         }
