@@ -35,6 +35,7 @@ We start in `model.hh` with the necessary header includes:
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 ```
 
 </details>
@@ -151,16 +152,16 @@ Let's have a look at the class implementation.
 <summary><b>Click to hide/show the file documentation</b> (or inspect the [source code](../model.hh))</summary>
 
 
-The class `CahnHilliardModelLocalResidual` inherits from a base class set in
-the model properties, depending on the discretization scheme.
+The class `CahnHilliardModelLocalResidual` inherits from a base class
+which is determined depending on the discretization scheme.
 See [examples/diffusion/doc/model.hh](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/doc/main.md)
-for details on the `BaseLocalResidual`.
+for details.
 
 ```cpp
 namespace Dumux {
 template<class TypeTag>
 class CahnHilliardModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
 ```
 

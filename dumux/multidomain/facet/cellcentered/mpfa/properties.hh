@@ -19,7 +19,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/ccmpfa.hh>
-
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/multidomain/facet/cellcentered/upwindscheme.hh>
 #include <dumux/multidomain/facet/cellcentered/localresidual.hh>
 #include <dumux/multidomain/facet/cellcentered/mpfa/interactionvolume.hh>
@@ -78,6 +78,20 @@ struct FluxVariables<TypeTag, TTag::CCMpfaFacetCouplingModel>
 };
 
 } // namespace Properties
+
+namespace Detail {
+
+template<class T>
+concept CCMpfaFacetCouplingModel = CCMpfaModel<T> && Dumux::Properties::inheritsFrom<Properties::TTag::CCMpfaFacetCouplingModel, T>();
+
+template<CCMpfaFacetCouplingModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CCFacetCouplingLocalResidual<TypeTag>;
+};
+
+} // end namespace Detail
+
 } // namespace Dumux
 
 #endif

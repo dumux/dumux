@@ -15,6 +15,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 
 namespace Dumux {
 
@@ -23,9 +24,10 @@ namespace Dumux {
  * \brief Element-wise calculation of the Navier-Stokes residual for multicomponent single-phase flow.
  */
 template<class TypeTag>
-class NavierStokesMassOnePNCLocalResidual : public GetPropType<TypeTag, Properties::BaseLocalResidual>
+class NavierStokesMassOnePNCLocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;

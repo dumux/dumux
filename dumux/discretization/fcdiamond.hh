@@ -14,6 +14,8 @@
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_HH
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_HH
 
+#include <type_traits>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/problem.hh>
 
@@ -21,6 +23,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/localdoftraits.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
@@ -140,6 +143,18 @@ struct LocalDofTraits<GridView, DiscretizationMethods::FCDiamond>
     static constexpr int dim = GridView::dimension;
     // Dofs are located at the facets
     static constexpr int numCubeElementDofs = 2*dim;
+};
+
+template<class TypeTag>
+concept FaceCenteredDiamondModel = std::is_same_v<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    DiscretizationMethods::FCDiamond
+>;
+
+template<FaceCenteredDiamondModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CVFELocalResidual<TypeTag>;
 };
 
 } // end namespace Dumux::Detail

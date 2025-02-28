@@ -298,14 +298,6 @@ public:
         // Default: Neither the scvf itself nor a lateral one considers a Neumann flux. We just calculate the flux as normal.
         return this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache, elemBcTypes);
     }
-
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 };
 
 } // end namespace Dumux
