@@ -33,6 +33,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref dumux-and-dune" visible="yes" title="Dumux and Dune" intro=""/>
       <tab type="user" url="@ref developing-dumux" visible="yes" title="Developing Dumux" intro=""/>
       <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
+      <tab type="user" url="@ref changing-property-name" visible="yes" title="Changing property name" intro=""/>
+      <tab type="user" url="@ref custom-input-data" visible="yes" title="Custom input data" intro=""/>
+      <tab type="user" url="@ref gmsh-with-alugrid" visible="yes" title="Gmsh with ALUGrid" intro=""/>
+      <tab type="user" url="@ref printing-system-matrix" visible="yes" title="Printing system matrix" intro=""/>
+      <tab type="user" url="@ref upgrading-dumux-programs-to-version" visible="yes" title="Upgrading to Dumux 3" intro=""/>
     </tab>
     <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
     <tab type="namespaces" visible="yes" title="">
