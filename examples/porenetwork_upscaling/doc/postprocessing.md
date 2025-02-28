@@ -6,7 +6,7 @@
 
 # Part 4: Postprocessing/Visualization of a pore-network model
 
-After compiling and running the code for a pore-network model, it is useful to visualize the results. Especially representing the pore bodies and throats by idealized geometries may help for interpreting the data (such as e.g. pressure distribution). Visulizing the pore-network and it's data can be done with the open source visualization application ParaView. In the following we will show how to show the pore bodies and throats by spheres or boxes and tubes.
+After compiling and running the code for a pore-network model, it is useful to visualize the results. Especially representing the pore bodies and throats by idealized geometries may help for interpreting the data (such as e.g. pressure distribution). Visualizing the pore-network and it's data can be done with the open source visualization application ParaView. In the following we will show how to show the pore bodies and throats by spheres or boxes and tubes.
 
 Before starting, make sure you loaded your results into ParaView. For loading your results, go to
 `File` -> `Open` -> Select your .pvd or your *.vtp file (e.g. `/build-cmake/examples/porenetwork_upscaling/upscaling_pnm.pvd`). You can also open ParaView from the terminal and directly load your results via the command:
@@ -83,7 +83,7 @@ To use thick lines, we do the following:
 For showing the pore throats as cylinders instead of lines, we use the tube filter in the following.
 1. Select your input file (.pvd or .vtp) in the Pipeline Browser.
 2. Choose the `Tube` filter by going to the `Filters` -> `Alphabetical` -> `Tube`
-3. In the `Properties` panel: increase the `Number of Sides` to e.g. 10 for a smoother reprentation of the tubes. <br>
+3. In the `Properties` panel: increase the `Number of Sides` to e.g. 10 for a smoother representation of the tubes. <br>
 ![](../img/doc_pnm_visualization_tubeSides.png)
 1. Leave everything else and click `Apply`.
 
