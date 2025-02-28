@@ -6,7 +6,7 @@ The following example shows a possible way to achieve this for a staggered-grid 
 
 We add the output within the `solveLinearSystem_` overload for `Dune::MultiTypeBlockMatrix` Jacobians in `newtonsolver.hh`:
 
-```c++
+```cpp
     //  MultiTypeBlockMatrix is not supported for printing, needs to be converted first
 
     // create the bcrs matrix the IterativeSolver backend can handle
@@ -51,6 +51,6 @@ Keep in mind that the `MatrixMarket`format uses indices starting with `1` instea
 
 For rather small matrices, you may also directly print the output to the terminal, giving you a graphical impression of the structure:
 
-```c++
+```cpp
 Dune::printmatrix(std::cout, M, "", "", 10/*width*/, 2/*precision*/);
 ```

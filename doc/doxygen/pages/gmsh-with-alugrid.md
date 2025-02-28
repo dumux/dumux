@@ -2,7 +2,7 @@
 
 If you are using Gmsh to create more complex grids and are using "Physical groups" to mark different boundary segments, you can normally access these inside your definition of the `neumann` function (solution dependent von Neumann boundaries) in your problem file by using something like the following:
 
-```c++
+```cpp
 NumEqVector neumann(const Element& element,
                     const FVElementGeometry& fvGeometry,
                     const ElementVolumeVariables& elemVolVars,
@@ -27,7 +27,7 @@ BoundarySegments = 1
 Unfortunately `ALUGrid` uses boundary flags differently, therefore you have to adapt your `FVGridGeometry` to use the class `BoundarySegmentIndexFlag` instead of the normal `BoundaryFlag` class.
 This can be done in your property settings, where you need to add the following:
 
-```c++
+```cpp
 #include <dumux/common/boundaryflag.hh>
 
 namespace Properties {
@@ -65,7 +65,7 @@ public:
 ```
 This was how to do it when using the Box discretization, for CCTpfa it works similarly:
 
-```c++
+```cpp
 namespace Properties {
 
 // other property settings
@@ -98,4 +98,4 @@ public:
 } // end namespace properties
 ```
 
-Then you can access the boundary marker/physical group in the same way as shown above
+Then you can access the boundary marker/physical group in the same way as shown above.

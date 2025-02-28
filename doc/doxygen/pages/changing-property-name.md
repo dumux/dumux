@@ -6,17 +6,17 @@ The only working possibility is to have two properties `OldProperty` and `NewPro
 
 ## Actions to be done in the module `dumux` before release
 
-#### Deprecate the old property
+__Deprecate the old property__
 
-```c++
+```cpp
 template<class TypeTag, class MyTypeTag>
 struct [[deprecated("Use OldProperty instead.")]] OldProperty { using type = UndefinedProperty; };
 ```
 Properties are usually defined in `dumux/common/properties.hh`.
 
-#### Define the new property
+__Define the new property__
 
-```c++
+```cpp
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
@@ -39,9 +39,9 @@ struct NewProperty
 The ignore pragmas avoid the emission of deprecation warnings for using the old property inside.
 The indirection via the helper class is required to allow specializing the new property with an undefined/unspecialized old one.
 
-#### Treat specializations
+__Treat specializations__
 
-```c++
+```cpp
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
@@ -54,28 +54,28 @@ struct OldProperty<TypeTag, TTag::SpecialModel> {
 Specializations still have to be performed in terms of the old property, otherwise
 user code can't employ the old name. Only the ignore pragmas have to be added.
 
-#### Use the new name
+__Use the new name__
 
 Change all
-```c++
+```cpp
 using MyOldFavoriteName = GetPropType<TypeTag, Properties::OldProperty>;
 ```
 to
-```c++
+```cpp
 using MyNewFavoriteName = GetPropType<TypeTag, Properties::NewProperty>;
 ```
 
-#### Export the new name
+__Export the new name__
 
 Very often, `MyOldFavoriteName` in the snippet above coincides with `OldProperty`. In this case, it is advisable
 to set `MyNewFavoriteName` to `NewProperty`. While this is unproblematic if the alias is local,
 take special care for exported names:
-```c++
+```cpp
 public:
     using OldProperty = GetPropType<TypeTag, Properties::OldProperty>;
 ```
 should become
-```c++
+```cpp
 public:
     using NewProperty = GetPropType<TypeTag, Properties::NewProperty>;
     using OldProperty [[deprecated("Use NewProperty instead.")]] = NewProperty;
@@ -83,29 +83,29 @@ public:
 
 ## Actions to be done in derived modules and user code
 
-#### Change using declarations
+__Change using declarations__
 
 Change all
-```c++
+```cpp
 using MyOldFavoriteName = GetPropType<TypeTag, Properties::OldProperty>;
 ```
 to
-```c++
+```cpp
 using MyNewFavoriteName = GetPropType<TypeTag, Properties::NewProperty>;
 ```
 If `MyOldFavoriteName` is exported and you care about backwards compatibility, consider
 deprecating it as outlined above.
 
-#### Treat specializations
+__Treat specializations__
 
 Change all
-```c++
+```cpp
 struct OldProperty<TypeTag, TTag::SpecialModel> {
     using type = SpecialType<...>;
 };
 ```
 to
-```c++
+```cpp
 struct NewProperty<TypeTag, TTag::SpecialModel> {
     using type = SpecialType<...>;
 };
@@ -114,37 +114,37 @@ This should work because everywhere we now get the new property, so it is possib
 
 ## Actions to be done in the module `dumux` after release
 
-#### Only define the new property
+__Only define the new property__
 
 Replace the two snippets "Deprecate the old property" and "Define the new property" by
-```c++
+```cpp
 template<class TypeTag, class MyTypeTag>
 struct NewProperty { using type = UndefinedProperty; };
 ```
 
-#### Only specialize the new property
+__Only specialize the new property__
 
 Replace the dumux code base snippet "Treat specializations" by
-```c++
+```cpp
 struct NewProperty<TypeTag, TTag::SpecialModel> {
     using type = SpecialType<...>;
 };
 ```
 
-#### Remove exports of the old name
+__Remove exports of the old name__
 
 Remove the line containing the deprecation from the snippet "Export the new name".
 
-### Known limitation
+__Known limitation__
 
 Unfortunately, clang emits false positives when invoking the outlined strategy.
 A workaround is to prevent clang from emitting deprecation warnings triggered
 by using `GetPropType` and `getPropValue()`. To this end, the line
-```c++
+```cpp
      using LastType = Property<TypeTag, LastTypeTag>;
 ```
 in `GetDefined` in `dumux/common/properties/propertysystem.hh` has to be augmented to
-```c++
+```cpp
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -155,11 +155,11 @@ in `GetDefined` in `dumux/common/properties/propertysystem.hh` has to be augment
 #endif
 ```
 The lines
-```c++
+```cpp
      using FirstType = Property<TypeTag, FirstTypeTag>;
 ```
 and
-```c++
+```cpp
 template<class TypeTag, template<class,class> class Property>
 using GetPropType = typename Properties::Detail::GetPropImpl<TypeTag, Property>::type::type;
 
@@ -169,7 +169,7 @@ constexpr auto getPropValue() { return Properties::Detail::GetPropImpl<TypeTag, 
 have to be treated in the same way.
 
 This should be augmented by a general warning message that is put best before the deprecation of the old property in `dumux/common/properties.hh`:
-```c++
+```cpp
 #if defined(__clang__) && !defined(DONT_EMIT_CLANG_NEWPROPERTY_WARNING)
 #warning "The property `OldProperty` is deprecated in favor of `NewProperty` \
 and will be removed after release X.Y. \

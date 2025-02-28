@@ -1,4 +1,4 @@
-# Upgrading dumux programs to version three
+# Upgrading dumux programs to version 3.0
 
 The major version update from DuMuX 2.12 to DuMuX 3.0 included some backward-incompatible changes. For the 3-series backward-compatibility will again be assured from one minor version update to the next.
 
@@ -72,7 +72,7 @@ The base classes for problems, originally `ImplicitPorousMediaProblem` and `Impl
 
 `grid()`, `gridView()`, `bBoxMin()`, `bBoxMax()`, `vertexMapper()`, `elementMapper()`, `dofMapper()`
 
-The `FVGridGeometry` and it's element-wise local counter part `FVElementGeometry` provide the abtractions of sub control volumes and sub control volume faces. For instance it it now possible given an instance of `FVElementGeometry` called `fvGeometry` to iterate over all sub control volumes associated with this element
+The `FVGridGeometry` and it's element-wise local counter part `FVElementGeometry` provide the abstractions of sub control volumes and sub control volume faces. For instance it it now possible given an instance of `FVElementGeometry` called `fvGeometry` to iterate over all sub control volumes associated with this element
 
 ```cpp
 for (const auto& scv : scvs(fvGeometry))
