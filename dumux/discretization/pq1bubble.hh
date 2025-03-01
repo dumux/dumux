@@ -32,7 +32,8 @@
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
@@ -66,10 +67,10 @@ struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
 public:
-    using type = CVFEGridVolumeVariables<Traits, enableCache>;
+    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
 };
 
 //! The flux variables cache class
