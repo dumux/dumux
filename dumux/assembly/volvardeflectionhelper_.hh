@@ -62,8 +62,8 @@ public:
                 class LocalDof,
                 class Problem>
     void deflect(const ElementSolution& elemSol,
-                    const LocalDof& localDof,
-                    const Problem& problem)
+                 const LocalDof& localDof,
+                 const Problem& problem)
     {
         if (deflectAll_)
             for (const auto& scv : scvs(fvGeometry_))
