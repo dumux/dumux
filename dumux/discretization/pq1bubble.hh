@@ -25,12 +25,12 @@
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/cvfeproperties.hh>
 #include <dumux/discretization/localdoftraits.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridlocalvariables.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
@@ -42,7 +42,7 @@ namespace Dumux::Properties {
 //! Type tag for the pq1bubble scheme.
 // Create new type tags
 namespace TTag {
-struct PQ1BubbleModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+struct PQ1BubbleModel { using InheritsFrom = std::tuple<CVFEModel>; };
 } // end namespace TTag
 
 //! Set the default for the grid geometry
@@ -58,16 +58,25 @@ public:
 };
 
 //! The grid volume variables vector class
+// TODO: Do we want to get rid of this property
+template<class TypeTag>
+struct GridLocalVariables<TypeTag, TTag::PQ1BubbleModel>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridLocalVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using LocalVariables = GetPropType<TypeTag, Properties::LocalVariables>;
+    using Traits = CVFEDefaultGridLocalVariablesTraits<Problem, LocalVariables>;
+public:
+    using type = CVFEGridLocalVariables<Traits, enableCache>;
+};
+
+// TODO: TEMP for supporting old interface, delete later
 template<class TypeTag>
 struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleModel>
 {
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
-    using type = CVFEGridVolumeVariables<Traits, enableCache>;
+    using type = GetPropType<TypeTag, Properties::GridLocalVariables>;
 };
 
 //! The flux variables cache class
