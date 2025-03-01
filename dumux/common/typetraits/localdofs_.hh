@@ -12,6 +12,7 @@
 #ifndef DUMUX_TYPETRAITS_LOCALDOFS__HH
 #define DUMUX_TYPETRAITS_LOCALDOFS__HH
 
+#include <type_traits>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/rangeutilities.hh>
 
@@ -74,6 +75,16 @@ using LocalDof_t = Dune::Std::detected_or_t<
     SpecifiesLocalDof,
     FVG
 >;
+
+//! helper struct detecting if a type corresponds to a local dof
+template<class Imp>
+constexpr inline bool isLocalDofType()
+{
+    using LocalIndexType = std::decay_t<decltype(index(std::declval<Imp>()))>;
+    using GridIndexType = std::decay_t<decltype(std::declval<Imp>().dofIndex())>;
+
+    return std::is_base_of_v<Dumux::CVFE::LocalDof<LocalIndexType, GridIndexType>, Imp>;
+}
 
 } // end namespace Dumux::Detail::LocalDofs
 
