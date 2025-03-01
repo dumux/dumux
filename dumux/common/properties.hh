@@ -75,6 +75,13 @@ DUMUX_DEFINE_PROPERTY(EnableGridGeometryCache)        //!< Whether to store fini
 DUMUX_DEFINE_PROPERTY(EnableGridVolumeVariablesCache) //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 DUMUX_DEFINE_PROPERTY(EnableGridFluxVariablesCache)   //!< Specifies if data on flux vars should be stores (faster, but more memory consuming)
 
+/////////////////////////////////////////////
+// Properties used by cvfe schemes:
+/////////////////////////////////////////////
+DUMUX_DEFINE_PROPERTY(LocalVariables)                //!< The secondary variables related to local dofs
+DUMUX_DEFINE_PROPERTY(GridLocalVariables)            //!< The type for a global container for the grid local variables
+DUMUX_DEFINE_PROPERTY(EnableGridLocalVariablesCache) //!< If disabled, the local variables are not stored (reduces memory, but is slower)
+
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
 /////////////////////////////////////////////////////////////////
