@@ -41,6 +41,7 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/localvariables.hh>
 #include <dumux/flux/fourierslaw.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -102,7 +103,7 @@ struct NavierStokesMomentumCVFEModelTraits
  * \tparam MT The model traits
  */
 template<class PV, class FSY, class FST, class MT>
-struct NavierStokesMomentumCVFEVolumeVariablesTraits
+struct NavierStokesMomentumCVFELocalVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
@@ -176,9 +177,18 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using Traits = NavierStokesMomentumCVFELocalVariablesTraits<PV, FSY, FST, MT>;
 public:
     using type = NavierStokesMomentumCVFEVolumeVariables<Traits>;
+};
+
+template<class TypeTag>
+struct LocalVariables<TypeTag, TTag::NavierStokesMomentumCVFE>
+{
+private:
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+public:
+    using type = LocalVariablesInterface<VolumeVariables>;
 };
 
 // This is the default (model not coupled with a mass (pressure) discretization)
