@@ -50,20 +50,40 @@ struct NoOperator
 template<class X, class Y>
 using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
 
-template<class ElemVolVars>
-using DefinesDeflectionHelper = decltype(&ElemVolVars::deflectionHelper);
+template<typename ElemLocalVars, typename FVG>
+using DefinesDeflectionHelperType = typename ElemLocalVars::template DeflectionHelper<FVG>;
 
-template<class ElemVolVars>
-constexpr inline bool definesVolVarsDeflectionHelper()
-{ return Dune::Std::is_detected<DefinesDeflectionHelper, ElemVolVars>::value; }
+template<typename ElemLocalVars, typename FVG>
+constexpr inline bool definesVolVarsDeflectionHelperType()
+{ return Dune::Std::is_detected<DefinesDeflectionHelperType, ElemLocalVars, FVG>::value; }
 
-template<typename ElemVolVars, class Accessor, class FVG>
-auto VolVarsDeflectionHelper(Accessor&& accessor, const FVG& fvg, bool deflectAllVolVars)
+template<class Accessor, class FVG>
+auto defaultDeflectionHelper(Accessor&& accessor, const FVG& fvg, bool deflectAllVolVars)
 {
-    if constexpr (definesVolVarsDeflectionHelper<ElemVolVars>())
-        return ElemVolVars::deflectionHelper(std::move(accessor), fvg, deflectAllVolVars);
+    return Detail::VolVarsDeflectionHelper<Accessor, FVG>(std::move(accessor), fvg, deflectAllVolVars);
+};
+
+template<class GridLocalVars, class ElemLocalVars, class FVG>
+auto VolVarsDeflectionHelper(GridLocalVars& gridLocalVars, ElemLocalVars& elemLocalVars, const FVG& fvg, bool deflectAllVolVars)
+{
+    if constexpr (definesVolVarsDeflectionHelperType<ElemLocalVars, FVG>())
+    {
+        using DeflectionHelper = typename ElemLocalVars::template DeflectionHelper<FVG>;
+        return DeflectionHelper(gridLocalVars, elemLocalVars, fvg, deflectAllVolVars);
+    }
     else
-        return Detail::VolVarsDeflectionHelper<Accessor, FVG>(std::move(accessor), fvg, deflectAllVolVars);
+    {
+        return defaultDeflectionHelper(
+            [&] (const auto& scv) -> ElemLocalVars::VolumeVariables& {
+                if constexpr (GridLocalVars::cachingEnabled)
+                    return gridLocalVars.volVars(scv);
+                else
+                    return elemLocalVars[scv];
+            },
+            fvg,
+            deflectAllVolVars
+        );
+    }
 };
 
 } // end namespace Detail
@@ -84,7 +104,7 @@ class CVFELocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, I
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
@@ -411,10 +431,9 @@ public:
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::numLocalDofs(fvGeometry));
 
-        auto deflectionHelper = Detail::CVFE::VolVarsDeflectionHelper<ElementVolumeVariables>(
-                [&] (const auto& scvOrLocalDof) -> VolumeVariables& {
-                    return this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvOrLocalDof);
-                },
+        auto deflectionHelper = Detail::CVFE::VolVarsDeflectionHelper(
+                gridVariables.curGridVolVars(),
+                curElemVolVars,
                 fvGeometry,
                 updateAllVolVars
             );
