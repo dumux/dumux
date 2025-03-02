@@ -28,6 +28,7 @@
 #include <dune/common/timer.hh>
 
 #include <dumux/io/format.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux::IO {
@@ -130,7 +131,10 @@ class GridWriter
     : gridView_{gridView}
     , grid_{makeGrid_(gridView)}
     , writer_{Detail::makeWriter(grid_, fmt)}
-    { writer_.set_meta_data("rank", gridView_.comm().rank()); }
+    {
+        if (gridView.comm().size() > 0 && getParam<bool>("IO.GridWriter.AddProcessRank", true))
+            setCellField("rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
+    }
 
     /*!
      * \brief Constructor for transient file formats, i.e. time series.
@@ -144,7 +148,10 @@ class GridWriter
     : gridView_{gridView}
     , grid_{makeGrid_(gridView)}
     , writer_{Detail::makeWriter(grid_, fmt, filename)}
-    { writer_.set_meta_data("rank", gridView_.comm().rank()); }
+    {
+        if (gridView.comm().size() > 0 && getParam<bool>("IO.GridWriter.AddProcessRank", true))
+            setCellField("rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
+    }
 
     /*!
      * \brief Write the registered fields into the file with the given name.
