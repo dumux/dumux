@@ -23,25 +23,23 @@
 
 namespace Dumux {
     namespace BinaryCoeff {
-        namespace Detail {
-            namespace H2O_Air {
+        namespace Detail::H2O_Air{
                 struct HenryLaws {
                 // Henry Law rule tags for H2O_Air
 
                     //! Finsterle implementation for Henry coefficient
-                    struct FinsterleRule : public Utility::Tag<FinsterleRule> {
+                    struct FinsterleLaw : public Utility::Tag<FinsterleLaw> {
                         static std::string name() { return "Finsterle"; }
                     };
 
                     //! Mixture implementation for Henry coefficient
-                    struct MixtureRule : public Utility::Tag<MixtureRule> {
+                    struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
                         static std::string name() { return "Mixture"; }
                     };
 
                     //! Default rule (for backwards compatibility, will change to Mixture after 3.10)
-                    using DefaultRule = FinsterleRule;
-                }; // end struct H2O_Air
-             // end namespace HenryLaws
+                    using DefaultRule = FinsterleLaw;
+                }; // end struct HenryLaws
 
             /*!
              * \brief Implementation details for H2O_Air Henry coefficients
@@ -61,7 +59,7 @@ namespace Dumux {
                      * \return Henry coefficient \f$\mathrm{[Pa]}\f$
                      */
                     template<typename Scalar>
-                    static Scalar henry(Scalar temperature, HenryLaws::FinsterleRule) {
+                    static Scalar henry(Scalar temperature, HenryLaws::FinsterleLaw) {
                         using std::exp;
                         Scalar r = (0.8942 + 1.47 * exp(-0.04394 * (temperature - 273.15))) * 1.E-10;
                         return 1. / r;
@@ -89,7 +87,7 @@ namespace Dumux {
                      * \return Henry coefficient for air in water \f$\mathrm{[Pa]}\f$
                      */
                     template<typename Scalar>
-                    static Scalar henry(Scalar temperature, HenryLaws::MixtureRule) {
+                    static Scalar henry(Scalar temperature, HenryLaws::IdealMixtureLaw) {
                         static constexpr Scalar yO2_air = Dumux::Components::Air<Scalar>::airMoleFraction::O2;
                         static constexpr Scalar yN2_air = Dumux::Components::Air<Scalar>::airMoleFraction::N2;
                         static constexpr Scalar yCO2_air = Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
@@ -103,9 +101,8 @@ namespace Dumux {
                         Scalar r = (yO2_air / kh_O2 + yN2_air / kh_N2 + yCO2_air / kh_CO2 + yAr_air / kh_Ar);
                         return 1 / r;
                     }
-                }; // end struct H2O_Air
-            } // end namespace HenryLawsImpl
-        } // end namespace Detail
+                }; // end struct HenryLawsImpl
+        } // end namespace Detail::H2O_Air
 
 /*!
  * \ingroup Binarycoefficients
@@ -115,15 +112,15 @@ namespace Dumux {
         {
         public:
             //! Make rule tags accessible
-            using Rules = Detail::H2O_Air::HenryLaws;
+            using HenryLaws = Detail::H2O_Air::HenryLaws;
 
             /*!
              * \brief Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water with explicit rule.
              * \param temperature the temperature \f$\mathrm{[K]}\f$
              * \param rule Tag dispatch parameter specifying which implementation to use
              */
-            template <typename Scalar, typename Rule = Rules::FinsterleRule>
-            static Scalar henry(Scalar temperature, Rule rule = Rule{})
+            template <typename Scalar>
+            static Scalar henry(Scalar temperature)
             {
                 // Warning about future changes (if needed)
                 [[maybe_unused]] static bool _ = []() {
@@ -132,6 +129,11 @@ namespace Dumux {
                 }();
 
 
+                return BinaryCoeff::Detail::H2O_Air::HenryLawsImpl::henry<Scalar>(temperature, HenryLaws::FinsterleLaw{});
+            }
+            template <typename Scalar, typename Rule>
+            static Scalar henry(Scalar temperature, Rule rule)
+            {
                 return BinaryCoeff::Detail::H2O_Air::HenryLawsImpl::henry<Scalar>(temperature, rule);
             }
 
