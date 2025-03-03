@@ -335,7 +335,7 @@ public:
                                     // We assume that the density at the face equals the one at the cell center and reconstruct a volume flux from the Neumann mass flux.
                                     const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
                                     const auto eqIdx = VolumeVariables::Indices::conti0EqIdx + phaseIdx;
-                                    scvfFluxes[fIdx] += neumannFlux[eqIdx] / insideVolVars.density(phaseIdx) * scvf.area() * insideVolVars.extrusionFactor();
+                                    scvfFluxes[fIdx] += neumannFlux[eqIdx] / insideVolVars.density(phaseIdx) * scvf.area();
                                 }
                                 else
                                 {
