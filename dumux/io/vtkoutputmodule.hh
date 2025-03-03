@@ -625,9 +625,9 @@ private:
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
-                                              "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
-                                              /*numComp*/dimWorld, /*codim*/0, dm, this->precision()) );
+                        this->addCellData( Field(gridGeometry().gridView(), gridGeometry().elementMapper(), velocity[phaseIdx],
+                                            "velocity_" + velocityOutput_->phaseName(phaseIdx) + " (m/s)",
+                                            /*numComp*/dimWorld, /*codim*/0, dm, this->precision()) );
                 }
             }
 
