@@ -51,7 +51,7 @@ Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen
 ./dumux/bin/extractmodule/extract_as_new_module.py <module_dir> <sub_folder_1> <[sub_folder_2 ...]>
 ```
 
-* Create install script for a module:
+* Create install script for a module. Is automatically executed within `extract_as_new_module.py`:
 ```bash
 ./dumux/bin/extractmodule/make_installscript.py -p <module_dir>
 ```
@@ -75,7 +75,7 @@ for (const auto& element : elements(gridGeometry.gridView()))
 ```cpp
 for (const auto& vertex : vertices(gridGeometry.gridView()))
 {
-    auto vertexPos = vertex.geometry().center();
+    auto vertexPos = vertex.geometry().corner(0);
     ...
 }
 ```
@@ -88,19 +88,19 @@ for (const auto& element : elements(gridGeometry.gridView()))
 {
     for (const auto& vertex : Dune::subEntities(element, Dune::Codim<dim>{}))
     {
-        auto vertexPos = vertex.geometry().center();
+        const auto vertexIdx = gridGeometry.vertexMapper().index(vertex);
         ...
     }
+
 }
 ```
 
 * Frequent calls on an element:
 ```cpp
-element.level();                           // refinement level
+element.level();                    // refinement level
 auto geometry = element.geometry();
 geometry.center();                  // center position
 geometry.volume();                  // volume
-
 
 // access global element index
 auto elementIdx = gridGeometry.elementMapper().index(element);
@@ -151,8 +151,8 @@ for (const auto& element : elements(gridGeometry.gridView()))
     {
         VolumeVariables volVars;
         volVars.update(elemSol, problem, element, scv);
-        Scalar pressure_phase = volVars.pressure(phaseIdx);
-        Scalar density_phase = volVars.density(phaseIdx);
+        Scalar pressure = volVars.pressure(phaseIdx);
+        Scalar density = volVars.density(phaseIdx);
     }
 }
 ```
@@ -201,7 +201,7 @@ for (const auto& element : elements(gridGeometry.gridView()))
 }
 ```
 
-* Adding a whole data field to the output writer. In the following, the output writer `vtkWriter` is assumed to be of type `Dumux::VtkOutputModule` or `Dumux::IO::OutputModule`. The data field container needs to outlive the vtkwriter object:
+* Adding a data field to the output writer. In the following, the output writer `vtkWriter` is assumed to be of type `Dumux::VtkOutputModule` or `Dumux::IO::OutputModule`. The data field container needs to outlive the vtkwriter object:
 ```cpp
 std::vector<double> outputField(gridGeometry.numDofs(), 0.0);
 vtkWriter.addField(outputField, "f");
