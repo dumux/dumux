@@ -35,7 +35,7 @@
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 #include <dumux/discretization/facecentered/staggered/localintersectionindexmapper.hh>
 
-#include <dumux/io/grid/periodicityhelper.hh>
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
 
@@ -143,13 +143,13 @@ public:
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export whether the grid(geometry) supports periodicity
-    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
     : ParentType(std::move(gg))
     , intersectionMapper_(this->gridView())
-    , periodicityHelper_(this->gridView().grid())
+    , periodicGridTraits_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -494,7 +494,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return periodicityHelper_.isPeriodic(intersection);
+        return periodicGridTraits_.isPeriodic(intersection);
     }
 
     // mappers
@@ -513,7 +513,7 @@ private:
     // a map for periodic boundary vertices
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
 
-    const PeriodicityHelper<typename GridView::Grid> periodicityHelper_;
+    const PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 /*!
@@ -569,13 +569,13 @@ public:
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export whether the grid(geometry) supports periodicity
-    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     FaceCenteredStaggeredFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg, const std::string& paramGroup = "")
     : ParentType(std::move(gg))
     , intersectionMapper_(this->gridView())
-    , periodicityHelper_(this->gridView().grid())
+    , periodicGridTraits_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -802,7 +802,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return periodicityHelper_.isPeriodic(intersection);
+        return periodicGridTraits_.isPeriodic(intersection);
     }
 
     // mappers
@@ -822,7 +822,7 @@ private:
     std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
     std::unordered_map<GridIndexType, GridIndexType> outsideVolVarIndices_;
 
-    const PeriodicityHelper<typename GridView::Grid> periodicityHelper_;
+    const PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 } // end namespace Dumux

@@ -35,7 +35,7 @@
 #include <dumux/discretization/pq1bubble/pq1bubblefecache.hh>
 #include <dumux/discretization/extrusion.hh>
 
-#include <dumux/io/grid/periodicityhelper.hh>
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
 
@@ -127,14 +127,14 @@ public:
     //! export the grid view type
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
-    using SupportsPeriodicity = typename PeriodicityHelper<GV::Grid>::SupportsPeriodicity;
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! Constructor
     PQ1BubbleFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
     , dofMapper_(gridView, Traits::layout())
     , cache_(*this)
-    , periodicityHelper_(this->gridView().grid())
+    , periodicGridTraits_(this->gridView().grid())
     {
         update_();
     }
@@ -380,7 +380,7 @@ private:
                 }
 
                 // inform the grid geometry if we have periodic boundaries
-                else if (periodicityHelper_.isPeriodic(intersection))
+                else if (periodicGridTraits_.isPeriodic(intersection))
                 {
                     this->setPeriodic();
 
@@ -399,7 +399,7 @@ private:
                         for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
                             // only check periodic vertices of the periodic neighbor
-                            if (periodicityHelper_.isPeriodic(isOutside))
+                            if (periodicGridTraits_.isPeriodic(isOutside))
                             {
                                 const auto fIdxOutside = isOutside.indexInInside();
                                 const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
@@ -439,7 +439,7 @@ private:
 
     Cache cache_;
 
-    const PeriodicityHelper<typename GridView::Grid>& periodicityHelper_;
+    const PeriodicGridTraits<typename GridView::Grid>& periodicGridTraits_;
 };
 
 } // end namespace Dumux
