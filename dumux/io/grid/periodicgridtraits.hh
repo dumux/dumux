@@ -1,6 +1,6 @@
 
-#ifndef DUMUX_IO_GRID_PERIODICITY_HELPER_HH
-#define DUMUX_IO_GRID_PERIODICITY_HELPER_HH
+#ifndef DUMUX_IO_GRID_PERIODIC_GRID_TRAITS_HH
+#define DUMUX_IO_GRID_PERIODIC_GRID_TRAITS_HH
 
 // forward declare
 namespace Dune {
@@ -15,13 +15,13 @@ class SubGrid;
 namespace Dumux {
 
 template<typename Grid>
-struct PeriodicityHelper
+struct PeriodicGridTraits
 {
     struct SupportsPeriodicity : public std::false_type {};
 
-    PeriodicityHelper() {};
+    PeriodicGridTraits() {};
 
-    PeriodicityHelper(const Grid& grid) {};
+    PeriodicGridTraits(const Grid& grid) {};
 
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
@@ -31,16 +31,16 @@ struct PeriodicityHelper
 };
 
 template<class ct, int dim, template< int > class Ref, class Comm>
-struct PeriodicityHelper<Dune::SPGrid<ct, dim, Ref, Comm>>
+struct PeriodicGridTraits<Dune::SPGrid<ct, dim, Ref, Comm>>
 {
 private:
     using Grid = Dune::SPGrid<ct, dim, Ref, Comm>;
 public:
     struct SupportsPeriodicity : public std::true_type {};
 
-    PeriodicityHelper() {};
+    PeriodicGridTraits() {};
 
-    PeriodicityHelper(const Grid& grid) {};
+    PeriodicGridTraits(const Grid& grid) {};
 
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
@@ -51,19 +51,19 @@ public:
 
 // SubGrid does not preserve intersection.boundary() at periodic boundaries of host grid
 template<int dim, typename HostGrid, bool MapIndexStorage>
-struct PeriodicityHelper<Dune::SubGrid<dim, HostGrid, MapIndexStorage>>
+struct PeriodicGridTraits<Dune::SubGrid<dim, HostGrid, MapIndexStorage>>
 {
 private:
     using Grid = Dune::SubGrid<dim, HostGrid, MapIndexStorage>;
 
     const Grid& subGrid_;
-    const PeriodicityHelper<HostGrid> hostHelper_;
+    const PeriodicGridTraits<HostGrid> hostTraits_;
 
 public:
-    struct SupportsPeriodicity : public PeriodicityHelper<HostGrid>::SupportsPeriodicity {};
+    struct SupportsPeriodicity : public PeriodicGridTraits<HostGrid>::SupportsPeriodicity {};
 
-    PeriodicityHelper(const Grid& subGrid)
-        : subGrid_(subGrid), hostHelper_(subGrid_.getHostGrid()) {};
+    PeriodicGridTraits(const Grid& subGrid)
+        : subGrid_(subGrid), hostTraits_(subGrid_.getHostGrid()) {};
 
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
@@ -73,7 +73,7 @@ public:
         {
             if (hostIntersection.indexInInside() == intersection.indexInInside())
             {
-                const bool periodicInHostGrid = hostHelper_.isPeriodic(hostIntersection);
+                const bool periodicInHostGrid = hostTraits_.isPeriodic(hostIntersection);
                 if (periodicInHostGrid && !subGrid_.template contains<0>(hostIntersection.outside()))
                     DUNE_THROW(Dune::GridError, "Periodic boundary in host grid but outside element not included in subgrid");
                 return periodicInHostGrid;
