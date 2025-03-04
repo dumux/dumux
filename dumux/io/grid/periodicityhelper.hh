@@ -19,9 +19,9 @@ struct PeriodicityHelper
 {
     struct SupportsPeriodicity : public std::false_type {};
 
-    PeriodicityHelper<Grid>() {};
+    PeriodicityHelper() {};
 
-    PeriodicityHelper<Grid>(const Grid& grid) {};
+    PeriodicityHelper(const Grid& grid) {};
 
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
@@ -38,9 +38,9 @@ private:
 public:
     struct SupportsPeriodicity : public std::true_type {};
 
-    PeriodicityHelper<Grid>() {};
+    PeriodicityHelper() {};
 
-    PeriodicityHelper<Grid>(const Grid& grid) {};
+    PeriodicityHelper(const Grid& grid) {};
 
     template<typename Intersection>
     bool isPeriodic (const Intersection& intersection) const
@@ -62,7 +62,7 @@ private:
 public:
     struct SupportsPeriodicity : public PeriodicityHelper<HostGrid>::SupportsPeriodicity {};
 
-    PeriodicityHelper<Grid> (const Grid& subGrid)
+    PeriodicityHelper(const Grid& subGrid)
         : subGrid_(subGrid), hostHelper_(subGrid_.getHostGrid()) {};
 
     template<typename Intersection>
