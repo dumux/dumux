@@ -25,6 +25,9 @@
 #include <dumux/io/grid/gridmanager_sub.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/evalsolution.hh>
+
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/stokes_solver.hh>
 
@@ -77,17 +80,34 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     for (const auto& element : elements(momentumGridGeometry->gridView()))
     {
         fvGeometry.bind(element);
-        for (const auto& scvf : scvfs(fvGeometry))
+
+        if constexpr (MomGG::discMethod == Dumux::DiscretizationMethods::fcstaggered)
         {
-            if (!scvf.boundary() || !scvf.isFrontal())
-                continue;
-            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            if (scv.boundary())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
-                for (int i = 0; i < bcTypes.size(); ++i)
-                    if (bcTypes.isDirichlet(i))
-                        dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                if (!scvf.boundary() || !scvf.isFrontal())
+                    continue;
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                if (scv.boundary())
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                }
+            }
+        }
+        else
+        {
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                }
             }
         }
     }
@@ -95,12 +115,116 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     return dirichletDofs;
 }
 
+template<class MomentumProblem,
+         class MassProblem,
+         class MomentumSolutionVector,
+         class Intersections,
+         class REVGeo,
+         typename MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>,
+         typename std::enable_if_t<Dumux::DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>, int> = 0>
+auto average(const MomentumProblem& momentumProblem,
+             const MassProblem& massProblem,
+             const MomentumSolutionVector& x,
+             const Intersections& iset,
+             const REVGeo& rev)
+{
+    using GlobalPosition = Dune::FieldVector<double, MomentumGridGeometry::GridView::dimensionworld>;
+
+    double phiAvg(0.0);
+    GlobalPosition vAvg(0.0);
+
+    const auto& momentumGridGeometry = momentumProblem.gridGeometry();
+    for(const auto& is : intersections(iset))
+    {
+        const auto isGeo = is.geometry();
+        const auto volume = isGeo.volume();
+        const auto center = isGeo.center();
+        const auto element = is.domainEntity();
+
+        phiAvg += volume;
+        // For CVFE schemes we can interpolate the velocity at the centroid of the intersecting geometry
+        const auto elemSol = elementSolution(element, x, momentumGridGeometry);
+        const auto vel = evalSolution(element, element.geometry(), momentumGridGeometry, elemSol, center);
+        vAvg += vel*volume;
+    }
+
+    phiAvg /= rev.volume();
+    vAvg /= rev.volume();
+    auto KAvg = vAvg[0]*1e-12;
+
+    // these reference values are just regression test references
+    // computed at the time this test was set up
+    // with grid refinement these values would change
+    const auto phiRef = 0.439627;
+    const auto KRef = 2.4471e-13;
+
+    return std::make_tuple(phiAvg, phiRef, KAvg, KRef);
+}
+
+template<class MomentumProblem,
+         class MassProblem,
+         class MomentumSolutionVector,
+         class Intersections,
+         class REVGeo,
+         typename MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>,
+         typename std::enable_if_t<MomentumGridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered, int> = 0>
+auto average(const MomentumProblem& momentumProblem,
+             const MassProblem& massProblem,
+             const MomentumSolutionVector& x,
+             const Intersections& iset,
+             const REVGeo& rev)
+{
+    using GlobalPosition = Dune::FieldVector<double, MomentumGridGeometry::GridView::dimensionworld>;
+
+    double phiAvg(0.0);
+
+    GlobalPosition vAvg(0.0);
+
+    const auto& massGridGeometry = massProblem.gridGeometry();
+
+    // Calculate element velocities
+    std::vector<GlobalPosition> velocity(massGridGeometry.gridView().size(0));
+    auto fvGeometry = localView(massGridGeometry);
+    for (const auto& element : elements(massGridGeometry.gridView()))
+    {
+        const auto eIdx = massGridGeometry.elementMapper().index(element);
+        fvGeometry.bind(element);
+        const auto getFaceVelocity = [&](const auto&, const auto& scvf)
+        { return massProblem.faceVelocity(element, fvGeometry, scvf); };
+
+        velocity[eIdx] = Dumux::StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
+    }
+
+    for(const auto& is : intersections(iset))
+    {
+        const auto isGeo = is.geometry();
+        const auto volume = isGeo.volume();
+        const auto eIdx = massGridGeometry.elementMapper().index(is.domainEntity());
+
+        phiAvg += volume;
+        // Here we apply a piecewise-constant interpolation (because of staggered scheme)
+        vAvg += velocity[eIdx]*volume;
+    }
+
+    phiAvg /= rev.volume();
+    vAvg /= rev.volume();
+    auto KAvg = vAvg[0]*1e-12;
+
+    // these reference values are just regression test references
+    // computed at the time this test was set up
+    // with grid refinement these values would change
+    const auto phiRef = 0.439627;
+    const auto KRef = 3.43761e-13;
+
+    return std::make_tuple(phiAvg, phiRef, KAvg, KRef);
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::PoreFlowTestMomentum;
+    using MomentumTypeTag = Properties::TTag::TYPETAG_MOMENTUM;
     using MassTypeTag = Properties::TTag::PoreFlowTestMass;
 
     // maybe initialize MPI and/or multithreading backend
@@ -242,62 +366,37 @@ int main(int argc, char** argv)
     std::cout << "Permeability is: " << K << " m^2" << std::endl;
     std::cout << "Porosity is: " << phi << std::endl;
 
-    // test against reference solution (hard-coded here)
-    // note that for the test the geometry is very coarse to minimize runtime
-    // therefore these reference values are just regression test references
-    // computed with this test at the time it was set up
-    const auto KRef = 3.43761e-13;
-    const auto phiRef = 0.439627;
-    if (Dune::FloatCmp::ne(K, KRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Permeability " << K << " doesn't match reference " << KRef << " by " << K-KRef);
-    if (Dune::FloatCmp::ne(phi, phiRef, 1e-5))
-        DUNE_THROW(Dune::Exception, "Porosity " << phi << " doesn't match reference " << phiRef << " by " << phi-phiRef);
-
     ////////////////////////////////////////////////////////////
     // do the same calculations by using volume averaging
     ////////////////////////////////////////////////////////////
 
-    // Calculate element velocities
-    std::vector<GlobalPosition> velocity(leafGridView.size(0));
-    auto fvGeometry = localView(*massGridGeometry);
-    for (const auto& element : elements(leafGridView))
-    {
-        const auto eIdx = massGridGeometry->elementMapper().index(element);
-        fvGeometry.bind(element);
-        const auto getFaceVelocity = [&](const auto&, const auto& scvf)
-        { return massProblem->faceVelocity(element, fvGeometry, scvf); };
-
-        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
-    }
-
     const auto size = massGridGeometry->bBoxMax() - massGridGeometry->bBoxMin();
     const auto center = 0.5*(massGridGeometry->bBoxMax() + massGridGeometry->bBoxMin());
-    const auto geo = makeAveragingVolume(center, size);
+    const auto avgGeo = makeAveragingVolume(center, size);
 
     using GES = GridViewGeometricEntitySet<GridView>;
-    using AES = SingleGeometryEntitySet<std::decay_t<decltype(geo)>>;
+    using AES = SingleGeometryEntitySet<std::decay_t<decltype(avgGeo)>>;
     using IntersectionSet = IntersectionEntitySet<GES, AES>;
     const auto gridEntitySet = std::make_shared<GES>(leafGridView);
-    const auto averagingEntitySet = std::make_shared<AES>(geo);
+    const auto averagingEntitySet = std::make_shared<AES>(avgGeo);
     IntersectionSet iset;
     iset.build(gridEntitySet, averagingEntitySet);
 
-    Scalar phiAvg(0.0);
-    GlobalPosition vAvg(0.0);
-    for(const auto& is : intersections(iset))
-    {
-        const auto geo = is.geometry();
-        const auto volume = geo.volume();
-        const auto eIdx = gridEntitySet->index(is.domainEntity());
+    // test against reference solution (hard-coded here)
+    // note that for the test the geometry is very coarse to minimize runtime
+    // therefore these reference values are just regression test references
+    // computed with this test at the time it was set up
+    auto [phiAvg, phiRef, KAvg, KRef] = average(*momentumProblem, *massProblem, x[momentumIdx], iset, avgGeo);
 
-        phiAvg += volume;
-        // Here we apply a piecewise-constant interpolation (because of staggered scheme)
-        vAvg += velocity[eIdx]*volume;
-    }
-    phiAvg /= geo.volume();
-    vAvg /= geo.volume();
+    // Only for staggered grid scheme we get the same reference solution since the piecewise constant quadrature
+    // guarantees that interior velocities cancel out such that the same permeability is expected
+    if constexpr (MomentumGridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+        if (Dune::FloatCmp::ne(K, KRef, 1e-5))
+            DUNE_THROW(Dune::Exception, "Permeability " << K << " doesn't match reference " << KRef << " by " << K-KRef);
 
-    Scalar KAvg = vAvg[0]*1e-12;
+    if (Dune::FloatCmp::ne(phi, phiRef, 1e-5))
+        DUNE_THROW(Dune::Exception, "Porosity " << phi << " doesn't match reference " << phiRef << " by " << phi-phiRef);
+
     std::cout << "Permeability by volume averaging is: " << KAvg << " m^2" << std::endl;
     std::cout << "Porosity by volume averaging is: " << phiAvg << std::endl;
 

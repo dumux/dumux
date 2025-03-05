@@ -16,12 +16,18 @@
 #define ENABLECACHING 1
 #endif
 
+#ifndef TYPETAG_MOMENTUM
+#define TYPETAG_MOMENTUM PoreFlowTestMomentumStaggered
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 #include <dune/subgrid/subgrid.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
 
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
@@ -37,13 +43,14 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct PoreFlowTest {};
-struct PoreFlowTestMomentum { using InheritsFrom = std::tuple<PoreFlowTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct PoreFlowTestMomentumStaggered { using InheritsFrom = std::tuple<PoreFlowTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct PoreFlowTestMomentumDiamond { using InheritsFrom = std::tuple<PoreFlowTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
 struct PoreFlowTestMass { using InheritsFrom = std::tuple<PoreFlowTest, NavierStokesMassOneP, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PoreFlowTestMomentum>
+struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 { using type = PoreFlowTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
@@ -77,7 +84,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PoreFlowTest> { static cons
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PoreFlowTest>
 {
-    using Traits = MultiDomainTraits<TTag::PoreFlowTestMomentum, TTag::PoreFlowTestMass>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::PoreFlowTestMass>;
     using type = FreeFlowCouplingManager<Traits>;
 };
 
