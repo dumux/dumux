@@ -92,7 +92,7 @@ template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::StokesOnePTwoC>
 {
   using H2OAir = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>;
-  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the water phase
+  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the gas phase
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
