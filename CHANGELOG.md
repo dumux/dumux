@@ -12,9 +12,17 @@ C++20 mode is enforced through CMake.
 
 - __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.
 - __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. `GridFormat` is added as a submodule and can be pulled in with `git submodule update --init`.
+- __Grid manager__: A new a grid manager that extracts a grid from the facets of a host grid, as well as a mapper between entities in the domain and the facet grid for finite volume schemes.
 - __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
 - __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
-- __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
+- __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase compositional non/isothermal flow.
+- __Numeric differentiation__: Added five-point stencil difference scheme as an option for numeric differencing.
+- __Time stepping__: Implemented the Newmark-beta time integration scheme with application in structural dynamics.
+- __Structural dynamics__: Extended the hyperelastic model to be able to simulate elastodynamics and added test case.
+- __Documentation__: A documentation page explaining basic concepts in DuMux.
+- __Documentation__: Added subcategories to fluid-matrix interactions and their documentations.
+- __Documentation__: Added Paraview description for pore-network visualization.
+- __Navier-Stokes test__: Added a test case for permeability upscaling
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 -__Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and
