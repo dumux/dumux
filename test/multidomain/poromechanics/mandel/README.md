@@ -1,58 +1,98 @@
-Mandel's problem
---------------------
+## 1. Introduction of Mandel's Problem
+Mandel's problem is a fundamental benchmark in the study of poromechanics, describing the behavior of a fluid-saturated porous medium subjected to loading. It was first introduced by J. Mandel in 1953 and is commonly used to validate theoretical models and numerical methods in poromechanics.
 
-We solve Mandel's 2D consolidation problem with the poromechanics model.
-The solver solves the fully coupled system with primary variables displacement and fluid pressure
-using the P1-CVFE (Box) scheme for the displacement and CC-TPFA for the pressure. The governing equations
-are given by
+## 2. Problem Description
+The typical setup for Mandel’s problem involves a rectangular (plane-strain) domain that is initially at equilibrium with uniform pore pressure. At time $ t = 0 $, an instantaneous load is applied (uniformly on the top and bottom surfaces). The resulting response of the medium is governed by:
 
-For displacement, we use the momentum balance equation, see [model description](https://dumux.org/docs/doxygen/master/group___poro_elastic.html):
+
+- **Mechanical deformation** due to the applied load.
+- **Fluid flow** induced by the pressure gradients set up by the deformation.
+
+The interplay between these processes leads to a diffusion-like behavior in pore pressure evolution and the characteristic Mandel–Cryer effect.
+
+todo: insert the domain figure.
+
+## 3. Governing Equations
+
+We solve Mandel's 2D consolidation problem using a fully coupled poromechanics model implemented in Dumux. In this formulation, the primary unknowns are the solid matrix displacement ($\mathbf{u}$) and the fluid pressure ($p$). The solver employs a P1-CVFE (Box) scheme for the displacement field and a CC-TPFA method for the pressure field, ensuring robust coupling between the mechanical and hydraulic responses.
+
+The governing equations consist of two main parts:
+
+### 3.1. Momentum Balance for the Solid Matrix
+
+The momentum balance (equilibrium) equation for the porous matrix is given by (see the [poro-elastic model description](https://dumux.org/docs/doxygen/master/group___poro_elastic.html)):
+
 $$
- \nabla\cdot\boldsymbol{\sigma_{\mathrm{eff}}} + \rho \mathbf{g} + \mathbf{f} = \rho\ddot{\mathbf{u}},
+\nabla \cdot \boldsymbol{\sigma}_{\mathrm{eff}} + \rho\, \mathbf{g} + \mathbf{f} = \rho\, \ddot{\mathbf{u}},
 $$
 
+where:
+- $\boldsymbol{\sigma}_{\mathrm{eff}}$ is the effective stress tensor,
+- $\rho$ is the density of the solid,
+- $\mathbf{g}$ is the gravitational acceleration vector,
+- $\mathbf{f} = 0$ represents additional body forces,
+- $\ddot{\mathbf{u}} \approx 0$ denotes the acceleration of the solid matrix.
 
- For pressure, we use the mass balance equation, see [model description](https://dumux.org/docs/doxygen/master/group___one_p_model.html):
- $$
- \frac{\partial (\phi \varrho) }{\partial t} + \nabla \cdot \left\lbrace - \varrho \frac{\textbf K}{\mu} \left( \nabla p -\varrho {\textbf g} \right) \right\rbrace = q
- $$
+### 3.2. Mass Balance for the Fluid Phase
 
-Description of the benchmark case
------------------------------------
+The mass conservation (fluid balance) equation is expressed as (see the [one-phase model description](https://dumux.org/docs/doxygen/master/group___one_p_model.html)):
+
+$$
+\frac{\partial (\phi\, \varrho)}{\partial t} + \nabla \cdot \left\{ - \varrho\, \frac{\mathbf{K}}{\mu} \left( \nabla p - \varrho\, \mathbf{g} \right) \right\} = q,
+$$
+
+where:
+- $\phi$ denotes the porosity,
+- $\varrho$ is the fluid density,
+- $\mathbf{K}$ is the permeability tensor,
+- $\mu$ is the dynamic viscosity of the fluid,
+- $q$ represents a source (or sink) term for the fluid.
+
+### 3.3. Coupling Equations
+The two equations are coupled through the porosity change and pore pressure ($p$ here).
+The porosity change is given by:
+(see the [ducumentation](https://dumux.org/docs/doxygen/master/class_dumux_1_1_porosity_deformation.html))
+$$ \phi = \frac{\phi_0 + \nabla \cdot \boldsymbol u}{1 + \nabla \cdot \boldsymbol u} $$
+where $\phi_0$ is the initial porosity.
+
+## 4. Boundary and Initial Conditions
+
+Due to the symmetry of the problem, we consider only a quarter of the domain. The boundary conditions are defined as follows:
+
+### Mechanical Boundary Conditions
+$$ u_y = \begin{cases}
+u_y(t) & \text{on } \Gamma_{\text{top}} \\
+0 & \text{on } \Gamma_{\text{bottom}}
+\end{cases}$$
+$$ u_x = 0 \quad \text{on } \Gamma_{\text{left}}$$
+$$ \sigma_{xx} = 0 \quad \text{on } \Gamma_{\text{right}}$$
+$$  \tau_{xy} = \tau_{yx} = 0 \quad on \Gamma $$
+
+
+### Hydraulic Boundary Conditions
+- **Top Boundary:**
+  - No flow condition: $q = 0$
+- **Bottom Boundary:**
+  - No flow condition: $q = 0$
+- **Left Boundary:**
+  - No flow condition: $q = 0$
+- **Right Boundary:**
+  - Prescribed pore pressure: $p = 0$
+
+
+---
+
+
 For details, please using the following papers as reference.
 - paper1: "Mandel’s problem revisited." [DOI: 10.1680/geot.1996.46.2.187](https://www.icevirtuallibrary.com/doi/abs/10.1680/geot.1996.46.2.187)
 - paper2: "A coupling of mixed and continuous Galerkin finite element methods for poroelasticity I: the continuous in time case" [DOI:10.1007/s10596-007-9045-y](https://link.springer.com/article/10.1007/s10596-007-9045-y)
 
-## Problem setup
-# Mandel's Problem in Poromechanics
 
-Mandel's problem is a fundamental benchmark in the study of poromechanics, describing the behavior of a fluid-saturated porous medium subjected to loading. It was first introduced by J. Mandel in 1953 and is commonly used to validate theoretical models and numerical methods in poromechanics.
+
 
 ## Problem Description
 
 The problem considers a porous elastic slab confined laterally and subjected to a uniform compressive load on its top surface. The system is initially undrained, leading to a buildup of pore pressure due to fluid incompressibility. Over time, fluid flow occurs due to pressure gradients, causing the system to transition towards a drained equilibrium state.
-
-## Key Features
-
-- **Material**: A porous, elastic medium saturated with an incompressible fluid.
-- **Boundary Conditions**:
-  - Lateral boundaries are impermeable and fixed.
-  - Vertical surfaces allow for fluid flow and stress application.
-- **Loading**: Uniform vertical stress is applied on the top surface.
-
-## Solution and Significance
-
-Mandel's problem highlights:
-- **Coupled Behavior**: The interaction between mechanical deformation and fluid diffusion.
-- **Pore Pressure Evolution**: An initial rise in pore pressure followed by a decay as fluid diffuses out.
-- **Consolidation Effects**: The time-dependent settlement of the porous medium due to fluid flow.
-
-The analytical solution to Mandel's problem provides insights into:
-- Stress and pore pressure distributions.
-- Consolidation rates and time scales.
-- Validation benchmarks for numerical models in poromechanics.
-
-Mandel's problem remains a cornerstone in the study of coupled solid-fluid interactions and is extensively used in fields such as geomechanics, petroleum engineering, and hydrology.
 
 TODO:
 1) Drawing of problem setup
