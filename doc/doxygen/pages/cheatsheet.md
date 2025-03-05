@@ -1,7 +1,7 @@
 # Cheatsheet
 
 ## Working with (DUNE) modules
-* Configure and compile all modules (including Dumux) using specified CMake options:
+* Configure and compile all modules (including DuMux) using specified CMake options:
 ```bash
 ./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all
 ```
@@ -40,6 +40,11 @@ DUMUX_NUM_THREADS=<num_threads> ./<executable_name>
 make doc
 ```
 Entry page of built documentation can be found in `dumux/build-cmake/doc/doxygen/html/index.html` and opened via a browser.
+
+Build and run the test suite of DuMux. In `build-cmake/`:
+```bash
+make -j8 build_test & ctest -j8
+```
 
 * Creating a new DUNE module:
 ```bash
@@ -225,6 +230,10 @@ set(CMAKE_BUILD_TYPE [BUILD_TYPE])
   [https://dumux.org/](https://dumux.org/)
 - **DuMuX documentation:**
   [https://dumux.org/docs/doxygen/master/](https://dumux.org/docs/doxygen/master/)
+- **DuMux style guide:**
+  [https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/doc/styleguide.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/doc/styleguide.md)
+- **Contribution guidelines:**
+  [https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
 - **DuMuX Wiki:**
   [https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/home](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/wikis/home)
 - **DuMuX course:**
