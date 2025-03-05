@@ -38,8 +38,7 @@ public:
 
     PeriodicGridTraits(const Grid& grid) {};
 
-    template<typename Intersection>
-    bool isPeriodic (const Intersection& intersection) const
+    bool isPeriodic (const Grid::LeafIntersection& intersection) const
     {
         return intersection.neighbor() && intersection.boundary();
     }
@@ -61,8 +60,7 @@ public:
     PeriodicGridTraits(const Grid& subGrid)
         : subGrid_(subGrid), hostTraits_(subGrid_.getHostGrid()) {};
 
-    template<typename Intersection>
-    bool isPeriodic (const Intersection& intersection) const
+    bool isPeriodic (const Grid::LeafIntersection& intersection) const
     {
         const auto& hostElement = subGrid_.template getHostEntity<0>(intersection.inside());
         for (const auto& hostIntersection : intersections(subGrid_.getHostGrid().leafGridView(), hostElement))
