@@ -19,8 +19,6 @@ struct PeriodicGridTraits
 {
     struct SupportsPeriodicity : public std::false_type {};
 
-    PeriodicGridTraits() {};
-
     PeriodicGridTraits(const Grid& grid) {};
 
     template<typename Intersection>
@@ -37,8 +35,6 @@ private:
     using Grid = Dune::SPGrid<ct, dim, Ref, Comm>;
 public:
     struct SupportsPeriodicity : public std::true_type {};
-
-    PeriodicGridTraits() {};
 
     PeriodicGridTraits(const Grid& grid) {};
 
