@@ -62,7 +62,12 @@ int main(int argc, char** argv)
     GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
 
 #if HAVE_DUNE_SUBGRID && USESUBGRID
-    auto selector = [](const auto& element) { return true; };
+    auto selector = [](const auto& element) {
+        const static auto trivialSelector = getParam<bool>("Problem.TrivialSelector", true);
+        const auto distance = std::max(std::abs(element.geometry().center()[0] - 0.5),
+                                       std::abs(element.geometry().center()[1] - 0.5));
+        return trivialSelector || distance > 0.25 - 1e-6;
+    };
     gridManager.init(selector);
 #else
     gridManager.init();

@@ -8,6 +8,7 @@ PrintL2Error = false
 EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
+TrivialSelector = true
 
 [Component]
 LiquidDensity = 1
