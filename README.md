@@ -25,7 +25,8 @@ Please have a look at our journal publications
 for a more detailed description of the goals the development history
 and motivations behind DuMu<sup>x</sup>.
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) ![GitLab Last Commit](https://img.shields.io/gitlab/last-commit/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de%2F)
+
 
 [TOC]
 
