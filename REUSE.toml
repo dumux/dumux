@@ -29,6 +29,7 @@ path = [
     "**.svg",
     "**.eps",
     "**.gif",
+    "**.raw",
 ]
 SPDX-FileCopyrightText = "DuMux Project contributors, see AUTHORS.md in root folder"
 SPDX-License-Identifier = "CC-BY-4.0"
