@@ -25,7 +25,9 @@ Please have a look at our journal publications
 for a more detailed description of the goals the development history
 and motivations behind DuMu<sup>x</sup>.
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) ![GitLab Last Commit](https://img.shields.io/gitlab/last-commit/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de%2F) ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=orange)
+
+
 
 [TOC]
 
@@ -108,8 +110,8 @@ our publications:
 
 # Automated Testing / Test suite
 
-* Latest release (3.9): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.9/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.9)
-* Master branch (development / unstable): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
+* ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=orange): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.9/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.9)
+* ![Master branch (development / unstable)](https://img.shields.io/badge/DuMux_branch-master-orange): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that
