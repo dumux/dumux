@@ -21,6 +21,7 @@
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
+#include <dumux/discretization/method.hh>
 
 namespace Dumux {
 
@@ -110,10 +111,16 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             const auto p = isInlet_(globalPos) ? deltaP_ : 0.0;
-            using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
-            values = FluxHelper::fixedPressureMomentumFlux(
-                *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
-            );
+
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+            {
+                using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
+                );
+            }
+            else
+                values.axpy(p, scvf.unitOuterNormal());
         }
         else
         {
