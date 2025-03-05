@@ -24,6 +24,21 @@
     height:60px;
     margin-bottom:-4px
 }
+.edit-button {
+    display: inline-block;
+    padding: 5px 10px 5px 10px;
+    background: #ffaa16;
+    border-radius: 10px;
+    color: black;
+    vertical-align: middle;
+}
+.edit-button:hover {
+    background: #ffcc1d;
+}
+a.edit-button{
+    text-decoration: none !important;
+    color: black !important;
+}
 .cls-r-1{
     fill:#dd1f26
 }

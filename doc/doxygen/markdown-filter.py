@@ -16,6 +16,19 @@ MAIN_README = abspath(join(TOP_LEVEL_DIR, "README.md"))
 assert exists(MAIN_README)
 
 
+def _get_file_gitlab_url(path: str) -> str:
+    return (
+        "https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/"
+        "-/blob/master/"
+        f"{path}"
+        "?ref_type=heads"
+    )
+
+
+def _file_path_relative_to_top_level(path: str) -> str:
+    return path.replace(TOP_LEVEL_DIR, "").lstrip("/")
+
+
 def _filter_characters(text: str) -> str:
     return "".join(filter(lambda c: c not in string.punctuation and c not in string.digits, text))
 
@@ -68,6 +81,18 @@ for line in result.split("\n"):
     result_lines.append(
         line if verbatim_environment else _enable_doxygen_only_content(_add_header_label(line))
     )
+
+# Tell readers that they can edit the markdown content on GitLab
+
+markdown_file_path = _file_path_relative_to_top_level(filePath)
+file_url = _get_file_gitlab_url(markdown_file_path)
+
+result_lines.extend(
+    [
+        "\n----\n",
+        f'<a class="edit-button" href="{file_url}">' "🛠  Edit above doc on GitLab" "</a>\n",
+    ]
+)
 
 # Print the final result for Doxygen to pick it up
 print("\n".join(result_lines))
