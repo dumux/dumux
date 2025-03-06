@@ -10,11 +10,8 @@
  * \brief Defines a type tag and some properties for geomechanical DuMuX models.
  */
 
-#ifndef DUMUX_GEOMECHANICS_PROPERTIES_HH
-#define DUMUX_GEOMECHANICS_PROPERTIES_HH
-
-#warning "This header is deprecated and will be removed after 3.10.
-
+#ifndef DUMUX_SOLIDMECHANICS_PROPERTIES_HH
+#define DUMUX_SOLIDMECHANICS_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
@@ -71,4 +68,4 @@ public:
 } // namespace Properties
 } // namespace Dumux
 
-#endif
+ #endif

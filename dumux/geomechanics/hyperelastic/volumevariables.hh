@@ -13,35 +13,7 @@
 #ifndef DUMUX_GEOMECHANICS_HYPERELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_GEOMECHANICS_HYPERELASTIC_VOLUME_VARIABLES_HH
 
-#include <dumux/common/volumevariables.hh>
-
-namespace Dumux {
-/*!
- * \ingroup Hyperelastic
- * \brief Volume variables for the hyperelasticity model
- */
-template <class Traits>
-class HyperelasticVolumeVariables
-: public BasicVolumeVariables<Traits>
-{
-    using Scalar = typename Traits::PrimaryVariables::value_type;
-
-    static_assert(Traits::PrimaryVariables::dimension == Traits::ModelTraits::numEq());
-
-public:
-    //! export the type used for the primary variables
-    using PrimaryVariables = typename Traits::PrimaryVariables;
-
-    //! export the indices type
-    using Indices = typename Traits::ModelTraits::Indices;
-
-    Scalar displacement(int i) const
-    { return this->priVar(i); }
-
-    const PrimaryVariables& displacement() const
-    { return this->priVars(); }
-};
-
-} // end namespace Dumux
+#include <dumux/solidmechanics/hyperelastic/volumevariables.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use HyperelasticVolumeVariables from dumux/solidmechanics/hyperelastic/volumevariables.hh."
 
 #endif

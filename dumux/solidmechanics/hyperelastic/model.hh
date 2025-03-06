@@ -46,10 +46,77 @@
  * This model expects the user problem implementation to provide a function
  * `firstPiolaKirchhoffStressTensor(F)` implementing the constitutive law.
  */
-#ifndef DUMUX_GEOMECHANICS_HYPERELASTIC_MODEL_HH
-#define DUMUX_GEOMECHANICS_HYPERELASTIC_MODEL_HH
+#ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
+#define DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 
-#include <dumux/solidmechanics/hyperelastic/model.hh>
-#warning "This header is deprecated and will be removed after 3.10. Use dumux/solidmechanics/hyperelastic/model.hh."
+#include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
+
+#include "spatialparams.hh"
+#include "localresidual.hh"
+#include "volumevariables.hh"
+
+namespace Dumux {
+
+template<class PV, class MT>
+struct HyperelasticVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using ModelTraits = MT;
+};
+
+struct HyperelasticIndices
+{
+    static constexpr int displacementIdx(int i) { return i; };
+    static constexpr int equationIdx(int i) { return i; };
+};
+
+/*!
+ * \ingroup Hyperelastic
+ * \brief HyperelasticModelTraits
+ */
+template<int dim>
+struct HyperelasticModelTraits
+{
+    using Indices = HyperelasticIndices;
+    static constexpr int numEq() { return dim; }
+};
+
+namespace Properties {
+
+// Create new type tags
+namespace TTag {
+struct Hyperelastic { using InheritsFrom = std::tuple<ModelProperties>; };
+} // end namespace TTag
+
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::Hyperelastic>
+{ using type = HyperelasticModelTraits<GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension>; };
+
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::Hyperelastic>
+{ using type = HyperelasticLocalResidual<TypeTag>; };
+
+//! Set the volume variables property
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Hyperelastic>
+{
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = HyperelasticVolumeVariablesTraits<PV, MT>;
+    using type = HyperelasticVolumeVariables<Traits>;
+};
+
+// Set the default spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::Hyperelastic>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = DefaultHyperelasticSpatialParams<GridGeometry, Scalar>;
+};
+
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif
