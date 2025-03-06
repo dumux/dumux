@@ -1,11 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory(elastic)
-add_subdirectory(hyperelastic)
 add_subdirectory(poroelastic)
-add_subdirectory(poromechanics)
-add_subdirectory(solidmechanics)
 
 file(GLOB DUMUX_GEOMECHANICS_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_GEOMECHANICS_HEADERS}
