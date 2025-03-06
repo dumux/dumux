@@ -48,22 +48,26 @@ See `Dumux::NewtonSolver` for the implementation of the Newton method based solv
 
  Users have the flexibility to adjust various Newton solver parameters to optimize convergence and efficiency.
  The aparmeters, that can be set in the input file, e.g., `params.input`, are:
- * UseLineSearch: if is set to true, an inexact line search method is used, which multiplies the full Newton step predicted by Newton method with a relaxation factor to improve the convergence behavior, i.e., increase the residual reduction. The relaxation factor decreases repeatedly until the residual reduction does not increase anymore or it reaches a minimum value.
- * LineSearchMinRelaxationFactor: to set the minimum values of the line search relaxation factor. The default value is 0.125.
- * EnableChop:
- * EnablePartialReassembly:
- * EnableAbsoluteResidualCriterion:
- * EnableShiftCriterion:
- * EnableResidualCriterion:
- * SatisfyResidualAndShiftCriterion:
- * MaxRelativeShift:
- * MaxAbsoluteResidual:
- * ResidualReduction:
- * MinSteps:
- * MaxSteps:
- * TargetSteps:
- * ReassemblyMinThreshold:
- * ReassemblyMaxThreshold:
- * ReassemblyShiftWeight:
- * RetryTimeStepReductionFactor:
- * MaxTimeStepDivisions:
+ - **UseLineSearch**: the default value is false. If is set to true, an inexact line search method is used, which multiplies the full Newton step predicted by Newton method with a relaxation factor, $\alpha$ to improve the convergence behavior, i.e., increase the residual reduction.
+  \begin{align*}
+  \textbf{u}^{i+1} = \textbf{u}^i - \alpha\textbf{x}^i
+  \end{align*}
+  The relaxation factor decreases repeatedly until the residual reduction does not improve anymore or the relaxation factor reaches a minimum value, i.e., `LineSearchMinRelaxationFactor`.
+ - **LineSearchMinRelaxationFactor**: The default value is 0.125. to set the minimum values of the line search relaxation factor.
+ - **EnableChop**: the default value is false. If is set to true, the Newton step is reduced. Please note that both `UseLineSearch` and `EnableChop` can be set to true simultaneously. To this end, the chopped Newton solver strategy is not yet implemented. Therefore, even if `EnableChop` is set to true, the Newton step will not be reduced in the current version.
+ - **EnableAbsoluteResidualCriterion**: the default value is false.
+ - **EnableShiftCriterion**: the default value is true.
+ - **EnableResidualCriterion**: the default value is false.
+ - **SatisfyResidualAndShiftCriterion**: the default value is false.
+ - **MaxRelativeShift**: the default value is 1e-8.
+ - **MaxAbsoluteResidual**: the default value is 1e-5.
+ - **ResidualReduction**: the default value is 1e-5.
+ - **MinSteps**: the default value is 2.
+ - **MaxSteps**: the default value is 18.
+ - **TargetSteps**: the default value is 10.
+ - **RetryTimeStepReductionFactor**: the default value is 0.5.
+ - **MaxTimeStepDivisions**: the default value is 10.
+ - **EnablePartialReassembly**: the default value is false.
+ - **ReassemblyMinThreshold**: the default value is $10^{-1} \times$ `MaxRelativeShift`.
+ - **ReassemblyMaxThreshold**: the default value is $10^2 \times$ `MaxRelativeShift`.
+ - **ReassemblyShiftWeight**: the default value is $10^{-3}$.
