@@ -41,6 +41,7 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/variablesinterface.hh>
 #include <dumux/flux/fourierslaw.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -178,7 +179,7 @@ private:
 
     using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
-    using type = NavierStokesMomentumCVFEVolumeVariables<Traits>;
+    using type = Dumux::Detail::CVFE::VariablesInterface<NavierStokesMomentumCVFEVolumeVariables<Traits>>;
 };
 
 // This is the default (model not coupled with a mass (pressure) discretization)
