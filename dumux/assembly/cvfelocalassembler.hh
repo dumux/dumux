@@ -57,12 +57,6 @@ template<typename ElemVars, typename FVG>
 constexpr inline bool definesVolVarsDeflectionHelperType()
 { return Dune::Std::is_detected<DefinesDeflectionHelperType, ElemVars, FVG>::value; }
 
-template<class Accessor, class FVG>
-auto defaultDeflectionHelper(Accessor&& accessor, const FVG& fvg, bool deflectAllVolVars)
-{
-    return Detail::VolVarsDeflectionHelper<Accessor, FVG>(std::move(accessor), fvg, deflectAllVolVars);
-};
-
 template<class GridVarsCache, class ElemVars, class FVG>
 auto VolVarsDeflectionHelper(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
 {
@@ -73,16 +67,8 @@ auto VolVarsDeflectionHelper(GridVarsCache& gridVarsCache, ElemVars& elemVars, c
     }
     else
     {
-        return defaultDeflectionHelper(
-            [&] (const auto& scv) -> ElemVars::VolumeVariables& {
-                if constexpr (GridVarsCache::cachingEnabled)
-                    return gridVarsCache.volVars(scv);
-                else
-                    return elemVars[scv];
-            },
-            fvg,
-            deflectAllVolVars
-        );
+        using DeflectionHelper = Detail::VolVarsDeflectionHelper<GridVarsCache, FVG>;
+        return DeflectionHelper(gridVarsCache, elemVars, fvg, deflectAllVolVars);
     }
 };
 
