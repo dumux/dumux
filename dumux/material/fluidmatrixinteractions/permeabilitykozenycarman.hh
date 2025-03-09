@@ -9,6 +9,7 @@
  * \ingroup Fluidmatrixinteractions
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  */
+
 #ifndef DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
 #define DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
 
