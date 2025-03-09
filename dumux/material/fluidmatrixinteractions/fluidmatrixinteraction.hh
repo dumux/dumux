@@ -10,6 +10,7 @@
  * \brief   Wrapper type to combine an arbitrary number of different laws
  *          for fluid-matrix interaction (e.g., pc-Sw-curves).
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_INTERACTIONS_FLUIDMATRIX_INTERACTION_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_INTERACTIONS_FLUIDMATRIX_INTERACTION_HH
 

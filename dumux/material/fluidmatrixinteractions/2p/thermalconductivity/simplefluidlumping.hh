@@ -4,6 +4,12 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+ * \file
+ * \ingroup EffectiveHeatConductivity
+ * \brief Relation for the saturation-dependent effective thermal conductivity
+ */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 

@@ -74,7 +74,6 @@ of the tortuosity coefficient $\tau$. The two
 quantities are related by $ \lambda = \sqrt{1/\tau} $.
 
 The following laws are implemented:
-
 @ingroup Fluidmatrixinteractions
 
 @defgroup EffectiveHeatConductivity Effective heat conductivity in porous media
