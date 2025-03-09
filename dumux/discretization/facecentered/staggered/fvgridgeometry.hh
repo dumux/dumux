@@ -245,10 +245,6 @@ public:
     const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
     { return periodicFaceMap_; }
 
-    //! Returns the map between dofs across periodic boundaries
-    [[deprecated("Will be removed after release 3.9. Use periodicDofMap() instead.")]]
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
-    { return periodicDofMap(); }
 
 private:
 
@@ -652,11 +648,6 @@ public:
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
     { return periodicFaceMap_; }
-
-    //! Returns the map between dofs across periodic boundaries
-    [[deprecated("Will be removed after release 3.9. Use periodicDofMap() instead.")]]
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
-    { return periodicDofMap(); }
 
 private:
 
