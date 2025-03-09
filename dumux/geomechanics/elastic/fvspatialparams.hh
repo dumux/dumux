@@ -12,7 +12,7 @@
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 
-#include <dumux/deomechanics/solidmechanics/elastic/fvspatialparams.hh>
-#warning "This header is deprecated and will be removed after 3.10. Use FVElasticSpatialParams from dumux/deomechanics/solidmechanics/elastic/fvspatialparams.hh."
+#include <dumux/solidmechanics/elastic/fvspatialparams.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use FVElasticSpatialParams from dumux/solidmechanics/elastic/fvspatialparams.hh."
 
 #endif

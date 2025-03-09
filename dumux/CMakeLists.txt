@@ -16,7 +16,9 @@ add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(parallel)
 add_subdirectory(porenetwork)
+add_subdirectory(poromechanics)
 add_subdirectory(porousmediumflow)
+add_subdirectory(solidmechanics)
 
 # if Python bindings are enabled, include necessary sub directories.
 if(DUMUX_ENABLE_PYTHONBINDINGS)
