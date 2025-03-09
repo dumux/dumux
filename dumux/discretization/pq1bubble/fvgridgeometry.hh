@@ -178,20 +178,15 @@ public:
 
     //! If a vertex / d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return periodicVertexMap_.count(dofIdx); }
+    { return periodicDofMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicVertexMap_.at(dofIdx); }
+    { return periodicDofMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
-    { return periodicVertexMap_; }
-
-    //! Returns the map between dofs across periodic boundaries
-    [[deprecated("Will be removed after release 3.9. Use periodicDofMap() instead.")]]
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicVertexMap() const
-    { return periodicDofMap(); }
+    { return periodicDofMap_; }
 
     //! local view of this object (constructed with the internal cache)
     friend inline LocalView localView(const PQ1BubbleFVGridGeometry& gg)
@@ -404,7 +399,7 @@ private:
                                     const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
-                                        periodicVertexMap_[vIdxGlobal] = this->dofMapper().subIndex(outside, vIdxOutside, dim);
+                                        periodicDofMap_[vIdxGlobal] = this->dofMapper().subIndex(outside, vIdxOutside, dim);
                                 }
                             }
                         }
@@ -430,7 +425,7 @@ private:
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+    std::unordered_map<GridIndexType, GridIndexType> periodicDofMap_;
 
     Cache cache_;
 };
