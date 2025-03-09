@@ -67,7 +67,8 @@ See `Dumux::NewtonSolver` for the implementation of the Newton method based solv
  - **TargetSteps**: the default value is 10. It sets the optimum number of iterations we want to achieve. It plays a role in time-step size suggestion by Newton for the next time-step, considering how fast Newton converged, i.e., the number of iterations done to converge in a time-step (`numSteps_`). That means, if the current `numSteps_` is below `TargetSteps`, Newton will suggest a larger time-step size for the next time step, and a smaller time-step size if it's above.
  - **RetryTimeStepReductionFactor**: the default value is 0.5. If Newton does not converges, then the time-step size will be reduced by a factor of `RetryTimeStepReductionFactor` and the time-step will be redone with the new time-step size.
  - **MaxTimeStepDivisions**: the default value is 10. If even after `MaxTimeStepDivisions` of time-step size reduction, the Newton solver does not succeed to solve the system, the simulation will be aborted.
- - **EnablePartialReassembly**: the default value is false.
+ - **EnablePartialReassembly**: the default value is false. If it is set to true, the Jacobian matrix is partially reassembled in the next iteration, computing only components associated with primary variables that have changed beyond the Reassembly threshold. The threshold is computed as: <br> Reassembly threshold = max(`ReassemblyMinThreshold`, min(`ReassemblyMaxThreshold`, `ReassemblyShiftWeight` $\times$ Relative shift))
+
  - **ReassemblyMinThreshold**: the default value is $10^{-1} \times$ `MaxRelativeShift`.
  - **ReassemblyMaxThreshold**: the default value is $10^2 \times$ `MaxRelativeShift`.
  - **ReassemblyShiftWeight**: the default value is $10^{-3}$.
