@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief This class provides the infrastructure to write the
  *        convergence behaviour of the Newton method for
  *        multidomain simulations into a VTK file.
@@ -23,7 +23,7 @@ namespace Dumux {
 
 /*!
  * \ingroup MultiDomain
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Writes the intermediate solutions for every Newton iteration
  * \note This is used together with a Newton solver, see documentation of the Newton solver for
  *       more information on how to use this class.

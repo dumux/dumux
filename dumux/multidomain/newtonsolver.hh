@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \ingroup MultiDomain
  * \copydoc Dumux::MultiDomainNewtonSolver
  */
@@ -25,7 +25,7 @@ using DetectPVSwitchMultiDomain = typename Assembler::template GridVariables<Ind
 } // end namespace Detail
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \ingroup MultiDomain
  * \brief Newton solver for coupled problems
  */
