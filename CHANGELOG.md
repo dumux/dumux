@@ -26,6 +26,10 @@ idenpendently of the property system.
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:
 
 
+### Removed
+- __Periodic Map__: `periodicVertexMap` that was deprecated in 3.9 has been removed. Use `periodicDofMap` instead.
+
+
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
 
