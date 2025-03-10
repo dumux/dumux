@@ -68,12 +68,20 @@ public:
     {
         refVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefVelocity");
         refPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefPressure");
-        refMoleFrac_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.refMoleFrac");
         refTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefTemperature");
+        Scalar refRelativeHumidity = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.RefRelHumidity");
+
 
         diffCoeffAvgType_ = StokesDarcyCouplingOptions::stringToEnum(DiffusionCoefficientAveragingType{},
                                                                      getParamFromGroup<std::string>(this->paramGroup(), "Problem.InterfaceDiffusionCoefficientAvg"));
         problemName_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+
+        FluidState fluidState;
+        fluidState.setPressure(FluidSystem::phase0Idx, refPressure_);
+        fluidState.setTemperature(refTemperature_);
+        const auto h2oIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx);
+        Scalar vapPressure = FluidSystem::vaporPressure(fluidState, h2oIdx);
+        refMoleFrac_ = refRelativeHumidity * vapPressure / refPressure_;
     }
 
     /*!
@@ -255,7 +263,7 @@ public:
     const Scalar refPressure() const
     { return refPressure_; }
 
-    //! Returns the reference mass fraction.
+    //! Returns the reference mole fraction.
     const Scalar refMoleFrac() const
     { return refMoleFrac_; }
 

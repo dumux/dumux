@@ -23,7 +23,7 @@ Grading1 = -1.5
 Name = stokes
 RefVelocity = 3.5 # [m/s]
 RefPressure = 1e5 # [Pa]
-refMoleFrac = 0 # [-]
+RefRelHumidity = 0 # [-]
 RefTemperature = 298.15 # [K]
 
 [Darcy.Problem]
