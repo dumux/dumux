@@ -3,6 +3,6 @@
 
 add_subdirectory(poroelastic)
 
-file(GLOB DUMUX_GEOMECHANICS_HEADERS *.hh *.inc)
-install(FILES ${DUMUX_GEOMECHANICS_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/geomechanics)
+file(GLOB DUMUX_POROMECHANICS_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_POROMECHANICS_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/poromechanics)
