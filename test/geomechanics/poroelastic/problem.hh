@@ -15,7 +15,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/geomechanics/fvproblem.hh>
+#include <dumux/poromechanics/fvproblem.hh>
 
 namespace Dumux {
 
@@ -24,9 +24,9 @@ namespace Dumux {
  * \brief Problem definition for the deformation of a poro-elastic body.
  */
 template<class TypeTag>
-class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
+class PoroElasticProblem : public PoromechanicsFVProblem<TypeTag>
 {
-    using ParentType = GeomechanicsFVProblem<TypeTag>;
+    using ParentType = PoromechanicsFVProblem<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

@@ -20,7 +20,7 @@
 #include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
-#include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/poromechanics/poroelastic/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/components/co2.hh>
@@ -28,7 +28,7 @@
 #include <dumux/material/fluidsystems/brineco2.hh>
 
 #include <dumux/multidomain/traits.hh>
-#include <dumux/geomechanics/poroelastic/couplingmanager.hh>
+#include <dumux/poromechanics/poroelastic/couplingmanager.hh>
 
 #include "spatialparams_2p.hh"
 #include "spatialparams_poroelastic.hh"

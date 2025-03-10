@@ -18,7 +18,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/geomechanics/fvproblem.hh>
+#include <dumux/poromechanics/fvproblem.hh>
 
 namespace Dumux {
 
@@ -27,9 +27,9 @@ namespace Dumux {
  * \brief The poro-elastic sub-problem in the el2p coupled problem.
  */
 template<class TypeTag>
-class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
+class PoroElasticSubProblem : public PoromechanicsFVProblem<TypeTag>
 {
-    using ParentType = GeomechanicsFVProblem<TypeTag>;
+    using ParentType = PoromechanicsFVProblem<TypeTag>;
 
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;

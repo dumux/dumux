@@ -18,14 +18,14 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 
-#include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/poromechanics/poroelastic/model.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/multidomain/traits.hh>
-#include <dumux/geomechanics/poroelastic/couplingmanager.hh>
+#include <dumux/poromechanics/poroelastic/couplingmanager.hh>
 
 #include "spatialparams_1p.hh"
 #include "spatialparams_poroelastic.hh"
