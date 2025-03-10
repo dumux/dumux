@@ -110,12 +110,6 @@ public:
     }
 };
 
-#ifndef DOXYGEN
-#ifndef DUMUX_MATERIAL_FLUIDMATRIX_THERMALCONDUCTIVITY_SOMERTON_TWO_P_HH
-template<class Scalar>
-using ThermalConductivitySomerton [[deprecated("Use ThermalConductivitySomertonThreeP. Will be removed after 3.9.")]] = ThermalConductivitySomertonThreeP<Scalar>;
-#endif
-#endif
 
 } // end namespace Dumux
 
