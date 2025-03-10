@@ -734,7 +734,7 @@ private:
     {
         return CheckPointType{}
             .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
-            .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
+            .withManual(!checkPoints_.empty() && fuzzyEqual_(t, checkPoints_.front()));
     }
 
     /*!
