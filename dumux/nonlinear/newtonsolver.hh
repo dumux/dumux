@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Reference implementation of a Newton solver.
- */
+*/
+
 #ifndef DUMUX_NEWTON_SOLVER_HH
 #define DUMUX_NEWTON_SOLVER_HH
 
@@ -165,7 +166,7 @@ void assign(To& to, const From& from)
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief An implementation of a Newton solver.
  * \tparam Assembler the assembler
  * \tparam LinearSolver the linear solver

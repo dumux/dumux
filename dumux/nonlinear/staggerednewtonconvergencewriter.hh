@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief This class provides the infrastructure to write the
  *        convergence behaviour of the newton method for the
  *        staggered discretization scheme into a VTK file.
@@ -24,7 +24,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Writes the intermediate solutions for every Newton iteration (for staggered grid scheme)
  * \note This is used together with a Newton solver, see documentation of the Newton solver for
  *       more information on how to use this class.

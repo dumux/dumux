@@ -1,6 +1,5 @@
-@addtogroup Nonlinear
-
-The Newton solver is used to solve a non-linear system of equations.
+@defgroup Newton
+@details The Newton solver is used to solve a non-linear system of equations.
 
 The discrete differential equations are formulated in residual form.
 This means that all terms of each equation are brought to one side and summed up, which forms a component of the residual vector $\textbf{r}(\textbf{u})$, which is a function of the solution vector $\textbf{u}$. The goal is to find the solution vector $\textbf{u}$ that makes the residual vector equal to zero (or very close to zero).
@@ -72,3 +71,4 @@ See `Dumux::NewtonSolver` for the implementation of the Newton method based solv
  - **ReassemblyMinThreshold**: the default value is $10^{-1} \times$ `MaxRelativeShift`.
  - **ReassemblyMaxThreshold**: the default value is $10^2 \times$ `MaxRelativeShift`.
  - **ReassemblyShiftWeight**: the default value is $10^{-3}$.
+ @ingroup Nonlinear
