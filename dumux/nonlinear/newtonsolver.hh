@@ -166,11 +166,6 @@ void assign(To& to, const From& from)
 namespace Dumux {
 
 /*!
- * \addtogroup Newton
- * \copydetails Dumux::NewtonSolver
- */
-
-/*!
  * \ingroup Newton
  * \brief An implementation of a Newton solver.
  * \tparam Assembler the assembler
