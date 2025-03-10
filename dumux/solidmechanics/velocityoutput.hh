@@ -27,14 +27,14 @@ namespace Dumux {
  *        VtkOutputModule which expects a VelocityOutput class.
  */
 template<class GridVariables>
-class GeomechanicsVelocityOutput
+class SolidmechanicsVelocityOutput
 : public VelocityOutput<GridVariables>
 {
 public:
     //! The constructor
     template< typename... Args >
-    GeomechanicsVelocityOutput(Args&&... args)
-    { DUNE_THROW(Dune::NotImplemented, "Velocity output for geomechanical models."); }
+    SolidmechanicsVelocityOutput(Args&&... args)
+    { DUNE_THROW(Dune::NotImplemented, "Velocity output for solidmechanical models."); }
 
     //! Output is currently disabled (not implemented)
     bool enableOutput() const override { return false; }
