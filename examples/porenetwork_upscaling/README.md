@@ -125,3 +125,9 @@ We will discuss the different parts of the code in detail subsequently.
 
 | [:arrow_right: Click to continue with part 3 of the documentation](doc/upscalinghelper.md) |
 |---:|
+
+
+## Part 4: Postprocessing/Visualization of a pore-network model
+
+| [:arrow_right: Click to continue with part 4 of the documentation](doc/postprocessing.md) |
+|---:|
