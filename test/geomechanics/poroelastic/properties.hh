@@ -15,7 +15,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/poroelastic/model.hh>
+#include <dumux/poromechanics/poroelastic/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 

@@ -12,8 +12,8 @@
 #ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 
-#include <dumux/geomechanics/lameparams.hh>
-#include <dumux/geomechanics/poroelastic/fvspatialparams.hh>
+#include <dumux/solidmechanics/elastic/lameparams.hh>
+#include <dumux/poromechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 namespace Dumux {
