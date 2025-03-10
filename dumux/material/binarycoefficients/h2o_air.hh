@@ -21,88 +21,89 @@
 #include <dumux/material/binarycoefficients/h2o_o2.hh>
 #include <dumux/common/tag.hh>
 
-namespace Dumux {
-    namespace BinaryCoeff {
-        namespace Detail::H2O_Air{
-                struct HenryLaws {
-                // Henry Law rule tags for H2O_Air
+namespace Dumux::BinaryCoeff {
+namespace Detail::H2O_Air{
+        struct HenryLaws {
+            // Henry's Law  tags for H2O_Air
 
-                    //! Finsterle implementation for Henry coefficient
-                    struct FinsterleLaw : public Utility::Tag<FinsterleLaw> {
-                        static std::string name() { return "Finsterle"; }
-                    };
+            //! Finsterle implementation for Henry coefficient
+            struct FinsterleLaw : public Utility::Tag<FinsterleLaw> {
+                static std::string name() { return "Finsterle"; }
+            };
 
-                    //! Mixture implementation for Henry coefficient
-                    struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
-                        static std::string name() { return "Mixture"; }
-                    };
+            //! Mixture implementation for Henry coefficient
+            struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
+                static std::string name() { return "Mixture"; }
+            };
 
-                    //! Default rule (for backwards compatibility, will change to Mixture after 3.10)
-                    using DefaultRule = FinsterleLaw;
-                }; // end struct HenryLaws
+            //! Default rule (for backwards compatibility, will change to Mixture after 3.10)
+            using DefaultRule = FinsterleLaw;
+        }; // end struct HenryLaws
+
+    /*!
+     * \brief Implementation details for H2O_Air Henry coefficients
+     */
+        struct HenryLawsImpl {
 
             /*!
-             * \brief Implementation details for H2O_Air Henry coefficients
+             * \ingroup Finsterle_Implementation
+             * \brief Henry coefficient implementation using Finsterle rule
+             *
+             * This implements the Henry coefficient calculation based on the Finsterle approach.
+             * See:
+             * Stefan Finsterle (1993, page 33 Formula (2.9)) \cite finsterle1993
+             * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985)
+             *
+             * \param temperature the temperature \f$\mathrm{[K]}\f$
+             * \return Henry coefficient \f$\mathrm{[Pa]}\f$
              */
-                struct HenryLawsImpl {
+            template<typename Scalar>
+            static Scalar henry(Scalar temperature, HenryLaws::FinsterleLaw) {
+                using std::exp;
+                Scalar r = (0.8942 + 1.47 * exp(-0.04394 * (temperature - 273.15))) * 1.E-10;
+                return 1. / r;
+            }
 
-                    /*!
-                     * \ingroup Finsterle_Implementation
-                     * \brief Henry coefficient implementation using Finsterle rule
-                     *
-                     * This implements the Henry coefficient calculation based on the Finsterle approach.
-                     * See:
-                     * Stefan Finsterle (1993, page 33 Formula (2.9)) \cite finsterle1993
-                     * (fitted to data from Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985)
-                     *
-                     * \param temperature the temperature \f$\mathrm{[K]}\f$
-                     * \return Henry coefficient \f$\mathrm{[Pa]}\f$
-                     */
-                    template<typename Scalar>
-                    static Scalar henry(Scalar temperature, HenryLaws::FinsterleLaw) {
-                        using std::exp;
-                        Scalar r = (0.8942 + 1.47 * exp(-0.04394 * (temperature - 273.15))) * 1.E-10;
-                        return 1. / r;
-                    }
+            /*!
+             * \ingroup Mixture_Implementation
+             * \brief Henry coefficient implementation using Mixture rule
+             *
+             * This implementation calculates the effective Henry coefficient for air as a mixture
+             * based on the individual Henry coefficients of its components (N₂, O₂, Ar, CO₂).
+             *
+             * For a gas mixture like air in water, the effective Henry coefficient can be derived
+             * from the individual Henry coefficients by:
+             * \f[K_{H,air} = \left(\sum_i \frac{y_{i,air}}{K_{H,i}}\right)^{-1}\f]
+             *
+             * Where:
+             * - \f$y_{i,air}\f$ is the mole fraction of component \f$i\f$ in air
+             * - \f$K_{H,i}\f$ is the Henry coefficient for component \f$i\f$ in water
+             *
+             * The implementation considers the four main components of dry-air with their respective
+             * mole fractions:
+             *
+             * \copydetails Dumux::Components::Air::composition::dryMoleFraction
+             *
+             * \param temperature the temperature \f$\mathrm{[K]}\f$
+             * \return Henry coefficient for air in water \f$\mathrm{[Pa]}\f$
+             */
+            template<typename Scalar>
+            static Scalar henry(Scalar temperature, HenryLaws::IdealMixtureLaw) {
+                static constexpr Scalar yO2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::O2;
+                static constexpr Scalar yN2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::N2;
+                static constexpr Scalar yCO2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::CO2;
+                static constexpr Scalar yAr_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::Ar;
 
-                    /*!
-                     * \ingroup Mixture_Implementation
-                     * \brief Henry coefficient implementation using Mixture rule
-                     *
-                     * This implementation calculates the effective Henry coefficient for air as a mixture
-                     * based on the individual Henry coefficients of its components (N₂, O₂, Ar, CO₂).
-                     *
-                     * For a gas mixture like air in water, the effective Henry coefficient can be derived
-                     * from the individual Henry coefficients by:
-                     * \f[K_{H,air} = \left(\sum_i \frac{y_{i,air}}{K_{H,i}}\right)^{-1}\f]
-                     *
-                     * Where:
-                     * - \f$y_{i,air}\f$ is the mole fraction of component \f$i\f$ in air
-                     * - \f$K_{H,i}\f$ is the Henry coefficient for component \f$i\f$ in water
-                     *
-                     * The implementation considers the four main components of air with their respective
-                     * mole fractions: O₂ (20.9%), N₂ (78.1%), Ar (0.93%), and CO₂ (0.04%).
-                     *
-                     * \param temperature the temperature \f$\mathrm{[K]}\f$
-                     * \return Henry coefficient for air in water \f$\mathrm{[Pa]}\f$
-                     */
-                    template<typename Scalar>
-                    static Scalar henry(Scalar temperature, HenryLaws::IdealMixtureLaw) {
-                        static constexpr Scalar yO2_air = Dumux::Components::Air<Scalar>::airMoleFraction::O2;
-                        static constexpr Scalar yN2_air = Dumux::Components::Air<Scalar>::airMoleFraction::N2;
-                        static constexpr Scalar yCO2_air = Dumux::Components::Air<Scalar>::airMoleFraction::CO2;
-                        static constexpr Scalar yAr_air = Dumux::Components::Air<Scalar>::airMoleFraction::Ar;
+                Scalar kh_O2 = H2O_O2::henry(temperature);
+                Scalar kh_N2 = H2O_N2::henry(temperature);
+                Scalar kh_CO2 = H2O_CO2::henry(temperature);
+                Scalar kh_Ar = H2O_AR::henry(temperature);
 
-                        Scalar kh_O2 = H2O_O2::henry(temperature);
-                        Scalar kh_N2 = H2O_N2::henry(temperature);
-                        Scalar kh_CO2 = H2O_CO2::henry(temperature);
-                        Scalar kh_Ar = H2O_AR::henry(temperature);
-
-                        Scalar r = (yO2_air / kh_O2 + yN2_air / kh_N2 + yCO2_air / kh_CO2 + yAr_air / kh_Ar);
-                        return 1 / r;
-                    }
-                }; // end struct HenryLawsImpl
-        } // end namespace Detail::H2O_Air
+                Scalar r = (yO2_air / kh_O2 + yN2_air / kh_N2 + yCO2_air / kh_CO2 + yAr_air / kh_Ar);
+                return 1 / r;
+            }
+        }; // end struct HenryLawsImpl
+} // end namespace Detail::H2O_Air
 
 /*!
  * \ingroup Binarycoefficients
@@ -189,8 +190,6 @@ namespace Dumux {
                 return Dexp * temperature / Texp;
             }
         };
-
-    } // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif
