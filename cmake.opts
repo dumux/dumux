@@ -17,7 +17,7 @@ GXX_RELEASE_OPTS=" \
     -fno-finite-math-only \
     -DNDEBUG=1 \
     -O3 \
-    -march=x86-64  \
+    -march=native  \
     -funroll-loops \
     -g0"
 
