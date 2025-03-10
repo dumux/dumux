@@ -40,14 +40,26 @@ public:
     static std::string name()
     { return "Air"; }
 
+
+    struct composition {
     /*!
-    * \brief Assumed gaseous composition of air in \f$\mathrm{[mol/mol]}\f$.
+    * \brief Mole fraction composition of dry air at standard conditions.
+    *
+    * The standard composition of dry air used in calculations is:
+    * - Nitrogen (N₂): ~78.1% (calculated as remainder)
+    * - Oxygen (O₂): 20.9%
+    * - Argon (Ar): 0.934%
+    * - Carbon dioxide (CO₂): 0.0427%
+    *
+    * These values are based on Table 1 from Gatley et al. 2008 \cite Gatley2008A ,
+    * with slight adjustments for CO₂ levels reflecting more recent measurements, see https://gml.noaa.gov/ccgg/trends/.
     */
-    struct airMoleFraction{
-        constexpr static Scalar O2= 0.209;
-        constexpr static Scalar Ar= 0.00934;
-        constexpr static Scalar CO2= 0.0004;
-        constexpr static Scalar N2= 1-O2-Ar-CO2;
+        struct dryMoleFraction {
+            constexpr static Scalar O2 = 0.209435;
+            constexpr static Scalar Ar = 0.009332;
+            constexpr static Scalar CO2 = 0.000427;
+            constexpr static Scalar N2 = 1 - O2 - Ar - CO2;
+        };
     };
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of Air.
