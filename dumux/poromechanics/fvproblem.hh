@@ -13,7 +13,7 @@
 #define DUMUX_POROMECHANICS_FV_PROBLEM_HH
 
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 
 namespace Dumux {
 
@@ -24,9 +24,9 @@ namespace Dumux {
  *       porous medium flow problem, which is why we inherit from that here.
  */
 template<class TypeTag>
-class GeomechanicsFVProblem : public PorousMediumFlowProblem<TypeTag>
+class PoromechanicsFVProblem : public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;

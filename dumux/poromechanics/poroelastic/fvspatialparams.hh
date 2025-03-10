@@ -16,56 +16,9 @@
 
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/fvporousmediumspatialparams.hh>
-#include <dumux/poromechanics/spatialparamstraits_.hh>
+#include <dumux/poromechanics/spatialparamstraits.hh>
 
 namespace Dumux {
-
-#ifndef DOXYGEN
-namespace Detail {
-
-// helper struct detecting if the user-defined problem class has an effectiveFluidDensityAtPos function
-template<class GlobalPosition>
-struct hasEffFluidDensityAtPos
-{
-    template<class Problem>
-    auto operator()(const Problem& a)
-    -> decltype(a.effectiveFluidDensityAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-// helper struct detecting if the user-defined problem class has an effectivePorePressureAtPos function
-template<class GlobalPosition>
-struct hasEffPorePressureAtPos
-{
-    template<class Problem>
-    auto operator()(const Problem& a)
-    -> decltype(a.effectivePorePressureAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-// helper struct detecting if the user-defined spatial params class has a reactiveVolumeFractionAtPos function
-template<class GlobalPosition, class SolidSystem>
-struct hasReactiveVolumeFractionAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.template reactiveVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {}
-};
-
-// helper struct detecting if the user-defined spatial params class has a biotCoefficientAtPos function
-template<class GlobalPosition>
-struct hasBiotCoeffAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.biotCoefficientAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-} // end namespace Detail
-#endif
-
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
