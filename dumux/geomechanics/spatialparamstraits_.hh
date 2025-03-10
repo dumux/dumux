@@ -12,21 +12,7 @@
 #ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 
-#include <utility>
+#include <dumux/solidmechanics/spatialparamstraits.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use dumux/solidmechanics/spatialparmastraits.hh."
 
-#ifndef DOXYGEN
-namespace Dumux::Detail {
-
-// helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
-template<class GlobalPosition>
-struct hasLameParamsAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
-    {}
-};
-
-} // end namespace Dumux::Detail
-#endif  // DOXYGEN
 #endif
