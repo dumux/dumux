@@ -13,12 +13,15 @@
 #define DUMUX_POROMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
 
 #include <memory>
+#include <utility>
 
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/common/fvporousmediumspatialparams.hh>
-#include <dumux/poromechanics/spatialparamstraits.hh>
+
+#include "spatialparamstraits_.hh"
 
 namespace Dumux {
+
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems

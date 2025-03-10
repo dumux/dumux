@@ -3,7 +3,3 @@
 
 add_subdirectory(elastic)
 add_subdirectory(hyperelastic)
-
-file(GLOB DUMUX_SOLIDMECHANICS_HEADERS *.hh *.inc)
-install(FILES ${DUMUX_SOLIDMECHANICS_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/solidmechanics)

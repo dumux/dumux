@@ -9,10 +9,8 @@
  * \ingroup GeomechanicsModels
  * \brief helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
  */
-#ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
-#define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
-
-#warning "This header is deprecated and will be removed after 3.10."
+#ifndef DUMUX_SOLIDMECHANICS_SPATIAL_PARAMS_TRAITS__HH
+#define DUMUX_SOLIDMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 
 #include <utility>
 

@@ -13,12 +13,14 @@
 #define DUMUX_SOLIDMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 
 #include <memory>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/solidmechanics/spatialparamstraits.hh>
+
+#include "spatialparamstraits_.hh"
 
 namespace Dumux {
 
