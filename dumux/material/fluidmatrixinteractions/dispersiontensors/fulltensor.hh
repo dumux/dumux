@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::FullDispersionTensor
+ * \ingroup DispersionTensors
+ * \brief Full dispersion tensor
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_FULLTENSOR_HH
 
@@ -16,10 +17,17 @@
 #include <dumux/common/properties.hh>
 
 namespace Dumux {
+/*!
+ * \addtogroup DispersionTensors
+ * \copydetails Dumux::FullDispersionTensor
+ */
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup DispersionTensors
  * \brief Full dispersion tensor
+ *
+ * ### Full dispersion tensor
+ * The full dispersion tensor is given by the spatial parameters.
  */
 template<class TypeTag>
 class FullDispersionTensor

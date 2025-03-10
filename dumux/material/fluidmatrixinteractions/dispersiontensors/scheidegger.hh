@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::ScheideggersDispersionTensor
+ * \ingroup DispersionTensors
+ * \brief Scheidegger's dispersion tensor
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_SCHEIDEGGER_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_DISPERSIONTENSORS_SCHEIDEGGER_HH
 
@@ -35,8 +36,23 @@ static constexpr bool hasVelocityInSpatialParams()
 }
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup DispersionTensors
+ * \copydetails Dumux::ScheideggersDispersionTensor
+ */
+
+/*!
+ * \ingroup DispersionTensors
  * \brief Scheidegger's dispersion tensor
+ *
+ * ### Scheidegger's dispersion tensor
+ * This class calculates the dispersion tensor for compositional and thermal models using Scheidegger's model.
+ * The dispersion tensor is given by:
+ * \f[
+ * D = \frac{\mathbf{v} \mathbf{v}^T}{\|\mathbf{v}\|} \cdot (\alpha_L - \alpha_T) + \|\mathbf{v}\| \cdot \alpha_T \cdot \mathbf{I}
+ * \f]
+ * where \f$\mathbf{v}\f$ is the velocity vector, \f$\alpha_L\f$ and \f$\alpha_T\f$ are the
+ * longitudinal and transverse dispersivities, respectively, and \f$\mathbf{I}\f$ is the identity matrix.
+ * The velocity is either taken from the spatial parameters or from the reconstructed velocity field and the dispersivities are taken from the spatial parameters.
  */
 template<class TypeTag>
 class ScheideggersDispersionTensor

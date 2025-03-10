@@ -7,7 +7,7 @@
 
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief Specification of threshold capillary pressures for the PNM.
  */

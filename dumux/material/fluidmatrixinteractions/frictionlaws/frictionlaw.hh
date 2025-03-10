@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::FrictionLaw
+ * \ingroup FrictionLaws
+ * \brief Implementation of the abstract base class for friction laws.
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_HH
 
@@ -18,12 +19,17 @@
 #include <dune/common/fvector.hh>
 
 namespace Dumux {
+
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \brief Implementation of the abstract base class for friction laws.
  *
- * A LET mobility model can be used to add an artificial water depth to
- * limit the friction for small water depths.
+ * A LET mobility model of Lomeland et al. 2005 \cite Lomeland2005 can be used to add an
+ * artificial water depth to limit the friction for small water depths.
+ *
+ * \note Instead of calculating the bed friction term \f$\mathbf{S_f}\f$
+ *       of the shallow water equations, the implemented friction laws
+ *       calculate the shear stress \f$\tau_{x}\f$ and \f$\tau_{y}\f$.
  */
 
 template <typename VolumeVariables >

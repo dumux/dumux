@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::FrictionLawManning
+ * \ingroup FrictionLaws
+ * \brief Implementation of the friction law after Manning.
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_MANNING_HH
 
@@ -19,8 +20,28 @@
 
 namespace Dumux {
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawManning
+ */
+
+/*!
+ * \ingroup FrictionLaws
  * \brief Implementation of the friction law after Manning.
+ *
+ * ### Manning
+ *
+ * This friction law calculates the stress between the flowing fluid and the bottom,
+ * which is called bottom shear stress, using the Manning friction law:
+ *
+ * \f$\tau_{x} = \frac{g}{(\frac{h^{1/6}}{n})^2} u \sqrt{u^2 + v^2}\f$ and
+ * \f$\tau_{y} = \frac{g}{(\frac{h^{1/6}}{n})^2} v \sqrt{u^2 + v^2}\f$
+ *
+ * with the gravity constant \f$\mathrm{g}\f$ in \f$\mathrm{[m/s^2]}\f$, the water depth
+ * \f$\mathrm{h}\f$ in \f$\mathrm{[m]}\f$ and the Manning friction coefficient
+ * \f$\mathrm{n}\f$ in \f$\mathrm{[s/m^{1/3}]}\f$.
+ *
+ * The bottom shear stress is needed to calculate on the one hand the loss of
+ * momentum due to bottom friction and on the other hand the bedload transport rate.
  *
  * The LET mobility model is used to limit the friction for small water
  * depths if a roughness height > 0.0 is provided (default roughnessHeight = 0.0).

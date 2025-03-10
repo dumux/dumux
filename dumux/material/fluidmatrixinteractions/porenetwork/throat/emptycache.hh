@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
+ * \ingroup PoreNetwork
  * \ingroup PoreNetworkModels
  * \brief An empty cache for transmissibility laws using only standard quantities
  */

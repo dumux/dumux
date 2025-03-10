@@ -74,12 +74,30 @@ of the tortuosity coefficient $\tau$. The two
 quantities are related by $ \lambda = \sqrt{1/\tau} $.
 
 The following laws are implemented:
-
 @ingroup Fluidmatrixinteractions
 
 @defgroup EffectiveHeatConductivity Effective heat conductivity in porous media
 @brief Laws for calculating effective heat conductivity coefficients.
 @details In porous media, the effective heat conductivity depends on the solid-fluid conductivity ratio, the volume fractions of the constituent phases, and the geometry of the solid-fluid interface \cite aichlmayr2006effective. The following laws are implemented:
+@ingroup Fluidmatrixinteractions
+
+@defgroup FrictionLaws Friction Laws
+@brief Friction Laws for calculating bottom shear stress
+@details Friction laws calculate the stress between the flowing fluid and the bottom,
+which is called bottom shear stress. The bottom shear stress is
+needed to calculate on the one hand the loss of momentum due to
+bottom friction and on the other hand the bedload transport rate.
+The following laws can be implemented by deriving from the abstract base class, where the LET mobility model by Lomeland et al. \cite Lomeland2005 can be employed to introduce an artificial water depth, which helps to limit friction in scenarios with small water depths.
+@ingroup Fluidmatrixinteractions
+
+@defgroup DispersionTensors Dispersion Tensors
+@brief Dispersion tensor models characterising mechanical dispersion in porous media
+@details Mechanical dispersion is caused by particles traveling at different velocities through the porous medium \cite Fried1971. A particle in the middle of a pore has a higher velocity than a particle close to a grain. Due to the tortuosity of the porous medium, particles take different paths through it. Given the existence of an REV, mechanical dispersion typically leads to increased Fickian diffusion on the Darcy scale \cite Bear1986. The magnitude and directionality of the increase diffusive transport depends on the size of the averaging volumes and characteristics of the flow such as average velocity magnitude and direction. The following classes can be implemented.
+@ingroup Fluidmatrixinteractions
+
+@defgroup PoreNetwork Pore Network
+@brief Constitutive Relations for pore networks models.
+@details In the pore-network model, a porous medium is represented as large void spaces called pore body (pore) connected to each other by narrow void spaces called pore throat (throat). The primary variables like pressure and saturation are located at the pore bodies and pore throats determine flow conductivity. Constitutive relations for pore bodies describe capillary pressure-saturation relationships for different pore shapes to be used in two-phase flow simulations. For pore throats, threshold capillary pressures that indicate when a throat is invaded by the non-wetting phase and when it is filled with the wetting phase are provided. Furthermore, relations for computing single-phase and two-phase transmissibility at the pore throats are given.
 @ingroup Fluidmatrixinteractions
 
 <!-- FluidStates -->

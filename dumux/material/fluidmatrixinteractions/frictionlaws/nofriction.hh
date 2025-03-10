@@ -6,19 +6,32 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::FrictionLawNoFriction
+ * \ingroup FrictionLaws
+ * \brief A pseudo friction law with no bottom friction
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_NOFRICTION_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_NOFRICTION_HH
 
 #include "frictionlaw.hh"
 
 namespace Dumux {
+/*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawNoFriction
+ */
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \brief A pseudo friction law with no bottom friction
+ *
+ * ### No Friction
+ *
+ * This friction law sets the stress between the flowing fluid and the bottom,
+ * which is called bottom shear stress, to zero.
+ * The bottom shear stress is needed to calculate on the one hand the loss of
+ * momentum due to bottom friction and on the other hand the bedload transport rate.
+ *
  */
 template <typename VolumeVariables>
 class FrictionLawNoFriction : public FrictionLaw<VolumeVariables>

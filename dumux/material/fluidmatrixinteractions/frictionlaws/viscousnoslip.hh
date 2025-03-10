@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Fluidmatrixinteractions
- * \copydoc Dumux::FrictionLawViscousNoSlip
+ * \ingroup FrictionLaws
+ * \brief Implementation of a viscous no-slip bottom friction law
  */
+
 #ifndef DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_VISCOUS_NOSLIP_HH
 #define DUMUX_MATERIAL_FLUIDMATRIX_FRICTIONLAW_VISCOUS_NOSLIP_HH
 
@@ -19,12 +20,18 @@
 #include <dumux/material/fluidmatrixinteractions/frictionlaws/frictionlaw.hh>
 
 namespace Dumux {
+/*!
+ * \addtogroup FrictionLaws
+ * \copydetails Dumux::FrictionLawViscousNoSlip
+ */
 
 /*!
- * \ingroup Fluidmatrixinteractions
+ * \ingroup FrictionLaws
  * \brief Implementation of a viscous no-slip bottom friction law
  *
- * This assumes thin film flow with a parabolic velocity profile in depth
+ * ### Viscous No-Slip
+ *
+ * This friction law assumes thin film flow with a parabolic velocity profile in depth
  * (for the depth-averaged shallow water equations). The velocity profile
  * and associated bottom shear stress can be derived from plane Poiseuille flow
  * with a free surface boundary condition on top and a no-slip boundary condition

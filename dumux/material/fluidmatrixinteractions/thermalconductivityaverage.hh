@@ -4,6 +4,12 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+ * \file
+ * \ingroup EffectiveHeatConductivity
+ * \brief Effective thermal conductivity based on weighted arithmetic average
+ */
+
 #ifndef DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGED_HH
 #define DUMUX_MATERIAL_THERMALCONDUCTIVITY_AVERAGED_HH
 

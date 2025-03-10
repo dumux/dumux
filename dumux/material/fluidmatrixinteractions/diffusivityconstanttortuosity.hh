@@ -4,6 +4,12 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+* \file
+* \ingroup EffectiveDiffusivity
+* \brief Relation for the effective diffusion coefficient with constant tortuosity
+*/
+
 #ifndef DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
 #define DUMUX_MATERIAL_DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
 
