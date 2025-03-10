@@ -44,8 +44,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 
-#include <dumux/solidmechanics/properties.hh>
+#include <dumux/material/components/constant.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/flux/hookeslaw.hh>
+
+#include <dumux/solidmechanics/stressvariablescache.hh>
+#include <dumux/solidmechanics/velocityoutput.hh>
 
 #include "indices.hh"
 #include "localresidual.hh"
@@ -100,7 +105,7 @@ namespace Properties {
 //! Type tag for the elastic geomechanical model
 // Create new type tags
 namespace TTag {
-struct Elastic { using InheritsFrom = std::tuple<Geomechanics>; };
+struct Elastic { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace TTag
 
 //! Use the local residual of the elastic model
@@ -137,6 +142,41 @@ struct StressType<TypeTag, TTag::Elastic>
 {
     using type = HookesLaw< GetPropType<TypeTag, Properties::Scalar>,
                             GetPropType<TypeTag, Properties::GridGeometry> >;
+};
+
+
+//! The flux variables cache class for models involving flow in porous media
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::Elastic>
+{
+    using type = StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
+                                       GetPropType<TypeTag, Properties::GridGeometry> >;
+};
+
+//! The (currently empty) velocity output
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::Elastic> { using type = SolidmechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>; };
+
+//! The solid state must be inert
+template<class TypeTag>
+struct SolidState<TypeTag, TTag::Elastic>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+//! Per default we use one constant component in the inert solid system
+template<class TypeTag>
+struct SolidSystem<TypeTag, TTag::Elastic>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using InertComponent = Components::Constant<1, Scalar>;
+public:
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 } // namespace Properties

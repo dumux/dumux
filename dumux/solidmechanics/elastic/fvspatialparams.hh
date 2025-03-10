@@ -18,7 +18,7 @@
 
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/solidmechanics/spatialparamstraits_.hh>
+#include <dumux/solidmechanics/spatialparamstraits.hh>
 
 namespace Dumux {
 
