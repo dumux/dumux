@@ -106,10 +106,6 @@ private:
     }
 };
 
-#ifndef DOXYGEN
-template<class Scalar>
-using ThermalConductivitySomerton [[deprecated("Use ThermalConductivitySomertonTwoP. Will be removed after 3.9.")]] = ThermalConductivitySomertonTwoP<Scalar>;
-#endif
 
 } // end namespace Dumux
 
