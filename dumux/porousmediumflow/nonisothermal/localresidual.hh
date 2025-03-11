@@ -15,6 +15,7 @@
 #define DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 
 namespace Dumux {
