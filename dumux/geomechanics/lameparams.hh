@@ -12,7 +12,7 @@
 #ifndef DUMUX_GEOMECHANICS_LAME_PARAMS_HH
 #define DUMUX_GEOMECHANICS_LAME_PARAMS_HH
 
-#include <dumux/solidmechanics/lameparams.hh>
-#warning "This header is deprecated and will be removed after 3.10. Use LameParams from dumux/solidmechanics/lameparams.hh."
+#include <dumux/solidmechanics/elastic/lameparams.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use LameParams from dumux/solidmechanics/elastic/lameparams.hh."
 
 #endif

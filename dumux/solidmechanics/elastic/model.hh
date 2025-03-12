@@ -49,12 +49,10 @@
 #include <dumux/material/solidsystems/1csolid.hh>
 #include <dumux/flux/hookeslaw.hh>
 
-#include <dumux/solidmechanics/stressvariablescache.hh>
-#include <dumux/solidmechanics/velocityoutput.hh>
-
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
+#include "stressvariablescache.hh"
 
 namespace Dumux {
 
@@ -144,7 +142,6 @@ struct StressType<TypeTag, TTag::Elastic>
                             GetPropType<TypeTag, Properties::GridGeometry> >;
 };
 
-
 //! The flux variables cache class for models involving flow in porous media
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::Elastic>
@@ -152,10 +149,6 @@ struct FluxVariablesCache<TypeTag, TTag::Elastic>
     using type = StressVariablesCache< GetPropType<TypeTag, Properties::Scalar>,
                                        GetPropType<TypeTag, Properties::GridGeometry> >;
 };
-
-//! The (currently empty) velocity output
-template<class TypeTag>
-struct VelocityOutput<TypeTag, TTag::Elastic> { using type = SolidmechanicsVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>>; };
 
 //! The solid state must be inert
 template<class TypeTag>

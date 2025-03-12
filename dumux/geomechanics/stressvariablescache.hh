@@ -12,7 +12,7 @@
 #ifndef DUMUX_GEOMECHANICS_STRESSVARIABLESCACHE_HH
 #define DUMUX_GEOMECHANICS_STRESSVARIABLESCACHE_HH
 
-#include <dumux/solidmechanics/stressvariablescache.hh>
-#warning "This header is deprecated and will be removed after 3.10. Use StressVariablesCache from dumux/solidmechanics/stressvariablescache.hh."
+#include <dumux/solidmechanics/elastic/stressvariablescache.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use StressVariablesCache from dumux/solidmechanics/elastic/stressvariablescache.hh."
 
 #endif

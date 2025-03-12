@@ -12,7 +12,35 @@
 #ifndef DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 #define DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 
-#include <dumux/solidmechanics/velocityoutput.hh>
-#warning "This header is deprecated and will be removed after 3.10. Use instead SolidmechanicsVelocityOutput from dumux/solidmechanics/velocityoutput.hh."
+#warning "This header is deprecated and will be removed after 3.10."
+
+#include <dune/common/exceptions.hh>
+#include <dumux/io/velocityoutput.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup GeomechanicsModels
+ * \brief Velocity output for geomechanical models.
+ *        This class could be used to compute the temporal derivative
+ *        of the displacement. Currently this is not implemented and
+ *        we simply define this here in order to be able to reuse the
+ *        VtkOutputModule which expects a VelocityOutput class.
+ */
+template<class GridVariables>
+class GeomechanicsVelocityOutput
+: public VelocityOutput<GridVariables>
+{
+public:
+    //! The constructor
+    template< typename... Args >
+    GeomechanicsVelocityOutput(Args&&... args)
+    { DUNE_THROW(Dune::NotImplemented, "Velocity output for geomechanical models."); }
+
+    //! Output is currently disabled (not implemented)
+    bool enableOutput() const override { return false; }
+};
+
+} // end namespace Dumux
 
 #endif
