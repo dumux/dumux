@@ -140,10 +140,6 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    //! Return the extrusion of the domain at the given position
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
-    { return 0.054977871437821; }
-
 private:
 
     const PcKrSwCurve pcKrSwCurve_;

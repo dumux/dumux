@@ -18,6 +18,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/porousmediumflow/2pncmin/model.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 
@@ -82,6 +83,36 @@ struct ReplaceCompEqIdx<TypeTag, TTag::Salinization> { static constexpr int valu
 template<class TypeTag>
 struct Formulation<TypeTag, TTag::Salinization>
 { static constexpr auto value = TwoPFormulation::p0s1; };
+
+// Set constant extrusion factor via property (for Box)
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::SalinizationBox>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    
+    struct GGTraits : public BoxDefaultGridGeometryTraits<GridView>
+    { using Extrusion = ConstantExtrusion<0.054977871437821>; };
+public:
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, GGTraits>;
+};
+
+// Set constant extrusion factor via property (for CCTpfa)
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::SalinizationCCTpfa>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    
+    struct GGTraits : public CCTpfaDefaultGridGeometryTraits<GridView>
+    { using Extrusion = ConstantExtrusion<0.054977871437821>; };
+public:
+    using type = CCTpfaFVGridGeometry<GridView, enableCache, GGTraits>;
+};
 
 } // end namespace Dumux::Properties
 
