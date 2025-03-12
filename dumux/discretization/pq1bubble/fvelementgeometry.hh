@@ -269,6 +269,13 @@ public:
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().geometry().type());
+        return ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx][0];
+    }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
