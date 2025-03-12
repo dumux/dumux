@@ -292,7 +292,7 @@ public:
         if (scvf.boundary())
         {
             GeometryHelper helper(geo);
-            const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
+            const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().geometry().type());
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {

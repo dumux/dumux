@@ -346,10 +346,10 @@ private:
             }
 
             // construct the sub control volume faces
-            numScvf_ += geometryHelper.numInteriorScvf();
-            cache_.scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
+            numScvf_ += GeometryHelper::numInteriorScvf(elementGeometry.type());
+            cache_.scvfs_[eIdx].resize(GeometryHelper::numInteriorScvf(elementGeometry.type()));
             LocalIndexType scvfLocalIdx = 0;
-            for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
+            for (; scvfLocalIdx < GeometryHelper::numInteriorScvf(elementGeometry.type()); ++scvfLocalIdx)
             {
                 const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
@@ -376,7 +376,7 @@ private:
                     cache_.hasBoundaryScvf_[eIdx] = true;
 
                     const auto localFacetIndex = intersection.indexInInside();
-                    const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
+                    const auto numBoundaryScvf = GeometryHelper::numBoundaryScvf(elementGeometry.type(), localFacetIndex);
                     numScvf_ += numBoundaryScvf;
                     numBoundaryScvf_ += numBoundaryScvf;
 
@@ -410,7 +410,6 @@ private:
                     }
 
                     // TODO also move this to helper class
-
                     // add all vertices on the intersection to the set of boundary vertices
                     for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
                     {
