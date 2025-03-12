@@ -144,12 +144,15 @@ public:
         return Dune::transformedRangeView(
             Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
             [&](const auto i)
-            { return CVFE::LocalDof
             {
-                static_cast<LocalIndexType>(GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i)),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
-                static_cast<GridIndexType>(fvGeometry.elementIndex())
-            }; }
+                auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i);
+                return CVFE::LocalDof
+                {
+                    static_cast<LocalIndexType>(localDofIdx),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), localDofIdx)),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+                }
         );
     }
 
