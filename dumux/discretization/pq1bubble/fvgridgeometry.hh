@@ -128,8 +128,6 @@ class PQ1BubbleFVGridGeometry
 
     static_assert(dim > 1, "Only implemented for dim > 1");
 
-    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::PQ1Bubble;
@@ -301,10 +299,9 @@ private:
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
-            // ToDo: Currently we still create scvs also for Fe dofs
-            numScv_ += GeometryHelper::numElementDofs(elementGeometry.type());
+            numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
-            cache_.scvs_[eIdx].resize(GeometryHelper::numElementDofs(elementGeometry.type()));
+            cache_.scvs_[eIdx].resize(geometryHelper.numScv());
 
             // Scvs related to control volumes
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
@@ -321,28 +318,12 @@ private:
                 );
             }
 
-            // Hybrid scvs, i.e. Fem dofs
-            if constexpr (enableHybridCVFE)
-            {
-                // We add the additional Fe dof
-                // ToDo: get rid of building scvs for Fe dofs
-                LocalIndexType scvLocalIdx = geometryHelper.numScv();
-                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(
-                    elementGeometry.volume(),
-                    elementGeometry.center(),
-                    elementGeometry.center(),
-                    scvLocalIdx,
-                    eIdx,
-                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
-                    true
-                );
-            }
-
             // construct the sub control volume faces
-            numScvf_ += geometryHelper.numInteriorScvf();
-            cache_.scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
+            const auto numInteriorScvfs = GeometryHelper::numInteriorScvf(elementGeometry.type());
+            numScvf_ += numInteriorScvfs;
+            cache_.scvfs_[eIdx].resize(numInteriorScvfs);
             LocalIndexType scvfLocalIdx = 0;
-            for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
+            for (; scvfLocalIdx < numInteriorScvfs; ++scvfLocalIdx)
             {
                 const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
@@ -369,7 +350,7 @@ private:
                     cache_.hasBoundaryScvf_[eIdx] = true;
 
                     const auto localFacetIndex = intersection.indexInInside();
-                    const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
+                    const auto numBoundaryScvf = GeometryHelper::numBoundaryScvf(elementGeometry.type(), localFacetIndex);
                     numScvf_ += numBoundaryScvf;
                     numBoundaryScvf_ += numBoundaryScvf;
 
