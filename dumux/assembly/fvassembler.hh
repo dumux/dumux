@@ -78,6 +78,14 @@ using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >::template type<TypeTag, Impl, diffMethod, isImplicit>;
 
+//! helper struct detecting if problem has a constraintMap() function
+template<class P>
+using ProblemConstraintsDetector = decltype(std::declval<P>().constraintMap());
+
+template<class P>
+constexpr inline bool hasGlobalConstraints()
+{ return Dune::Std::is_detected<ProblemConstraintsDetector, P>::value; }
+
 } // end namespace Dumux::Detail
 
 namespace Dumux {
@@ -181,6 +189,21 @@ public:
         });
 
         enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
+
+        auto applyConstraint = [&] (const auto& dofIdx,
+                                    const auto& values,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
+        {
+            (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+
+            auto& row = (*jacobian_)[dofIdx];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+
+            (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
+        };
+        enforceGlobalConstraints_(*problem_, *gridGeometry_, applyConstraint);
     }
 
     /*!
@@ -196,6 +219,19 @@ public:
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
+
+        auto applyConstraint = [&] (const auto& dofIdx,
+                                    const auto& values,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
+        {
+            auto& row = (*jacobian_)[dofIdx];
+            for (auto col = row.begin(); col != row.end(); ++col)
+            row[col.index()][eqIdx] = 0.0;
+
+            (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
+        };
+        enforceGlobalConstraints_(*problem_, *gridGeometry_, applyConstraint);
     }
 
     //! compute the residuals using the internal residual
@@ -203,6 +239,15 @@ public:
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
+
+        auto applyConstraint = [&] (const auto& dofIdx,
+                                    const auto& values,
+                                    const auto eqIdx,
+                                    const auto pvIdx)
+        {
+            (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+        };
+        enforceGlobalConstraints_(*problem_, *gridGeometry_, applyConstraint);
     }
 
     //! assemble a residual r
@@ -497,6 +542,32 @@ private:
                         if(it.index() == m.first)
                             setMatrixBlock(matrixBlock, -1.0);
 
+                    }
+                }
+            }
+        }
+    }
+
+    template<class Problem, class GG, typename ApplyFunction>
+    void enforceGlobalConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyConstraint)
+    {
+        if constexpr (Detail::hasGlobalConstraints<Problem>())
+        {
+            for (const auto& [dofIdx, constraintData] : problem.constraintMap())
+            {
+                const auto& constraintInfo =constraintData.constraintInfo();
+                if (constraintInfo.hasConstraint())
+                {
+                    const auto values = constraintData.values();
+                    // set the constraint in residual and jacobian
+                    for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
+                    {
+                        if (constraintInfo.isConstraint(eqIdx))
+                        {
+                            const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
+                            assert(0 <= pvIdx && pvIdx < constraintInfo.size());
+                            applyConstraint(dofIdx, values, eqIdx, pvIdx);
+                        }
                     }
                 }
             }
