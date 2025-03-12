@@ -18,6 +18,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
@@ -34,7 +35,9 @@ class FVSpatialParams
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using LocalDof = Detail::LocalDofs::LocalDof_t<FVElementGeometry>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -48,6 +51,24 @@ public:
     {
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dimWorld-1] = -9.81;
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given local dof.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    template<class ElementSolution>
+    Scalar extrusionFactor(const FVElementGeometry& fvGeometry,
+                           const LocalDof& localDof,
+                           const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().extrusionFactorAtPos(fvGeometry.dofPosition(localDof));
     }
 
     /*!
@@ -76,6 +97,18 @@ public:
         // As a default, i.e. if the user's spatial parameters do not overload
         // any extrusion factor method, return 1.0
         return 1.0;
+    }
+
+    /*!
+     * \brief Return the temperature at a local dof.
+     */
+    template<class ElementSolution>
+    Scalar temperature(const FVElementGeometry& fvGeometry,
+                       const LocalDof& localDof,
+                       const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().temperatureAtPos(fvGeometry.dofPosition(localDof));
     }
 
     /*!
