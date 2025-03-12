@@ -11,7 +11,19 @@
 #ifndef DUMUX_CVFE_LOCAL_VARIABLES_INTERFACE_HH
 #define DUMUX_CVFE_LOCAL_VARIABLES_INTERFACE_HH
 
+#include <dune/common/std/type_traits.hh>
+
 namespace Dumux::Detail::CVFE {
+
+//! helper struct detecting if volumeVariables class has new update function
+template<class Imp, class ES, class P, class FVG, class DOF>
+using UpdateFunctionDetector = decltype(
+    std::declval<Imp>().update(std::declval<ES>(), std::declval<P>(), std::declval<FVG>(), std::declval<DOF>())
+);
+
+template<class Imp, class ES, class P, class FVG, class DOF>
+constexpr inline bool hasUpdateFunction()
+{ return Dune::Std::is_detected<UpdateFunctionDetector, Imp, ES, P, FVG, DOF>::value; }
 
 /*!
  * \ingroup CVFEDiscretization
@@ -42,7 +54,10 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const LocalDof& localDof)
     {
-        VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
+        if constexpr (hasUpdateFunction<VolumeVariables, ElementSolution, Problem, FVElementGeometry, LocalDof>())
+            return VolumeVariables::update(elemSol, problem, fvGeometry, localDof);
+        else
+            return VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
     };
 };
 
