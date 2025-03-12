@@ -173,7 +173,7 @@ void testTimeLoops(double tStart,
         timeLoop.reportTimeStep();
     }
 
-    // check if setting the checkpoint at the current time shows error message
+    // check if setting the checkpoint at the current time or too close to it shows error message
     {
         // redirect std::cerr
         std::stringstream cerrBuffer;
@@ -181,6 +181,9 @@ void testTimeLoops(double tStart,
 
         Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
         timeLoop.setCheckPoint(tStart);
+
+        double epsilon = 1e-15;
+        timeLoop.setCheckPoint(tStart + epsilon);
 
         // get result and reset buffer
         const auto result = cerrBuffer.str();
@@ -191,6 +194,23 @@ void testTimeLoops(double tStart,
             DUNE_THROW(Dune::Exception, "Setting a checkpoint at the current time should print a warning to the error stream");
         if (Dune::FloatCmp::eq(timeLoop.timeStepSize(), 0.0, 1e-10))
             DUNE_THROW(Dune::Exception, "Time Loop reduced time step size to 0!");
+    }
+
+    // check if setting the checkpoint at too close to the next time makes problem
+    {
+        double epsilon = 1e-15;
+
+        Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
+        timeLoop.setCheckPoint(dt + epsilon);
+
+        timeLoop.start();
+        timeLoop.advanceTimeStep();
+        timeLoop.reportTimeStep();
+
+        if (std::abs(timeLoop.timeStepSize()) < 1e-14 && !timeLoop.finished()) {
+            DUNE_THROW(Dune::InvalidStateException,
+                "Failed to reach checkpoints due to a remaining gap of " << timeLoop.timeStepSize() << "s.");
+            }
     }
 
     // check if setting timestep to zero shows error message
@@ -257,36 +277,6 @@ void testWithDurations()
         DUNE_THROW(Dune::InvalidStateException, "Setting periodic checkpoint failed");
 }
 
-void testWithCheckpoints() {
-    std::cout << "\n------- Test Time Loop with Checkpoints ----------" << std::endl;
-
-    double tStart = 1.0;
-    double tEnd = 5.0;
-    double dt = 1.0;
-    double epsilon1 = 1e-15;
-    double epsilon2 = 1e-16;
-    double epsilon3 = 1e-17;
-
-    Dumux::CheckPointTimeLoop<double> timeLoop(tStart, dt, tEnd);
-    timeLoop.setCheckPoint(2.0 + epsilon1);
-    timeLoop.setCheckPoint(3.0 + epsilon2);
-    timeLoop.setCheckPoint(4.0 + epsilon3);
-
-    timeLoop.start();
-
-    while (!timeLoop.finished()) {
-        timeLoop.advanceTimeStep();
-        timeLoop.reportTimeStep();
-
-        if (std::abs(timeLoop.timeStepSize()) < 1e-14 && !timeLoop.finished()) {
-        DUNE_THROW(Dune::InvalidStateException,
-            "Failed to reach checkpoints due to a remaining gap of " << timeLoop.timeStepSize() << "s.");
-        }
-    }
-
-    timeLoop.finalize();
-}
-
 int main(int argc, char* argv[])
 {
     // maybe initialize MPI and/or multithreading backend
@@ -305,8 +295,6 @@ int main(int argc, char* argv[])
     testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
 
     testWithDurations();
-
-    testWithCheckpoints();
 
     return 0;
 }
