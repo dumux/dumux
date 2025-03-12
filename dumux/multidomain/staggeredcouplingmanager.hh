@@ -17,6 +17,7 @@
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {

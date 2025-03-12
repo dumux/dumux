@@ -18,6 +18,7 @@
 #include <dumux/common/spline.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 
