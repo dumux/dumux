@@ -119,8 +119,8 @@ public:
 
         // interpolate velocity at scvf
         NumEqVector v(0.0);
-        for (const auto& scv : scvs(fvGeometry))
-            v.axpy(shapeValues[scv.indexInElement()][0], elemVolVars[scv].velocity());
+        for (const auto& localDof : localDofs(fvGeometry))
+            v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
         // get density from the problem
         const Scalar density = context.problem().density(context.element(), context.fvGeometry(), scvf);
@@ -150,11 +150,11 @@ public:
 
         // interpolate velocity gradient at scvf
         Tensor gradV(0.0);
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& localDof : localDofs(fvGeometry))
         {
-            const auto& volVars = elemVolVars[scv];
+            const auto& volVars = elemVolVars[localDof.index()];
             for (int dir = 0; dir < dim; ++dir)
-                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
         }
 
         // get viscosity from the problem
