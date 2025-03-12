@@ -13,6 +13,7 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_VOLUME_VARIABLES_HH
 
+#include <dumux/common/typetraits/localdofs.hh>
 
 namespace Dumux {
 
@@ -35,7 +36,7 @@ public:
     using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Update all quantities for a local dof
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -43,14 +44,15 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    template<class ElementSolution, class Problem, class FVElementGeometry, class LocalDof,
+             typename std::enable_if_t<Detail::isLocalDofType<LocalDof>(), int> = 0>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
-                const Element& element,
-                const SubControlVolume& scv)
+                const FVElementGeometry& fvGeometry,
+                const LocalDof& localDof)
     {
-        priVars_ = elemSol[scv.indexInElement()];
-        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
+        priVars_ = elemSol[localDof.index()];
+        extrusionFactor_ = problem.spatialParams().extrusionFactor(fvGeometry, localDof, elemSol);
     }
 
     /*!
