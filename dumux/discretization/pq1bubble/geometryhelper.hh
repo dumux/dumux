@@ -333,15 +333,15 @@ public:
     { return geo_; }
 
     //! number of interior sub control volume faces
-    std::size_t numInteriorScvf() const
+    static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return boxHelper_.numInteriorScvf() + referenceElement(geo_).size(dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1) + Dune::referenceElement<Scalar, dim>(type).size(dim);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
-    std::size_t numBoundaryScvf(unsigned int localFacetIndex) const
+    static auto numBoundaryScvf(Dune::GeometryType type, unsigned int localFacetIndex)
     {
-        return referenceElement(geo_).size(localFacetIndex, 1, dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(localFacetIndex, 1, dim);
     }
 
     //! number of sub control volumes (number of codim-1 entities)
@@ -584,15 +584,15 @@ public:
     { return geo_; }
 
     //! number of interior sub control volume faces
-    std::size_t numInteriorScvf() const
+    static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return boxHelper_.numInteriorScvf();
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
-    std::size_t numBoundaryScvf(unsigned int localFacetIndex) const
+    static auto numBoundaryScvf(Dune::GeometryType type, unsigned int localFacetIndex)
     {
-        return referenceElement(geo_).size(localFacetIndex, 1, dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(localFacetIndex, 1, dim);
     }
 
     //! number of sub control volumes (number of codim-1 entities)
