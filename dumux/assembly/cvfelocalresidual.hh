@@ -18,6 +18,7 @@
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
@@ -45,16 +46,6 @@ using SCVFIsOverlappingDetector = decltype(
 template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
-
-//! helper struct detecting if a problem has new boundaryFlux function
-template<class P, class FVG, class EV, class EFVC, class IP>
-using BoundaryFluxFunctionDetector = decltype(
-    std::declval<P>().boundaryFlux(std::declval<FVG>(), std::declval<EV>(), std::declval<EFVC>(), std::declval<IP>())
-);
-
-template<class P, class FVG, class EV, class EFVC, class IP>
-constexpr inline bool hasProblemBoundaryFluxFunction()
-{ return Dune::Std::is_detected<BoundaryFluxFunctionDetector, P, FVG, EV, EFVC, IP>::value; }
 
 } // end namespace Dumux::Detail
 
@@ -235,8 +226,7 @@ public:
         // boundary faces
         else
         {
-            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, scv);
+            const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
 
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             // For Dirichlet there is no addition to the residual here but they
@@ -244,12 +234,13 @@ public:
             if (bcTypes.hasNeumann())
             {
                 NumEqVector boundaryFluxes;
-                if constexpr (Detail::hasProblemBoundaryFluxFunction<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, FaceIpData>())
+                if constexpr (Dumux::Detail::hasProblemBoundaryFluxFunction<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, FaceIpData>())
                     boundaryFluxes = problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache, FaceIpData(scvf.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
                 else
                     boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
                 boundaryFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
@@ -316,6 +307,20 @@ private:
         else
             return this->asImp().computeStorage(problem, scv, volVars);
     }
+
+    auto bcTypes_(const Problem& problem,
+                  const FVElementGeometry& fvGeometry,
+                  const SubControlVolumeFace& scvf,
+                  const ElementBoundaryTypes& elemBcTypes) const
+    {
+        // Check if problem supports the new boundaryTypes function for element intersections
+        // then we can always get bcTypes for intersections and the associated scvfs
+        if constexpr (Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridView::Intersection>())
+            return elemBcTypes.get(fvGeometry, scvf);
+        else
+            return elemBcTypes.get(fvGeometry, fvGeometry.scv(scvf.insideScvIdx()));
+    }
+
 };
 
 } // end namespace Dumux
