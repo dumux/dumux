@@ -673,7 +673,10 @@ public:
 
 private:
     bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
-    { return Dune::FloatCmp::eq(t0, t1, this->baseEps_*this->timeStepSize()); }
+    {
+        Scalar eps = this->timeStepSize() < 1.0 ? this->baseEps_ : this->baseEps_*this->timeStepSize();
+        return Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t0, t1, eps);
+    }
 
     void setPeriodicCheckPoint_(Scalar interval, Scalar offset = 0.0)
     {
@@ -702,11 +705,11 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
-        if (Dune::FloatCmp::le(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
+        if (Dune::FloatCmp::le<Scalar, Dune::FloatCmp::absolute>(t - this->time(), 0.0, this->timeStepSize()*this->baseEps_))
         {
             if (this->verbose())
                 std::cerr << Fmt::format("Couldn't insert checkpoint at t = {:.5g} ", t)
-                          << Fmt::format("because that's not in the future! (current simulation time is {:.5g})\n", this->time());
+                          << Fmt::format("because that's not in the future! or too close to the current time (current simulation time is {:.5g})\n", this->time());
             return;
         }
 
