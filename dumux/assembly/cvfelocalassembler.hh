@@ -24,6 +24,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -66,15 +67,18 @@ template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CVFELocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
+    using GridGeometry =  GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
+    static constexpr int dim = GridGeometry::GridView::dimension;
 
 public:
 
@@ -256,23 +260,27 @@ public:
     {
         // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
         // and set the residual to (privar - dirichletvalue)
-        if (this->elemBcTypes().hasDirichlet())
+        // when having the new boundary interface Dirichlet conditions are incorporated via constraints
+        if constexpr (!Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridGeometry::GridView::Intersection>())
         {
-            for (const auto& scvI : scvs(this->fvGeometry()))
+            if (this->elemBcTypes().hasDirichlet())
             {
-                const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
-                if (bcTypes.hasDirichlet())
+                for (const auto& scvI : scvs(this->fvGeometry()))
                 {
-                    const auto dirichletValues = this->asImp_().problem().dirichlet(this->element(), scvI);
-
-                    // set the Dirichlet conditions in residual and jacobian
-                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    const auto bcTypes = this->elemBcTypes().get(this->fvGeometry(), scvI);
+                    if (bcTypes.hasDirichlet())
                     {
-                        if (bcTypes.isDirichlet(eqIdx))
+                        const auto dirichletValues = this->asImp_().problem().dirichlet(this->element(), scvI);
+
+                        // set the Dirichlet conditions in residual and jacobian
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                         {
-                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                            assert(0 <= pvIdx && pvIdx < numEq);
-                            applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
+                            if (bcTypes.isDirichlet(eqIdx))
+                            {
+                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                                assert(0 <= pvIdx && pvIdx < numEq);
+                                applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
+                            }
                         }
                     }
                 }
