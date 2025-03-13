@@ -25,6 +25,8 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/periodicgridtraits.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 
@@ -181,6 +183,7 @@ int main(int argc, char** argv)
         vtkWriter.write("repeatedsubgrid_binary_image");
     }
 
+    {
 #if HAVE_DUNE_SPGRID
         Dune::Timer timer;
         using HostGrid = Dune::SPGrid<double, dim>;
@@ -190,7 +193,8 @@ int main(int argc, char** argv)
         hostGridManager.init(gridName);
         auto& hostGrid = hostGridManager.grid();
 
-        using SubGridManager = Dumux::GridManager<Dune::SubGrid<dim, HostGrid>>;
+        using Grid = Dune::SubGrid<dim, HostGrid>;
+        using SubGridManager = Dumux::GridManager<Grid>;
         SubGridManager subGridManager;
 
         // The subgrid is created from a 3x3 periodic host grid.
@@ -209,8 +213,11 @@ int main(int argc, char** argv)
         Dune::VTKWriter<SubGridManager::Grid::LeafGridView> vtkWriter(subGridManager.grid().leafGridView());
         vtkWriter.write("periodic_subgrid_binary_image");
 
-        // The intersections for the periodic subgrid should match the following properties.
+        // The intersections for the periodic subgrid should match the following properties
+        // according to SPGrid definitions.
         // Each entry contains a pair with bool values that should match (it.Boundary(), it.Neighbor())
+        // As SubGrid currently does not pass through it.boundary() at periodic boundaries, this
+        // will not be matched, use periodicGridTraits.isPeriodic(it) || it.boundary.
         std::vector<std::pair<bool, bool>> intersectionProperties {{true, false}, {false, true}, {true, true}, {true, false},
                                                                    {false, true}, {true, false}, {true, true}, {false, true},
                                                                    {true, false}, {true, false}, {true, false}, {false, true},
@@ -220,22 +227,28 @@ int main(int argc, char** argv)
                                                                    {false, true}, {true, false}, {false, true}, {true, true}};
         int countSub = 0;
         int intersectionIdx = 0;
+        const PeriodicGridTraits<Grid> periodicGridTraits(subGridManager.grid());
         for (const auto& element : elements(subGridManager.grid().leafGridView()))
         {
             for (auto& intersection : intersections(subGridManager.grid().leafGridView(), element))
             {
-                if ((intersection.boundary() != intersectionProperties[intersectionIdx].first) ||
-                    (intersection.neighbor() != intersectionProperties[intersectionIdx].second) )
-                    DUNE_THROW(Dune::Exception, "The Subgrid intersection's (" << intersectionIdx << ") properties are incorrect. \n" <<
+                const bool isBoundary = intersection.boundary() || periodicGridTraits.isPeriodic(intersection);
+                const bool shouldBePeriodic = (intersectionProperties[intersectionIdx].first &&
+                                               intersectionProperties[intersectionIdx].second);
+                if ((intersectionProperties[intersectionIdx].first != isBoundary) ||
+                    (intersectionProperties[intersectionIdx].second != intersection.neighbor()) ||
+                    (shouldBePeriodic != periodicGridTraits.isPeriodic(intersection) ) )
+                    DUNE_THROW(Dune::Exception, "The SubGrid intersection's (" << intersectionIdx << ") properties are incorrect.\n" <<
                                                 "Intersection Center is : " << intersection.geometry().center() <<
-                                                "\n Boundary is " <<  intersection.boundary() << " and should be " <<
-                                                intersectionProperties[intersectionIdx].first <<
-                                                "\n Neighbor is " <<  intersection.neighbor() << " and should be " <<
-                                                intersectionProperties[intersectionIdx].second );
-                if (intersection.boundary())
-                    if (intersection.neighbor())
-                        countSub++;
-            intersectionIdx++;
+                                                "\n Boundary is " << isBoundary <<
+                                                " and should be " << intersectionProperties[intersectionIdx].first <<
+                                                "\n Neighbor is " << intersection.neighbor() <<
+                                                " and should be " << intersectionProperties[intersectionIdx].second <<
+                                                "\n isPeriodic is " << periodicGridTraits.isPeriodic(intersection) <<
+                                                " and should be " << shouldBePeriodic );
+                if (periodicGridTraits.isPeriodic(intersection))
+                    countSub++;
+                intersectionIdx++;
             }
         }
         if (countSub == 0)
