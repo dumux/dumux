@@ -22,6 +22,8 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/datahandleif.hh>
 
+#include <dumux/io/vtk/vtkreader.hh>
+
 namespace Dumux {
 
 /*!

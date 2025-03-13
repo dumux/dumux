@@ -13,6 +13,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dune/common/reservedvector.hh>

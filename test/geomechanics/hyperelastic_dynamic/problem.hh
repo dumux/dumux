@@ -14,6 +14,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 
+#include <dumux/experimental/timestepping/newmarkbeta.hh>
+
 namespace Dumux {
 
 // This test case corresponds to the CSM benchmark problem

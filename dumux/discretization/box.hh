@@ -13,6 +13,7 @@
 #ifndef DUMUX_DISCRETIZTAION_BOX_HH
 #define DUMUX_DISCRETIZTAION_BOX_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dune/common/fvector.hh>
