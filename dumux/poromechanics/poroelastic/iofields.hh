@@ -10,7 +10,7 @@
  * \brief Adds I/O fields specific to the poro-elastic model
  */
 #ifndef DUMUX_POROMECHANICS_POROELASTIC_IO_FIELDS_HH
-#define DUMUX_POROMECHANICS_POROMECHANICS_POROELASTIC_IO_FIELDS_HH
+#define DUMUX_POROMECHANICS_POROELASTIC_IO_FIELDS_HH
 
 #include <dumux/io/name.hh>
 
