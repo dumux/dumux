@@ -641,11 +641,6 @@ public:
     void setCheckPoint(const std::initializer_list<ScalarOrDuration>& checkPoints)
     { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
 
-    template<class ScalarOrDuration>
-    [[deprecated("Use setCheckpoint(begin, end) instead. Will be removed after release 3.9.")]]
-    void setCheckPoint(const std::vector<ScalarOrDuration>& checkPoints)
-    { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
-
     /*!
      * \brief add checkpoints to the queue from a container from the first iterator to the last iterator
      * \note checkpoints have to be provided in ascending order

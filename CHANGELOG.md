@@ -31,6 +31,7 @@ idenpendently of the property system.
 - __Periodic Map__: `periodicVertexMap` that was deprecated in 3.9 has been removed. Use `periodicDofMap` instead.
 - __Thermal conductivity__: Removed deprecated alias `ThermalConductivitySomerton`. Use `ThermalConductivitySomertonTwoP` and `ThermalConductivitySomertonThreeP` instead.
 - __Thermal conductivity__: `1p` folder from `material/fluidmatrixinteractions` that was deprecated in 3.9 has been removed. Use `ThermalConductivityAverage` from `dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh` instead.
+- __setCheckPoint(vec)__: this function in `timeloop.hh` is removed. Other options are available.
 
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
