@@ -19,8 +19,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
-
-#include <dumux/geomechanics/fvproblem.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 
 namespace Dumux {
 
@@ -29,9 +28,9 @@ namespace Dumux {
  * \brief Problem definition for the deformation of an elastic body.
  */
 template<class TypeTag>
-class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
+class ElasticProblem : public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = GeomechanicsFVProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;

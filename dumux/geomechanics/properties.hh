@@ -13,6 +13,9 @@
 #ifndef DUMUX_GEOMECHANICS_PROPERTIES_HH
 #define DUMUX_GEOMECHANICS_PROPERTIES_HH
 
+#warning "This header is deprecated and will be removed after 3.10.
+
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/material/components/constant.hh>
@@ -68,4 +71,4 @@ public:
 } // namespace Properties
 } // namespace Dumux
 
- #endif
+#endif

@@ -12,6 +12,8 @@
 #ifndef DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 #define DUMUX_GEOMECHANICS_SPATIAL_PARAMS_TRAITS__HH
 
+#warning "This header is deprecated and will be removed after 3.10."
+
 #include <utility>
 
 #ifndef DOXYGEN

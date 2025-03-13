@@ -12,63 +12,7 @@
 #ifndef DUMUX_GEOMECHANICS_DEFAULT_HYPERELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_GEOMECHANICS_DEFAULT_HYPERELASTIC_SPATIAL_PARAMS_HH
 
-#include <dumux/common/fvspatialparams.hh>
-
-namespace Dumux {
-
-template<class GridGeometry, class Scalar>
-class DefaultHyperelasticSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>
-{
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>;
-public:
-    DefaultHyperelasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
-    , E_(getParam<Scalar>("SpatialParams.YoungsModulus"))
-    , nu_(getParam<Scalar>("SpatialParams.PoissonRatio"))
-    {
-        mu_ = E_/(2*(1 + nu_));
-        K_ = E_/(3*(1 - 2*nu_));
-        lambda_ = nu_*E_/((1 + nu_)*(1-2*nu_));
-    }
-
-    Scalar shearModulus() const
-    { return mu_; }
-
-    Scalar bulkModulus() const
-    { return K_; }
-
-    Scalar youngsModulus() const
-    { return E_; }
-
-    Scalar poissonRatio() const
-    { return nu_; }
-
-    Scalar firstLameParameter() const
-    { return lambda_; }
-
-private:
-    Scalar E_, nu_, mu_, K_, lambda_;
-};
-
-template<class GridGeometry, class Scalar>
-class DefaultDynamicHyperelasticSpatialParams
-: public DefaultHyperelasticSpatialParams<GridGeometry, Scalar>
-{
-    using ParentType = DefaultHyperelasticSpatialParams<GridGeometry, Scalar>;
-public:
-    DefaultDynamicHyperelasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
-    , rho_(getParam<Scalar>("SpatialParams.SolidDensity"))
-    {}
-
-    Scalar solidDensity() const
-    { return rho_; }
-
-private:
-    Scalar rho_;
-};
-
-} // end namespace Dumux
+#include <dumux/solidmechanics/hyperelastic/spatialparams.hh>
+#warning "This header is deprecated and will be removed after 3.10. Use DefaultHyperelasticSpatialParams or DefaultDynamicHyperelasticSpatialParams from dumux/solidmechanics/hyperelastic/spatialparams.hh."
 
 #endif

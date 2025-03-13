@@ -12,6 +12,8 @@
 #ifndef DUMUX_GEOMECHANICS_FV_PROBLEM_HH
 #define DUMUX_GEOMECHANICS_FV_PROBLEM_HH
 
+#warning "This header is deprecated and will be removed after 3.10. Inherit directly from FVProblemWithSpatialParams instead."
+
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/porousmediumflow/problem.hh>
 

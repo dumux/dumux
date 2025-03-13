@@ -13,8 +13,8 @@
 #ifndef DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
-#include <dumux/geomechanics/lameparams.hh>
-#include <dumux/geomechanics/elastic/fvspatialparams.hh>
+#include <dumux/solidmechanics/elastic/lameparams.hh>
+#include <dumux/solidmechanics/elastic/fvspatialparams.hh>
 
 namespace Dumux {
 

@@ -11,7 +11,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/hyperelastic/model.hh>
+#include <dumux/solidmechanics/hyperelastic/model.hh>
 
 #include "problem.hh"
 

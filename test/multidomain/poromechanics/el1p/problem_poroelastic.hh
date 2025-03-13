@@ -18,8 +18,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>
-
-#include <dumux/geomechanics/fvproblem.hh>
+#include <dumux/common/fvproblemwithspatialparams.hh>
 
 namespace Dumux {
 
@@ -28,9 +27,9 @@ namespace Dumux {
  * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 template<class TypeTag>
-class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
+class PoroElasticSubProblem : public FVProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = GeomechanicsFVProblem<TypeTag>;
+    using ParentType = FVProblemWithSpatialParams<TypeTag>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
