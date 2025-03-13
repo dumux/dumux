@@ -17,6 +17,8 @@
 #ifndef DUMUX_FACETCOUPLING_CC_MPFA_PROPERTIES_HH
 #define DUMUX_FACETCOUPLING_CC_MPFA_PROPERTIES_HH
 
+#include <concepts>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>

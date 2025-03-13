@@ -13,6 +13,7 @@
 #ifndef DUMUX_DISCRETIZTAION_PQ1BUBBLE_HH
 #define DUMUX_DISCRETIZTAION_PQ1BUBBLE_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dune/common/fvector.hh>

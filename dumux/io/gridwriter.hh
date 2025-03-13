@@ -18,6 +18,7 @@
 
 #include <ranges>
 #include <execution>
+#include <concepts>
 #include <type_traits>
 
 #include <gridformat/common/type_traits.hpp>

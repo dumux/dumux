@@ -17,6 +17,7 @@
 #ifndef DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
 #define DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dumux/common/properties.hh>

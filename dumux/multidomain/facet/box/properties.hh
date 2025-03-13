@@ -17,6 +17,8 @@
 #ifndef DUMUX_FACETCOUPLING_BOX_PROPERTIES_HH
 #define DUMUX_FACETCOUPLING_BOX_PROPERTIES_HH
 
+#include <concepts>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>

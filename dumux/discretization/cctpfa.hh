@@ -14,6 +14,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dumux/common/properties.hh>
