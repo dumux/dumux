@@ -32,6 +32,7 @@ idenpendently of the property system.
 - __Thermal conductivity__: Removed deprecated alias `ThermalConductivitySomerton`. Use `ThermalConductivitySomertonTwoP` and `ThermalConductivitySomertonThreeP` instead.
 - __Thermal conductivity__: `1p` folder from `material/fluidmatrixinteractions` that was deprecated in 3.9 has been removed. Use `ThermalConductivityAverage` from `dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh` instead.
 - __setCheckPoint(vec)__: this function in `timeloop.hh` is removed. Other options are available.
+- __BJS functions__: the functions in `freeflow/navierstokes/momentum/problem.hh` returning permeability, alpha, beta, and pm velocity to be used in BJS boundary condition are removed. They are supposed to be implemented in the test problem.
 
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================
