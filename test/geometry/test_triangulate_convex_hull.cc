@@ -10,6 +10,8 @@
 #include <string>
 #include <random>
 #include <vector>
+#include <array>
+#include <cmath>
 #include <algorithm>
 
 #include <dune/common/exceptions.hh>
@@ -21,6 +23,179 @@
 #include <dumux/geometry/grahamconvexhull.hh>
 
 #include "writetriangulation.hh"
+
+using Point3D = Dune::FieldVector<double, 3>;
+
+double tetrahedronVolume(const Point3D& a, const Point3D& b, const Point3D& c, const Point3D& d)
+{
+    using std::abs;
+    return abs(Dumux::crossProduct(b - a, c - a)*(d - a))/6.0;
+}
+
+double hullVolume(const std::vector<Point3D>& points)
+{
+    double volume = 0.0;
+    for (const auto& t : Dumux::triangulate<3, 3>(points))
+        volume += tetrahedronVolume(t[0], t[1], t[2], t[3]);
+    return volume;
+}
+
+void checkHullVolume(const std::vector<Point3D>& points, double expected, const std::string& name)
+{
+    const auto volume = hullVolume(points);
+    using std::abs;
+    if (abs(volume - expected) > 1e-8*expected)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Wrong hull volume for " << name << ": got " << volume << ", expected " << expected);
+}
+
+// hull is the tetrahedron spanned by the first four points, the others are interior
+void checkInteriorPoints()
+{
+    checkHullVolume({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0},
+                     {0.25, 0.25, 0.1}, {0.1, 0.1, 0.1}},
+                    1.0/6.0, "tetrahedron with interior points");
+
+    const std::vector<Point3D> nearVertex{
+        {-0.58057106851830498, -0.29775076358325248, 0.47892172882172601},
+        {-0.76664480766118182, -0.18561860185460144, -0.51301334052091452},
+        {-0.35939177696124769, -0.6827810040821285, 0.45321126331016059},
+        {-0.621361647200943, -0.046130559471627697, 0.7836681578432878},
+        {-0.58057121064396167, -0.29775129553011892, 0.4789039063440802},
+        {-0.76662634241292427, -0.18563034701764078, -0.51293196949162612},
+        {-0.58795871204284378, -0.34662007135205208, 0.15458067343399479},
+        {-0.5234498642758163, -0.42102332668904252, 0.30207239510020373}};
+    checkHullVolume(nearVertex,
+                    tetrahedronVolume(nearVertex[0], nearVertex[1], nearVertex[2], nearVertex[3]),
+                    "tetrahedron with interior points close to a vertex");
+}
+
+// the same polyhedron with its planar face perturbed by the round-off an intersection produces
+void checkPerturbedPlanarFace()
+{
+    const std::vector<Point3D> exact{
+        {0.0, 0.0, 0.0},
+        {0.10000000000000001, 0.20000000000000001, 0.90000000000000002},
+        {0.1309712721100709, 0.47874144899063814, 0.71417236733957468},
+        {0.1561289667403154, 0.85870931707173481, 0.2341934501104731},
+        {0.37130348780858424, 0.94426955653765066, 0.28442695565376508},
+        {1.3, 0.10000000000000001, 0.20000000000000001}};
+
+    const std::vector<Point3D> perturbed{
+        {0.0, 0.0, 0.0},
+        {0.10000000000000001, 0.20000000000000001, 0.90000000000000002},
+        {0.13097127211007112, 0.47874144899044035, 0.71417236733980216},
+        {0.1561289667403041, 0.85870931707170495, 0.23419345011046996},
+        {0.37130348780854766, 0.94426955653761602, 0.28442695565373782},
+        {1.3, 0.10000000000000001, 0.20000000000000001}};
+
+    checkHullVolume(perturbed, hullVolume(exact), "polyhedron with a perturbed planar face");
+}
+
+// random tetrahedra cut by a random plane, clipped volume known in closed form
+void checkClippedTetrahedra()
+{
+    std::mt19937 gen(20260723);
+    std::uniform_real_distribution<double> coord(-1.0, 1.0), frac(0.0, 1.0);
+
+    for (int test = 0; test < 500; ++test)
+    {
+        std::array<Point3D, 4> corners;
+        for (auto& c : corners)
+            c = {coord(gen), coord(gen), coord(gen)};
+        const auto volume = tetrahedronVolume(corners[0], corners[1], corners[2], corners[3]);
+        if (volume < 1e-2)
+            continue;
+
+        Point3D normal{coord(gen), coord(gen), coord(gen)};
+        if (normal.two_norm() < 0.2)
+            continue;
+        normal /= normal.two_norm();
+
+        auto lowest = 1e100, highest = -1e100;
+        for (const auto& c : corners)
+        {
+            using std::min; using std::max;
+            lowest = min(lowest, c*normal);
+            highest = max(highest, c*normal);
+        }
+        const auto offset = lowest + (highest - lowest)*(0.15 + 0.7*frac(gen));
+
+        std::array<double, 4> distance;
+        std::vector<int> inside, outside;
+        for (int i = 0; i < 4; ++i)
+        {
+            distance[i] = corners[i]*normal - offset;
+            (distance[i] <= 0.0 ? inside : outside).push_back(i);
+        }
+        if (inside.empty() || outside.empty())
+            continue;
+
+        const auto cutPoint = [&](int i, int j)
+        {
+            auto p = corners[i];
+            p.axpy(distance[i]/(distance[i] - distance[j]), corners[j] - corners[i]);
+            return p;
+        };
+        const auto cornerFraction = [&](int v)
+        {
+            auto f = 1.0;
+            for (int i = 0; i < 4; ++i)
+                if (i != v)
+                    f *= distance[v]/(distance[v] - distance[i]);
+            return f;
+        };
+
+        double expected;
+        if (inside.size() == 1)
+            expected = volume*cornerFraction(inside[0]);
+        else if (outside.size() == 1)
+            expected = volume*(1.0 - cornerFraction(outside[0]));
+        else
+        {
+            const auto a = inside[0], b = inside[1], p = outside[0], q = outside[1];
+            const auto ap = cutPoint(a, p), aq = cutPoint(a, q);
+            const auto bp = cutPoint(b, p), bq = cutPoint(b, q);
+            expected = tetrahedronVolume(corners[a], corners[b], ap, aq)
+                     + tetrahedronVolume(corners[b], ap, aq, bq)
+                     + tetrahedronVolume(corners[b], ap, bq, bp);
+        }
+        if (expected < 1e-3)
+            continue;
+
+        std::vector<Point3D> clipped;
+        for (int i = 0; i < 4; ++i)
+            if (distance[i] <= 0.0)
+                clipped.push_back(corners[i]);
+        for (int i = 0; i < 4; ++i)
+            for (int j = i+1; j < 4; ++j)
+                if ((distance[i] > 0.0) != (distance[j] > 0.0))
+                    clipped.push_back(cutPoint(i, j));
+
+        const auto id = std::to_string(test);
+        checkHullVolume(clipped, expected, "clipped tetrahedron " + id);
+
+        std::shuffle(clipped.begin(), clipped.end(), gen);
+        checkHullVolume(clipped, expected, "shuffled clipped tetrahedron " + id);
+
+        Point3D centre(0.0);
+        for (const auto& p : clipped)
+            centre += p;
+        centre /= clipped.size();
+
+        auto withInterior = clipped;
+        auto interior = clipped[0];
+        interior.axpy(1e-4, centre - clipped[0]);
+        withInterior.push_back(interior);
+        checkHullVolume(withInterior, expected, "clipped tetrahedron with interior point " + id);
+
+        auto jittered = clipped;
+        for (auto& p : jittered)
+            for (int i = 0; i < 3; ++i)
+                p[i] += 1e-13*coord(gen);
+        checkHullVolume(jittered, expected, "jittered clipped tetrahedron " + id);
+    }
+}
 
 template<class Scalar>
 class UniformDistributedRandomNumber
@@ -191,6 +366,10 @@ int main(int argc, char* argv[])
     writeVTUTetrahedron(hull3D4Rnd, "hulltriangulation3d_rnd");
     if (hull3D4Rnd.size() < 4)
         DUNE_THROW(Dune::InvalidStateException, "Incorrect hull for random points!");
+
+    checkInteriorPoints();
+    checkPerturbedPlanarFace();
+    checkClippedTetrahedra();
 
     return 0;
 }
