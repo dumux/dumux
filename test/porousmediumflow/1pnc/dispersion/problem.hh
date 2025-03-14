@@ -146,7 +146,8 @@ public:
 
         if (isLeftBoundary_(globalPos))
         {
-            values[contiN2EqIdx] =  boundaryConcentration_;
+            values[contiN2EqIdx] =  boundaryConcentration_ * (useMoles ? 1.0 :
+                    FluidSystem::molarMass(N2Idx) / FluidSystem::molarMass(H2OIdx));
 #if NONISOTHERMAL
             values[energyEqIdx] = this->spatialParams().temperatureAtPos(globalPos) + temperatureDifference_;
 #endif
@@ -182,7 +183,7 @@ public:
         const auto globalPos = element.geometry().corner(scvf.insideScvIdx());
         NumEqVector values(0.0);
         if (isRightBoundary_(globalPos))
-            values[contiH2OEqIdx] = -1.0 * counterFlowRate_;
+            values[contiH2OEqIdx] = -1.0 * counterFlowRate_ * (useMoles ? 1.0 : FluidSystem::molarMass(H2OIdx));
         return values;
     }
 
