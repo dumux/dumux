@@ -43,10 +43,6 @@ namespace TTag {
 struct BoxFacetCouplingModel { using InheritsFrom = std::tuple<BoxModel>; };
 } // end namespace TTag
 
-//! Use the box local residual for models with facet coupling
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::BoxFacetCouplingModel> { using type = BoxFacetCouplingLocalResidual<TypeTag>; };
-
 //! Use the box facet coupling-specific Darcy's law
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::BoxFacetCouplingModel>

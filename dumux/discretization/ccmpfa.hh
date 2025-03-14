@@ -156,9 +156,6 @@ public:
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::CCMpfaModel> { using type = CCElementBoundaryTypes; };
 
-//! Set the BaseLocalResidual to CCLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::CCMpfaModel> { using type = CCLocalResidual<TypeTag>; };
 } // namespace Properties
 
 namespace Detail {

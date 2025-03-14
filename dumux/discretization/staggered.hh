@@ -115,10 +115,6 @@ public:
 template<class TypeTag>
 struct ElementBoundaryTypes<TypeTag, TTag::StaggeredModel> { using type = CCElementBoundaryTypes; };
 
-//! Set the BaseLocalResidual to StaggeredLocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::StaggeredModel> { using type = StaggeredLocalResidual<TypeTag>; };
-
 //! The cell center primary variables
 template<class TypeTag>
 struct CellCenterPrimaryVariables<TypeTag, TTag::StaggeredModel>

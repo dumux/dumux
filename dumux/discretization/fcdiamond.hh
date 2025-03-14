@@ -94,11 +94,6 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! Set the BaseLocalResidual to CVFELocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::FaceCenteredDiamondModel>
-{ using type = CVFELocalResidual<TypeTag>; };
-
 //! The flux variables cache type
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::FaceCenteredDiamondModel>
