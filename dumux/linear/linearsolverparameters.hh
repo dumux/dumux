@@ -93,6 +93,12 @@ public:
             }
         }
     }
+
+    static void disableVerbosity(Dune::ParameterTree& params)
+    {
+        params["verbose"] = "0";
+        params["preconditioner.verbosity"] = "0";
+    }
 };
 
 //! Translation table for solver parameters

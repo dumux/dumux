@@ -203,7 +203,7 @@ public:
                               const DofMapper& dofMapper,
                               const ParameterInitializer& params = "")
     {
-        initializeParameters_(params);
+        initializeParameters_(params, gridView.comm());
 #if HAVE_MPI
         solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
         if constexpr (LinearSolverTraits::canCommunicate)
@@ -238,7 +238,7 @@ public:
                               const DofMapper& dofMapper,
                               const ParameterInitializer& params = "")
     {
-        initializeParameters_(params);
+        initializeParameters_(params, gridView.comm());
         solverCategory_ = Detail::solverCategory(gridView);
         scalarProduct_ = scalarProduct;
         communication_ = communication;
@@ -349,11 +349,18 @@ public:
     /*!
      * \brief Set the linear solver parameters
      * \param params Either a std::string giving a parameter group (parameters are read from input file) or a Dune::ParameterTree
-     * \note In case of a Dune::ParameterTree, the parameters are passed trait to the linear solver and preconditioner
+     * \note In case of a Dune::ParameterTree, the parameters are passed straight to the linear solver and preconditioner
      */
     void setParams(const ParameterInitializer& params)
     {
+#if HAVE_MPI
+        if (communication_)
+            initializeParameters_(params, communication_->communicator());
+        else
+            initializeParameters_(params);
+#else
         initializeParameters_(params);
+#endif
 
         // reconstruct the solver with new parameters
         if (solver_)
@@ -368,6 +375,16 @@ private:
             params_ = Dumux::LinearSolverParameters<LinearSolverTraits>::createParameterTree(std::get<std::string>(params));
         else
             params_ = std::get<Dune::ParameterTree>(params);
+    }
+
+    template <class Comm>
+    void initializeParameters_(const ParameterInitializer& params, const Comm& comm)
+    {
+        initializeParameters_(params);
+
+        // disable verbose output on all ranks except rank 0
+        if (comm.rank() != 0)
+            Dumux::LinearSolverParameters<LinearSolverTraits>::disableVerbosity(params_);
     }
 
     MatrixOperatorHolder makeSequentialLinearOperator_(std::shared_ptr<Matrix> A)
