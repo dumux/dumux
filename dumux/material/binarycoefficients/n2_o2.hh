@@ -18,8 +18,7 @@
 #include <dumux/material/components/o2.hh>
 #include <dumux/material/components/n2.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -70,7 +69,6 @@ public:
     }
 };
 
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif
