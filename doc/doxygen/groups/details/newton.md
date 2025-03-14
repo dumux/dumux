@@ -1,6 +1,6 @@
-@ingroup Nonlinear
 @defgroup Newton Newton solver
-@brief The Newton solver and the related parameters.
+@brief The Newton solver and the related parameters. See @ref Dumux::NewtonSolver for the reference implementation.
+@ingroup Nonlinear
 @details
 # Understanding the Newton solver
 The Newton solver is used to solve a non-linear system of equations.
@@ -46,7 +46,7 @@ $\textbf{u}^{i+1} = \textbf{u}^i - \textbf{x}^i$.
 We repeat the calculation of the Jacobian $J_{\textbf{r}(\textbf{u}^i)}$ and the
 direction of maximum growth $\textbf{x}^i$ until our approximated solution becomes good enough.
 
-See `Dumux::NewtonSolver` for the reference implementation of the Newton method based solver in DuMux, which features various convergence criteria and a simple line search algorithm to improve the update.
+See @ref Dumux::NewtonSolver for the reference implementation of the Newton method based solver in DuMux, which features various convergence criteria and a simple line search algorithm to improve the update.
 
 Users have the flexibility to adjust various Newton solver parameters to optimize convergence and efficiency.
 The parameters, that can be set in the input file, e.g., `params.input`, are categorized and explained in the following:
