@@ -9,8 +9,8 @@
  * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::OnePGas
  */
-#ifndef DUMUX_GAS_PHASE_HH
-#define DUMUX_GAS_PHASE_HH
+#ifndef DUMUX_FLUIDSYTEMS_GAS_PHASE_HH
+#define DUMUX_FLUIDSYTEMS_GAS_PHASE_HH
 
 #include <cassert>
 #include <limits>
