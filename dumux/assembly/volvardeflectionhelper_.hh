@@ -16,73 +16,95 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
+
 #ifndef DOXYGEN
 
 namespace Dumux::Detail {
 
-template<class VolVarAccessor, class FVElementGeometry>
+template<class GridVolumeVariables, class FVElementGeometry>
 class VolVarsDeflectionHelper
 {
-    static constexpr int maxNumscvs = FVElementGeometry::maxNumElementScvs;
+    using ElementVariables = typename GridVolumeVariables::LocalView;
+    using VolumeVariables = typename ElementVariables::VolumeVariables;
 
-    using SubControlVolume = typename FVElementGeometry::GridGeometry::SubControlVolume;
-    using VolumeVariablesRef = std::invoke_result_t<VolVarAccessor, const SubControlVolume&>;
-    using VolumeVariables = std::decay_t<VolumeVariablesRef>;
-    static_assert(std::is_lvalue_reference_v<VolumeVariablesRef>
-                  && !std::is_const_v<std::remove_reference_t<VolumeVariablesRef>>);
+    static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
 
 public:
-    VolVarsDeflectionHelper(VolVarAccessor&& accessor,
+    VolVarsDeflectionHelper(GridVolumeVariables& gridVolumeVariables,
+                            ElementVariables& elementVariables,
                             const FVElementGeometry& fvGeometry,
-                            bool deflectAllVolVars)
-    : deflectAll_(deflectAllVolVars)
-    , accessor_(std::move(accessor))
+                            bool deflectAllVariables)
+    : gridVolumeVariables_(gridVolumeVariables)
+    , elementVariables_(elementVariables)
     , fvGeometry_(fvGeometry)
+    , deflectAll_(deflectAllVariables)
     {
         if (deflectAll_)
-            for (const auto& curScv : scvs(fvGeometry))
-                origVolVars_.push_back(accessor_(curScv));
+            for (const auto& scv : scvs(fvGeometry))
+                origVolVars_.push_back(accessor_(scv));
     }
 
-    void setCurrent(const SubControlVolume& scv)
+    template<class LocalDof>
+    void setCurrent(const LocalDof& localDof)
     {
         if (!deflectAll_)
         {
             origVolVars_.clear();
-            origVolVars_.push_back(accessor_(scv));
+            for(const auto& scv : scvs(fvGeometry_, localDof))
+                origVolVars_.push_back(accessor_(scv));
         }
     }
 
-    template<class ElementSolution, class Problem>
+    template<class ElementSolution, class LocalDof, class Problem>
     void deflect(const ElementSolution& elemSol,
-                 const SubControlVolume& scv,
+                 const LocalDof& localDof,
                  const Problem& problem)
     {
         if (deflectAll_)
-            for (const auto& curScv : scvs(fvGeometry_))
-                accessor_(curScv).update(elemSol, problem, fvGeometry_.element(), curScv);
+            for (const auto& scv : scvs(fvGeometry_))
+                accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
         else
-            accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+        {
+            for(const auto& scv : scvs(fvGeometry_, localDof))
+                accessor_(scv).update(elemSol, problem, fvGeometry_.element(), scv);
+        }
     }
 
-    void restore(const SubControlVolume& scv)
+    template<class LocalDof>
+    void restore(const LocalDof& localDof)
     {
         if (!deflectAll_)
-            accessor_(scv) = origVolVars_[0];
+        {
+            unsigned int idx = 0;
+            for(const auto& scv : scvs(fvGeometry_, localDof))
+            {
+                accessor_(scv) = origVolVars_[idx];
+                idx++;
+            }
+        }
         else
-            for (const auto& curScv : scvs(fvGeometry_))
-                accessor_(curScv) = origVolVars_[curScv.localDofIndex()];
+            for (const auto& scv : scvs(fvGeometry_))
+                accessor_(scv) = origVolVars_[scv.indexInElement()];
     }
 
 private:
-    const bool deflectAll_;
-    VolVarAccessor accessor_;
-    const FVElementGeometry& fvGeometry_;
-    Dune::ReservedVector<VolumeVariables, maxNumscvs> origVolVars_;
-};
+    template<class SCV>
+    VolumeVariables& accessor_(const SCV& scv)
+    {
+        if constexpr (GridVolumeVariables::cachingEnabled)
+            return gridVolumeVariables_.volVars(scv);
+        else
+            return elementVariables_[scv];
+    }
 
-template<class Accessor, class FVElementGeometry>
-VolVarsDeflectionHelper(Accessor&&, FVElementGeometry&&) -> VolVarsDeflectionHelper<Accessor, std::decay_t<FVElementGeometry>>;
+    GridVolumeVariables& gridVolumeVariables_;
+    ElementVariables& elementVariables_;
+    const FVElementGeometry& fvGeometry_;
+    const bool deflectAll_;
+    Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
+};
 
 } // end namespace Dumux::Detail
 
