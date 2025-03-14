@@ -10,3 +10,7 @@ A "problem" in DuMu<sup>x</sup> conceptually characterizes the simulated scenari
 ### SpatialParams
 All problem implementations derived from @ref Dumux::FVProblemWithSpatialParams (for example, @ref Dumux::PorousMediumFlowProblem) contain an instance of a class that specified position-dependent parameters. The type of this class is set by specializing the property @ref Dumux::Properties::SpatialParams. Examples of spatial parameter class implementations can also be found in the documented examples and many end-user test applications.
 
+## More basic concepts
+This documentation page is still incomplete. Contributing by describing other basic concepts in DuMu<sup>x</sup>.
+To go to the source file of this documentation page, follow the edit button below.
+
