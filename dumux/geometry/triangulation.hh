@@ -218,7 +218,7 @@ triangulate(const RandomAccessContainer& points)
     for (int i = 0; i < dimWorld; ++i)
         magnitude = max(upperRight[i] - lowerLeft[i], magnitude);
     const auto eps = 1e-7*magnitude;
-    const auto eps2 = eps*magnitude;
+    const auto eps2 = eps*eps;
 
     // reserve memory conservatively to avoid reallocation
     std::vector<Tetrahedron> triangulation;
@@ -367,7 +367,20 @@ triangulate(const RandomAccessContainer& points)
 
     // sanity check: if points are not coplanar, then using the mid point policy, we get at least 4 tetrahedrons
     if (triangulation.size() < 4)
+    {
+        for (const auto& p : points)
+            std::cout << p << "\n";
+        std::cout << std::endl;
+
+        for (const auto& t : triangulation)
+        {
+            for (const auto& p : t)
+                std::cout << "--" << p << "\n";
+            std::cout << std::endl;
+        }
+
         DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the triangulation!");
+    }
 
     return triangulation;
 }

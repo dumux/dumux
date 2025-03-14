@@ -1346,12 +1346,11 @@ public:
             const auto normal = crossProduct(points[1] - p0, points[2] - p0);
             // include the normal in eps (instead of norm*norm) since the normal can become very small
             // if the first three points are very close together
-            const auto epsCoplanar = normal.two_norm()*norm*eps_;
             for (int i = 3; i < points.size(); ++i)
             {
                 const auto ad = points[i] - p0;
                 using std::abs;
-                if (abs(normal*ad) > epsCoplanar)
+                if (abs(normal*ad) > squaredEps)
                     return false;
             }
 
