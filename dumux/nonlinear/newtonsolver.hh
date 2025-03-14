@@ -167,7 +167,8 @@ namespace Dumux {
 
 /*!
  * \ingroup Newton
- * \brief An implementation of a Newton solver.
+ * \brief An implementation of a Newton solver. The comprehensive documentation is in \ref Newton,
+ * providing more details about the algorithm and the related parameters.
  * \tparam Assembler the assembler
  * \tparam LinearSolver the linear solver
  * \tparam Comm the communication object used to communicate with all processes
