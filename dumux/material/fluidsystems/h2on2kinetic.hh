@@ -23,8 +23,7 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -99,7 +98,7 @@ public:
         return ParentType::H2O::vaporPressure(temperature);
     }
 };
-} // end namespace Fluidsystem
-} // end namespace Dumux
+
+} // end namespace Dumux::FluidSystems
 
 #endif

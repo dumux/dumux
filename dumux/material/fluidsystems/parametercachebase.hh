@@ -139,6 +139,6 @@ private:
     { return *static_cast<Implementation*>(this); }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

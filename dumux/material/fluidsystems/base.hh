@@ -18,8 +18,7 @@
 #include <dumux/common/typetraits/typetraits.hh>
 #include "nullparametercache.hh"
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
 * \ingroup FluidSystems
@@ -445,8 +444,6 @@ public:
     }
 };
 
-} // end namespace FluidSystems
-
-} // end namespace Dumux
+} // end namespace Dumux::FluidSystems
 
 #endif

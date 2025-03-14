@@ -33,8 +33,8 @@
 
 #include <dumux/io/name.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
+
 /*!
  * \ingroup FluidSystems
  * \brief Policy for the H2O-N2-O2 fluid system
@@ -864,7 +864,6 @@ public:
 
 };
 
-} // end namespace FluidSystems
-} // end namespace Dumux
+} // end namespace Dumux::FluidSystems
 
 #endif

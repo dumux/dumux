@@ -21,8 +21,7 @@
 #include <dumux/material/components/componenttraits.hh>
 #include <dumux/io/name.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -323,7 +322,6 @@ public:
     }
 };
 
-} // namespace FluidSystems
-} // namespace
+} // namespace Dumux::FluidSystems
 
 #endif

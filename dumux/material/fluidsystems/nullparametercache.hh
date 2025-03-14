@@ -21,6 +21,6 @@ namespace Dumux {
  */
 class NullParameterCache : public ParameterCacheBase<NullParameterCache> {};
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
