@@ -23,8 +23,7 @@
 
 #include <dumux/io/name.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -564,7 +563,7 @@ public:
     }
 
 };
-} // end namespace FluidSystems
-} // end namespace Dumux
+
+} // end namespace Dumux::FluidSystems
 
 #endif

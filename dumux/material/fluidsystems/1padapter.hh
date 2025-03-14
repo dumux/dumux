@@ -19,8 +19,7 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidstates/adapter.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -295,7 +294,6 @@ public:
     }
 };
 
-} // namespace FluidSystems
-} // namespace
+} // namespace Dumux::FluidSystems
 
 #endif

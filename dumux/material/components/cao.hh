@@ -20,8 +20,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/solid.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -83,8 +82,6 @@ public:
     }
 };
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

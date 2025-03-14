@@ -9,8 +9,8 @@
  * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::OnePGas
  */
-#ifndef DUMUX_GAS_PHASE_HH
-#define DUMUX_GAS_PHASE_HH
+#ifndef DUMUX_FLUIDSYTEMS_GAS_PHASE_HH
+#define DUMUX_FLUIDSYTEMS_GAS_PHASE_HH
 
 #include <cassert>
 #include <limits>
@@ -21,8 +21,7 @@
 #include <dumux/material/components/componenttraits.hh>
 #include <dumux/io/name.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -337,7 +336,6 @@ public:
     }
 };
 
-} // namespace FluidSystems
-} // namespace
+} // namespace Dumux::FluidSystems
 
 #endif

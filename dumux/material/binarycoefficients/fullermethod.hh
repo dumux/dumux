@@ -14,8 +14,8 @@
 
 #include <dumux/common/math.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
+
 /*!
  * \ingroup Binarycoefficients
  * \brief Estimate binary diffusion coefficients \f$\mathrm{[m^2/s]}\f$ in gases according to
@@ -48,7 +48,6 @@ inline Scalar fullerMethod(const Scalar *M, // molar masses [g/mol]
     return 1e-4 * (143.0*pow(temperature, 1.75))/(pressure*sqrt(Mab)*tmp*tmp);
 }
 
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif

@@ -20,8 +20,7 @@
 #include <dumux/material/components/gas.hh>
 #include <dumux/material/components/shomate.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -277,7 +276,6 @@ const typename N2<Scalar>::ShomateMethod N2<Scalar>::shomateMethod{
     }}
 };
 
-} // end namespace Components
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

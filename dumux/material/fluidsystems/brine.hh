@@ -22,8 +22,7 @@
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup FluidSystems
@@ -516,7 +515,6 @@ private:
     }
 };
 
-} // end namespace FluidSystems
-} // end namespace Dumux
+} // end namespace Dumux::FluidSystems
 
 #endif

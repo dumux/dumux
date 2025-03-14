@@ -18,8 +18,7 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/constant.hh>
 
-namespace Dumux {
-namespace BinaryCoeff {
+namespace Dumux::BinaryCoeff {
 
 /*!
  * \ingroup Binarycoefficients
@@ -90,7 +89,6 @@ public:
     }
 };
 
-} // end namespace BinaryCoeff
-} // end namespace Dumux
+} // end namespace Dumux::BinaryCoeff
 
 #endif

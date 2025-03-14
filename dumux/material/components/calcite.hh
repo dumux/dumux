@@ -18,8 +18,7 @@
 #include <dumux/material/components/calciumion.hh>
 #include <dumux/material/components/carbonateion.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -78,7 +77,6 @@ public:
     { return 837; }
 };
 
-} // end namespace Components
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

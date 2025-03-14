@@ -25,8 +25,7 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -398,8 +397,6 @@ const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
 template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

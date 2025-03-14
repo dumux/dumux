@@ -80,6 +80,7 @@ inline Scalar henryIAPWS(Scalar E,
     using std::exp;
     return exp(exponent)*H2O::vaporPressure(temperature);
 }
-}
+
+} // end namespace Dumux
 
 #endif
