@@ -410,11 +410,6 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
     }
 };
 
-using NavierStokesMomentumBoundaryFluxHelper
-    [[deprecated("Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `DiscretizationMethod` and `SlipVelocityPolicy`. This will be removed after 3.9.")]]
-    = NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered,
-                                       NavierStokesSlipVelocity<DiscretizationMethods::FCStaggered, NavierStokes::SlipConditions::BJ>>;
-
 } // end namespace Dumux
 
 #endif
