@@ -50,7 +50,10 @@ struct BalanceEqOpts<TypeTag, TTag::ModelProperties> { using type = BalanceEquat
 template<class TypeTag>
 class DeprecatedBaseLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    struct [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10.")]] PropertyBaseLocalResidual {};
+    struct PropertyBaseLocalResidual {
+        [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10.")]]
+        PropertyBaseLocalResidual() = default;
+    };
     using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
 public:
     using ParentType::ParentType;
