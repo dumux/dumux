@@ -12,7 +12,7 @@ dumux_add_test(NAME test_1pni_simple_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_simple_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_simple_tpfa-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_simple_tpfa params.input -Problem.Name test_1pni_simple_tpfa"
-                       --zeroThreshold {"velocity_liq \(m/s\)":1e-15})
+                       --zeroThreshold {"velocity_liq \(m/s\)_0":1e-15})
 
 dumux_add_test(NAME test_1pni_simple_box
               LABELS porousmediumflow 1p 1pni
@@ -23,4 +23,4 @@ dumux_add_test(NAME test_1pni_simple_box
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_simple_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_simple_box-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pni_simple_box params.input -Problem.Name test_1pni_simple_box"
-                       --zeroThreshold {"velocity_liq \(m/s\)":1e-15})
+                       --zeroThreshold {"velocity_liq \(m/s\)_0":1e-15})
