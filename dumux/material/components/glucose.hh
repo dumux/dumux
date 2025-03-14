@@ -15,8 +15,7 @@
 
 #include <dumux/material/components/base.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -41,7 +40,6 @@ public:
     { return 0.18016; } // kg/mol
 };
 
-} // end namespace Components
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

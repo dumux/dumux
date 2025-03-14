@@ -20,8 +20,7 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -375,8 +374,6 @@ public:
     }
 };
 
-} // end namespace Components
-
-} // end namespace Dumux
+} // end namespace Dumux::Components
 
 #endif

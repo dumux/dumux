@@ -28,8 +28,7 @@
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
 
-namespace Dumux {
-namespace Components {
+namespace Dumux::Components {
 
 /*!
  * \ingroup Components
@@ -897,9 +896,10 @@ private:
 template <class Scalar>
 struct IsAqueous<H2O<Scalar>> : public std::true_type {};
 
-} // end namespace Components
+} // end namespace Dumux::Components
 
-namespace FluidSystems::Detail {
+namespace Dumux::FluidSystems::Detail {
+
 // viscosity according to Reid, R.C.
 template <class Scalar>
 Scalar viscosityReid_(Scalar temperature)
@@ -932,8 +932,11 @@ Scalar viscosityNagel_(Scalar temperature)
               + a4*temperature*temperature*temperature
               + a5*temperature*temperature*temperature*temperature;
 }
-} // end FluidSystems::Detail
-namespace FluidSystems {
+
+} // end Dumux::FluidSystems::Detail
+
+namespace Dumux::FluidSystems {
+
 /*!
  * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of steam in a gas mixture.
  *
@@ -974,7 +977,7 @@ Scalar h2oGasViscosityInMixture(Scalar temperature, Scalar pressure)
                + (1.0 - op)*Detail::viscosityNagel_(temperature);
     }
 }
-} // end namespace FluidSystems
-} // end namespace Dumux
+
+} // end namespace Dumux::FluidSystems
 
 #endif
