@@ -1,4 +1,4 @@
-<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/b9550fddee9b6d6dddb8fcae8e0d14440f7a55eb/doc/logo/dumux_logo_hires_whitebg.png" alt="dumux logo" width="400"/>
+<img src="https://dumux.org/images/logo.svg" alt="dumux logo" width="400"/>
 
 # What is DuMux?
 
