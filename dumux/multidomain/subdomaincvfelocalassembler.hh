@@ -22,6 +22,7 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/typetraits/localdofs.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -63,9 +64,6 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using Scalar = typename GridVariables::Scalar;
 
     using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -254,12 +252,8 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
     using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
-    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -279,10 +273,10 @@ public:
     /*!
      * \brief Update the coupling context for coupled models.
      */
-    template<class ElemSol>
-    void maybeUpdateCouplingContext(const SubControlVolume& scv, ElemSol& elemSol, const int pvIdx)
+    template<class ScvOrLocalDof, class ElemSol>
+    void maybeUpdateCouplingContext(const ScvOrLocalDof& scvOrLocalDof, ElemSol& elemSol, const int pvIdx)
     {
-        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.localDofIndex()], pvIdx);
+        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scvOrLocalDof.dofIndex(), elemSol[Detail::index(scvOrLocalDof)], pvIdx);
     }
 
     /*!
