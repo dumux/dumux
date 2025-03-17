@@ -53,7 +53,7 @@ def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", i
         # make sure the assembler is compiled with the Serial backend
         # as currently the assembly in combination with Python is not thread-safe
         extraCMake=[
-            "target_compile_definitions(TARGET PUBLIC DUMUX_MULTITHREADING_BACKEND=Serial)"
+            "target_compile_definitions(TARGET PRIVATE DUMUX_MULTITHREADING_BACKEND=Serial)"
         ],
     )
     return module.FVAssembler(problem, problem.gridGeometry(), gridVariables)

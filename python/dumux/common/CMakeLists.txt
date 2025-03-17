@@ -9,14 +9,11 @@ add_python_targets(common
   properties
 )
 
-# currently the Python bindings only work with
-# serial dumux code
-dune_add_pybind11_module(
-  NAME _common
-  COMPILE_DEFINITIONS DUMUX_MULTITHREADING_BACKEND=Serial
-)
-
+dune_add_pybind11_module(NAME _common)
 target_link_libraries(_common PUBLIC Dune::Common Dune::Grid Dumux::Dumux)
+
+# currently the Python bindings only work with serial dumux code
+target_compile_definitions(_common PUBLIC DUMUX_MULTITHREADING_BACKEND=Serial)
 
 if(SKBUILD)
   install(TARGETS _common LIBRARY DESTINATION python/dumux/common)
