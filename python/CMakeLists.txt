@@ -15,5 +15,7 @@ endif()
 dune_python_configure_bindings(
   PATH "."
   PACKAGENAME dumux
-  CMAKE_METADATA_FLAGS DUNE_OPTS_FILE
+  CMAKE_METADATA_FLAGS 
+    DUNE_OPTS_FILE
+    "DUMUX_MULTITHREADING_BACKEND:=Serial"
 )
