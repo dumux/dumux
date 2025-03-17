@@ -23,7 +23,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_isotropic
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_isotropic-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_isotropic-00025.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_isotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_isotropic params.input
                         -Problem.Name test_1pnc_dispersion_fulldispersiontensor_isotropic
                         -Problem.DispersionTensor 1e-6")
@@ -35,7 +35,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_anisotropic
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_anisotropic-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_anisotropic-00025.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_anisotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_anisotropic params.input
                         -Problem.Name test_1pnc_dispersion_fulldispersiontensor_anisotropic
                         -Problem.DispersionTensor '1e-6 5e-8 6e-9 5e-6'")
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_1pncni_dispersion_scheidegger
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_scheidegger-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_scheidegger-00026.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_scheidegger-00027.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_scheidegger params.input
                         -Problem.Name test_1pncni_dispersion_scheidegger
                         -Problem.AlphaL 0.1
