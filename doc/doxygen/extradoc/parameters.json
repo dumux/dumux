@@ -1699,6 +1699,11 @@
             "Whether to print detailed invasion information."
         ]
     },
+    "IO.GridWriter.AddProcessRank": {
+        "explanation": [
+            "Add process rank"
+        ]
+    },
     "KEpsilon.EnableZeroEqScaling": {
         "explanation": [
             "Whether to match the potential zeroeq eddy viscosities for two-layer model at the matching point"
@@ -1719,6 +1724,16 @@
             "Whether to enable the production limiter"
         ]
     },
+    "LevenbergMarquardt.LambdaInitial": {
+        "explanation": [
+            "Initial value of the damping parameter Lambda in the Levenberg-Marquardt algorithm"
+        ]
+    },
+    "LevenbergMarquardt.MaxLambdaDivisions": {
+        "explanation": [
+            "Maximum number of divisions of the damping parameter Lambda in the Levenberg-Marquardt algorithm"
+        ]
+    },
     "LinearPDESolver.EnableDynamicOutput": {
         "explanation": [
             "Whether dynamic output should be enabled."
@@ -1730,6 +1745,9 @@
         ]
     },
     "LinearSolver.DirectSolverForVelocity": {
+        "mode": "ignore"
+    },
+    "LinearSolver.DirectSolverForPressure": {
         "mode": "ignore"
     },
     "LinearSolver.GMResRestart": {
@@ -2292,69 +2310,162 @@
             "Whether to write integration points to a file"
         ]
     },
+    "NewmarkBeta.Beta": {
+        "explanation": [
+            "Beta parameter in the Newmark-Beta method"
+        ]
+    },
+    "NewmarkBeta.Gamma": {
+        "explanation": [
+            "Gamma parameter in the Newmark-Beta method"        ]
+    },
     "Newton.AllowedSaturationChange": {
         "explanation": [
             "Maximum allowed (relative or absolute) shift of saturation  between to consecutive time steps. If this is not set, any shift is allowed. If SaturationChangeIsRelative is true, relative shifts are considered (while not dividing by zero). If SaturationChangeIsRelative is false, absolute shifts are considered."
         ]
     },
     "Newton.EnableAbsoluteResidualCriterion": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "For Newton iterations to stop the absolute residual is demanded to be below a threshold value. At least two iterations."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.EnableChop": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "chop the Newton update at the beginning of the non-linear solver"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.EnableDynamicOutput": {
+        "defaultValue": [
+            "true"
+        ],
         "explanation": [
             "Prints current information about assembly and solution process in the coarse of the simulation."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.EnablePartialReassembly": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "Every entity where the primary variables exhibit a relative shift summed up since the last linearization above 'eps' will be reassembled."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.EnableResidualCriterion": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "declare convergence if the initial residual is reduced by the factor ResidualReduction"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.EnableShiftCriterion": {
+        "defaultValue": [
+            "true"
+        ],
         "explanation": [
             "For Newton iterations to stop the maximum relative shift abs(uLastIter - uNew)/scalarmax(1.0, abs(uLastIter + uNew)*0.5) is demanded to be below a threshold value. At least two iterations."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.LineSearchMinRelaxationFactor": {
+        "defaultValue": [
+            "0.125"
+        ],
         "explanation": [
             "A minimum relaxation factor for the line search process."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.MaxAbsoluteResidual": {
+        "defaultValue": [
+            "1e-5"
+        ],
         "explanation": [
             "The maximum acceptable absolute residual for declaring convergence"
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.MaxRelativeShift": {
+        "defaultValue": [
+            "1e-8"
+        ],
         "explanation": [
             "Set the maximum acceptable difference of any primary variable between two iterations for declaring convergence"
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.MaxSteps": {
+        "defaultValue": [
+            "18"
+        ],
         "explanation": [
             "The number of iterations after we give up"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
         ]
     },
     "Newton.MaxTimeStepDivisions": {
+        "defaultValue": [
+            "10"
+        ],
         "explanation": [
             "The maximum number of time-step divisions"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
         ]
     },
     "Newton.MinSteps": {
+        "defaultValue": [
+            "2"
+        ],
         "explanation": [
             "The minimum number of iterations"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
         ]
     },
     "Newton.PlausibilityCheck": {
@@ -2368,6 +2479,10 @@
         ],
         "explanation": [
             "'maxEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'maxEps' leads to less/more reassembly if 'omega*shift' is large, i.e., for the first Newton iterations."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.ReassemblyMinThreshold": {
@@ -2376,26 +2491,58 @@
         ],
         "explanation": [
             "'minEps' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'minEps' leads to less/more reassembly if 'omega*shift' is small, i.e., for the last Newton iterations."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.ReassemblyShiftWeight": {
+        "defaultValue": [
+            "1e-3"
+        ],
         "explanation": [
             "'omega' in reassembly threshold max( minEps, min(maxEps, omega*(currently achieved maximum relative shift)) ). Increasing/decreasing 'maxEps' leads to less/more reassembly if 'omega*shift' is large, i.e., for the first Newton iterations."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.ResidualReduction": {
+        "defaultValue": [
+            "1e-5"
+        ],
         "explanation": [
             "The maximum acceptable residual norm reduction"
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.RetryTimeStepReductionFactor": {
+        "defaultValue": [
+            "0.5"
+        ],
         "explanation": [
             "Factor for reducing the current time-step"
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.SatisfyResidualAndShiftCriterion": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "declare convergence only if both criteria are met"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.SaturationChangeIsRelative": {
@@ -2404,18 +2551,39 @@
         ]
     },
     "Newton.TargetSteps": {
+        "defaultValue": [
+            "10"
+        ],
         "explanation": [
             "The number of iterations which are considered \"optimal\""
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
         ]
     },
     "Newton.UseLineSearch": {
+        "defaultValue": [
+            "false"
+        ],
         "explanation": [
             "Whether to use line search"
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
         ]
     },
     "Newton.Verbosity": {
+        "defaultValue": [
+            "2"
+        ],
         "explanation": [
             "The verbosity level of the Newton solver"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
         ]
     },
     "PointSource.EnableBoxLumping": {
@@ -2570,6 +2738,11 @@
     "SpatialParams.Porosity": {
         "explanation": [
             "The porosity"
+        ]
+    },
+    "SpatialParams.SolidDensity": {
+        "explanation": [
+            "The density of the solid phase"
         ]
     },
     "SpatialParams.SurfaceTension": {
