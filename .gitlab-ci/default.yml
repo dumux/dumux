@@ -295,6 +295,7 @@ test python:
         fi
         source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pushd build-cmake
+          cmake -DDUMUX_MULTITHREADING_BACKEND=Serial .
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
         popd
