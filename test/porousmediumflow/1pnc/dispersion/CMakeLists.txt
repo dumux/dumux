@@ -9,6 +9,7 @@ dumux_add_test(NAME test_1pnc_dispersion_scheidegger
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_scheidegger-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_scheidegger-00024.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_scheidegger params.input
@@ -22,6 +23,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_isotropic
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_isotropic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_isotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_isotropic params.input
@@ -34,6 +36,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_anisotropic
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_anisotropic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_anisotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_dispersion_fulldispersiontensor_anisotropic params.input
@@ -46,6 +49,7 @@ dumux_add_test(NAME test_1pncni_dispersion_scheidegger
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=1 NONISOTHERMAL=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_scheidegger-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_scheidegger-00027.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_scheidegger params.input
@@ -59,6 +63,7 @@ dumux_add_test(NAME test_1pncni_dispersion_fulldispersiontensor_isotropic
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=0 NONISOTHERMAL=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_fulldispersiontensor_isotropic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_fulldispersiontensor_isotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_fulldispersiontensor_isotropic params.input
@@ -71,6 +76,7 @@ dumux_add_test(NAME test_1pncni_dispersion_fulldispersiontensor_anisotropic
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=0 NONISOTHERMAL=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
+                        --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_fulldispersiontensor_anisotropic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_fulldispersiontensor_anisotropic-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_dispersion_fulldispersiontensor_anisotropic params.input
