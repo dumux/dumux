@@ -1,6 +1,7 @@
 [TimeLoop]
 Dt = 1e6
 TEnd = 1e10
+MaxTimeStepSize = 5e8
 
 [Problem]
 EnableGravity = false

@@ -166,6 +166,8 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<double>>(0.0,
                                                        getParam<double>("TimeLoop.Dt"),
                                                        getParam<double>("TimeLoop.TEnd"));
+    timeLoop->setMaxTimeStepSize(getParam<double>("TimeLoop.MaxTimeStepSize"));
+
     // the assembler
     using Assembler = MultiDomainFVAssembler<MDTraits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
     auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, facetProblem),
