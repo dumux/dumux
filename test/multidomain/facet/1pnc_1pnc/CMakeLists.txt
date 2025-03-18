@@ -172,7 +172,11 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_tpfa
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_tpfa_bulk-00001.vtu
                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_surface_tpfa_facet-reference.vtp
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_tpfa_facet-00001.vtp
-                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_tpfa params.input -Vtk.OutputName test_md_facet_1pncni1pncni_surface_tpfa -Grid.File grids/square_surface.msh")
+                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_tpfa params.input
+                                    -Vtk.OutputName test_md_facet_1pncni1pncni_surface_tpfa
+                                    -Grid.File grids/square_surface.msh
+                                    -TimeLoop.MaxTimeStepSize 5e8
+                                    -Newton.MinSteps 3")
 
 dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_mpfa
                SOURCES main.cc
@@ -188,7 +192,11 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_mpfa
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa_bulk-00001.vtu
                                  ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_surface_tpfa_facet-reference.vtp
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa_facet-00001.vtp
-                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa params.input -Vtk.OutputName test_md_facet_1pncni1pncni_surface_mpfa -Grid.File grids/square_surface.msh")
+                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa params.input
+                                    -Vtk.OutputName test_md_facet_1pncni1pncni_surface_mpfa
+                                    -Grid.File grids/square_surface.msh
+                                    -TimeLoop.MaxTimeStepSize 5e8
+                                    -Newton.MinSteps 3")
 
 dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_box
                SOURCES main.cc
