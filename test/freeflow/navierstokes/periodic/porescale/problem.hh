@@ -84,6 +84,42 @@ public:
         return values;
     }
 
+    //! Enable internal Dirichlet constraints
+    static constexpr bool enableInternalDirichletConstraints()
+    { return !ParentType::isMomentumProblem(); }
+
+
+    /*!
+     * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
+     *        If true is returned for a dof, the equation for this dof is replaced
+     *        by the constraint that its primary variable values must match the
+     *        user-defined values obtained from the function internalDirichlet(),
+     *        which must be defined in the problem.
+     *
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+    {
+        std::bitset<DirichletValues::dimension> values;
+
+        // If only Dirichlet BCs are set for the momentum balance, fix the pressure at some cells such that the solution is fully defined.
+        {
+            if (scv.elementIndex() == 0)
+                values.set(Indices::pressureIdx);
+        }
+
+        return values;
+    }
+
+    /*!
+     * \brief Define the values of internal Dirichlet constraints for a degree of freedom.
+     * \param element The finite element
+     * \param scv The sub-control volume
+     */
+    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
+    { return DirichletValues{-0.00185227}; }
+
     template<class ElementVolumeVariables>
     Sources source(const Element& element,
                    const FVElementGeometry& fvGeometry,
