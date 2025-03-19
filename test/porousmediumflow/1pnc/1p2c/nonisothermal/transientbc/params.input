@@ -20,6 +20,3 @@ ResidualReduction = 1e-20
 SolidDensity = 2700
 SolidThermalConductivity = 2.8
 SolidHeatCapacity = 790
-
-[Newton]
-MinSteps = 4
