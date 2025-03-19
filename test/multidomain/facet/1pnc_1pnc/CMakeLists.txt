@@ -191,7 +191,8 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_mpfa
                          --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa params.input
                                     -Vtk.OutputName test_md_facet_1pncni1pncni_surface_mpfa
                                     -Grid.File grids/square_surface.msh
-                                    -TimeLoop.MaxTimeStepSize 5e8")
+                                    -TimeLoop.MaxTimeStepSize 5e8
+                                    -Newton.MinSteps 3")
 
 dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_box
                SOURCES main.cc
