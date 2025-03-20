@@ -46,6 +46,12 @@ if (DUMUX_ENABLE_PYTHONBINDINGS AND NOT BUILD_SHARED_LIBS)
   message(FATAL_ERROR "Using the Python bindings requires BUILD_SHARED_LIBS=ON")
 endif()
 
+# deactivate global include-directories
+if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+  dune_policy(SET DP_DEFAULT_INCLUDE_DIRS NEW)
+  dune_policy(SET DP_TEST_ADD_ALL_FLAGS NEW)
+endif()
+
 # start a dune project with information from dune.module
 dune_project()
 
@@ -101,11 +107,17 @@ endif()
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
   target_compile_features(dumux_format PUBLIC cxx_std_20)
+  if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+    dune_default_include_directories(dumux_format PUBLIC)
+  endif()
   target_link_libraries(dumux INTERFACE dumux_format)
 endif()
 
 # Enable all dune registered packages on the dumux library.
 dune_target_enable_all_packages(dumux)
+if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+  dune_default_include_directories(dumux PUBLIC)
+endif()
 
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
