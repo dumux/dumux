@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES grids "params.input")
+dune_symlink_to_source_files(FILES params.input)
 
 add_executable(test_porenetwork_solid_energy EXCLUDE_FROM_ALL main.cc)
 
