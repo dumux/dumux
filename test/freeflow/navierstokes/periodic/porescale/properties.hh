@@ -14,6 +14,14 @@
 #include <dune/grid/spgrid.hh>
 #include <dune/common/hybridutilities.hh>
 
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#endif
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
