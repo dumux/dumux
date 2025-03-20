@@ -254,33 +254,33 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> gridGeometry,
                  createFacePVNameFunction<IOFields, FacePrimaryVariables, ModelTraits, FluidSystem>(),
                  *gridGeometry);
 
-     if (verbose)
-     {
-         std::cout << "reference face " << std::endl;
-         for (const auto& block : writeFrom[GridGeometry::faceIdx()])
-         std::cout << block << std::endl;
+    if (verbose)
+    {
+        std::cout << "reference face " << std::endl;
+        for (const auto& block : writeFrom[GridGeometry::faceIdx()])
+        std::cout << block << std::endl;
 
-         std::cout << "result face " << std::endl;
-         for (const auto& block : readTo[GridGeometry::faceIdx()])
-         std::cout << block << std::endl;
-     }
+        std::cout << "result face " << std::endl;
+        for (const auto& block : readTo[GridGeometry::faceIdx()])
+        std::cout << block << std::endl;
+    }
 
-     for (int i = 0; i < readTo[GridGeometry::faceIdx()].size(); ++i)
-     {
-         if (Dune::FloatCmp::ne(readTo[GridGeometry::faceIdx()][i], writeFrom[GridGeometry::faceIdx()][i]))
-             DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::faceIdx()][i] << ", old " << writeFrom[GridGeometry::faceIdx()][i]);
-     }
+    for (int i = 0; i < readTo[GridGeometry::faceIdx()].size(); ++i)
+    {
+        if (Dune::FloatCmp::ne(readTo[GridGeometry::faceIdx()][i], writeFrom[GridGeometry::faceIdx()][i]))
+            DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::faceIdx()][i] << ", old " << writeFrom[GridGeometry::faceIdx()][i]);
+    }
 
-     // clean up the folder
-     if(deleteFiles)
-     {
-         const std::string deleteCommand = "exec rm "
+    // clean up the folder
+    if (deleteFiles)
+    {
+        const std::string deleteCommand = "exec rm "
                                            + fileName + "*pvd "
                                            + fileName + "*vtu "
                                            + fileName + "*vtp";
-         if (system(deleteCommand.c_str()))
-             DUNE_THROW(Dune::IOError, "Deleting files failed");
-     }
+        if (system(deleteCommand.c_str()))
+            DUNE_THROW(Dune::IOError, "Deleting files failed");
+    }
 }
 
 
