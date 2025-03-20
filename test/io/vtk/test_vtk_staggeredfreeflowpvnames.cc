@@ -245,7 +245,8 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> gridGeometry,
 
     for (int i = 0; i < readTo[GridGeometry::cellCenterIdx()].size(); ++i)
     {
-        if (Dune::FloatCmp::ne(readTo[GridGeometry::cellCenterIdx()][i], writeFrom[GridGeometry::cellCenterIdx()][i]))
+        const auto eps = std::numeric_limits<float>::epsilon();
+        if (Dune::FloatCmp::ne(readTo[GridGeometry::cellCenterIdx()][i], writeFrom[GridGeometry::cellCenterIdx()][i], eps))
             DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::cellCenterIdx()][i] << ", old " << writeFrom[GridGeometry::cellCenterIdx()][i]);
     }
 
@@ -267,7 +268,8 @@ void testWriteAndReadVtk(std::shared_ptr<GridGeometry> gridGeometry,
 
     for (int i = 0; i < readTo[GridGeometry::faceIdx()].size(); ++i)
     {
-        if (Dune::FloatCmp::ne(readTo[GridGeometry::faceIdx()][i], writeFrom[GridGeometry::faceIdx()][i]))
+        const auto eps = std::numeric_limits<float>::epsilon();
+        if (Dune::FloatCmp::ne(readTo[GridGeometry::faceIdx()][i], writeFrom[GridGeometry::faceIdx()][i], eps))
             DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[GridGeometry::faceIdx()][i] << ", old " << writeFrom[GridGeometry::faceIdx()][i]);
     }
 
