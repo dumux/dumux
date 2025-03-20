@@ -13,7 +13,7 @@
 #ifndef DUMUX_GEOMECHANICS_PROPERTIES_HH
 #define DUMUX_GEOMECHANICS_PROPERTIES_HH
 
-#warning "This header is deprecated and will be removed after 3.10.
+#warning "This header is deprecated and will be removed after 3.10."
 
 
 #include <dumux/common/properties.hh>
