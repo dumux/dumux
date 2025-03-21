@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <algorithm>
+#include <array>
 #include <vector>
 #include <iostream>
 #include <cassert>

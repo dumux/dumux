@@ -14,6 +14,7 @@
 #define DUMUX_COMMON_ENUMERATE_HH
 
 #include <tuple>
+#include <iterator>
 
 namespace Dumux {
 
