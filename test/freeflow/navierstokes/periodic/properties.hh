@@ -15,6 +15,9 @@
 
 
 #include <dune/grid/spgrid.hh>
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -31,6 +34,10 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include "problem.hh"
+
+#ifndef USESUBGRID
+#define USESUBGRID 0
+#endif
 
 namespace Dumux::Properties {
 
@@ -52,7 +59,14 @@ struct FluidSystem<TypeTag, TTag::PeriodicTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PeriodicTest> { using type = Dune::SPGrid<double, 2>; };
+struct Grid<TypeTag, TTag::PeriodicTest> {
+    using HostGrid = Dune::SPGrid<double, 2>;
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    using type = Dune::SubGrid<2, HostGrid>;
+#else
+    using type = HostGrid;
+#endif
+};
 
 // Set the problem property
 template<class TypeTag>

@@ -17,8 +17,11 @@
 #include <dune/grid/spgrid.hh>
 #endif
 
+#if HAVE_DUNE_SUBPGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
 #include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -34,19 +37,29 @@
 #define FVGEOMCACHING 0
 #endif
 
+#ifndef USESUBGRID
+#define USESUBGRID 0
+#endif
+
 namespace Dumux::Properties {
 namespace TTag {
 struct OnePIncompressible { using InheritsFrom = std::tuple<OneP>; };
 struct OnePIncompressibleTpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCTpfaModel>; };
-struct OnePIncompressibleMpfa { using InheritsFrom = std::tuple<OnePIncompressible, CCMpfaModel>; };
 struct OnePIncompressibleBox { using InheritsFrom = std::tuple<OnePIncompressible, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
 #if HAVE_DUNE_SPGRID
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePIncompressible> { using type = Dune::SPGrid<double, 2>; };
-#endif
+struct Grid<TypeTag, TTag::OnePIncompressible> {
+    using HostGrid = Dune::SPGrid<double, 2>;
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    using type = Dune::SubGrid<2, HostGrid>;
+#else
+    using type = HostGrid;
+#endif // SUBGRID
+};
+#endif // HAVE_DUNE_SPGRID
 
 // Set the problem type
 template<class TypeTag>

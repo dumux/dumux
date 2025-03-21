@@ -34,6 +34,8 @@
 #include <dumux/discretization/facecentered/diamond/fvelementgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 
+#include <dumux/io/grid/periodicgridtraits.hh>
+
 namespace Dumux {
 
 namespace Detail {
@@ -105,12 +107,15 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export the finite element cache type
     using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
     : ParentType(gridView)
     , dofMapper_(gridView, Dune::mcmgLayout(Dune::Codim<1>{}))
     , cache_(*this)
+    , periodicGridTraits_(this->gridView().grid())
     {
         update_();
     }
@@ -368,7 +373,7 @@ private:
 
     bool onPeriodicBoundary_(const typename GridView::Intersection& intersection) const
     {
-        return intersection.boundary() && intersection.neighbor();
+        return periodicGridTraits_.isPeriodic(intersection);
     }
 
     // faces on the boundary
@@ -386,6 +391,8 @@ private:
     const FeCache feCache_;
 
     Cache cache_;
+
+    PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 } // end namespace Dumux

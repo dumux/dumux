@@ -148,15 +148,18 @@ public:
 
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
 
-            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof TODO periodic
-            // if (this->assembler().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
-            // {
-            //     const auto periodicDof = this->assembler().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-            //     res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-            //     const auto end = jac[periodicDof].end();
-            //     for (auto it = jac[periodicDof].begin(); it != end; ++it)
-            //         (*it) = periodicDof != it.index() ? 0.0 : 1.0;
-            // }
+            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
+            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
+            {
+                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
+                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+
+                auto& rowP = jac[periodicDof];
+                for (auto col = rowP.begin(); col != rowP.end(); ++col)
+                    row[col.index()][eqIdx] = 0.0;
+
+                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);

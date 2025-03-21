@@ -28,6 +28,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -58,8 +59,15 @@ int main(int argc, char** argv)
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    auto gridManager = GridManager<Grid>();
+
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    auto selector = [](const auto& element) { return true; };
+    gridManager.init(selector);
+#else
     gridManager.init();
+#endif
 
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();

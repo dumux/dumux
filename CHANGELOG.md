@@ -16,6 +16,7 @@ C++20 mode is enforced through CMake.
 - __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
 - __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
 - __Geomechanics__: is split into solidmechanics and poromechanics. The geomechanics folder is now deprecated and will be removed after releases 3.10.
+- __Periodic Boundaries__: Added support for Dune SubGrid with periodic host grid.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 -__Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and

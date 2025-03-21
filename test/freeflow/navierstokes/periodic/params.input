@@ -2,12 +2,13 @@
 File = periodic.dgf
 
 [Problem]
-Name = test_kovasznay
+Name = test_periodic
 EnableGravity = true
 PrintL2Error = false
 EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
+TrivialSelector = true
 
 [Component]
 LiquidDensity = 1
