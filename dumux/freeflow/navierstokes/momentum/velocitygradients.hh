@@ -18,25 +18,9 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/facecentered/staggered/elementboundarytypes.hh>
-
-// forward declare
-namespace Dune {
-
-template<class ct, int dim, template< int > class Ref, class Comm>
-class SPGrid;
-}
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
-
-namespace Detail
-{
-
-template<class Grid>
-struct SupportsPeriodicity : public std::false_type {};
-
-template<class ct, int dim, template< int > class Ref, class Comm>
-struct SupportsPeriodicity<Dune::SPGrid<ct, dim, Ref, Comm>> : public std::true_type {};
-}
 
 /*!
  * \ingroup NavierStokesModel
@@ -246,7 +230,7 @@ private:
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
 
         // The standard case: Our grid does not support periodic boundaries.
-        if constexpr (!Detail::SupportsPeriodicity<typename FVElementGeometry::GridGeometry::Grid>())
+        if constexpr (!supportsPeriodicity<typename FVElementGeometry::GridGeometry>())
             return getStandardDistance_(insideScv, outsideScv);
         else
         {
@@ -297,7 +281,7 @@ private:
         const auto& orthogonalOutsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
 
         // The standard case: Our grid does not support periodic boundaries.
-        if constexpr (!Detail::SupportsPeriodicity<typename FVElementGeometry::GridGeometry::Grid>())
+        if constexpr (!supportsPeriodicity<typename FVElementGeometry::GridGeometry>())
             return getStandardDistance_(orthogonalInsideScv, orthogonalOutsideScv);
         else
         {

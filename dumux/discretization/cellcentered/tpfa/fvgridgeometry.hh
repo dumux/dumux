@@ -29,6 +29,8 @@
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include <dumux/io/grid/periodicgridtraits.hh>
+
 namespace Dumux {
 
 /*!
@@ -100,6 +102,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCTpfa;
@@ -114,6 +118,7 @@ public:
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
     : ParentType(std::move(gg))
+    , periodicGridTraits_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -267,7 +272,7 @@ private:
                 if (intersection.neighbor())
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (periodicGridTraits_.isPeriodic(intersection))
                         this->setPeriodic();
 
                     if (dim == dimWorld)
@@ -366,6 +371,8 @@ private:
 
     //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<GridIndexType>> flipScvfIndices_;
+
+    PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 /*!
@@ -407,6 +414,8 @@ public:
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
     using DofMapper = typename Traits::ElementMapper;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
     //! Export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::CCTpfa;
@@ -421,6 +430,7 @@ public:
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     CCTpfaFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
     : ParentType(std::move(gg))
+    , periodicGridTraits_(this->gridView().grid())
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod>::isValid(this->gridView()))
@@ -539,7 +549,7 @@ private:
                 if (intersection.neighbor())
                 {
                     // update the grid geometry if we have periodic boundaries
-                    if (intersection.boundary())
+                    if (periodicGridTraits_.isPeriodic(intersection))
                         this->setPeriodic();
 
                     if (dim == dimWorld)
@@ -592,6 +602,8 @@ private:
     //! vectors that store the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<NeighborVolVarIndices>> neighborVolVarIndices_;
+
+    PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 } // end namespace Dumux
