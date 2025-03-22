@@ -158,3 +158,10 @@ string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION
 )
 
 finalize_dune_project()
+
+if(ENABLE_HEADERCHECK)
+  get_property(dumux_header_target_list_ TARGET headercheck PROPERTY MANUALLY_ADDED_DEPENDENCIES)
+  foreach(header_target_ ${dumux_header_target_list_})
+    target_link_libraries(${header_target_} PRIVATE Dumux::Dumux)
+  endforeach()
+endif()
