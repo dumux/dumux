@@ -34,200 +34,18 @@
 #include <gridformat/gridformat.hpp>
 #include <gridformat/traits/dune.hpp>
 #include <gridformat/reader.hpp>
+#include <gridformat/adapters/reader_polylines_subdivider.hpp>
 
 namespace Dumux::Detail::VTKReader {
 
-// factory adapter that fulfills the GridFormat::Concepts::GridFactory concept
-template<typename Grid>
-class GridFactoryAdapter : public GridFormat::Dune::GridFactoryAdapter<Grid>
-{
-    using ParentType = GridFormat::Dune::GridFactoryAdapter<Grid>;
-public:
-    GridFactoryAdapter(Dune::GridFactory<Grid>& factory)
-    : ParentType(factory)
-    {}
-
-    void insert_cell(const GridFormat::CellType& ct, const std::vector<std::size_t>& corners)
-    {
-        // special treatment for polylines not supported by the Dune adapter supplied by gridformat
-        if (ct == GridFormat::CellType::polyline && corners.size() > 2)
-            for (std::size_t i = 1; i < corners.size(); ++i)
-                ParentType::insert_cell(GridFormat::CellType::segment, {corners[i-1], corners[i]});
-
-        else
-            ParentType::insert_cell(ct, corners);
-    }
-};
-
-// reader adapter that fulfills the GridFormat::GridReader concept
-// and can read polylines as separate cells
-class VTPReader : public GridFormat::GridReader {
- private:
-    void _open(const std::string& filename, typename GridReader::FieldNames& fields) override {
-        auto helper = GridFormat::VTK::XMLReaderHelper::make_from(filename, "PolyData");
-
-        _num_points = GridFormat::from_string<std::size_t>(helper.get("PolyData/Piece").get_attribute("NumberOfPoints"));
-        _num_verts = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfVerts");
-        _num_polylines = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfLines");
-        _num_segments = 0; // initialize to zero and compute later
-        _num_strips = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfStrips");
-        _num_polys = helper.get("PolyData/Piece").get_attribute_or(std::size_t{0}, "NumberOfPolys");
-
-        if (_num_strips > 0)
-            throw GridFormat::NotImplemented("Triangle strips are not (yet) supported");
-
-        GridFormat::VTK::XMLDetail::copy_field_names_from(helper.get("PolyData"), fields);
-        _helper.emplace(std::move(helper));
-
-        if (_num_polylines > 0)
-            _visit_cells("Lines", GridFormat::CellType::polyline, _num_polylines, // count segments in polylines
-                [&](const GridFormat::CellType& ct, const std::vector<std::size_t>& corners) {
-                    _num_segments += corners.size() - 1;
-                }
-            );
-    }
-
-    void _close() override {
-        _helper.reset();
-        _num_points = 0;
-        _num_verts = 0;
-        _num_polylines = 0;
-        _num_segments = 0;
-        _num_strips = 0;
-        _num_polys = 0;
-    }
-
-    std::string _name() const override {
-        return "VTPReader";
-    }
-
-    std::size_t _number_of_cells() const override {
-        return _num_verts + _num_segments + _num_strips + _num_polys;
-    }
-
-    std::size_t _number_of_points() const override {
-        return _num_points;
-    }
-
-    std::size_t _number_of_pieces() const override {
-        return 1;
-    }
-
-    bool _is_sequence() const override {
-        return false;
-    }
-
-    GridFormat::FieldPtr _points() const override {
-        return _helper.value().make_points_field("PolyData/Piece/Points", _number_of_points());
-    }
-
-    void _visit_cells(const typename GridFormat::GridReader::CellVisitor& visitor) const override {
-        if (_num_verts > 0)
-            _visit_cells("Verts", GridFormat::CellType::vertex, _num_verts, visitor);
-        if (_num_polylines > 0)
-            _visit_cells("Lines", GridFormat::CellType::polyline, _num_polylines, visitor);
-        if (_num_polys > 0)
-            _visit_cells("Polys", GridFormat::CellType::polygon, _num_polys, visitor);
-    }
-
-    GridFormat::FieldPtr _cell_field(std::string_view name) const override {
-        const auto num_vtk_cells = _num_verts + _num_polylines + _num_strips + _num_polys;
-        const auto field_ptr = _helper.value().make_data_array_field(name, "PolyData/Piece/CellData", num_vtk_cells);
-        if (_num_polylines == 0)
-            return field_ptr;
-
-        // make a field that wraps the usual field and repeats entries for polylines
-        std::vector<std::size_t> extents(field_ptr->layout().dimension(), _number_of_cells());
-        std::ranges::copy(field_ptr->layout() | std::views::drop(1), extents.begin() + 1);
-        const auto precision = field_ptr->precision();
-
-        return make_field_ptr(GridFormat::LazyField{
-            std::move(field_ptr),
-            GridFormat::MDLayout{extents},
-            precision,
-            [this, _nv=_number_of_cells()] (const auto& fp) {
-                GridFormat::Serialization result{_nv*fp->precision().size_in_bytes()};
-                std::size_t in = 0, out = 0;
-                fp->precision().visit([&] <typename T> (const GridFormat::Precision<T>& p) {
-                    const auto source = fp->template export_to<std::vector<T>>();
-                    auto target = result.as_span_of(p);
-                    _visit_cells([&] (const auto& ct, const auto& corners) {
-                        if (ct == GridFormat::CellType::polyline) { // repeat source value for each segment
-                            for (const auto endIdx = out + corners.size()-1; out < endIdx; ++out)
-                                target[out] = source[in];
-                            ++in;
-                        } else {
-                            target[out++] = source[in++];
-                        }
-                    });
-                });
-
-                return result;
-            }
-        });
-    }
-
-    GridFormat::FieldPtr _point_field(std::string_view name) const override {
-        return _helper.value().make_data_array_field(name, "PolyData/Piece/PointData", _number_of_points());
-    }
-
-    GridFormat::FieldPtr _meta_data_field(std::string_view name) const override {
-        return _helper.value().make_data_array_field(name, "PolyData/FieldData");
-    }
-
-    void _visit_cells(std::string_view type_name,
-                      const GridFormat::CellType& cell_type,
-                      const std::size_t expected_size,
-                      const typename GridFormat::GridReader::CellVisitor& visitor) const {
-        const std::string path = "PolyData/Piece/" + std::string{type_name};
-        const auto offsets = _helper.value().make_data_array_field(
-            "offsets", path, expected_size
-        )->template export_to<std::vector<std::size_t>>();
-        const auto connectivity = _helper.value().make_data_array_field(
-            "connectivity", path
-        )->template export_to<std::vector<std::size_t>>();
-
-        std::vector<std::size_t> corners;
-        for (std::size_t i = 0; i < expected_size; ++i) {
-            corners.clear();
-            const std::size_t offset_begin = (i == 0 ? 0 : offsets.at(i-1));
-            const std::size_t offset_end = offsets.at(i);
-            if (connectivity.size() < offset_end)
-                throw GridFormat::SizeError("Connectivity array read from the file is too small");
-            if (offset_end < offset_begin)
-                throw GridFormat::ValueError("Invalid offset array");
-            std::copy_n(connectivity.begin() + offset_begin, offset_end - offset_begin, std::back_inserter(corners));
-
-            // look for cell types that allow for a more specific classification
-            const GridFormat::CellType ct = cell_type == GridFormat::CellType::polygon ? (
-                    corners.size() == 3 ? GridFormat::CellType::triangle
-                                        : (corners.size() == 4 ? GridFormat::CellType::quadrilateral : cell_type)
-                ) : (cell_type == GridFormat::CellType::polyline ? (
-                    corners.size() == 2 ? GridFormat::CellType::segment
-                                        : cell_type
-                ) : cell_type);
-
-            visitor(ct, corners);
-        }
-    }
-
-    std::optional<GridFormat::VTK::XMLReaderHelper> _helper;
-    std::size_t _num_points;
-    std::size_t _num_verts;
-    std::size_t _num_polylines;
-    std::size_t _num_segments;
-    std::size_t _num_strips;
-    std::size_t _num_polys;
-};
-
 template<GridFormat::Concepts::Communicator C>
-auto makeGridformatReaderFactory(const C& c) {
+auto makeGridformatReaderFactory(const C& c)
+{
     return [fac = GridFormat::AnyReaderFactory<C>{c}] (const std::string& f)
-    -> std::unique_ptr<GridFormat::GridReader>
-    {
-        // custom reader for vtp files
-        if (f.ends_with(".vtp"))
-            return std::make_unique<::Dumux::Detail::VTKReader::VTPReader>();
+    -> std::unique_ptr<GridFormat::GridReader> {
+        // use adapter for poly data that splits polylines into segments
+        if (f.ends_with("vtp"))
+            return std::make_unique<GridFormat::ReaderAdapters::PolylinesSubdivider>(fac.make_for(f));
         return fac.make_for(f);
     };
 }
@@ -337,7 +155,7 @@ public:
                 std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_.filename() << "." << std::endl;
 
             {
-                Dumux::Detail::VTKReader::GridFactoryAdapter adapter{ factory };
+                GridFormat::Dune::GridFactoryAdapter<Grid> adapter{ factory };
                 reader_.export_grid(adapter);
             }
         }
