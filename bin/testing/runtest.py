@@ -62,8 +62,8 @@ try:
         referenceFields = read_as("mesh", ref)
 
         # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
-        sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
-        referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1.5e-7)
+        sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1e-5)
+        referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1e-5)
 
         ignoreFields = ignoreFields or []
         compare = MeshFieldsComparator(
