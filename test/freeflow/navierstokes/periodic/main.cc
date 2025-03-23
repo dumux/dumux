@@ -23,6 +23,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/io/grid/periodicgridtraits.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -58,8 +60,25 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
+    using Grid = GetPropType<MomentumTypeTag, Properties::Grid>;
+    GridManager<Grid> gridManager;
+
+#if HAVE_DUNE_SUBGRID && USESUBGRID
+    auto selector = [](const auto& element) {
+        const static auto trivialSelector = getParam<bool>("Problem.TrivialSelector", true);
+        const auto distance = std::max(std::abs(element.geometry().center()[0] - 0.5),
+                                       std::abs(element.geometry().center()[1] - 0.5));
+        return trivialSelector || distance > 0.25 - 1e-6;
+    };
+    gridManager.init(selector);
+
+    // Verify that the subgrid still has a conforming periodic boundary
+    // Take additional care with boundary conditions if not guaranteed
+    PeriodicGridTraits<Grid> periodicGridTraits(gridManager.grid());
+    periodicGridTraits.verifyConformingPeriodicBoundary();
+#else
     gridManager.init();
+#endif
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -156,6 +175,37 @@ int main(int argc, char** argv)
     // write vtk output
     vtkWriter.write(1.0);
     timer.stop();
+
+    // verify periodic mapping of dofs
+    {
+        const auto eps = 1e-6;
+        const auto bBoxMax = momentumGridGeometry->bBoxMax();
+        const auto bBoxMin = momentumGridGeometry->bBoxMin();
+        auto fvGeometry = localView(*momentumGridGeometry);
+        for (const auto& element : elements(momentumGridGeometry->gridView()))
+        {
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const bool isPeriodic = std::min(scv.dofPosition()[1]-bBoxMin[1],
+                                                 bBoxMax[1]-scv.dofPosition()[1]) < eps;
+                if (isPeriodic != momentumGridGeometry->dofOnPeriodicBoundary(scv.dofIndex()))
+                    DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
+                if (isPeriodic)
+                {
+                    const auto periodicScv = fvGeometry.outsidePeriodicScv(scv);
+                    const auto periodicDof = momentumGridGeometry->periodicallyMappedDof(scv.dofIndex());
+                    const auto distance = scv.dofPosition() - periodicScv.dofPosition();
+                    if (std::abs(distance[0]) > eps
+                            || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
+                        DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
+                    if (std::abs(x[momentumIdx][periodicDof] - x[momentumIdx][scv.dofIndex()]) > eps)
+                        DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
+                }
+
+            }
+        }
+    }
 
     const auto& comm = Dune::MPIHelper::getCommunication();
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
