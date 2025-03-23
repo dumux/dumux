@@ -6,13 +6,13 @@ SPDX-License-Identifier: CC-BY-4.0
 
 <VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
   <PolyData>
-    <Piece NumberOfLines="1" NumberOfPoints="21">
+    <Piece NumberOfLines="3" NumberOfPoints="21">
       <CellData Scalars="p">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
-          1
+          1 2 3
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
-          0
+          0 0 0
         </DataArray>
       </CellData>
       <PointData Scalars="r">
@@ -32,10 +32,10 @@ SPDX-License-Identifier: CC-BY-4.0
       </Points>
       <Lines>
         <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
-          0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+          0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 17 18 19 19 20
         </DataArray>
         <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
-          21
+          18 21 23
         </DataArray>
       </Lines>
     </Piece>

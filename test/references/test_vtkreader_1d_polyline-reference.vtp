@@ -11,7 +11,7 @@
       <CellData Scalars="p">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
-          1 1 1 1 1 1 1 1
+          1 1 1 1 1 2 2 3
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
