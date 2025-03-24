@@ -228,7 +228,7 @@ int main(int argc, char** argv)
             // set time for boundary conditions
             lowDimProblem->setTime(timeLoop->time() + timeLoop->timeStepSize());
 
-            // linearize & solve
+            // linearize & solve the non-linear system
             try {
                 nonLinearSolver.solve(sol);
                 break;
