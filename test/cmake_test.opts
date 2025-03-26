@@ -17,7 +17,7 @@ GXX_RELEASE_OPTS=" \
     -fno-finite-math-only \
     -DNDEBUG=1 \
     -O2 \
-    -ffp-model=precise \
+    -ffp-model=strict \
     -ffp-contract=off \
     -fno-fast-math \
     -fno-unsafe-math-optimizations \
