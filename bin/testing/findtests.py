@@ -146,3 +146,6 @@ if __name__ == "__main__":
 
     with open(targetFile, "w") as jsonFile:
         json.dump(affectedTests, jsonFile)
+
+    # clean build directory
+    subprocess.run(["make", "clean"], cwd=buildDir, check=False)
