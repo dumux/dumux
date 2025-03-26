@@ -105,6 +105,10 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
+                    continue;
+
             const auto& dispersionTensor =
                 ModelTraits::CompositionalDispersionModel::compositionalDispersionTensor(problem, scvf, fvGeometry,
                                                                                          elemVolVars, elemFluxVarsCache,
@@ -118,6 +122,9 @@ public:
             const auto xOutide = massOrMoleFraction(outsideVolVars, referenceSystem, phaseIdx, compIdx);
 
             componentFlux[compIdx] = (rho * tij * (xInside-xOutide));
+            if constexpr (!FluidSystem::isTracerFluidSystem())
+                if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx))
+                    componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
         return componentFlux;
     }

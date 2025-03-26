@@ -17,6 +17,7 @@ C++20 mode is enforced through CMake.
 - __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
 - __Geomechanics__: is split into solidmechanics and poromechanics. The geomechanics folder is now deprecated and will be removed after releases 3.10.
 - __Periodic Boundaries__: Added support for Dune SubGrid with periodic host grid.
+- __Compositional Dispersion__: Fixed a bug where compositional dispersion did not work correctly if `useMoles` differed from the reference system formulation.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 -__Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and
