@@ -82,6 +82,9 @@ public:
                                                         const int phaseIdx,
                                                         const int compIdx)
     {
+        if (phaseIdx > 0)
+            DUNE_THROW(Dune::NotImplemented, "Scheidegger dispersion tensors are only implemented for single phase flows.");
+
         DimWorldMatrix dispersionTensor(0.0);
 
         // Get the velocity either from the reconstruction, or from the spatialparams
@@ -101,6 +104,9 @@ public:
                                                   const ElementFluxVariablesCache& elemFluxVarsCache,
                                                   const int phaseIdx)
     {
+        if (phaseIdx > 0)
+            DUNE_THROW(Dune::NotImplemented, "Scheidegger dispersion tensors are only implemented for single phase flows.");
+
         DimWorldMatrix dispersionTensor(0.0);
 
         // Get the velocity either from the reconstruction, or from the spatialparams
