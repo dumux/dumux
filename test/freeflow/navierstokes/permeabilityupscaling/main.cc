@@ -91,9 +91,8 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
                 if (scv.boundary())
                 {
                     const auto bcTypes = momentumProblem->boundaryTypes(element, scvf);
-                    for (int i = 0; i < bcTypes.size(); ++i)
-                        if (bcTypes.isDirichlet(i))
-                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                    if (bcTypes.isDirichlet(scv.dofAxis()))
+                        dirichletDofs[momentumIdx][scv.dofIndex()][0] = 1.0;
                 }
             }
         }
