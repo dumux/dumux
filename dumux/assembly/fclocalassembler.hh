@@ -140,25 +140,25 @@ public:
                                    const auto eqIdx,
                                    const auto pvIdx)
         {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[0] - dirichletValues[pvIdx];
 
             auto& row = jac[scvI.dofIndex()];
             for (auto col = row.begin(); col != row.end(); ++col)
                 row[col.index()][eqIdx] = 0.0;
 
-            jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+            jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][0] = 1.0;
 
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
                 const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][0] - dirichletValues[pvIdx];
 
                 auto& rowP = jac[periodicDof];
                 for (auto col = rowP.begin(); col != rowP.end(); ++col)
                     row[col.index()][eqIdx] = 0.0;
 
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+                rowP[periodicDof][eqIdx][0] = 1.0;
             }
         };
 
