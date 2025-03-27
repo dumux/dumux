@@ -15,6 +15,7 @@ import sys
 import subprocess
 import json
 
+COMPARISON_BACKENDS = {}
 
 try:
     from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
@@ -129,15 +130,24 @@ try:
             return 1
         return 0
 
-    BACKEND = "fieldcompare"
-
-
-# fall back to Dumux legacy backend if we don't have fieldcompare
+    COMPARISON_BACKENDS["fieldcompare"] = {
+        "compareMeshData": fieldcompareMeshData,
+        "compareCSVData": fieldcompareCSVData,
+    }
 except ImportError:
-    from fuzzycomparevtu import compareVTK as fieldcompareMeshData
-    from fuzzycomparedata import compareData as fieldcompareCSVData
+    pass
 
-    BACKEND = "legacy"
+
+try:
+    from fuzzycomparevtu import compareVTK as legacycompareMeshData
+    from fuzzycomparedata import compareData as legacycompareCSVData
+
+    COMPARISON_BACKENDS["legacy"] = {
+        "compareMeshData": legacycompareMeshData,
+        "compareCSVData": legacycompareCSVData,
+    }
+except ImportError:
+    pass
 
 
 def readCmdParameters():
@@ -155,8 +165,18 @@ def readCmdParameters():
         "--script",
         nargs=1,
         help=(
-            "The comparison script. [fuzzy, fuzzyData, exact, <path_to_script>]"
+            "The comparison script (choose from [fuzzy, fuzzyData, exact, <path_to_script>])"
             " where the script takes two files as arguments."
+        ),
+    )
+    parser.add_argument(
+        "-b",
+        "--backend",
+        type=str,
+        help=(
+            "The comparison backend (choose from [legacy, fieldcompare])"
+            " If this argument is specified, the script will only perform the"
+            "test if the chosen backend is available and warn and skip otherwise."
         ),
     )
     parser.add_argument(
@@ -226,6 +246,14 @@ def readCmdParameters():
                 sys.exit(1)
             subprocess.call(["rm", "-fv", args["files"][(i * 2) + 1]])
 
+    if args["backend"]:
+        if args["backend"] not in ["legacy", "fieldcompare"]:
+            sys.stderr.write(
+                "Invalid backend. Choose from [legacy, fieldcompare] or leave empty.\n"
+            )
+            parser.print_help()
+            sys.exit(1)
+
     return args
 
 
@@ -242,9 +270,17 @@ def _exactComparison(args):
 
 def _fuzzyMeshComparison(args):
     """Fuzzy mesh comparison driver"""
+
+    if args["backend"] not in COMPARISON_BACKENDS:
+        print(
+            "\nSkipping test as the requested comparison backend:"
+            f" {args['backend']} is not available"
+        )
+        return 77
+
     numFailed = 0
     for i in range(0, len(args["files"]) // 2):
-        print(f"\nFuzzy data comparison with {BACKEND} backend")
+        print(f"\nFuzzy data comparison with {args['backend']} backend")
         source, ref = args["files"][i * 2], args["files"][(i * 2) + 1]
         if "reference" in source and "reference" not in ref:
             source, ref = ref, source
@@ -252,7 +288,8 @@ def _fuzzyMeshComparison(args):
         absThreshold = args["absolute"]
         zeroValueThreshold = args["zeroThreshold"]
         ignoreFields = args["ignore"]
-        numFailed += fieldcompareMeshData(
+        backend = COMPARISON_BACKENDS[args["backend"]]
+        numFailed += backend["compareMeshData"](
             source,
             ref,
             absThreshold,
@@ -266,9 +303,17 @@ def _fuzzyMeshComparison(args):
 
 def _fuzzyDataComparison(args):
     """Fuzzy data comparison driver"""
+
+    if args["backend"] not in COMPARISON_BACKENDS:
+        print(
+            "\nSkipping test as the requested comparison backend:"
+            f" {args['backend']} is not available"
+        )
+        return 77
+
     numFailed = 0
     for i in range(0, len(args["files"]) // 2):
-        print(f"\nFuzzy data comparison with {BACKEND} backend")
+        print(f"\nFuzzy data comparison with {args['backend']} backend")
         source, ref = args["files"][i * 2], args["files"][(i * 2) + 1]
         if "reference" in source and "reference" not in ref:
             source, ref = ref, source
@@ -277,7 +322,8 @@ def _fuzzyDataComparison(args):
         absThreshold = args["absolute"]
         zeroValueThreshold = args["zeroThreshold"]
         ignoreFields = args["ignore"]
-        numFailed += fieldcompareCSVData(
+        backend = COMPARISON_BACKENDS[args["backend"]]
+        numFailed += backend["compareCSVData"](
             source,
             ref,
             delimiter,
@@ -303,6 +349,18 @@ def _scriptComparison(args):
 
 def runRegressionTest(args):
     """Run regression test scripts against reference data"""
+
+    # specific backend chosen?
+    if args["backend"]:
+        if args["backend"] == "legacy":
+            print(
+                "\n-- Choosing legacy backend explicitly is deprecated"
+                " and will be removed in the future."
+            )
+
+    # default backend
+    else:
+        args["backend"] = "fieldcompare" if "fieldcompare" in COMPARISON_BACKENDS else "legacy"
 
     # exact comparison?
     if args["script"] == ["exact"]:
