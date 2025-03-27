@@ -10,9 +10,11 @@
 #include <config.h>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/common/capabilities.hh>
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -22,6 +24,10 @@
 
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#endif
+
+#if DUMUX_HAVE_GRIDFORMAT
+#include <gridformat/gridformat.hpp>
 #endif
 
 #include <dumux/common/initialize.hh>
@@ -36,8 +42,20 @@ int main(int argc, char** argv)
     if (argc != 3)
         DUNE_THROW(Dune::IOError, "Needs two arguments, the vtk file name and an output file base name");
 
-    auto vtkReader = std::make_shared<Dumux::VTKReader>(std::string(argv[1]));
+    const auto inputGridFileName = std::string(argv[1]);
     using Grid = GRIDTYPE;
+
+    // maybe generate the 3D input grid file
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (Dune::Capabilities::isCartesian<Grid>::v && Grid::dimensionworld == 3)
+    {
+        GridFormat::ImageGrid<3, double> grid{{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {10, 10, 10}};
+        GridFormat::Writer{GridFormat::FileFormat::vti, grid}.write(std::filesystem::path(inputGridFileName).stem());
+        std::cout << "Generated a 3D input grid file " << std::filesystem::path(inputGridFileName).stem() << std::endl;
+    }
+#endif
+
+    auto vtkReader = std::make_shared<Dumux::VTKReader>(inputGridFileName);
     Dumux::VTKReader::Data cellData, pointData;
     Dune::GridFactory<Grid> gridFactory;
     auto grid = vtkReader->readGrid(gridFactory, cellData, pointData, /*verbose=*/true);
