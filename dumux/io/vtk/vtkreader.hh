@@ -34,7 +34,7 @@
 #include <gridformat/gridformat.hpp>
 #include <gridformat/traits/dune.hpp>
 #include <gridformat/reader.hpp>
-#include <gridformat/adapters/reader_polylines_subdivider.hpp>
+#include <gridformat/decorators/reader_polylines_subdivider.hpp>
 
 namespace Dumux::Detail::VTKReader {
 
@@ -45,7 +45,7 @@ auto makeGridformatReaderFactory(const C& c)
     -> std::unique_ptr<GridFormat::GridReader> {
         // use adapter for poly data that splits polylines into segments
         if (f.ends_with("vtp"))
-            return std::make_unique<GridFormat::ReaderAdapters::PolylinesSubdivider>(fac.make_for(f));
+            return std::make_unique<GridFormat::ReaderDecorators::PolylinesSubdivider>(fac.make_for(f));
         return fac.make_for(f);
     };
 }

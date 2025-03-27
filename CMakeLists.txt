@@ -60,13 +60,27 @@ include(FetchContent)
 
 option(DUMUX_ENABLE_GRIDFORMAT "Enable gridformat I/O integration" OFF)
 if (DUMUX_ENABLE_GRIDFORMAT)
-  if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
-    FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
+  find_package(gridformat QUIET)
+  if (gridformat_FOUND)
+    set(DUMUX_HAVE_GRIDFORMAT true)
+  elseif (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+    FetchContent_Declare(gridformat
+      SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat"
+      OVERRIDE_FIND_PACKAGE ON
+    )
     FetchContent_MakeAvailable(gridformat)
     set(DUMUX_HAVE_GRIDFORMAT true)
     message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
-  else()
-    message(FATAL_ERROR "DUMUX_ENABLE_GRIDFORMAT is ON but gridformat is not found. Run git submodule update --init.")
+  else ()
+    FetchContent_Declare(gridformat
+      GIT_REPOSITORY https://github.com/dglaeser/gridformat.git
+      GIT_TAG 6e1f1963dd69443dc8da8fd14423d4f1d057654e
+      GIT_PROGRESS true
+      GIT_SUBMODULES_RECURSE ON
+      OVERRIDE_FIND_PACKAGE ON
+    )
+    FetchContent_MakeAvailable(gridformat)
+    set(DUMUX_HAVE_GRIDFORMAT true)
   endif()
 endif()
 
@@ -117,6 +131,18 @@ endif()
 dune_target_enable_all_packages(dumux)
 if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
   dune_default_include_directories(dumux PUBLIC)
+endif()
+
+if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
+  include(FeatureSummary)
+  add_feature_info("Grid I/O via gridformat" DUMUX_HAVE_GRIDFORMAT "writing and reading grid data supporting many different VTK formats")
+  set(DUMUX_MULTITHREADING_SUPPORTED true)
+  if (DUMUX_MULTITHREADING_BACKEND STREQUAL "Serial")
+    set(DUMUX_MULTITHREADING_SUPPORTED false)
+  endif()
+  add_feature_info("Shared-memory parallelism" DUMUX_MULTITHREADING_SUPPORTED "multithreaded loops, assembly and solvers if available")
+  add_feature_info("Distributed-memory parallelism" MPI_FOUND "MPI parallel programs")
+  add_feature_info("Python bindings for DuMux" DUMUX_ENABLE_PYTHONBINDINGS "using DuMux via its Python API (experimental)")
 endif()
 
 add_subdirectory(cmake/modules)
