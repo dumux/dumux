@@ -18,15 +18,13 @@
 #include <dune/common/std/type_traits.hh>
 #include <dune/grid/common/exceptions.hh>
 
-// forward declare
-namespace Dune {
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#endif
 
-template<class ct, int dim, template< int > class Ref, class Comm>
-class SPGrid;
-
-template<int dim, class HostGrid, bool MapIndexStorage>
-class SubGrid;
-} // end namespace Dune
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
 
 namespace Dumux {
 
@@ -43,6 +41,7 @@ struct PeriodicGridTraits
     }
 };
 
+#if HAVE_DUNE_SPGRID
 template<class ct, int dim, template< int > class Ref, class Comm>
 struct PeriodicGridTraits<Dune::SPGrid<ct, dim, Ref, Comm>>
 {
@@ -58,7 +57,9 @@ public:
         return intersection.neighbor() && intersection.boundary();
     }
 };
+#endif //HAVE_DUNE_SPGRID
 
+#if HAVE_DUNE_SUBGRID
 // SubGrid does not preserve intersection.boundary() at periodic boundaries of host grid
 template<int dim, typename HostGrid, bool MapIndexStorage>
 struct PeriodicGridTraits<Dune::SubGrid<dim, HostGrid, MapIndexStorage>>
@@ -113,6 +114,7 @@ public:
         }
     }
 };
+#endif //HAVE_DUNE_SUBGRID
 
 template<class T>
 class SupportsPeriodicity
