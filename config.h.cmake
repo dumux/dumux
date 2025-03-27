@@ -42,9 +42,6 @@
 /* Define to the revision of dumux */
 #define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
 
-/* Define the path to dumux */
-#define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
-
 /* Define the major version of opm-grid */
 #define OPM_GRID_VERSION_MAJOR ${OPM_GRID_VERSION_MAJOR}
 
