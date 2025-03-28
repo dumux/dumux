@@ -9,7 +9,7 @@ dumux_add_test(NAME test_tracer_explicit_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_explicit_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa-00010.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_tracer_explicit_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_explicit_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_box-00010.vtu
@@ -32,7 +32,7 @@ dumux_add_test(NAME test_tracer_explicit_tpfa_mol
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=true
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_explicit_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_mol-00010.vtu
@@ -43,7 +43,7 @@ dumux_add_test(NAME test_tracer_explicit_box_mol
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false USEMOLES=true
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_explicit_box-reference.vtu
                            ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_box_mol-00010.vtu
@@ -55,7 +55,7 @@ dumux_add_test(NAME test_tracer_implicit_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_tpfa-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa-00010.vtu
@@ -66,7 +66,7 @@ dumux_add_test(NAME test_tracer_implicit_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=true USEMOLES=false
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_box-00010.vtu
@@ -77,7 +77,7 @@ dumux_add_test(NAME test_tracer_implicit_dispersion_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=true USEMOLES=false ENABLEDISPERSION=true
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_dispersion_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_box-00010.vtu
@@ -90,7 +90,7 @@ dumux_add_test(NAME test_tracer_implicit_dispersion_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false ENABLEDISPERSION=true
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_dispersion_tpfa-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_tpfa-00010.vtu

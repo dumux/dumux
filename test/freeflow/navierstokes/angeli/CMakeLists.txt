@@ -5,7 +5,7 @@ dumux_add_test(NAME test_ff_navierstokes_angeli
               LABELS freeflow navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_angeli-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_angeli-00009.vtu
@@ -16,7 +16,7 @@ dumux_add_test(NAME test_ff_navierstokes_angeli_averaged
               LABELS freeflow navierstokes
               TARGET test_ff_navierstokes_angeli
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_angeli_averaged-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_angeli_averaged-00001.vtu

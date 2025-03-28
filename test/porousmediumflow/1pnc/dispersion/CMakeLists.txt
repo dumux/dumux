@@ -7,7 +7,7 @@ dumux_add_test(NAME test_1pnc_dispersion_scheidegger
               LABELS porousmediumflow dispersion 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_scheidegger-reference.vtu
@@ -21,7 +21,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_isotropic
               LABELS porousmediumflow dispersion 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_isotropic-reference.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_1pnc_dispersion_fulldispersiontensor_anisotropic
               LABELS porousmediumflow dispersion 1pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCDispersionTestBox SCHEIDEGGER=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pnc_dispersion_fulldispersiontensor_anisotropic-reference.vtu
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_1pncni_dispersion_scheidegger
               LABELS porousmediumflow dispersion 1pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=1 NONISOTHERMAL=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_scheidegger-reference.vtu
@@ -61,7 +61,7 @@ dumux_add_test(NAME test_1pncni_dispersion_fulldispersiontensor_isotropic
               LABELS porousmediumflow dispersion 1pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=0 NONISOTHERMAL=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_fulldispersiontensor_isotropic-reference.vtu
@@ -74,7 +74,7 @@ dumux_add_test(NAME test_1pncni_dispersion_fulldispersiontensor_anisotropic
               LABELS porousmediumflow dispersion 1pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNCNIDispersionTestBox SCHEIDEGGER=0 NONISOTHERMAL=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncni_dispersion_fulldispersiontensor_anisotropic-reference.vtu

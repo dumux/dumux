@@ -9,7 +9,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_diamond
                LABELS freeflow navierstokes
                TIMEOUT 3600
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_nonuniform_diamond-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_diamond-00001.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_diamond_simplex
                TARGET test_ff_stokes_channel_3d_nonuniform_diamond
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_nonuniform_diamond_simplex-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_diamond_simplex-00001.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex
                 COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassBox
                 LABELS freeflow navierstokes
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS      --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex-00001.vtu

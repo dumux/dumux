@@ -11,7 +11,7 @@ dumux_add_test(NAME test_1p_fracture2d3d_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fracture2d3d_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_box-00001.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_1p_fracture2d3d_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfa
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fracture2d3d_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_tpfa-00001.vtu
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_1p_fracture2d3d_mpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfa
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_fracture2d3d_cc-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/test_1p_fracture2d3d_mpfa-00001.vtu

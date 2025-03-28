@@ -7,7 +7,7 @@ dumux_add_test(NAME test_3pni_convection_box
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_3pni_convection_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_convection_box-00009.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_3pni_convection_tpfa
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConvectionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_3pni_convection_tpfa-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_convection_tpfa-00009.vtu

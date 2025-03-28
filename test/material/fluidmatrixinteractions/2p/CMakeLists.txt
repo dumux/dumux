@@ -3,7 +3,7 @@
 
 dumux_add_test(SOURCES test_thermalconductivity.cc
               LABELS unit material
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzyData --delimiter " "
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_thermalconductivitysomerton-reference.dat
                               ${CMAKE_CURRENT_BINARY_DIR}/somerton_lambda_eff.dat
@@ -13,7 +13,7 @@ dumux_add_test(SOURCES test_thermalconductivity.cc
 
 dumux_add_test(SOURCES test_material_2p_vangenuchten.cc
                LABELS unit material
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzyData --delimiter " "
                         --files  ${CMAKE_SOURCE_DIR}/test/references/test_pcsw_vangenuchten-reference.dat
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_pcsw_vangenuchten.dat
@@ -21,7 +21,7 @@ dumux_add_test(SOURCES test_material_2p_vangenuchten.cc
 
 dumux_add_test(SOURCES test_material_2p_brookscorey.cc
                LABELS unit material
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzyData --delimiter " "
                         --files  ${CMAKE_SOURCE_DIR}/test/references/test_pcsw_brookscorey-reference.dat
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_pcsw_brookscorey.dat

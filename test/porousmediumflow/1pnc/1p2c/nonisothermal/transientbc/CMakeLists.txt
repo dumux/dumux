@@ -9,7 +9,7 @@ dumux_add_test(NAME test_1pncni_transientbc_box_caching
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCBox ENABLECACHING=1
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_box_caching-00009.vtu
@@ -21,7 +21,7 @@ dumux_add_test(NAME test_1pncni_transientbc_box
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCBox ENABLECACHING=0
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_box-00009.vtu
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_1pncni_transientbc_tpfa_caching
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCTpfa ENABLECACHING=1
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_tpfa_caching-00009.vtu
@@ -45,7 +45,7 @@ dumux_add_test(NAME test_1pncni_transientbc_tpfa
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCTpfa ENABLECACHING=0
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_tpfa-00009.vtu
@@ -57,7 +57,7 @@ dumux_add_test(NAME test_1pncni_transientbc_mpfa_caching
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCMpfa ENABLECACHING=1
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_mpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa_caching-00009.vtu
@@ -69,7 +69,7 @@ dumux_add_test(NAME test_1pncni_transientbc_mpfa
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNITransientBCCCMpfa ENABLECACHING=0
               LABELS caching
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_mpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa-00009.vtu

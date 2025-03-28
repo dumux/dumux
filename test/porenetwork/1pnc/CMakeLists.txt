@@ -9,7 +9,7 @@ target_compile_definitions(test_pnm_1p2c PRIVATE ISOTHERMAL=1)
 dumux_add_test(NAME test_pnm_1p2c_advection
                TARGET test_pnm_1p2c
                LABELS porenetwork
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p2c-reference.vtp
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_pnm_1p2c_advection
 dumux_add_test(NAME test_pnm_1p2c_diffusion
                TARGET test_pnm_1p2c
                LABELS porenetwork
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p2c_diffusion-reference.vtp
@@ -30,7 +30,7 @@ dumux_add_test(NAME test_pnm_1p2cni
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=0
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_1p2cni-reference.vtp

@@ -15,7 +15,7 @@ target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox
 
 dumux_add_test(TARGET test_richards_lens_box
               LABELS porousmediumflow richards
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box-00007.vtu
@@ -24,7 +24,7 @@ dumux_add_test(TARGET test_richards_lens_box
 dumux_add_test(NAME test_richards_lens_box_analyticdiff
               SOURCES main.cc
               LABELS porousmediumflow richards
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS DIFFMETHOD=DiffMethod::analytic
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox
               CMD_ARGS --script fuzzy
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_richards_lens_box_analyticdiff
 
 dumux_add_test(TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa-00007.vtu
@@ -46,7 +46,7 @@ foreach(_precond ${DUMUX_TEST_PAR_SMOOTHERS})
     dumux_add_test(NAME test_richards_lens_tpfa_precond_${_precond}
                    TARGET test_richards_lens_tpfa
                    LABELS porousmediumflow richards
-                   COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                   COMMAND ${DUMUX_RUNTEST}
                    CMD_ARGS --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_${_precond}-00007.vtu
@@ -56,7 +56,7 @@ endforeach()
 dumux_add_test(NAME test_richards_lens_tpfa_analyticdiff
               SOURCES main.cc
               LABELS porousmediumflow richards
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS DIFFMETHOD=DiffMethod::analytic
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC
               CMD_ARGS --script fuzzy
@@ -68,7 +68,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_yasp
               TARGET test_richards_lens_box
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_parallel_yasp-00007.vtu
@@ -80,7 +80,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_yasp_ovlp_2
               TARGET test_richards_lens_box
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_parallel_yasp_ovlp_2-00007.vtu
@@ -92,7 +92,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp
               TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_parallel_yasp-00007.vtu
@@ -104,7 +104,7 @@ dumux_add_test(NAME test_richards_lens_mpfa_parallel_yasp
               TARGET test_richards_lens_mpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_mpfa_parallel_yasp-00007.vtu
@@ -118,7 +118,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
               TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank" --zeroThreshold {"S_liq":1e-3,"water content":1e-3}
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_parallel_yasp_restart-00004.vtu
@@ -134,7 +134,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_ug
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_ug-00007.pvtu
@@ -145,7 +145,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_ug
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_ug-00007.pvtu
@@ -156,7 +156,7 @@ dumux_add_test(NAME test_richards_lens_box_parallel_alu
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_alu-00007.pvtu
@@ -167,7 +167,7 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_alu
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_alu-00007.pvtu

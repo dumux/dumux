@@ -8,7 +8,7 @@ dumux_add_test(NAME test_periodic_porescale
                SOURCES main.cc
                LABELS porescale periodic freeflow
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND AND dune-subgrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_periodic_subgrid-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_ff_periodic_subgrid-00000.vtu

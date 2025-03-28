@@ -10,7 +10,7 @@ target_compile_definitions(test_2p_incompressible_tpfa PUBLIC TYPETAG=TwoPIncomp
 dumux_add_test(NAME test_2p_incompressible_tpfa
               TARGET test_2p_incompressible_tpfa
               LABELS porousmediumflow 2p
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa-00007.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_2p_incompressible_tpfa_analytic
               SOURCES main.cc
               LABELS porousmediumflow 2p
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa DIFFMETHOD=DiffMethod::analytic
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_analytic-00007.vtu
@@ -30,7 +30,7 @@ dumux_add_test(NAME test_2p_incompressible_tpfa_analytic
 dumux_add_test(NAME test_2p_incompressible_tpfa_restart
               TARGET test_2p_incompressible_tpfa
               LABELS porousmediumflow 2p
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_restart-00002.vtu
@@ -44,7 +44,7 @@ dumux_add_test(NAME test_2p_incompressible_box
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box-00007.vtu
@@ -54,7 +54,7 @@ dumux_add_test(NAME test_2p_incompressible_box_analytic
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox DIFFMETHOD=DiffMethod::analytic
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_analytic-00007.vtu
@@ -67,7 +67,7 @@ dumux_add_test(NAME test_2p_incompressible_box_ifsolver
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               COMPILE_DEFINITIONS ENABLEINTERFACESOLVER=true
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_box_ifsolver-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver-00017.vtu
@@ -80,7 +80,7 @@ dumux_add_test(NAME test_2p_incompressible_tpfa_oilwet
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_tpfa_oilwet-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_oilwet-00009.vtu
@@ -95,7 +95,7 @@ dumux_add_test(NAME test_2p_incompressible_mpfa
               LABELS porousmediumflow 2p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_incompressible_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_mpfa-00007.vtu

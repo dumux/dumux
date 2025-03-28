@@ -10,7 +10,7 @@ dumux_add_test(NAME test_1p2c_nonequilibrium_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_nonequilibrium_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_nonequilibrium_box-00045.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_1p2c_nonequilibrium_tpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_nonequilibrium_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_nonequilibrium_tpfa-00044.vtu

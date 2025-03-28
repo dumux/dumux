@@ -5,7 +5,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Average
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p1p_tpfatpfa_average_1d-reference.vtp
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxtpfa_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Average
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p1p_tpfatpfa_average_1d-reference.vtp
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfabox_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Average
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p1p_boxbox_average_1d-reference.vtp
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_average
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Average
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p1p_boxbox_average_1d-reference.vtp

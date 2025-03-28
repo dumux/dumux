@@ -20,7 +20,7 @@ add_executable(test_walldistance EXCLUDE_FROM_ALL test_walldistance.cc)
 dumux_add_test(NAME test_walldistance_2dcube
                TARGET test_walldistance
                LABELS unit
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "wallElementIndex"
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 2DCube"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_2dcube_box_element-reference.vtu
@@ -36,7 +36,7 @@ dumux_add_test(NAME test_walldistance_2dcube
 dumux_add_test(NAME test_walldistance_3dcube
                TARGET test_walldistance
                LABELS unit
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "wallElementIndex"
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_element-reference.vtu
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_walldistance_3dcube_parallel
                TARGET test_walldistance
                LABELS unit
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "wallElementIndex"
                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_element-reference.vtu
@@ -71,7 +71,7 @@ dumux_add_test(NAME test_walldistance_3dheart
                TARGET test_walldistance
                LABELS unit
                CMAKE_GUARD dune-alugrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "wallElementIndex"
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DMesh"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dmesh_box_element-reference.vtu

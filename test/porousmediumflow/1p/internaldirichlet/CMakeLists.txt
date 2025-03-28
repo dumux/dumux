@@ -7,7 +7,7 @@ dumux_add_test(NAME test_1p_internaldirichlet_tpfa
               LABELS porousmediumflow 1p
               COMPILE_DEFINITIONS TYPETAG=OnePInternalDirichletTpfa
               COMPILE_DEFINITIONS NUMDIFFMETHOD=DiffMethod::analytic
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_internaldirichlet_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa-00001.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_1p_internaldirichlet_box
               LABELS porousmediumflow 1p
               COMPILE_DEFINITIONS TYPETAG=OnePInternalDirichletBox
               COMPILE_DEFINITIONS NUMDIFFMETHOD=DiffMethod::analytic
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_internaldirichlet_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_box-00001.vtu

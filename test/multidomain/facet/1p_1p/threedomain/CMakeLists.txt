@@ -10,7 +10,7 @@ dumux_add_test(NAME test_md_facet_1p1p_threedomain_tpfa
               COMPILE_DEFINITIONS EDGETYPETAG=Dumux::Properties::TTag::OnePEdgeTpfa
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_tpfa_bulk-00001.vtu
@@ -32,7 +32,7 @@ dumux_add_test(NAME test_md_facet_1p1p_threedomain_tpfa
 #               COMPILE_DEFINITIONS EDGETYPETAG=Dumux::Properties::TTag::OnePEdgeMpfa
 #               SOURCES main.cc
 #               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               COMMAND ${DUMUX_RUNTEST}
 #               CMD_ARGS  --script fuzzy
 #                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_mpfa_bulk-reference.vtu
 #                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_mpfa_bulk-00001.vtu
@@ -50,7 +50,7 @@ dumux_add_test(NAME test_md_facet_1p1p_threedomain_box
               COMPILE_DEFINITIONS EDGETYPETAG=Dumux::Properties::TTag::OnePEdgeBox
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_box_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_bulk-00001.vtu

@@ -8,7 +8,7 @@ dumux_add_test(NAME test_2pncminni_salinization_box
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=SalinizationBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_box-00042.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_2pncminni_salinization_tpfa
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=SalinizationCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncminni_salinization_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncminni_salinization_tpfa-00042.vtu

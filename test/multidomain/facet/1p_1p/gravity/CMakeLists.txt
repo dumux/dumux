@@ -22,7 +22,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi1_tpfa_bulk-00000.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi1_tpfa_bulk-00001.vtu
@@ -36,7 +36,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_xi066_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi066_tpfa_bulk-00000.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi066_tpfa_bulk-00001.vtu
@@ -51,7 +51,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi1_mpfa_bulk-00000.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi1_mpfa_bulk-00001.vtu
@@ -64,7 +64,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_xi066_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_gravity_mpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi066_mpfa_bulk-00000.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_xi066_mpfa_bulk-00001.vtu
@@ -82,7 +82,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_surface_tpfa
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimTpfa
                COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_surface_tpfa_bulk-00000.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_surface_tpfa_bulk-00001.vtu
@@ -100,7 +100,7 @@ dumux_add_test(NAME test_md_facet_1p1p_gravity_surface_mpfa
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimMpfa
                COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_surface_mpfa_bulk-00000.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_gravity_surface_mpfa_bulk-00001.vtu

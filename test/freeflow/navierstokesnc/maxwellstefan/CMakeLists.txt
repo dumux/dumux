@@ -8,7 +8,7 @@ dumux_add_test(NAME test_ff_stokes2c_maxwellstefan
               LABELS freeflow navierstokesnc navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_maxwellstefan-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_maxwellstefan-00005.vtu

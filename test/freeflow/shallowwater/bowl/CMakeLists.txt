@@ -7,7 +7,7 @@ dumux_add_test(NAME test_shallowwater_bowl
                SOURCES main.cc
                LABELS shallowwater
                TIMEOUT 3600
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS   --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_bowl-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/bowl-00013.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_shallowwater_bowl_parallel
                LABELS shallowwater
                TIMEOUT 3600
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS   --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_bowl-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/s0002-bowl-parallel-00013.pvtu

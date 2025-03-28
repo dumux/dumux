@@ -8,7 +8,7 @@ dumux_add_test(NAME test_md_poromechanics_el2p
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               TIMEOUT 3600
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el2p_2p-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p_twop-00010.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_md_poromechanics_el2p_gravity
               TARGET test_md_poromechanics_el2p
               CMAKE_GUARD HAVE_UMFPACK
               TIMEOUT 3600
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el2p_gravity_2p-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el2p_gravity_twop-00010.vtu

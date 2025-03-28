@@ -9,7 +9,7 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c
                 SOURCES main.cc
                 COMPILE_DEFINITIONS ISOTHERMAL=1
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS  --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_ff-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2c_pnm1p2c_ff-00019.vtu
@@ -23,7 +23,7 @@ dumux_add_test(NAME test_md_boundary_ff1p2c_pnm1p2c_diffusion
                 SOURCES main.cc
                 COMPILE_DEFINITIONS ISOTHERMAL=1
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS  --script fuzzy
                           --ignore "velocity_gas (m/s)"
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2c_pnm1p2c_diffusion_ff-reference.vtu
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_md_boundary_ff1p2cni_pnm1p2cni
                 SOURCES main.cc
                 COMPILE_DEFINITIONS ISOTHERMAL=0
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-                COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p2cni_pnm1p2cni_ff-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p2cni_pnm1p2cni_ff-00019.vtu

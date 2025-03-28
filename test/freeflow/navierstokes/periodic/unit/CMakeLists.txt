@@ -7,7 +7,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic
                SOURCES main.cc
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
                COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic-00000.vtu
@@ -21,7 +21,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_trivial
                TARGET test_ff_navierstokes_periodic_subgrid
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND AND dune-subgrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_trivial-00000.vtu
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_nontrivial
                TARGET test_ff_navierstokes_periodic_subgrid
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND AND dune-subgrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_subgrid-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid-00000.vtu

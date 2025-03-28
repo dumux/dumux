@@ -7,7 +7,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_tpfatpfa
               LABELS multidomain multidomain_embedded 1p richards
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilCC
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               TIMEOUT 1500
               CMD_ARGS  --script fuzzy
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_tpfabox
               LABELS multidomain multidomain_embedded 1p richards
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-foamgrid_FOUND
               TIMEOUT 1500
               CMD_ARGS  --script fuzzy
@@ -38,7 +38,7 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p_richards_proj
               LABELS multidomain multidomain_embedded 1p richards
               SOURCES main.cc
               COMPILE_DEFINITIONS SOILTYPETAG=SoilBox COUPLINGMODE=Projection SOILGRID=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TIMEOUT 1500
               CMD_ARGS  --script fuzzy

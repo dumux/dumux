@@ -6,7 +6,7 @@ add_input_file_links()
 dumux_add_test(NAME test_pnm_2p_static
                SOURCES main.cc
                LABELS porenetwork
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzyData
                              --delimiter " "
