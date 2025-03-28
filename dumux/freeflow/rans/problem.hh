@@ -434,7 +434,7 @@ private:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
+                const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][dofIdxFace][0];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int axisIdx = 0; axisIdx < dim; ++axisIdx)
