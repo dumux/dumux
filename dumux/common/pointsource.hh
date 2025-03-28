@@ -16,6 +16,7 @@
 
 #include <functional>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -323,7 +324,8 @@ public:
                     }
                 }
             }
-            else
+            else if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa
+                    || GridGeometry::discMethod == DiscretizationMethods::ccmpfa)
             {
                 for (const auto eIdx : entities)
                 {
@@ -335,6 +337,8 @@ public:
                         pointSourceMap.insert({key, {source}});
                 }
             }
+            else
+                DUNE_THROW(Dune::NotImplemented, "BoundingBoxTreePointSourceHelper for discretization method " << GridGeometry::discMethod);
         }
     }
 };
