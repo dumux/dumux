@@ -341,7 +341,7 @@ private:
                 const auto mu = effectiveViscosityAtPos(scvf.ipGlobal());
                 const auto h = diameter(element.geometry());
 
-                const auto f = this->sourceAtPos(scvf.ipGlobal());
+                const auto f = this->couplingManager().problem(CouplingManager::freeFlowMomentumIndex).sourceAtPos(scvf.ipGlobal());
                 flux[0] = -1.0*vtmv(scvf.unitOuterNormal(), boxStabilizationParameter_*h*h*rho/mu, gradP - f);
             }
         }
