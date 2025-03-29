@@ -310,7 +310,6 @@ def getPersistentVersions(modFolderPaths):
     """Get versions of last commit on a persistent branch"""
     result = {}
     for modFolderPath in modFolderPaths:
-
         if not isGitRepository(modFolderPath):
             raise Exception("Folder is not a git repository")
 
