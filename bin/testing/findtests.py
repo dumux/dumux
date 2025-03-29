@@ -88,7 +88,6 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
 
 
 if __name__ == "__main__":
-
     # parse input arguments
     parser = ArgumentParser(description="Find tests affected by changes")
     parser.add_argument(

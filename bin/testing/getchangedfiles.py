@@ -32,7 +32,6 @@ def getChangedFiles(gitFolder, sourceTree, targetTree):
 
 
 if __name__ == "__main__":
-
     # parse input arguments
     parser = ArgumentParser(description="Get the files that differ between two git-trees")
     parser.add_argument(
