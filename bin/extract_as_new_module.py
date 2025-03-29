@@ -636,7 +636,6 @@ def infoFinal(newModuleName):
 ###############
 # Main script #
 if __name__ == "__main__":
-
     # set script parameters
     EPILOG = """
     -----------------------------------------------------------

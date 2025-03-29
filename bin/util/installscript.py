@@ -127,7 +127,6 @@ def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", 
         print("Warning: opts file is not contained in any of the dependencies")
 
     with open(scriptName, "w") as script:
-
         writer.setOutputStream(script)
         writer.writeSheBang()
 
