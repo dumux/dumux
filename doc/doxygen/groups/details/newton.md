@@ -1,80 +1,215 @@
 @defgroup Newton Newton solver
-@brief The Newton solver and the related parameters. See @ref Dumux::NewtonSolver for the reference implementation.
+@brief The Newton solver and the related parameters. This describes the reference implementation @ref Dumux::NewtonSolver.
+@brief The Newton solver and the related parameters. This describes the reference implementation @ref Dumux::NewtonSolver.
 @ingroup Nonlinear
 @details
-# Understanding the Newton solver
-The Newton solver is used to solve a non-linear system of equations.
 
-The discrete differential equations are formulated in residual form.
-This means that all terms of each equation are brought to one side and summed up, which forms a component of the residual vector $\textbf{r}(\textbf{u})$, which is a function of the solution vector $\textbf{u}$. The goal is to find the solution vector $\textbf{u}$ that makes the residual vector equal to zero (or very close to zero).
+# Newton's method
 
-For example:
+The following describes Newton's method and the reference implementation @ref Dumux::NewtonSolver of a multi-dimensional Newton solver to solve a non-linear system of equations in DuMu<sup>x</sup>.
+For solving nonlinear equations with only one unknown, DuMu<sup>x</sup> also provides @ref Dumux::findScalarRootNewton and @ref Dumux::findScalarRootBrent.
 
-\begin{align*}
-\underbrace{
-  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
- -
- \text{div} \left(
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
- \left(\nabla p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
- \right) - q_\alpha} _
-{=: \, \textbf{r}(\textbf{u})}
-= 0
-\end{align*}
+We assume that the equations (in DuMu<sup>x</sup> usually the discretized partial differential equations) are formulated as a residual equation:
 
-Since Newton's method is an iterative algorithm, meaning it generates a sequence of approximations, $\textbf{u}^i$, to converge to the solution vector, that satisfies $\textbf{r}(\textbf{u}) = 0$.
-We start with an initial guess $\textbf{u}^0$ and
-calculate the initial residual $\textbf{r}(\textbf{u}^0)$. Then,
-we calculate the derivative of the residual with respect to the solution, which gives the Jacobian matrix, $J_{\textbf{r} \left(\textbf{u}^i\right)}$, representing the sensitivity of the residual to changes in the solution. It linearizes the nonlinear system around the current approximation $\textbf{u}^i$:
+```math
+F(\textbf{u}) = \textbf{r} = \textbf{0}
+```
 
-\begin{align*}
-  \frac{\text{d}}{\text{d}\textbf{u}}\textbf{r} \left(\textbf{u}^i\right)
-  = J_{\textbf{r} \left(\textbf{u}^i\right)}
-  = \left(\frac{\text{d}}{\text{d}\textbf{u}^i_m}\textbf{r} \left(\textbf{u}^i\right)_n\right)_{m,n}
-\end{align*}
+with the residual operator $F : \mathbb{R}^n \to \mathbb{R}$, $n$ is the number of equations, $\textbf{u} \in \mathbb{R}^n$ is the vector of unknowns,
+and $\textbf{r} \in \mathbb{R}^n$ is the residual vector.
 
-By solving the linear system
+The goal of Newton's method is to find a vector $\textbf{u}$ such that the residual equation is fulfilled (at least to a good enough approximation $F(\textbf{u}) \approx \textbf{0}$ as we will discuss below).
 
-\begin{align*}
-  J_{\textbf{r}(\textbf{u}^i)} \cdot \textbf{x}^i = \textbf{r}(\textbf{u}^i)
-\end{align*}
+Newton's method is an iterative algorithm: it generates a sequence of approximations, $\textbf{u}_k$, that converges (under some circumstances) to the vector $\textbf{u}_\star$, that satisfies $F(\textbf{u}_\star) = 0$. We start with an initial guess $\textbf{u}_0$ and
+calculate the initial residual $\textbf{r}_0 = \textbf{F}(\textbf{u}_0)$.
+Then, we calculate the derivative of the residual operator with respect to the unknowns, the Jacobian matrix, $J : \mathbb{R}^n \to \mathbb{R}^n$
+evaluated at $\textbf{u}_k$ (in the first step $k=0$):
 
-we calculate the direction of maximum growth $\textbf{x}^i$ and subtract it from
-our current approximation to get a new, better approximation
-$\textbf{u}^{i+1} = \textbf{u}^i - \textbf{x}^i$.
+```math
+J(\textbf{u}_k) = \frac{\partial F(\textbf{u})}{\partial \textbf{u}} \vert_{\textbf{u} = \textbf{u}_k}
+```
 
-We repeat the calculation of the Jacobian $J_{\textbf{r}(\textbf{u}^i)}$ and the
-direction of maximum growth $\textbf{x}^i$ until our approximated solution becomes good enough.
+@note Computing the residual operator $F$ and the Jacobian matrix $J$ is delegated to the assembler implementation (see e.g. @ref Dumux::FVAssembler).
+Typically with DuMu<sup>x</sup>, the Jacobian matrix is approximated by finite differences but the implementation of Newton's method in @ref Dumux::NewtonSolver is independent of the way the Jacobian is calculated. The C++ type of the Assembler is a template parameter of @ref Dumux::NewtonSolver and and instance of the assembler must be passed to the Newton solver in its constructor @ref Dumux::NewtonSolver::NewtonSolver.
 
-See @ref Dumux::NewtonSolver for the reference implementation of the Newton method based solver in DuMux, which features various convergence criteria and a simple line search algorithm to improve the update.
+This allows to compute a tangent direction of residual surface in n-dimensional space as
 
-Users have the flexibility to adjust various Newton solver parameters to optimize convergence and efficiency.
-The parameters, that can be set in the input file, e.g., `params.input`, are categorized and explained in the following:
-### Update Strategy:
-  - **UseLineSearch**: the default value is false. If is set to true, an inexact line search method is used, which multiplies the full Newton step predicted by Newton method with a relaxation factor, $\alpha$ to improve the convergence behavior, i.e., increase the residual reduction.
-   \begin{align*}
-   \textbf{u}^{i+1} = \textbf{u}^i - \alpha\textbf{x}^i
-   \end{align*}
-   The relaxation factor decreases repeatedly until the residual reduction does not improve anymore or the relaxation factor reaches a minimum value, i.e., `LineSearchMinRelaxationFactor`.
-  - **LineSearchMinRelaxationFactor**: The default value is 0.125. to set the minimum values of the line search relaxation factor.
-  - **EnableChop**: the default value is false. If is set to true, the Newton step is reduced. Please note that both `UseLineSearch` and `EnableChop` can be set to true simultaneously. To this end, the chopped Newton solver strategy is not yet implemented. Therefore, even if `EnableChop` is set to true, the Newton step will not be reduced in the current version.
-### Convergence/Termination Criteria:
-  - **EnableShiftCriterion**: the default value is true. The Newton solver converges, when the maximum relative difference between the solution vector from the last iteration and the one before that is less than the `MaxRelativeShift`.
-  - **EnableResidualCriterion**: the default value is false. The Newton converges, when the relative reduction of the residual vector to the initial residual vector, i.e., at the beginning of the time-step, is less than `ResidualReduction` (default residual criterion). When `EnableAbsoluteResidualCriterion` is also set to true, then the Newton converges, when the norm of the residual vector is less than `MaxAbsoluteResidual`. It should be noted that setting the `EnableResidualCriterion = true` **does not** automatically set `EnableShiftCriterion` to false. That means, if only `EnableResidualCriterion` is set to true, then the Newton converges when either the residual criterion or the shift criterion is fulfilled (the shift criterion is checked first). To use only the residual criterion, 'EnableShiftCriterion' must explicitly be set to false.
-  - **EnableAbsoluteResidualCriterion**: the default value is false. By setting it to true, the residual criterion changes to when the norm of the residual vector is less than `MaxAbsoluteResidual`.
-  - **SatisfyResidualAndShiftCriterion**: the default value is false. The Newton solver converges when both residual criterion and shift criterion are fulfilled.
-  - **MaxRelativeShift**: the default value is 1e-8.
-  - **MaxAbsoluteResidual**: the default value is 1e-5.
-  - **ResidualReduction**: the default value is 1e-5.
-  - **MinSteps**: the default value is 2. The minimum iterations, that Newton must do before it converges.
-  - **MaxSteps**: the default value is 18. The maximum iterations, that Newton is allowed to do until it converges. If Newton can not converges after doing this number of iterations, the last maximum relative shift in the solution vector or the reduction in the residual is checked. If the last maximum relative shift was reduced by a factor of at least 4 in comparison to the one before it, Newton is allowed to proceed to the next iteration. Otherwise the time-step will be redone with a reduced time-step size.
-### Adaptive Time Stepping:
-  - **TargetSteps**: the default value is 10. It sets the optimum number of iterations we want to achieve. It plays a role in time-step size suggestion by Newton for the next time-step, considering how fast Newton converged, i.e., the number of iterations done to converge in a time-step (`numSteps_`). That means, if the current `numSteps_` is below `TargetSteps`, Newton will suggest a larger time-step size for the next time step, and a smaller time-step size if it's above.
-  - **RetryTimeStepReductionFactor**: the default value is 0.5. If Newton does not converge, then the time-step size will be reduced by a factor of `RetryTimeStepReductionFactor` and the time-step will be redone with the new time-step size.
-  - **MaxTimeStepDivisions**: the default value is 10. If even after `MaxTimeStepDivisions` of time-step size reduction, the Newton solver does not succeed to solve the system, the simulation will be aborted.
-### Partial Reassembly:
-  - **EnablePartialReassembly**: the default value is false. If it is set to true, the Jacobian matrix is partially reassembled in the next iteration, computing only components associated with primary variables that have changed beyond the Reassembly threshold. The threshold is computed as: <br> Reassembly threshold = max(`ReassemblyMinThreshold`, min(`ReassemblyMaxThreshold`, `ReassemblyShiftWeight` $\times$ Relative shift))
+```math
+\Delta \textbf{u} = \textbf{u}_{k} - \textbf{u}_{k+1} = J(\textbf{u}_k)^{-1} \cdot \textbf{r}_k
+```
 
-  - **ReassemblyMinThreshold**: the default value is $10^{-1} \times$ `MaxRelativeShift`.
-  - **ReassemblyMaxThreshold**: the default value is $10^2 \times$ `MaxRelativeShift`.
-  - **ReassemblyShiftWeight**: the default value is $10^{-3}$.
+@note Evaluating $\Delta \textbf{u}$ is equivalent to solving the linear system
+```math
+J(\textbf{u}_k) \Delta \textbf{u} = \textbf{r}_k
+```
+This task is delegated to a linear solver (see e.g. @ref Dumux::LinearSolver)
+which is passed the Jacobian matrix and the residual vector computed by the assembler earlier.
+The C++ type of the LinearSolver is a template parameter of @ref Dumux::NewtonSolver and and instance of the linear solver must be passed to the Newton solver in its constructor @ref Dumux::NewtonSolver::NewtonSolver.
+
+With the tangent direction $\Delta \textbf{u}$ (also called the "update" vector), we update our
+current approximation $\textbf{u}_k$ to get a new approximation $\textbf{u}_{k+1}$:
+
+```math
+\textbf{u}_{k+1} = \textbf{u}_k - \Delta \textbf{u}
+```
+
+@note The update can be customized by a user-defined update strategy or by choosing from the implemented strategies (see below for more details).
+
+This is one Newton step (or iteration). We repeat the steps of calculating the residual
+and the Jacobian matrix, solve the linear system, and update the approximation until we reach a good enough solution (see below for the available termination criteria).
+
+@note A good initial guess is crucial to get fast convergence of Newton's method.
+For time-dependent problems, the initial guess $\textbf{u}_0$ is usually the solution of the previous time step.
+The initial guess is passed to the Newton solver in the method @ref Dumux::NewtonSolver::apply and @ref Dumux::NewtonSolver::solve.
+
+@note When choosing a zero initial guess you must be aware that the assembler (based on finite difference approximations)
+may have difficulties to find a good epsilon to compute the finite difference approximation. In this case, you may need to
+help the assembler by providing an estimate of the problem-typical magnitude of the unknowns. See @ref Dumux::FVAssembler
+and the parameters `Assembly.NumericDifference.PriVarMagnitude` and `Assembly.NumericDifference.BaseEpsilon`.
+
+The @ref Dumux::NewtonSolver reference implementation of Newton's method has several features discussed below that can be controlled by user-set parameters (e.g. via a parameter input file or the command line, see @ref runtime-parameters).
+
+## Update strategy
+
+Here we describe strategies that differ from the default update strategy, that is:
+
+```math
+\textbf{u}_{k+1} = \textbf{u}_k - \Delta \textbf{u}
+```
+The different strategies can be enabled via runtime parameters as described below.
+
+
+### Line search
+
+The idea of line search is to find an optimal scaling factor $\alpha \in \mathbb{R}$ for the update vector $\Delta \textbf{u}$
+```math
+\textbf{u}_{k+1} = \textbf{u}_k - \alpha\Delta \textbf{u}
+```
+
+such that the residual norm evaluated with the new iterate $\textbf{u}_{k+1}$ that is $||r_{k+1}||$ is minimized.
+That means using line search the following optimization problem is solved: find $\alpha$ such that
+
+```math
+\alpha = \arg \min_{\alpha} ||F(\textbf{u}_{k+1} - \alpha \Delta \textbf{u})||_2^2
+```
+
+The default implementation of @ref Dumux::NewtonSolver uses a simple backtracking line search algorithm to approximately solve the above optimization problem. The algorithm is based on the following steps:
+
+1. Set the initial step size $\alpha = 1$.
+2. Compute the residual norm $||r_{k+1}|| = ||F(\textbf{u}_{k+1} - \alpha \Delta \textbf{u})||_2^2$.
+3. If the residual norm is smaller than $||r_{k}||$ (the norm of the previous residual), $\alpha$ is accepted and the algorithm terminates. Otherwise, alpha is reduced by a factor `Newton.LineSearchReductionFactor` (default value $0.5$) and we continue with step 2 unless $\alpha$ is smaller or equal the `Newton.LineSearchMinRelaxationFactor` (default value $0.125$) in which we accept the step size, even if the residual norm increased.
+
+@note To customize the line search strategy, create a new class derived from @ref Dumux::NewtonSolver and override the private virtual method @ref Dumux::NewtonSolver::lineSearchUpdate_.
+Activate line search update by setting the parameter `Newton.UseLineSearch = true`.
+
+### Chopped update
+
+For instance in problems where the residual has multiple roots, it can be beneficial to restrict the search space to a certain region in the parameter space. This can be achieved by a chopped update strategy, where the solution vector is projected back to a feasible region after each Newton step.
+A chopped update strategy can be enabled by setting `Newton.EnableChop = true`. As such strategies are usually problem-dependent, there is no default implementation.  The parameter will merely active the hook @ref Dumux::NewtonSolver::choppedUpdate_ which can be overridden in a derived class, see @ref Dumux::RichardsNewtonSolver for an example implementation using this strategy.
+
+@note To customize the chop update strategy, create a new class derived from @ref Dumux::NewtonSolver and override the private virtual method @ref Dumux::NewtonSolver::choppedUpdate_.
+Activate the chopped update strategy by setting the parameter `Newton.EnableChop = true`. The line search and chopped update are mutually exclusive, i.e. if `Newton.UseLineSearch` is set to true, the `Newton.EnableChop` parameter will be ignored.
+
+## Termination criteria
+
+Newton's method finds an approximate solution to the residual equation $F(\textbf{u}_k) \approx \textbf{0}$.
+But when is the solution "good enough"? A good criterion makes sure that the residual is small enough but should also be easy to compute.
+@ref Dumux::NewtonSolver provides several termination criteria.
+
+The default is the relative shift criterion in addition to bounds on the minimum and maximum number of iterations.
+The solver never terminates if $k$ is smaller than `Newton.MinSteps` (default value $2$).
+The solver always terminates if $k$ is larger than `Newton.MaxSteps` (default value $18$).
+@ref Dumux::NewtonSolver::apply returns a boolean value indicating whether the solver converged or not;
+@ref Dumux::NewtonSolver::solve throws @ref Dumux::NumericalProblem is the solver did not converge.
+
+### Relative shift criterion
+
+This criterion is enabled per default. The idea is to terminate the algorithm when the solution vector does not change significantly between iterations.
+This criterion does not check the actual residual but is useful in practice and fast to compute. We compute the maximum difference
+of any degree of freedom (entry of the vector $\textbf{u}_{k+1}$) between the current and the previous iteration.
+This uses the criterion
+
+```math
+\text{max}_{i=1,\ldots,n} \left( \frac{|u_{k+1,i} - u_{k,i}|}{\max\lbrace 1.0, |u_{k+1,i} + u_{k,i}| \cdot 0.5 \rbrace} \right) < \epsilon_\mathrm{shift}
+```
+
+where $u_{k,i}$ is the $i$-th entry of the vector $\textbf{u}_k$ and
+$\epsilon_\mathrm{shift}$ is a user-defined parameter `Newton.MaxRelativeShift` (default value $10^{-8}$).
+The relative shift criterion can be disabled by setting `Newton.EnableShiftCriterion = false`.
+The relative shift criterion can be combined with a residual criterion (see below) by enabling a residual criterion without disabling the shift criterion.
+By default the Newton solver terminates when either of the criteria are fulfilled. If you want to require both criteria to be fulfilled, you can do so
+by setting `Newton.SatisfyResidualAndShiftCriterion = true`.
+
+### Relative residual norm criterion
+
+This criterion is disabled by default.
+It can be enabled by setting `Newton.EnableResidualCriterion = true`.
+The idea is to terminate the algorithm when the norm of the residual vector is small in comparison
+to the initial residual norm. The relative residual norm criterion checks if
+
+```math
+\frac{||\textbf{r}_{k+1}||_2^2}{||\textbf{r}_{0}||_2^2} < \epsilon_\mathrm{r,rel}^2,
+```
+
+where $||\textbf{r}_{k+1}||$ is the norm of the residual vector at iteration $k+1$ and
+$||\textbf{r}_{0}||$ is the norm of the residual vector at iteration $0$.
+The parameter `Newton.ResidualReduction` (default value $10^{-5}$) defines the threshold $\epsilon_\mathrm{r,rel}$.
+
+### Absolute residual norm criterion
+
+This criterion is disabled by default. The idea is to terminate the algorithm when norm of the residual vector is small enough in comparison with a given absolute threshold.
+This requires knowledge about the problem because the magnitude of the residual vector has to be estimated.
+The criterion is enabled by setting `Newton.EnableAbsoluteResidualCriterion = true` and  `Newton.EnableResidualCriterion = true`. It checks if
+
+```math
+||\textbf{r}_{k+1}||_2^2 < \epsilon_\mathrm{r,abs}^2,
+```
+
+where $||\textbf{r}_{k+1}||$ is the norm of the residual vector at iteration $k+1$ and
+$\epsilon_\mathrm{r,abs}$ is a user-defined parameter `Newton.MaxAbsoluteResidual` (default value $10^{-5}$).
+The absolute residual norm criterion can be combined with a relative shift criterion by enabling both criteria.
+
+## Adaptive time stepping
+
+The extended interface @ref Dumux::NewtonSolver::solve with time loop in the signature provides an automated adaptive time stepping strategy.
+The idea is retry the entire algorithm with a lower the time step size if the Newton solver fails to converge. This is repeated until
+the Newton solver either converges or the maximum number of allowed retry steps is reached.
+
+The factor by which the time step size is reduced after each non-converged try is set by the parameter `Newton.RetryTimeStepReductionFactor` (default value $0.5$).
+The maximum number of retries is set by the parameter `Newton.MaxTimeStepDivisions` (default value $10$). If the maximum number of retries is reached,
+the a @ref Dumux::NumericalProblem is thrown.
+
+Finally, @ref Dumux::NewtonSolver::suggestTimeStepSize suggest a new time-step size based on the current time-step size and
+the convergence history of the Newton solver. In particular, the implemented heuristic determines
+how much the time step size is adjusted depends on how far away the Newton is
+from converging within $m$ iterations, where $m$ is set by the parameter `Newton.TargetSteps` (default value $10$).
+
+
+## Partial reassembly (Quasi-Newton method)
+
+Technically, when using a finite difference approximation of the Jacobian, we use a so-called quasi-Newton method for which
+the Jacobian matrix is replaced by an approximation. Another strategy is useful for simulations where the Jacobian matrix is expensive to compute but
+not all degrees of freedom are expected to change significantly between iterations (for example if changes only happen in parts of the simulation domain).
+
+If supported by the assembler (e.g. @ref Dumux::FVAssembler), the Newton solver can tell the assembler
+to only recompute those entries of the Jacobian matrix that are associated with primary variables that have changed significantly.
+This strategy is enabled via the parameter `Newton.EnablePartialReassembly` (default value is `false`).
+
+The threshold for the partial reassembly is computed can also be controlled via parameters.
+The threshold $\theta_r$ for each entry is computed as
+
+```math
+\theta_r = \max(\theta_\mathrm{min}, \min(\theta_\mathrm{max}, \omega \epsilon_\textrm{shift}))
+```
+where $\theta_\mathrm{min}$ is set by `Newton.ReassemblyMinThreshold` (default value $10^{-1} \Delta u_\mathrm{shift}$)
+and $\theta_\mathrm{max}$ is set by `Newton.ReassemblyMaxThreshold` (default value $10^{-2} \Delta u_\mathrm{shift}$),
+$\omega$ is a weight (default value $10^{-3}$), and $\epsilon_\textrm{shift}$
+is the maximum relative shift threshold parameter (`Newton.MaxRelativeShift`) described above.
+
+## Primary variable switching
+
+Switching primary variables during Newton's method is a form of nonlinear preconditioning.
+We solve an alternative problem with different primary variables where the hope that the root is easier to find.
+This can be, for instance, because the finite difference approximation of the Jacobian is numerically better conditioned
+in the new variables. The strategy depends on the problem at hand. For an example,
+see for instance @ref TwoPNCModel for a model with activated primary variable switch.
