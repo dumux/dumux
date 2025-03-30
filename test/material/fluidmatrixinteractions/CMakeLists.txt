@@ -6,7 +6,7 @@ add_subdirectory(porenetwork)
 
 dumux_add_test(SOURCES test_effectivediffusivity.cc
               LABELS unit material
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzyData --delimiter " "
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_effectivediffusivityconstanttau-reference.dat
                                ${CMAKE_CURRENT_BINARY_DIR}/constant_d_eff.dat

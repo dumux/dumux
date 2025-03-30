@@ -7,7 +7,7 @@ dumux_add_test(
     LABELS geomechanics elastic
     SOURCES main.cc
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
-    COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+    COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_saint_venant_kirchhoff_dynamic-reference.vtu
                       ${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic-00002.vtu

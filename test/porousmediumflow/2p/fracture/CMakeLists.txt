@@ -9,7 +9,7 @@ dumux_add_test(NAME test_2p_fracture_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureBox
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box-00001.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_2p_fracture_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfa
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa-00001.vtu
@@ -32,7 +32,7 @@ dumux_add_test(NAME test_2p_fracture_mpfa
               TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfa
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa-00001.vtu
@@ -43,7 +43,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_box
               TARGET test_2p_fracture_box
               LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_box-00001.vtu
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_tpfa
               TARGET test_2p_fracture_tpfa
               LABELS porousmediumflow 2p
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_tpfa-00001.vtu
@@ -64,7 +64,7 @@ dumux_add_test(NAME test_2p_fracture_gravity_mpfa
               LABELS porousmediumflow 2p
               TIMEOUT 1500
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_fracture_gravity_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_gravity_mpfa-00001.vtu

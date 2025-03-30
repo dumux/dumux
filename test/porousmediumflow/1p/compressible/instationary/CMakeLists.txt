@@ -8,7 +8,7 @@ dumux_add_test(NAME test_1p_compressible_instationary_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa-00010.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_1p_compressible_instationary_mpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_mpfa-00010.vtu
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_1p_compressible_instationary_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePCompressibleBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_box-00010.vtu
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_1p_compressible_instationary_tpfa_experimental
                SOURCES main_experimental.cc
                COMPILE_DEFINITIONS TYPETAG=OnePCompressibleTpfa
                COMPILE_DEFINITIONS EXPERIMENTAL=1
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_1p_compressible_instationary_tpfa_experimental-00010.vtu

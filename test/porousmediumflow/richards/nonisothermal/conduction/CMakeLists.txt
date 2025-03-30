@@ -8,7 +8,7 @@ dumux_add_test(NAME test_richardsni_conduction_box
               LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-16}
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_conduction_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_box-00024.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_richardsni_conduction_tpfa
               LABELS porousmediumflow richards richardsni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCC
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-16}
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_conduction_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_conduction_tpfa-00024.vtu

@@ -4,7 +4,7 @@
 dumux_add_test(NAME test_md_boundary_darcy1p_darcy2p
               LABELS multidomain multidomain_boundary darcydarcy 1p 2p
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMAKE_GUARD dune-subgrid_FOUND
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_darcy2p_2p-reference.vtu

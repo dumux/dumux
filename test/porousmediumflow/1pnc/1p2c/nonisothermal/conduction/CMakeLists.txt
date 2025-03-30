@@ -10,7 +10,7 @@ dumux_add_test(NAME test_1p2cni_conduction_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_conduction_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_box-00005.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_1p2cni_conduction_tpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_conduction_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_tpfa-00005.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_1p2cni_conduction_mpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionCCMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_conduction_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa-00005.vtu

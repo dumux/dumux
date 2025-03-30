@@ -7,7 +7,7 @@ dumux_add_test(NAME test_2p2c_injection_box
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionBox ENABLECACHING=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_box-00008.vtu
@@ -16,7 +16,7 @@ dumux_add_test(NAME test_2p2c_injection_box
 dumux_add_test(NAME test_2p2c_injection_box_restart
               TARGET test_2p2c_injection_box
               LABELS porousmediumflow 2p2c
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_box_restart-00004.vtu
@@ -29,7 +29,7 @@ dumux_add_test(NAME test_2p2c_injection_tpfa
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfa ENABLECACHING=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa-00008.vtu
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_2p2c_injection_mpfa
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCMpfa ENABLECACHING=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa-00008.vtu
@@ -50,7 +50,7 @@ dumux_add_test(NAME test_2p2c_injection_box_caching
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionBox ENABLECACHING=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_box_caching-00008.vtu
@@ -60,7 +60,7 @@ dumux_add_test(NAME test_2p2c_injection_tpfa_caching
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfa ENABLECACHING=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_caching-00008.vtu
@@ -70,7 +70,7 @@ dumux_add_test(NAME test_2p2c_injection_mpfa_caching
               LABELS porousmediumflow 2p2c
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCMpfa ENABLECACHING=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa_caching-00008.vtu

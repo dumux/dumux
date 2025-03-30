@@ -9,7 +9,7 @@ dumux_add_test(NAME test_2pncmin_dissolution_box
               SOURCES main.cc
               TIMEOUT 3600
               COMPILE_DEFINITIONS TYPETAG=DissolutionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_box-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_dissolution_box-00043.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_2pncmin_dissolution_box_restart
               LABELS porousmediumflow 2pncmin
               TARGET  test_2pncmin_dissolution_box
               TIMEOUT 3600
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_dissolution_box_restart-00005.vtu
@@ -32,7 +32,7 @@ dumux_add_test(NAME test_2pncmin_dissolution_tpfa
               LABELS porousmediumflow 2pncmin
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncmin_dissolution_tpfa-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_dissolution_tpfa-00042.vtu

@@ -10,7 +10,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassTpfa
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_diamond.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa
                TARGET test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
@@ -37,7 +37,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
@@ -49,7 +49,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                TARGET test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
@@ -64,7 +64,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diam
                COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassDiamond
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
@@ -77,7 +77,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
                TARGET test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu

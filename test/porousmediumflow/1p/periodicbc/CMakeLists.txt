@@ -9,7 +9,7 @@ dumux_add_test(NAME test_1p_periodic_tpfa
               LABELS porousmediumflow 1p
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=false
               CMAKE_GUARD dune-spgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa-00001.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_1p_periodic_tpfa_parallel
               TARGET test_1p_periodic_tpfa
               LABELS porousmediumflow 1p parallel
               CMAKE_GUARD "( MPI_FOUND AND dune-spgrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
@@ -31,7 +31,7 @@ dumux_add_test(NAME test_1p_periodic_tpfa_caching
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=true
               CMAKE_GUARD dune-spgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa_caching-00001.vtu
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_1p_periodic_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
               CMAKE_GUARD dune-spgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_box-00001.vtu
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_1p_periodic_tpfa_subgrid
               LABELS porousmediumflow 1p
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa FVGEOMCACHING=false USESUBGRID=true
               CMAKE_GUARD "( dune-spgrid_FOUND AND dune-subgrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa_subgrid-00001.vtu

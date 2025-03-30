@@ -13,7 +13,7 @@ target_compile_definitions(test_2p1cni_steaminjection_box PUBLIC "TYPETAG=TwoPOn
 dumux_add_test(NAME test_2p1cni_steaminjection_waterwet_box
               LABELS porousmediumflow 2p1c  2p1cni
               TARGET test_2p1cni_steaminjection_box
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_waterwet_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_waterwet_box-00007.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_2p1cni_steaminjection_waterwet_box
 dumux_add_test(NAME test_2p1cni_steaminjection_waterwet_tpfa
               LABELS porousmediumflow 2p1c  2p1cni
               TARGET test_2p1cni_steaminjection_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_waterwet_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_waterwet_tpfa-00009.vtu
@@ -31,7 +31,7 @@ dumux_add_test(NAME test_2p1cni_steaminjection_waterwet_tpfa
 dumux_add_test(NAME test_2p1cni_steaminjection_gaswet_box
               LABELS porousmediumflow 2p1c  2p1cni
               TARGET test_2p1cni_steaminjection_box
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_gaswet_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_gaswet_box-00005.vtu
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_2p1cni_steaminjection_gaswet_box
 dumux_add_test(NAME test_2p1cni_steaminjection_gaswet_tpfa
               LABELS porousmediumflow 2p1c  2p1cni
               TARGET test_2p1cni_steaminjection_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2p1cni_steaminjection_gaswet_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_steaminjection_gaswet_tpfa-00005.vtu

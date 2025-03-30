@@ -145,6 +145,8 @@ if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
   add_feature_info("Python bindings for DuMux" DUMUX_ENABLE_PYTHONBINDINGS "using DuMux via its Python API (experimental)")
 endif()
 
+set(DUMUX_RUNTEST ${CMAKE_SOURCE_DIR}/bin/testing/dumux_runtest.py)
+
 add_subdirectory(bin)
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)

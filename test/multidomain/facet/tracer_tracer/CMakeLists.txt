@@ -11,7 +11,7 @@ dumux_add_test(NAME test_md_facet_tracertracer_tpfa
               COMPILE_DEFINITIONS TRACERBULKTYPETAG=TracerBulkTpfa
               COMPILE_DEFINITIONS TRACERLOWDIMTYPETAG=TracerLowDimTpfa
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_tpfa_onep_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_tpfa_onep_bulk-00000.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_md_facet_tracertracer_mpfa
               COMPILE_DEFINITIONS TRACERLOWDIMTYPETAG=TracerLowDimMpfa
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND HAVE_UMFPACK )"
               TIMEOUT 1500
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_mpfa_onep_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_mpfa_onep_bulk-00000.vtu
@@ -56,7 +56,7 @@ dumux_add_test(NAME test_md_facet_tracertracer_box
               COMPILE_DEFINITIONS TRACERBULKTYPETAG=TracerBulkBox
               COMPILE_DEFINITIONS TRACERLOWDIMTYPETAG=TracerLowDimBox
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_tracertracer_box_onep_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_tracertracer_box_onep_bulk-00000.vtu

@@ -17,7 +17,7 @@ dumux_add_test(
     SOURCES main.cc
     LABELS multidomain embedded example
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-    COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+    COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS --script fuzzyData --delimiter " "
              --files ${CMAKE_SOURCE_DIR}/test/references/example_embedded_network_1d3d-reference.dat
                      ${CMAKE_CURRENT_BINARY_DIR}/clearance_tracer_amounts.dat
