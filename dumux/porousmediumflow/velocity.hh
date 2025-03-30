@@ -18,6 +18,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -264,7 +265,7 @@ public:
                 }
             }
 
-            std::vector<Scalar> scvfFluxes(element.subEntities(1), 0.0);
+            Dune::ReservedVector<Scalar, 2*dim> scvfFluxes(element.subEntities(1), 0.0);
             localScvfIdx = 0;
             for (auto&& scvf : scvfs(fvGeometry))
             {
