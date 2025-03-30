@@ -366,19 +366,23 @@ public:
             // note that this is equal to a corner velocity interpolation method
             if (dim == 1 || geomType.isCube())
             {
-                for (int i = 0; i < dim; i++)
+                assert(scvfFluxes.size() == 2*dim);
+                for (int i = 0; i < dim; ++i)
                     refVelocity[i] = 0.5 * (scvfFluxes[2*i + 1] - scvfFluxes[2*i]);
             }
+
             // simplices: Raviart-Thomas-0 interpolation evaluated at the cell center
             else if (geomType.isSimplex())
             {
-                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+                assert(scvfFluxes.size() == dim+1);
+                for (int i = 0; i < dim; ++i)
                 {
-                    refVelocity[dimIdx] = -scvfFluxes[dim - 1 - dimIdx];
-                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                        refVelocity[dimIdx] += scvfFluxes[fIdx]/(dim + 1);
+                    refVelocity[i] = -scvfFluxes[dim - 1 - i];
+                    for (int fIdx = 0; fIdx < dim + 1; ++fIdx)
+                        refVelocity[i] += scvfFluxes[fIdx]/(dim + 1);
                 }
             }
+
             // 3D prism and pyramids
             else
                 DUNE_THROW(Dune::NotImplemented, "Velocity computation for cell-centered and prism/pyramid");
