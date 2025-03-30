@@ -7,7 +7,7 @@ dumux_add_test(NAME example_pnm1p_upscaling
                LABELS porenetwork example
                SOURCES main.cc
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzyData --delimiter " "
                               --files ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_PermeabilityratioVsForchheimerNumber.dat
                                       ${CMAKE_CURRENT_BINARY_DIR}/X-dir-PermeabilityratioVsForchheimerNumber.dat
@@ -19,5 +19,5 @@ dumux_add_test(NAME example_pnm1p_creeping_flow_upscaling
                TARGET example_pnm1p_upscaling
                LABELS porenetwork example
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_upscaling  params.input -Problem.AssumeCreepingFlow true")

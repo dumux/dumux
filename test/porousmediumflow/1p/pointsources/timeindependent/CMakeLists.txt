@@ -7,7 +7,7 @@ dune_symlink_to_source_files(FILES grids)
 dumux_add_test(NAME test_1p_pointsources_timeindependent_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityCCTpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_pointsources_timeindependent_cc-reference.vtu
@@ -17,7 +17,7 @@ dumux_add_test(NAME test_1p_pointsources_timeindependent_tpfa
 dumux_add_test(NAME test_1p_pointsources_timeindependent_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityBox
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_pointsources_timeindependent_box-reference.vtu
@@ -29,7 +29,7 @@ dumux_add_test(NAME test_1p_pointsources_timeindependent_tpfa_prism
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<3>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityCCTpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_pointsources_timeindependent_tpfa_prism-reference.vtu
@@ -43,7 +43,7 @@ dumux_add_test(NAME test_1p_pointsources_timeindependent_box_prism
               SOURCES main.cc
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<3>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityBox
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_pointsources_timeindependent_box_prism-reference.vtu

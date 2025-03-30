@@ -10,7 +10,7 @@ dumux_add_test(NAME test_1p2cni_convection_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_convection_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_box-00009.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_1p2cni_convection_tpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_convection_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_tpfa-00009.vtu
@@ -34,7 +34,7 @@ dumux_add_test(NAME test_1p2cni_convection_mpfa
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_convection_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_mpfa-00009.vtu

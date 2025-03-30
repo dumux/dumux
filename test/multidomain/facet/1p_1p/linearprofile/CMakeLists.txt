@@ -35,7 +35,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_xi1_tpfa_bulk-00001.vtu
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_xi066_tpfa_bulk-00001.vtu
@@ -61,7 +61,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_tpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_tpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_surface_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_xi1_tpfa_bulk-00001.vtu
@@ -75,7 +75,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_xi1_mpfa_bulk-00001.vtu
@@ -88,7 +88,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi066_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_mpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_xi066_mpfa_bulk-00001.vtu
@@ -102,7 +102,7 @@ dumux_add_test(NAME test_md_facet_1p1p_linearprofile_surface_xi1_mpfa
               LABELS multidomain multidomain_facet 1p
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               TARGET test_md_facet_1p1p_linearprofile_surface_mpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_linearprofile_surface_tpfa_bulk-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_linearprofile_surface_xi1_mpfa_bulk-00001.vtu

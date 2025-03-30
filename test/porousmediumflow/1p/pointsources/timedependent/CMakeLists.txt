@@ -6,7 +6,7 @@ add_input_file_links("params.input")
 dumux_add_test(NAME test_1p_pointsources_timedependent_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               COMPILE_DEFINITIONS TYPETAG=OnePSingularityTimeDependentCCTpfa
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_pointsources_timedependent_tpfa-reference.vtu

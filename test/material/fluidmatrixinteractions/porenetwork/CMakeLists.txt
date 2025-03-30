@@ -9,7 +9,7 @@ dumux_add_test(NAME test_throattransmissibility
 dumux_add_test(NAME test_material_2p_porenetwork
                SOURCES test_material_2p_porenetwork.cc
                LABELS unit material porenetwork
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzyData --delimiter " "
                         --files  ${CMAKE_SOURCE_DIR}/test/references/test_pnm_pcsw_cube-reference.dat
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_pcsw_cube.dat

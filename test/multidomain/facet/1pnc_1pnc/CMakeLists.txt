@@ -10,7 +10,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_tpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=2
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_tpfa_bulk-00001.vtu
@@ -25,7 +25,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_mpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=2
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_mpfa_bulk-00001.vtu
@@ -40,7 +40,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_box
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetBox
                COMPILE_DEFINITIONS DIMWORLD=2
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_box_bulk-00001.vtu
@@ -56,7 +56,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_box_mixedbcs
                COMPILE_DEFINITIONS DIMWORLD=2
                COMPILE_DEFINITIONS USEMIXEDBCS=true
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_box_mixedbcs_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_box_mixedbcs_bulk-00001.vtu
@@ -72,7 +72,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_tpfa
                COMPILE_DEFINITIONS DIMWORLD=2
                COMPILE_DEFINITIONS BULKGRID=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_tpfa_bulk-00001.vtu
@@ -89,7 +89,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_mpfa
                COMPILE_DEFINITIONS DIMWORLD=2
                COMPILE_DEFINITIONS BULKGRID=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_mpfa_bulk-00001.vtu
@@ -105,7 +105,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_box
                COMPILE_DEFINITIONS DIMWORLD=2
                COMPILE_DEFINITIONS BULKGRID=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_box_bulk-00001.vtu
@@ -121,7 +121,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_surface_tpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_surface_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_surface_tpfa_bulk-00001.vtu
@@ -136,7 +136,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_surface_mpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_surface_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_surface_mpfa_bulk-00001.vtu
@@ -151,7 +151,7 @@ dumux_add_test(NAME test_md_facet_1pnc1pnc_surface_box
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCFacetBox
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pnc1pnc_surface_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pnc1pnc_surface_box_bulk-00001.vtu
@@ -166,7 +166,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_tpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCNIFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_surface_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_tpfa_bulk-00001.vtu
@@ -182,7 +182,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_mpfa
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCNIFacetTpfa
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_surface_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_mpfa_bulk-00001.vtu
@@ -197,7 +197,7 @@ dumux_add_test(NAME test_md_facet_1pncni1pncni_surface_box
                COMPILE_DEFINITIONS FACETTYPETAG=OnePNCNIFacetBox
                COMPILE_DEFINITIONS DIMWORLD=3
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1pncni1pncni_surface_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1pncni1pncni_surface_box_bulk-00001.vtu

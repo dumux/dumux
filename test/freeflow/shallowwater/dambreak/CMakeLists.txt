@@ -9,7 +9,7 @@ dumux_add_test(NAME test_shallowwater_dambreak_sequential
                TARGET test_shallowwater_dambreak
                LABELS shallowwater
                TIMEOUT 1500
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_dambreak-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/dambreak-00001.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME test_shallowwater_dambreak_parallel
                LABELS shallowwater parallel
                TIMEOUT 1500
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_dambreak-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0002-dambreak_parallel-00001.pvtu

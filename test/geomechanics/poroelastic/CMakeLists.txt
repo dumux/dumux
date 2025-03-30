@@ -7,7 +7,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME test_poroelastic_box
               LABELS geomechanics poroelastic
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_poroelastic_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_poroelastic_box-00001.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_poroelastic_box_gridformat_io
                CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
                COMPILE_DEFINITIONS USE_GRIDFORMAT=1
                SOURCES main.cc
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                            --files ${CMAKE_SOURCE_DIR}/test/references/test_poroelastic_box-reference.vtu
                                    ${CMAKE_CURRENT_BINARY_DIR}/test_poroelastic_box_gridformat_io-00001.vtu
