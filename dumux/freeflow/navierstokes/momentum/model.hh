@@ -34,7 +34,10 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_MODEL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/common/pointsource.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
@@ -190,6 +193,19 @@ public:
 //! The flux variables
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumFluxVariables<TypeTag>; };
+
+//! The point source
+template<class TypeTag>
+struct PointSource<TypeTag, TTag::NavierStokesMomentum>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using SourceValues = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
+public:
+    using type = Dumux::PointSource<GlobalPosition, SourceValues>;
+};
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::NavierStokesMomentum>

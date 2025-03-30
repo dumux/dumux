@@ -13,6 +13,7 @@
 #define DUMUX_NAVIERSTOKES_MOMENTUM_PROBLEM_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
@@ -150,6 +151,23 @@ public:
     {
         //! As a default, i.e. if the user's problem does not overload any source method
         //! return 0.0 (no source terms)
+        return Sources(0.0);
+    }
+
+    /*!
+     * \brief Adds contribution of point sources for a specific sub control volume
+     *        to the values.
+     *        Caution: Only overload this method in the implementation if you know
+     *                 what you are doing.
+     */
+    Sources scvPointSources(const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume& scv) const
+    {
+        if (!this->pointSourceMap().empty())
+            DUNE_THROW(Dune::NotImplemented, "scvPointSources not implemented");
+
         return Sources(0.0);
     }
 
