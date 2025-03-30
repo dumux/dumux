@@ -163,8 +163,7 @@ public:
 
         // get the transposed Jacobian of the element mapping
         using Dune::referenceElement;
-        const auto refElement = referenceElement(geometry);
-        const auto& localPos = refElement.position(0, 0);
+        const auto localPos = referenceElement(geometry).position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
         if constexpr (isBox)
