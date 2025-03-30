@@ -58,6 +58,7 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -278,6 +279,37 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Enforces Dirichlet constraints if enabled in the problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        for (const auto& scvI : scvs(this->fvGeometry()))
+        {
+            const auto internalDirichletConstraints = this->asImp_().problem().hasInternalDirichletConstraint(this->element(), scvI);
+            if (internalDirichletConstraints.any())
+            {
+                const auto dirichletValues = this->asImp_().problem().internalDirichlet(this->element(), scvI);
+                // set the Dirichlet conditions in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    static_assert(numEq == 1, "Not yet implemented for more than one vector-valued primary variable");
+                    const int pvIdx = eqIdx;
+                    const int componentIdx = scvI.dofAxis();
+                    if (internalDirichletConstraints[componentIdx])
+                        applyDirichlet(scvI, std::array<Scalar,1>{{dirichletValues[componentIdx]}}, eqIdx, pvIdx);
+                }
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
 
     /*!
      * \brief Update the coupling context for coupled models.
