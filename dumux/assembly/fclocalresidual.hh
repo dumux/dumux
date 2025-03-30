@@ -112,7 +112,8 @@ public:
         source += problem.source(element, fvGeometry, elemVolVars, scv)[scv.dofAxis()];
 
         // add contribution from possible point sources
-        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv)[scv.dofAxis()];
+        if (!problem.pointSourceMap().empty())
+            source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv)[scv.dofAxis()];
 
         return source;
     }
