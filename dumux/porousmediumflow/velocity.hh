@@ -89,9 +89,11 @@ class PorousMediumFlowVelocity
 
     static_assert(VolumeVariables::numFluidPhases() >= 1, "Velocity output only makes sense for models with fluid phases.");
 
+    using Velocity = Dune::FieldVector<Scalar, dimWorld>;
+    using ReferenceElementVelocity = Dune::FieldVector<Scalar, dim>;
 public:
     static constexpr int numFluidPhases = VolumeVariables::numFluidPhases();
-    using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
+    using VelocityVector = std::vector<Velocity>;
 
     /*!
      * \brief Constructor initializes the static data with the initial solution.
@@ -124,8 +126,6 @@ public:
                            const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const
     {
-        using Velocity = typename VelocityVector::value_type;
-
         const auto geometry = element.geometry();
         const Dune::GeometryType geomType = geometry.type();
 
@@ -362,7 +362,7 @@ public:
             }
 
 
-            Velocity refVelocity;
+            ReferenceElementVelocity refVelocity;
             // cubes: On the reference element simply average over opposite fluxes
             // note that this is equal to a corner velocity interpolation method
             if (dim == 1 || geomType.isCube())
