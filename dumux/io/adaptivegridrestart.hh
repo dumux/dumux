@@ -11,7 +11,7 @@
  */
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
 #define DUMUX_ADAPTIVEGRIDRESTART_HH
-
+#warning "This header is deprecated and will be removed after release 2.10."
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
