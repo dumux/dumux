@@ -206,7 +206,7 @@ public:
                                    const auto eqIdx,
                                    const auto pvIdx)
         {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[eqIdx] - dirichletValues[pvIdx];
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
