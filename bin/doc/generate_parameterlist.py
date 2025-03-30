@@ -259,7 +259,6 @@ if cmdArgs["inputFile"]:
 missingParameters = [key for key in inputDict if key.replace("-.", "") not in parameterDict]
 
 for missingKey in missingParameters:
-
     MODE = inputDict[missingKey].get("mode")
     key = missingKey.replace("-.", "")
 
@@ -297,7 +296,6 @@ parameterDict = dict(sorted(parameterDict.items(), key=lambda kv: kv[0]))
 
 tableEntryData = []
 for key in parameterDict:
-
     entry = parameterDict[key]
     hasGroup = entry["paramName"].count(".") > 0
     group = "-" if not hasGroup else entry["paramName"].split(".")[0]
@@ -419,7 +417,6 @@ def tableEntry(groupEntry, param, paramTypeName, defaultParamValue, explanation)
 
 
 for data in tableEntryData:
-
     groupName = data["group"]
     if groupName != PREVIOUS_GROUP_ENTRY:
         PREVIOUS_GROUP_ENTRY = groupName
