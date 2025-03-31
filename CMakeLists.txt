@@ -127,8 +127,6 @@ if (NOT DUMUX_HAVE_STD_FORMAT)
   target_link_libraries(dumux INTERFACE dumux_format)
 endif()
 
-# Enable all dune registered packages on the dumux library.
-dune_target_enable_all_packages(dumux)
 if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
   dune_default_include_directories(dumux PUBLIC)
 endif()
