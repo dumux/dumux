@@ -444,7 +444,7 @@ EXTERNAL_URLS = {
     "dune-foamgrid": DUNE_GIT_BASEURL + "extensions/dune-foamgrid.git",
     "dune-subgrid": DUNE_GIT_BASEURL + "extensions/dune-subgrid.git",
     "dune-spgrid": DUNE_GIT_BASEURL + "extensions/dune-spgrid.git",
-    "dune-mmesh": DUNE_GIT_BASEURL + "samuel.burbulla/dune-mmesh.git",
+    "dune-mmesh": DUNE_GIT_BASEURL + "extensions/dune-mmesh.git",
     "dune-functions": DUNE_GIT_BASEURL + "staging/dune-functions.git",
     "dune-typetree": DUNE_GIT_BASEURL + "staging/dune-typetree.git",
     "glpk": "http://ftp.gnu.org/gnu/glpk/glpk-4.60.tar.gz",
