@@ -57,6 +57,7 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -206,7 +207,7 @@ public:
                                    const auto eqIdx,
                                    const auto pvIdx)
         {
-            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[eqIdx] - dirichletValues[pvIdx];
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -247,11 +248,11 @@ public:
                         // set the Dirichlet conditions in residual and jacobian
                         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                         {
-                            for (int pvIdx = 0; pvIdx < GridView::dimension; ++pvIdx)
-                            {
-                                if (bcTypes.isDirichlet(pvIdx) && pvIdx == scv.dofAxis()) // TODO?
-                                    applyDirichlet(scv, dirichletValues, eqIdx, pvIdx);
-                            }
+                            static_assert(numEq == 1, "Not yet implemented for more than one vector-valued primary variable");
+                            const int pvIdx = eqIdx;
+                            const int componentIdx = scv.dofAxis();
+                            if (bcTypes.isDirichlet(componentIdx))
+                                applyDirichlet(scv, std::array<Scalar,1>{{dirichletValues[componentIdx]}}, eqIdx, pvIdx);
                         }
                     }
                 }
