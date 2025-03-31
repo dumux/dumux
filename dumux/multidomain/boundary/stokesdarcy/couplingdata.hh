@@ -952,7 +952,9 @@ protected:
                 const Scalar Ml = FluidSystem<i>::molarMass(domainICompLIdx);
                 const Scalar tkl = volVarsI.effectiveDiffusionCoefficient(couplingPhaseIdx(domainI), domainICompKIdx, domainICompLIdx);
                 reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
-                reducedDiffusionMatrixInside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
+
+                if (domainICompLIdx < numComponents-1)
+                    reducedDiffusionMatrixInside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
         }
         //outside matrix
@@ -983,7 +985,9 @@ protected:
                 const Scalar Ml = FluidSystem<j>::molarMass(domainJCompLIdx);
                 const Scalar tkl = volVarsJ.effectiveDiffusionCoefficient(couplingPhaseIdx(domainJ), domainJCompKIdx, domainJCompLIdx);
                 reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] += xl*avgMolarMass/(tkl*Mk);
-                reducedDiffusionMatrixOutside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
+
+                if (domainICompLIdx < numComponents-1)
+                    reducedDiffusionMatrixOutside[domainICompKIdx][domainICompLIdx] += xk*(avgMolarMass/(tkn*Mn) - avgMolarMass/(tkl*Ml));
             }
         }
 
