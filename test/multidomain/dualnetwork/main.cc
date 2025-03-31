@@ -467,7 +467,7 @@ int main(int argc, char** argv)
         std::cout << "\n\n ***** Boundary fluxes \n\n" << std::endl;
         std::cout << "Void inlet flux (total - mass/heat): " << voidInletFlux << std::endl;
         std::cout << "Void outlet flux (total - mass/heat): " << voidOutletFlux << std::endl;
-        std::cout << "Delta heat flux abs(outlet) - abs(inlet): " << abs(voidOutletFlux.totalFlux[1]) - abs(voidInletFlux.totalFlux[0]) << "\n\n" << std::endl;
+        std::cout << "Delta heat flux abs(outlet) - abs(inlet): " << abs(voidOutletFlux.totalFlux[1]) - abs(voidInletFlux.totalFlux[1]) << "\n\n" << std::endl;
 
         std::cout << "Void heater flux (total - mass/heat): " << voidHeaterFlux << "\n\n" << std::endl;
 
