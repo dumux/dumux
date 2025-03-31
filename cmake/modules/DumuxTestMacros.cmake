@@ -263,6 +263,9 @@ function(dumux_add_test)
   # link the dumux library to the test target
   target_link_libraries(${ADDTEST_TARGET} PRIVATE Dumux::Dumux)
 
+  # enable all dune registered packages on the test target
+  dune_target_enable_all_packages(${ADDTEST_TARGET})
+
   if(NOT ADDTEST_MPI_RANKS)
     set(ADDTEST_MPI_RANKS 1)
   endif()
