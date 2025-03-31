@@ -11,7 +11,7 @@ dumux_add_test(NAME test_root_soil_benchmark_kernel_c12a
                LABELS multidomain multidomain_embedded 1p richards
                TIMEOUT 1500
                CMAKE_GUARD dune-foamgrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzyData
                         --delimiter " "
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_root_soil_benchmark_kernel_c12a-reference.dat
@@ -26,7 +26,7 @@ dumux_add_test(NAME test_root_soil_benchmark_kernel_c12b
                LABELS multidomain multidomain_embedded 1p richards
                TIMEOUT 1500
                CMAKE_GUARD dune-foamgrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzyData
                         --delimiter " "
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_root_soil_benchmark_kernel_c12b-reference.dat

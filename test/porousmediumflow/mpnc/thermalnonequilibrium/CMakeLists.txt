@@ -10,7 +10,7 @@ dumux_add_test(COMPILE_ONLY # since it currently fails miserably with very diffe
               LABELS porousmediumflow mpnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=CombustionOneComponentBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_mpnc_thermalnonequil_box-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_thermalnonequil_box-00073.vtp

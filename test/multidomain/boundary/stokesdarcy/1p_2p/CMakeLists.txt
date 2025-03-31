@@ -7,7 +7,7 @@ dumux_add_test(NAME test_md_boundary_darcy2p_stokes1p_vertical
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy2p_stokes1p_vertical_stokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy2p_stokes1p_vertical_stokes-00024.vtu

@@ -15,7 +15,7 @@ dumux_add_test(NAME test_co2_box
                LABELS porousmediumflow co2
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_box-00028.vtu
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_co2_tpfa
                SOURCES main.cc
                COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCTpfa
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_tpfa-00028.vtu
@@ -40,7 +40,7 @@ dumux_add_test(NAME test_co2_mpfa
                SOURCES main.cc
                COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCMpfa
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_mpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa-00028.vtu
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_co2_mpfa_fluxvarscache
                COMPILE_DEFINITIONS TYPETAG=HeterogeneousCCMpfa
                COMPILE_DEFINITIONS FLUXVARSCACHE=1
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_mpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_mpfa_fluxvarscache-00028.vtu
@@ -65,7 +65,7 @@ dumux_add_test(NAME test_co2_box_parallel
                LABELS porousmediumflow co2 parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_box_parallel-00028.pvtu
@@ -76,7 +76,7 @@ dumux_add_test(NAME test_co2_tpfa_parallel
                LABELS porousmediumflow co2 parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_tpfa_parallel-00028.pvtu
@@ -89,7 +89,7 @@ dumux_add_test(NAME test_co2ni_box
                TIMEOUT 3600
                COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBox ISOTHERMAL=0
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box-00028.vtu
@@ -102,7 +102,7 @@ dumux_add_test(NAME test_co2ni_tpfa
                TIMEOUT 3600
                COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfa PUBLIC ISOTHERMAL=0
                CMAKE_GUARD "( dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa-00028.vtu
@@ -113,7 +113,7 @@ dumux_add_test(NAME test_co2ni_box_parallel
                LABELS porousmediumflow co2 co2ni parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_box_parallel-00028.pvtu
@@ -124,7 +124,7 @@ dumux_add_test(NAME test_co2ni_tpfa_parallel
                LABELS porousmediumflow co2 co2ni parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_tpfa_parallel-00028.pvtu

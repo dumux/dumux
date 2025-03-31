@@ -11,7 +11,7 @@ dumux_add_test(NAME test_vtkreader_3d
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<3,3,Dune::cube,Dune::nonconforming>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_3d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p2c_richards2c_3d-reference.vtu test-3d"
@@ -24,19 +24,21 @@ dumux_add_test(NAME test_vtkreader_3d
 #               LABELS unit io
 #               CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
 #               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<3,Dune::EquidistantOffsetCoordinates<double,3>>
-#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               COMMAND ${DUMUX_RUNTEST}
 #               CMD_ARGS --script fuzzy
 #                        --backend fieldcompare
 #                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_3d_structured ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vti test-3d"
 #                        --files ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vti
 #                                ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vtu)
 
+message(STATUS ${DUMUX_RUNTEST})
+
 dumux_add_test(NAME test_vtkreader_2d
               SOURCES test_vtkreader.cc
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_2d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu test-2d"
@@ -48,7 +50,7 @@ dumux_add_test(NAME test_vtkreader_2d3d
               LABELS unit io
               CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<2,3>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_2d3d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_2d3d_fracture1p_tpfa_2d-reference.vtu test-2d3d"
@@ -60,7 +62,7 @@ dumux_add_test(NAME test_vtkreader_1d
               LABELS unit io
               CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<1,3>
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_1d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p_richards_tpfatpfa_1d-reference.vtp test-1d"
@@ -70,7 +72,7 @@ dumux_add_test(NAME test_vtkreader_1d
 dumux_add_test(NAME test_vtkreader_1d_polyline
               TARGET test_vtkreader_1d
               LABELS unit io
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_1d polyline.vtp test_polyline"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkreader_1d_polyline-reference.vtp
@@ -83,7 +85,7 @@ dumux_add_test(NAME test_vtk_staggeredfreeflowpvnames
 dumux_add_test(NAME test_vtkoutputmodule
                SOURCES test_vtkoutputmodule.cc
                LABELS unit io
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkoutputmodule"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkoutputmodule_allfloat-reference.vtu

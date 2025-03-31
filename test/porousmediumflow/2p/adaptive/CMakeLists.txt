@@ -11,7 +11,7 @@ dumux_add_test(NAME test_2p_adaptive_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveTpfa
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_adaptive_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_tpfa-00001.vtu
@@ -23,7 +23,7 @@ dumux_add_test(NAME test_2p_pointsource_adaptive_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPAdaptivePointSource
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_pointsource_adaptive_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_pointsource_adaptive_tpfa-00001.vtu
@@ -35,7 +35,7 @@ dumux_add_test(NAME test_2p_adaptive_mpfa
              SOURCES main.cc
              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveMpfa
              CMAKE_GUARD dune-alugrid_FOUND
-             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+             COMMAND ${DUMUX_RUNTEST}
              CMD_ARGS --script fuzzy
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_adaptive_mpfa-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_mpfa-00001.vtu
@@ -47,7 +47,7 @@ dumux_add_test(NAME test_2p_adaptive_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleAdaptiveBox
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_adaptive_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p_adaptive_box-00001.vtu

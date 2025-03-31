@@ -7,7 +7,7 @@ dumux_add_test(NAME test_3pni_conduction_box
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_3pni_conduction_box-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_conduction_box-00005.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_3pni_conduction_tpfa
               LABELS porousmediumflow 3p 3pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=ThreePNIConductionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_3pni_conduction_tpfa-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_3pni_conduction_tpfa-00005.vtu

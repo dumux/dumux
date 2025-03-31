@@ -9,7 +9,7 @@ dumux_add_test(NAME test_3p3cni_columnxylol_box
               SOURCES main.cc
               TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=ColumnBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_3p3cni_columnxylol_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box-00069.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_3p3cni_columnxylol_tpfa
               SOURCES main.cc
               TIMEOUT 1500
               COMPILE_DEFINITIONS TYPETAG=ColumnCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_3p3cni_columnxylol_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_tpfa-00053.vtu

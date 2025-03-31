@@ -11,7 +11,7 @@ dumux_add_test(NAME example_ff_liddrivencavity
                SOURCES main.cc
                LABELS freeflow navierstokes example
                CMAKE_GUARD ${DUMUX_EXAMPLE_LDC_CMAKE_GUARD}
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_closedsystem_ldc_re1-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/example_ff_liddrivencavity_re1-00002.vtu
@@ -21,7 +21,7 @@ dumux_add_test(NAME example_ff_liddrivencavity
 dumux_add_test(NAME example_ff_liddrivencavity_re1000
                TARGET example_ff_liddrivencavity
                LABELS freeflow navierstokes example
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_closedsystem_ldc_re1000-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/example_ff_liddrivencavity_re1000-00008.vtu

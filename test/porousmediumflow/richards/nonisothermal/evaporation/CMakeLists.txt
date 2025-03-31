@@ -9,7 +9,7 @@ dumux_add_test(NAME test_richardsni_evaporation_tpfa
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationCC
               TIMEOUT 1200
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_evaporation_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_tpfa-00043.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_richardsni_evaporation_box
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationBox
               TIMEOUT 1200
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richardsni_evaporation_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richardsni_evaporation_box-00043.vtu

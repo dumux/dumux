@@ -7,7 +7,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME example_cahn_hilliard
                LABELS example
                SOURCES main.cc
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_cahn_hilliard-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/cahn_hilliard-00102.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME example_cahn_hilliard_parallel
                LABELS example
                TARGET example_cahn_hilliard
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_cahn_hilliard_parallel_p0-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-cahn_hilliard_parallel-00102.vtu

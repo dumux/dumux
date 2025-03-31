@@ -6,7 +6,7 @@ dumux_add_test(
     NAME test_hyperelastic_box
     LABELS geomechanics elastic
     SOURCES main.cc
-    COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+    COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_box-reference.vtu
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box-00001.vtu
@@ -18,7 +18,7 @@ dumux_add_test(
     CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
     COMPILE_DEFINITIONS USE_GRIDFORMAT=1
     SOURCES main.cc
-    COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+    COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_box-reference.vtu
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box_gridformat_io-00001.vtu

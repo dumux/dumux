@@ -8,7 +8,7 @@ dumux_add_test(NAME test_richards_analytical_tpfa
               LABELS porousmediumflow richards
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCC
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_analytical_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_analytical_tpfa-00001.vtu

@@ -9,7 +9,7 @@ dumux_add_test(NAME test_1pni_conduction_box
               LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_conduction_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_box-00005.vtu
@@ -22,7 +22,7 @@ target_compile_definitions(test_1pni_convection_box PUBLIC TYPETAG=OnePNIConvect
 dumux_add_test(NAME test_1pni_convection_box
               TARGET test_1pni_convection_box
               LABELS porousmediumflow 1p  1pni
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_convection_box-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_box-00009.vtp
@@ -32,7 +32,7 @@ dumux_add_test(NAME test_1pni_convection_box
 dumux_add_test(NAME test_1pni_convection_box_restart
               TARGET test_1pni_convection_box
               LABELS porousmediumflow 1p  1pni
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_convection_box-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_box_restart-00004.vtp
@@ -46,7 +46,7 @@ dumux_add_test(NAME test_1pni_conduction_tpfa
               LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_conduction_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_tpfa-00005.vtu
@@ -57,7 +57,7 @@ dumux_add_test(NAME test_1pni_convection_tpfa
               LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_convection_cc-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_convection_tpfa-00009.vtp
@@ -67,7 +67,7 @@ dumux_add_test(NAME test_1pni_conduction_mpfa
               LABELS porousmediumflow 1p  1pni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pni_conduction_mpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_1pni_conduction_mpfa-00005.vtu
