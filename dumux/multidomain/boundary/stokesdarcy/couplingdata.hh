@@ -939,7 +939,7 @@ protected:
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrixInside[domainICompKIdx][domainICompKIdx] += xk*avgMolarMass/(tkn*Mn);
 
-            for (int compLIdx = 0; compLIdx < numComponents; compLIdx++)
+            for (int compLIdx = 0; compLIdx < numComponents-1; compLIdx++)
             {
                 const int domainICompLIdx = couplingCompIdx(domainI, compLIdx);
 
@@ -969,7 +969,7 @@ protected:
             // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrixOutside[domainICompKIdx][domainICompKIdx] +=  xk*avgMolarMass/(tkn*Mn);
 
-            for (int compLIdx = 0; compLIdx < numComponents; compLIdx++)
+            for (int compLIdx = 0; compLIdx < numComponents-1; compLIdx++)
             {
                 const int domainJCompLIdx = couplingCompIdx(domainJ, compLIdx);
                 const int domainICompLIdx = couplingCompIdx(domainI, compLIdx);
