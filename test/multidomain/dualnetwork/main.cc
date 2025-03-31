@@ -474,7 +474,7 @@ int main(int argc, char** argv)
         std::cout << "Solid inlet flux (total - heat): " << solidInletFlux << std::endl;
         std::cout << "Solid outlet flux (total - heat): " << solidOutletFlux << std::endl;
         std::cout << "Solid inlet Robin flux: " << totalSolidInletHeatFlux << std::endl;
-        std::cout << "Delta heat flux abs(outlet) - abs(inlet): " << abs(solidOutletFlux.totalFlux[1]) - abs(solidInletFlux.totalFlux[1]) << "\n\n" << std::endl;
+        std::cout << "Delta heat flux abs(outlet) - abs(inlet): " << abs(solidOutletFlux.totalFlux[0]) - abs(solidInletFlux.totalFlux[0]) << "\n\n" << std::endl;
 
         std::cout << "Solid heater flux (total - heat): " << solidHeaterFlux << "\n\n" << std::endl;
 
@@ -529,7 +529,7 @@ int main(int argc, char** argv)
         std::cout << "sumCouplingVoid: " << sumCouplingVoid << std::endl;
         std::cout << "solidInletFlux: " << solidInletFlux << std::endl;
         std::cout << "voidHeaterFlux: " << voidHeaterFlux[1] << std::endl;
-        std::cout << "Total exchange flux (sumCouplingVoid + solidInletFlux - voidHeaterFlux) " << sumCouplingVoid + solidInletFlux[1] - voidHeaterFlux[1] << std::endl;
+        std::cout << "Total exchange flux (sumCouplingVoid + solidInletFlux - voidHeaterFlux) " << sumCouplingVoid + solidInletFlux[0] - voidHeaterFlux[1] << std::endl;
 
         std::cout << "\n\n *** Void convection *** " << std::endl;
         std::cout << "Void inlet convective heat flux (\u1E41 * h): " << totalConvectiveHeatFluxIn << std::endl;
