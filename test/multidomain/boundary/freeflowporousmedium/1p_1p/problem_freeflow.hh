@@ -189,7 +189,7 @@ public:
 
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, scvf))
             {
-                values += couplingManager_->momentumCouplingCondition(
+                values[scvf.normalAxis()] += couplingManager_->momentumCouplingCondition(
                     CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex,
                     fvGeometry, scvf, elemVolVars
                 );
