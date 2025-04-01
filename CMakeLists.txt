@@ -90,7 +90,13 @@ find_package(OpenMP QUIET)
 
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
-dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
+dumux_add_library(dumux
+  NAMESPACE Dumux::
+  EXPORT_NAME Dumux
+  LINK_LIBRARIES
+    Dune::Common Dune::Geometry Dune::Grid
+    Dune::LocalFunctions Dune::ISTL
+)
 
 # enforce C++-20
 target_compile_features(dumux PUBLIC cxx_std_20)
