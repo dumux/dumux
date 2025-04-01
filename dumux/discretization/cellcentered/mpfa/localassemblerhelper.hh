@@ -149,7 +149,7 @@ public:
     assembleFaceUnkowns(const DataHandle& handle, const IV& iv)
     {
         typename IV::Traits::MatVecTraits::FaceVector u;
-        resizeVector(u, iv.numFaces());
+        resizeVector(u, iv.numUnknowns());
 
         handle.AB().mv(handle.uj(), u);
 
