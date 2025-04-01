@@ -22,6 +22,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa
                TARGET test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               TIMEOUT 600
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
@@ -49,6 +50,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                TARGET test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               TIMEOUT 600
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box.vtu

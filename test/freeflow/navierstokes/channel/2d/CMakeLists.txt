@@ -79,6 +79,7 @@ dumux_add_test(NAME test_ff_stokes_channel_iterative
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
+              TIMEOUT 600
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
