@@ -177,16 +177,16 @@ public:
         const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
 
         if(numPhasesDarcy > 1)
-            momentumFlux[scvf.normalAxis()] = context.volVars.pressure(pmPhaseIdx);
+            momentumFlux[0] = context.volVars.pressure(pmPhaseIdx);
         else // use pressure reconstruction for single phase models
-            momentumFlux[scvf.normalAxis()] = pressureAtInterface_(fvGeometry, scvf, elemVolVars, context);
+            momentumFlux[0] = pressureAtInterface_(fvGeometry, scvf, elemVolVars, context);
 
         // TODO: generalize for permeability tensors
 
         // normalize pressure
-        momentumFlux[scvf.normalAxis()] -= elemVolVars.gridVolVars().problem().referencePressure(fvGeometry.element(), fvGeometry, scvf);
+        momentumFlux[0] -= elemVolVars.gridVolVars().problem().referencePressure(fvGeometry.element(), fvGeometry, scvf);
 
-        momentumFlux[scvf.normalAxis()] *= scvf.directionSign();
+        momentumFlux[0] *= scvf.directionSign();
 
         return momentumFlux;
     }
