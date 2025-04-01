@@ -60,8 +60,10 @@ dumux_add_test(NAME test_1pncni_transientbc_mpfa_caching
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_mpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa_caching-00009.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_mpfa_caching params.input -Problem.Name test_1p2cni_transientbc_mpfa_caching")
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa_caching-00010.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_mpfa_caching params.input
+                                    -Problem.Name test_1p2cni_transientbc_mpfa_caching
+                                    -Newton.MinSteps 4")
 
 dumux_add_test(NAME test_1pncni_transientbc_mpfa
               LABELS porousmediumflow 1pnc  1pncni
@@ -72,5 +74,7 @@ dumux_add_test(NAME test_1pncni_transientbc_mpfa
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2cni_transientbc_mpfa-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa-00009.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_mpfa params.input -Problem.Name test_1p2cni_transientbc_mpfa")
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_transientbc_mpfa-00010.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncni_transientbc_mpfa params.input
+                                    -Problem.Name test_1p2cni_transientbc_mpfa
+                                    -Newton.MinSteps 4")
