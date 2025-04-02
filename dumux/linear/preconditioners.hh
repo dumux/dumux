@@ -235,7 +235,7 @@ private:
         auto& B = matrix_[_0][_1];
         auto& C = matrix_[_1][_0];
 
-        U x(A.M());
+        U x(B.M());
         x = 1.0;
 
         scalar_field_type omega = 0.0;
@@ -247,15 +247,15 @@ private:
         for (std::size_t i = 0; i < iterations; ++i)
         {
             // bx = B*x
-            U bx(x.size());
+            U bx(B.N());
             B.mv(x, bx);
 
             // ainvbx = Ainv*(B*x)
-            auto ainvbx = x;
+            U ainvbx(A.M());
             applySolverForA_(ainvbx, bx);
 
             // v = M*x = -C*(Ainv*B*x)
-            U v(x.size());
+            U v(C.N());
             C.mv(ainvbx, v);
             v *= -1.0;
 
