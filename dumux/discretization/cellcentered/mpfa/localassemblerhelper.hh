@@ -149,8 +149,14 @@ public:
     assembleFaceUnkowns(const DataHandle& handle, const IV& iv)
     {
         typename IV::Traits::MatVecTraits::FaceVector u;
+
+        // u is a vector, which will contain the values for non-Dirichlet faces (scvfs)
+        // i.e., with the length of number of unknowns in the current iv
         resizeVector(u, iv.numUnknowns());
 
+        // handle.AB() is a NxM matrix containing geometrical weights to compute the face unknowns based on the known values
+        // with N: number of unknowns and M: number of knowns in the current iv.
+        // handle.uj() is a vector containing the known values, i.e., with the length of number of knowns in the current iv
         handle.AB().mv(handle.uj(), u);
 
         // maybe add gravity terms
