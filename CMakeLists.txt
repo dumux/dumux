@@ -63,6 +63,7 @@ if (DUMUX_ENABLE_GRIDFORMAT)
   find_package(gridformat QUIET)
   if (gridformat_FOUND)
     set(DUMUX_HAVE_GRIDFORMAT true)
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_DIR})
   elseif (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
     FetchContent_Declare(gridformat
       SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat"
@@ -70,7 +71,7 @@ if (DUMUX_ENABLE_GRIDFORMAT)
     )
     FetchContent_MakeAvailable(gridformat)
     set(DUMUX_HAVE_GRIDFORMAT true)
-    message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_BINARY_DIR}/cmake)
   else ()
     FetchContent_Declare(gridformat
       GIT_REPOSITORY https://github.com/dglaeser/gridformat.git
@@ -80,6 +81,7 @@ if (DUMUX_ENABLE_GRIDFORMAT)
       OVERRIDE_FIND_PACKAGE ON
     )
     FetchContent_MakeAvailable(gridformat)
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_BINARY_DIR}/cmake)
     set(DUMUX_HAVE_GRIDFORMAT true)
   endif()
 endif()
@@ -171,7 +173,7 @@ set(DUNE_CUSTOM_PKG_CONFIG_SECTION "include(CMakeFindDependencyMacro)")
 if (DUMUX_HAVE_GRIDFORMAT)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure gridformat build in dumux is found"
-    "find_dependency(gridformat PATHS ${gridformat_BINARY_DIR}/cmake)"
+    "find_dependency(gridformat HINTS ${DUMUX_GRIDFORMAT_HINT_DIR})"
   )
 endif()
 # make sure downstream projects can find TBB too
