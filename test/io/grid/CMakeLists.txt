@@ -31,8 +31,6 @@ dumux_add_test(NAME test_vtkreader_3d
 #                        --files ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vti
 #                                ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vtu)
 
-message(STATUS ${DUMUX_RUNTEST})
-
 dumux_add_test(NAME test_vtkreader_2d
               SOURCES test_vtkreader.cc
               LABELS unit io
