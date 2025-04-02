@@ -14,8 +14,9 @@ dumux_add_test(NAME test_2p_boxdfm_quads_alu
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_quads-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_alu-00023.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_alu params.input -Problem.Name test_2p_boxdfm_quads_alu -Grid.File grids/quads_2d.msh")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_alu-00018.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_alu params.input -Problem.Name test_2p_boxdfm_quads_alu -Grid.File grids/quads_2d.msh
+                                                                                                    -SpatialParams.FractureAperture 1e-3")
 
 # quadrilaterals ug grid
 dumux_add_test(NAME test_2p_boxdfm_quads_ug
@@ -28,8 +29,9 @@ dumux_add_test(NAME test_2p_boxdfm_quads_ug
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p_boxdfm_2d_quads-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug-00023.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug params.input -Problem.Name test_2p_boxdfm_quads_ug -Grid.File grids/quads_2d.msh")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug-00018.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_boxdfm_quads_ug params.input -Problem.Name test_2p_boxdfm_quads_ug -Grid.File grids/quads_2d.msh
+                                                                                                   -SpatialParams.FractureAperture 1e-3")
 
 # triangles alu
 dumux_add_test(NAME test_2p_boxdfm_trias_alu
