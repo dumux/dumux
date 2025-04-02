@@ -7,7 +7,7 @@ MaxTimeStepSize = 200
 File = grids/durlofsky.msh
 
 [SpatialParams]
-FractureAperture = 1e-3
+FractureAperture = 2e-3
 
 [SpatialParams.Matrix]
 Swr = 0.18
@@ -22,3 +22,6 @@ BrooksCoreyLambda = 2
 [Problem]
 Name = 2pboxdfm
 EnableGravity = false
+
+[Newton]
+UseLineSearch = true
