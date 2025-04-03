@@ -85,15 +85,13 @@ public:
         if (phaseIdx > 0)
             DUNE_THROW(Dune::NotImplemented, "Scheidegger dispersion tensors are only implemented for single phase flows.");
 
-        DimWorldMatrix dispersionTensor(0.0);
-
         // Get the velocity either from the reconstruction, or from the spatialparams
         auto velocity = dispersionVelocity_(problem, scvf, fvGeometry, elemVolVars, elemFluxVarsCache);
 
         // collect the dispersion alphas at this location
         std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx, compIdx);
 
-        return scheideggerTensor_(dispersivity, velocity);
+        return scheideggerDispersionTensor_(dispersivity, velocity);
     }
 
     template <class ElementFluxVariablesCache>
@@ -107,15 +105,13 @@ public:
         if (phaseIdx > 0)
             DUNE_THROW(Dune::NotImplemented, "Scheidegger dispersion tensors are only implemented for single phase flows.");
 
-        DimWorldMatrix dispersionTensor(0.0);
-
         // Get the velocity either from the reconstruction, or from the spatialparams
         auto velocity = dispersionVelocity_(problem, scvf, fvGeometry, elemVolVars, elemFluxVarsCache);
 
         // collect the dispersion alphas at this location
         std::array<Scalar,2> dispersivity = problem.spatialParams().dispersionAlphas(scvf.center(), phaseIdx); //TODO: fix this?
 
-        return scheideggerTensor_(dispersivity, velocity);
+        return scheideggerDispersionTensor_(dispersivity, velocity);
     }
 
 private:
@@ -179,31 +175,31 @@ private:
         return velocity;
     }
 
-    static DimWorldMatrix scheideggerTensor_(const std::array<Scalar,2>& dispersivity,
-                                             const Dune::FieldVector<Scalar, dimWorld>& velocity)
+    static DimWorldMatrix scheideggerDispersionTensor_(const std::array<Scalar,2>& dispersivity,
+                                                       const Dune::FieldVector<Scalar, dimWorld>& velocity)
     {
-        DimWorldMatrix scheideggerTensor(0.0);
+        DimWorldMatrix dispersionTensor(0.0);
 
         //matrix multiplication of the velocity at the interface: vv^T
         for (int i=0; i < dimWorld; i++)
             for (int j = 0; j < dimWorld; j++)
-                scheideggerTensor[i][j] = velocity[i]*velocity[j];
+                dispersionTensor[i][j] = velocity[i]*velocity[j];
 
         //normalize velocity product --> vv^T/||v||, [m/s]
         Scalar vNorm = velocity.two_norm();
 
-        scheideggerTensor /= vNorm;
+        dispersionTensor /= vNorm;
         if (vNorm < 1e-20)
-            scheideggerTensor = 0;
+            dispersionTensor = 0;
 
         //multiply with dispersivity difference: vv^T/||v||*(alphaL - alphaT), [m^2/s] --> alphaL = longitudinal disp., alphaT = transverse disp.
-        scheideggerTensor *= (dispersivity[0] - dispersivity[1]);
+        dispersionTensor *= (dispersivity[0] - dispersivity[1]);
 
         //add ||v||*alphaT to the main diagonal:vv^T/||v||*(alphaL - alphaT) + ||v||*alphaT, [m^2/s]
         for (int i = 0; i < dimWorld; i++)
-            scheideggerTensor[i][i] += vNorm*dispersivity[1];
+            dispersionTensor[i][i] += vNorm*dispersivity[1];
 
-        return scheideggerTensor;
+        return dispersionTensor;
     }
 
 };
