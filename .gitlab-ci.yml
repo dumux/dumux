@@ -14,6 +14,7 @@ variables:
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
+  DUMUX_ENABLE_DUNE_CHECKING: "ON"
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
