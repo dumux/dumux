@@ -217,6 +217,7 @@ compile cpp:
         make clean && make all
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
+          make build_cmake_tests
         else
           python3 ../bin/testing/runselectedtests.py --all -b
         fi
@@ -259,6 +260,21 @@ test cpp:
     reports:
       junit: junit/dumux-cmake.xml
     expire_in: 3 hours
+
+
+test cmake:
+  stage: test
+  variables:
+    OMPI_ALLOW_RUN_AS_ROOT: 1
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+    DUMUX_NUM_THREADS: 1
+  script:
+    - |
+      source build-cmake/ci-env/bin/activate
+      ctest --test-dir build-cmake/test/cmake -VV
+  needs:
+    - job: compile cpp
+      artifacts: true
 
 
 test python:
