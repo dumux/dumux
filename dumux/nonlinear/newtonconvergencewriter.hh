@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief This class provides the infrastructure to write the
  *        convergence behaviour of the newton method into a VTK file.
  */
@@ -21,7 +21,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief A convergence writer interface
  * Provide an interface that show the minimal requirements a convergence write passed to a newton method has to fulfill
  * \note This is used together with a Newton solver, see documentation of the Newton solver for
@@ -36,7 +36,7 @@ struct ConvergenceWriterInterface
 };
 
 /*!
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Writes the intermediate solutions for every Newton iteration
  * \note This is used together with a Newton solver, see documentation of the Newton solver for
  *       more information on how to use this class.
