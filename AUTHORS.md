@@ -8,6 +8,7 @@ The DuMux Project contributors are
 | 2013-2021  | Beatrix Becker             |
 | 2014       | Markus Blatt               |
 | 2010       | Felix Bode                 |
+| 2025       | Kerem Bozkurt              |
 | 2020-2025  | Ivan Buntic                |
 | 2018-2021  | Samuel Burbulla            |
 | 2007-2011  | Yufei Cao                  |
@@ -78,6 +79,7 @@ The DuMux Project contributors are
 | 2020-2025  | Yue Wang                   |
 | 2018-2022  | Felix Weinhardt            |
 | 2015-2022  | Kilian Weishaupt           |
+| 2025       | Fiona Weiß                 |
 | 2022-2025  | Kai Wendel                 |
 | 2010-2011,2022-2025  | David Werner          |
 | 2019-2024  | Roman Winter               |
