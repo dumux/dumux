@@ -1083,6 +1083,14 @@ private:
             shift_ = comm_.max(shift_);
     }
 
+    /*!
+     * \brief Use a line search update based on simple backtracking
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void lineSearchUpdate_(Variables &vars,
                                    const SolutionVector &uLastIter,
                                    const ResidualVector &deltaU)
@@ -1109,7 +1117,14 @@ private:
         }
     }
 
-    //! \note method must update the gridVariables, too!
+    /*!
+     * \brief Use a custom chopped update strategy (do not use the full update)
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void choppedUpdate_(Variables& vars,
                                 const SolutionVector& uLastIter,
                                 const ResidualVector& deltaU)
