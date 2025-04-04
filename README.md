@@ -64,7 +64,7 @@ this is unacceptable, please [contact us][5] for a commercial
 license.
 
 See the file [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) for copying permissions.
-For a curated list of contributors, see [AUTHORS.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/2b17b8e507a80deb83f0e5db4ae1e73a95ac946f/AUTHORS.md).
+For a curated list of contributors, see [AUTHORS.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/AUTHORS.md).
 If you notice that a contributor is missing on the list,
 please [contact us][5] or open a merge request adding the name.
 
