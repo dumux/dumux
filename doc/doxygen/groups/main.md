@@ -53,7 +53,7 @@ Several coupling modes are currently available.
 @ingroup AssemblyAndSolvers
 
 @defgroup Nonlinear Nonlinear
-@brief Nonlinear solvers: Newton method
+@brief Nonlinear solvers and helpers
 @ingroup AssemblyAndSolvers
 
 @defgroup Parallel Parallel

@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Reference implementation of a Newton solver.
- */
+*/
+
 #ifndef DUMUX_NEWTON_SOLVER_HH
 #define DUMUX_NEWTON_SOLVER_HH
 
@@ -165,8 +166,9 @@ void assign(To& to, const From& from)
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
- * \brief An implementation of a Newton solver
+ * \ingroup Newton
+ * \brief An implementation of a Newton solver. The comprehensive documentation is in \ref Newton,
+ * providing more details about the algorithm and the related parameters.
  * \tparam Assembler the assembler
  * \tparam LinearSolver the linear solver
  * \tparam Comm the communication object used to communicate with all processes
@@ -1081,6 +1083,14 @@ private:
             shift_ = comm_.max(shift_);
     }
 
+    /*!
+     * \brief Use a line search update based on simple backtracking
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void lineSearchUpdate_(Variables &vars,
                                    const SolutionVector &uLastIter,
                                    const ResidualVector &deltaU)
@@ -1107,7 +1117,14 @@ private:
         }
     }
 
-    //! \note method must update the gridVariables, too!
+    /*!
+     * \brief Use a custom chopped update strategy (do not use the full update)
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void choppedUpdate_(Variables& vars,
                                 const SolutionVector& uLastIter,
                                 const ResidualVector& deltaU)
