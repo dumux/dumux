@@ -97,3 +97,5 @@ REPEAT_BRIEF = NO
 BRIEF_MEMBER_DESC = YES
 # Omit the detailed section when there is none specified
 ALWAYS_DETAILED_SEC = NO
+# Document private virtual methods
+EXTRACT_PRIV_VIRTUAL = YES
