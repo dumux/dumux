@@ -12,6 +12,8 @@
 #ifndef DUMUX_IO_GRID_MANAGER_SP_HH
 #define DUMUX_IO_GRID_MANAGER_SP_HH
 
+#include <type_traits>
+
 // SPGrid specific includes
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid.hh>
@@ -21,6 +23,7 @@
 #ifndef DUMUX_IO_GRID_MANAGER_BASE_HH
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
 
@@ -98,6 +101,22 @@ public:
         ParentType::gridPtr() = std::make_shared<Grid>( domain, cells, spOverlap );
         ParentType::maybeRefineGrid(paramGroup);
         ParentType::loadBalance();
+    }
+};
+
+template<class ct, int dim, template< int > class Ref, class Comm>
+struct PeriodicGridTraits<Dune::SPGrid<ct, dim, Ref, Comm>>
+{
+private:
+    using Grid = Dune::SPGrid<ct, dim, Ref, Comm>;
+public:
+    struct SupportsPeriodicity : public std::true_type {};
+
+    PeriodicGridTraits(const Grid& grid) {};
+
+    bool isPeriodic (const typename Grid::LeafIntersection& intersection) const
+    {
+        return intersection.neighbor() && intersection.boundary();
     }
 };
 
