@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief \copydoc Dumux::LameParams
  */
 #ifndef DUMUX_SOLIDMECHANICS_LAME_PARAMS_HH
@@ -15,7 +15,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief Structure encapsulating the lame parameters
  */
 template<class Scalar>
