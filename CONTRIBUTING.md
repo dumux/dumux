@@ -50,6 +50,16 @@ If you have any questions or complaints about this workflow of contributing to D
 * Bugfix branches should be called `fix/issue-554`.
 * Cleanup branches should be called `cleanup/remove-deprecated-bla`.
 * Use lower case letters only, and hyphens to separate things.
+* In case multiple authors have contributed to a single commit, list co-authors at the end of the commit message as
+
+    ```
+    [topic] Brief description
+
+    Long description
+
+    Co-authored-by: John Doe <john@doe.com>
+    Co-authored-by: Max More <max.more@bla.org>
+    ```
 
 ## GitLab
 * Open issues for bugs / discussions / feature requests.
