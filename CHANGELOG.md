@@ -1,3 +1,17 @@
+Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
+=============================================
+
+### General changes / structure
+
+### Improvements and Enhancements
+
+- __Particles__: Added a basic particle and particle cloud implementation. This can be the basis for particle tracking modules as shown in a Fokker-Planck test.
+
+### Immediate interface changes not allowing/requiring a deprecation period:
+
+### Deprecated properties/classes/functions/files, to be removed after 3.10:
+
+
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 =============================================
 
