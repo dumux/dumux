@@ -192,28 +192,36 @@
 @copydoc dumux/freeflow/shallowwater/model.hh
 @ingroup Models
 
-<!-- GeomechanicsModels -->
+<!-- SolidMechanicsModels -->
 
-@defgroup GeomechanicsModels Geomechanics
-@brief Models taking into account solid deformation
+@defgroup SolidMechanicsModels Solid mechanics
+@brief Models for solid mechanical problems.
 @ingroup Models
 
-<!-- GeomechanicsModels subgroups -->
+<!-- SolidMechanicsModels subgroups -->
 
-@defgroup Elastic Solid mechanics w/o fluid pressure
-@brief Models linear elastic deformation of a solid. Disregards fluid pressure.
-@copydoc dumux/geomechanics/elastic/model.hh
-@ingroup GeomechanicsModels
+@defgroup Elastic Solid mechanics linear elasticity
+@brief Models linear elastic deformation of a solid.
+@copydoc dumux/solidmechanics/elastic/model.hh
+@ingroup SolidMechanicsModels
+
+@defgroup Hyperelastic Hyperelastic solid mechanics
+@brief Models nonlinear deformation of an elastic solid.
+@copydoc dumux/solidmechanics/hyperelastic/model.hh
+@ingroup SolidMechanicsModels
+
+<!-- PoroMechanicsModels -->
+
+@defgroup PoroMechanicsModels Poro-mechanics
+@brief Solid deformation coupled to pore fluids.
+@ingroup Models
+
+<!-- PoroMechanicsModels subgroups -->
 
 @defgroup PoroElastic Solid mechanics with fluid pressure
-@brief Models linear elastic deformation of a solid. Takes fluid pressure into account.
-@copydoc dumux/geomechanics/poroelastic/model.hh
-@ingroup GeomechanicsModels
-
-@defgroup Hyperelastic Hyperelastic solid mechanics w/o fluid pressure
-@brief Models nonlinear deformation of an elastic solid.
-@copydoc dumux/geomechanics/hyperelastic/model.hh
-@ingroup GeomechanicsModels
+@brief Models linear elastic deformation of a solid taking into account fluid pressure.
+@copydoc dumux/poromechanics/poroelastic/model.hh
+@ingroup PoroMechanicsModels
 
 <!-- PoreNetworkModels -->
 

@@ -7,6 +7,7 @@
 /*!
  * \file
  * \ingroup SpatialParameters
+ * \ingroup PoroElastic
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
 #ifndef DUMUX_POROMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
@@ -24,6 +25,7 @@ namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
+ * \ingroup PoroElastic
  * \brief The base class for spatial parameters of poro-elastic geomechanical problems
  */
 template<class GridGeometry, class Scalar, class Implementation>
