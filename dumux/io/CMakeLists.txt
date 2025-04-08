@@ -5,6 +5,7 @@ add_subdirectory(expression)
 add_subdirectory(format)
 add_subdirectory(grid)
 add_subdirectory(json)
+add_subdirectory(particles)
 add_subdirectory(vtk)
 add_subdirectory(xml)
 
