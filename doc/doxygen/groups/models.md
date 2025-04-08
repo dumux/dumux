@@ -250,3 +250,16 @@
 @brief Energy equation for the solid (heat equation)
 @copydoc dumux/porenetwork/solidenergy/model.hh
 @ingroup PoreNetworkModels
+
+<!-- ParticleModels -->
+
+@defgroup Particles Particle-based models
+@brief Particle-based models
+@ingroup Models
+
+<!-- ParticleModels subgroups -->
+
+@defgroup FokkerPlanckModel Fokker-Planck
+@brief A hybrid particle- and grid-based Fokker-Planck equation solver
+@copydoc dumux/particles/fokkerplanck.hh
+@ingroup Particles
