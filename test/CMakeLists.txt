@@ -3,7 +3,7 @@
 
 add_subdirectory(cmake)
 add_subdirectory(common)
-add_subdirectory(geomechanics)
+add_subdirectory(discretization)
 add_subdirectory(geometry)
 add_subdirectory(experimental)
 add_subdirectory(flux)
@@ -15,9 +15,9 @@ add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(parallel)
 add_subdirectory(porenetwork)
+add_subdirectory(poromechanics)
 add_subdirectory(porousmediumflow)
-add_subdirectory(discretization)
-
+add_subdirectory(solidmechanics)
 
 # if Python bindings are enabled, include Python binding tests
 if(DUMUX_ENABLE_PYTHONBINDINGS)
