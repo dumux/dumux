@@ -3,6 +3,7 @@
 
 add_subdirectory(cmake)
 add_subdirectory(common)
+add_subdirectory(discretization)
 add_subdirectory(geomechanics)
 add_subdirectory(geometry)
 add_subdirectory(experimental)
@@ -14,9 +15,9 @@ add_subdirectory(material)
 add_subdirectory(multidomain)
 add_subdirectory(nonlinear)
 add_subdirectory(parallel)
+add_subdirectory(particles)
 add_subdirectory(porenetwork)
 add_subdirectory(porousmediumflow)
-add_subdirectory(discretization)
 
 
 # if Python bindings are enabled, include Python binding tests
