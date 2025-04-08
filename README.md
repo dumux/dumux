@@ -13,7 +13,7 @@ DuMu<sup>x</sup> then provides
 * Finite volume discretizations (Tpfa, Mpfa, Staggered) and control-volume finite element discretization schemes
 * A flexible system matrix assembler and approximation of the Jacobian matrix by numeric differentiation
 * A customizable Newton method implementation, including line search and various stopping criteria
-* Many pre-implemented models (Darcy-scale porous media flow, Navier-Stokes, Geomechanics, Pore network models, Shallow water equations) and constitutive models
+* Many pre-implemented models (Darcy-scale porous media flow, Navier-Stokes, Solid and Poromechanics, Pore network models, Shallow water equations) and constitutive models
 * A multi-domain framework for model coupling suited to couple subproblems with different discretizations/domains/physics/dimensions/... and create monolithic solvers
 
 DuMu<sup>x</sup> has been applied to model complex and non-linear phenomena,
