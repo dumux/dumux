@@ -38,6 +38,8 @@ case "$key" in
 esac
 done
 
-echo "Contributors from commit ${from_sha} to ${to_sha}:"
-
+echo "Commit authors from commit ${from_sha} to ${to_sha}:"
 git log $from_sha..$to_sha "$@" | grep ^Author: | sed 's/ <.*//; s/^Author: //' | sort | uniq -c | sort -nr
+
+echo "Commit co-authors on commits ${from_sha} to ${to_sha}:"
+git log $from_sha..$to_sha "$@" | grep Co-authored-by: | sed 's/ <.*//; s/Co-authored-by: //' | sed "s/^[ \t]*//;s/[ \t]*$//" | sort | uniq -c | sort -nr
