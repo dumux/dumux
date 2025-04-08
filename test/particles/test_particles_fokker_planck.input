@@ -1,0 +1,16 @@
+[FokkerPlanck]
+Velocity = 0.5
+DiffusionCoefficient = 0.1
+DiracPosition = 0.5
+
+[Particles]
+TimeStepSize = 0.002
+EndTime = 0.25
+NumParticles = 10000
+
+[Grid]
+Cells = 100
+Dimension = 1
+
+[Output]
+WriteParticles = false
