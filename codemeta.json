@@ -18,7 +18,7 @@
     "developmentStatus": "active",
     "referencePublication": "https://doi.org/10.1016/j.camwa.2020.02.012",
     "keywords": [
-        "porous media", "finite volume method", "multi-phase flow in porous media", "geomechanics", "flow and transport", "PDE solver", "nonlinear problems"
+        "porous media", "finite volume method", "multi-phase flow in porous media", "poromechanics", "flow and transport", "PDE solver", "nonlinear problems"
     ],
     "programmingLanguage": [
         "C++",

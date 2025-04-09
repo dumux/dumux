@@ -7,6 +7,7 @@
 /*!
  * \file
  * \ingroup SpatialParameters
+ * \ingroup Elastic
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
 #ifndef DUMUX_SOLIDMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
@@ -26,6 +27,7 @@ namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
+ * \ingroup Elastic
  * \brief The base class for spatial parameters of linear elastic geomechanical problems
  */
 template<class GridGeometry, class Scalar, class Implementation>
