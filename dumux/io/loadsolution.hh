@@ -138,6 +138,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                 sol[eIdx][targetPvIdx] = vec[i++];
             }
         }
+
         // for staggered face data (which is written out as VTK point data) we just read in the vector
         else if (dataType == VTKReader::DataType::pointData && GridGeometry::discMethod == DiscretizationMethods::staggered)
         {
@@ -147,6 +148,19 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
             for (std::size_t i = 0; i < sol.size(); ++i)
                 sol[i][targetPvIdx] = vec[i];
         }
+
+        // structured grid vertex data
+        else if (const auto extension = fileName.substr(fileName.find_last_of(".") + 1); extension == "vti" || extension == "pvti")
+        {
+            std::size_t i = 0;
+            for (const auto& vertex : vertices(gridGeometry.gridView(), Dune::Partitions::interior + Dune::Partitions::border))
+            {
+                const auto vIdx = gridGeometry.vertexMapper().index(vertex);
+                sol[vIdx][targetPvIdx] = vec[i++];
+            }
+        }
+
+        // unstructured grid vertex data
         else
         {
             std::size_t i = 0;
@@ -324,14 +338,14 @@ void loadSolution(SolutionVector& sol,
     auto dataType = GridGeometry::discMethod == DiscretizationMethods::box ?
                     VTKReader::DataType::pointData : VTKReader::DataType::cellData;
 
-    if (extension == "vtu" || extension == "vtp")
+    if (extension == "vtu" || extension == "vtp" || extension == "vti")
     {
         if (GridGeometry::discMethod == DiscretizationMethods::staggered && extension == "vtp")
             dataType = VTKReader::DataType::pointData;
 
         loadSolutionFromVtkFile(sol, fileName, targetPvNameFunc, gridGeometry, dataType);
     }
-    else if (extension == "pvtu" || extension == "pvtp")
+    else if (extension == "pvtu" || extension == "pvtp" || extension == "pvti")
     {
         if (GridGeometry::discMethod == DiscretizationMethods::staggered)
             DUNE_THROW(Dune::NotImplemented, "reading staggered solution from a parallel vtk file");
