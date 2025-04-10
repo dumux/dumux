@@ -10,7 +10,7 @@
  * \brief Effective stress are used to describe the actual stresses acting on the grains/matrix in the soil.
  * Furthermore, they determine the behaviour of the soil.
  * Most of the geomechanical laws are written in terms of effective stresses,
- * such as the poroelastic model in dumux/geomechanics/poroelastic/model.hh
+ * such as the poroelastic model in \ref dumux/poromechanics/poroelastic/model.hh
  *
  * Effective stresses are denoted with \f$ \boldsymbol{\sigma_{\mathrm{eff}}} \f$.
  * The effective stress tensor \f$ \boldsymbol{\sigma_{\mathrm{eff}}} \f$ is

@@ -21,7 +21,8 @@ each example, the setup is explained and the code is presented and described in 
 * @refdir{dumux/experimental} "experimental": New features, may undergo disruptive changes.
 * @refdir{dumux/flux} "flux": Calculation of advective and diffusive fluxes for different discretization schemes.
 * @refdir{dumux/freeflow} "freeflow": Single-phase free flow models using Navier-Stokes and eddy-viscosity based Reynolds-averaged Navier-Stokes turbulence models, and shallow water equation model.
-* @refdir{dumux/geomechanics} "geomechanics": Elastic and poro-elastic geomechanics models.
+* @refdir{dumux/solidmechanics} "solidmechanics": Solid mechanical models.
+* @refdir{dumux/poromechanics} "poromechanics": Poro-mechanical models.
 * @refdir{dumux/geometry} "geometry": Bounding boxes, intersections, distances, ...
 * @refdir{dumux/io} "io": In-/output functionalities such as restart files, gnuplot interface, VTKWriter extensions and grid managers.
 * @refdir{dumux/linear} "linear": Linear solver backends.
