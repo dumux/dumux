@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
-#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
