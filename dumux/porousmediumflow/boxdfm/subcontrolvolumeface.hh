@@ -162,6 +162,11 @@ public:
         else if (T::dim == 2)
             area_ = 1.0;
 
+#if DISABLE_FRACTURES
+    area_ = 0.0;
+    boundary_ = false;
+#endif
+
         // obtain the unit normal vector
         unitOuterNormal_ = geometryHelper.fractureNormal(corners, intersection, indexInIntersection);
 

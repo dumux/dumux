@@ -146,6 +146,10 @@ public:
         for (const auto& corner : corners)
             center_ += corner;
         center_ /= corners.size();
+
+#if DISABLE_FRACTURES
+        volume_ = 0;
+#endif
     }
 
     //! The center of the sub control volume
