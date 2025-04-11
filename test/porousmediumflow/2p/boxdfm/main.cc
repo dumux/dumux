@@ -33,6 +33,7 @@
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/porousmediumflow/boxdfm/vtkoutputmodule.hh>
 
 #include "properties.hh"
@@ -76,7 +77,11 @@ int main(int argc, char** argv)
 
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+#if USE_BOXMODEL
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+#else
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, fractureGridAdapter);
+#endif
 
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -103,9 +108,13 @@ int main(int argc, char** argv)
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // initialize the vtk output module
+#if DISABLE_FRACTURES
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(), "", Dune::VTK::conforming);
+#else
     using VtkOutputModule = BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid>;
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), fractureGridAdapter, "", Dune::VTK::nonconforming);
+#endif
+    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 

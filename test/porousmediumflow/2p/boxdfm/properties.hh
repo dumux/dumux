@@ -27,6 +27,7 @@
 
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/boxdfm/model.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
 #include "problem.hh"
@@ -37,13 +38,25 @@
 #define GRIDTYPE Dune::ALUGrid<2, 2, Dune::simplex , Dune::conforming>;
 #endif
 
+#ifndef DISABLE_FRACTURES
+#define DISABLE_FRACTURES 0
+#endif
+
+#ifndef USE_BOXMODEL
+#define USE_BOXMODEL 0
+#endif
+
 namespace Dumux::Properties {
 
 // we need to derive first from twop and then from the box-dfm Model
 // because the flux variables cache type of TwoP is overwritten in BoxDfmModel
 // Create new type tags
 namespace TTag {
+#if USE_BOXMODEL
+struct TwoPIncompressibleBoxDfm { using InheritsFrom = std::tuple<BoxModel, TwoP>; };
+#else
 struct TwoPIncompressibleBoxDfm { using InheritsFrom = std::tuple<BoxDfmModel, TwoP>; };
+#endif
 } // end namespace TTag
 
 // Set the grid type
