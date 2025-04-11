@@ -123,7 +123,7 @@ public:
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = ParentType::getFileExtension(fileName);
-        if (extension != "dgf" && extension != "msh" && extension != "vtu")
+        if (extension != "dgf" && extension != "msh" && extension != "vtu" && extension != "vti")
             DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
 
         // Dune Grid Format (DGF) files
@@ -179,7 +179,8 @@ public:
         }
 
         // VTK file formats for unstructured grids
-        else if (extension == "vtu")
+        // (can be constructed from both unstructured or structured grid data file formats)
+        else if (extension == "vtu" || extension == "vti")
         {
             VTKReader vtkReader(fileName);
             VTKReader::Data cellData, pointData;
