@@ -62,7 +62,49 @@ public:
         // First try to create it from a DGF file in GridParameterGroup.File
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            const auto filename = getParamFromGroup<std::string>(modelParamGroup, "Grid.File");
+            const std::string extension = ParentType::getFileExtension(filename);
+
+            if (extension != "dgf" && extension != "vti")
+                DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
+
+            // VTK file formats for image grids
+            if (extension == "vti")
+            {
+#if DUMUX_HAVE_GRIDFORMAT
+                VTKReader vtkReader(filename);
+                VTKReader::Data cellData, pointData;
+
+                const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+                std::shared_ptr<Detail::VTKReader::ImageGrid<ct, dim>> gridInfo
+                    = vtkReader.readStructuredGrid<ct, dim>(cellData, pointData, verbose);
+                const std::bitset<dim> periodic;
+                const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
+                const auto upperRight = gridInfo->upperRight();
+                const auto cells = gridInfo->cells();
+                const auto lowerLeft = gridInfo->lowerLeft();
+
+                if constexpr (std::is_same_v<Dune::EquidistantCoordinates<ct, dim>, Coordinates>)
+                    init_(upperRight, cells, modelParamGroup, overlap, periodic);
+                else
+                    init_(lowerLeft, upperRight, cells, modelParamGroup, overlap, periodic);
+
+                ParentType::gridData_ = std::make_shared<GridData<Grid>>(
+                    ParentType::gridPtr(), gridInfo, std::move(cellData), std::move(pointData)
+                );
+
+                ParentType::enableVtkData_ = true;
+#else
+                DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
+#endif
+            }
+            else
+            {
+                ParentType::makeGridFromDgfFile(
+                    getParamFromGroup<std::string>(modelParamGroup, "Grid.File")
+                );
+            }
+
             postProcessing_(modelParamGroup);
             return;
         }
@@ -114,6 +156,36 @@ public:
               const int overlap = 1,
               const std::bitset<dim> periodic = std::bitset<dim>{})
     {
+        init_(upperRight, cells, modelParamGroup, overlap, periodic);
+        postProcessing_(modelParamGroup);
+    }
+
+    /*!
+     * \brief Make the grid using input data not read from the input file.
+     * \note Use this function for EquidistantOffsetCoordinates.
+     */
+    void init(const GlobalPosition& lowerLeft,
+              const GlobalPosition& upperRight,
+              const std::array<int, dim>& cells,
+              const std::string& modelParamGroup = "",
+              const int overlap = 1,
+              const std::bitset<dim> periodic = std::bitset<dim>{})
+    {
+        init_(lowerLeft, upperRight, cells, modelParamGroup, overlap, periodic);
+        postProcessing_(modelParamGroup);
+    }
+
+private:
+    /*!
+     * \brief Make the grid using input data not read from the input file.
+     * \note Use this function for EquidistantCoordinates where lowerLeft is always zero.
+     */
+    void init_(const GlobalPosition& upperRight,
+               const std::array<int, dim>& cells,
+               const std::string& modelParamGroup = "",
+               const int overlap = 1,
+               const std::bitset<dim> periodic = std::bitset<dim>{})
+    {
         static_assert(std::is_same_v<Dune::EquidistantCoordinates<ct, dim>, Coordinates>,
                       "Use init function taking lowerLeft as argument when working with EquidistantOffsetCoordinates");
 
@@ -129,20 +201,18 @@ public:
             Dune::Yasp::FixedSizePartitioning<dim> lb(partitioning);
             ParentType::gridPtr() = std::make_unique<Grid>(upperRight, cells, periodic, overlap, typename Grid::Communication(), &lb);
         }
-
-        postProcessing_(modelParamGroup);
     }
 
     /*!
      * \brief Make the grid using input data not read from the input file.
      * \note Use this function for EquidistantOffsetCoordinates.
      */
-    void init(const GlobalPosition& lowerLeft,
-              const GlobalPosition& upperRight,
-              const std::array<int, dim>& cells,
-              const std::string& modelParamGroup = "",
-              const int overlap = 1,
-              const std::bitset<dim> periodic = std::bitset<dim>{})
+    void init_(const GlobalPosition& lowerLeft,
+               const GlobalPosition& upperRight,
+               const std::array<int, dim>& cells,
+               const std::string& modelParamGroup = "",
+               const int overlap = 1,
+               const std::bitset<dim> periodic = std::bitset<dim>{})
     {
         static_assert(std::is_same_v<Dune::EquidistantOffsetCoordinates<ct, dim>, Coordinates>,
                       "LowerLeft can only be specified with EquidistantOffsetCoordinates");
@@ -159,11 +229,7 @@ public:
             Dune::Yasp::FixedSizePartitioning<dim> lb(partitioning);
             ParentType::gridPtr() = std::make_unique<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::Communication(), &lb);
         }
-
-        postProcessing_(modelParamGroup);
     }
-
-private:
 
     /*!
      * \brief Postprocessing for YaspGrid
