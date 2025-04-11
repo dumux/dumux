@@ -25,7 +25,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
-#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
