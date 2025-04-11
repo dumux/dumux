@@ -6,7 +6,7 @@ stages:
   - trigger dumux pipelines
 
 variables:
-  UBUNTU_VERSION: "22.04"
+  UBUNTU_VERSION: "24.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
