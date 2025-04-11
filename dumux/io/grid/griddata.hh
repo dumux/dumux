@@ -20,6 +20,7 @@
 #include <dune/common/parallel/communication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/gridfactory.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/io/file/dgfparser/parser.hh>
 #include <dune/grid/io/file/dgfparser/gridptr.hh>
 #include <dumux/io/vtk/vtkreader.hh>
@@ -44,6 +45,52 @@ template<int dim>
 struct isUG<Dune::UGGrid<dim>> : public std::true_type {};
 #endif
 
+namespace GridData  {
+
+template<class Grid>
+struct GridFactory
+{
+    using Intersection = typename Grid::LeafIntersection;
+public:
+    GridFactory(std::shared_ptr<Dune::GridFactory<Grid>> factory)
+    : factory_(factory)
+    {}
+
+    bool wasInserted(const Intersection& intersection) const
+    { return factory_->wasInserted(intersection); }
+
+    template<class Entity>
+    auto insertionIndex(const Entity& e) const
+    { return factory_->insertionIndex(e); }
+
+private:
+    std::shared_ptr<Dune::GridFactory<Grid>> factory_;
+};
+
+template<class Grid>
+concept CartesianGrid = Dune::Capabilities::isCartesian<Grid>::v;
+
+template<CartesianGrid Grid>
+struct GridFactory<Grid>
+{
+    using Intersection = typename Grid::LeafIntersection;
+public:
+    GridFactory(std::array<int, Grid::dimension> factory)
+    : factory_(factory)
+    {}
+
+    bool wasInserted(const Intersection& intersection) const
+    { DUNE_THROW(Dune::NotImplemented, "GridFactory::wasInserted is not implemented for Cartesian grids."); }
+
+    template<class Entity>
+    unsigned int insertionIndex(const Entity& e) const
+    { DUNE_THROW(Dune::NotImplemented, "GridFactory::insertionIndex is not implemented for Cartesian grids."); }
+
+    std::array<int, Grid::dimension> factory_;
+};
+
+}  // end namespace GridData
+
 } // end namespace Details
 
 /*!
@@ -56,17 +103,17 @@ class GridData
     using Intersection = typename Grid::LeafIntersection;
     using Element = typename Grid::template Codim<0>::Entity;
     using Vertex = typename Grid::template Codim<Grid::dimension>::Entity;
-    using GmshDataHandle = GmshGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<int>>;
-    using VtkDataHandle = VtkGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<double>>;
-
-    enum DataSourceType { dgf, gmsh, vtk };
-
+    using GridFactory = Detail::GridData::GridFactory<Grid>;
+    using GmshDataHandle = GmshGridDataHandle<Grid, GridFactory, std::vector<int>>;
+    using VtkDataHandle = VtkGridDataHandle<Grid, GridFactory, std::vector<double>>;
 public:
+    enum class DataSourceType { dgf, gmsh, vtk };
+
     //! constructor for gmsh grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
              std::vector<int>&& elementMarkers, std::vector<int>&& boundaryMarkers, std::vector<int>&& faceMarkers = std::vector<int>{})
     : gridPtr_(grid)
-    , gridFactory_(factory)
+    , gridFactory_(std::make_shared<GridFactory>(factory))
     , elementMarkers_(elementMarkers)
     , boundaryMarkers_(boundaryMarkers)
     , faceMarkers_(faceMarkers)
@@ -79,16 +126,25 @@ public:
     , dataSourceType_(DataSourceType::dgf)
     {}
 
-    //! constructor for VTK grid data
+    //! constructor for unstructured VTK grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
              VTKReader::Data&& cellData, VTKReader::Data&& pointData)
     : gridPtr_(grid)
-    , gridFactory_(factory)
+    , gridFactory_(std::make_shared<GridFactory>(factory))
     , cellData_(cellData)
     , pointData_(pointData)
     , dataSourceType_(DataSourceType::vtk)
     {}
 
+    //! constructor for structured VTK grid data
+    GridData(std::shared_ptr<Grid> grid, const std::array<int, Grid::dimension>& cells,
+             VTKReader::Data&& cellData, VTKReader::Data&& pointData)
+    : gridPtr_(grid)
+    , gridFactory_(std::make_shared<GridFactory>(cells))
+    , cellData_(cellData)
+    , pointData_(pointData)
+    , dataSourceType_(DataSourceType::vtk)
+    {}
 
     /*!
      * \name DGF interface functions
@@ -267,6 +323,8 @@ public:
         const auto index = [&]{
             if (gridPtr_->comm().size() > 1)
                 return gridPtr_->levelGridView(0).indexSet().index(level0element);
+            else if (Detail::GridData::CartesianGrid<Grid>)
+                return gridPtr_->levelGridView(0).indexSet().index(level0element);
             else
                 return gridFactory_->insertionIndex(level0element);
         }();
@@ -315,6 +373,8 @@ public:
         const auto index = [&]{
             if (gridPtr_->comm().size() > 1)
                 return gridPtr_->levelGridView(0).indexSet().index(vertex);
+            else if (Detail::GridData::CartesianGrid<Grid>)
+                return gridPtr_->levelGridView(0).indexSet().index(vertex);
             else
                 return gridFactory_->insertionIndex(vertex);
         }();
@@ -340,10 +400,13 @@ public:
 
     // \}
 
+    DataSourceType dataSourceType() const
+    { return dataSourceType_; }
+
 private:
     // grid and grid factor for gmsh grid data / vtk grid data
     std::shared_ptr<Grid> gridPtr_;
-    std::shared_ptr<Dune::GridFactory<Grid>> gridFactory_;
+    std::shared_ptr<GridFactory> gridFactory_;
 
     /*!
      * \brief Element and boundary domain markers obtained from Gmsh physical entities
