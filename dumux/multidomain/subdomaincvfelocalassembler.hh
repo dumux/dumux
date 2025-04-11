@@ -22,7 +22,7 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 
-#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>

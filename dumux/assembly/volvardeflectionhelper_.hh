@@ -16,7 +16,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
-#include <dumux/common/typetraits/localdofs.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 #ifndef DOXYGEN
