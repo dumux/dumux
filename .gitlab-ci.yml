@@ -104,39 +104,21 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
+    DUMUX_ENABLE_CPPCHECK: "true"
+    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
+    DUMUX_CHECK_EXAMPLE_DOCS: "true"
+    DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
-minimal-dune-master-clang:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
-
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
     IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
-
-full-dune-master-gcc-docs:
-  extends: .base-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
-    DUMUX_ENABLE_CPPCHECK: "true"
-    DUMUX_ENABLE_DOXYGEN_BUILD: "true"
-    DUMUX_CHECK_EXAMPLE_DOCS: "true"
-    DUMUX_ENABLE_GRIDFORMAT: "ON"
-
-##################################
-# additional scheduled pipelines #
-full-dune-master-clang:
-  extends: .non-mr-trigger
-  variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
-    DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 ################################################
 # trigger test pipelines of downstream modules #
