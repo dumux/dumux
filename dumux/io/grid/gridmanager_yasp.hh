@@ -62,7 +62,47 @@ public:
         // First try to create it from a DGF file in GridParameterGroup.File
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            const auto filename = getParamFromGroup<std::string>(modelParamGroup, "Grid.File");
+            const std::string extension = ParentType::getFileExtension(filename);
+
+            if (extension != "dgf" && extension != "vti")
+                DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
+
+            // VTK file formats for image grids
+            if (extension == "vti")
+            {
+#ifndef DUMUX_HAVE_GRIDFORMAT
+                DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " doesn't support grid files with extension: *."<< extension);
+#else
+                VTKReader vtkReader(filename);
+                VTKReader::Data cellData, pointData;
+
+                auto gridInfo = vtkReader.readStructuredGrid<ct, dim>(cellData, pointData);
+                const std::bitset<dim> periodic;
+                const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
+                const auto upperRight = gridInfo->upperRight();
+                const auto cells = gridInfo->cells();
+
+                if constexpr (std::is_same_v<Dune::EquidistantCoordinates<ct, dim>, Coordinates>)
+                    init(upperRight, cells, modelParamGroup, overlap, periodic);
+                else
+                {
+                    const auto lowerLeft = gridInfo->lowerLeft();
+                    init(lowerLeft, upperRight, cells, modelParamGroup, overlap, periodic);
+                }
+
+                ParentType::gridData_ = std::make_shared<GridData<Grid>>(
+                    ParentType::gridPtr(), cells, std::move(cellData), std::move(pointData)
+                );
+#endif
+            }
+            else
+            {
+                ParentType::makeGridFromDgfFile(
+                    getParamFromGroup<std::string>(modelParamGroup, "Grid.File")
+                );
+            }
+
             postProcessing_(modelParamGroup);
             return;
         }
