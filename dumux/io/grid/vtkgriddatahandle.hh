@@ -52,7 +52,7 @@ struct VtkGridDataHandle
         // assume all data is on rank 0 (see grid manager)
         // First broadcast how many keys we have
         std::array<std::size_t, 2> numKeys{{ cellData_.size(), pointData_.size() }};
-        Dune::MPIHelper::getCommunication().broadcast(numKeys.data(), 2, 0);
+        grid.comm().broadcast(numKeys.data(), 2, 0);
 
         // then broadcast the length of the individual key strings
         // and the number of component associated with each key (e.g. vector/tensor fields)
@@ -73,9 +73,9 @@ struct VtkGridDataHandle
                 keyLengthAndComponents[n++] = gridView_.size(Grid::dimension) > 0 ? data.size()/gridView_.size(Grid::dimension) : 0;
 
             // entries only exist on rank 0 and the data containers are empty on other ranks
-            assert((Dune::MPIHelper::instance().rank() == 0) == (n == keyLengthAndComponents.size()));
+            assert((grid.comm().rank() == 0) == (n == keyLengthAndComponents.size()));
 
-            Dune::MPIHelper::getCommunication().broadcast(keyLengthAndComponents.data(), keyLengthAndComponents.size(), 0);
+            grid.comm().broadcast(keyLengthAndComponents.data(), keyLengthAndComponents.size(), 0);
         }
 
         // save the number of components for each cell and point data array
@@ -97,9 +97,9 @@ struct VtkGridDataHandle
                     keys[n++] = c;
 
             // entries only exist on rank 0 and the data containers are empty on other ranks
-            assert((Dune::MPIHelper::instance().rank() == 0) == (n == keys.size()));
+            assert((grid.comm().rank() == 0) == (n == keys.size()));
 
-            Dune::MPIHelper::getCommunication().broadcast(keys.data(), keys.size(), 0);
+            grid.comm().broadcast(keys.data(), keys.size(), 0);
         }
 
         // create the entries in the cellData and pointData maps on all processes
