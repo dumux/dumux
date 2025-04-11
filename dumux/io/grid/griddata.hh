@@ -20,6 +20,7 @@
 #include <dune/common/parallel/communication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/gridfactory.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/io/file/dgfparser/parser.hh>
 #include <dune/grid/io/file/dgfparser/gridptr.hh>
 #include <dumux/io/vtk/vtkreader.hh>
@@ -29,6 +30,7 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
+#include "gridinput_.hh"
 #include "gmshgriddatahandle.hh"
 #include "vtkgriddatahandle.hh"
 
@@ -56,17 +58,17 @@ class GridData
     using Intersection = typename Grid::LeafIntersection;
     using Element = typename Grid::template Codim<0>::Entity;
     using Vertex = typename Grid::template Codim<Grid::dimension>::Entity;
-    using GmshDataHandle = GmshGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<int>>;
-    using VtkDataHandle = VtkGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<double>>;
-
-    enum DataSourceType { dgf, gmsh, vtk };
-
+    using GridInput = Detail::GridData::GridInput<Grid>;
+    using GmshDataHandle = GmshGridDataHandle<Grid, GridInput, std::vector<int>>;
+    using VtkDataHandle = VtkGridDataHandle<Grid, GridInput, std::vector<double>>;
 public:
+    enum class DataSourceType { dgf, gmsh, vtk };
+
     //! constructor for gmsh grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
              std::vector<int>&& elementMarkers, std::vector<int>&& boundaryMarkers, std::vector<int>&& faceMarkers = std::vector<int>{})
-    : gridPtr_(grid)
-    , gridFactory_(factory)
+    : gridPtr_(std::move(grid))
+    , gridInput_(std::make_shared<GridInput>(gridPtr_, std::move(factory)))
     , elementMarkers_(elementMarkers)
     , boundaryMarkers_(boundaryMarkers)
     , faceMarkers_(faceMarkers)
@@ -75,20 +77,30 @@ public:
 
     //! constructor for dgf grid data
     GridData(Dune::GridPtr<Grid> grid)
-    : dgfGrid_(grid)
+    : dgfGrid_(std::move(grid))
     , dataSourceType_(DataSourceType::dgf)
     {}
 
-    //! constructor for VTK grid data
+    //! constructor for unstructured VTK grid data
     GridData(std::shared_ptr<Grid> grid, std::shared_ptr<Dune::GridFactory<Grid>> factory,
              VTKReader::Data&& cellData, VTKReader::Data&& pointData)
-    : gridPtr_(grid)
-    , gridFactory_(factory)
+    : gridPtr_(std::move(grid))
+    , gridInput_(std::make_shared<GridInput>(gridPtr_, std::move(factory)))
     , cellData_(cellData)
     , pointData_(pointData)
     , dataSourceType_(DataSourceType::vtk)
     {}
 
+    //! constructor for structured VTK grid data
+    template<class ImageGrid>
+    GridData(std::shared_ptr<Grid> grid, std::shared_ptr<ImageGrid> imageGrid,
+             VTKReader::Data&& cellData, VTKReader::Data&& pointData)
+    : gridPtr_(std::move(grid))
+    , gridInput_(std::make_shared<GridInput>(gridPtr_, std::move(imageGrid)))
+    , cellData_(cellData)
+    , pointData_(pointData)
+    , dataSourceType_(DataSourceType::vtk)
+    {}
 
     /*!
      * \name DGF interface functions
@@ -182,7 +194,7 @@ public:
      * \brief Returns true if an intersection was inserted during grid creation
      */
     bool wasInserted(const Intersection& intersection) const
-    { return gridFactory_->wasInserted(intersection); }
+    { return gridInput_->wasInserted(intersection); }
 
     /*!
      * \brief Return the element domain marker (Gmsh physical entity number) of an element.
@@ -204,7 +216,7 @@ public:
         if (gridPtr_->comm().size() > 1 && !Detail::isUG<Grid>::value)
             return elementMarkers_[gridPtr_->levelGridView(0).indexSet().index(level0element)];
         else
-            return elementMarkers_[gridFactory_->insertionIndex(level0element)];
+            return elementMarkers_[gridInput_->insertionIndex(level0element)];
     }
 
     /*!
@@ -214,7 +226,7 @@ public:
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<!ug, int> = 0>
     GmshDataHandle createGmshDataHandle()
     {
-        return GmshDataHandle(*gridPtr_, *gridFactory_, elementMarkers_, boundaryMarkers_, faceMarkers_);
+        return GmshDataHandle(*gridPtr_, *gridInput_, elementMarkers_, boundaryMarkers_, faceMarkers_);
     }
 
     /*!
@@ -224,7 +236,7 @@ public:
     template<bool ug = Detail::isUG<Grid>::value, typename std::enable_if_t<ug, int> = 0>
     GmshDataHandle createGmshDataHandle()
     {
-        return GmshDataHandle(*gridPtr_, *gridFactory_, elementMarkers_, boundaryMarkers_);
+        return GmshDataHandle(*gridPtr_, *gridInput_, elementMarkers_, boundaryMarkers_);
     }
 
     // \}
@@ -267,8 +279,10 @@ public:
         const auto index = [&]{
             if (gridPtr_->comm().size() > 1)
                 return gridPtr_->levelGridView(0).indexSet().index(level0element);
+            else if (Detail::GridData::CartesianGrid<Grid>)
+                return gridPtr_->levelGridView(0).indexSet().index(level0element);
             else
-                return gridFactory_->insertionIndex(level0element);
+                return gridInput_->insertionIndex(level0element);
         }();
 
         std::array<T, size> param;
@@ -315,8 +329,10 @@ public:
         const auto index = [&]{
             if (gridPtr_->comm().size() > 1)
                 return gridPtr_->levelGridView(0).indexSet().index(vertex);
+            else if (Detail::GridData::CartesianGrid<Grid>)
+                return gridPtr_->levelGridView(0).indexSet().index(vertex);
             else
-                return gridFactory_->insertionIndex(vertex);
+                return gridInput_->insertionIndex(vertex);
         }();
 
         std::array<T, size> param;
@@ -335,15 +351,21 @@ public:
      */
     VtkDataHandle createVtkDataHandle()
     {
-        return VtkDataHandle(*gridPtr_, *gridFactory_, cellData_, pointData_);
+        if (dataSourceType_ != DataSourceType::vtk)
+            DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
+
+        return VtkDataHandle(*gridPtr_, *gridInput_, cellData_, pointData_);
     }
 
     // \}
 
+    DataSourceType dataSourceType() const
+    { return dataSourceType_; }
+
 private:
     // grid and grid factor for gmsh grid data / vtk grid data
     std::shared_ptr<Grid> gridPtr_;
-    std::shared_ptr<Dune::GridFactory<Grid>> gridFactory_;
+    std::shared_ptr<GridInput> gridInput_;
 
     /*!
      * \brief Element and boundary domain markers obtained from Gmsh physical entities
