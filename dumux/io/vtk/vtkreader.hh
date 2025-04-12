@@ -36,6 +36,8 @@
 #include <gridformat/reader.hpp>
 #include <gridformat/decorators/reader_polylines_subdivider.hpp>
 
+#include "imagegrid_.hh"
+
 namespace Dumux::Detail::VTKReader {
 
 template<GridFormat::Concepts::Communicator C>
@@ -49,45 +51,6 @@ auto makeGridformatReaderFactory(const C& c)
         return fac.make_for(f);
     };
 }
-
-template<class ctype, std::size_t dim>
-class ImageGrid
-{
-public:
-    ImageGrid(std::shared_ptr<GridFormat::Reader> grid)
-    : grid_(std::move(grid))
-    {}
-
-    Dune::FieldVector<ctype, dim> lowerLeft() const
-    {
-        const auto origin = grid_->origin();
-        Dune::FieldVector<ctype, dim> lowerLeft;
-        for (std::size_t i = 0; i < dim; ++i)
-            lowerLeft[i] = origin[i];
-        return lowerLeft;
-    }
-
-    Dune::FieldVector<ctype, dim> upperRight() const
-    {
-        const auto spacing = grid_->spacing();
-        const auto extents = grid_->extents();
-        auto upperRight = lowerLeft();
-        for (std::size_t i = 0; i < dim; ++i)
-            upperRight[i] += extents[i] * spacing[i];
-        return upperRight;
-    }
-
-    std::array<int, dim> cells() const
-    {
-        std::array<int, dim> cells;
-        const auto extents = grid_->extents();
-        for (std::size_t i = 0; i < dim; ++i)
-            cells[i] = extents[i];
-        return cells;
-    }
-private:
-    std::shared_ptr<GridFormat::Reader> grid_;
-};
 
 } // end namespace Dumux::Detail::VTKReader
 
