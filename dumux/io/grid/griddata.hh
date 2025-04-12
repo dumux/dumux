@@ -347,7 +347,7 @@ public:
     }
 
     /*!
-     * \brief Create a data handle for communication of the data in parallel simulations
+     * \brief Create a data handle for communication of the data in parallel simulations via the grid
      */
     VtkDataHandle createVtkDataHandle()
     {
@@ -355,6 +355,17 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
 
         return VtkDataHandle(*gridPtr_, *gridInput_, cellData_, pointData_);
+    }
+
+    /*!
+     * \brief Communication of the data in parallel simulations for structured grid is done manually
+     */
+    void communicateStructuredVtkData()
+    {
+        if (dataSourceType_ != DataSourceType::vtk)
+            DUNE_THROW(Dune::InvalidStateException, "This access function is only available for data from VTK files.");
+
+        Detail::VtkData::communicateStructuredVtkData(*gridPtr_, *gridInput_, cellData_, pointData_);
     }
 
     // \}
