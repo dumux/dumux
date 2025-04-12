@@ -16,8 +16,16 @@
 #include <algorithm>
 #include <map>
 #include <numeric>
+#include <array>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <iostream>
+#include <ranges>
 
 #include <dune/common/parallel/communication.hh>
+#include <dune/common/parallel/future.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -289,5 +297,230 @@ private:
 };
 
 } // namespace Dumux
+
+namespace Dumux::Detail::VtkData {
+
+// for structured vtk data, we manually distribute the data to the other ranks
+template<class Grid, class GridInput>
+void communicateStructuredVtkData(const Grid& grid, const GridInput& gridInput, ::Dumux::VTKReader::Data& cellData, ::Dumux::VTKReader::Data& pointData)
+{
+#if HAVE_MPI // needed due to oversight in Dune::Communication interface
+    const auto commSize = grid.comm().size();
+    if (commSize <= 1)
+        return;
+
+    const auto rank = grid.comm().rank();
+
+#ifndef NDEBUG
+    if (rank == 0)
+    {
+        std::cout << "Communicating structured VTK data...\n\n" << std::endl;
+        std::cout << "Grid has " << gridInput.numElements() << " elements and " << gridInput.numVertices() << " vertices." << std::endl;
+    }
+#endif
+
+    // first some preliminary steps
+    // we need to sort the data
+    std::map<std::string, ::Dumux::VTKReader::Data::mapped_type> sortedCellData, sortedPointData;
+    for (const auto& [key, data] : cellData)
+        sortedCellData[key] = std::move(cellData[key]);
+    for (const auto& [key, data] : pointData)
+        sortedPointData[key] = std::move(pointData[key]);
+
+    // and we need to compute the number of components for each cell and point data array
+    // to know the message sizes
+    std::array<std::size_t, 2> numKeys{{ sortedCellData.size(), sortedPointData.size() }};
+    std::vector<std::size_t> keyComponents(numKeys[0] + numKeys[1], 0);
+    {
+        int n = 0;
+        for (const auto& [key, data] : sortedCellData)
+            keyComponents[n++] = rank == 0 ? data.size()/gridInput.numElements() : 0;
+        for (const auto& [key, data] : sortedPointData)
+            keyComponents[n++] = rank == 0 ? data.size()/gridInput.numVertices() : 0;
+        grid.comm().broadcast(keyComponents.data(), keyComponents.size(), 0);
+    }
+
+    const auto begin = keyComponents.begin();
+    const std::size_t numCellDataPerElement = std::accumulate(begin, begin + numKeys[0], 0UL);
+    const std::size_t numPointDataPerVertex = std::accumulate(begin + numKeys[0], keyComponents.end(), 0UL);
+
+#ifndef NDEBUG
+    std::cout << "Rank " << rank << ": numbers of components for each cell and point data array: "
+              << numCellDataPerElement << " " << numPointDataPerVertex << std::endl;
+#endif
+
+    // each process knows:
+    // - total number of cells and vertices
+    // - its data indices for each cell and vertex (global numbering)
+    // process 0 has all the data
+
+    // each rank decides which data they need
+    const auto& gridView = grid.levelGridView(0);
+    std::vector<std::size_t> requestedData(gridView.size(0) + gridView.size(Grid::dimension));
+    const std::size_t numElements = gridView.size(0);
+    const std::size_t numVertices = gridView.size(Grid::dimension);
+    for (const auto& element : elements(gridView))
+    {
+        requestedData[gridView.indexSet().index(element)] = gridInput.insertionIndex(element);
+        for (const auto& vertex : subEntities(element, Dune::Codim<Grid::dimension>{}))
+            requestedData[numElements + gridView.indexSet().index(vertex)] = gridInput.insertionIndex(vertex);
+    }
+
+    // gather the sizes of the data on rank 0
+    std::vector<std::size_t> numData_;
+    if (rank == 0)
+        numData_.resize(2*commSize);
+    std::array<std::size_t, 2> localNumData{{ numElements, numVertices }};
+    grid.comm().gather(localNumData.data(), numData_.data(), 2, 0);
+
+#ifndef NDEBUG
+    if (rank == 0)
+    {
+        std::cout << "Number of elements and vertices on each rank: ";
+        for (std::size_t i = 0; i < commSize; ++i)
+            std::cout << numData_[2*i] << " " << numData_[2*i + 1] << " ";
+        std::cout << std::endl;
+    }
+#endif
+
+    // send the data request to rank 0
+    using RequestData = std::vector<std::size_t>;
+    using FutureIndices = Dune::Future<RequestData>;
+    std::unique_ptr<FutureIndices> sendRequest;
+    if (rank != 0)
+        sendRequest = std::make_unique<FutureIndices>(
+            std::move(grid.comm().isend(std::move(requestedData), 0, /*tag*/0))
+        );
+
+    // receive the data on rank 0
+    std::vector<RequestData> requestedDataAll(commSize);
+    if (rank == 0)
+    {
+        std::vector<std::unique_ptr<FutureIndices>> receiveRequests(commSize-1);
+        for (std::size_t i = 0; i < commSize; ++i)
+        {
+            requestedDataAll[i].resize(numData_[2*i] + numData_[2*i + 1]);
+
+            if (i == 0)
+                requestedDataAll[i] = std::move(requestedData);
+            else
+            {
+                receiveRequests[i-1] = std::make_unique<FutureIndices>(
+                    std::move(grid.comm().irecv(requestedDataAll[i], i, /*tag*/0))
+                );
+            }
+        }
+
+        /// TODO: actually we want to call MPI_Waitall here: how to do this with the futures?
+        std::ranges::for_each(receiveRequests, [](auto& request) { request->wait(); });
+
+#ifndef NDEBUG
+        std::cout << "Received data from all ranks." << std::endl;
+        for (std::size_t i = 0; i < commSize; ++i)
+            std::cout << "From rank " << i << ": " << requestedDataAll[i].size() << " index size." << std::endl;
+#endif
+    }
+
+    // Now we need to pack the data and send it to the other ranks
+    using PackedData = std::vector<double>;
+    PackedData receivedFlatData(localNumData[0]*numCellDataPerElement + localNumData[1]*numPointDataPerVertex);
+    if (rank == 0)
+    {
+        using FutureData = Dune::Future<PackedData>;
+        std::vector<std::unique_ptr<FutureData>> sendRequests(commSize-1);
+        for (std::size_t i = 0; i < commSize; ++i)
+        {
+            const auto& requestedIndices = requestedDataAll[i];
+            PackedData packedData(numData_[2*i]*numCellDataPerElement + numData_[2*i + 1]*numPointDataPerVertex);
+
+            // pack the data
+            std::size_t n = 0, l = 0;
+            for (const auto& [key, data] : sortedCellData)
+            {
+                const auto nComp = keyComponents[l++];
+                for (std::size_t k = 0; k < numData_[2*i]; ++k)
+                {
+                    const auto idx = requestedIndices[k];
+                    for (std::size_t j = 0; j < nComp; ++j)
+                        packedData[n++] = data[j + nComp*idx];
+                }
+            }
+
+            const auto pointDataOffsett = numData_[2*i];
+            for (const auto& [key, data] : sortedPointData)
+            {
+                const auto nComp = keyComponents[l++];
+                for (std::size_t k = 0; k < numData_[2*i + 1]; ++k)
+                {
+                    const auto idx = requestedIndices[k + pointDataOffsett];
+                    for (std::size_t j = 0; j < nComp; ++j)
+                        packedData[n++] = data[j + nComp*idx];
+                }
+            }
+
+            if (n != packedData.size())
+                DUNE_THROW(Dune::InvalidStateException, "Packed data size does not match expected size.");
+
+            if (i == 0)
+                receivedFlatData = std::move(packedData);
+            else
+            {
+                // send the data to rank i
+                sendRequests[i-1] = std::make_unique<FutureData>(
+                    std::move(grid.comm().isend(std::move(packedData), i, /*tag*/1))
+                );
+            }
+        }
+
+        /// TODO: actually we want to call MPI_Waitall here: how to do this with the futures?
+        std::ranges::for_each(sendRequests, [](auto& request) { request->wait(); });
+    }
+    else
+    {
+        // receive the data from rank 0
+        auto receiveRequest = grid.comm().irecv(receivedFlatData, 0, /*tag*/1);
+
+        // finalize all communication
+        sendRequest->wait();
+        receiveRequest.wait();
+    }
+
+#ifndef NDEBUG
+    std::cout << "On rank " << rank << ", the received data size is " << receivedFlatData.size() << std::endl;
+#endif
+
+    // unpack the data on each process into cellData and pointData
+    std::size_t n = 0, l = 0;
+    for (const auto& [key, data] : sortedCellData)
+    {
+        auto& out = cellData[key];
+        const auto nComp = keyComponents[l++];
+        out.resize(localNumData[0]*nComp);
+        for (std::size_t k = 0; k < localNumData[0]; ++k)
+            for (std::size_t j = 0; j < nComp; ++j)
+                out[j + nComp*k] = receivedFlatData[n++];
+    }
+
+    for (const auto& [key, data] : sortedPointData)
+    {
+        auto& out = pointData[key];
+        const auto nComp = keyComponents[l++];
+        out.resize(localNumData[1]*nComp);
+        for (std::size_t k = 0; k < localNumData[1]; ++k)
+            for (std::size_t j = 0; j < nComp; ++j)
+                out[j + nComp*k] = receivedFlatData[n++];
+    }
+
+    if (n != receivedFlatData.size())
+        DUNE_THROW(Dune::InvalidStateException, "Unpacked data size does not match expected size.");
+
+#ifndef NDEBUG
+    if (rank == 0)
+        std::cout << "\n\n+++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+#endif
+#endif
+}
+
+} // end namespace Dumux::Detail::VtkData
 
 #endif
