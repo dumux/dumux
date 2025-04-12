@@ -33,6 +33,7 @@
 #include <dumux/io/vtk/vtkreader.hh>
 
 #include "griddata.hh"
+#include "gridinput_.hh"
 
 namespace Dumux {
 
@@ -118,10 +119,17 @@ public:
             // if we have VTK parameters we have to manually load balance the data
             else if (enableVtkData_)
             {
-                // cell and point data is communicated during load balance
-                auto dh = gridData_->createVtkDataHandle();
-                gridPtr()->loadBalance(dh.interface());
-                gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+                if constexpr (Detail::GridData::CartesianGrid<Grid>)
+                {
+                    gridData_->communicateStructuredVtkData();
+                }
+                else
+                {
+                    // cell and point data is communicated during load balance
+                    auto dh = gridData_->createVtkDataHandle();
+                    gridPtr()->loadBalance(dh.interface());
+                    gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+                }
             }
 
             else
