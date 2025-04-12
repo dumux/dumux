@@ -30,18 +30,20 @@ namespace Dumux {
  * \ingroup InputOutput
  * \brief A data handle for communicating grid data for VTK grids
  */
-template<class Grid, class GridFactory, class Data>
+template<class Grid, class GridInput, class Data>
 struct VtkGridDataHandle
-: public Dune::CommDataHandleIF<VtkGridDataHandle<Grid, GridFactory, Data>, typename Data::value_type>
+: public Dune::CommDataHandleIF<VtkGridDataHandle<Grid, GridInput, Data>, typename Data::value_type>
 {
     using GridView = typename Grid::LevelGridView;
 
-    VtkGridDataHandle(const Grid& grid, const GridFactory& gridFactory, VTKReader::Data& cellData, VTKReader::Data& pointData)
+    VtkGridDataHandle(const Grid& grid, const GridInput& gridInput, VTKReader::Data& cellData, VTKReader::Data& pointData)
     : gridView_(grid.levelGridView(0))
     , idSet_(grid.localIdSet())
     , userCellData_(cellData)
     , userPointData_(pointData)
     {
+        const auto rank = grid.comm().rank();
+
         // For the following to work we assume a sorted map of keys to values in the user data.
         // This is not guaranteed by the VTKReader, so we need to sort the data first.
         for (const auto& [key, data] : userCellData_)
@@ -68,12 +70,9 @@ struct VtkGridDataHandle
 
             // number of components
             for (const auto& [key, data] : cellData_)
-                keyLengthAndComponents[n++] = gridView_.size(0) > 0 ? data.size()/gridView_.size(0) : 0;
+                keyLengthAndComponents[n++] = rank == 0 ? data.size()/gridInput.numElements() : 0;
             for (const auto& [key, data] : pointData_)
-                keyLengthAndComponents[n++] = gridView_.size(Grid::dimension) > 0 ? data.size()/gridView_.size(Grid::dimension) : 0;
-
-            // entries only exist on rank 0 and the data containers are empty on other ranks
-            assert((grid.comm().rank() == 0) == (n == keyLengthAndComponents.size()));
+                keyLengthAndComponents[n++] = rank == 0 ? data.size()/gridInput.numVertices() : 0;
 
             grid.comm().broadcast(keyLengthAndComponents.data(), keyLengthAndComponents.size(), 0);
         }
@@ -95,9 +94,6 @@ struct VtkGridDataHandle
             for (const auto& [key, data] : pointData_)
                 for (const auto& c : key)
                     keys[n++] = c;
-
-            // entries only exist on rank 0 and the data containers are empty on other ranks
-            assert((grid.comm().rank() == 0) == (n == keys.size()));
 
             grid.comm().broadcast(keys.data(), keys.size(), 0);
         }
@@ -129,7 +125,7 @@ struct VtkGridDataHandle
             {
                 const auto nComp = cellDataComponents_[l++];
                 for (int k = 0; k < nComp; ++k)
-                    std::swap(cellData_[key][k + nComp*gridFactory.insertionIndex(element)], data_[idSet_.id(element)][n++]);
+                    std::swap(cellData_[key][k + nComp*gridInput.insertionIndex(element)], data_[idSet_.id(element)][n++]);
             }
 
             assert(n == numCellDataPerElement_);
@@ -144,7 +140,7 @@ struct VtkGridDataHandle
             {
                 const auto nComp = pointDataComponents_[l++];
                 for (int k = 0; k < nComp; ++k)
-                    std::swap(pointData_[key][k + nComp*gridFactory.insertionIndex(vertex)], data_[idSet_.id(vertex)][n++]);
+                    std::swap(pointData_[key][k + nComp*gridInput.insertionIndex(vertex)], data_[idSet_.id(vertex)][n++]);
             }
 
             assert(n == numPointDataPerVertex_);
@@ -196,7 +192,7 @@ struct VtkGridDataHandle
             userPointData_[key] = std::move(pointData_[key]);
     }
 
-    Dune::CommDataHandleIF<VtkGridDataHandle<Grid, GridFactory, Data>, typename Data::value_type>& interface()
+    Dune::CommDataHandleIF<VtkGridDataHandle<Grid, GridInput, Data>, typename Data::value_type>& interface()
     { return *this; }
 
     bool contains (int dim, int codim) const
