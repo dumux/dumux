@@ -338,6 +338,31 @@ dumux_add_test(NAME test_gridmanager_vtk_alu_parallel
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-vertex-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-vertex-00000.pvtu)
 
+dumux_add_test(NAME test_gridmanager_vtk_yasp
+              SOURCES test_gridmanager_vtk.cc
+              LABELS unit io
+              COMPILE_DEFINITIONS YASPGRID
+              CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --backend fieldcompare
+                       --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_yasp
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/structured.vti
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-yaspgrid-0.vti)
+
+dumux_add_test(NAME test_gridmanager_vtk_yasp_parallel
+              TARGET test_gridmanager_vtk_yasp
+              LABELS unit io
+              COMPILE_DEFINITIONS YASPGRID
+              CMAKE_GUARD "( DUMUX_HAVE_GRIDFORMAT AND MPI_FOUND )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --backend fieldcompare
+                       --ignore "rank"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_yasp"
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/structured.vti
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-yaspgrid-parallel-0.pvti)
+
 dumux_add_test(NAME test_gmshboundaryflag
               SOURCES test_gmshboundaryflag.cc
               COMPILE_DEFINITIONS ENABLE_CACHING=false
