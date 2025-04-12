@@ -177,14 +177,29 @@ public:
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
     {
         auto grid = readGrid(factory, verbose);
+
+        // read field names on all processes
+        for (const auto& name : cell_field_names(*reader_))
+            cellData[name] = Data::mapped_type{};
+        for (const auto& name : point_field_names(*reader_))
+            pointData[name] = Data::mapped_type{};
+
+        // read data arrays only on rank 0
         if (Dune::MPIHelper::instance().rank() == 0)
         {
             for (const auto& [name, field_ptr] : cell_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading cell data '" << name << "'." << std::endl;
                 field_ptr->export_to(cellData[name]);
+            }
 
             for (const auto& [name, field_ptr] : point_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading point data '" << name << "'." << std::endl;
                 field_ptr->export_to(pointData[name]);
+            }
         }
+
         return std::unique_ptr<Grid>(std::move(grid));
     }
 
@@ -219,13 +234,27 @@ public:
     std::unique_ptr<Detail::VTKReader::ImageGrid<ct, dim>> readStructuredGrid(Data& cellData, Data& pointData, bool verbose = false) const
     {
         auto grid = readStructuredGrid<ct, dim>(verbose);
+
+        // read field names on all processes
+        for (const auto& name : cell_field_names(*reader_))
+            cellData[name] = Data::mapped_type{};
+        for (const auto& name : point_field_names(*reader_))
+            pointData[name] = Data::mapped_type{};
+
+        // read data arrays only on rank 0
         if (Dune::MPIHelper::instance().rank() == 0)
         {
             for (const auto& [name, field_ptr] : cell_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading cell data '" << name << "'." << std::endl;
                 field_ptr->export_to(cellData[name]);
+            }
 
             for (const auto& [name, field_ptr] : point_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading point data '" << name << "'." << std::endl;
                 field_ptr->export_to(pointData[name]);
+            }
         }
         return { std::move(grid) };
     }

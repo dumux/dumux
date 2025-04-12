@@ -51,6 +51,26 @@ struct VtkGridDataHandle
         for (const auto& [key, data] : userPointData_)
             pointData_[key] = std::move(userPointData_[key]);
 
+#if DUMUX_HAVE_GRIDFORMAT
+        // compute the number of components for each cell and point data array
+        // and the serialization size per entity
+        std::array<std::size_t, 2> numKeys{{ cellData_.size(), pointData_.size() }};
+        std::vector<std::size_t> keyComponents(numKeys[0] + numKeys[1], 0);
+        {
+            int n = 0;
+            for (const auto& [key, data] : cellData_)
+                keyComponents[n++] = rank == 0 ? data.size()/gridInput.numElements() : 0;
+            for (const auto& [key, data] : pointData_)
+                keyComponents[n++] = rank == 0 ? data.size()/gridInput.numVertices() : 0;
+            grid.comm().broadcast(keyComponents.data(), keyComponents.size(), 0);
+        }
+
+        const auto begin = keyComponents.begin();
+        cellDataComponents_.assign(begin, begin + numKeys[0]);
+        pointDataComponents_.assign(begin + numKeys[0], keyComponents.end());
+        numCellDataPerElement_ = std::accumulate(cellDataComponents_.begin(), cellDataComponents_.end(), 0UL);
+        numPointDataPerVertex_ = std::accumulate(pointDataComponents_.begin(), pointDataComponents_.end(), 0UL);
+#else
         // assume all data is on rank 0 (see grid manager)
         // First broadcast how many keys we have
         std::array<std::size_t, 2> numKeys{{ cellData_.size(), pointData_.size() }};
@@ -114,6 +134,7 @@ struct VtkGridDataHandle
 
             offset += keyLengthAndComponents[keyIdx];
         }
+#endif
 
         // write data into an id map
         for (const auto& element : elements(gridView_, Dune::Partitions::interior))
