@@ -2,13 +2,18 @@
 File = ./grids/disk.vtu
 Verbosity = true
 
-[FoamGrid]
-Grid.File = ./grids/lupine.vtp
-Grid.Verbosity = true
-Grid.CellData = p radius
+[FoamGrid.Grid]
+File = ./grids/lupine.vtp
+Verbosity = true
+CellData = p radius
 
-[UGGrid]
-Grid.File = ./grids/lens.vtu
-Grid.Verbosity = true
-Grid.CellData = processrank
-Grid.PointData = S_aq S_napl p_aq p_napl pc rho_aq rho_napl mob_aq mob_napl porosity
+[UGGrid.Grid]
+File = ./grids/lens.vtu
+Verbosity = true
+CellData = processrank
+PointData = S_aq S_napl p_aq p_napl pc rho_aq rho_napl mob_aq mob_napl porosity
+
+[YaspGrid.Grid]
+File = ./grids/structured.vti
+Verbosity = true
+CellData = index

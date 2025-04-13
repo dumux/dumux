@@ -36,6 +36,8 @@
 #include <gridformat/reader.hpp>
 #include <gridformat/decorators/reader_polylines_subdivider.hpp>
 
+#include "imagegrid_.hh"
+
 namespace Dumux::Detail::VTKReader {
 
 template<GridFormat::Concepts::Communicator C>
@@ -67,11 +69,11 @@ public:
     using Data = std::unordered_map<std::string, std::vector<double>>;
 
     explicit VTKReader(const std::string& fileName)
-    : reader_(GridFormat::Reader::from(fileName,
+    : reader_(std::make_shared<GridFormat::Reader>(GridFormat::Reader::from(fileName,
         Detail::VTKReader::makeGridformatReaderFactory(
             Dune::MPIHelper::instance().getCommunicator()
         )
-    ))
+    )))
     {}
 
     /*!
@@ -83,17 +85,17 @@ public:
     {
         if (type == DataType::cellData)
             return std::ranges::any_of(
-                cell_field_names(reader_),
+                cell_field_names(*reader_),
                 [&] (const auto& n) { return name == n; }
             );
         else if (type == DataType::pointData)
             return std::ranges::any_of(
-                point_field_names(reader_),
+                point_field_names(*reader_),
                 [&] (const auto& n) { return name == n; }
             );
         else if (type == DataType::fieldData)
             return std::ranges::any_of(
-                meta_data_field_names(reader_),
+                meta_data_field_names(*reader_),
                 [&] (const auto& n) { return name == n; }
             );
         else
@@ -111,14 +113,14 @@ public:
     {
         if (type == DataType::cellData)
         {
-            Container values(reader_.number_of_cells());
-            reader_.cell_field(name)->export_to(values);
+            Container values(reader_->number_of_cells());
+            reader_->cell_field(name)->export_to(values);
             return values;
         }
         else if (type == DataType::pointData)
         {
-            Container values(reader_.number_of_points());
-            reader_.point_field(name)->export_to(values);
+            Container values(reader_->number_of_points());
+            reader_->point_field(name)->export_to(values);
             return values;
         }
         else if (type == DataType::fieldData)
@@ -152,11 +154,11 @@ public:
         if (Dune::MPIHelper::instance().rank() == 0)
         {
             if (verbose)
-                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_.filename() << "." << std::endl;
+                std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << reader_->filename() << "." << std::endl;
 
             {
                 GridFormat::Dune::GridFactoryAdapter<Grid> adapter{ factory };
-                reader_.export_grid(adapter);
+                reader_->export_grid(adapter);
             }
         }
 
@@ -164,7 +166,7 @@ public:
     }
 
     /*!
-     * \brief Read a grid from a vtk/vtu/vtp file, reading all cell and point data
+     * \brief Read a grid from a vtk/vtu/vtp file (unstructured), reading all cell and point data
      * \note the factory will be needed outside to interpret the data via the factory's insertion indices
      * \param factory the (empty) grid factory
      * \param cellData the cell data arrays to be filled
@@ -175,19 +177,90 @@ public:
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
     {
         auto grid = readGrid(factory, verbose);
+
+        // read field names on all processes
+        for (const auto& name : cell_field_names(*reader_))
+            cellData[name] = Data::mapped_type{};
+        for (const auto& name : point_field_names(*reader_))
+            pointData[name] = Data::mapped_type{};
+
+        // read data arrays only on rank 0
         if (Dune::MPIHelper::instance().rank() == 0)
         {
-            for (const auto& [name, field_ptr] : cell_fields(reader_))
+            for (const auto& [name, field_ptr] : cell_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading cell data '" << name << "'." << std::endl;
                 field_ptr->export_to(cellData[name]);
+            }
 
-            for (const auto& [name, field_ptr] : point_fields(reader_))
+            for (const auto& [name, field_ptr] : point_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading point data '" << name << "'." << std::endl;
                 field_ptr->export_to(pointData[name]);
+            }
         }
+
         return std::unique_ptr<Grid>(std::move(grid));
     }
 
+    /*!
+     * \brief Read a grid from a vti file (structured), reading all cell and point data
+     * \note the factory will be needed outside to interpret the data via the factory's insertion indices
+     * \param factory the (empty) grid factory
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
+     *
+     * \return an instance of an image grid that contains information to construct a structured grid
+     */
+    template<class ct, int dim>
+    std::unique_ptr<Detail::VTKReader::ImageGrid<ct, dim>> readStructuredGrid(bool verbose = false) const
+    {
+        if (verbose)
+            std::cout << "Reading " << dim << "d grid from vtk file " << reader_->filename() << "." << std::endl;
+
+        return std::make_unique<Detail::VTKReader::ImageGrid<ct, dim>>(reader_);
+    }
+
+    /*!
+     * \brief Read a grid from a vti file (structured), reading all cell and point data
+     * \note the factory will be needed outside to interpret the data via the factory's insertion indices
+     * \param factory the (empty) grid factory
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
+     */
+    template<class ct, int dim>
+    std::unique_ptr<Detail::VTKReader::ImageGrid<ct, dim>> readStructuredGrid(Data& cellData, Data& pointData, bool verbose = false) const
+    {
+        auto grid = readStructuredGrid<ct, dim>(verbose);
+
+        // read field names on all processes
+        for (const auto& name : cell_field_names(*reader_))
+            cellData[name] = Data::mapped_type{};
+        for (const auto& name : point_field_names(*reader_))
+            pointData[name] = Data::mapped_type{};
+
+        // read data arrays only on rank 0
+        if (Dune::MPIHelper::instance().rank() == 0)
+        {
+            for (const auto& [name, field_ptr] : cell_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading cell data '" << name << "'." << std::endl;
+                field_ptr->export_to(cellData[name]);
+            }
+
+            for (const auto& [name, field_ptr] : point_fields(*reader_))
+            {
+                if (verbose) std::cout << "-- reading point data '" << name << "'." << std::endl;
+                field_ptr->export_to(pointData[name]);
+            }
+        }
+        return { std::move(grid) };
+    }
+
 private:
-    GridFormat::Reader reader_;
+    std::shared_ptr<GridFormat::Reader> reader_;
 };
 
 } // namespace Dumux
