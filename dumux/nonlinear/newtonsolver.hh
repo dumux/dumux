@@ -1007,7 +1007,7 @@ private:
 
             // linearize the problem at the current solution
             assembleTimer.start();
-            assembleLinearSystem(vars);
+            callAndCheck_([&]{ assembleLinearSystem(vars); }, "assemble");
             assembleTimer.stop();
 
             ///////////////
@@ -1067,6 +1067,34 @@ private:
 
         // return status
         return converged;
+    }
+
+    template<std::invocable Func>
+    void callAndCheck_(Func&& run, const std::string& stepName)
+    {
+        bool successful = false;
+        try {
+            run();
+            successful = true;
+        }
+        catch (const Dumux::NumericalProblem& e)
+        {
+            successful = false;
+
+            if (verbosity_ >= 1)
+                std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
+        }
+
+        // make sure all processes converged
+        int successfulRemote = static_cast<int>(successful);
+        if (comm_.size() > 1)
+            successfulRemote = comm_.min(static_cast<int>(successful));
+
+        if (!successful)
+            DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on process " << comm_.rank());
+
+        else if (!successfulRemote)
+            DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on a remote process");
     }
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
