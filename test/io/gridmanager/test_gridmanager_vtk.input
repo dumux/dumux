@@ -1,3 +1,6 @@
+[IO.GridWriter]
+AddProcessRank = false
+
 [Grid]
 File = ./grids/disk.vtu
 Verbosity = true
@@ -17,3 +20,4 @@ PointData = S_aq S_napl p_aq p_napl pc rho_aq rho_napl mob_aq mob_napl porosity
 File = ./grids/structured.vti
 Verbosity = true
 CellData = index
+PointData = vdata

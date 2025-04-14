@@ -15,7 +15,7 @@ SPDX-License-Identifier: CC0-1.0
       <DataArray type="Int32" Name="index" format="ascii" NumberOfComponents="1">
         0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
       </DataArray>
-      <DataArray type="Int32" Name="rank" format="ascii" NumberOfComponents="1">
+      <DataArray type="Int32" Name="process rank" format="ascii" NumberOfComponents="1">
         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
       </DataArray>
     </CellData>

@@ -358,7 +358,7 @@ dumux_add_test(NAME test_gridmanager_vtk_yasp_parallel
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --backend fieldcompare
-                       --ignore "rank"
+                       --ignore "process rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_yasp"
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/structured.vti
                                ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-yaspgrid-parallel-0.pvti)
