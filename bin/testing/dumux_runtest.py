@@ -17,7 +17,12 @@ import json
 COMPARISON_BACKENDS = {}
 
 try:
-    from fieldcompare import FieldDataComparator, protocols, DefaultFieldComparisonCallback
+    from fieldcompare import (
+        FieldDataComparator,
+        FieldComparisonStatus,
+        protocols,
+        DefaultFieldComparisonCallback,
+    )
     from fieldcompare.mesh import MeshFieldsComparator
     from fieldcompare.predicates import DefaultEquality, ScaledTolerance
     from fieldcompare.io import read_as
@@ -83,8 +88,13 @@ try:
 
         print(f"-- Summary: {result.status} ({result.report})\n")
 
+        # all skipped comparisons result in failure except explicitly filtered fields
+        if any(r.status != FieldComparisonStatus.filtered for r in result.skipped):
+            return 1
+
         if not result:
             return 1
+
         return 0
 
     def fieldcompareCSVData(
