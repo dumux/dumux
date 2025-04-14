@@ -1035,7 +1035,7 @@
           0.0285857 0.0286394 0.0287304 0.0288992 0.0292628 0.0299143 0.0310024 0.0335189 0.0398384 0.0521967 0.0743614 0.113184
           0.176592 0.264129 0.3497 0.392984
         </DataArray>
-        <DataArray type="Float32" Name="x^H2O_liq" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^SimpleH2O_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
