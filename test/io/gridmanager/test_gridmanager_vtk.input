@@ -13,7 +13,6 @@ CellData = p radius
 [UGGrid.Grid]
 File = ./grids/lens.vtu
 Verbosity = true
-CellData = processrank
 PointData = S_aq S_napl p_aq p_napl pc rho_aq rho_napl mob_aq mob_napl porosity
 
 [YaspGrid.Grid]

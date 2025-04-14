@@ -293,6 +293,7 @@ dumux_add_test(NAME test_gridmanager_vtk_foam
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
+                       --ignore "process rank"
                        --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_foam
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lupine.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-foamgrid-0.vtp)
@@ -304,6 +305,7 @@ dumux_add_test(NAME test_gridmanager_vtk_ug
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
+                       --ignore "process rank"
                        --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_ug
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lens.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-uggrid-0.vtu)
@@ -315,6 +317,7 @@ dumux_add_test(NAME test_gridmanager_vtk_alu
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
+                       --ignore "rank"
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/disk_alu-element-00000.vtu
@@ -329,7 +332,8 @@ dumux_add_test(NAME test_gridmanager_vtk_alu_parallel
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${DUMUX_RUNTEST}
-              CMD_ARGS --script fuzzy --ignore "rank"
+              CMD_ARGS --script fuzzy
+                       --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-element-00000.pvtu
