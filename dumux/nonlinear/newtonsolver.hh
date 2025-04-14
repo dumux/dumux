@@ -501,7 +501,7 @@ public:
         catch (const Dune::Exception &e)
         {
             if (verbosity_ >= 1)
-                std::cout << solverName_ << ": Caught exception from the linear solver: \"" << e.what() << "\"\n";
+                std::cout << solverName_ << " caught exception in  the linear solver: \"" << e.what() << "\"\n";
 
             converged = false;
         }
@@ -1030,7 +1030,7 @@ private:
         catch (const NumericalProblem &e)
         {
             if (verbosity_ >= 1)
-                std::cout << solverName_ << ": Caught exception: \"" << e.what() << "\"\n";
+                std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
 
             totalWastedIter_ += numSteps_;
 
