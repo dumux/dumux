@@ -2,7 +2,7 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="200" NumberOfPoints="402">
-      <CellData Scalars="S_aq" Vectors="velocityW">
+      <CellData Scalars="S_aq" Vectors="velocity_aq (m/s)">
         <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -231,7 +231,7 @@
           290 290 290 290 290 290 290 290 290 290 290 290
           290 290 290 290 290 290 290 290
         </DataArray>
-        <DataArray type="Float32" Name="velocity_aq" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_aq (m/s)" NumberOfComponents="3" format="ascii">
           -1.0499e-09 0 0 -1.03771e-09 0 0 -1.01387e-09 0 0 -9.81573e-10 0 0
           -9.42382e-10 0 0 -8.95523e-10 0 0 -8.42218e-10 0 0 -7.83778e-10 0 0
           -7.21541e-10 0 0 -6.61849e-10 0 0 -6.05993e-10 0 0 -5.50043e-10 0 0
@@ -283,7 +283,7 @@
           7.00058e-11 0 0 7.00058e-11 0 0 7.00058e-11 0 0 7.00058e-11 0 0
           7.00058e-11 0 0 7.00058e-11 0 0 7.00058e-11 0 0 7.00058e-11 0 0
         </DataArray>
-        <DataArray type="Float32" Name="velocity_napl" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_napl (m/s)" NumberOfComponents="3" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -335,7 +335,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="velocity_gas" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_gas (m/s)" NumberOfComponents="3" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
