@@ -257,7 +257,7 @@ int main(int argc, char** argv)
 
     Dune::VTKWriter<typename HostGrid::LeafGridView> vtkWriter(gridView);
     vtkWriter.addCellData(processRank, "process rank");
-    vtkWriter.addCellData(pressure, "pressure");
+    vtkWriter.addCellData(pressure, "p");
     const auto filename = getParam<std::string>("Vtk.OutputName") + "_combined";
     vtkWriter.write(filename);
 
