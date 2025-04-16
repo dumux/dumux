@@ -1,3 +1,13 @@
+Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
+=============================================
+
+### Improvements and Enhancements
+
+- __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
+It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
+- __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
+times whenever multiple scvs were associated with the same localDof.
+
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 =============================================
 
