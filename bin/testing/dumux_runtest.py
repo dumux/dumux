@@ -89,6 +89,8 @@ try:
         print(f"-- Summary: {result.status} ({result.report})\n")
 
         # all skipped comparisons result in failure except explicitly filtered fields
+        for r in (r.status == FieldComparisonStatus.filtered for r in result.skipped):
+            print(f"-- Filtered comparison: {r}")
         if any(r.status != FieldComparisonStatus.filtered for r in result.skipped):
             return 1
 
