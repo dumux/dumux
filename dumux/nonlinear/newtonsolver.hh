@@ -900,7 +900,8 @@ protected:
     std::ostringstream endIterMsgStream_;
 
 
-private:
+
+protected:
 
     /*!
      * \brief Run the Newton method to solve a non-linear system.
@@ -1037,6 +1038,10 @@ private:
         }
     }
 
+    const std::size_t& maxTimeStepDivisions() const
+    { return maxTimeStepDivisions_; }
+
+private:
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
