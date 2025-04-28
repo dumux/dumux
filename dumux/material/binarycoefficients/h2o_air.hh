@@ -158,25 +158,25 @@ Scalar henry(Scalar temperature, IdealMixtureImplementation) {
             }
 
             /*!
-            * \brief Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
-            *
-            * Two implementations are available:
-            *
-            * \section finsterle_section Finsterle Law Implementation
-            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleImplementation)
-            *
-            * \section tchobanoglous_section Tchobanoglous Cubic Law Implementation
-            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,TchobanoglousCubicImplementation)
-            *
-            * \section mixture_section Mixture Law Implementation
-            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,IdealMixtureLaw)
-            *
-            * \note The default implementation currently uses the Finsterle approach but will change to
-            * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
-            *
-            * \param temperature the temperature \f$\mathrm{[K]}\f$
-            * \return Henry coefficient \f$\mathrm{[Pa]}\f$
-            */
+             * \brief Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
+             *
+             * Available implementations:
+             *
+             * \section finsterle_section Finsterle Law Implementation
+             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleImplementation)
+             *
+             * \section tchobanoglous_section Tchobanoglous Cubic Law Implementation
+             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,TchobanoglousCubicImplementation)
+             *
+             * \section mixture_section Mixture Law Implementation
+             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,IdealMixtureLaw)
+             *
+             * \note The default implementation currently uses the Finsterle approach but will change to
+             * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
+             *
+             * \param temperature the temperature \f$\mathrm{[K]}\f$
+             * \return Henry coefficient \f$\mathrm{[Pa]}\f$
+             */
             template <typename Scalar, typename Rule>
             static Scalar henry(Scalar temperature, Rule rule)
             {
