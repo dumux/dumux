@@ -20,6 +20,7 @@
 #include <dumux/material/idealgas.hh>
 
 namespace Dumux::Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the air fluid properties
