@@ -25,7 +25,7 @@ namespace Dumux::BinaryCoeff {
 namespace Detail::H2O_Air{
 
 //! Finsterle implementation for Henry coefficient
-struct FinsterleLaw : public Utility::Tag<FinsterleLaw> {
+struct FinsterleImplementation : public Utility::Tag<FinsterleImplementation> {
     static std::string name() { return "Finsterle"; }
 };
 
@@ -40,7 +40,7 @@ struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
 };
 
 //! Default rule (for backwards compatibility, will change to Mixture after 3.11)
-using DefaultRule = FinsterleLaw;
+using DefaultRule = FinsterleImplementation;
 
 
 /*!
@@ -56,7 +56,7 @@ using DefaultRule = FinsterleLaw;
  * \return Henry coefficient \f$\mathrm{[Pa]}\f$
  */
 template<typename Scalar>
-Scalar henry(Scalar temperature, FinsterleLaw) {
+Scalar henry(Scalar temperature, FinsterleImplementation) {
     using std::exp;
     Scalar r = (0.8942 + 1.47 * exp(-0.04394 * (temperature - 273.15))) * 1.E-10;
     return 1. / r;
