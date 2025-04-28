@@ -35,7 +35,7 @@ struct TchobanoglousCubicImplementation : public Utility::Tag<TchobanoglousCubic
 };
 
 //! Mixture implementation for Henry coefficient
-struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
+struct IdealMixtureImplementation : public Utility::Tag<IdealMixtureImplementation> {
     static std::string name() { return "Mixture"; }
 };
 
@@ -106,7 +106,7 @@ Scalar henry(Scalar temperature, TchobanoglousCubicImplementation)
  * \return Henry coefficient for air in water \f$\mathrm{[Pa]}\f$
  */
 template<typename Scalar>
-Scalar henry(Scalar temperature, IdealMixtureLaw) {
+Scalar henry(Scalar temperature, IdealMixtureImplementation) {
     static constexpr Scalar yO2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::O2;
     static constexpr Scalar yN2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::N2;
     static constexpr Scalar yCO2_air = Dumux::Components::Air<Scalar>::composition::dryMoleFraction::CO2;
