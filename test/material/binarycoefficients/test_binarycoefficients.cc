@@ -139,8 +139,8 @@ int main()
     success += checkHenryCoefficients<Scalar, Air_Mesitylene>();
     success += checkHenryCoefficients<Scalar, Air_Xylene>();
     success += checkHenryCoefficients<Scalar, H2O_Air>();
-    success += checkHenryCoefficients<Scalar, H2O_Air>(H2O_Air::HenryLaws::FinsterleLaw{});
-    success += checkHenryCoefficients<Scalar, H2O_Air>(H2O_Air::HenryLaws::IdealMixtureLaw{});
+    success += checkHenryCoefficients<Scalar, H2O_Air>(BinaryCoeff::Detail::H2O_Air::FinsterleLaw{});
+    success += checkHenryCoefficients<Scalar, H2O_Air>(BinaryCoeff::Detail::H2O_Air::IdealMixtureLaw{});
     success += checkHenryCoefficients<Scalar, H2O_CH4>();
     success += checkHenryCoefficients<Scalar, H2O_Mesitylene>();
     success += checkHenryCoefficients<Scalar, H2O_N2>();
