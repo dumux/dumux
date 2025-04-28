@@ -121,20 +121,20 @@ int main()
 
     int success = 0;
 
-   success += checkDiffusionCoefficients<Scalar, Air_Mesitylene>();
-   success += checkDiffusionCoefficients<Scalar, Air_Xylene>();
-   success += checkDiffusionCoefficients<Scalar, Brine_CO2<Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>>>();
-   success += checkDiffusionCoefficients<Scalar, H2O_Air>();
-   success += checkDiffusionCoefficients<Scalar, H2O_CH4>();
-   success += checkDiffusionCoefficients<Scalar, H2O_Component<Scalar, Components::Constant<0, Scalar>>>();
-   success += checkDiffusionCoefficients<Scalar, H2O_HeavyOil>();
-   success += checkDiffusionCoefficients<Scalar, H2O_Mesitylene>();
-   success += checkDiffusionCoefficients<Scalar, H2O_N2>();
-   success += checkDiffusionCoefficients<Scalar, H2O_O2>();
-   success += checkDiffusionCoefficients<Scalar, H2O_CO2>();
-   success += checkDiffusionCoefficients<Scalar, H2O_AR>();
-   success += checkDiffusionCoefficients<Scalar, H2O_Xylene>();
-   success += checkDiffusionCoefficients<Scalar, N2_O2>();
+    success += checkDiffusionCoefficients<Scalar, Air_Mesitylene>();
+    success += checkDiffusionCoefficients<Scalar, Air_Xylene>();
+    success += checkDiffusionCoefficients<Scalar, Brine_CO2<Scalar, Components::CO2<Scalar, GeneratedCO2Tables::CO2Tables>>>();
+    success += checkDiffusionCoefficients<Scalar, H2O_Air>();
+    success += checkDiffusionCoefficients<Scalar, H2O_CH4>();
+    success += checkDiffusionCoefficients<Scalar, H2O_Component<Scalar, Components::Constant<0, Scalar>>>();
+    success += checkDiffusionCoefficients<Scalar, H2O_HeavyOil>();
+    success += checkDiffusionCoefficients<Scalar, H2O_Mesitylene>();
+    success += checkDiffusionCoefficients<Scalar, H2O_N2>();
+    success += checkDiffusionCoefficients<Scalar, H2O_O2>();
+    success += checkDiffusionCoefficients<Scalar, H2O_CO2>();
+    success += checkDiffusionCoefficients<Scalar, H2O_AR>();
+    success += checkDiffusionCoefficients<Scalar, H2O_Xylene>();
+    success += checkDiffusionCoefficients<Scalar, N2_O2>();
 
     success += checkHenryCoefficients<Scalar, Air_Mesitylene>();
     success += checkHenryCoefficients<Scalar, Air_Xylene>();
