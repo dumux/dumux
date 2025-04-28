@@ -157,6 +157,9 @@ Scalar henry(Scalar temperature, IdealMixtureLaw) {
             * \section finsterle_section Finsterle Law Implementation
             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleLaw)
             *
+            * \section tchobanoglous_section Tchobanoglous Cubic Law Implementation
+            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,TchobanoglousCubicImplementation)
+            *
             * \section mixture_section Mixture Law Implementation
             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,IdealMixtureLaw)
             *
