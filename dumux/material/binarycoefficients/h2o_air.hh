@@ -131,7 +131,7 @@ Scalar henry(Scalar temperature, IdealMixtureLaw) {
             * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
             *
             * \section finsterle_section Finsterle Law Implementation
-            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleLaw)
+            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleImplementation)
             *
             * \param temperature the temperature \f$\mathrm{[K]}\f$
             * \return Henry coefficient \f$\mathrm{[Pa]}\f$
