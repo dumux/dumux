@@ -42,7 +42,7 @@ OPM_FLAGS=""
 #"
 
 # set this to "ON" if you want to be able to have the headercheck target
-DUMUX_ENABLE_HEADERCHECK=ON
+DUMUX_ENABLE_HEADERCHECK=OFF
 
 # DuMux Python bindings require shared libraries to be built for DuMux and upstream modules
 DUMUX_ENABLE_PYTHON_BINDINGS="-DDUNE_ENABLE_PYTHONBINDINGS=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON"
