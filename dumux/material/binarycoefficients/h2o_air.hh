@@ -115,7 +115,7 @@ namespace Detail::H2O_Air{
             {
                 // Warning about future changes (if needed)
                 [[maybe_unused]] static bool _ = []() {
-                    std::cout << "Warning: H2O_Air::henry(T) default implementation will change from Finsterle to Mixture implementation after 3.10. Use explicit tag to disable this warning and choose a specific implementation.\n";
+                    std::cout << "Warning: H2O_Air::henry(T) default implementation will change from Finsterle to Mixture implementation after 3.11. Use explicit tag to disable this warning and choose a specific implementation.\n";
                     return true;
                 }();
 
