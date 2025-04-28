@@ -58,6 +58,26 @@ Scalar henry(Scalar temperature, FinsterleLaw) {
 }
 
 /*!
+ * \ingroup TchobanoglousCubic_Implementation
+ * \brief Henry coefficient implementation using a cubic function to data from
+ * Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985
+ * The data covers the interval from 0°C to 60°C. Outside, the quality of the extrapolation
+ * is unknown.
+ *
+ * \param temperature the temperature \f$\mathrm{[K]}\f$
+ * \return Henry coefficient \f$\mathrm{[Pa]}\f$
+ */
+template <class Scalar>
+Scalar henry(Scalar temperature, TchobanoglousCubicImplementation)
+{
+    Scalar t = temperature - 273.15; // convert from K to °C
+    Scalar r = (-5.55556E-6 * t*t*t + 0.000895238 * t*t - 0.0556825 * t + 2.30524) * 1e-5;
+    r /= 101325; // convert from atm to Pa
+
+    return 1./r;
+}
+
+/*!
  * \ingroup Mixture_Implementation
  * \brief Henry coefficient implementation using Mixture rule
  *
