@@ -29,6 +29,11 @@ struct FinsterleLaw : public Utility::Tag<FinsterleLaw> {
     static std::string name() { return "Finsterle"; }
 };
 
+//! Cubic interpolation of tabulated Henry coefficient from Tchobanoglous & Schroeder (1985)
+struct TchobanoglousCubicImplementation : public Utility::Tag<TchobanoglousCubicImplementation> {
+    static std::string name() { return "Cubic interpolation Tchobanoglous data "; }
+};
+
 //! Mixture implementation for Henry coefficient
 struct IdealMixtureLaw : public Utility::Tag<IdealMixtureLaw> {
     static std::string name() { return "Mixture"; }
