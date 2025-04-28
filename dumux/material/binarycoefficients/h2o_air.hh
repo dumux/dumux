@@ -100,7 +100,7 @@ Scalar henry(Scalar temperature, TchobanoglousCubicImplementation)
  * The implementation considers the four main components of dry-air with their respective
  * mole fractions:
  *
- * \copydetails Dumux::Components::Air::composition::dryMoleFraction
+ * \copydetails Dumux::Components::Air::Composition::DryMoleFraction
  *
  * \param temperature the temperature \f$\mathrm{[K]}\f$
  * \return Henry coefficient for air in water \f$\mathrm{[Pa]}\f$
