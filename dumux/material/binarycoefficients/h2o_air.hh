@@ -66,6 +66,9 @@ Scalar henry(Scalar temperature, FinsterleImplementation) {
  * \ingroup TchobanoglousCubic_Implementation
  * \brief Henry coefficient implementation using a cubic function to data from
  * Tchobanoglous & Schroeder, 1985 \cite tchobanoglous1985
+ *
+ * The cubic interpolation uses Table 2.15 from \cite tchobanoglous1985 .
+ * For a discussion see MR: 4112.
  * The data covers the interval from 0°C to 60°C. Outside, the quality of the extrapolation
  * is unknown.
  *
