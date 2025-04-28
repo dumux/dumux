@@ -74,9 +74,9 @@ int checkDiffusionCoefficients()
         return 1;
 }
 
-struct voidTag{};
+struct VoidTag{};
 
-template<class Scalar, class BinaryCoefficients, class Implementation=voidTag>
+template<class Scalar, class BinaryCoefficients, class Implementation=VoidTag>
 int checkHenryCoefficients(Implementation impl = Implementation{})
 {
     // Define a reference temperature and pressure for evaluation:
@@ -88,7 +88,7 @@ int checkHenryCoefficients(Implementation impl = Implementation{})
 
     try
     {
-        if constexpr (std::is_same_v<Implementation, voidTag>) {
+        if constexpr (std::is_same_v<Implementation, VoidTag>) {
             [[maybe_unused]] Scalar val = BinaryCoefficients::henry(t);
             std::cout << className << ": t=" << t << ", p=" << p << ", henry: " << val << std::endl;
         } else {
