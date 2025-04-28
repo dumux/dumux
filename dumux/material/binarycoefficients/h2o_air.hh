@@ -134,16 +134,16 @@ Scalar henry(Scalar temperature, IdealMixtureImplementation) {
         public:
 
             /*!
-            * \brief Default Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
-            * \note The default implementation currently uses the Finsterle approach but will change to
-            * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
-            *
-            * \section finsterle_section Finsterle Law Implementation
-            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleImplementation)
-            *
-            * \param temperature the temperature \f$\mathrm{[K]}\f$
-            * \return Henry coefficient \f$\mathrm{[Pa]}\f$
-            */
+             * \brief Default Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
+             * \note The default implementation currently uses the Finsterle approach but will change to
+             * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
+             *
+             * \section finsterle_section Finsterle Law Implementation
+             * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleImplementation)
+             *
+             * \param temperature the temperature \f$\mathrm{[K]}\f$
+             * \return Henry coefficient \f$\mathrm{[Pa]}\f$
+             */
             template <typename Scalar>
             static Scalar henry(Scalar temperature)
             {
