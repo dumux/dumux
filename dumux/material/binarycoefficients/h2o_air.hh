@@ -34,7 +34,7 @@ namespace Detail::H2O_Air{
             static std::string name() { return "Mixture"; }
         };
 
-            //! Default rule (for backwards compatibility, will change to Mixture after 3.10)
+        //! Default rule (for backwards compatibility, will change to Mixture after 3.11)
         using DefaultRule = FinsterleLaw;
 
 
@@ -106,10 +106,16 @@ namespace Detail::H2O_Air{
         public:
 
             /*!
-             * \brief Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water with explicit rule.
-             * \param temperature the temperature \f$\mathrm{[K]}\f$
-             * \param rule Tag dispatch parameter specifying which implementation to use
-             */
+            * \brief Default Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
+            * \note The default implementation currently uses the Finsterle approach but will change to
+            * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
+            *
+            * \section finsterle_section Finsterle Law Implementation
+            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleLaw)
+            *
+            * \param temperature the temperature \f$\mathrm{[K]}\f$
+            * \return Henry coefficient \f$\mathrm{[Pa]}\f$
+            */
             template <typename Scalar>
             static Scalar henry(Scalar temperature)
             {
@@ -122,6 +128,24 @@ namespace Detail::H2O_Air{
 
                 return henry<Scalar>(temperature, Detail::H2O_Air::DefaultRule{});
             }
+
+            /*!
+            * \brief Henry coefficient \f$\mathrm{[Pa]}\f$ for air in liquid water.
+            *
+            * Two implementations are available:
+            *
+            * \section finsterle_section Finsterle Law Implementation
+            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,FinsterleLaw)
+            *
+            * \section mixture_section Mixture Law Implementation
+            * \copydetails Dumux::BinaryCoeff::Detail::H2O_Air::henry(Scalar,IdealMixtureLaw)
+            *
+            * \note The default implementation currently uses the Finsterle approach but will change to
+            * the mixture approach after version 3.11. Use explicit tag dispatch to choose a specific implementation.
+            *
+            * \param temperature the temperature \f$\mathrm{[K]}\f$
+            * \return Henry coefficient \f$\mathrm{[Pa]}\f$
+            */
             template <typename Scalar, typename Rule>
             static Scalar henry(Scalar temperature, Rule rule)
             {
