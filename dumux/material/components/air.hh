@@ -41,7 +41,7 @@ public:
     { return "Air"; }
 
 
-    struct composition {
+    struct Composition {
     /*!
     * \brief Mole fraction composition of dry air at standard conditions.
     *
@@ -54,7 +54,7 @@ public:
     * These values are based on Table 1 from Gatley et al. 2008 \cite Gatley2008A ,
     * with slight adjustments for CO₂ levels reflecting more recent measurements, see https://gml.noaa.gov/ccgg/trends/.
     */
-        struct dryMoleFraction {
+        struct DryMoleFraction {
             constexpr static Scalar O2 = 0.209435;
             constexpr static Scalar Ar = 0.009332;
             constexpr static Scalar CO2 = 0.000427;
