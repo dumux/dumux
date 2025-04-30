@@ -13,6 +13,11 @@ target_compile_definitions(test_richards_lens_mpfa PUBLIC TYPETAG=RichardsLensCC
 add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
+# address sanitizer
+set(CMAKE_BUILD_TYPE Debug)
+target_compile_options(test_richards_lens_box PRIVATE -fsanitize=address)
+target_link_libraries(test_richards_lens_box PRIVATE -fsanitize=address)
+
 dumux_add_test(TARGET test_richards_lens_box
               LABELS porousmediumflow richards
               COMMAND ${DUMUX_RUNTEST}

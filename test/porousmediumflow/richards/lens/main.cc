@@ -12,6 +12,8 @@
 
 #include <config.h>
 
+#define HAVE_MPI 1
+
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -25,6 +27,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/linear/trilinossolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/porousmediumflow/richards/newtonsolver.hh>
@@ -135,10 +138,10 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
-                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = DirectSolverAmesos2<LinearSolverTraits<GridGeometry>,
+                                             LinearAlgebraTraitsFromAssembler<Assembler>>;
 
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(*gridGeometry, leafGridView, gridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;

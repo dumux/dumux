@@ -16,6 +16,7 @@ EnableChop = true # chop for better convergence
 
 [LinearSolver]
 Type = bicgstabsolver
+ConfigFilename = solver.xml
 
 [LinearSolver.Preconditioner]
 Type = amg
