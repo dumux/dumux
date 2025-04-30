@@ -167,7 +167,7 @@ public:
             }
         }
 
-        if (std::any_of(poreRadius.begin(), poreRadius.end(), [&](auto& r) { return Dune::FloatCmp::eq(r, poreRadius[0]); }))
+        if (!std::all_of(poreRadius.begin(), poreRadius.end(), [&](auto& r) { return Dune::FloatCmp::eq(r, poreRadius[0]); }))
             DUNE_THROW(Dune::GridError, "SnappyGridCreator in 3D currently only supports equal pore radii at the interface");
 
         for (auto& c : coordinates)
