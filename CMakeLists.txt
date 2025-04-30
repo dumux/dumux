@@ -91,6 +91,18 @@ find_package(TBB QUIET)
 find_package(Kokkos QUIET)
 find_package(OpenMP QUIET)
 
+find_package(Trilinos COMPONENTS Teuchos Tpetra Amesos2)
+MESSAGE("\nFound Trilinos!  Here are the details: ")
+MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
+MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
+MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+MESSAGE("End of Trilinos details\n")
+
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
 dumux_add_library(dumux
@@ -129,6 +141,11 @@ endif()
 if (OpenMP_FOUND)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_OPENMP=1)
   target_link_libraries(dumux INTERFACE OpenMP::OpenMP_CXX)
+endif()
+
+if (Trilinos_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_TRILINOS=1)
+  target_link_libraries(dumux INTERFACE Trilinos::all_selected_libs)
 endif()
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
