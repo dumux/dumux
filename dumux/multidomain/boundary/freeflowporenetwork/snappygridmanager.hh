@@ -547,12 +547,6 @@ private:
         // create an empty vector for the given directionIndex
         interFacePositions[directionIndex] = ScalarVector{};
 
-        if ((points[0].pos - points[0].radius) < gridLowerLeft[directionIndex])
-                DUNE_THROW(Dune::RangeError, "The first pore body at interface intersects with start of grid in direction "
-                    + std::to_string(directionIndex) + ".\n"
-                    "This can be due to a too large radius of this pore body OR "
-                    "a too large value for the start of the free-flow grid this direction.");
-
         // set the points for the pore body positions
         for (const auto& point : points)
         {
@@ -560,13 +554,21 @@ private:
             const auto right = point.pos + point.radius;
 
             if (left < positions[directionIndex].back())
-                DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
-
-            if (left > gridLowerLeft[directionIndex])
+                if (left < gridLowerLeft[directionIndex])
+                    DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
+                        "with the start of the FF-grid in direction " + std::to_string(directionIndex));
+                else
+                    DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
+            else if (left > positions[directionIndex].back())
                 positions[directionIndex].push_back(left);
+            //if left = position[directionIndex].back(), this position has already been added
 
             if (right < gridUpperRight[directionIndex])
                 positions[directionIndex].push_back(right);
+            else if (right > gridUpperRight[directionIndex])
+                DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
+                    "with the end of the FF-grid in direction " + std::to_string(directionIndex));
+            //if right = gridUpperRight[directionIndex], this is fine as gridUpperRight wil be added later on
 
             interFacePositions[directionIndex]->push_back(left);
             interFacePositions[directionIndex]->push_back(right);
