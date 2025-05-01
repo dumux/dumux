@@ -276,7 +276,7 @@ public:
     template<class ScvOrLocalDof, class ElemSol>
     void maybeUpdateCouplingContext(const ScvOrLocalDof& scvOrLocalDof, ElemSol& elemSol, const int pvIdx)
     {
-        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scvOrLocalDof.dofIndex(), elemSol[Detail::index(scvOrLocalDof)], pvIdx);
+        this->couplingManager().updateCouplingContext(domainI, *this, domainI, scvOrLocalDof.dofIndex(), elemSol[Detail::LocalDofs::index(scvOrLocalDof)], pvIdx);
     }
 
     /*!

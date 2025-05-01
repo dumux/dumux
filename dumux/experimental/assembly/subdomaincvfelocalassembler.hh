@@ -250,7 +250,7 @@ public:
     void maybeUpdateCouplingContext(const ScvOrLocalDof& scvOrLocalDof, ElemSol& elemSol, const int pvIdx)
     {
         if (this->assembler().isImplicit())
-            this->couplingManager().updateCouplingContext(domainI, *this, domainI, scvOrLocalDof.dofIndex(), elemSol[Dumux::Detail::index(scvOrLocalDof)], pvIdx);
+            this->couplingManager().updateCouplingContext(domainI, *this, domainI, scvOrLocalDof.dofIndex(), elemSol[Dumux::Detail::LocalDofs::index(scvOrLocalDof)], pvIdx);
     }
 
     /*!

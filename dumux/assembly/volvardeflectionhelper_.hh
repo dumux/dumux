@@ -29,7 +29,7 @@ class VolVarsDeflectionHelper
     using ElementVariables = typename GridVolumeVariables::LocalView;
     using VolumeVariables = typename ElementVariables::VolumeVariables;
 
-    static constexpr int maxNumLocalDofs = Detail::maxNumLocalDofs<FVElementGeometry>();
+    static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
 
 public:
     VolVarsDeflectionHelper(GridVolumeVariables& gridVolumeVariables,

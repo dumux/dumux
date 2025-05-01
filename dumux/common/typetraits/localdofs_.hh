@@ -9,8 +9,8 @@
  * \ingroup Typetraits
  * \brief Type traits to be used for detecting new interfaces related to local dofs
  */
-#ifndef DUMUX_TYPETRAITS_LOCALDOFS_HH
-#define DUMUX_TYPETRAITS_LOCALDOFS_HH
+#ifndef DUMUX_TYPETRAITS_LOCALDOFS__HH
+#define DUMUX_TYPETRAITS_LOCALDOFS__HH
 
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/rangeutilities.hh>
@@ -18,7 +18,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
-namespace Dumux::Detail {
+namespace Dumux::Detail::LocalDofs {
 
 //! helper struct detecting if a fvElementGeometry object has a numLocalDofs() function
 template<class Imp>
@@ -75,6 +75,6 @@ using LocalDof_t = Dune::Std::detected_or_t<
     FVG
 >;
 
-} // end namespace Dumux::Detail
+} // end namespace Dumux::Detail::LocalDofs
 
 #endif

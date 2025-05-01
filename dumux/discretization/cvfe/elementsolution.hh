@@ -60,7 +60,7 @@ public:
     CVFEElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                         const FVElementGeometry& fvGeometry)
     {
-        priVars_.resize(Detail::numLocalDofs(fvGeometry));
+        priVars_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
         for (const auto& scv : scvs(fvGeometry))
             priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
     }
@@ -91,7 +91,7 @@ public:
     void update(const Element& element, const SolutionVector& sol,
                 const FVElementGeometry& fvGeometry)
     {
-        priVars_.resize(Detail::numLocalDofs(fvGeometry));
+        priVars_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
         for (const auto& localDof : localDofs(fvGeometry))
             priVars_[localDof.index()] = sol[localDof.dofIndex()];
     }
