@@ -1,4 +1,4 @@
-# Contribution guidelines for DuMu<sup>x</sup>
+# Contribution guidelines
 
 DuMu<sup>x</sup> and DUNE are community projects and we are happy about all forms of external contributions.
 Here are many easy things that you can do, like
@@ -106,13 +106,11 @@ template<class A, class B,
          typename std::enable_if_t<decltype(isValid(HasNewCoolMethodIF<B>()).template check<A>())::value, int> = 0>
 auto coolMethod(const A a, const B b)
 { return a.coolMethod(b); }
-
 ```
 and replace the call with:
 
-``` c++
-Deprecated::template coolMethod(a, b); //TODO: Replace this after release 3.n
-
+```c++
+Deprecated::coolMethod(a, b); //TODO: Replace this after release 3.n
 ```
 
 There are other methods for deprecating old interfaces, please see [ (cppref/deprecated) ](https://en.cppreference.com/w/cpp/language/attributes/deprecated) for more information.
