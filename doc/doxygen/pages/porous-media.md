@@ -1,16 +1,14 @@
-# Flow and transport in porous media
+@addtogroup PorousmediumflowModels
 
-[TOC]
+# Introduction to porous medium flow models
 
-This section gives a brief introduction to the general physics concepts
+We start a brief introduction to the general physics concepts
 used for single and multi-phase flow in porous media in many DuMux models.
 The following description mostly concerns models on the Darcy (homogenized) continuum scale
 and assumes the existence of a representative elementary volume (REV) for
 which average quantities are defined. For a more comprehensive treatment of
 the mathematical modeling and description of the physical processes, we recommend
-the references @cite CLASS2007, @cite helmig1997multiphase. (Before we start, we remark that DuMux can be used to solve general
-conservation equations such as the Navier-Stokes equations and also support other modeling concepts
-such as pore-networks models to simulate pore-scale processes. Here, we focus on models in the scope of Darcy's law.)
+the references @cite CLASS2007, @cite helmig1997multiphase.
 
 ![](multiphase_processes.svg){html: width=70%}
 
@@ -281,8 +279,8 @@ leads to the following expression for the (mass) density and molar density of th
 
 Also see Dumux::IdealGas for where this is implemented in DuMux.
 
-## Porous medium flow models
+# Porous medium flow models
 
-A list of porous medium flow models implemented in DuMux can be found in @ref PorousmediumflowModels.
+A list of porous medium flow models implemented in DuMux can be found below.
 The module description found under the link features a description of the governing equations
 describing each mathematical model.
