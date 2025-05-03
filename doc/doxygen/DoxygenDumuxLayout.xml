@@ -24,10 +24,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref directory-structure" visible="yes" title="Directory structure" intro=""/>
       <tab type="user" url="@ref cheatsheet" visible="yes" title="Cheatsheet" intro=""/>
     </tab>
-    <tab type="modules" visible="yes" title="Module documentation" intro=""/>
-    <tab type="user" url="@ref flow-and-transport-in-porous-media" visible="yes" title="Flow and transport in porous media" intro=""/>
-    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
+    <!-- The topics contains pages for each group and subpages for each subgroup -->
+    <!-- Note that extra documentation can be added to groups in separate markdown files -->
+    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
+    <tab type="modules" visible="yes" title="User documentation by topics" intro="" /> <!-- only doxygen < 1.9.8, now called topics -->
+    <tab type="topics" visible="yes" title="User documentation by topics" intro="" />
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
+    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="usergroup" title="Developer documentation">
       <tab type="user" url="@ref dumux-and-dune" visible="yes" title="Dumux and Dune" intro=""/>
       <tab type="user" url="@ref developing-dumux" visible="yes" title="Developing Dumux" intro=""/>
@@ -49,6 +52,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="hierarchy" visible="yes" title="" intro=""/>
       <tab type="classmembers" visible="yes" title="" intro=""/>
     </tab>
+    <tab type="concepts" visible="yes" title="" />
     <tab type="examples" visible="yes" title="" intro=""/>
   </navindex>
 
