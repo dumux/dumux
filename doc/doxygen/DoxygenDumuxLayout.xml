@@ -29,6 +29,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
     <tab type="modules" visible="yes" title="User documentation by topics" intro="" /> <!-- only doxygen < 1.9.8, now called topics -->
     <tab type="topics" visible="yes" title="User documentation by topics" intro="" />
+    <tab type="user" url="@ref benchmarks" visible="yes" title="Benchmarks" intro=""/>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
     <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="usergroup" title="Developer documentation">
