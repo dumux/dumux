@@ -10,6 +10,7 @@ PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
+                         @top_srcdir@/examples/README.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
                          @srcdir@/README.md \
