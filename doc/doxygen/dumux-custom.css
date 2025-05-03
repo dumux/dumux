@@ -213,3 +213,14 @@ a.edit-button{
         fill:#672f8f
     }
 }
+
+.dumux-circled-text {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #fff;
+    text-align: center;
+    background: #7cb5c6;
+}
