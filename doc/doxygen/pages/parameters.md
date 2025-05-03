@@ -4,6 +4,8 @@ Runtime simulation parameters can be parsed to the program via a parameter file,
 or can be initialized programmatically. We discuss all three approaches. Moreover, most parameters have default values as explained below.
 Runtime parameters are a configuration mechanism at program runtime (avoiding recompilation).
 
+[TOC]
+
 ## Initializing the parameter tree
 
 The parameter tree is initialized by Dumux::Parameters::init.
@@ -184,5 +186,3 @@ Note that not all listed parameters will be available in all types of simulation
 solver can only be configured (via parameters in the group `[Newton]`) for
 simulations that actually use a Newton solver. Model-specific parameters are only
 read and used when the corresponding model is in use.
-
-
