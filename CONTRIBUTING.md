@@ -133,4 +133,4 @@ cases is not feasible, or would require enormous intrusive changes.  In this cas
 
 * Patches can be supplied via the mailing list,
 * should be formatted with git format-patch.
-* TODO: How to format patches
+* We recommend using GitLab to provide patches in the form of a merge request (fork workflow).
