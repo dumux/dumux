@@ -12,5 +12,5 @@ of the conventions and concepts. Please follow one of the links below.
 | @emoji :gear: @emoji :gear: @emoji :gear: | @ref running-in-parallel              | How to run DuMux in parallel. This will help you to speed up your simulations using distributed and shared memory parallelism. |
 | @emoji :arrows_counterclockwise: | @ref input-and-output-formats       | How to read and write computational grids and other user data in different formats. |
 | @emoji :jigsaw: | @ref MultiDomain | Introduction to the Multidomain framework of DuMux that allows coupling different models in various ways. |
-| @emoji :open_file_folder: | @ref directory-structure              | An overview of the top-level directory structure of the DuMux source code. This will help you to navigate the codebase and find the files you need. |
+| @emoji :open_file_folder: | @ref directory-structure              | An overview of the top-level and `dumux` directory structure of the DuMux source code. This will help you to navigate the codebase and find the files you need. |
 | @emoji :joystick: | @ref cheatsheet                       | A quick reference to some commonly used code patterns and control commands when simulating with DuMux. |
