@@ -5,37 +5,17 @@ You have run `dunecontrol` and your first example compiled and showed a nice sim
 What now? *How on earth is this going to help me solve my multi-(phase, component, scale, physics) flow and transport problems in porous media systems?*
 A great collection of additional resources can be found below.
 
-[TOC]
+| | | |
+|:----------------:|:---------:|:--------------|
+| <div class="dumux-circled-text">📝</div>   | [Documented Examples](@ref examples)  | DuMux comes with a set of [➡️ Documented Examples](@ref examples). These are currently best viewed in GitLab via the browser. The corresponding files are located in the same folder as the `README.md` which contains the documentation and is rendered as a documentation page in GitLab. |
+| <div class="dumux-circled-text">🧪</div>   | [↗️ DuMux test applications](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test)                  |  Every model in DuMux is accompanied by at least one test application. Applications can be used as a starting point for developing your own applications. All tests can be found in the DuMux source code folder [↗️ dumux/test](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test) and instruction how to build and run tests is described [here](#running-individual-tests). |
+| <div class="dumux-circled-text">🧑‍🏫</div>   | [↗️ DuMux course](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course)                  | This dumux course is a 3 day workshop offered in person from time to time. But all the course materials is also [↗️ available online for self study](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course). A series of beginner-level exercises are explained such that you can see how a model is developed in DuMux. There is exercises and solution on models exploring "Coupling free flow and porous-media flow", "Flow in fractured porous media" and "Fluid-solid phase change". Installation instructions and further instructions how to use the course material can be found [↗️ here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course). |
+| <div class="dumux-circled-text">🎓</div>   | [↗️ DuMux lecture](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-lecture)                  | This repository contains different application examples that are used in the university-level teaching at the Department of Hydromechanics and Modelling of Hydrosystems at the University of Stuttgart. See more information below. |
 
-## Documented examples
 
-DuMux comes with a set of [↗️ documented examples](@ref examples).
-These are currently best viewed in GitLab via the browser. The corresponding files are located in the same folder as the `README.md`
-which contains the documentation and is rendered as a documentation page in GitLab.
+__Details on the dumux lecture repository__
 
-## The dumux course
-
-This dumux course is a 3 day workshop offered in person from time to time.
-But all the course materials is also [↗️ available online for self study](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course).
-A series of beginner-level exercises are explained such that you can see how a model is developed in DuMux.
-There is exercises and solution on models exploring "Coupling free flow and porous-media flow",
-"Flow in fractured porous media" and "Fluid-solid phase change".
-
-Installation instructions and further instructions how to use the course material
-can be found [↗️ here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course).
-
-## Test applications
-
-Every model in Dumux is accompanied by at least one test application.
-Applications can be used as a starting point for developing your own applications.
-All tests can be found in [↗️ dumux/test](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test)
-and instruction how to build and run tests is described [here](#running-individual-tests).
-
-## The dumux lecture repository
-
-Another possibility to gain more experience with DuMux is the `dumux-lecture` module that contains different application
-examples that are used in the university-level teaching at the Department of Hydromechanics and Modelling of Hydrosystems
-at the University of Stuttgart. The `dumux-lecture` module can be
+The `dumux-lecture` module can be
 installed via the [`bin/installexternal.py` script](#install-external-dependencies-via-script).
 
 The module is structured based on the different lectures:
