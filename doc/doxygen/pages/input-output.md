@@ -6,6 +6,8 @@ and introduces grid management via Dumux::GridManager.
 We briefly discuss grid generation. Finally, we discuss the options for
 outputting results for checkpointing or visualization.
 
+[TOC]
+
 ## Supported grid formats
 
 DuMux can read grids from file using the Dune Grid Format (DGF),
