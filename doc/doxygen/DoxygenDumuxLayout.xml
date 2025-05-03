@@ -31,7 +31,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <tab type="topics" visible="yes" title="User documentation by topics" intro="" />
     <tab type="user" url="@ref benchmarks" visible="yes" title="Benchmarks" intro=""/>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
-    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
+    <tab type="user" url="@ref contribution-guidelines" visible="yes" title="Contribute to DuMux" intro=""/>
     <tab type="usergroup" title="Developer documentation">
       <tab type="user" url="@ref dumux-and-dune" visible="yes" title="Dumux and Dune" intro=""/>
       <tab type="user" url="@ref developing-dumux" visible="yes" title="Developing Dumux" intro=""/>
@@ -42,6 +42,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref printing-system-matrix" visible="yes" title="Printing system matrix" intro=""/>
       <tab type="user" url="@ref upgrading-dumux-programs-to-version" visible="yes" title="Upgrading to Dumux 3" intro=""/>
     </tab>
+    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>

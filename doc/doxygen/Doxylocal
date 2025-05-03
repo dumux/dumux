@@ -11,6 +11,7 @@ PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/examples/README.md \
+                         @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
                          @srcdir@/README.md \
