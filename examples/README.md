@@ -5,12 +5,23 @@ Click on the respective example to get to a detailed documentation of the exampl
 For each example in this overview, the model equations and discretization method are described in words
 and the DuMu<sup>x</sup> name of the model is given in parenthesis: e.g. (`OneP`) / (`CCTpfaModel`).
 
-### [:open_file_folder: Example 1: Diffusion equation](diffusion/README.md)
-<table><tr><td>
+[TOC]
 
-In this example we create a diffusion equation model and then simulate a diffusive process.
 
-You learn how to
+## Example 1: Diffusion equation
+
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 1: Diffusion equation](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
+
+In this example, we create a diffusion equation model and then simulate a diffusive process.
+
+__You learn how to__
 
 * setup a new simple model equation (diffusion equation)
 * read parameters from a configuration file
@@ -22,18 +33,25 @@ __Model equations:__ A diffusion equation model fully developed and contained wi
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="25%"><a href="diffusion/README.md">
-<figure><img src="diffusion/img/diffusion.gif" alt="diffusion"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/diffusion/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/diffusion/img/diffusion.gif" alt="diffusion"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 2: Cahn-Hilliard equation](cahn_hilliard/README.md)
+## Example 2: Cahn-Hilliard equation
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 2: Cahn-Hilliard equation](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/cahn_hilliard/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example we simulate the separation of two immiscible phases using the Cahn-Hilliard equation.
 
-You learn how to
+__You learn how to__
 
 * setup a new nonlinear model equation (Cahn-Hilliard equation)
 * setup a model with two governing equations
@@ -45,19 +63,26 @@ __Model equations:__ A Cahn-Hilliard equation model fully developed and containe
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="25%"><a href="cahn_hilliard/README.md">
-<figure><img src="cahn_hilliard/img/animation.gif" alt="phase distribution" width="400px"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/cahn_hilliard/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/cahn_hilliard/img/animation.gif" alt="phase distribution" width="400px"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 3: One-phase flow and tracer transport](1ptracer/README.md)
+## Example 3: One-phase flow and tracer transport
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 3: One-phase flow and tracer transport](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/1ptracer/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, we simulate tracer transport through a confined aquifer with a randomly distributed permeability field.
 We first solve the pressure field, compute the steady state flow field, and then solve the tracer transport equation.
 
-You learn how to
+__You learn how to__
 
 * generate a randomly distributed permeability field
 * sequentially solve two types of problems after each other:
@@ -69,21 +94,28 @@ __Model equations:__ Single-phase flow Darcy equation and advection-diffusion eq
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
-<td width="35%"><a href="1ptracer/README.md">
-<figure><img src="1ptracer/img/xtracer.gif" alt="Tracer result"/></figure>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/1ptracer/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/1ptracer/img/xtracer.gif" alt="Tracer result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 4: Two-phase flow with infiltration and adaptive grid](2pinfiltration/README.md)
+## Example 4: Two-phase flow with infiltration and adaptive grid
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 4: Two-phase flow with infiltration and adaptive grid](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/2pinfiltration/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example we model a soil contamination problem where a
 DNAPL (dense non-aqueous phase liquid) infiltrates a water-saturated porous medium (two-phase flow).
 The initial distribution of DNAPL is read in from a txt-file.
 The grid is adaptively refined where DNAPL enters the domain, around the plume, and around an injection well.
 
-You learn how to
+__You learn how to__
 
 * solve a two-phase flow in porous media problem with two immiscible phases
 * set boundary conditions and a simple injection well
@@ -92,19 +124,27 @@ You learn how to
 
 __Model equations:__ Immiscible two-phase flow Darcy equations in porous media (`TwoP`)<br />
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
+
 </td>
-<td width="35%"><a href="2pinfiltration/README.md">
-<figure><img src="2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/></figure>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/2pinfiltration/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/2pinfiltration/img/test_2p_pointsource_adaptive.png" alt="2p result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 5: Shallow water model](shallowwaterfriction/README.md)
+## Example 5: Shallow water model
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 5: Shallow water model](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/shallowwaterfriction/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 The shallow water flow model is applied to simulate steady subcritical flow in a channel including a bottom friction model.
 
-You learn how to
+__You learn how to__
 
 * solve a shallow water flow problem including bottom friction
 * compute and output (VTK) an analytical reference solution
@@ -113,18 +153,25 @@ __Model equations:__ 2D shallow water equations (`ShallowWater`)<br />
 __Discretization method:__ Cell-centered finite volumes with Riemann solver (`CCTpfaModel`)
 
 </td>
-<td width="35%"><a href="shallowwaterfriction/README.md">
-<figure><img src="shallowwaterfriction/img/swe_result.png" alt="swe result"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/shallowwaterfriction/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/shallowwaterfriction/img/swe_result.png" alt="swe result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 6: Freeflow channel](freeflowchannel/README.md)
+## Example 6: Freeflow channel
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 6: Freeflow channel](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/freeflowchannel/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, we simulate a free flow between two plates in two dimensions.
 
-You learn how to
+__You learn how to__
 
 * solve a free flow problem
 * set outflow boundary conditions in the free-flow context
@@ -133,18 +180,25 @@ __Model equations:__ 2D Stokes equations (`NavierStokes`)<br />
 __Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
 
 </td>
-<td width="40%"><a href="freeflowchannel/README.md">
-<figure><img src="freeflowchannel/img/setup.png" alt="freeflow result"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/freeflowchannel/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/freeflowchannel/img/setup.png" alt="freeflow result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 7: One-phase flow with rotation-symmetric solution](1protationsymmetry/README.md)
+## Example 7: One-phase flow with rotation-symmetric solution
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 7: One-phase flow with rotation-symmetric solution](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/1protationsymmetry/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, a rotation-symmetric solution for the single-phase flow equation is discussed.
 
-You learn how to
+__You learn how to__
 
 * solve a rotation-symmetric problem
 * perform a convergence test against an analytical solution
@@ -154,18 +208,25 @@ __Model equations:__ (rotation-symmetric) single-phase flow Darcy equation (`One
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="35%"><a href="1protationsymmetry/README.md">
-<figure><img src="1protationsymmetry/img/setup.svg" alt="Rotation-symmetric setup"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/1protationsymmetry/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/1protationsymmetry/img/setup.svg" alt="Rotation-symmetric setup"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 8: Biomineralization](biomineralization/README.md)
+## Example 8: Biomineralization
 
-<table><tr><td>
+<table class="markdownTable">
 
-In this example, we simulate microbially-induced calcite precipitation
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 8: Biomineralization](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/biomineralization/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
 
-You learn how to
+<tr><td>
+
+In this example, we simulate microbially-induced calcite precipitation.
+
+__You learn how to__
 
 * solve a reactive transport model including
     * biofilm growth
@@ -179,18 +240,25 @@ __Model equations:__ Miscible two-phase multi-component flow Darcy equations wit
 __Discretization method:__ Vertex-centered finite volumes / control-volume finite elements (Lagrange, P1) (`BoxModel`)
 
 </td>
-<td width="35%"><a href="biomineralization/README.md">
-<figure><img src="biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/biomineralization/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/biomineralization/img/pore_scale_w_processes_named.png" alt="biomin result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 9: Lid-driven cavity](liddrivencavity/README.md)
+## Example 9: Lid-driven cavity
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 9: Lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, we simulate laminar incompressible flow in a cavity with the Navier-Stokes equations.
 
-You learn how to
+__You learn how to__
 
 * solve a single-phase Navier-Stokes flow problem
 * compare the results of Stokes flow (Re = 1) and Navier-Stokes flow (Re = 1000)
@@ -200,19 +268,26 @@ __Model equations:__ Navier-Stokes equations (`NavierStokes`)<br />
 __Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
 
 </td>
-<td width="35%"><a href="liddrivencavity/README.md">
-<figure><img src="liddrivencavity/img/setup.png" alt="liddriven result"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/setup.png" alt="liddriven result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 10: Permeability estimation using a pore-network model](porenetwork_upscaling/README.md)
+## Example 10: Permeability estimation using a pore-network model
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 10: Permeability estimation using a pore-network model](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/porenetwork_upscaling/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, we use a single-phase flow pore-network model to estimate the upscaled Darcy permeability of a randomly
 generated grid.
 
-You learn how to
+__You learn how to__
 
 * solve a single-phase-flow pore-network problem
 * use the total mass flow rate to estimate $`K_{xx}`$, $`K_{yy}`$, $`K_{zz}`$
@@ -221,19 +296,26 @@ __Model equations:__ Single-phase flow pore-network model (`PNMOneP`)<br />
 __Discretization method:__ Pore-network (`PoreNetworkModel`)
 
 </td>
-<td width="35%"><a href="porenetwork_upscaling/README.md">
-<figure><img src="porenetwork_upscaling/img/result.png" alt="pnm result"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/porenetwork_upscaling/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/porenetwork_upscaling/img/result.png" alt="pnm result"/>
 </a></td>
 </tr></table>
 
-### [:open_file_folder: Example 11: Embedded network 1D-3D model (tissue perfusion)](embedded_network_1d3d/README.md)
+## Example 11: Embedded network 1D-3D model (tissue perfusion)
 
-<table><tr><td>
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 11: Embedded network 1D-3D model (tissue perfusion)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/embedded_network_1d3d/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
 
 In this example, we compute the spread of a tracer in the blood stream and the embedding tissue (porous medium).
 We couple a 1D advection-diffusion equation on the network with a 3D diffusion equation in the embedding porous medium.
 
-You learn how to
+__You learn how to__
 
 * setup a multi-domain with domains of different dimension
 * read data from a grid file
@@ -243,7 +325,7 @@ __Model equations:__ 1D and 3D advection-diffusion equations (`Tracer`)<br />
 __Discretization method:__ Cell-centered finite volumes with two-point flux approximation (`CCTpfaModel`)
 
 </td>
-<td width="35%"><a href="embedded_network_1d3d/README.md">
-<figure><img src="embedded_network_1d3d/img/network.png" alt="blood vessel network"/></figure></td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/embedded_network_1d3d/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/embedded_network_1d3d/img/network.png" alt="blood vessel network"/>
 </a></td>
 </tr></table>

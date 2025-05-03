@@ -13,10 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- We manually create the navigation hierarchy of the pages -->
     <tab type="user" url="@ref installation" visible="yes" title="Installation" intro=""/>
     <tab type="user" url="@ref getting-started" visible="yes" title="Getting started" intro=""/>
-    <!-- The modules contains pages for each group and subpages for each subgroup -->
-    <!-- Note that extra documentation can be added to groups in separate markdown files -->
-    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
-    <tab type="user" url="@ref examples-and-tutorials" visible="yes" title="Examples and tutorials" intro=""/>
+    <tab type="usergroup" url="@ref examples-and-tutorials" visible="yes" title="Examples and learning material" intro="">
+      <tab type="user" url="@ref examples" visible="yes" title="Documented examples" intro=""/>
+    </tab>
     <tab type="usergroup" url="@ref understanding-dumux" visible="yes" title="Understanding DuMux" >
       <tab type="user" url="@ref basic-concepts" visible="yes" title="Basic concepts" intro=""/>
       <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime parameters" intro=""/>
