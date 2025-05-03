@@ -102,3 +102,6 @@ EXTRACT_PRIV_VIRTUAL = YES
 
 NUM_PROC_THREADS = 8
 DOT_NUM_THREADS = 8
+
+# Do not interpret README.md files as directory doc (since doxygen 1.13)
+IMPLICIT_DIR_DOCS = NO
