@@ -578,7 +578,7 @@ private:
             else if (poreMaxBound > gridUpperRight[directionIndex])
                 DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
                     "with the end of the FF-grid in direction " + std::to_string(directionIndex));
-            else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight wil be added later on
+            else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight will be added later on
             {
                 Dune::dwarn << "Warning: `poreMaxBound = gridUpperRight[" + std::to_string(directionIndex) + "]`. "
                     "PoreMaxBound will not be added as interface position, as gridUpperRight[" + std::to_string(directionIndex) + "] will be added later.\n";
