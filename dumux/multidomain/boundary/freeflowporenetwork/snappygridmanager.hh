@@ -562,9 +562,10 @@ private:
             else if (poreMinBound == gridLowerLeft[directionIndex]) //this position has already been added
             {
                 Dune::dwarn << "Warning: `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`. "
-                    "PoreMinBound will not be added as interface position.\n";
+                    "PoreMinBound will not be added as interface position, as gridLowerLeft[" + std::to_string(directionIndex) + "] has already been added.\n";
                 if (hasParamInGroup(modelParamGroup_, "Grid.UpstreamCells"  + std::to_string(directionIndex)))
-                    DUNE_THROW(Dune::RangeError, "No `Grid.UpstreamCells" + std::to_string(directionIndex) + "` should be specified "
+                    DUNE_THROW(Dune::RangeError, "No upstream cells can be added in "+ std::to_string(directionIndex) +"-direction, as the bound of a pore body overlaps with the start of the grid in this direction.\n"
+"Either `Grid.UpstreamCells" + std::to_string(directionIndex) + "` should not be specified "
                     "OR choose smaller position for `Grid.LowerLeft` in direction " + std::to_string(directionIndex) + ".");
                 std::cout << std::endl;
             }
@@ -579,11 +580,13 @@ private:
                     "with the end of the FF-grid in direction " + std::to_string(directionIndex));
             else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight wil be added later on
             {
-                Dune::dwarn << "Warning: `poreMaxBound = gridUperRight[" + std::to_string(directionIndex) + "]`. "
-                    "PoreMaxBound will not be added as interface position.\n";
+                Dune::dwarn << "Warning: `poreMaxBound = gridUpperRight[" + std::to_string(directionIndex) + "]`. "
+                    "PoreMaxBound will not be added as interface position, as gridUpperRight[" + std::to_string(directionIndex) + "] will be added later.\n";
                 if (hasParamInGroup(modelParamGroup_, "Grid.DownstreamCells"  + std::to_string(directionIndex)))
-                    DUNE_THROW(Dune::RangeError,"No `Grid.DownstreamCells" + std::to_string(directionIndex) + "` should be specified "
-                    "OR choose larger position for `Grid.UpperRight` in direction " + std::to_string(directionIndex) + ".");
+                    DUNE_THROW(Dune::RangeError,"No downstream cells can be added in "+ std::to_string(directionIndex) +"-direction, as the bound of a pore body overlaps with the end of the grid in this direction.\n"
+"Either `Grid.DownstreamCells" + std::to_string(directionIndex) + "` should not be specified "
+                    "OR choose larger position for `Grid.UpperRight` in direction " + std::to_string(directionIndex) + ".")
+);
                 std::cout << std::endl;
             }
 
