@@ -735,8 +735,8 @@ public:
      * copyright (C) 2004-2009  John Pye
      *
      * See:
-     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * IAPWS: "Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance",
+     * https://doc.modelica.org/Modelica%204.0.0/Resources/Documentation/Media/Water/IF97documentation/thcond.pdf
      * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
@@ -768,8 +768,8 @@ public:
      * copyright (C) 2004-2009  John Pye
      *
      * See:
-     * IAPWS: "Release on the IAPWS Formulation 2011 for the Thermal Conductivity
-     * of Ordinary Water Substance", http://www.iapws.org/relguide/ThCond.pdf
+     * IAPWS: "Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance",
+     * https://doc.modelica.org/Modelica%204.0.0/Resources/Documentation/Media/Water/IF97documentation/thcond.pdf
      * \cite IAPWS_ThCond
      *
      * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
