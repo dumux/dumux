@@ -550,28 +550,46 @@ private:
         // set the points for the pore body positions
         for (const auto& point : points)
         {
-            const auto left = point.pos - point.radius;
-            const auto right = point.pos + point.radius;
+            const auto poreMinBound = point.pos - point.radius;
+            const auto poreMaxBound = point.pos + point.radius;
 
-            if (left < positions[directionIndex].back())
-                if (left < gridLowerLeft[directionIndex])
-                    DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
-                        "with the start of the FF-grid in direction " + std::to_string(directionIndex));
-                else
-                    DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
-            else if (left > positions[directionIndex].back())
-                positions[directionIndex].push_back(left);
-            //if left = position[directionIndex].back(), this position has already been added
+            // check for intersections with poreMinBound
+            if (poreMinBound > positions[directionIndex].back())
+                positions[directionIndex].push_back(poreMinBound);
+            else if (poreMinBound < gridLowerLeft[directionIndex])
+                DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
+                    "with the start of the FF-grid in direction " + std::to_string(directionIndex));
+            else if (poreMinBound == gridLowerLeft[directionIndex]) //this position has already been added
+            {
+                Dune::dwarn << "Warning: `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`. "
+                    "PoreMinBound will not be added as interface position.\n";
+                if (hasParamInGroup(modelParamGroup_, "Grid.UpstreamCells"  + std::to_string(directionIndex)))
+                    DUNE_THROW(Dune::RangeError, "No `Grid.UpstreamCells" + std::to_string(directionIndex) + "` should be specified "
+                    "OR choose smaller position for `Grid.LowerLeft` in direction " + std::to_string(directionIndex) + ".");
+                std::cout << std::endl;
+            }
+            else
+                DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
 
-            if (right < gridUpperRight[directionIndex])
-                positions[directionIndex].push_back(right);
-            else if (right > gridUpperRight[directionIndex])
+            // check for intersections with poreMaxBound
+            if (poreMaxBound < gridUpperRight[directionIndex])
+                positions[directionIndex].push_back(poreMaxBound);
+            else if (poreMaxBound > gridUpperRight[directionIndex])
                 DUNE_THROW(Dune::RangeError, "The pore body radius at interface is so large that it intersects "
                     "with the end of the FF-grid in direction " + std::to_string(directionIndex));
-            //if right = gridUpperRight[directionIndex], this is fine as gridUpperRight wil be added later on
+            else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight wil be added later on
+            {
+                Dune::dwarn << "Warning: `poreMaxBound = gridUperRight[" + std::to_string(directionIndex) + "]`. "
+                    "PoreMaxBound will not be added as interface position.\n";
+                if (hasParamInGroup(modelParamGroup_, "Grid.DownstreamCells"  + std::to_string(directionIndex)))
+                    DUNE_THROW(Dune::RangeError,"No `Grid.DownstreamCells" + std::to_string(directionIndex) + "` should be specified "
+                    "OR choose larger position for `Grid.UpperRight` in direction " + std::to_string(directionIndex) + ".");
+                std::cout << std::endl;
+            }
 
-            interFacePositions[directionIndex]->push_back(left);
-            interFacePositions[directionIndex]->push_back(right);
+
+            interFacePositions[directionIndex]->push_back(poreMinBound);
+            interFacePositions[directionIndex]->push_back(poreMaxBound);
             assert(interFacePositions[directionIndex].has_value());
         }
     }
