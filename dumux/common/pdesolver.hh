@@ -100,7 +100,7 @@ public:
      *             solution, defining primary and possibly secondary variables
      *             and information on the time level.
      */
-    virtual void solve(Variables& vars) = 0;
+    virtual bool solve(Variables& vars) = 0;
 
     /*!
      * \brief Solve the given PDE system with time step control
@@ -109,10 +109,10 @@ public:
      * \param vars instance of the `Variables` class representing a numerical solution
      * \param timeLoop a reference to the current time loop
      */
-    virtual void solve(Variables& vars, TimeLoop& timeLoop)
+    virtual bool solve(Variables& vars, TimeLoop& timeLoop)
     {
         // per default we just forward to the method without time step control
-        solve(vars);
+        return solve(vars);
     }
 
     /*!

@@ -304,7 +304,7 @@ public:
      *             numerical solution (primary and possibly secondary variables).
      * \param timeLoop The time loop.
      */
-    void solve(Variables& vars, TimeLoop& timeLoop) override
+    bool solve(Variables& vars, TimeLoop& timeLoop) override
     {
         if constexpr (!assemblerExportsVariables)
         {
@@ -319,7 +319,7 @@ public:
             const bool converged = solve_(vars);
 
             if (converged)
-                return;
+                return true;
 
             else if (!converged && i < maxTimeStepDivisions_)
             {
@@ -358,9 +358,10 @@ public:
      * \param vars The variables object representing the current state of the
      *             numerical solution (primary and possibly secondary variables).
      */
-    void solve(Variables& vars) override
+    bool solve(Variables& vars) override
     {
         const bool converged = solve_(vars);
+        return converged;
         if (!converged)
             DUNE_THROW(NumericalProblem,
                 Fmt::format("{} solver didn't converge after {} iterations.\n", solverName_, numSteps_));
