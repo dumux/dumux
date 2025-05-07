@@ -949,6 +949,8 @@ protected:
                 // linearize the problem at the current solution
                 assembleTimer.start();
                 assembleLinearSystem(vars);
+                auto jacci = this->assembler().jacobian();
+                Dune::printmatrix(std::cout , jacci, "see the BCSRMatrix" , "--");
                 assembleTimer.stop();
 
                 ///////////////
