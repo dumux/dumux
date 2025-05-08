@@ -51,24 +51,24 @@ template<class X, class Y>
 using Impl = std::conditional_t<!std::is_same_v<X, void>, X, Y>;
 
 template<typename ElemVars, typename FVG>
-using DefinesDeflectionHelperType = typename ElemVars::template DeflectionHelper<FVG>;
+using DefinesDeflectionPolicyType = typename ElemVars::template DeflectionPolicy<FVG>;
 
 template<typename ElemVars, typename FVG>
-constexpr inline bool definesVolVarsDeflectionHelperType()
-{ return Dune::Std::is_detected<DefinesDeflectionHelperType, ElemVars, FVG>::value; }
+constexpr inline bool definesVariablesDeflectionPolicy()
+{ return Dune::Std::is_detected<DefinesDeflectionPolicyType, ElemVars, FVG>::value; }
 
 template<class GridVarsCache, class ElemVars, class FVG>
-auto VolVarsDeflectionHelper(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
+auto makeVariablesDeflectionPolicy(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
 {
-    if constexpr (definesVolVarsDeflectionHelperType<ElemVars, FVG>())
+    if constexpr (definesVariablesDeflectionPolicy<ElemVars, FVG>())
     {
-        using DeflectionHelper = typename ElemVars::template DeflectionHelper<FVG>;
-        return DeflectionHelper(gridVarsCache, elemVars, fvg, deflectAllVolVars);
+        using DeflectionPolicy = typename ElemVars::template DeflectionPolicy<FVG>;
+        return DeflectionPolicy(gridVarsCache, elemVars, fvg, deflectAllVolVars);
     }
     else
     {
-        using DeflectionHelper = Detail::VolVarsDeflectionHelper<GridVarsCache, FVG>;
-        return DeflectionHelper(gridVarsCache, elemVars, fvg, deflectAllVolVars);
+        using DeflectionPolicy = Detail::VolVarsDeflectionHelper<GridVarsCache, FVG>;
+        return DeflectionPolicy(gridVarsCache, elemVars, fvg, deflectAllVolVars);
     }
 };
 
@@ -405,7 +405,7 @@ public:
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
 
-        auto deflectionHelper = Detail::CVFE::VolVarsDeflectionHelper(
+        auto deflectionPolicy = Detail::CVFE::makeVariablesDeflectionPolicy(
                 gridVariables.curGridVolVars(),
                 curElemVolVars,
                 fvGeometry,
@@ -417,7 +417,7 @@ public:
             // dof index and corresponding actual pri vars
             const auto dofIdx = localDof.dofIndex();
             const auto localIdx = localDof.index();
-            deflectionHelper.setCurrent(localDof);
+            deflectionPolicy.setCurrent(localDof);
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -428,7 +428,7 @@ public:
                 {
                     // update the volume variables and compute element residual
                     elemSol[localIdx][pvIdx] = priVar;
-                    deflectionHelper.deflect(elemSol, localDof, this->asImp_().problem());
+                    deflectionPolicy.deflect(elemSol, localDof, this->asImp_().problem());
                     if constexpr (solutionDependentFluxVarsCache)
                     {
                         elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
@@ -464,7 +464,7 @@ public:
                 }
 
                 // restore the original state of the scv's volume variables
-                deflectionHelper.restore(localDof);
+                deflectionPolicy.restore(localDof);
 
                 // restore the original element solution
                 elemSol[localIdx][pvIdx] = curSol[localDof.dofIndex()][pvIdx];
