@@ -8,8 +8,8 @@
  * \file
  * \ingroup CVFEDiscretization
  */
-#ifndef DUMUX_CVFE_LOCAL_VARIABLES_INTERFACE_HH
-#define DUMUX_CVFE_LOCAL_VARIABLES_INTERFACE_HH
+#ifndef DUMUX_CVFE_LOCAL_VARIABLES_ADAPTER_HH
+#define DUMUX_CVFE_LOCAL_VARIABLES_ADAPTER_HH
 
 #include <dune/common/std/type_traits.hh>
 
@@ -30,7 +30,7 @@ constexpr inline bool hasUpdateFunction()
  * \brief A class for providing the new update interface of variables
  */
 template <class VolumeVariables>
-class VariablesInterface : public VolumeVariables
+class VariablesAdapter : public VolumeVariables
 {
 public:
     //! export the type used for the primary variables
