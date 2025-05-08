@@ -9,7 +9,7 @@ dumux_add_test(NAME test_porenetwork_solid_energy_stationary
               LABELS porenetwork solid energy
               TARGET test_porenetwork_solid_energy
               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_solid_energy_stationary-00001.vtp
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_porenetwork_solid_energy_transient
               LABELS porenetwork solid energy
               TARGET test_porenetwork_solid_energy
               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_solid_energy-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_solid_energy_transient-00033.vtp

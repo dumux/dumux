@@ -10,7 +10,7 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mass
               TARGET test_ff_stokes2c_mass
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_diffusion-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mass-00015.vtu
@@ -24,7 +24,7 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mole
               TARGET test_ff_stokes2c
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_diffusion-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_diffusion_mole-00015.vtu
@@ -35,7 +35,7 @@ dumux_add_test(NAME test_ff_stokes2c_advection
               TARGET test_ff_stokes2c
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection-00009.vtu
@@ -48,7 +48,7 @@ dumux_add_test(NAME test_ff_stokes2c_advection_nocaching
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS ENABLECACHING=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2c_advection-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_advection_nocaching-00009.vtu
@@ -63,7 +63,7 @@ dumux_add_test(NAME test_ff_stokes2cni_advection
               TARGET test_ff_stokes2cni
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2cni_advection-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_advection-00009.vtu
@@ -75,7 +75,7 @@ dumux_add_test(NAME test_ff_stokes2cni_diffusion
               TARGET test_ff_stokes2cni
               LABELS freeflow navierstokes navierstokesnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes2cni_diffusion-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2cni_diffusion-00015.vtu

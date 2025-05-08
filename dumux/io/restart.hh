@@ -11,6 +11,7 @@
  */
 #ifndef DUMUX_RESTART_HH
 #define DUMUX_RESTART_HH
+#warning "This header is deprecated and will be removed after release 2.10."
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>

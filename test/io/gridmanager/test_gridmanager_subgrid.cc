@@ -18,10 +18,15 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#endif
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/io/grid/gridmanager_sp.hh>
+#include <dumux/io/grid/periodicgridtraits.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 
@@ -176,6 +181,82 @@ int main(int argc, char** argv)
         subgridManager.init("RepeatedImage");
         Dune::VTKWriter<GridManager::Grid::LeafGridView> vtkWriter(subgridManager.grid().leafGridView());
         vtkWriter.write("repeatedsubgrid_binary_image");
+    }
+
+    {
+#if HAVE_DUNE_SPGRID
+        Dune::Timer timer;
+        using HostGrid = Dune::SPGrid<double, dim>;
+        using HostGridManager = GridManager<HostGrid>;
+        HostGridManager hostGridManager;
+        std::string gridName = "SPGrid";
+        hostGridManager.init(gridName);
+        auto& hostGrid = hostGridManager.grid();
+
+        using Grid = Dune::SubGrid<dim, HostGrid>;
+        using SubGridManager = Dumux::GridManager<Grid>;
+        SubGridManager subGridManager;
+
+        // The subgrid is created from a 3x3 periodic host grid.
+        // Two cells are removed (one internal, one at a boundary) such that all possible intersection cases are seen.
+
+        std::vector<bool> img = {1, 0, 0, 0, 1, 0, 0, 0, 0};
+
+        auto gridSelector = [&hostGrid, &img](const auto& element)
+        {
+            auto eIdx = hostGrid.leafGridView().indexSet().index(element);
+            return img[eIdx] == 0;
+        };
+
+        subGridManager.init(hostGrid, gridSelector, gridName);
+        std::cout << "Constructing a sp host grid and one basic image grid in "  << timer.elapsed() << " seconds.\n";
+        Dune::VTKWriter<SubGridManager::Grid::LeafGridView> vtkWriter(subGridManager.grid().leafGridView());
+        vtkWriter.write("periodic_subgrid_binary_image");
+
+        // The intersections for the periodic subgrid should match the following properties
+        // according to SPGrid definitions.
+        // Each entry contains a pair with bool values that should match (it.Boundary(), it.Neighbor())
+        // As SubGrid currently does not pass through it.boundary() at periodic boundaries, this
+        // will not be matched, use periodicGridTraits.isPeriodic(it) || it.boundary.
+        std::vector<std::pair<bool, bool>> intersectionProperties {{true, false}, {false, true}, {true, true}, {true, false},
+                                                                   {false, true}, {true, false}, {true, true}, {false, true},
+                                                                   {true, false}, {true, false}, {true, false}, {false, true},
+                                                                   {true, false}, {true, false}, {false, true}, {false, true},
+                                                                   {true, false}, {false, true}, {false, true}, {true, false},
+                                                                   {false, true}, {false, true}, {true, false}, {true, true},
+                                                                   {false, true}, {true, false}, {false, true}, {true, true}};
+        int countSub = 0;
+        int intersectionIdx = 0;
+        const PeriodicGridTraits<Grid> periodicGridTraits(subGridManager.grid());
+        for (const auto& element : elements(subGridManager.grid().leafGridView()))
+        {
+            for (auto& intersection : intersections(subGridManager.grid().leafGridView(), element))
+            {
+                const bool isBoundary = intersection.boundary() || periodicGridTraits.isPeriodic(intersection);
+                const bool shouldBePeriodic = (intersectionProperties[intersectionIdx].first &&
+                                               intersectionProperties[intersectionIdx].second);
+                if ((intersectionProperties[intersectionIdx].first != isBoundary) ||
+                    (intersectionProperties[intersectionIdx].second != intersection.neighbor()) ||
+                    (shouldBePeriodic != periodicGridTraits.isPeriodic(intersection) ) )
+                    DUNE_THROW(Dune::Exception, "The SubGrid intersection's (" << intersectionIdx << ") properties are incorrect.\n" <<
+                                                "Intersection Center is : " << intersection.geometry().center() <<
+                                                "\n Boundary is " << isBoundary <<
+                                                " and should be " << intersectionProperties[intersectionIdx].first <<
+                                                "\n Neighbor is " << intersection.neighbor() <<
+                                                " and should be " << intersectionProperties[intersectionIdx].second <<
+                                                "\n isPeriodic is " << periodicGridTraits.isPeriodic(intersection) <<
+                                                " and should be " << shouldBePeriodic );
+                if (periodicGridTraits.isPeriodic(intersection))
+                    countSub++;
+                intersectionIdx++;
+            }
+        }
+        if (countSub == 0)
+            DUNE_THROW(Dune::Exception, "subGrid is not periodic!");
+
+#else
+        std::cout << "Skipped test with SPGRID as host grid.\n";
+#endif
     }
 
     return 0;

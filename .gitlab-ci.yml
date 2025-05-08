@@ -6,14 +6,15 @@ stages:
   - trigger dumux pipelines
 
 variables:
-  UBUNTU_VERSION: "22.04"
+  UBUNTU_VERSION: "24.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
   IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
-  DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
+  DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
+  DUMUX_ENABLE_DUNE_CHECKING: "ON"
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -151,7 +152,29 @@ trigger lecture:
   stage: trigger dumux pipelines
   trigger:
     project: dumux-repositories/dumux-lecture
-    branch: $DUMUX_CI_TRIGGER_LECTURE_BRANCH
+    branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
+    strategy: depend
+  variables:
+    DUMUX_MERGE_REQUEST_SOURCE_BRANCH: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    DUMUX_MERGE_REQUEST_SOURCE_PROJECT_URL: $CI_MERGE_REQUEST_SOURCE_PROJECT_URL
+    DUMUX_MERGE_REQUEST_SOURCE_PROJECT_PATH: $CI_MERGE_REQUEST_SOURCE_PROJECT_PATH
+    DUMUX_MERGE_REQUEST_TARGET_BRANCH: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    DUMUX_COMMIT_SHA: $CI_COMMIT_SHA
+    DUMUX_REFERENCE_SHA: $CI_REFERENCE_SHA
+    DUMUX_DOCKER_BRANCH: $DUMUX_DOCKER_CI_BRANCH
+    DUMUX_UBUNTU_VERSION: $UBUNTU_VERSION
+
+# trigger dumux-testing test (additional tests)
+trigger testing:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+  - if: $CI_PIPELINE_SOURCE == "pipeline"
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    when: manual
+  stage: trigger dumux pipelines
+  trigger:
+    project: dumux-repositories/dumux-testing
+    branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
     strategy: depend
   variables:
     DUMUX_MERGE_REQUEST_SOURCE_BRANCH: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME

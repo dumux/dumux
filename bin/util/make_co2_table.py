@@ -125,7 +125,8 @@ for i in range(cmdArgs["n_temp"]):
         "STUnit": "N/m",
     }
     response = requests.get(
-        "https://webbook.nist.gov/cgi/fluid.cgi?" + urllib.parse.urlencode(query)
+        "https://webbook.nist.gov/cgi/fluid.cgi?" + urllib.parse.urlencode(query),
+        timeout=10,
     )
     response.encoding = "utf-8"
     text = response.text

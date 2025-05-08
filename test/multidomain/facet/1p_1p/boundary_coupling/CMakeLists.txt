@@ -9,7 +9,7 @@ dumux_add_test(NAME test_md_facet_1p1p_boundary_coupling_tpfa
                COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkTpfa
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimTpfa
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_boundary_coupling_tpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_boundary_coupling_tpfa_bulk-00001.vtu
@@ -24,7 +24,7 @@ dumux_add_test(NAME test_md_facet_1p1p_boundary_coupling_mpfa
                COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkMpfa
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimMpfa
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_boundary_coupling_mpfa_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_boundary_coupling_mpfa_bulk-00001.vtu
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_md_facet_1p1p_boundary_coupling_box
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkBox
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimBox
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_boundary_coupling_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_boundary_coupling_box_bulk-00001.vtu
@@ -55,7 +55,7 @@ dumux_add_test(NAME test_md_facet_1p1p_boundary_coupling_box_caching
                COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkBox
                COMPILE_DEFINITIONS LOWDIMTYPETAG=OnePLowDimBox
                COMPILE_DEFINITIONS USEBULKGGCACHING=1
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_boundary_coupling_box_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_boundary_coupling_box_caching_bulk-00001.vtu

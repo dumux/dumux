@@ -18,6 +18,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -88,9 +89,11 @@ class PorousMediumFlowVelocity
 
     static_assert(VolumeVariables::numFluidPhases() >= 1, "Velocity output only makes sense for models with fluid phases.");
 
+    using Velocity = Dune::FieldVector<Scalar, dimWorld>;
+    using ReferenceElementVelocity = Dune::FieldVector<Scalar, dim>;
 public:
     static constexpr int numFluidPhases = VolumeVariables::numFluidPhases();
-    using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
+    using VelocityVector = std::vector<Velocity>;
 
     /*!
      * \brief Constructor initializes the static data with the initial solution.
@@ -123,8 +126,6 @@ public:
                            const ElementFluxVarsCache& elemFluxVarsCache,
                            int phaseIdx) const
     {
-        using Velocity = typename VelocityVector::value_type;
-
         const auto geometry = element.geometry();
         const Dune::GeometryType geomType = geometry.type();
 
@@ -162,8 +163,7 @@ public:
 
         // get the transposed Jacobian of the element mapping
         using Dune::referenceElement;
-        const auto refElement = referenceElement(geometry);
-        const auto& localPos = refElement.position(0, 0);
+        const auto localPos = referenceElement(geometry).position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
         if constexpr (isBox)
@@ -264,7 +264,7 @@ public:
                 }
             }
 
-            std::vector<Scalar> scvfFluxes(element.subEntities(1), 0.0);
+            Dune::ReservedVector<Scalar, 2*dim> scvfFluxes(element.subEntities(1), 0.0);
             localScvfIdx = 0;
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -361,24 +361,28 @@ public:
             }
 
 
-            Velocity refVelocity;
+            ReferenceElementVelocity refVelocity;
             // cubes: On the reference element simply average over opposite fluxes
             // note that this is equal to a corner velocity interpolation method
             if (dim == 1 || geomType.isCube())
             {
-                for (int i = 0; i < dim; i++)
+                assert(scvfFluxes.size() == 2*dim);
+                for (int i = 0; i < dim; ++i)
                     refVelocity[i] = 0.5 * (scvfFluxes[2*i + 1] - scvfFluxes[2*i]);
             }
+
             // simplices: Raviart-Thomas-0 interpolation evaluated at the cell center
             else if (geomType.isSimplex())
             {
-                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+                assert(scvfFluxes.size() == dim+1);
+                for (int i = 0; i < dim; ++i)
                 {
-                    refVelocity[dimIdx] = -scvfFluxes[dim - 1 - dimIdx];
-                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                        refVelocity[dimIdx] += scvfFluxes[fIdx]/(dim + 1);
+                    refVelocity[i] = -scvfFluxes[dim - 1 - i];
+                    for (int fIdx = 0; fIdx < dim + 1; ++fIdx)
+                        refVelocity[i] += scvfFluxes[fIdx]/(dim + 1);
                 }
             }
+
             // 3D prism and pyramids
             else
                 DUNE_THROW(Dune::NotImplemented, "Velocity computation for cell-centered and prism/pyramid");

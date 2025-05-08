@@ -472,7 +472,7 @@ private:
     template<class RC = RawComponent>
     bool tabularizeMinMaxLiquidDensity_()
     {
-        if constexpr (Detail::hasGasEnthalpy<RC>())
+        if constexpr (Detail::hasLiquidDensity<RC>())
         {
             const auto liqRho = [] (auto T, auto p) { return RC::liquidDensity(T, p); };
             tabularizeMinMaxRhoArray_(liqRho, LiquidPolicy{ *this }, minLiquidDensity_, maxLiquidDensity_);

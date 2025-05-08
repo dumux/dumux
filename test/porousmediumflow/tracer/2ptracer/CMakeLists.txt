@@ -7,7 +7,7 @@ dumux_add_test(NAME test_2ptracer_lens_tpfa
               LABELS porousmediumflow tracer 2p
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2ptracer_lens_tpfa_transport-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2ptracer_lens_tpfa-00050.vtu

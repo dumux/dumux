@@ -79,49 +79,74 @@ public:
                 const typename GridVariables::GridGeometry& gridGeometry)
     {
         bool switched = false;
-        visited_.assign(wasSwitched_.size(), false);
-        std::size_t countSwitched = 0;
+        bool successfulUpdate = false;
+        const auto& comm = gridGeometry.gridView().comm();
 
-        auto fvGeometry = localView(gridGeometry);
-        auto elemVolVars = localView(gridVariables.curGridVolVars());
+        try {
+            visited_.assign(wasSwitched_.size(), false);
+            std::size_t countSwitched = 0;
 
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            // make sure FVElementGeometry is bound to the element
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, curSol);
+            auto fvGeometry = localView(gridGeometry);
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
 
-            const auto curElemSol = elementSolution(element, curSol, gridGeometry);
-            for (auto&& scv : scvs(fvGeometry))
+            for (const auto& element : elements(gridGeometry.gridView()))
             {
-                if (!asImp_().skipDof_(element, fvGeometry, scv, problem))
-                {
-                    const auto dofIdxGlobal = scv.dofIndex();
-                    // Note this implies that volume variables don't differ
-                    // in any sub control volume associated with the dof!
-                    visited_[dofIdxGlobal] = true;
-                    // Compute volVars on which grounds we decide
-                    // if we need to switch the primary variables
-                    auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
-                    volVars.update(curElemSol, problem, element, scv);
+                // make sure FVElementGeometry is bound to the element
+                fvGeometry.bindElement(element);
+                elemVolVars.bindElement(element, fvGeometry, curSol);
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                const auto curElemSol = elementSolution(element, curSol, gridGeometry);
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    if (!asImp_().skipDof_(element, fvGeometry, scv, problem))
                     {
-                        switched = true;
-                        ++countSwitched;
+                        const auto dofIdxGlobal = scv.dofIndex();
+                        // Note this implies that volume variables don't differ
+                        // in any sub control volume associated with the dof!
+                        visited_[dofIdxGlobal] = true;
+                        // Compute volVars on which grounds we decide
+                        // if we need to switch the primary variables
+                        auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
+                        volVars.update(curElemSol, problem, element, scv);
+
+                        if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                        {
+                            switched = true;
+                            ++countSwitched;
+                        }
                     }
                 }
             }
+
+            if (verbosity_ > 0 && countSwitched > 0)
+                std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
+                        << comm.rank() << "." << std::endl;
+
+            successfulUpdate = true;
+        }
+        catch (const Dumux::NumericalProblem& e)
+        {
+            if (verbosity_ > 0)
+                std::cout << "Primary variable switch caught: \"" << e.what() << "\"\n";
+
+            successfulUpdate = false;
         }
 
-        if (verbosity_ > 0 && countSwitched > 0)
-            std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
-                      << gridGeometry.gridView().comm().rank() << "." << std::endl;
+        // make sure all processes were successful
+        int successfulUpdateRemote = static_cast<int>(successfulUpdate);
+        if (comm.size() > 1)
+            successfulUpdateRemote = comm.min(static_cast<int>(successfulUpdate));
+
+        if (!successfulUpdate)
+            DUNE_THROW(NumericalProblem, "Primary variable switch caught exception on process " << comm.rank());
+
+        else if (!successfulUpdateRemote)
+            DUNE_THROW(NumericalProblem, "Primary variable switch caught exception on a remote process");
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
-        if (gridGeometry.gridView().comm().size() > 1)
-            switched = gridGeometry.gridView().comm().max(switched);
+        if (comm.size() > 1)
+            switched = comm.max(switched);
 
         return switched;
     }

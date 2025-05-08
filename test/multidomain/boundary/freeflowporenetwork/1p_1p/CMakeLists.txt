@@ -9,7 +9,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
               SOURCES main.cc
               COMPILE_DEFINITIONS ISOTHERMAL=1
               CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_ff-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_ff-00001.vtu
@@ -23,7 +23,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pnm1p_single_throat
               TARGET test_md_boundary_ff1p_pnm1p
               COMPILE_DEFINITIONS ISOTHERMAL=1
               CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_ff1p_pnm1p_single_throat_ff-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pnm1p_single_throat_ff-00001.vtu

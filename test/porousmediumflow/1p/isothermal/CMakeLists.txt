@@ -8,7 +8,7 @@ dumux_add_test(NAME test_1p_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa-00001.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_1p_mpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_mpfa-00001.vtu
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_1p_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box-00001.vtu
@@ -38,7 +38,7 @@ dumux_add_test(NAME test_1p_forchheimer_tpfa
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfa FORCHHEIMER=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_forchheimer_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_tpfa-00001.vtu
@@ -49,7 +49,7 @@ dumux_add_test(NAME test_1p_forchheimer_box
               LABELS porousmediumflow 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestBox FORCHHEIMER=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_forchheimer_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_forchheimer_box-00001.vtu

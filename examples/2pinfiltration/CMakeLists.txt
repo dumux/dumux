@@ -9,7 +9,7 @@ dumux_add_test(NAME example_2p_pointsource_adaptive
                LABELS porousmediumflow 2p example
                SOURCES main.cc
                CMAKE_GUARD dune-alugrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --zeroThreshold {"pc":0.1}
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_2padaptive-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/example_2p_pointsource_adaptive-00006.vtu

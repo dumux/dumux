@@ -8,7 +8,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_cuboid
               TARGET test_ff_stokes_channel_3d
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_cuboid-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_cuboid-00001.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase
               TARGET test_ff_stokes_channel_3d
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK dune-subgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_staircase-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_staircase-00001.vtu
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_staircase_nocaching
                LABELS freeflow navierstokes
                CMAKE_GUARD HAVE_UMFPACK dune-subgrid_FOUND
                COMPILE_DEFINITIONS ENABLECACHING=0
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_staircase-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_staircase_nocaching-00001.vtu
@@ -46,7 +46,7 @@ dumux_add_test(NAME test_ff_stokes_channel_pseudo3d
               SOURCES main.cc
               COMPILE_DEFINITIONS GRID_DIM=2
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_pseudo3d-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pseudo3d-00001.vtu

@@ -132,22 +132,22 @@ public:
         }();
 
         // set p_freeflow = p_PNM
-        momentumFlux[scvf.normalAxis()] = pnmPressure;
+        momentumFlux[0] = pnmPressure;
 
         // normalize pressure
-        momentumFlux[scvf.normalAxis()] -= elemVolVars.gridVolVars().problem().referencePressure(fvGeometry.element(), fvGeometry, scvf);
+        momentumFlux[0] -= elemVolVars.gridVolVars().problem().referencePressure(fvGeometry.element(), fvGeometry, scvf);
 
         // Explicitly account for dv_i/dx_i, which is NOT part of the actual coupling condition. We do it here for convenience so
         // we do not forget to set it in the problem. We assume that the velocity gradient at the boundary towards the interface is the same
         // as the one in the center of the element. TODO check sign
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& frontalInternalScvf = (*scvfs(fvGeometry, scv).begin());
-        momentumFlux[scvf.normalAxis()] -= 2*VelocityGradients::velocityGradII(fvGeometry, frontalInternalScvf, elemVolVars) * pnmViscosity;
+        momentumFlux[0] -= 2*VelocityGradients::velocityGradII(fvGeometry, frontalInternalScvf, elemVolVars) * pnmViscosity;
 
         // We do NOT consider the inertia term here. If included, Newton convergence decreases drastically and the solution even does not converge to a reference solution.
         // We furthermore assume creeping flow within the boundary layer thus neglecting this term is physically justified.
 
-        momentumFlux[scvf.normalAxis()] *= scvf.directionSign();
+        momentumFlux[0] *= scvf.directionSign();
 
         return momentumFlux;
     }

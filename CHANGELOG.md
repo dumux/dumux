@@ -1,3 +1,13 @@
+Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
+=============================================
+
+### Improvements and Enhancements
+
+- __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
+It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
+- __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
+times whenever multiple scvs were associated with the same localDof.
+
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 =============================================
 
@@ -5,28 +15,33 @@ Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
 and a C++ compiler supporting the C++20 feature set union of GCC 11 and Clang 14.
 C++20 mode is enforced through CMake.
 
-### General changes / structure
-
-
 ### Improvements and Enhancements
 
 - __Grid I/O__: The vtu/vtp reader now allows to read unstructured grid from (ASCII) vtu/vtp files with e.g. dune-alugrid, dune-uggrid. Grid data can also be handled in parallel. Like for the GmshReader, the grid and data is read on rank 0 and then broadcasted for now.
-- __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. `GridFormat` is added as a submodule and can be pulled in with `git submodule update --init`.
-- __Multidomain boundary__: A init function was added to coupling managers of free-flow porenetwork as well as free-flow porousmedium to allow for transient problems.
+- __Grid I/O__: A new writer (grid I/O) and output module (grid I/O + vol var output) - see `dumux/io/gridwriter.hh` - have been added, which build on top of the [GridFormat](https://github.com/dglaeser/gridformat) library. The new writers allow you to write results into a variety of file formats, which can save significant disk space, especially for structured grids. To enable gridformat set the CMake configuration variable `DUMUX_ENABLE_GRIDFORMAT=ON`. Note that gridformat requires GCC >= 12 or Clang >= 16.
+- __Grid manager__: A new a grid manager that extracts a grid from the facets of a host grid, as well as a mapper between entities in the domain and the facet grid for finite volume schemes.
+- __Multidomain boundary__: A init function was added to coupling managers of free-flow pore network as well as free-flow porousmedium to allow for transient problems.
 - __Nonlinear least squares__: Added a nonlinear least squares solver (in `nonlinear/leastsquares.hh`) that can be used to for example fit a curve to data points. The fitting function is general and can be, for example, a whole PDE solver. The solver is based on a Levenberg-Marquardt algorithm.
-- __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase composional non/isothermal flow.
+- __Multidomain boundary__: Added the coupling condition and a test case for free-flow pore network single-phase compositional non/isothermal flow.
 - __Geomechanics__: is split into solidmechanics and poromechanics. The geomechanics folder is now deprecated and will be removed after releases 3.10.
 - __Periodic Boundaries__: Added support for Dune SubGrid with periodic host grid.
+- __Compositional Dispersion__: Fixed a bug where compositional dispersion did not work correctly if `useMoles` differed from the reference system formulation.
+- __Numeric differentiation__: Added five-point stencil difference scheme as an option for numeric differencing.
+- __Time stepping__: Implemented the Newmark-beta time integration scheme with application in structural dynamics.
+- __Structural dynamics__: Extended the hyperelastic model to be able to simulate elastodynamics and added test case.
+- __Documentation__: A documentation page explaining basic concepts in DuMux.
+- __Documentation__: Added subcategories to fluid-matrix interactions and their documentations.
+- __Documentation__: Added a Paraview description for pore-network visualization.
+- __Navier-Stokes test__: Added a test case for permeability upscaling.
+- __Handling dependencies__: `Dumux::Dumux` module library is linked only against the required dune modules and not all of them. Downstream DUNE modules depending on Dumux require linking (and for external dependencies also finding) additional dependencies unless they rely on `dune_enable_all_packages` or `dumux_add_test`, which automatically links all found dependencies.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
--__Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and
-only a left-over from old IMPES-style models. The linear solver type is chosen in the main file and
-idenpendently of the property system.
-
+- __Property LinearSolver__: Property `LinearSolver` has been removed. It was not used in Dumux and only a left-over from old IMPES-style models. The linear solver type is chosen in the main file and independently of the property system.
 - __Property DefaultModelParameters__: Has been removed without replacement. Introduced in 3.0, we are not aware of any use case so far. If you have used this feature, please get in touch with us. This feature can easily be realized by a simple traits mechanism.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:
-
+- __Geomechanics__: the top-level folder `geomechanics` is deprecated and will be removed after release 3.10. The content has been split between the new top-level folders `solidmechanics` and `poromechanics`; please use the new include paths.
+- __BaseLocalResidual property__: is deprecated. Will be removed after release 3.10.
 
 ### Removed
 - __Periodic Map__: `periodicVertexMap` that was deprecated in 3.9 has been removed. Use `periodicDofMap` instead.
@@ -34,7 +49,7 @@ idenpendently of the property system.
 - __Thermal conductivity__: `1p` folder from `material/fluidmatrixinteractions` that was deprecated in 3.9 has been removed. Use `ThermalConductivityAverage` from `dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh` instead.
 - __setCheckPoint(vec)__: this function in `timeloop.hh` is removed. Other options are available.
 - __BJS functions__: the functions in `freeflow/navierstokes/momentum/problem.hh` returning permeability, alpha, beta, and pm velocity to be used in BJS boundary condition are removed. They are supposed to be implemented in the test problem.
--__NavierStokesMomentumBoundaryFluxHelper__-: Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `DiscretizationMethod`.
+- __NavierStokesMomentumBoundaryFluxHelper__: Replace with implementation class `NavierStokesMomentumBoundaryFlux`with template arguments `DiscretizationMethod`.
 
 Differences Between DuMu<sup>x</sup> 3.9 and DuMu<sup>x</sup> 3.8
 =============================================

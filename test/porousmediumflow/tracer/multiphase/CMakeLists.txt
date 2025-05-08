@@ -8,7 +8,7 @@ dumux_add_test(NAME test_tracer_multiphase_tpfa
               TIMEOUT 3600
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_multiphase_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa-00010.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_tracer_multiphase_mpfa
               TIMEOUT 3600
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=TracerTestMpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_multiphase_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_mpfa-00010.vtu

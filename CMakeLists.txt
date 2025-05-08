@@ -3,19 +3,17 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-project("dumux" C CXX)
+project(dumux LANGUAGES C CXX)
 
-if(NOT (dune-common_DIR
-        OR dune-common_ROOT
-        OR "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
-    string(REPLACE  ${CMAKE_PROJECT_NAME}
-      dune-common dune-common_DIR
-      ${PROJECT_BINARY_DIR})
+# if no path to dune-common is given, we assume
+# that dune-common uses the same build directory as dumux
+if(NOT (dune-common_DIR OR dune-common_ROOT OR "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
+  string(REPLACE ${CMAKE_PROJECT_NAME} dune-common dune-common_DIR ${PROJECT_BINARY_DIR})
 endif()
 
-# find dune-common and set the module path
-find_package(dune-common)
+find_package(dune-common REQUIRED)
 
+# make cmake find dune-common's and dumux's cmake modules
 list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
   "${PROJECT_SOURCE_DIR}/cmake/modules")
 
@@ -48,6 +46,12 @@ if (DUMUX_ENABLE_PYTHONBINDINGS AND NOT BUILD_SHARED_LIBS)
   message(FATAL_ERROR "Using the Python bindings requires BUILD_SHARED_LIBS=ON")
 endif()
 
+# deactivate global include-directories
+if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+  dune_policy(SET DP_DEFAULT_INCLUDE_DIRS NEW)
+  dune_policy(SET DP_TEST_ADD_ALL_FLAGS NEW)
+endif()
+
 # start a dune project with information from dune.module
 dune_project()
 
@@ -56,23 +60,46 @@ include(FetchContent)
 
 option(DUMUX_ENABLE_GRIDFORMAT "Enable gridformat I/O integration" OFF)
 if (DUMUX_ENABLE_GRIDFORMAT)
-  if (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
-    FetchContent_Declare(gridformat SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat")
+  find_package(gridformat QUIET)
+  if (gridformat_FOUND)
+    set(DUMUX_HAVE_GRIDFORMAT true)
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_DIR})
+  elseif (EXISTS ${CMAKE_SOURCE_DIR}/deps/gridformat/CMakeLists.txt)
+    FetchContent_Declare(gridformat
+      SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gridformat"
+      OVERRIDE_FIND_PACKAGE ON
+    )
     FetchContent_MakeAvailable(gridformat)
     set(DUMUX_HAVE_GRIDFORMAT true)
-    message(STATUS "Using gridformat from ${gridformat_SOURCE_DIR}")
-  else()
-    message(FATAL_ERROR "DUMUX_ENABLE_GRIDFORMAT is ON but gridformat is not found. Run git submodule update --init.")
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_BINARY_DIR}/cmake)
+  else ()
+    FetchContent_Declare(gridformat
+      GIT_REPOSITORY https://github.com/dglaeser/gridformat.git
+      GIT_TAG 6e1f1963dd69443dc8da8fd14423d4f1d057654e
+      GIT_PROGRESS true
+      GIT_SUBMODULES_RECURSE ON
+      OVERRIDE_FIND_PACKAGE ON
+    )
+    FetchContent_MakeAvailable(gridformat)
+    set(DUMUX_GRIDFORMAT_HINT_DIR ${gridformat_BINARY_DIR}/cmake)
+    set(DUMUX_HAVE_GRIDFORMAT true)
   endif()
 endif()
 
+find_package(MPI QUIET)
 find_package(TBB QUIET)
 find_package(Kokkos QUIET)
 find_package(OpenMP QUIET)
 
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
-dumux_add_library(dumux NAMESPACE Dumux:: EXPORT_NAME Dumux)
+dumux_add_library(dumux
+  NAMESPACE Dumux::
+  EXPORT_NAME Dumux
+  LINK_LIBRARIES
+    Dune::Common Dune::Geometry Dune::Grid
+    Dune::LocalFunctions Dune::ISTL
+)
 
 # enforce C++-20
 target_compile_features(dumux PUBLIC cxx_std_20)
@@ -83,6 +110,10 @@ include(DumuxMultithreadingBackend)
 if (DUMUX_HAVE_GRIDFORMAT)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_GRIDFORMAT=1)
   target_link_libraries(dumux INTERFACE gridformat::gridformat)
+endif()
+
+if (MPI_FOUND)
+  add_dune_mpi_flags(dumux)
 endif()
 
 if (TBB_FOUND)
@@ -103,12 +134,31 @@ endif()
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
   target_compile_features(dumux_format PUBLIC cxx_std_20)
+  if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+    dune_default_include_directories(dumux_format PUBLIC)
+  endif()
   target_link_libraries(dumux INTERFACE dumux_format)
 endif()
 
-# Enable all dune registered packages on the dumux library.
-dune_target_enable_all_packages(dumux)
+if (dune-common_VERSION VERSION_GREATER_EQUAL 2.11)
+  dune_default_include_directories(dumux PUBLIC)
+endif()
 
+if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
+  include(FeatureSummary)
+  add_feature_info("Grid I/O via gridformat" DUMUX_HAVE_GRIDFORMAT "writing and reading grid data supporting many different VTK formats")
+  set(DUMUX_MULTITHREADING_SUPPORTED true)
+  if (DUMUX_MULTITHREADING_BACKEND STREQUAL "Serial")
+    set(DUMUX_MULTITHREADING_SUPPORTED false)
+  endif()
+  add_feature_info("Shared-memory parallelism" DUMUX_MULTITHREADING_SUPPORTED "multithreaded loops, assembly and solvers if available")
+  add_feature_info("Distributed-memory parallelism" MPI_FOUND "MPI parallel programs")
+  add_feature_info("Python bindings for DuMux" DUMUX_ENABLE_PYTHONBINDINGS "using DuMux via its Python API (experimental)")
+endif()
+
+set(DUMUX_RUNTEST ${CMAKE_SOURCE_DIR}/bin/testing/dumux_runtest.py)
+
+add_subdirectory(bin)
 add_subdirectory(cmake/modules)
 add_subdirectory(doc)
 add_subdirectory(dumux)
@@ -128,7 +178,14 @@ set(DUNE_CUSTOM_PKG_CONFIG_SECTION "include(CMakeFindDependencyMacro)")
 if (DUMUX_HAVE_GRIDFORMAT)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure gridformat build in dumux is found"
-    "find_dependency(gridformat PATHS ${gridformat_BINARY_DIR}/cmake)"
+    "find_dependency(gridformat HINTS ${DUMUX_GRIDFORMAT_HINT_DIR})"
+  )
+endif()
+# make sure downstream projects can find MPI too
+if (MPI_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure MPI is found"
+    "find_dependency(MPI)"
   )
 endif()
 # make sure downstream projects can find TBB too

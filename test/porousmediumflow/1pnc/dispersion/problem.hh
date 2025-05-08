@@ -146,7 +146,10 @@ public:
 
         if (isLeftBoundary_(globalPos))
         {
-            values[contiN2EqIdx] =  boundaryConcentration_;
+            values[contiN2EqIdx] = boundaryConcentration_;
+            // assumes simplified density
+            if (!useMoles)
+                values[contiN2EqIdx] *= FluidSystem::molarMass(N2Idx) / FluidSystem::molarMass(H2OIdx);
 #if NONISOTHERMAL
             values[energyEqIdx] = this->spatialParams().temperatureAtPos(globalPos) + temperatureDifference_;
 #endif
@@ -182,7 +185,7 @@ public:
         const auto globalPos = element.geometry().corner(scvf.insideScvIdx());
         NumEqVector values(0.0);
         if (isRightBoundary_(globalPos))
-            values[contiH2OEqIdx] = -1.0 * counterFlowRate_;
+            values[contiH2OEqIdx] = -1.0 * counterFlowRate_ * (useMoles ? 1.0 : FluidSystem::molarMass(H2OIdx));
         return values;
     }
 
@@ -206,14 +209,19 @@ public:
         PrimaryVariables values;
 
         GetPropType<TypeTag, Properties::FluidState> fluidState;
-        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-        fluidState.setPressure(0, pressure_);
-        Scalar density = FluidSystem::density(fluidState, 0);
         const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
         const Scalar gravity = this->spatialParams().gravity(globalPos)[1];
+        const Scalar moleFraction = 0.0; //initial condition for the molefraction
+        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
+        fluidState.setPressure(0, pressure_);
+        fluidState.setMoleFraction(0, N2Idx, moleFraction);
+        fluidState.setMoleFraction(0, H2OIdx, 1.0-moleFraction);
+        const Scalar density = FluidSystem::density(fluidState, 0);
+        const Scalar molarMass = density / FluidSystem::molarDensity(fluidState, 0);
+        const Scalar massFraction = moleFraction * FluidSystem::molarMass(N2Idx) / molarMass;
 
         values[Indices::pressureIdx] = pressure_ - (density * gravity * depth); //initial condition for the pressure
-        values[contiN2EqIdx] = 0.0; //initial condition for the molefraction
+        values[contiN2EqIdx] = useMoles ? moleFraction : massFraction;
 #if NONISOTHERMAL
         values[energyEqIdx] = this->spatialParams().temperatureAtPos(globalPos);
 #endif

@@ -14,7 +14,7 @@ dumux_add_test(NAME test_md_facet_1p1p_box_dof_enrichment_extended_fracture
                TARGET test_md_facet_1p1p_box_dof_enrichment
                LABELS multidomain multidomain_facet 1p
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_dof_enrichment_extended_fracture_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_dof_enrichment_extended_fracture_bulk-00001.vtu
@@ -28,7 +28,7 @@ dumux_add_test(NAME test_md_facet_1p1p_box_dof_enrichment_short_fracture
                TARGET test_md_facet_1p1p_box_dof_enrichment
                LABELS multidomain multidomain_facet 1p
                CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS  --script fuzzy
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_dof_enrichment_extended_fracture_bulk-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_dof_enrichment_short_fracture_bulk-00001.vtu

@@ -88,7 +88,6 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
 
 
 if __name__ == "__main__":
-
     # parse input arguments
     parser = ArgumentParser(description="Find tests affected by changes")
     parser.add_argument(
@@ -146,3 +145,6 @@ if __name__ == "__main__":
 
     with open(targetFile, "w") as jsonFile:
         json.dump(affectedTests, jsonFile)
+
+    # clean build directory
+    subprocess.run(["make", "clean"], cwd=buildDir, check=False)

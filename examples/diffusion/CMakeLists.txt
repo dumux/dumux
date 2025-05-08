@@ -10,7 +10,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME example_diffusion
                LABELS example
                SOURCES main.cc
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_diffusion-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/diffusion-00050.vtu
@@ -22,7 +22,7 @@ dumux_add_test(NAME example_diffusion_parallel
                LABELS example
                CMAKE_GUARD MPI_FOUND
                TARGET example_diffusion
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_diffusion_parallel_p0-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-diffusion_parallel-00050.vtu

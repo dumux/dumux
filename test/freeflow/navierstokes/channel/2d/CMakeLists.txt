@@ -9,7 +9,7 @@ dumux_add_test(NAME test_ff_stokes_channel_outflow
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_outflow-00002.vtu
@@ -20,7 +20,7 @@ dumux_add_test(NAME test_ff_stokes_channel_outflow_gravity
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --relative 1e-5
                              --ignore p
@@ -33,7 +33,7 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_dirichlet_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxdy-00002.vtu
@@ -44,7 +44,7 @@ dumux_add_test(NAME test_ff_stokes_channel_neumann_x_neumann_y
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_neumann-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_nxny-00001.vtu
@@ -56,7 +56,7 @@ dumux_add_test(NAME test_ff_stokes_channel_unconstrained_outflow
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_unconstrained_outflow-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_unconstrained_outflow-00002.vtu
@@ -67,7 +67,7 @@ dumux_add_test(NAME test_ff_navierstokes_channel
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_channel-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_channel-00002.vtu
@@ -79,7 +79,8 @@ dumux_add_test(NAME test_ff_stokes_channel_iterative
               TARGET test_ff_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              TIMEOUT 600
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_iterative-00002.vtu
@@ -93,7 +94,7 @@ dumux_add_test(NAME test_ff_stokesni_channel_convection
               TARGET test_ff_stokesni_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_convection-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_convection-00005.vtu
@@ -104,7 +105,7 @@ dumux_add_test(NAME test_ff_stokesni_channel_conduction
               TARGET test_ff_stokesni_channel
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokesni_channel_conduction-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokesni_channel_conduction-00004.vtu

@@ -27,3 +27,8 @@ LowerLeft = 1 1
 PixelDimensions = 1 1
 Repeat = 5 3
 Image = grids/dumux_binary.pbm
+
+[SPGrid.Grid]
+File = periodic.dgf
+LowerLeft = 0 0
+UpperRight = 1 1

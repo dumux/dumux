@@ -12,7 +12,7 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_twolayer
               TARGET test_ff_rans2c_kepsilon
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-                            COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                            COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_kepsilon_twolayer-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_twolayer-00031.vtu
@@ -23,7 +23,7 @@ dumux_add_test(NAME test_ff_rans2c_kepsilon_wallfunctions
               TARGET test_ff_rans2c_kepsilon
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-                            COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                            COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_kepsilon_wallfunctions-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_kepsilon_wallfunctions-00028.vtu
@@ -35,7 +35,7 @@ dumux_add_test(NAME test_ff_rans2c_sst
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCSST
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_sst-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_sst-00034.vtu
@@ -49,7 +49,7 @@ dumux_add_test(NAME test_ff_rans2c_komega
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCKOmega
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_komega-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_komega-00035.vtu
@@ -61,7 +61,7 @@ dumux_add_test(NAME test_ff_rans2c_lowrekepsilon
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCLowReKEpsilon
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_lowrekepsilon-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_lowrekepsilon-00031.vtu
@@ -73,7 +73,7 @@ dumux_add_test(NAME test_ff_rans2c_oneeq
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCOneEq
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_oneeq-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_oneeq-00032.vtu
@@ -86,7 +86,7 @@ dumux_add_test(NAME test_ff_rans2c_zeroeq
               COMPILE_DEFINITIONS TYPETAG=FlatPlateNCZeroEq
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2c_zeroeq-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2c_zeroeq-00029.vtu
@@ -105,7 +105,7 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_twolayer
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_twolayer-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_twolayer-00031.vtu
@@ -117,7 +117,7 @@ dumux_add_test(NAME test_ff_rans2cni_kepsilon_wallfunction
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_kepsilon_wallfunction-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_kepsilon_wallfunction-00024.vtu
@@ -130,7 +130,7 @@ dumux_add_test(NAME test_ff_rans2cni_sst
               COMPILE_DEFINITIONS NONISOTHERMAL
               LABELS freeflow rans ransnc
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_sst-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_sst-00030.vtu
@@ -148,7 +148,7 @@ dumux_add_test(NAME test_ff_rans2cni_komega
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_komega-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega-00031.vtu
@@ -161,7 +161,7 @@ dumux_add_test(NAME test_ff_rans2cni_komega_loadsolution
               LABELS freeflow rans loadsolution
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_komega_loadsolution-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_komega_loadsolution-00008.vtu
@@ -178,7 +178,7 @@ dumux_add_test(NAME test_ff_rans2cni_lowrekepsilon
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_lowrekepsilon-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_lowrekepsilon-00030.vtu
@@ -192,7 +192,7 @@ dumux_add_test(NAME test_ff_rans2cni_oneeq
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_oneeq-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_oneeq-00031.vtu
@@ -207,7 +207,7 @@ dumux_add_test(NAME test_ff_rans2cni_zeroeq
               LABELS freeflow rans ransnc
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_rans2cni_zeroeq-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_rans2cni_zeroeq-00030.vtu

@@ -8,7 +8,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow
                SOURCES main.cc
                LABELS shallowwater
                COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow-reference.vtu
                                       ${CMAKE_CURRENT_BINARY_DIR}/poiseuilleflow-00007.vtu
@@ -19,7 +19,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_parallel
                TARGET test_shallowwater_poiseuilleflow
                LABELS shallowwater
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS   --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/s0002-poiseuilleflow-parallel-00007.pvtu
@@ -31,7 +31,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured
                LABELS shallowwater
                CMAKE_GUARD dune-uggrid_FOUND
                COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow_unstructured-reference.vtu
                                       ${CMAKE_CURRENT_BINARY_DIR}/poiseuilleflow-unstructured-00007.vtu
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured_parallel
                TARGET test_shallowwater_poiseuilleflow_unstructured
                LABELS shallowwater
                CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS   --script fuzzy
                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow_unstructured-reference.vtu
                                   ${CMAKE_CURRENT_BINARY_DIR}/s0002-poiseuilleflow-unstructured-parallel-00007.pvtu

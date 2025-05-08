@@ -7,7 +7,7 @@ dumux_add_test(NAME test_md_dualnetwork_heat_1p_solid
               LABELS multidomain dualnetwork 1p
               SOURCES main.cc
               CMAKE_GUARD "( dune-subgrid_FOUND AND dune-foamgrid_FOUND AND HAVE_UMFPACK )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_dualnetwork_heat_solid-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_dualnetwork_heat_solid-00001.vtp

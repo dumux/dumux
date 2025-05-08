@@ -27,6 +27,8 @@ variables:
   DUMUX_ENABLE_CPPCHECK: ""
   DUMUX_ENABLE_DOXYGEN_BUILD: ""
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
+  DUMUX_ENABLE_DUNE_CHECKS: "ON"
+  DUMUX_NDEBUG: 0
 
 
 configure:
@@ -35,6 +37,7 @@ configure:
     - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
+      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_CXX_FLAGS='-DDUNE_CHECK_BOUNDS=${DUMUX_ENABLE_DUNE_CHECKS} -DNDEBUG=${DUMUX_NDEBUG} -DDUNE_ISTL_WITH_CHECKING=${DUMUX_ENABLE_DUNE_CHECKS}'\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current cmake
     - dunecontrol --opts=opts_file.opts --current make -j8
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
@@ -71,7 +74,7 @@ linters:
     # codespell
     - echo "Running codespell"
     - codespell --version
-    - codespell --skip="./deps/**/*,*format/fmt/*,*io/expression/*,*build-cmake*,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf,*dumux/common/dumuxmessage.hh" --ignore-words-list="ges"
+    - codespell --skip="./deps/**/*,*format/fmt/*,*io/expression/*,*build-cmake*,*.pbm,*.raw,*.png,*.svg,*.eps,*.bib,*.tex,patches,.git,*staggered_grid.pdf,*dumux/common/dumuxmessage.hh" --ignore-words-list="ges"
     # check examples
     - |
       if [ "${DUMUX_CHECK_EXAMPLE_DOCS}" == "true" ]; then
@@ -214,6 +217,7 @@ compile cpp:
         make clean && make all
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
+          make build_cmake_tests
         else
           python3 ../bin/testing/runselectedtests.py --all -b
         fi
@@ -256,6 +260,21 @@ test cpp:
     reports:
       junit: junit/dumux-cmake.xml
     expire_in: 3 hours
+
+
+test cmake:
+  stage: test
+  variables:
+    OMPI_ALLOW_RUN_AS_ROOT: 1
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+    DUMUX_NUM_THREADS: 1
+  script:
+    - |
+      source build-cmake/ci-env/bin/activate
+      ctest --test-dir build-cmake/test/cmake -VV
+  needs:
+    - job: compile cpp
+      artifacts: true
 
 
 test python:

@@ -19,7 +19,7 @@ set_tests_properties(test_python_fvproblem PROPERTIES TIMEOUT 1200)
 dune_python_add_test(NAME test_python_explicit_transport_cctpfa
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                     SCRIPT ${DUMUX_RUNTEST}
                               --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_python_explicit-transport-cctpfa-100-reference.vtu
                                       ${CMAKE_CURRENT_BINARY_DIR}/finitevolume-solution-100.vtu
@@ -29,7 +29,7 @@ set_tests_properties(test_python_explicit_transport_cctpfa PROPERTIES TIMEOUT 12
 dune_python_add_test(NAME test_python_1p_incompressible_box_numdiff
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                     SCRIPT ${DUMUX_RUNTEST}
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_numeric-00000.vtu
@@ -39,7 +39,7 @@ set_tests_properties(test_python_1p_incompressible_box_numdiff PROPERTIES TIMEOU
 dune_python_add_test(NAME test_python_1p_incompressible_box_anadiff
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                     SCRIPT ${DUMUX_RUNTEST}
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_analytic-00000.vtu
@@ -49,7 +49,7 @@ set_tests_properties(test_python_1p_incompressible_box_anadiff PROPERTIES TIMEOU
 dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_numdiff
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                     SCRIPT ${DUMUX_RUNTEST}
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_numeric-00000.vtu
@@ -59,7 +59,7 @@ set_tests_properties(test_python_1p_incompressible_cctpfa_numdiff PROPERTIES TIM
 dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_anadiff
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                     SCRIPT ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                     SCRIPT ${DUMUX_RUNTEST}
                                 --script fuzzy
                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_cctpfa_analytic-00000.vtu

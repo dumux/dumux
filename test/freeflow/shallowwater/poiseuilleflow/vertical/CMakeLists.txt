@@ -7,7 +7,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical
                SOURCES main.cc
                LABELS shallowwater
                COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_shallowwater_poiseuilleflow_vertical-reference.vtu
                                       ${CMAKE_CURRENT_BINARY_DIR}/poiseuilleflow-00001.vtu

@@ -12,7 +12,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_ff1p_pm1p
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_horizontal_stokes-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pm1p_horizontal_freeflow-00000.vtu
@@ -25,7 +25,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_vertical
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes
               TARGET test_md_boundary_ff1p_pm1p
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_md_boundary_darcy1p_stokes1p_vertical_stokes-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_ff1p_pm1p_vertical_freeflow-00000.vtu

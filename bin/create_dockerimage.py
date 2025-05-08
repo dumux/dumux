@@ -33,7 +33,6 @@ def substituteAndWrite(template, target, mapping):
 
 
 if __name__ == "__main__":
-
     # input argument parser
     parser = argparse.ArgumentParser(
         description="Create a docker image for a given module and install script."

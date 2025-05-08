@@ -25,6 +25,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -33,10 +34,39 @@
 #include <dumux/assembly/entitycolor.hh>
 
 #include <dumux/discretization/cvfe/elementsolution.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/assembly/volvardeflectionhelper_.hh>
 
 namespace Dumux::Experimental {
+
+#ifndef DOXYGEN
+namespace Detail::CVFE {
+
+template<typename ElemVars, typename FVG>
+using DefinesDeflectionHelperType = typename ElemVars::template DeflectionHelper<FVG>;
+
+template<typename ElemVars, typename FVG>
+constexpr inline bool definesVolVarsDeflectionHelperType()
+{ return Dune::Std::is_detected<DefinesDeflectionHelperType, ElemVars, FVG>::value; }
+
+template<class GridVarsCache, class ElemVars, class FVG>
+auto VolVarsDeflectionHelper(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
+{
+    if constexpr (definesVolVarsDeflectionHelperType<ElemVars, FVG>())
+    {
+        using DeflectionHelper = typename ElemVars::template DeflectionHelper<FVG>;
+        return DeflectionHelper(gridVarsCache, elemVars, fvg, deflectAllVolVars);
+    }
+    else
+    {
+        using DeflectionHelper = Dumux::Detail::VolVarsDeflectionHelper<GridVarsCache, FVG>;
+        return DeflectionHelper(gridVarsCache, elemVars, fvg, deflectAllVolVars);
+    }
+};
+
+} // end namespace Detail::CVFE
+#endif // DOXYGEN
 
 /*!
  * \ingroup Experimental
@@ -226,8 +256,8 @@ public:
         this->asImp_().bindLocalViews();
         const auto residual = this->evalLocalResidual();
 
-        for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.localDofIndex()];
+        for (const auto& localDof : localDofs(this->fvGeometry()))
+            res[localDof.dofIndex()] += residual[localDof.index()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -340,6 +370,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation
     using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, NonVoidOr<ThisType, Implementation>>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
@@ -406,22 +437,21 @@ private:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(fvGeometry.numScv());
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
-        Dumux::Detail::VolVarsDeflectionHelper deflectionHelper(
-            [&] (const auto& scv) -> VolumeVariables& {
-                return this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
-            },
-            fvGeometry,
-            updateAllVolVars
-        );
+        auto deflectionHelper = Detail::CVFE::VolVarsDeflectionHelper(
+                gridVariables.curGridVolVars(),
+                curElemVolVars,
+                fvGeometry,
+                updateAllVolVars
+            );
 
-        // calculation of the derivatives
-        for (const auto& scv : scvs(fvGeometry))
+        auto assembleDerivative = [&, this](const auto& localDof)
         {
             // dof index and corresponding actual pri vars
-            const auto dofIdx = scv.dofIndex();
-            deflectionHelper.setCurrent(scv);
+            const auto dofIdx = localDof.dofIndex();
+            const auto localIdx = localDof.index();
+            deflectionHelper.setCurrent(localDof);
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -431,30 +461,30 @@ private:
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
-                    deflectionHelper.deflect(elemSol, scv, this->asImp_().problem());
+                    elemSol[localIdx][pvIdx] = priVar;
+                    deflectionHelper.deflect(elemSol, localDof, this->asImp_().problem());
                     if constexpr (solutionDependentFluxVarsCache)
                     {
                         elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
                         if constexpr (enableGridFluxVarsCache)
                             gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
                     }
-                    this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
+                    this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
                     return this->evalLocalResidual();
                 };
 
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[localIdx][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (const auto& scvJ : scvs(fvGeometry))
+                for (const auto& localDofJ : localDofs(fvGeometry))
                 {
                     // don't add derivatives for green dofs
                     if (!partialReassembler
-                        || partialReassembler->dofColor(scvJ.dofIndex()) != EntityColor::green)
+                        || partialReassembler->dofColor(localDofJ.dofIndex()) != EntityColor::green)
                     {
                         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                         {
@@ -462,19 +492,23 @@ private:
                             // the residual of equation 'eqIdx' at dof 'i'
                             // depending on the primary variable 'pvIdx' at dof
                             // 'col'.
-                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
+                            A[localDofJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[localDofJ.index()][eqIdx];
                         }
                     }
                 }
 
                 // restore the original state of the scv's volume variables
-                deflectionHelper.restore(scv);
+                deflectionHelper.restore(localDof);
 
                 // restore the original element solution
-                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                this->asImp_().maybeUpdateCouplingContext(scv, elemSol, pvIdx);
+                elemSol[localIdx][pvIdx] = curSol[localDof.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
             }
-        }
+        };
+
+        // calculation of the derivatives
+        for (const auto& localDof : localDofs(fvGeometry))
+            assembleDerivative(localDof);
 
         // restore original state of the flux vars cache in case of global caching.
         // In the case of local caching this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
@@ -508,7 +542,7 @@ private:
         auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(fvGeometry.numScv());
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
         // calculation of the derivatives
         for (const auto& scv : scvs(fvGeometry))

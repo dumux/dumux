@@ -13,10 +13,15 @@
 #include <tuple>
 
 #include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/common/capabilities.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/gridmanager.hh>
+
+#if DUMUX_HAVE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#endif
 
 #include "gridmanagertests.hh"
 
@@ -45,7 +50,7 @@ getGridData(const GridView& gridView, const GridData& data,
             pointData[i][vIdx] = data.getParameter(vertex, pointDataFieldNames[i]);
     }
 
-    return std::make_pair(cellData, pointData);
+    return std::make_pair(std::move(cellData), std::move(pointData));
 }
 
 template<class Grid>
@@ -59,11 +64,43 @@ void testVTKReader(const std::string& gridName)
     const auto gridData = gridManager.getGridData();
     const auto& gridView = gridManager.grid().leafGridView();
 
+    const auto rank = gridView.comm().rank();
+    std::cout << "Rank " << rank << " has " << gridView.size(0) << " elements and " << gridView.size(Grid::dimension) << " vertices." << std::endl;
+
     auto cellDataFieldNames = getParamFromGroup<std::vector<std::string>>(gridName, "Grid.CellData", std::vector<std::string>{});
     auto pointDataFieldNames = getParamFromGroup<std::vector<std::string>>(gridName, "Grid.PointData", std::vector<std::string>{});
     std::vector<std::vector<double>> cellData, pointData;
     std::tie(cellData, pointData) = getGridData(gridView, *gridData, cellDataFieldNames, pointDataFieldNames);
 
+    if (rank == 0)
+    {
+        std::cout << "Choosing " << cellDataFieldNames.size() << " cell data fields." << std::endl;
+        for (int i = 0; i < cellDataFieldNames.size(); ++i)
+            std::cout << "-- field '" << cellDataFieldNames[i] << "' with size " << cellData[i].size() << std::endl;
+        std::cout << "Choosing " << pointDataFieldNames.size() << " point data fields." << std::endl;
+        for (int i = 0; i < pointDataFieldNames.size(); ++i)
+            std::cout << "-- field '" << pointDataFieldNames[i] << "' with size " << pointData[i].size() << std::endl;
+    }
+
+    if (gridView.comm().size() > 1)
+        suffix += "-parallel";
+
+#if DUMUX_HAVE_GRIDFORMAT
+    std::shared_ptr<Dumux::IO::GridWriter<typename Grid::LeafGridView>> gridWriter;
+    if constexpr (Dune::Capabilities::isCartesian<Grid>::v)
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vti, gridView);
+    else if constexpr (Grid::dimension == 1)
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtp, gridView);
+    else
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtu, gridView);
+
+    for (int i = 0; i < cellDataFieldNames.size(); ++i)
+        gridWriter->setCellField(cellDataFieldNames[i], [&,i=i](const auto& e) { return cellData[i][gridView.indexSet().index(e)]; });
+    for (int i = 0; i < pointDataFieldNames.size(); ++i)
+        gridWriter->setPointField(pointDataFieldNames[i], [&,i=i](const auto& v) { return pointData[i][gridView.indexSet().index(v)]; });
+
+    gridWriter->write("test-gridmanager-vtk-" + suffix + "-0");
+#else
     Dune::VTKWriter<typename Grid::LeafGridView> vtkWriter(gridView);
 
     for (int i = 0; i < cellDataFieldNames.size(); ++i)
@@ -72,6 +109,7 @@ void testVTKReader(const std::string& gridName)
         vtkWriter.addVertexData(pointData[i], pointDataFieldNames[i]);
 
     vtkWriter.write("test-gridmanager-vtk-" + suffix + "-0");
+#endif
 }
 
 } // end namespace Dumux
@@ -95,6 +133,12 @@ int main(int argc, char** argv)
 
         testVTKReader<Dune::FoamGrid<1, 3>>("FoamGrid");
         return 0;
+
+    #elif YASPGRID
+
+        testVTKReader<Dune::YaspGrid<2>>("YaspGrid");
+        return 0;
+
     #else
     #warning "Unknown grid type. Skipping test."
         return 77;

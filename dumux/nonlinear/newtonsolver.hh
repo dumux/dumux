@@ -6,9 +6,10 @@
 //
 /*!
  * \file
- * \ingroup Nonlinear
+ * \ingroup Newton
  * \brief Reference implementation of a Newton solver.
- */
+*/
+
 #ifndef DUMUX_NEWTON_SOLVER_HH
 #define DUMUX_NEWTON_SOLVER_HH
 
@@ -165,8 +166,9 @@ void assign(To& to, const From& from)
 namespace Dumux {
 
 /*!
- * \ingroup Nonlinear
- * \brief An implementation of a Newton solver
+ * \ingroup Newton
+ * \brief An implementation of a Newton solver. The comprehensive documentation is in \ref Newton,
+ * providing more details about the algorithm and the related parameters.
  * \tparam Assembler the assembler
  * \tparam LinearSolver the linear solver
  * \tparam Comm the communication object used to communicate with all processes
@@ -500,7 +502,7 @@ public:
         catch (const Dune::Exception &e)
         {
             if (verbosity_ >= 1)
-                std::cout << solverName_ << ": Caught exception from the linear solver: \"" << e.what() << "\"\n";
+                std::cout << solverName_ << " caught exception in  the linear solver: \"" << e.what() << "\"\n";
 
             converged = false;
         }
@@ -700,12 +702,14 @@ public:
     /*!
      * \brief Called if the Newton method broke down.
      * This method is called _after_ newtonEnd()
+     * \note If this method throws an exception, it won't be recoverable
      */
     virtual void newtonFail(Variables& u) {}
 
     /*!
      * \brief Called if the Newton method ended successfully
      * This method is called _after_ newtonEnd()
+     * \note If this method throws an exception, it won't be recoverable
      */
     virtual void newtonSucceed()  {}
 
@@ -906,139 +910,196 @@ protected:
 
     /*!
      * \brief Run the Newton method to solve a non-linear system.
-     *        The solver is responsible for all the strategic decisions.
+     * \return bool converged or not
+     * \note The result is guaranteed to be the same on all processes
+     * \note This is guaranteed to not throw Dumux::NumericalProblem,
+     *       other exceptions lead to program termination.
      */
     bool solve_(Variables& vars)
     {
-        try
+        bool converged = false;
+
+        Dune::Timer assembleTimer(false);
+        Dune::Timer solveTimer(false);
+        Dune::Timer updateTimer(false);
+
+        try {
+            converged = solveImpl_(
+                vars, assembleTimer, solveTimer, updateTimer
+            );
+        }
+
+        // Dumux::NumericalProblem may be recovered from
+        catch (const Dumux::NumericalProblem &e)
         {
-            // newtonBegin may manipulate the solution
-            newtonBegin(vars);
+            if (verbosity_ >= 1)
+                std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
+            converged = false;
+        }
 
-            // the given solution is the initial guess
-            auto uLastIter = Backend::dofs(vars);
-            ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
-            Detail::Newton::assign(deltaU, Backend::dofs(vars));
+        // make sure all processes were successful
+        int allProcessesConverged = static_cast<int>(converged);
+        if (comm_.size() > 1)
+            allProcessesConverged = comm_.min(static_cast<int>(converged));
 
-            // setup timers
-            Dune::Timer assembleTimer(false);
-            Dune::Timer solveTimer(false);
-            Dune::Timer updateTimer(false);
-
-            // execute the method as long as the solver thinks
-            // that we should do another iteration
-            bool converged = false;
-            while (newtonProceed(vars, converged))
-            {
-                // notify the solver that we're about to start
-                // a new iteration
-                newtonBeginStep(vars);
-
-                // make the current solution to the old one
-                if (numSteps_ > 0)
-                    uLastIter = Backend::dofs(vars);
-
-                if (verbosity_ >= 1 && enableDynamicOutput_)
-                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
-                              << std::flush;
-
-                ///////////////
-                // assemble
-                ///////////////
-
-                // linearize the problem at the current solution
-                assembleTimer.start();
-                assembleLinearSystem(vars);
-                auto jacci = this->assembler().jacobian();
-                Dune::printmatrix(std::cout , jacci, "see the BCSRMatrix" , "--");
-                assembleTimer.stop();
-
-                ///////////////
-                // linear solve
-                ///////////////
-
-                // Clear the current line using an ansi escape
-                // sequence.  for an explanation see
-                // http://en.wikipedia.org/wiki/ANSI_escape_code
-                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
-
-                if (verbosity_ >= 1 && enableDynamicOutput_)
-                    std::cout << "\rSolve: M deltax^k = r"
-                              << clearRemainingLine << std::flush;
-
-                // solve the resulting linear equation system
-                solveTimer.start();
-
-                // set the delta vector to zero before solving the linear system!
-                deltaU = 0;
-
-                solveLinearSystem(deltaU);
-                solveTimer.stop();
-
-                ///////////////
-                // update
-                ///////////////
-                if (verbosity_ >= 1 && enableDynamicOutput_)
-                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
-                              << clearRemainingLine << std::flush;
-
-                updateTimer.start();
-                // update the current solution (i.e. uOld) with the delta
-                // (i.e. u). The result is stored in u
-                newtonUpdate(vars, uLastIter, deltaU);
-                updateTimer.stop();
-
-                // tell the solver that we're done with this iteration
-                newtonEndStep(vars, uLastIter);
-
-                // if a convergence writer was specified compute residual and write output
-                if (convergenceWriter_)
-                {
-                    this->assembler().assembleResidual(vars);
-                    convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assembler().residual());
-                }
-
-                // detect if the method has converged
-                converged = newtonConverged();
-            }
-
-            // tell solver we are done
-            newtonEnd();
-
-            // reset state if Newton failed
-            if (!newtonConverged())
-            {
-                totalWastedIter_ += numSteps_;
-                newtonFail(vars);
-                return false;
-            }
-
+        if (allProcessesConverged)
+        {
             totalSucceededIter_ += numSteps_;
             numConverged_++;
-
-            // tell solver we converged successfully
             newtonSucceed();
 
             if (verbosity_ >= 1) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
                 std::cout << Fmt::format("Assemble/solve/update time: {:.2g}({:.2f}%)/{:.2g}({:.2f}%)/{:.2g}({:.2f}%)\n",
-                                         assembleTimer.elapsed(), 100*assembleTimer.elapsed()/elapsedTot,
-                                         solveTimer.elapsed(), 100*solveTimer.elapsed()/elapsedTot,
-                                         updateTimer.elapsed(), 100*updateTimer.elapsed()/elapsedTot);
+                                            assembleTimer.elapsed(), 100*assembleTimer.elapsed()/elapsedTot,
+                                            solveTimer.elapsed(), 100*solveTimer.elapsed()/elapsedTot,
+                                            updateTimer.elapsed(), 100*updateTimer.elapsed()/elapsedTot);
             }
-            return true;
-
         }
-        catch (const NumericalProblem &e)
+        else
         {
-            if (verbosity_ >= 1)
-                std::cout << solverName_ << ": Caught exception: \"" << e.what() << "\"\n";
-
             totalWastedIter_ += numSteps_;
-
             newtonFail(vars);
-            return false;
         }
+
+        return static_cast<bool>(allProcessesConverged);
+    }
+
+    /*!
+     * \brief Run the Newton method to solve a non-linear system.
+     *        The implements the main algorithm and calls hooks for
+     *        the various substeps.
+     * \note As part of the design, this method may throw
+     *       \ref Dumux::NumericalProblem which can be considered recoverable
+     *       in certain situations by retrying the algorithm with
+     *       different parameters, see \ref Dumux::NewtonSolver::solve
+     */
+    bool solveImpl_(Variables& vars,
+        Dune::Timer& assembleTimer,
+        Dune::Timer& solveTimer,
+        Dune::Timer& updateTimer)
+    {
+        // newtonBegin may manipulate the solution
+        newtonBegin(vars);
+
+        // the given solution is the initial guess
+        auto uLastIter = Backend::dofs(vars);
+        ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
+        Detail::Newton::assign(deltaU, Backend::dofs(vars));
+
+        // execute the method as long as the solver thinks
+        // that we should do another iteration
+        bool converged = false;
+        while (newtonProceed(vars, converged))
+        {
+            // notify the solver that we're about to start
+            // a new iteration
+            newtonBeginStep(vars);
+
+            // make the current solution to the old one
+            if (numSteps_ > 0)
+                uLastIter = Backend::dofs(vars);
+
+            if (verbosity_ >= 1 && enableDynamicOutput_)
+                std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
+                            << std::flush;
+
+            ///////////////
+            // assemble
+            ///////////////
+
+            // linearize the problem at the current solution
+            assembleTimer.start();
+            callAndCheck_([&]{ assembleLinearSystem(vars); }, "assemble");
+            auto jacci = this->assembler().jacobian();
+            Dune::printmatrix(std::cout , jacci, "see the BCSRMatrix" , "--");
+            assembleTimer.stop();
+
+            ///////////////
+            // linear solve
+            ///////////////
+
+            // Clear the current line using an ansi escape
+            // sequence.  for an explanation see
+            // http://en.wikipedia.org/wiki/ANSI_escape_code
+            const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+            if (verbosity_ >= 1 && enableDynamicOutput_)
+                std::cout << "\rSolve: M deltax^k = r"
+                            << clearRemainingLine << std::flush;
+
+            // solve the resulting linear equation system
+            solveTimer.start();
+
+            // set the delta vector to zero before solving the linear system!
+            deltaU = 0;
+
+            solveLinearSystem(deltaU);
+            solveTimer.stop();
+
+            ///////////////
+            // update
+            ///////////////
+            if (verbosity_ >= 1 && enableDynamicOutput_)
+                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k"
+                            << clearRemainingLine << std::flush;
+
+            updateTimer.start();
+            // update the current solution (i.e. uOld) with the delta
+            // (i.e. u). The result is stored in u
+            newtonUpdate(vars, uLastIter, deltaU);
+            updateTimer.stop();
+
+            // tell the solver that we're done with this iteration
+            newtonEndStep(vars, uLastIter);
+
+            // if a convergence writer was specified compute residual and write output
+            if (convergenceWriter_)
+            {
+                this->assembler().assembleResidual(vars);
+                convergenceWriter_->write(Backend::dofs(vars), deltaU, this->assembler().residual());
+            }
+
+            // detect if the method has converged
+            converged = newtonConverged();
+        }
+
+        // tell solver we are done
+        newtonEnd();
+
+        // check final convergence status
+        converged = newtonConverged();
+
+        // return status
+        return converged;
+    }
+
+    template<std::invocable Func>
+    void callAndCheck_(Func&& run, const std::string& stepName)
+    {
+        bool successful = false;
+        try {
+            run();
+            successful = true;
+        }
+        catch (const Dumux::NumericalProblem& e)
+        {
+            successful = false;
+
+            if (verbosity_ >= 1)
+                std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
+        }
+
+        // make sure all processes converged
+        int successfulRemote = static_cast<int>(successful);
+        if (comm_.size() > 1)
+            successfulRemote = comm_.min(static_cast<int>(successful));
+
+        if (!successful)
+            DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on process " << comm_.rank());
+
+        else if (!successfulRemote)
+            DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on a remote process");
     }
 
     const std::size_t& maxTimeStepDivisions() const
@@ -1089,6 +1150,14 @@ private:
             shift_ = comm_.max(shift_);
     }
 
+    /*!
+     * \brief Use a line search update based on simple backtracking
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void lineSearchUpdate_(Variables &vars,
                                    const SolutionVector &uLastIter,
                                    const ResidualVector &deltaU)
@@ -1115,7 +1184,14 @@ private:
         }
     }
 
-    //! \note method must update the gridVariables, too!
+    /*!
+     * \brief Use a custom chopped update strategy (do not use the full update)
+     * \note method must update the gridVariables if the solution changes
+     *
+     * \param vars The variables to be updated
+     * \param uLastIter The solution vector after the last iteration
+     * \param deltaU The computed difference between the current and the next solution (full update)
+     */
     virtual void choppedUpdate_(Variables& vars,
                                 const SolutionVector& uLastIter,
                                 const ResidualVector& deltaU)

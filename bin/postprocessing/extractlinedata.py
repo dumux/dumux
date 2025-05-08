@@ -78,7 +78,6 @@ if outDirectory.strip():
 # loop over all vtk files
 COUNTER = 0
 for curFile in args["files"]:
-
     # if no output directory was specified, use the directory of the given file
     curOutDirectory = outDirectory
     if curOutDirectory == "":

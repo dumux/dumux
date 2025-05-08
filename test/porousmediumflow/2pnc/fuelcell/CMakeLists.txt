@@ -8,7 +8,7 @@ dumux_add_test(NAME test_2pnc_fuelcell_box
               LABELS porousmediumflow 2pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellBox
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_fuelcell_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_box-00015.vtu
@@ -18,7 +18,7 @@ dumux_add_test(NAME test_2pnc_fuelcell_tpfa
               LABELS porousmediumflow 2pnc
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellCCTpfa
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_fuelcell_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fuelcell_tpfa-00015.vtu
@@ -29,7 +29,7 @@ dumux_add_test(NAME test_2pncni_fuelcell_box
               LABELS porousmediumflow 2pnc  2pncni
               SOURCES main.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellNIBox NONISOTHERMAL=1
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pncni_fuelcell_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_fuelcell_box-00015.vtu

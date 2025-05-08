@@ -141,7 +141,13 @@ public:
      * copyright (C) 2004-2009  John Pye
      *
      * Appendix B: Recommended Interpolating equation for Industrial Use
-     * see http://www.iapws.org/relguide/thcond.pdf
+     * see "Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance",
+     * https://doc.modelica.org/Modelica%204.0.0/Resources/Documentation/Media/Water/IF97documentation/thcond.pdf
+     * \cite IAPWS_ThCond
+     *
+     * TODO: implement new formulation (and update dumux.bib entry then) presented in
+     * "Release on the IAPWS Formulation 2011 for the Thermal Conductivity of Ordinary Water Substance",
+     * https://iapws.org/relguide/ThCond.pdf
      *
      * \param T absolute temperature in \f$\mathrm{[K]}\f$
      * \param rho density of water in \f$\mathrm{[kg/m^3]}\f$

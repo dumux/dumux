@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES grids)
+dune_symlink_to_source_files(FILES grids periodic.dgf)
 
 add_executable(test_gridmanager_cake_ug EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
 target_compile_definitions(test_gridmanager_cake_ug PUBLIC "USEUG=1")
@@ -13,7 +13,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_ug
                TARGET test_gridmanager_cake_ug
                LABELS unit io
                CMAKE_GUARD dune-uggrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-360"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
@@ -26,7 +26,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_ug_parallel
                TARGET test_gridmanager_cake_ug
                LABELS unit io
                CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore  "process rank"
                         --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-360"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_alu
                TARGET test_gridmanager_cake_alu
                LABELS unit io
                CMAKE_GUARD dune-alugrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-360"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
@@ -52,7 +52,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_alu_parallel
                TARGET test_gridmanager_cake_alu
                LABELS unit io
                CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank"
                         --command "${MPIEXEC} -np 3 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-360"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360-reference.vtu
@@ -65,7 +65,7 @@ dumux_add_test(NAME test_gridmanager_cake_210_ug
                TARGET test_gridmanager_cake_ug
                LABELS unit io
                CMAKE_GUARD dune-uggrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name ug-210 -Grid.Angular1 '0.0 210.0'"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_210-reference.vtu
@@ -78,7 +78,7 @@ dumux_add_test(NAME test_gridmanager_cake_210_alu
                TARGET test_gridmanager_cake_alu
                LABELS unit io
                CMAKE_GUARD dune-alugrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_alu -Grid.Name alu-210 -Grid.Angular1 '0.0 210.0'"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_210-reference.vtu
@@ -91,7 +91,7 @@ dumux_add_test(NAME test_gridmanager_cake_360_nowell
                TARGET test_gridmanager_cake_ug
                LABELS unit io
                CMAKE_GUARD dune-uggrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_cake_ug -Grid.Name nowell-360 -Grid.Radial0 '0.0 0.3 1.0'"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_cake_3d_360_nowell-reference.vtu
@@ -104,7 +104,7 @@ dumux_add_test(NAME test_gridmanager_subgrid
               SOURCES test_gridmanager_subgrid.cc
               LABELS unit io
               CMAKE_GUARD dune-subgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_subgrid"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager_subgrid-reference.vtu
@@ -123,7 +123,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_alu_sequential
               TARGET test_gridmanager_gmsh_3d_alu
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
@@ -134,7 +134,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_alu_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_alu -Problem.Name bifurcation_alu_parallel -Grid.Refine false"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
@@ -147,7 +147,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_ug_sequential
               TARGET test_gridmanager_gmsh_3d_ug
               LABELS unit io
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_ug -Problem.Name bifurcation_ug"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
@@ -160,7 +160,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_ug_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_3d_ug -Problem.Name bifurcation_ug_parallel -Grid.Refine false"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
@@ -173,7 +173,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_alu_sequential
               TARGET test_gridmanager_gmsh_e_markers_alu
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_e_markers_alu -Problem.Name fracture_alu"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-reference.vtu
@@ -186,7 +186,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_alu_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_e_markers_alu -Problem.Name fracture_alu_parallel"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-reference.vtu
@@ -201,7 +201,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_ug_sequential
               TARGET test_gridmanager_gmsh_e_markers_ug
               LABELS unit io
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_e_markers_ug -Problem.Name fracture_ug"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-reference.vtu
@@ -214,7 +214,7 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_ug_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_gmsh_e_markers_ug -Problem.Name fracture_ug_parallel"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-reference.vtu
@@ -229,7 +229,7 @@ dumux_add_test(NAME test_gridmanager_dgf_alu_sequential
               TARGET test_gridmanager_dgf_alu
               LABELS unit io
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_alu -Problem.Name co2_alu"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-co2-simpl-element-reference.vtu
@@ -244,7 +244,7 @@ dumux_add_test(NAME test_gridmanager_dgf_alu_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_alu -Problem.Name co2_alu_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-co2-simpl-element-reference.vtu
@@ -261,7 +261,7 @@ dumux_add_test(NAME test_gridmanager_dgf_ug_sequential
               TARGET test_gridmanager_dgf_ug
               LABELS unit io
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_ug -Problem.Name co2_ug"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-co2-quad-element-reference.vtu
@@ -276,7 +276,7 @@ dumux_add_test(NAME test_gridmanager_dgf_ug_parallel
               LABELS unit io parallel
               TIMEOUT 300
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_ug -Problem.Name co2_ug_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-co2-quad-element-reference.vtu
@@ -291,7 +291,7 @@ dumux_add_test(NAME test_gridmanager_vtk_foam
               LABELS unit io
               COMPILE_DEFINITIONS FOAMGRID
               CMAKE_GUARD dune-foamgrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_foam
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lupine.vtp
@@ -302,7 +302,7 @@ dumux_add_test(NAME test_gridmanager_vtk_ug
               LABELS unit io
               COMPILE_DEFINITIONS UGGRID
               CMAKE_GUARD dune-uggrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_ug
                        --files ${CMAKE_CURRENT_BINARY_DIR}/grids/lens.vtu
@@ -313,7 +313,7 @@ dumux_add_test(NAME test_gridmanager_vtk_alu
               LABELS unit io
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
               CMAKE_GUARD dune-alugrid_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
@@ -328,7 +328,7 @@ dumux_add_test(NAME test_gridmanager_vtk_alu_parallel
               LABELS unit io
               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "rank"
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_alu -Problem.Name disk_alu_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-element-reference.vtu
@@ -337,6 +337,31 @@ dumux_add_test(NAME test_gridmanager_vtk_alu_parallel
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-element-00001.pvtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-disk-tri-vertex-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-disk_alu_parallel-vertex-00000.pvtu)
+
+dumux_add_test(NAME test_gridmanager_vtk_yasp
+              SOURCES test_gridmanager_vtk.cc
+              LABELS unit io
+              COMPILE_DEFINITIONS YASPGRID
+              CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --backend fieldcompare
+                       --command ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_yasp
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/structured.vti
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-yaspgrid-0.vti)
+
+dumux_add_test(NAME test_gridmanager_vtk_yasp_parallel
+              TARGET test_gridmanager_vtk_yasp
+              LABELS unit io
+              COMPILE_DEFINITIONS YASPGRID
+              CMAKE_GUARD "( DUMUX_HAVE_GRIDFORMAT AND MPI_FOUND )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --backend fieldcompare
+                       --ignore "rank"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_vtk_yasp"
+                       --files ${CMAKE_CURRENT_BINARY_DIR}/grids/structured.vti
+                               ${CMAKE_CURRENT_BINARY_DIR}/test-gridmanager-vtk-yaspgrid-parallel-0.pvti)
 
 dumux_add_test(NAME test_gmshboundaryflag
               SOURCES test_gmshboundaryflag.cc
@@ -364,7 +389,7 @@ dumux_add_test(NAME test_pnm_gridmanager_constant_params
                LABELS unit io porenetwork
                TARGET test_pnm_gridmanager
                CMAKE_GUARD dune-foamgrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_gridmanager-3d-constant-reference.vtp
                                      ${CMAKE_CURRENT_BINARY_DIR}/generic-3dgrid-constant-params.vtp
@@ -384,7 +409,7 @@ dumux_add_test(NAME test_pnm_gridmanager_random_params
                LABELS unit io porenetwork
                TARGET test_pnm_gridmanager
                CMAKE_GUARD dune-foamgrid_FOUND
-               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_gridmanager-3d-random-reference.vtp
                                      ${CMAKE_CURRENT_BINARY_DIR}/generic-3dgrid-random-params.vtp

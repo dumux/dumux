@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsModels
+ * \ingroup PoroElastic
  * \brief helper struct detecting if the user-defined spatial params class has a lameParamsAtPos function
  */
 #ifndef DUMUX_POROMECHANICS_SPATIAL_PARAMS_TRAITS__HH
