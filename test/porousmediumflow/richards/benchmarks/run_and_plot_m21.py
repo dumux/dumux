@@ -60,3 +60,4 @@ axes[2].legend()
 
 fig.tight_layout()
 plt.savefig("benchmark_infiltration.png")
+plt.savefig("benchmark_infiltration.svg")
