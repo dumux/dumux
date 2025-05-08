@@ -178,9 +178,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <detaileddescription title="Description"/>
     <memberdecl>
       <nestedgroups visible="yes" title=""/>
-      <dirs visible="yes" title=""/>
-      <files visible="yes" title=""/>
-      <namespaces visible="yes" title=""/>
       <classes visible="yes" title=""/>
       <defines title=""/>
       <typedefs title=""/>
@@ -188,6 +185,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <enumvalues title=""/>
       <functions title=""/>
       <variables title=""/>
+      <namespaces visible="yes" title=""/>
+      <dirs visible="yes" title=""/>
+      <files visible="yes" title=""/>
       <signals title=""/>
       <publicslots title=""/>
       <protectedslots title=""/>
