@@ -20,7 +20,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/geometry/volume.hh>
@@ -37,7 +36,6 @@ namespace Dumux {
  */
 template<class GV, class T = BoxDefaultScvfGeometryTraits<GV> >
 class BoxFacetCouplingSubControlVolumeFace
-: public SubControlVolumeFaceBase<BoxFacetCouplingSubControlVolumeFace<GV, T>, T>
 {
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;

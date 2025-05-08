@@ -19,7 +19,6 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 
 #include <typeinfo>
 
@@ -105,10 +104,8 @@ struct StaggeredDefaultScvfGeometryTraits
 template<class GV,
          class T = StaggeredDefaultScvfGeometryTraits<GV> >
 class StaggeredSubControlVolumeFace
-: public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<GV, T>, T>
 {
     using ThisType = StaggeredSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
@@ -133,8 +130,7 @@ public:
                                   GridIndexType scvfIndex,
                                   const std::vector<GridIndexType>& scvIndices,
                                   const GeometryHelper& geometryHelper)
-    : ParentType()
-    , area_(isGeometry.volume())
+    : area_(isGeometry.volume())
     , center_(isGeometry.center())
     , unitOuterNormal_(is.centerUnitOuterNormal())
     , scvfIndex_(scvfIndex)

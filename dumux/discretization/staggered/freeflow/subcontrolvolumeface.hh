@@ -19,7 +19,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 
@@ -78,10 +77,8 @@ template<class GV,
          int upwindSchemeOrder,
          class T = FreeFlowStaggeredDefaultScvfGeometryTraits<GV, upwindSchemeOrder>>
 class FreeFlowStaggeredSubControlVolumeFace
-: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>, T>
 {
     using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, upwindSchemeOrder, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename IndexTraits<GV>::GridIndex;
     using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
@@ -114,8 +111,7 @@ public:
                                           GridIndexType scvfIndex,
                                           const std::vector<GridIndexType>& scvIndices,
                                           const typename T::GeometryHelper& geometryHelper)
-    : ParentType(),
-      area_(isGeometry.volume()),
+    : area_(isGeometry.volume()),
       center_(isGeometry.center()),
       unitOuterNormal_(is.centerUnitOuterNormal()),
       scvfIndex_(scvfIndex),

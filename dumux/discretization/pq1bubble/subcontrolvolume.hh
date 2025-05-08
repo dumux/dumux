@@ -17,7 +17,6 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
@@ -54,12 +53,13 @@ struct PQ1BubbleDefaultScvGeometryTraits
 template<class GridView, class T = PQ1BubbleDefaultScvGeometryTraits<GridView>>
 class PQ1BubbleSubControlVolume
 {
-    using GlobalPosition = typename T::GlobalPosition;
     using Scalar = typename T::Scalar;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 

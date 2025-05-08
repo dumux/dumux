@@ -21,7 +21,6 @@
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 
 namespace Dumux {
 
@@ -74,10 +73,8 @@ struct CCTpfaDefaultScvfGeometryTraits
 template<class GV,
          class T = CCTpfaDefaultScvfGeometryTraits<GV> >
 class CCTpfaSubControlVolumeFace
-: public SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<GV, T>, T>
 {
     using ThisType = CCTpfaSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using Scalar = typename T::Scalar;
     using CornerStorage = typename T::CornerStorage;
@@ -108,8 +105,7 @@ public:
                                GridIndexType scvfIndex,
                                const GridIndexStorage& scvIndices,
                                bool isBoundary)
-    : ParentType()
-    , area_(isGeometry.volume())
+    : area_(isGeometry.volume())
     , center_(isGeometry.center())
     , unitOuterNormal_(is.centerUnitOuterNormal())
     , scvfIndex_(scvfIndex)

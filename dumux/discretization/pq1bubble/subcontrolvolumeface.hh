@@ -19,7 +19,6 @@
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
 namespace Dumux {
@@ -56,10 +55,8 @@ struct PQ1BubbleDefaultScvfGeometryTraits
 template<class GV,
          class T = PQ1BubbleDefaultScvfGeometryTraits<GV> >
 class PQ1BubbleSubControlVolumeFace
-: public SubControlVolumeFaceBase<PQ1BubbleSubControlVolumeFace<GV, T>, T>
 {
     using ThisType = PQ1BubbleSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;

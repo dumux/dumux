@@ -15,7 +15,6 @@
 #include <dune/geometry/affinegeometry.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
 
 namespace Dumux::PoreNetwork {
 
@@ -48,10 +47,8 @@ struct PNMDefaultScvGeometryTraits
 template<class GV,
          class T = PNMDefaultScvGeometryTraits<GV> >
 class PNMSubControlVolume
-: public Dumux::SubControlVolumeBase<PNMSubControlVolume<GV, T>, T>
 {
     using ThisType = PNMSubControlVolume<GV, T>;
-    using ParentType = Dumux::SubControlVolumeBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
