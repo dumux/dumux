@@ -13,7 +13,6 @@
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
 
 namespace Dumux {
 
@@ -43,10 +42,8 @@ struct CCDefaultScvGeometryTraits
 template<class GV,
          class T = CCDefaultScvGeometryTraits<GV> >
 class CCSubControlVolume
-: public SubControlVolumeBase<CCSubControlVolume<GV, T>, T>
 {
     using ThisType = CCSubControlVolume<GV, T>;
-    using ParentType = SubControlVolumeBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
@@ -61,8 +58,7 @@ public:
     template<class Geometry>
     CCSubControlVolume(Geometry&& geometry,
                        GridIndexType elementIndex)
-    : ParentType()
-    , volume_(geometry.volume())
+    : volume_(geometry.volume())
     , center_(geometry.center())
     , elementIndex_(elementIndex)
     {}

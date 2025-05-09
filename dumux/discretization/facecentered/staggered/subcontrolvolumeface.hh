@@ -19,7 +19,6 @@
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/facecentered/staggered/normalaxis.hh>
 
 namespace Dumux {

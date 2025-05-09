@@ -19,7 +19,6 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/geometry/center.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
 namespace Dumux {
@@ -56,10 +55,8 @@ struct BoxDefaultScvGeometryTraits
 template<class GV,
          class T = BoxDefaultScvGeometryTraits<GV> >
 class BoxSubControlVolume
-: public SubControlVolumeBase<BoxSubControlVolume<GV, T>, T>
 {
     using ThisType = BoxSubControlVolume<GV, T>;
-    using ParentType = SubControlVolumeBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;

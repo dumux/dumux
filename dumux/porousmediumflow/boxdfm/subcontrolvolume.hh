@@ -17,7 +17,6 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-#include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/porousmediumflow/boxdfm/geometryhelper.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
@@ -60,20 +59,19 @@ struct BoxDfmDefaultScvGeometryTraits
 template<class GV,
          class T = BoxDfmDefaultScvGeometryTraits<GV> >
 class BoxDfmSubControlVolume
-: public SubControlVolumeBase<BoxDfmSubControlVolume<GV, T>, T>
 {
     using ThisType = BoxDfmSubControlVolume<GV, T>;
-    using ParentType = SubControlVolumeBase<ThisType, T>;
     using Geometry = typename T::Geometry;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
-    enum { dim = Geometry::mydimension };
+    static constexpr int dim = Geometry::mydimension;
 
     static_assert(dim == 2 || dim == 3, "Box-Dfm sub-control volume only implemented in 2d or 3d");
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! State the traits public and thus export all types
     using Traits = T;
 

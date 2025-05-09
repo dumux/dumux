@@ -19,7 +19,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/porousmediumflow/boxdfm/geometryhelper.hh>
 #include <dumux/geometry/volume.hh>
 
@@ -61,20 +60,19 @@ struct BoxDfmDefaultScvfGeometryTraits
 template<class GV,
          class T = BoxDfmDefaultScvfGeometryTraits<GV> >
 class BoxDfmSubControlVolumeFace
-: public SubControlVolumeFaceBase<BoxDfmSubControlVolumeFace<GV, T>, T>
 {
     using ThisType = BoxDfmSubControlVolumeFace<GV, T>;
-    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
 
     static_assert(T::dim == 2 || T::dim == 3, "Box-Dfm sub-control volume face only implemented in 2d or 3d");
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! State the traits public and thus export all types
     using Traits = T;
 

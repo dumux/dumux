@@ -11,6 +11,7 @@
  */
 #ifndef DUMUX_SUBCONTROLVOLUME_HH
 #define DUMUX_SUBCONTROLVOLUME_HH
+#warning "This header is deprecated and will be removed after release 3.11"
 
 namespace Dumux {
 
@@ -22,7 +23,7 @@ namespace Dumux {
  * \tparam ScvGeometryTraits traits of this class
  */
 template<class Imp, class ScvGeometryTraits>
-class SubControlVolumeBase
+class [[deprecated("Will be removed after 3.11")]] SubControlVolumeBase
 {
     using Implementation = Imp;
     using GridIndexType = typename ScvGeometryTraits::GridIndexType;

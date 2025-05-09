@@ -11,6 +11,7 @@
  */
 #ifndef DUMUX_DISCRETIZATION_SUBCONTROLVOLUMEFACEBASE_HH
 #define DUMUX_DISCRETIZATION_SUBCONTROLVOLUMEFACEBASE_HH
+#warning "This header is deprecated and will be removed after release 3.11"
 
 #include <utility>
 #include <dune/common/fvector.hh>
@@ -25,7 +26,7 @@ namespace Dumux {
  * \tparam ScvGeometryTraits traits of this class
  */
 template<class Imp, class ScvfGeometryTraits>
-class SubControlVolumeFaceBase
+class [[deprecated("Will be removed after 3.11")]] SubControlVolumeFaceBase
 {
     using Implementation = Imp;
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
