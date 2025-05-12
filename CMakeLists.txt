@@ -75,7 +75,7 @@ if (DUMUX_ENABLE_GRIDFORMAT)
   else ()
     FetchContent_Declare(gridformat
       GIT_REPOSITORY https://github.com/dglaeser/gridformat.git
-      GIT_TAG 6e1f1963dd69443dc8da8fd14423d4f1d057654e
+      GIT_TAG v0.4.0
       GIT_PROGRESS true
       GIT_SUBMODULES_RECURSE ON
       OVERRIDE_FIND_PACKAGE ON
