@@ -16,14 +16,6 @@ endif()
 list(APPEND _DUNE_MODULES_PREFIX_PATH ${PROJECT_BINARY_DIR})
 # add the prefix path in case some modules are installed and this is given
 list(APPEND _DUNE_MODULES_PREFIX_PATH ${CMAKE_PREFIX_PATH})
-# add the build directory of all found dune modules
-# here we actually only want to have the "depends"-modules of
-# dumux which are the core modules. However, for now the dune
-# build system writes all found modules to the dumux config file
-# and therefore we need to find all of them.
-foreach(_mod IN LISTS DUNE_FOUND_DEPENDENCIES)
-  list(APPEND _DUNE_MODULES_PREFIX_PATH ${${_mod}_DIR})
-endforeach()
 
 # need to escape the semicolon in the path to pass it as a command
 string(REPLACE ";" "\;" _DUNE_MODULES_PREFIX_PATH "${_DUNE_MODULES_PREFIX_PATH}")
