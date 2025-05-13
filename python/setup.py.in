@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from setuptools import setup, find_packages
+
+required_pkgs = "${RequiredPythonModules}".replace(";", " ").split(" ")
+
+setup(
+    name="${ProjectName}",
+    packages=find_packages(include=["dumux", "dumux.*"]),
+    description="${ProjectDescription}",
+    version="${ProjectVersionString}",
+    author="${ProjectAuthor}",
+    author_email="${ProjectMaintainerEmail}",
+    zip_safe=0,
+    package_data={"": ["*.so"]},
+    install_requires=required_pkgs,
+    include_package_data=True,
+)
