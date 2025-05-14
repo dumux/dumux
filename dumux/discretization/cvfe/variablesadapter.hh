@@ -15,19 +15,20 @@
 
 namespace Dumux::Detail::CVFE {
 
-//! helper struct detecting if volumeVariables class has new update function
-template<class Imp, class ES, class P, class FVG, class DOF>
+//! helper struct detecting if volumeVariables class has update function for scvs (old interface)
+template<class Imp, class ES, class P, class FVG, class SCV>
 using UpdateFunctionDetector = decltype(
-    std::declval<Imp>().update(std::declval<ES>(), std::declval<P>(), std::declval<FVG>(), std::declval<DOF>())
+    std::declval<Imp>().update(std::declval<ES>(), std::declval<P>(), std::declval<FVG>(), std::declval<SCV>())
 );
 
-template<class Imp, class ES, class P, class FVG, class DOF>
-constexpr inline bool hasUpdateFunction()
-{ return Dune::Std::is_detected<UpdateFunctionDetector, Imp, ES, P, FVG, DOF>::value; }
+//! Whenever the old interface is supported, we update related to scvs
+template<class Imp, class ES, class P, class FVG, class SCV = typename FVG::SubControlVolume>
+constexpr inline bool hasUpdateFunctionForScvs()
+{ return Dune::Std::is_detected<UpdateFunctionDetector, Imp, ES, P, FVG, SCV>::value; }
 
 /*!
  * \ingroup CVFEDiscretization
- * \brief A class for providing the new update interface of variables
+ * \brief A class for providing the new update interface of variables. This alows to still use the VolumesVariables.
  */
 template <class VolumeVariables>
 class VariablesAdapter : public VolumeVariables
@@ -54,10 +55,13 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const LocalDof& localDof)
     {
-        if constexpr (hasUpdateFunction<VolumeVariables, ElementSolution, Problem, FVElementGeometry, LocalDof>())
-            return VolumeVariables::update(elemSol, problem, fvGeometry, localDof);
+        // As default we assume that for each localDof there is a corresponding scv
+        // such that the update interface of VolumeVariables can still be used.
+        if constexpr (hasUpdateFunctionForScvs<VolumeVariables, ElementSolution, Problem, FVElementGeometry>())
+            VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
         else
-            return VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
+            VolumeVariables::update(elemSol, problem, fvGeometry, localDof);
+
     };
 };
 
