@@ -19,8 +19,8 @@
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/elementsolution.hh>
 
-#include <dumux/discretization/variablesdeflectionhelper.hh>
-#include <dumux/discretization/variablesupdatehelper.hh>
+#include "variablesdeflectionpolicy.hh"
+#include "variablesupdatepolicy.hh"
 
 namespace Dumux::Detail::CVFE {
 
@@ -56,11 +56,11 @@ public:
     using VolumeVariables = Variables;
 
     //! export type to update local variables
-    using UpdateHelper = VariablesUpdateHelper<GridVariablesCache>;
+    using UpdatePolicy = VariablesCVFEDefaultUpdatePolicy<GridVariablesCache>;
 
     //! export type to deflect local variables
     template<class FVElementGeometry>
-    using DeflectionHelper = VariablesDeflectionHelper<GridVariablesCache, FVElementGeometry>;
+    using DeflectionPolicy = VariablesCVFEDefaultDeflectionPolicy<GridVariablesCache, FVElementGeometry>;
 
     //! Constructor
     CVFEElementVariables(const GridVariablesCache& gridVariablesCache)
@@ -157,11 +157,11 @@ public:
     using VolumeVariables = Variables;
 
     //! export type to update local variables
-    using UpdateHelper = VariablesUpdateHelper<GridVariablesCache>;
+    using UpdatePolicy = VariablesCVFEDefaultUpdatePolicy<GridVariablesCache>;
 
     //! export type to deflect local variables
     template<class FVElementGeometry>
-    using DeflectionHelper = VariablesDeflectionHelper<GridVariablesCache, FVElementGeometry>;
+    using DeflectionPolicy = VariablesCVFEDefaultDeflectionPolicy<GridVariablesCache, FVElementGeometry>;
 
     //! Constructor
     CVFEElementVariables(const GridVariablesCache& gridVarsCache)

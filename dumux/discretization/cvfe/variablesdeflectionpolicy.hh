@@ -19,14 +19,14 @@
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
-namespace Dumux {
+namespace Dumux::Detail::CVFE {
 
 /*!
  * \ingroup Discretization
  * \brief Deflection helper to deflect and restore grid variables.
  */
 template<class GridVariablesCache, class FVElementGeometry>
-class VariablesDeflectionHelper
+class VariablesCVFEDefaultDeflectionPolicy
 {
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Variables = typename ElementVariables::Variables;
@@ -34,10 +34,10 @@ class VariablesDeflectionHelper
     static constexpr int maxNumLocalDofs = Dumux::Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
 
 public:
-    VariablesDeflectionHelper(GridVariablesCache& gridVariablesCache,
-                              ElementVariables& elementVariables,
-                              const FVElementGeometry& fvGeometry,
-                              bool deflectAllVariables)
+    VariablesCVFEDefaultDeflectionPolicy(GridVariablesCache& gridVariablesCache,
+                                         ElementVariables& elementVariables,
+                                         const FVElementGeometry& fvGeometry,
+                                         bool deflectAllVariables)
     : gridVariablesCache_(gridVariablesCache)
     , elementVariables_(elementVariables)
     , fvGeometry_(fvGeometry)
@@ -105,6 +105,6 @@ private:
     Dune::ReservedVector<Variables, maxNumLocalDofs> origVariables_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Detail::CVFE
 
 #endif

@@ -16,21 +16,21 @@
  #include <type_traits>
  #include <dune/common/reservedvector.hh>
 
- namespace Dumux {
+ namespace Dumux::Detail::CVFE {
 
 /*!
  * \ingroup Discretization
  * \brief Update helper for grid variables.
  */
  template<class GridVariablesCache>
- class VariablesUpdateHelper
+ class VariablesCVFEDefaultUpdatePolicy
  {
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Variables = typename ElementVariables::Variables;
 
 public:
-    VariablesUpdateHelper(GridVariablesCache& gridVariablesCache,
-                        ElementVariables& elementVariables)
+    VariablesCVFEDefaultUpdatePolicy(GridVariablesCache& gridVariablesCache,
+                                     ElementVariables& elementVariables)
     : gridVariablesCache_(gridVariablesCache)
     , elementVariables_(elementVariables)
     { }
@@ -56,6 +56,6 @@ private:
     ElementVariables& elementVariables_;
  };
 
- } // end namespace Dumux
+ } // end namespace Dumux::Detail::CVFE
 
  #endif
