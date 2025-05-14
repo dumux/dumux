@@ -2,19 +2,19 @@
 
 # What is DuMux?
 
-[DuMu<sup>x</sup>][0] is a simulation framework with a focus on
+[DuMu<sup>x</sup>][a] is a simulation framework with a focus on
 finite volume discretization methods, model coupling for multi-physics applications,
 and flow and transport applications in porous media.
 
-DuMu<sup>x</sup> is based on the [DUNE][1] framework from which it uses
-the versatile grid interface, vector and matrix types, geometry and local basis functions, and linear solvers.
+DuMu<sup>x</sup> is based on the [DUNE][a] framework from which it uses
+the versatile [grid interface](https://gitlab.dune-project.org/core/dune-grid) [[2][], [3][]], [vector and matrix types](https://gitlab.dune-project.org/core/dune-common), [geometry](https://gitlab.dune-project.org/core/dune-geometry) and [local basis functions](https://gitlab.dune-project.org/core/dune-localfunctions), and [linear solvers](https://gitlab.dune-project.org/core/dune-istl).
 DuMu<sup>x</sup> then provides
 
-* Finite volume discretizations (Tpfa, Mpfa, Staggered) and control-volume finite element discretization schemes
-* A flexible system matrix assembler and approximation of the Jacobian matrix by numeric differentiation
-* A customizable Newton method implementation, including line search and various stopping criteria
-* Many pre-implemented models (Darcy-scale porous media flow, Navier-Stokes, Solid and Poromechanics, Pore network models, Shallow water equations) and constitutive models
-* A multi-domain framework for model coupling suited to couple subproblems with different discretizations/domains/physics/dimensions/... and create monolithic solvers
+* [Finite volume discretizations](https://dumux.org/docs/doxygen/master/group___c_c_discretization.html) ([Tpfa](https://dumux.org/docs/doxygen/master/group___c_c_tpfa_discretization.html), [Mpfa](https://dumux.org/docs/doxygen/master/group___c_c_mpfa_discretization.html), [Staggered](https://dumux.org/docs/doxygen/master/group___face_centered_staggered_discretization.html)) and [control-volume finite element (CVFE)](https://dumux.org/docs/doxygen/master/group___c_v_f_e_discretization.html) discretization schemes
+* A flexible [system matrix assembler](https://dumux.org/docs/doxygen/master/class_dumux_1_1_f_v_assembler.html) and approximation of the Jacobian matrix by [numeric differentiation](https://dumux.org/docs/doxygen/master/class_dumux_1_1_numeric_differentiation.html)
+* A [customizable implementation of Newton's method](https://dumux.org/docs/doxygen/master/group___newton.html), including line search and various stopping criteria
+* Many [pre-implemented models](https://dumux.org/docs/doxygen/master/group___models.html) ([Darcy-scale porous media flow](https://dumux.org/docs/doxygen/master/group___porousmediumflow_models.html), [Navier-Stokes](https://dumux.org/docs/doxygen/master/group___freeflow_models.html), [Solid mechanics](https://dumux.org/docs/doxygen/master/group___solid_mechanics_models.html) and [Poro-mechanics](https://dumux.org/docs/doxygen/master/group___poro_mechanics_models.html), [Pore network models](https://dumux.org/docs/doxygen/master/group___pore_network_models.html), [Shallow water equations](https://dumux.org/docs/doxygen/master/group___shallow_water_models.html)) and [constitutive models](https://dumux.org/docs/doxygen/master/group___material.html)
+* A [multi-domain framework](https://dumux.org/docs/doxygen/master/group___multi_domain.html) for model coupling suited to couple subproblems with different discretizations/domains/physics/dimensions/... and create monolithic solvers
 
 DuMu<sup>x</sup> has been applied to model complex and non-linear phenomena,
 such as $\mathrm{CO}_2$ sequestration, soil remediation, reactive transport, and precipitation phenomena,
@@ -35,7 +35,7 @@ and motivations behind DuMu<sup>x</sup>.
 
 The following resources are useful to get started with DuMu<sup>x</sup>:
 
-* [Installation guide][3]
+* [Installation guide][d]
 * [Getting started guide](https://dumux.org/docs/doxygen/master/getting-started.html)
 * [Documentation](https://dumux.org/docs/doxygen/master/),
 * [DuMu<sup>x</sup> course materials](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-course/tree/master),
@@ -53,20 +53,20 @@ Automated testing of installation: [![installation testing pipeline](https://git
 
 DuMu<sup>x</sup> is licensed under the terms and conditions of the GNU General
 Public License (GPL) version 3 or - at your option - any later
-version. The GPL can be [read online][4] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
+version. The GPL can be [read online][e] or in the [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) file
 provided in the topmost directory of the DuMu<sup>x</sup> source code tree.
 
 Please note that DuMu<sup>x</sup>' license, unlike DUNE's, does *not* feature a
 template exception to the GNU General Public License. This means that
 you must publish any source code that uses any of the DuMu<sup>x</sup> header
 files if you want to redistribute your program to third parties. If
-this is unacceptable, please [contact us][5] for a commercial
+this is unacceptable, please [contact us][f] for a commercial
 license.
 
 See the file [LICENSE.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/afb7f2296d84fd2367c612a1084d9b47ff85a260/LICENSE.md) for copying permissions.
 For a curated list of contributors, see [AUTHORS.md](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/AUTHORS.md).
 If you notice that a contributor is missing on the list,
-please [contact us][5] or open a merge request adding the name.
+please [contact us][f] or open a merge request adding the name.
 
 # How to cite
 
@@ -81,7 +81,7 @@ our publications:
 
 **DuMux 3 – an open-source simulator for solving flow and transport problems in porous media with a focus on model coupling.**
 *Computers & Mathematics with Applications*, 81, 423-443, (2021).
-[![dumuxCAMWAbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.camwa.2020.02.012-blue)](https://doi.org/10.1016/j.camwa.2020.02.012) [PDF][6]
+[![dumuxCAMWAbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.camwa.2020.02.012-blue)](https://doi.org/10.1016/j.camwa.2020.02.012) [PDF][1]
 
 ```bib
 @article{Koch2021,
@@ -95,7 +95,7 @@ our publications:
 
 **DuMux: DUNE for multi-{phase,component,scale,physics,…} flow and transport in porous media.**
 *Advances in Water Resources*, 34(9), 1102–1112, (2011)
-[![dumuxAWRbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.advwatres.2011.03.007-blue)](https://doi.org/10.1016/j.advwatres.2011.03.007) [PDF][2]
+[![dumuxAWRbadge](https://img.shields.io/badge/DOI-10.1016%2Fj.advwatres.2011.03.007-blue)](https://doi.org/10.1016/j.advwatres.2011.03.007) [PDF][c]
 
 ```bib
 @article{Flemisch2011,
@@ -180,10 +180,16 @@ for more complicated changes, this is decided upon on a case-to-case basis due t
 If implementing full backward compatibility for an update is not feasible or would require unreasonable resources,
 the degree of backward compatibility can be decided by a vote in one of the monthly core developer meetings.
 
-[0]: https://dumux.org
-[1]: https://dune-project.org/
-[2]: https://dumux.org/documents/dumux_awrpaper.pdf
-[3]: https://dumux.org/docs/doxygen/master/installation.html
-[4]: https://www.gnu.org/licenses/gpl-3.0.en.html
-[5]: https://www.iws.uni-stuttgart.de/en/lh2/
-[6]: https://doi.org/10.1016/j.camwa.2020.02.012
+[a]: https://dumux.org
+[b]: https://dune-project.org/
+[c]: https://dumux.org/documents/dumux_awrpaper.pdf
+[d]: https://dumux.org/docs/doxygen/master/installation.html
+[e]: https://www.gnu.org/licenses/gpl-3.0.en.html
+[f]: https://www.iws.uni-stuttgart.de/en/lh2/
+
+<!-- Koch et al (2021) -->
+[1]: https://doi.org/10.1016/j.camwa.2020.02.012
+<!-- Bastian et al (2008a) --> 
+[2]: https://doi.org/10.1007/s00607-008-0003-x
+<!-- Bastian et al (2008b) -->
+[3]: https://doi.org/10.1007/s00607-008-0004-9 
