@@ -7,7 +7,7 @@ finite volume discretization methods, model coupling for multi-physics applicati
 and flow and transport applications in porous media.
 
 DuMu<sup>x</sup> is based on the [DUNE][1] framework from which it uses
-the versatile grid interface, vector and matrix types, geometry and local basis functions, and linear solvers.
+the versatile [grid interface](https://gitlab.dune-project.org/core/dune-grid) ([Bastian et al (2008a)][] [Bastian et al (2008b)][]), [vector and matrix types](https://gitlab.dune-project.org/core/dune-common), [geometry](https://gitlab.dune-project.org/core/dune-geometry) and [local basis functions](https://gitlab.dune-project.org/core/dune-localfunctions), and [linear solvers](https://gitlab.dune-project.org/core/dune-istl).
 DuMu<sup>x</sup> then provides
 
 * [Finite volume discretizations](https://dumux.org/docs/doxygen/master/group___c_c_discretization.html) ([Tpfa](https://dumux.org/docs/doxygen/master/group___c_c_tpfa_discretization.html), [Mpfa](https://dumux.org/docs/doxygen/master/group___c_c_mpfa_discretization.html), [Staggered](https://dumux.org/docs/doxygen/master/group___face_centered_staggered_discretization.html)) and [control-volume finite element (CVFE)](https://dumux.org/docs/doxygen/master/group___c_v_f_e_discretization.html) discretization schemes
@@ -187,3 +187,6 @@ the degree of backward compatibility can be decided by a vote in one of the mont
 [4]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [5]: https://www.iws.uni-stuttgart.de/en/lh2/
 [6]: https://doi.org/10.1016/j.camwa.2020.02.012
+
+[Bastian et al (2008a)]: https://doi.org/10.1007/s00607-008-0003-x
+[Bastian et al (2008b)]: https://doi.org/10.1007/s00607-008-0004-9
