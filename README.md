@@ -182,7 +182,7 @@ the degree of backward compatibility can be decided by a vote in one of the mont
 
 [a]: https://dumux.org
 [b]: https://dune-project.org/
-[c]: https://dumux.org/documents/dumux_awrpaper.pdf
+[c]: https://dumux.org/docs/papers/dumux_awrpaper.pdf
 [d]: https://dumux.org/docs/doxygen/master/installation.html
 [e]: https://www.gnu.org/licenses/gpl-3.0.en.html
 [f]: https://www.iws.uni-stuttgart.de/en/lh2/
