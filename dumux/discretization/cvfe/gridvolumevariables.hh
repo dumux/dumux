@@ -60,6 +60,9 @@ public:
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
+    //! export the type of the mutable local view
+    using MutableLocalView = LocalView::MutableView;
+
     CVFEGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     template<class GridGeometry, class SolutionVector>
@@ -122,6 +125,9 @@ public:
 
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
+    //! export the type of the mutable local view
+    using MutableLocalView = LocalView::MutableView;
 
     CVFEGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
