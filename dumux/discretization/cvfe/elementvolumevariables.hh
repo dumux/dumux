@@ -38,9 +38,27 @@ class CVFEElementVolumeVariables;
 template<class GVV>
 class CVFEElementVolumeVariables<GVV, /*cachingEnabled*/true>
 {
+    class MutableVariablesView
+    {
+    public:
+        MutableVariablesView(GVV& gridCache)
+        : gridCache_(gridCache) {}
+
+        using VolumeVariables = typename GVV::VolumeVariables;
+
+        template<class SubControlVolume>
+        VolumeVariables& operator [](const SubControlVolume& scv) const
+        { return gridCache_.volVars(scv.elementIndex(), scv.indexInElement()); }
+    private:
+        GVV& gridCache_;
+    };
+
 public:
     //! export type of the grid volume variables
     using GridVolumeVariables = GVV;
+
+    //! export type of the mutable version of the view
+    using MutableView = MutableVariablesView;
 
     //! export type of the volume variables
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
@@ -107,6 +125,13 @@ public:
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+    /*!
+    * \brief return a local view on variables that is always mutable, regardless of the caching policy
+    * \pre bind has to be called before, otherwise using the view will result in undefined behavior
+    */
+    MutableView asMutableView(GridVolumeVariables& gridVolVars)
+    { return { gridVolVars }; }
+
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
     std::size_t eIdx_;
@@ -120,9 +145,29 @@ private:
 template<class GVV>
 class CVFEElementVolumeVariables<GVV, /*cachingEnabled*/false>
 {
+    using ThisType = CVFEElementVolumeVariables<GVV, /*cachingEnabled*/false>;
+
+    class MutableVariablesView
+    {
+    public:
+        MutableVariablesView(ThisType& view)
+        : view_(view) {}
+
+        using VolumeVariables = typename GVV::VolumeVariables;
+
+        template<class SubControlVolume>
+        VolumeVariables& operator [](const SubControlVolume& scv) const
+        { return view_[scv]; }
+    private:
+        ThisType& view_;
+    };
+
 public:
     //! export type of the grid volume variables
     using GridVolumeVariables = GVV;
+
+    //! export type of the mutable version of the view
+    using MutableView = MutableVariablesView;
 
     //! export type of the volume variables
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
@@ -200,6 +245,13 @@ public:
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
+
+    /*!
+    * \brief return a local view on variables that is always mutable, regardless of the caching policy
+    * \pre bind has to be called before, otherwise using the view will result in undefined behavior
+    */
+    MutableView asMutableView(GridVolumeVariables&)
+    { return { *this }; }
 
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
