@@ -373,7 +373,7 @@ public:
 
         // if all volvars in the stencil have to be updated or if it's enough to only update the
         // volVars for the scv whose associated dof has been deflected
-        static const bool updateAllVolVars = getParamFromGroup<bool>(
+        static const bool dependsOnAllElementDofs = getParamFromGroup<bool>(
             this->asImp_().problem().paramGroup(), "Assembly.BoxVolVarsDependOnAllElementDofs", false
         );
 
@@ -383,12 +383,14 @@ public:
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
 
-        auto deflectionPolicy = Detail::CVFE::makeVariablesDeflectionPolicy(
-            gridVariables.curGridVolVars(),
-            curElemVolVars,
-            fvGeometry,
-            updateAllVolVars
-        );
+        auto variablesContext = Detail::CVFE::makeVariablesContext(
+                gridVariables.curGridVolVars(),
+                curElemVolVars,
+                fvGeometry,
+                dependsOnAllElementDofs
+            );
+
+        auto deflectionPolicy = Detail::CVFE::VariablesDeflectionPolicy(variablesContext, fvGeometry);
 
         auto assembleDerivative = [&, this](const auto& localDof)
         {
