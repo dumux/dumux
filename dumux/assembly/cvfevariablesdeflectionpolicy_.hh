@@ -43,7 +43,7 @@ public:
     }
 
     template<class LocalDof>
-    void setCurrent(const LocalDof& localDof)
+    void store(const LocalDof& localDof)
     {
         if (!context_.dependsOnAllElementDofs())
         {
@@ -54,8 +54,8 @@ public:
     }
 
     template<class ElementSolution, class LocalDof, class Problem>
-    void deflect(const ElementSolution& elemSol,
-                 const LocalDof& localDof,
+    void update(const ElementSolution& elemSol,
+                const LocalDof& localDof,
                 const Problem& problem)
     {
         context_.update(elemSol, problem, localDof);
