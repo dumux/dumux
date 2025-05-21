@@ -18,99 +18,85 @@
 
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/cvfe/volvarscontext.hh>
 
 #ifndef DOXYGEN
 
 namespace Dumux::Detail::CVFE {
 
-template<class MutableVariablesView, class FVElementGeometry>
+template<class VariablesContext, class FVElementGeometry>
 class VariablesDeflectionPolicy
 {
-    using VolumeVariables = typename MutableVariablesView::VolumeVariables;
-    static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
+    using Variables = typename VariablesContext::Variables;
+
+    static constexpr int maxNumLocalDofs = Dumux::Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
 
 public:
-    VariablesDeflectionPolicy(MutableVariablesView elementVariables,
-                              const FVElementGeometry& fvGeometry,
-                              bool deflectAllVariables)
-    : elementVariables_(elementVariables)
+    VariablesDeflectionPolicy(VariablesContext& context,
+                              const FVElementGeometry& fvGeometry)
+    : context_(context)
     , fvGeometry_(fvGeometry)
-    , deflectAll_(deflectAllVariables)
     {
-        if (deflectAll_)
-            for (const auto& scv : scvs(fvGeometry))
-                origVolVars_.push_back(elementVariables_[scv]);
+        if(context_.dependsOnAllElementDofs())
+            for(const auto& variable : context_.variables())
+                origVariables_.push_back(variable);
     }
 
     template<class LocalDof>
     void setCurrent(const LocalDof& localDof)
     {
-        if (!deflectAll_)
+        if (!context_.dependsOnAllElementDofs())
         {
-            origVolVars_.clear();
-            for(const auto& scv : scvs(fvGeometry_, localDof))
-                origVolVars_.push_back(elementVariables_[scv]);
+            origVariables_.clear();
+            for(const auto& variable : context_.variables(localDof))
+                origVariables_.push_back(variable);
         }
     }
 
     template<class ElementSolution, class LocalDof, class Problem>
     void deflect(const ElementSolution& elemSol,
                  const LocalDof& localDof,
-                 const Problem& problem)
+                const Problem& problem)
     {
-        if (deflectAll_)
-            for (const auto& scv : scvs(fvGeometry_))
-                elementVariables_[scv].update(elemSol, problem, fvGeometry_.element(), scv);
-        else
-        {
-            for(const auto& scv : scvs(fvGeometry_, localDof))
-                elementVariables_[scv].update(elemSol, problem, fvGeometry_.element(), scv);
-        }
+        context_.update(elemSol, problem, localDof);
     }
 
     template<class LocalDof>
     void restore(const LocalDof& localDof)
     {
-        if (!deflectAll_)
+        unsigned int idx = 0;
+        for(auto& variable : context_.variables(localDof))
         {
-            unsigned int idx = 0;
-            for(const auto& scv : scvs(fvGeometry_, localDof))
-            {
-                elementVariables_[scv] = origVolVars_[idx];
-                idx++;
-            }
+            variable = origVariables_[idx];
+            idx++;
         }
-        else
-            for (const auto& scv : scvs(fvGeometry_))
-                elementVariables_[scv] = origVolVars_[scv.indexInElement()];
     }
 
 private:
-    MutableVariablesView elementVariables_;
+    VariablesContext& context_;
     const FVElementGeometry& fvGeometry_;
-    const bool deflectAll_;
-    Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
+    Dune::ReservedVector<Variables, maxNumLocalDofs> origVariables_;
 };
 
 template<typename ElemVars, typename FVG>
-using DefinesDeflectionPolicyType = typename ElemVars::template DeflectionPolicy<FVG>;
+using DefinesVariablesContextType = typename ElemVars::template VariablesContext<FVG>;
 
 template<typename ElemVars, typename FVG>
-constexpr inline bool definesVariablesDeflectionPolicy()
-{ return Dune::Std::is_detected<DefinesDeflectionPolicyType, ElemVars, FVG>::value; }
+constexpr inline bool definesVariablesContext()
+{ return Dune::Std::is_detected<DefinesVariablesContextType, ElemVars, FVG>::value; }
 
 template<class GridVarsCache, class ElemVars, class FVG>
-auto makeVariablesDeflectionPolicy(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
+auto makeVariablesContext(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool localDependency)
 {
-    if constexpr (definesVariablesDeflectionPolicy<ElemVars, FVG>())
+    if constexpr (definesVariablesContext<ElemVars, FVG>())
     {
-        using DeflectionPolicy = typename ElemVars::template DeflectionPolicy<FVG>;
-        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVolVars);
+        using VariablesContext = typename ElemVars::template VariablesContext<FVG>;
+        return VariablesContext(elemVars.asMutableView(gridVarsCache), fvg, localDependency);
     }
     else
     {
-        using DeflectionPolicy = Detail::CVFE::VariablesDeflectionPolicy<typename GridVarsCache::MutableLocalView, FVG>;
-        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVolVars);
+        using VariablesContext = Detail::CVFE::LocalDofVolVarsContext<typename GridVarsCache::MutableLocalView, FVG>;
+        return VariablesContext(elemVars.asMutableView(gridVarsCache), fvg, localDependency);
     }
 };
 
