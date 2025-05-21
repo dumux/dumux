@@ -43,7 +43,7 @@ public:
     }
 
     template<class LocalDof>
-    void setCurrent(const LocalDof& localDof)
+    void store(const LocalDof& localDof)
     {
         if (!deflectAll_)
         {
@@ -54,9 +54,9 @@ public:
     }
 
     template<class ElementSolution, class LocalDof, class Problem>
-    void deflect(const ElementSolution& elemSol,
-                 const LocalDof& localDof,
-                 const Problem& problem)
+    void update(const ElementSolution& elemSol,
+                const LocalDof& localDof,
+                const Problem& problem)
     {
         if (deflectAll_)
             for (const auto& scv : scvs(fvGeometry_))
