@@ -63,9 +63,9 @@ public:
 
     //! Update all variables that depend on localDof
     template<class ElementSolution, class Problem>
-    void updateVariables(const ElementSolution& elemSol,
-                         const Problem& problem,
-                         const LocalDof& localDof)
+    void update(const ElementSolution& elemSol,
+                const Problem& problem,
+                const LocalDof& localDof)
     {
         if (!dependsOnAllElementDofs())
             for(const auto& scv : scvs(fvGeometry_, localDof))
