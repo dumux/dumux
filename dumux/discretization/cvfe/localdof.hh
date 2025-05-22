@@ -79,7 +79,9 @@ inline auto
 scvs(const FVElementGeometry& fvGeometry, const LocalDof& localDof)
 {
     assert(fvGeometry.numScv() > localDof.index());
-    return std::views::single(1) | std::views::transform([&](const auto i) { return fvGeometry.scv(localDof.index()); });
+    return std::views::single(1) | std::views::transform(
+        [&](const auto i) -> const typename FVElementGeometry::SubControlVolume& { return fvGeometry.scv(localDof.index()); }
+    );
 }
 
 } // end namespace Dumux
