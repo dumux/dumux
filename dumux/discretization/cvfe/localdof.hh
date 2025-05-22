@@ -75,11 +75,13 @@ inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
 //! If multiple scvs are related to a localDof, this range needs to be overwritten
 //! within the fvElementGeometry class
 template<class FVElementGeometry, class LocalDof>
-inline auto
+inline std::ranges::range auto
 scvs(const FVElementGeometry& fvGeometry, const LocalDof& localDof)
 {
     assert(fvGeometry.numScv() > localDof.index());
-    return std::views::single(1) | std::views::transform([&](const auto i) { return fvGeometry.scv(localDof.index()); });
+    return std::views::single(1) | std::views::transform(
+        [&](const auto i) -> const typename FVElementGeometry::SubControlVolume& { return fvGeometry.scv(localDof.index()); }
+    );
 }
 
 } // end namespace Dumux
