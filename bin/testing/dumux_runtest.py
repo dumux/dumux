@@ -61,7 +61,7 @@ try:
         sourceFields = read_as("mesh", source)
         referenceFields = read_as("mesh", ref)
 
-        # hard-code some values for the mesh comparisons (as for Dumux legacy backend)
+        # hard-code some values for the mesh comparisons
         sourceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1e-5)
         referenceFields.domain.set_tolerances(abs_tol=ScaledTolerance(1e-6), rel_tol=1e-5)
 
@@ -138,16 +138,16 @@ except ImportError:
     pass
 
 
-try:
-    from dumux_fuzzycompare_legacy import compareVTK as legacycompareMeshData
-    from dumux_fuzzycompare_legacy import compareData as legacycompareCSVData
-
-    COMPARISON_BACKENDS["legacy"] = {
-        "compareMeshData": legacycompareMeshData,
-        "compareCSVData": legacycompareCSVData,
-    }
-except ImportError:
-    pass
+if len(COMPARISON_BACKENDS) < 1:
+    print(
+        "No comparison backend available.\n"
+        "Please setup the `fieldcompare` library to enable regression tests:\n"
+        "    python -m venv venv\n"
+        "    source venv/bin/activate\n"
+        "    pip install fieldcompare\n"
+        "\n"
+    )
+    sys.exit(77)
 
 
 def readCmdParameters():
@@ -174,7 +174,7 @@ def readCmdParameters():
         "--backend",
         type=str,
         help=(
-            "The comparison backend (choose from [legacy, fieldcompare])"
+            f"The comparison backend (choose from {list(COMPARISON_BACKENDS)})"
             " If this argument is specified, the script will only perform the"
             "test if the chosen backend is available and warn and skip otherwise."
         ),
@@ -247,9 +247,9 @@ def readCmdParameters():
             subprocess.call(["rm", "-fv", args["files"][(i * 2) + 1]])
 
     if args["backend"]:
-        if args["backend"] not in ["legacy", "fieldcompare"]:
+        if args["backend"] not in COMPARISON_BACKENDS:
             sys.stderr.write(
-                "Invalid backend. Choose from [legacy, fieldcompare] or leave empty.\n"
+                f"Invalid backend. Choose from {list(COMPARISON_BACKENDS)} or leave empty.\n"
             )
             parser.print_help()
             sys.exit(1)
@@ -350,17 +350,9 @@ def _scriptComparison(args):
 def runRegressionTest(args):
     """Run regression test scripts against reference data"""
 
-    # specific backend chosen?
-    if args["backend"]:
-        if args["backend"] == "legacy":
-            print(
-                "\n-- Choosing legacy backend explicitly is deprecated"
-                " and will be removed in the future."
-            )
-
-    # default backend
-    else:
-        args["backend"] = "fieldcompare" if "fieldcompare" in COMPARISON_BACKENDS else "legacy"
+    # specific backend chosen
+    if not args["backend"]:
+        args["backend"] = "fieldcompare"
 
     # exact comparison?
     if args["script"] == ["exact"]:

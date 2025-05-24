@@ -116,14 +116,33 @@ our publications:
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that
 are continuously and automatically tested in the GitLab-CI framework (see badges).
-The test suite is based on CTest and can also be built and run manually
+
+Most tests are regression tests that rely on the [`fieldcompare`](https://pypi.org/project/fieldcompare/) Python library.
+Before you run tests, we therefore recommend setting up a Python virtual environment with the fieldcompare package installed.
+In the `dumux` source directory run
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
-make -j8 build_tests && ctest -j8
+
+to set up the virtual environment and install the required development Python packages.
+
+The test suite is based on CTest and can also be built and run manually.
+In the build directory, you can run build and run tests by executing
+
+```bash
+cmake --build --target build_tests -- -j8
+ctest -j8
 ```
+
 The tests are labelled (see `CMakeLists.txt` of each individual test for its labels).
 You can build and run tests of a specific label (e.g. `2p` for two-phase flow porous medium model tests) like this
-```
-make -j8 build_2p_tests && ctest -j8 -L ^2p$
+
+```bash
+cmake --build --target build_2p_tests -- -j8
+ctest -j8 -L ^2p$
 ```
 
 ## Running individual tests
@@ -189,7 +208,7 @@ the degree of backward compatibility can be decided by a vote in one of the mont
 
 <!-- Koch et al (2021) -->
 [1]: https://doi.org/10.1016/j.camwa.2020.02.012
-<!-- Bastian et al (2008a) --> 
+<!-- Bastian et al (2008a) -->
 [2]: https://doi.org/10.1007/s00607-008-0003-x
 <!-- Bastian et al (2008b) -->
-[3]: https://doi.org/10.1007/s00607-008-0004-9 
+[3]: https://doi.org/10.1007/s00607-008-0004-9
