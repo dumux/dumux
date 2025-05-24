@@ -88,11 +88,11 @@ void testVTKReader(const std::string& gridName)
 #if DUMUX_HAVE_GRIDFORMAT
     std::shared_ptr<Dumux::IO::GridWriter<typename Grid::LeafGridView>> gridWriter;
     if constexpr (Dune::Capabilities::isCartesian<Grid>::v)
-        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vti, gridView);
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vti({.compressor = IO::Compression::none}), gridView);
     else if constexpr (Grid::dimension == 1)
-        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtp, gridView);
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtp({.compressor = IO::Compression::none}), gridView);
     else
-        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtu, gridView);
+        gridWriter = std::make_shared<Dumux::IO::GridWriter<typename Grid::LeafGridView>>(IO::Format::vtu({.compressor = IO::Compression::none}), gridView);
 
     for (int i = 0; i < cellDataFieldNames.size(); ++i)
         gridWriter->setCellField(cellDataFieldNames[i], [&,i=i](const auto& e) { return cellData[i][gridView.indexSet().index(e)]; });

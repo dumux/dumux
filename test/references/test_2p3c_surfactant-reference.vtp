@@ -2,8 +2,8 @@
 <VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
   <PolyData>
     <Piece NumberOfLines="100" NumberOfPoints="101">
-      <PointData Scalars="S_wetting">
-        <DataArray type="Float32" Name="S_wetting" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_w">
+        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
           0.95434 0.949158 0.946744 0.944729 0.942583 0.939995 0.935927 0.928396 0.885906 0.564349 0.451639 0.450014
           0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45
           0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45
@@ -14,7 +14,7 @@
           0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45 0.45
           0.45 0.45 0.45 0.45 0.449915
         </DataArray>
-        <DataArray type="Float32" Name="p_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
           2.62638e+08 2.47757e+08 2.33482e+08 2.21036e+08 2.10042e+08 1.95646e+08 1.81451e+08 1.7178e+08 1.57102e+08 1.46791e+08 1.45144e+08 1.43543e+08
           1.41948e+08 1.40353e+08 1.38758e+08 1.37163e+08 1.35568e+08 1.33973e+08 1.32378e+08 1.30783e+08 1.29188e+08 1.27593e+08 1.25998e+08 1.24403e+08
           1.22808e+08 1.21213e+08 1.19618e+08 1.18023e+08 1.16428e+08 1.14833e+08 1.13238e+08 1.11643e+08 1.10048e+08 1.08453e+08 1.06858e+08 1.05263e+08
@@ -25,7 +25,7 @@
           2.71071e+07 2.55121e+07 2.3917e+07 2.2322e+07 2.0727e+07 1.9132e+07 1.7537e+07 1.5942e+07 1.4347e+07 1.2752e+07 1.1157e+07 9.56196e+06
           7.96695e+06 6.37194e+06 4.77693e+06 3.18192e+06 1.58691e+06
         </DataArray>
-        <DataArray type="Float32" Name="rho_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_w" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -36,7 +36,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mob_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_w" NumberOfComponents="1" format="ascii">
           5.83745 6.07089 6.97877 7.89133 5.95398 6.009 8.87048 5.51204 5.96646 1.3248 0.566812 0.561489
           0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443
           0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443
@@ -47,7 +47,7 @@
           0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443 0.561443
           0.561443 0.561443 0.561443 0.561443 0.561221
         </DataArray>
-        <DataArray type="Float32" Name="S_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
           0.0456603 0.0508424 0.0532556 0.0552708 0.0574168 0.0600048 0.0640731 0.0716045 0.114094 0.435651 0.548361 0.549986
           0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55
           0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55
@@ -58,7 +58,7 @@
           0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55 0.55
           0.55 0.55 0.55 0.55 0.550085
         </DataArray>
-        <DataArray type="Float32" Name="p_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
           2.62638e+08 2.47757e+08 2.33482e+08 2.21036e+08 2.10042e+08 1.95646e+08 1.81451e+08 1.7178e+08 1.57102e+08 1.46791e+08 1.45144e+08 1.43543e+08
           1.41948e+08 1.40353e+08 1.38758e+08 1.37163e+08 1.35568e+08 1.33973e+08 1.32378e+08 1.30783e+08 1.29188e+08 1.27593e+08 1.25998e+08 1.24403e+08
           1.22808e+08 1.21213e+08 1.19618e+08 1.18023e+08 1.16428e+08 1.14833e+08 1.13238e+08 1.11643e+08 1.10048e+08 1.08453e+08 1.06858e+08 1.05263e+08
@@ -69,7 +69,7 @@
           2.71071e+07 2.55121e+07 2.3917e+07 2.2322e+07 2.0727e+07 1.9132e+07 1.7537e+07 1.5942e+07 1.4347e+07 1.2752e+07 1.1157e+07 9.56196e+06
           7.96695e+06 6.37194e+06 4.77693e+06 3.18192e+06 1.58691e+06
         </DataArray>
-        <DataArray type="Float32" Name="rho_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_n" NumberOfComponents="1" format="ascii">
           773 773 773 773 773 773 773 773 773 773 773 773
           773 773 773 773 773 773 773 773 773 773 773 773
           773 773 773 773 773 773 773 773 773 773 773 773
@@ -80,7 +80,7 @@
           773 773 773 773 773 773 773 773 773 773 773 773
           773 773 773 773 773
         </DataArray>
-        <DataArray type="Float32" Name="mob_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_n" NumberOfComponents="1" format="ascii">
           0.00394019 0.0185427 0.00636988 0.0168396 0.08454 0.114618 0.121321 0.410099 2.46602 51.6417 53.9537 54.1601
           54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619
           54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619 54.1619
@@ -113,7 +113,7 @@
           0.18 0.18 0.18 0.18 0.18 0.18 0.18 0.18 0.18 0.18 0.18 0.18
           0.18 0.18 0.18 0.18 0.18
         </DataArray>
-        <DataArray type="Float32" Name="x^water_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^water_w" NumberOfComponents="1" format="ascii">
           9.56299e-05 0.0184591 0.0870476 0.223698 0.411451 0.608326 0.774221 0.889627 0.956937 0.992794 0.999965 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -124,7 +124,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x^oil_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^oil_w" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -135,7 +135,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="x^surfactant_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^surfactant_w" NumberOfComponents="1" format="ascii">
           0.999904 0.981541 0.912952 0.776302 0.588549 0.391674 0.225779 0.110373 0.0430629 0.00720622 3.53439e-05 6.85913e-08
           1.31061e-10 2.53372e-13 4.92038e-16 9.54876e-19 1.8501e-21 3.58138e-24 6.932e-27 1.34217e-29 2.5997e-32 5.0369e-35 9.76059e-38 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -146,7 +146,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="rhoMolar_wetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rhoMolar_w" NumberOfComponents="1" format="ascii">
           55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6
           55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6
           55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6
@@ -157,7 +157,7 @@
           55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6 55555.6
           55555.6 55555.6 55555.6 55555.6 55555.6
         </DataArray>
-        <DataArray type="Float32" Name="x^water_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^water_n" NumberOfComponents="1" format="ascii">
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
@@ -168,7 +168,7 @@
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0
         </DataArray>
-        <DataArray type="Float32" Name="x^oil_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^oil_n" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -179,7 +179,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x^surfactant_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^surfactant_n" NumberOfComponents="1" format="ascii">
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
@@ -190,7 +190,7 @@
           -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0 -0
           -0 -0 -0 -0 -0
         </DataArray>
-        <DataArray type="Float32" Name="rhoMolar_nonwetting" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rhoMolar_n" NumberOfComponents="1" format="ascii">
           2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57
           2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57
           2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57 2208.57

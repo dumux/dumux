@@ -134,7 +134,7 @@ class GridWriter
     , writer_{Detail::makeWriter(grid_, fmt)}
     {
         if (gridView.comm().size() > 0 && getParam<bool>("IO.GridWriter.AddProcessRank", true))
-            setCellField("rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
+            setCellField("process rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
     }
 
     /*!
@@ -151,7 +151,7 @@ class GridWriter
     , writer_{Detail::makeWriter(grid_, fmt, filename)}
     {
         if (gridView.comm().size() > 0 && getParam<bool>("IO.GridWriter.AddProcessRank", true))
-            setCellField("rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
+            setCellField("process rank", [&](const Cell&) { return gridView.comm().rank(); }, Precision::uint64);
     }
 
     /*!

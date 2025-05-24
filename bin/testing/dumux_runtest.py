@@ -81,10 +81,11 @@ try:
             reordering_callback=lambda msg: print(f"-- {msg}"),
         )
 
-        print(f"-- Summary: {result.status} ({result.report})\n")
+        print(f"-- Summary: {result.report}\n")
 
         if not result:
             return 1
+
         return 0
 
     def fieldcompareCSVData(
@@ -123,7 +124,7 @@ try:
             fieldcomp_callback=DefaultFieldComparisonCallback(verbosity=1),
         )
 
-        print(f"-- Summary: {result.status} ({result.report})\n")
+        print(f"-- Summary: {result.report}\n")
 
         if not result:
             return 1
