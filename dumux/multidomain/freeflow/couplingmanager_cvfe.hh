@@ -330,31 +330,31 @@ public:
                 this->momentumCouplingContext_()[0].prevElemVolVars[scv]
                 : this->momentumCouplingContext_()[0].curElemVolVars[scv];
 
-            return volVars.density();
+            return volVars.viscosity();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
-            // TODO: cache the shape values when Box method is used
+            // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
             localBasis.evaluateFunction(pos, shapeValues);
 
-            Scalar rho = 0.0;
+            Scalar mu = 0.0;
             for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
                     this->momentumCouplingContext_()[0].prevElemVolVars[scv]
                     : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                rho += volVars.density()*shapeValues[scv.indexInElement()][0];
+                mu += volVars.viscosity()*shapeValues[scv.indexInElement()][0];
             }
 
-            return rho;
+            return mu;
         }
         else
             DUNE_THROW(Dune::NotImplemented,
-                "Density interpolation for discretization scheme " << MassDiscretizationMethod{}
+                "Viscosity interpolation for discretization scheme " << MassDiscretizationMethod{}
             );
     }
 
