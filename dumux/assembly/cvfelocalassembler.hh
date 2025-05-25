@@ -34,7 +34,7 @@
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
-#include "cvfevariablesdeflectionpolicy_.hh"
+#include "cvfevolvarsdeflectionpolicy_.hh"
 
 namespace Dumux {
 
