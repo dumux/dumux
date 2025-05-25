@@ -196,7 +196,7 @@ public:
     //! The total number of element-local dofs
     std::size_t numLocalDofs() const
     {
-        return GeometryHelper::numElementDofs(element().geometry().type());
+        return GeometryHelper::numElementDofs(element().type());
     }
 
     //! The total number of sub control volumes
