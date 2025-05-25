@@ -12,6 +12,8 @@
 #ifndef DUMUX_CVFE_LOCAL_DOF_HH
 #define DUMUX_CVFE_LOCAL_DOF_HH
 
+#include <ranges>
+
 #include <dumux/common/indextraits.hh>
 
 namespace Dumux::CVFE {
@@ -24,6 +26,9 @@ template<class LocalIndex, class GridIndex>
 class LocalDof
 {
 public:
+    using LocalIndexType = LocalIndex;
+    using GridIndexType = GridIndex;
+
     LocalDof(LocalIndex index, GridIndex dofIndex, GridIndex eIdx)
     : index_(index), dofIndex_(dofIndex), eIdx_(eIdx) {}
     LocalIndex index() const { return index_; }
@@ -47,15 +52,14 @@ inline auto localDofs(const FVElementGeometry& fvGeometry)
     using LocalIndexType = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::LocalIndex;
     using GridIndexType = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::GridIndex;
 
-    return Dune::transformedRangeView(
-        Dune::range(fvGeometry.numScv()),
-        [&](const auto i) { return CVFE::LocalDof
-        {
-            static_cast<LocalIndexType>(i),
-            static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
-            static_cast<GridIndexType>(fvGeometry.scv(i).elementIndex())
-        }; }
-    );
+    return std::views::iota(0u, fvGeometry.numScv())
+        | std::views::transform([&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(fvGeometry.scv(i).dofIndex()),
+                static_cast<GridIndexType>(fvGeometry.scv(i).elementIndex())
+            }; }
+        );
 }
 
 //! range over control-volume local dofs
@@ -71,13 +75,12 @@ inline auto cvLocalDofs(const FVElementGeometry& fvGeometry)
 //! If multiple scvs are related to a localDof, this range needs to be overwritten
 //! within the fvElementGeometry class
 template<class FVElementGeometry, class LocalDof>
-inline auto
+inline std::ranges::range auto
 scvs(const FVElementGeometry& fvGeometry, const LocalDof& localDof)
 {
     assert(fvGeometry.numScv() > localDof.index());
-    return Dune::transformedRangeView(
-        Dune::range(1),
-        [&](const auto i) { return fvGeometry.scv(localDof.index()); }
+    return std::views::single(1) | std::views::transform(
+        [&](const auto i) -> const typename FVElementGeometry::SubControlVolume& { return fvGeometry.scv(localDof.index()); }
     );
 }
 

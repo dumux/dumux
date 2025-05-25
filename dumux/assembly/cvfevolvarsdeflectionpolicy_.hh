@@ -10,8 +10,8 @@
  * \brief Variables deflection policy
  */
 
-#ifndef DUMUX_ASSEMBLY_CVFE_VARIABLES_DEFLECTION_POLICY_HH
-#define DUMUX_ASSEMBLY_CVFE_VARIABLES_DEFLECTION_POLICY_HH
+#ifndef DUMUX_ASSEMBLY_CVFE_VOLVARS_DEFLECTION_POLICY_HH
+#define DUMUX_ASSEMBLY_CVFE_VOLVARS_DEFLECTION_POLICY_HH
 
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
@@ -24,15 +24,15 @@
 namespace Dumux::Detail::CVFE {
 
 template<class MutableVariablesView, class FVElementGeometry>
-class VariablesDeflectionPolicy
+class VolVarsDeflectionPolicy
 {
     using VolumeVariables = typename MutableVariablesView::VolumeVariables;
     static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
 
 public:
-    VariablesDeflectionPolicy(MutableVariablesView elementVariables,
-                              const FVElementGeometry& fvGeometry,
-                              bool deflectAllVariables)
+    VolVarsDeflectionPolicy(MutableVariablesView elementVariables,
+                            const FVElementGeometry& fvGeometry,
+                            bool deflectAllVariables)
     : elementVariables_(elementVariables)
     , fvGeometry_(fvGeometry)
     , deflectAll_(deflectAllVariables)
@@ -43,7 +43,7 @@ public:
     }
 
     template<class LocalDof>
-    void setCurrent(const LocalDof& localDof)
+    void store(const LocalDof& localDof)
     {
         if (!deflectAll_)
         {
@@ -54,9 +54,9 @@ public:
     }
 
     template<class ElementSolution, class LocalDof, class Problem>
-    void deflect(const ElementSolution& elemSol,
-                 const LocalDof& localDof,
-                 const Problem& problem)
+    void update(const ElementSolution& elemSol,
+                const LocalDof& localDof,
+                const Problem& problem)
     {
         if (deflectAll_)
             for (const auto& scv : scvs(fvGeometry_))
@@ -109,7 +109,7 @@ auto makeVariablesDeflectionPolicy(GridVarsCache& gridVarsCache, ElemVars& elemV
     }
     else
     {
-        using DeflectionPolicy = Detail::CVFE::VariablesDeflectionPolicy<typename GridVarsCache::MutableLocalView, FVG>;
+        using DeflectionPolicy = Detail::CVFE::VolVarsDeflectionPolicy<typename GridVarsCache::MutableLocalView, FVG>;
         return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVolVars);
     }
 };

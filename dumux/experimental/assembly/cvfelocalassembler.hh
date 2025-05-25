@@ -36,7 +36,7 @@
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
-#include <dumux/assembly/cvfevariablesdeflectionpolicy_.hh>
+#include <dumux/assembly/cvfevolvarsdeflectionpolicy_.hh>
 
 namespace Dumux::Experimental {
 
@@ -423,7 +423,7 @@ private:
             // dof index and corresponding actual pri vars
             const auto dofIdx = localDof.dofIndex();
             const auto localIdx = localDof.index();
-            deflectionPolicy.setCurrent(localDof);
+            deflectionPolicy.store(localDof);
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -434,7 +434,7 @@ private:
                 {
                     // update the volume variables and compute element residual
                     elemSol[localIdx][pvIdx] = priVar;
-                    deflectionPolicy.deflect(elemSol, localDof, this->asImp_().problem());
+                    deflectionPolicy.update(elemSol, localDof, this->asImp_().problem());
                     if constexpr (solutionDependentFluxVarsCache)
                     {
                         elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
