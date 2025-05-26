@@ -243,7 +243,6 @@ public:
         return flux;
     }
 
-    using ParentType::evalStorage;
     /*!
      * \brief Compute the storage local residual, i.e. the deviation of the
      *        storage term from zero for instationary problems.
