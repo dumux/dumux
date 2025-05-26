@@ -23,6 +23,7 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
