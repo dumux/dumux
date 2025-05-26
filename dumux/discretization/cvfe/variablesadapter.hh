@@ -16,15 +16,15 @@
 namespace Dumux::Detail::CVFE {
 
 //! helper struct detecting if volumeVariables class has update function for scvs (old interface)
-template<class Imp, class ES, class P, class FVG, class SCV>
+template<class Imp, class ES, class P, class E, class SCV>
 using UpdateFunctionDetector = decltype(
-    std::declval<Imp>().update(std::declval<ES>(), std::declval<P>(), std::declval<FVG>(), std::declval<SCV>())
+    std::declval<Imp>().update(std::declval<ES>(), std::declval<P>(), std::declval<E>(), std::declval<SCV>())
 );
 
 //! Whenever the old interface is supported, we update related to scvs
-template<class Imp, class ES, class P, class FVG, class SCV = typename FVG::SubControlVolume>
+template<class Imp, class ES, class P, class E, class SCV>
 constexpr inline bool hasUpdateFunctionForScvs()
-{ return Dune::Std::is_detected<UpdateFunctionDetector, Imp, ES, P, FVG, SCV>::value; }
+{ return Dune::Std::is_detected<UpdateFunctionDetector, Imp, ES, P, E, SCV>::value; }
 
 /*!
  * \ingroup CVFEDiscretization
@@ -57,11 +57,11 @@ public:
     {
         // As default we assume that for each localDof there is a corresponding scv
         // such that the update interface of VolumeVariables can still be used.
-        if constexpr (hasUpdateFunctionForScvs<VolumeVariables, ElementSolution, Problem, FVElementGeometry>())
+        if constexpr (hasUpdateFunctionForScvs<VolumeVariables, ElementSolution, Problem,
+                      typename FVElementGeometry::Element, typename FVElementGeometry::SubControlVolume>())
             VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
         else
             VolumeVariables::update(elemSol, problem, fvGeometry, localDof);
-
     };
 };
 
