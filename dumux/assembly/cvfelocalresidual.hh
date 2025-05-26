@@ -102,7 +102,7 @@ public:
         assert(!this->isStationary() && "no time loop set for storage term evaluation");
 
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
+        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
@@ -133,7 +133,7 @@ public:
                                             const ElementBoundaryTypes &bcTypes) const
     {
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(Detail::numLocalDofs(fvGeometry));
+        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
