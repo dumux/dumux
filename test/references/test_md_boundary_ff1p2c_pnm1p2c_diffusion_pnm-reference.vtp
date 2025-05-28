@@ -45,13 +45,13 @@
           2
         </DataArray>
         <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
-          6.62133e-05
+          0.0001
         </DataArray>
         <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
           0.0018
         </DataArray>
         <DataArray type="Float32" Name="transmissibility" NumberOfComponents="1" format="ascii">
-          6.01603e-15
+          3.12989e-14
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
           0

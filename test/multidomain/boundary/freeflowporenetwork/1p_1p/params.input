@@ -2,6 +2,7 @@
 LowerLeft = 0 0
 UpperRight = 1e-2 1e-2
 NumPores = 3 3
+#coupled pore radii have to be same as throat radii
 PoreInscribedRadius = 5e-4
 ThroatInscribedRadius = 5e-4
 SubstractRadiiFromThroatLength = true

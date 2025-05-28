@@ -7,28 +7,28 @@
           101000 100005
         </DataArray>
         <DataArray type="Float32" Name="rho" NumberOfComponents="1" format="ascii">
-          1.07123 1.16791
+          1.07123 1.1662
         </DataArray>
         <DataArray type="Float32" Name="mu" NumberOfComponents="1" format="ascii">
-          1.98257e-05 1.8423e-05
+          1.98257e-05 1.8444e-05
         </DataArray>
         <DataArray type="Float32" Name="x^Air_gas" NumberOfComponents="1" format="ascii">
-          0.998 0.999994
+          0.998 0.999971
         </DataArray>
         <DataArray type="Float32" Name="x^H2O_gas" NumberOfComponents="1" format="ascii">
-          0.002 5.6701e-06
+          0.002 2.92715e-05
         </DataArray>
         <DataArray type="Float32" Name="X^Air_gas" NumberOfComponents="1" format="ascii">
-          0.998755 0.999996
+          0.998755 0.999982
         </DataArray>
         <DataArray type="Float32" Name="X^H2O_gas" NumberOfComponents="1" format="ascii">
-          0.00124508 3.52721e-06
+          0.00124508 1.82092e-05
         </DataArray>
         <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
           0.0001 0.0001
         </DataArray>
         <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
-          328.15 298.245
+          328.15 298.681
         </DataArray>
         <DataArray type="Float32" Name="coordinationNumber" NumberOfComponents="1" format="ascii">
           1 1
@@ -39,7 +39,7 @@
       </PointData>
       <CellData Scalars="process rank" Vectors="velocity_gas (m/s)">
         <DataArray type="Float32" Name="velocity_gas (m/s)" NumberOfComponents="3" format="ascii">
-          0 17.2169 0
+          0 39.2702 0
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0
@@ -48,16 +48,16 @@
           2
         </DataArray>
         <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
-          6.62133e-05
+          0.0001
         </DataArray>
         <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
           0.0018
         </DataArray>
         <DataArray type="Float32" Name="transmissibility" NumberOfComponents="1" format="ascii">
-          6.01603e-15
+          3.12989e-14
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
-          3.01929e-07
+          1.57081e-06
         </DataArray>
       </CellData>
       <Points>

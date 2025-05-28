@@ -8,6 +8,7 @@ NumPores = 2
 LowerLeft = 2.5e-3 0
 UpperRight = 2.5e-3 2e-3
 PoreInscribedRadius = 1e-4
+ThroatInscribedRadius = 1e-4
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3

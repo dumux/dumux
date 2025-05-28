@@ -4,7 +4,7 @@
     <Piece NumberOfLines="1" NumberOfPoints="2">
       <PointData Scalars="p">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
-          101000 100013
+          101000 100043
         </DataArray>
         <DataArray type="Float32" Name="poreInscribedRadius" NumberOfComponents="1" format="ascii">
           0.0001 0.0001
@@ -18,7 +18,7 @@
       </PointData>
       <CellData Scalars="process rank" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
-          0.706833 1.41367 0
+          1.55423 3.10846 0
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0
@@ -27,16 +27,16 @@
           2
         </DataArray>
         <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
-          6.64079e-05
+          0.0001
         </DataArray>
         <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
           0.000918034
         </DataArray>
         <DataArray type="Float32" Name="transmissibility" NumberOfComponents="1" format="ascii">
-          2.12671e-10
+          7.2619e-10
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
-          0.000209919
+          0.000695073
         </DataArray>
       </CellData>
       <Points>

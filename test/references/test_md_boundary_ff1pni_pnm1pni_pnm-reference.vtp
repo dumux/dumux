@@ -10,7 +10,7 @@
           0.0001 0.0001
         </DataArray>
         <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
-          298.15 309.081
+          298.15 298.42
         </DataArray>
         <DataArray type="Float32" Name="coordinationNumber" NumberOfComponents="1" format="ascii">
           1 1
@@ -21,7 +21,7 @@
       </PointData>
       <CellData Scalars="process rank" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
-          0 3.43052 0
+          0 7.82472 0
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
           0
@@ -30,16 +30,16 @@
           2
         </DataArray>
         <DataArray type="Float32" Name="throatInscribedRadius" NumberOfComponents="1" format="ascii">
-          6.62133e-05
+          0.0001
         </DataArray>
         <DataArray type="Float32" Name="throatLength" NumberOfComponents="1" format="ascii">
           0.0018
         </DataArray>
         <DataArray type="Float32" Name="transmissibility" NumberOfComponents="1" format="ascii">
-          6.01603e-15
+          3.12989e-14
         </DataArray>
         <DataArray type="Float32" Name="volumeFlux" NumberOfComponents="1" format="ascii">
-          6.01603e-08
+          3.12989e-07
         </DataArray>
       </CellData>
       <Points>
