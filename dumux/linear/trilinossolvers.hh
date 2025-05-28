@@ -73,7 +73,7 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
     const auto numRowsGlobal_ = gridGeometry.dofMapper().size();
     const auto rowMap_ = Teuchos::rcp(new Map (numRowsGlobal_, GlobalIDType{0}, comm));
 
-    for (const auto& element : elements(gridGeometry.gridView(), Dune::Partition::interior))
+    for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
     {
 
     }
