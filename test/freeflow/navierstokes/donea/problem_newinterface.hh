@@ -19,6 +19,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
@@ -46,8 +47,10 @@ class DoneaTestProblemNewInterface : public BaseProblem
     using Sources = typename ParentType::Sources;
     using DirichletValues = typename ParentType::DirichletValues;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ConstraintInfo = Dumux::ConstraintInfo<ModelTraits::numEq()>;
+    using ConstraintInfo = Dumux::DirichletConstraintInfo<ModelTraits::numEq()>;
     using ConstraintValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
+    using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
+    using DirichletConstraints = Dumux::DirichletConstraints<DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>>;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
 
@@ -155,8 +158,8 @@ public:
     /*!
      * \brief Return constraint map
      */
-    auto constraintMap() const
-    { return constraints_.map(); }
+    const DirichletConstraints& constraints() const
+    { return constraints_; }
 
     /*!
      * \brief Evaluates the boundary flux related to a localDof at a given integration point.
@@ -289,7 +292,7 @@ private:
 
     bool useNeumann_;
     Scalar mu_;
-    DirichletConstraints<GridGeometry, ConstraintInfo, ConstraintValues> constraints_;
+    DirichletConstraints constraints_;
 };
 
 } // end namespace Dumux

@@ -270,23 +270,32 @@ public:
 
         if (!useNeumann_)
         {
-            auto fvGeometry = localView(this->gridGeometry());
-            fvGeometry.bindElement(element);
+            static constexpr Scalar eps = 1e-8;
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+            {
+                if ( (scv.dofPosition() - this->gridGeometry().bBoxMin()).two_norm() < eps)
+                    values.set(0);
+            }
+            else
+            {
+                auto fvGeometry = localView(this->gridGeometry());
+                fvGeometry.bindElement(element);
 
-            bool onBoundary = false;
-            for (const auto& scvf : scvfs(fvGeometry))
-                if (fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex())
-                    onBoundary = std::max(onBoundary, scvf.boundary());
+                bool onBoundary = false;
+                for (const auto& scvf : scvfs(fvGeometry))
+                    if (fvGeometry.scv(scvf.insideScvIdx()).dofIndex() == scv.dofIndex())
+                        onBoundary = std::max(onBoundary, scvf.boundary());
 
-            if (onBoundary)
-                values.set(0);
+                if (onBoundary)
+                    values.set(0);
 
-            // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
+                // TODO: only use one cell or pass fvGeometry to hasInternalDirichletConstraint
 
-            // if (scv.dofIndex() == 0)
-            //     values.set(0);
-            // the pure Neumann problem is only defined up to a constant
-            // we create a well-posed problem by fixing the pressure at one dof
+                // if (scv.dofIndex() == 0)
+                //     values.set(0);
+                // the pure Neumann problem is only defined up to a constant
+                // we create a well-posed problem by fixing the pressure at one dof
+            }
         }
 
         return values;
