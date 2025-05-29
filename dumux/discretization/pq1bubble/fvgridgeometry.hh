@@ -137,6 +137,8 @@ public:
 
     static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -154,15 +156,20 @@ public:
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
-    //! Constructor
-    PQ1BubbleFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    , dofMapper_(gridView, Traits::layout())
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    PQ1BubbleFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
+    , dofMapper_(this->gridView(), Traits::layout())
     , cache_(*this)
     , periodicGridTraits_(this->gridView().grid())
     {
         update_();
     }
+
+    //! Constructor
+    PQ1BubbleFVGridGeometry(const GridView& gridView)
+    : PQ1BubbleFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! The dofMapper
     const DofMapper& dofMapper() const
