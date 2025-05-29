@@ -32,6 +32,14 @@
 #define ALUGRID_CELL_TYPE cube
 #endif
 
+#ifndef NEW_PROBLEM_INTERFACE
+#define NEW_PROBLEM_INTERFACE 0
+#endif
+
+#ifndef NEW_VARIABLES_INTERFACE
+#define NEW_VARIABLES_INTERFACE 0
+#endif
+
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #else
@@ -41,11 +49,13 @@
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
@@ -53,6 +63,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "problem.hh"
+#include "problem_newinterface.hh"
 
 namespace Dumux::Properties {
 
@@ -65,7 +76,13 @@ struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMa
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMomentum>
-{ using type = DoneaTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
+{
+#if NEW_PROBLEM_INTERFACE
+    using type = Dumux::DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>;
+#else
+    using type = Dumux::DoneaTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>;
+#endif
+};
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMass>
@@ -77,6 +94,28 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
+
+#if NEW_VARIABLES_INTERFACE
+// the variables
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+#endif
+
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
