@@ -23,6 +23,7 @@
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -149,7 +150,7 @@ public:
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(this->fvGeometry().numScv());
+        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(this->fvGeometry()));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
@@ -255,6 +256,7 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
@@ -350,7 +352,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                ElementResidualVector partialDerivs(fvGeometry.numScv());
+                ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
 
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                 static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
@@ -370,15 +372,20 @@ public:
                         // 'col'.
                         A[scv.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
 
-                        // If the dof is coupled by a Dirichlet condition,
-                        // set the derived value only once (i.e. overwrite existing values).
-                        if (this->elemBcTypes().hasDirichlet())
+                        // For the old boundary interface we set them for each scv
+                        // for the new interface we enforce them globally by constraints, i.e. do nothing here
+                        if constexpr (!Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridGeometry::GridView::Intersection>())
                         {
-                            const auto bcTypes = this->elemBcTypes().get(fvGeometry, scv);
-                            if (bcTypes.isCouplingDirichlet(eqIdx))
-                                A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
-                            else if (bcTypes.isDirichlet(eqIdx))
-                                A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
+                            // If the dof is coupled by a Dirichlet condition,
+                            // set the derived value only once (i.e. overwrite existing values).
+                            if (this->elemBcTypes().hasDirichlet())
+                            {
+                                const auto bcTypes = this->elemBcTypes().get(fvGeometry, scv);
+                                if (bcTypes.isCouplingDirichlet(eqIdx))
+                                    A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
+                                else if (bcTypes.isDirichlet(eqIdx))
+                                    A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
+                            }
                         }
 
                         // enforce internal Dirichlet constraints
