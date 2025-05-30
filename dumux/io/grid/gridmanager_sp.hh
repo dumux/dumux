@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for SPGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_SP_HH
@@ -30,7 +30,7 @@ namespace Dumux {
 #if HAVE_DUNE_SPGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SPGrid
  *
  * The following keys are recognized:

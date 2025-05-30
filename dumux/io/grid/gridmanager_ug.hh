@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for UGGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_UG_HH
@@ -28,7 +28,7 @@ namespace Dumux {
 #if HAVE_DUNE_UGGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for UGGrids
  *        from information in the input file
  *

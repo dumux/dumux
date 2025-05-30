@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for FoamGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_FOAM_HH
@@ -29,7 +29,7 @@ namespace Dumux {
 #if HAVE_DUNE_FOAMGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for FoamGrids
  *        from information in the input file
  *
@@ -86,7 +86,7 @@ public:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for FoamGrids of dim 1
  *        from information in the input file
  *

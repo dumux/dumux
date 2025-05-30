@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for ALUGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_ALU_HH
@@ -30,7 +30,7 @@ namespace Dumux {
 #if HAVE_DUNE_ALUGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for Dune ALUGrids
  *        from information in the input file
  *
@@ -220,7 +220,7 @@ public:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Boundary flag
  */
 //! alu uses boundary id

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for SubGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_SUB_HH
@@ -45,7 +45,7 @@ namespace Dumux {
 namespace Concept {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief The element selector concept
  */
 template<class Element>
@@ -59,7 +59,7 @@ struct ElementSelector
 } // end namespace Concept
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief The base class for grid managers for dune-subgrid.
  */
 template <class HostGrid, class HostGridManager = GridManager<HostGrid>>
@@ -182,7 +182,7 @@ protected:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SubGrids
  *        from information in the input file
  *
@@ -195,7 +195,7 @@ class GridManager<Dune::SubGrid<dim, HostGrid>>
 {};
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SubGrids
  *        from information in the input file
  *

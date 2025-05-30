@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for YaspGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_YASP_HH
@@ -26,7 +26,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for YaspGrids
  *        from information in the input file
  *
@@ -245,7 +245,7 @@ private:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for YaspGrids with different zones and grading
  *
  * All keys are expected to be in group GridParameterGroup.

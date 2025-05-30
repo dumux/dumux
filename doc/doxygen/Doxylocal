@@ -81,6 +81,11 @@ CITE_BIB_FILES         = @top_srcdir@/doc/doxygen/dumux.bib
 # enable macro expansion only for specified macros
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
+PREDEFINED            += HAVE_DUNE_ALUGRID
+PREDEFINED            += HAVE_DUNE_FOAMGRID
+PREDEFINED            += HAVE_DUNE_MMESH
+PREDEFINED            += HAVE_DUNE_SPGRID
+PREDEFINED            += HAVE_DUNE_SUBGRID
 
 DOT_GRAPH_MAX_NODES    = 100
 
