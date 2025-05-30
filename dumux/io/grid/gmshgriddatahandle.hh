@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A data handle for commucating grid data for gmsh grids
  */
 #ifndef DUMUX_GMSH_GRID_DATA_HANDLE_HH
@@ -29,7 +29,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A data handle for commucating grid data for gmsh grids
  */
 template<class Grid, class GridFactory, class Data>
@@ -115,7 +115,7 @@ private:
 #if HAVE_DUNE_UGGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A data handle for commucating grid data for gmsh grids (specialization for UGGrid)
  */
 template<class GridFactory, class Data, int dimgrid>

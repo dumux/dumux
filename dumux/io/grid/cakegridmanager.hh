@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for a piece of cake grid
  */
 #ifndef DUMUX_CAKE_GRID_MANAGER_HH
@@ -26,7 +26,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager with a method for creating creating vectors
  *        with polar Coordinates and one for creating a Cartesian grid from
  *        these polar coordinates.

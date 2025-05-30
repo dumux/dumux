@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Class for grid data attached to dgf or gmsh grid files
  */
 #ifndef DUMUX_IO_GRID_DATA_HH
@@ -49,7 +49,7 @@ struct isUG<Dune::UGGrid<dim>> : public std::true_type {};
 } // end namespace Details
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Class for grid data attached to dgf or gmsh grid files
  */
 template <class Grid>

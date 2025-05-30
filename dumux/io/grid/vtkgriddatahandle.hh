@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A data handle for communicating grid data for VTK grids
  */
 #ifndef DUMUX_VTK_GRID_DATA_HANDLE_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A data handle for communicating grid data for VTK grids
  */
 template<class Grid, class GridInput, class Data>

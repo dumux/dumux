@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for OneDGrid
  */
 #ifndef DUMUX_IO_GRID_MANAGER_ONED_HH
@@ -22,7 +22,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for OneDGrids
  *        from information in the input file
  *

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for MMesh
  */
 #ifndef DUMUX_IO_GRID_MANAGER_MMESH_HH
@@ -25,7 +25,7 @@ namespace Dumux {
 #if HAVE_DUNE_MMESH
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for Dune MMesh
  *        from information in the input file
  *
