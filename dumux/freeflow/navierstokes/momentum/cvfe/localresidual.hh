@@ -240,8 +240,8 @@ public:
             for (const auto& localDof : nonCVLocalDofs(fvGeometry))
             {
                 const auto localDofIdx = localDof.index();
-                const auto curDensity = problem.density(element, fvGeometry, geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), false);
-                const auto prevDensity = problem.density(element, fvGeometry,  geometry.local(fvGeometry.scv(localDofIdx).dofPosition()), true);
+                const auto curDensity = problem.density(element, fvGeometry, geometry.local(fvGeometry.dofPosition(localDof)), false);
+                const auto prevDensity = problem.density(element, fvGeometry,  geometry.local(fvGeometry.dofPosition(localDof)), true);
                 const auto curVelocity = curElemVolVars[localDofIdx].velocity();
                 const auto prevVelocity = prevElemVolVars[localDofIdx].velocity();
                 auto timeDeriv = (curDensity*curVelocity - prevDensity*prevVelocity);
