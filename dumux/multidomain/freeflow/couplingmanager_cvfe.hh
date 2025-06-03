@@ -24,6 +24,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/evalsolution.hh>
@@ -272,12 +273,12 @@ public:
             localBasis.evaluateFunction(pos, shapeValues);
 
             Scalar rho = 0.0;
-            for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                rho += volVars.density()*shapeValues[scv.indexInElement()][0];
+                    this->momentumCouplingContext_()[0].prevElemVolVars[localDof.index()]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[localDof.index()];
+                rho += volVars.density()*shapeValues[localDof.index()][0];
             }
 
             return rho;
@@ -342,12 +343,12 @@ public:
             localBasis.evaluateFunction(pos, shapeValues);
 
             Scalar mu = 0.0;
-            for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                mu += volVars.viscosity()*shapeValues[scv.indexInElement()][0];
+                    this->momentumCouplingContext_()[0].prevElemVolVars[localDof.index()]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[localDof.index()];
+                mu += volVars.viscosity()*shapeValues[localDof.index()][0];
             }
 
             return mu;
@@ -378,8 +379,8 @@ public:
 
         // interpolate velocity at scvf
         VelocityVector velocity(0.0);
-        for (const auto& scv : scvs(fvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+        for (const auto& localDof : localDofs(fvGeometry))
+            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
 
         return velocity;
     }
@@ -399,8 +400,8 @@ public:
         std::vector<ShapeValue> shapeValues;
         localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
 
-        for (const auto& scv : scvs(momentumFvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+        for (const auto& localDof : localDofs(momentumFvGeometry))
+            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
 
         return velocity;
     }
@@ -520,6 +521,7 @@ public:
                 const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
                 const auto& fvGeometry = this->momentumCouplingContext_()[0].fvGeometry;
 
+                // ToDo: Replace once all mass models are also working with local dofs
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     if(scv.dofIndex() == dofIdxGlobalJ)
@@ -703,9 +705,10 @@ private:
             massFvGeometry.bindElement(element);
             const auto eIdx = momentumFvGeometry.elementIndex();
 
-            for (const auto& scv : scvs(momentumFvGeometry))
-                massAndEnergyToMomentumStencils_[eIdx].push_back(scv.dofIndex());
+            for (const auto& localDof : localDofs(momentumFvGeometry))
+                massAndEnergyToMomentumStencils_[eIdx].push_back(localDof.dofIndex());
 
+            // ToDo: Replace once all mass models are also working with local dofs
             for (const auto& scv : scvs(massFvGeometry))
                 momentumToMassAndEnergyStencils_[eIdx].push_back(scv.dofIndex());
         }
