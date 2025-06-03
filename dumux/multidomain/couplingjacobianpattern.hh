@@ -16,6 +16,7 @@
 #include <dune/common/indices.hh>
 #include <dune/istl/matrixindexset.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -185,10 +186,10 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
         {
             fvGeometry.bindElement(elementI);
             const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& localDof : localDofs(fvGeometry))
             {
                 for (const auto globalJ : stencil)
-                    pattern.add(scv.dofIndex(), globalJ);
+                    pattern.add(localDof.dofIndex(), globalJ);
 
             }
         }
