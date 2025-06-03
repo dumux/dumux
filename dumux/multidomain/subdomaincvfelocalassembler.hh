@@ -32,6 +32,7 @@
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/cvfelocalassembler.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
@@ -65,6 +66,7 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using Scalar = typename GridVariables::Scalar;
 
     using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -149,10 +151,12 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
+        static_assert(!Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>(), "Separate source calculation not implemented for hybrid schemes.");
+
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(this->fvGeometry()));
 
-        // evaluate the volume terms (storage + source terms)
+        // evaluate the source term
         // forward to the local residual specialized for the discretization methods
         for (const auto& scv : scvs(this->fvGeometry()))
         {
@@ -395,7 +399,22 @@ public:
                             if (internalDirichletConstraints[eqIdx])
                                 A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                         }
+                    }
+                }
 
+                // update the global stiffness matrix with the current partial derivatives for non-cv dofs
+                if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+                {
+                    for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        {
+                            // A[i][col][eqIdx][pvIdx] is the rate of change of
+                            // the residual of equation 'eqIdx' at dof 'i'
+                            // depending on the primary variable 'pvIdx' at dof
+                            // 'col'.
+                            A[localDof.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[localDof.index()][eqIdx];
+                        }
                     }
                 }
 
