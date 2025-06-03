@@ -1,8 +1,0 @@
-{
-    "README.md" : [
-        "doc/_intro.md",
-        "properties.hh",
-        "problem.hh",
-        "main.cc"
-    ]
-}
