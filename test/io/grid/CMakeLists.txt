@@ -76,10 +76,6 @@ dumux_add_test(NAME test_vtkreader_1d_polyline
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_vtkreader_1d_polyline-reference.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test_polyline.vtp)
 
-dumux_add_test(NAME test_vtk_staggeredfreeflowpvnames
-              SOURCES test_vtk_staggeredfreeflowpvnames.cc
-              LABELS unit io)
-
 dumux_add_test(NAME test_vtkoutputmodule
                SOURCES test_vtkoutputmodule.cc
                LABELS unit io
