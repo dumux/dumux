@@ -345,6 +345,9 @@ private:
         const auto& geometry = element.geometry();
         for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
+            if(!intersection.boundary())
+                continue;
+
             const auto& bcTypes = elemBcTypes.get(fvGeometry, intersection);
             if(!bcTypes.hasNeumann())
                 continue;
