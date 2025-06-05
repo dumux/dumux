@@ -25,7 +25,7 @@
 @ingroup MultiDomain
 
 @defgroup EmbeddedCoupling Embedded mixed-dimension coupling mode
-@brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a higher-dimensional domain (bulk). Examples are embedded one-dimensional networks for the simulation of blood tissue perfusion, or root-soil interaction, and embedded fracture models.
+@brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) are embedded in a higher-dimensional domain (bulk).
 @ingroup MultiDomain
 
 @defgroup FacetCoupling Conforming mixed-dimension facet coupling mode
