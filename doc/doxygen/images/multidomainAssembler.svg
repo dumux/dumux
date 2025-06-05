@@ -138,7 +138,10 @@
        inkscape:export-ydpi="500">
       <g
          id="g8"
-         transform="translate(-8.4202408,114.66387)">
+         transform="translate(-8.4202408,114.66387)"
+         inkscape:export-filename="multidomainAssembler.svg"
+         inkscape:export-xdpi="500"
+         inkscape:export-ydpi="500">
         <rect
            style="fill:none;stroke:#000000;stroke-width:0.264999;stroke-linecap:square"
            id="rect1"
@@ -252,7 +255,7 @@
              x="27.62541"
              y="23.563057">Coupling Mapper</tspan></text>
         <rect
-           style="fill:none;fill-opacity:0.596078;stroke:#000000;stroke-width:0.3;stroke-linecap:square;stroke-dasharray:0.264583, 0.264583;stroke-opacity:1"
+           style="fill:none;fill-opacity:0.596078;stroke:#000000;stroke-width:0.3;stroke-linecap:square;stroke-dasharray:0.3, 0.9;stroke-dashoffset:0;stroke-opacity:1"
            id="rect6-0-2"
            width="60.661209"
            height="8.8086042"
@@ -382,7 +385,7 @@
            inkscape:original-d="m 155.32646,166.8956 c -1.7064,3.61636 -3.41281,7.23273 -5.11921,10.84909 3.40032,2.3261 6.80051,4.65211 10.20076,6.97817 -1.49175,2.74275 -2.98344,5.48539 -4.47517,8.22809" />
       </g>
       <path
-         style="fill:none;stroke:#000000;stroke-width:0.262507px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:0.262507px;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:0.262507, 0.525014;stroke-dashoffset:0;stroke-opacity:1"
          d="m 160.9503,148.18216 c -3.13695,3.30205 -6.27391,6.60411 -5.48962,8.99811 0.78429,2.39401 5.48962,3.8799 6.27382,5.20074 0.78421,1.32083 -2.35268,2.47653 -5.48963,3.63224"
          id="path19"
          inkscape:path-effect="#path-effect19"

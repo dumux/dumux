@@ -1,6 +1,6 @@
 @addtogroup BoundaryCoupling
 
-The boundary coupling mode is excellent for coupling subproblems that touch at domain boundaries which also means that each subproblem owns a delimited domain. The subproblems may have identical or different dimensionalities, but can also consist of identical or differing physical models. Due to potential differences in DOF location of the the different models, the coupling manager needs to assure that the subproblems' data is mapped correctly to each other at the coupling boundary. This is particularly important when the subproblems use different discretizations and the degrees of freedom do not coincide at the same positions.
+The boundary coupling mode is excellent for coupling subproblems that touch at domain boundaries which also means that each subproblem owns an individual domain. The subproblems may have identical or different dimensionalities, but can also consist of identical or differing physical models. Due to potential differences in DOF location of the the different models, the coupling manager needs to assure that the subproblems' data is mapped correctly to each other at the coupling boundary. This is particularly important when the subproblems use different discretizations and the degrees of freedom do not coincide at the same positions.
 
 ![Examples for possible systems with boundary coupling.](multidomainBoundaryCoupling.svg){html: width=55%}
 
