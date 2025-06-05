@@ -81,9 +81,6 @@ public:
                                      const PartialReassembler* partialReassembler,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = CouplingFunction{})
     {
-        static_assert(!std::decay_t<decltype(this->asImp_().problem())>::enableInternalDirichletConstraints(),
-            "Internal Dirichlet constraints are currently not implemented for face-centered staggered models!");
-
         this->asImp_().bindLocalViews();
         const auto& gridGeometry = this->asImp_().problem().gridGeometry();
         const auto eIdxGlobal = gridGeometry.elementMapper().index(this->element());
