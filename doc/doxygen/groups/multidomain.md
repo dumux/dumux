@@ -1,7 +1,7 @@
 # Doxygen subgroups of the multidomain group
 
 @defgroup BoundaryCoupling Boundary coupling mode
-@brief Couples problems of different or equal dimension that touch at the domain boundary. Examples are equal-dimension multi-physics problems like Darcy-Stokes coupling or PNM (pore network model)-Darcy coupling.
+@brief Couples problems of different or equal dimension that touch at the domain boundary.
 @ingroup MultiDomain
 
 @defgroup DarcyDarcyCoupling Darcy-Darcy domain coupling
