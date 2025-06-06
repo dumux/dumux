@@ -22,24 +22,24 @@ and use forward declarations elsewhere. How to use the property system without m
 ## Parameters
 The parameter tree is now implemented as a singleton.
 Runtime parameter are now obtained with the free functions
-``` cpp
+```cpp
 template<class ParamType>
 ParamType getParam<ParamType>(const std::string&);
 ```
 and
-``` cpp
+```cpp
 template<class ParamType>
 ParamType getParamFromGroup<ParamType>(const std::string&, const std::string&);
 ```
 The functions optionally take a third argument providing a default if the parameter was not found in the parameter tree, i.e.
-``` cpp
+```cpp
 template<class ParamType>
 ParamType getParam<ParamType>(const std::string&, ParamType defaultValue);
 ```
 
 Furthermore, the tree can be queried for existence of a key with
 
-``` cpp
+```cpp
 bool hasParam(const std::string&);
 ```
 
@@ -47,14 +47,14 @@ The parameter tree is initialize by calling the `Parameters::init` function.
 The `init` function exists with different signatures (see `dumux/common/parameters.hh`).
 Most commonly it is called at program start like
 
-``` cpp
+```cpp
 // initialize the parameters
 Parameters::init(argc, argv);
 ```
 
 This default call looks first for a parameter file with the name of executable `<executablename>.input`, then for `params.input`, and finally it prints a message that no parameter file could be found and continues the program without a parameter file. Then, command line arguments are read, they overwrite the parameters in the parameter file, e.g.
 
-``` bash
+```bash
 ./executablename -TimeLoop.TEnd 1e6
 ```
 sets or overwrites the parameter `"TimeLoop.TEnd"`.
