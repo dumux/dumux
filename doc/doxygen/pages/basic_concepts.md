@@ -13,4 +13,3 @@ All problem implementations derived from @ref Dumux::FVProblemWithSpatialParams 
 ## More basic concepts
 This documentation page is still incomplete. Contributing by describing other basic concepts in DuMu<sup>x</sup>.
 To go to the source file of this documentation page, follow the edit button below.
-
