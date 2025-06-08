@@ -231,7 +231,7 @@ p = \sum_{i}^{}p_i.
 Here $p_i$ refers to the partial pressure of component i.
 As an example, if two equal volumes of gas A and gas B are mixed, the volume of the mixture stays the same but the pressures add up (see figure)
 
-![](dalton1.svg)
+![](dalton_one.svg)
 
 The density of the mixture, $\varrho$, can be calculated as follows:
 \begin{equation}
@@ -251,7 +251,7 @@ V = \sum_{i}^{}V_i.
 
 As an example, if two volumes of gas A and B at equal pressure are mixed, the pressure of the mixture stays the same, but the volumes add up.
 
-![](dalton2.svg)
+![](dalton_two.svg)
 
 The density of the mixture, $\varrho$, can be calculated as follows:
 \begin{equation}

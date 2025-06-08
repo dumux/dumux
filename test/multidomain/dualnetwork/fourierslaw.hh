@@ -209,7 +209,7 @@ struct FixedFactorFouriersLaw
 * Depending on the conductivity ratio between the fluid and the solid \f$ \kappa = \frac{\łambda_s}{\lambda_s}\f$,
 * the area available for conduction of heat through each phase might be restricted due to the other phase.
 * The effective areas available for heat conduction in the solid are shown in the picture below:
-* \image html effectiveareasforconduction_dnm.png
+* \image html effective_areas_for_conduction_dnm.png
 * This picture (figure 3) was taken from Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
 * \f$A_{A}\f$ denotes here the contact area between two grains (solid bodies) and
 * \f$\tilde{A}\f$ denotes the effective area of the solid body.

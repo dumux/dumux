@@ -452,7 +452,7 @@ class SubDomainStaggeredLocalAssembler;
  *
  * A sketch of what this means can be found in the following image:
  *
- * \image html staggered_halfelementwise.png
+ * \image html staggered_halfelementwise.svg
  *
  * Half-element wise assembly means, that integrals are
 split into contributions from the left and right part of the staggered control volume. For an example term \f$\int_{\Omega}\varrho u\text{d}\Omega\f$ this reads
