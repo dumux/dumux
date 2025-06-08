@@ -37,7 +37,7 @@ namespace Dumux::FluidMatrix {
  * regions with a spline.
  *
  * An example of the regularization of the relative permeability is shown below:
- * \image html regularized_linear_kr.png
+ * \image html regularized_linear_kr.svg
  */
 template<class ScalarType, class EffToAbsPolicy = TwoPEffToAbsDefaultPolicy>
 class SmoothedLinearLaw : public Adapter<SmoothedLinearLaw<ScalarType, EffToAbsPolicy>, PcKrSw>
