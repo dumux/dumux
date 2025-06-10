@@ -1,0 +1,7 @@
+@addtogroup EmbeddedCoupling
+
+
+| Image | Example description | Topics | Comment |
+|:----------:|:----------|:---------|:---------|
+| ![1d3d](coupling_embedded_1d3d.svg) | A 1D domain is embedded into a 3D domain. Typical examples are the modelling of root systems in soil or blood vessels in organisms. Available implementations utilize the Darcy model in each domain for one phase [1p_1p](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/embedded/1d3d/1p_1p?ref_type=heads), or couple a single-phase Darcy model to a Richards model [1p_richards](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/embedded/1d3d/1p_richards?ref_type=heads). Additional components are realized in the test [1p2c_richards2c](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/embedded/1d3d/1p2c_richards2c?ref_type=heads). | @ref PorousmediumflowModels, @ref CCTpfaDiscretization, @ref BoxDiscretization, @RichardsModel, @OnePModel, @ref RichardsNCModel, @ref OnePNCModel, 1D-3D | - |
+| ![2d3d](coupling_embedded_2d3d.svg) | A 2D domain is embedded into a 3D domain. For example, this can be used for modelling fractures in porous media. Currently, there is an implementation for coupling single-phase Darcy models [1p_1p](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/embedded/2d3d/1p_1p?ref_type=heads).| @ref PorousmediumflowModels, @ref CCTpfaDiscretization, @ref OnePModel, 2D-3D | - |
