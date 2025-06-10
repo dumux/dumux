@@ -16,7 +16,7 @@ The framework enabling all these coupled simulations is called the MultiDomain f
 
 ## Monolithic assembly and solvers
 
-![Structure of monolithic Jacobian matrix](mdstructure.png){html: width=50%}
+![Structure of monolithic Jacobian matrix](mdstructure.svg){html: width=50%}
 
 The multidomain framework uses block-structured matrices to assemble a single system matrix for the linear system
 arising from the coupled problem (for example, in each Newton iteration of a nonlinear solver).
