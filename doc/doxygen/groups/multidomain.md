@@ -1,6 +1,6 @@
 @addtogroup MultiDomain
 
-![Coupled models realized with the DuMux multidomain framework](multidomain.svg){html: width=100%}
+![Coupled models realized with the DuMux multidomain framework](multidomain_tmp.svg){html: width=100%}
 
 DuMu<sup>X</sup> can couple problems posed on different domains.
 The domains can touch or overlap, model different physics, have different dimensions, different grids, or different discretization methods.
