@@ -1,6 +1,6 @@
 @addtogroup MultiDomain
 
-![Coupled models realized with the DuMux multidomain framework](multidomain_tmp.svg){html: width=100%}
+![Coupled models realized with the DuMux multidomain framework](multidomain.svg){html: width=100%}
 
 DuMu<sup>X</sup> can couple problems posed on different domains.
 The domains can touch or overlap, model different physics, have different dimensions, different grids, or different discretization methods.
@@ -16,7 +16,7 @@ The framework enabling all these coupled simulations is called the MultiDomain f
 
 ## Monolithic assembly and solvers
 
-![Structure of monolithic Jacobian matrix](mdstructure.png){html: width=50%}
+![Structure of monolithic Jacobian matrix](mdstructure.svg){html: width=50%}
 
 The multidomain frameworks uses block-structured matrices to assemble a single system matrix for the linear system
 arising from the coupled problem (for example, in each Newton iteration of a nonlinear solver).
