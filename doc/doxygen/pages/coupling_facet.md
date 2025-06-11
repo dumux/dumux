@@ -1,7 +1,7 @@
 @addtogroup FacetCoupling
 
 
-| Image | Available combinations | Comment |
-|:----------:|:----------|:---------|
-| ![1d2d](coupling_facet_one.svg) | <ul><li>1D_2D + 1pnc_1pnc</li></ul> | - |
-| ![1d2d3d](coupling_facet_two.svg) | <ul><li>1D_2D_3D + 1p_1p</li><li>1D_2D + tracer_tracer</li></ul> | - |
+| Image | Example description | Topics | Comment |
+|:----------:|:----------|:---------|:---------|
+| ![1d2d](coupling_facet_1d2d.svg) | A 1D domain is coupled to a 2D domain. The 2D grid acts as a host grid, while the 1D grid lives on the facets of the host grid. Examplary tests can be found for coupling two Darcy models that use a single phase and several components [1pnc_1pnc](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/facet/1pnc_1pnc?ref_type=heads) or two Darcy models that utilize single-phase tracer models [tracer_tracer](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/facet/tracer_tracer?ref_type=heads).| @ref PorousmediumflowModels, @ref CCTpfaDiscretization, @ref CCMpfaDiscretization, @ref BoxDiscretization, @ref OnePModel, @ref OnePNCModel, @ref TracerModel, 1D-2D | - |
+| ![1d2d3d](coupling_facet_1d2d3d.svg) | It is also possible the embed a 1D domain onto the facets of a 2D domain which again lives on the facets of a 3D domain. An exemplary implementation for coupling single-phase Darcy models across the three domains can be found at [1p_1p](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/test/multidomain/facet/1p_1p?ref_type=heads). | @ref PorousmediumflowModels, @ref CCTpfaDiscretization, @ref CCMpfaDiscretization, @ref BoxDiscretization, @ref OnePModel, @ref OnePNCModel, 1D-2D-3D | - |
