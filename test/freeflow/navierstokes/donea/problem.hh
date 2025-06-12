@@ -61,7 +61,7 @@ public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     DoneaTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager)
+    : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         addBoxStabilization_ = getParam<bool>("Problem.AddBoxStabilization", false);

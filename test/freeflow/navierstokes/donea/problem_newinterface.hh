@@ -62,7 +62,7 @@ public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     DoneaTestProblemNewInterface(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager)
+    : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
