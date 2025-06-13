@@ -24,8 +24,7 @@ You should get your changes to us in the following way:
 * Follow the discussion on the merge request to see what improvements should be done to the branch before merging.
 * If you have developer status you don't need to do a fork and you can create branches directly.
 
-If you have any questions or complaints about this workflow of contributing to DuMu<sup>x</sup>, please ask on the
-[DuMu<sup>x</sup> mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux).
+If you have any questions or complaints about this workflow of contributing to DuMu<sup>x</sup>, please ask on the [DuMu<sup>x</sup> support channel on Matrix](https://matrix.to/#/!dKKvOPMFJwyhekAKbj:matrix.org?via=matrix.org&via=gitter.im&via=matrix.sp-codes.de) or the [DuMu<sup>x</sup> mailing list](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux).
 
 ## Git
 * Use Git to your advantage!
