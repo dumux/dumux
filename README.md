@@ -173,8 +173,10 @@ only a few lines of code are never instantiated in the comprehensive test suite.
 
 # Contributing
 
-Contributions are highly welcome. Please ask questions over the [mailing list](mailto:dumux@listserv.uni-stuttgart.de).
-Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
+[![Dumux support matrix](https://img.shields.io/matrix/dumux-support:matrix.org.svg?label=Dumux%20Support%20@%20Matrix)](https://matrix.to/#/!dKKvOPMFJwyhekAKbj:matrix.org?via=matrix.org&via=gitter.im&via=matrix.sp-codes.de)
+[![list](https://img.shields.io/badge/Dumux_Mailing_list-Subscribe_now-brightgreen)](https://listserv.uni-stuttgart.de/mailman/listinfo/dumux)
+
+Contributions are highly welcome. Please ask questions over the DuMu<sup>x</sup> support channel on Matrix or the DuMu<sup>x</sup> mailing list. Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
 before opening issues and merge requests.
 
 # Bug/issue reports or vulnerabilities
