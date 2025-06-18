@@ -18,6 +18,8 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 /*!
@@ -139,22 +141,17 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto globalI = scv.dofIndex();
+            const auto globalIP = gridGeometryI.isPeriodic() && gridGeometryI.dofOnPeriodicBoundary(globalI)
+                    ? std::ranges::min(Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometryI,globalI))
+                    : globalI;
             const auto& stencil = couplingManager.couplingStencil(domainI, elementI, scv, domainJ);
             for (const auto globalJ : stencil)
             {
                 assert(globalJ < gridGeometryJ.numDofs());
                 pattern.add(globalI, globalJ);
 
-                if (gridGeometryI.isPeriodic())
-                {
-                    if (gridGeometryI.dofOnPeriodicBoundary(globalI))
-                    {
-                        const auto globalIP = gridGeometryI.periodicallyMappedDof(globalI);
-
-                        if (globalI > globalIP)
-                            pattern.add(globalIP, globalJ);
-                    }
-                }
+                if (globalI > globalIP)
+                    pattern.add(globalIP, globalJ);
             }
         }
     }
@@ -188,8 +185,17 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
             const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
             for (const auto& localDof : localDofs(fvGeometry))
             {
+                const auto globalI = localDof.dofIndex();
+                const auto globalIP = gridGeometryI.isPeriodic() && gridGeometryI.dofOnPeriodicBoundary(globalI)
+                        ? std::ranges::min(Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometryI,globalI))
+                        : globalI;
                 for (const auto globalJ : stencil)
-                    pattern.add(localDof.dofIndex(), globalJ);
+                {
+                    pattern.add(globalI, globalJ);
+
+                    if (globalI > globalIP)
+                        pattern.add(globalIP, globalJ);
+                }
 
             }
         }
