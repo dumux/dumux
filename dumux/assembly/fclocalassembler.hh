@@ -152,14 +152,17 @@ public:
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+                for (const auto periodicDof :
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(this->asImp_().problem().gridGeometry(), scvI.dofIndex()))
+                {
+                    res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
 
-                auto& rowP = jac[periodicDof];
-                for (auto col = rowP.begin(); col != rowP.end(); ++col)
-                    rowP[col.index()][eqIdx] = 0.0;
+                    auto& rowP = jac[periodicDof];
+                    for (auto col = rowP.begin(); col != rowP.end(); ++col)
+                        rowP[col.index()][eqIdx] = 0.0;
 
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+                    rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+                }
             }
         };
 
@@ -189,13 +192,16 @@ public:
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
+                for (const auto periodicDof :
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(this->asImp_().problem().gridGeometry(), scvI.dofIndex()))
+                {
 
-                auto& rowP = jac[periodicDof];
-                for (auto col = rowP.begin(); col != rowP.end(); ++col)
-                    rowP[col.index()][eqIdx] = 0.0;
+                    auto& rowP = jac[periodicDof];
+                    for (auto col = rowP.begin(); col != rowP.end(); ++col)
+                        rowP[col.index()][eqIdx] = 0.0;
 
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+                    rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+                }
             }
         };
 
@@ -224,8 +230,11 @@ public:
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+                for (const auto periodicDof :
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(this->asImp_().problem().gridGeometry(), scvI.dofIndex()))
+                {
+                    res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+                }
             }
         };
 

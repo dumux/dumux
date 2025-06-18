@@ -38,6 +38,8 @@
 
 #include <dumux/assembly/cvfevolvarsdeflectionpolicy_.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux::Experimental {
 
 /*!
@@ -183,12 +185,15 @@ public:
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
             if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-                constrainedDofs[periodicDof][eqIdx] = 1;
-                const auto end = jac[periodicDof].end();
-                for (auto it = jac[periodicDof].begin(); it != end; ++it)
-                    (*it) = periodicDof != it.index() ? 0.0 : 1.0;
+                for (const auto periodicDof :
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDof(this->asImp_().problem().gridGeometry(), scvI.dofIndex()))
+                {
+                    res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+                    constrainedDofs[periodicDof][eqIdx] = 1;
+                    const auto end = jac[periodicDof].end();
+                    for (auto it = jac[periodicDof].begin(); it != end; ++it)
+                        (*it) = periodicDof != it.index() ? 0.0 : 1.0;
+                }
             }
         };
 

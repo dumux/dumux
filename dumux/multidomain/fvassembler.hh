@@ -41,6 +41,8 @@
 
 #include <dumux/discretization/method.hh>
 
+#include <dumux/common/deprecated.hh>
+
 namespace Dumux {
 
 namespace Grid::Capabilities {
@@ -604,53 +606,57 @@ private:
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
-                if (m.first < m.second)
+                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
+                if (std::ranges::all_of(periodicallyMappedDofs, [=](auto second){ return m.first < second; }))
                 {
-                    auto& jac = jacRow[domainI];
-
-                    // add the second row to the first
-                    res[m.first] += res[m.second];
-
-                    const auto end = jac[m.second].end();
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                        jac[m.first][it.index()] += (*it);
-
-
-                    // enforce the solution of the first periodic DOF to the second one
-                    res[m.second] = curSol[m.second] - curSol[m.first];
-
-                    // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
-                    auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                    for (const auto& second : periodicallyMappedDofs)
                     {
-                        for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                            matrixBlock[eIdx][eIdx] = diagValue;
-                    };
+                        auto& jac = jacRow[domainI];
 
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                    {
-                        auto& matrixBlock = *it;
-                        matrixBlock = 0.0;
+                        // add the second row to the first
+                        res[m.first] += res[second];
 
-                        assert(matrixBlock.N() == matrixBlock.M());
-                        if(it.index() == m.second)
-                            setMatrixBlock(matrixBlock, 1.0);
+                        const auto end = jac[second].end();
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                            jac[m.first][it.index()] += (*it);
 
-                        if(it.index() == m.first)
-                            setMatrixBlock(matrixBlock, -1.0);
 
+                        // enforce the solution of the first periodic DOF to the second one
+                        res[second] = curSol[second] - curSol[m.first];
+
+                        // set derivatives accordingly in jacobian, i.e. id for second and -id for m.first
+                        auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                        {
+                            for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                                matrixBlock[eIdx][eIdx] = diagValue;
+                        };
+
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                        {
+                            auto& matrixBlock = *it;
+                            matrixBlock = 0.0;
+
+                            assert(matrixBlock.N() == matrixBlock.M());
+                            if(it.index() == second)
+                                setMatrixBlock(matrixBlock, 1.0);
+
+                            if(it.index() == m.first)
+                                setMatrixBlock(matrixBlock, -1.0);
+
+                        }
+
+                        using namespace Dune::Hybrid;
+                        forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
+                        {
+                            auto& jacCoupling = jacRow[couplingDomainId];
+
+                            for (auto it = jacCoupling[second].begin(); it != jacCoupling[second].end(); ++it)
+                                jacCoupling[m.first][it.index()] += (*it);
+
+                            for (auto it = jacCoupling[second].begin(); it != jacCoupling[second].end(); ++it)
+                                (*it) = 0.0;
+                        });
                     }
-
-                    using namespace Dune::Hybrid;
-                    forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
-                    {
-                        auto& jacCoupling = jacRow[couplingDomainId];
-
-                        for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
-                            jacCoupling[m.first][it.index()] += (*it);
-
-                        for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
-                            (*it) = 0.0;
-                    });
                 }
             }
         }
