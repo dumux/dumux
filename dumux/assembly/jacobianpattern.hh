@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <dune/istl/matrixindexset.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -176,12 +177,17 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
                 {
                     if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
                     {
-                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
-                        pattern.add(globalIP, globalI);
-                        pattern.add(globalI, globalIP);
+                        const auto& periodicallyMappedDofs =
+                            Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometry, globalI);
 
-                        if (globalI > globalIP)
-                            pattern.add(globalIP, globalJ);
+                        for (const auto globalIP : periodicallyMappedDofs)
+                        {
+                            pattern.add(globalIP, globalI);
+                            pattern.add(globalI, globalIP);
+
+                            if (globalI > globalIP)
+                                pattern.add(globalIP, globalJ);
+                        }
                     }
                 }
             }
@@ -213,23 +219,40 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
             for (const auto& localDof : localDofs(fvGeometry))
             {
                 const auto globalI = localDof.dofIndex();
+                const auto globalIP = gridGeometry.isPeriodic() && gridGeometry.dofOnPeriodicBoundary(globalI)
+                        ? std::ranges::min(Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometry,globalI))
+                        : globalI;
                 for (const auto& localDofJ : localDofs(fvGeometry))
                 {
                     const auto globalJ = localDofJ.dofIndex();
                     pattern.add(globalI, globalJ);
 
-                    if (gridGeometry.isPeriodic())
+                    if (globalI != globalJ && globalI != globalIP)
                     {
-                        if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
-                        {
-                            const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
-                            pattern.add(globalIP, globalI);
-                            pattern.add(globalI, globalIP);
+                        pattern.add(globalIP, globalI);
+                        pattern.add(globalI, globalIP);
 
-                            if (globalI > globalIP)
-                                pattern.add(globalIP, globalJ);
-                        }
+                        if (globalI > globalIP)
+                            pattern.add(globalIP, globalJ);
                     }
+
+//                    if (gridGeometry.isPeriodic())
+//                    {
+//                        if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
+//                        {
+//                            const auto& periodicallyMappedDofs =
+//                                Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometry, globalI);
+//
+//                            for (const auto globalIP : periodicallyMappedDofs)
+//                            {
+//                                pattern.add(globalIP, globalI);
+//                                pattern.add(globalI, globalIP);
+//
+//                                if (globalI > globalIP)
+//                                    pattern.add(globalIP, globalJ);
+//                            }
+//                        }
+//                    }
                 }
             }
         }
