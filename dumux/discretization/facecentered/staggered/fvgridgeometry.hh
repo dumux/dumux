@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_STAGGERED_FV_GRID_GEOMETRY
 
 #include <memory>
+#include <ranges>
 
 #include <dune/common/rangeutilities.hh>
 #include <dune/grid/common/scsgmapper.hh>
@@ -243,11 +244,16 @@ public:
     { return periodicFaceMap_.count(dofIdx); }
 
     //! The index of the d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicFaceMap_.at(dofIdx); }
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
+    const GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { return periodicFaceMap_.at(dofIdx)[0]; }
+
+    //! The index of the d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicFaceMap_.at(dofIdx)); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::unordered_map<GridIndexType, std::array<GridIndexType, 1>>& periodicDofMap() const
     { return periodicFaceMap_; }
 
 
@@ -350,7 +356,7 @@ private:
                         if (Dune::FloatCmp::eq(intersectionUnitOuterNormal*otherIntersection.centerUnitOuterNormal(), -1.0, 1e-7))
                         {
                             const auto periodicDofIdx = intersectionMapper().globalIntersectionIndex(otherElement, otherIntersectionLocalIdx);
-                            periodicFaceMap_[dofIndex] = periodicDofIdx;
+                            periodicFaceMap_[dofIndex][0] = periodicDofIdx;
                             periodicFaceFound = true;
                         }
 
@@ -507,7 +513,7 @@ private:
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
+    std::unordered_map<GridIndexType, std::array<GridIndexType, 1>> periodicFaceMap_;
 
     PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
@@ -652,11 +658,16 @@ public:
     { return periodicFaceMap_.count(dofIdx); }
 
     //! The index of the d.o.f. on the other side of the periodic boundary
-    GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicFaceMap_.at(dofIdx); }
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
+    const GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { return periodicFaceMap_.at(dofIdx)[0]; }
+
+    //! The indices of the d.o.f.s on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicFaceMap_.at(dofIdx)); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::unordered_map<GridIndexType, std::array<GridIndexType, 1>>& periodicDofMap() const
     { return periodicFaceMap_; }
 
 private:
@@ -761,7 +772,7 @@ private:
                         {
                             const auto periodicDofIdx = intersectionMapper().globalIntersectionIndex(otherElement, otherIntersectionLocalIdx);
                             const auto dofIndex = intersectionMapper().globalIntersectionIndex(element, localScvIdx);
-                            periodicFaceMap_[dofIndex] = periodicDofIdx;
+                            periodicFaceMap_[dofIndex][0] = periodicDofIdx;
                             periodicFaceFound = true;
                         }
 
@@ -810,7 +821,7 @@ private:
     std::vector<std::vector<GridIndexType>> scvfIndicesOfElement_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
+    std::unordered_map<GridIndexType, std::array<GridIndexType, 1>> periodicFaceMap_;
     std::unordered_map<GridIndexType, GridIndexType> outsideVolVarIndices_;
 
     PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;

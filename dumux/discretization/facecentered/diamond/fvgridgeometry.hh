@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_FV_GRID_GEOMETRY
 
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 
 #include <dune/grid/common/mcmgmapper.hh>
@@ -167,11 +168,16 @@ public:
     { return periodicFaceMap_.count(dofIdx); }
 
     //! The index of the d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicFaceMap_.at(dofIdx); }
+    { return periodicFaceMap_.at(dofIdx)[0]; }
+
+    //! The index of the d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicFaceMap_.at(dofIdx)); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::unordered_map<GridIndexType, std::array<GridIndexType, 1>>& periodicDofMap() const
     { return periodicFaceMap_; }
 
     //! local view of this object (constructed with the internal cache)
@@ -350,7 +356,7 @@ private:
                         if (Dune::FloatCmp::eq(intersection.centerUnitOuterNormal()*otherIntersection.centerUnitOuterNormal(), -1.0, 1e-7))
                         {
                             const auto periodicDofIdx = dofMapper().subIndex(otherElement, otherIntersectionLocalIdx, 1);
-                            periodicFaceMap_[dofIndex] = periodicDofIdx;
+                            periodicFaceMap_[dofIndex][0] = periodicDofIdx;
                             periodicFaceFound = true;
                         }
 
@@ -386,7 +392,7 @@ private:
     std::size_t numBoundaryScvf_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicFaceMap_;
+    std::unordered_map<GridIndexType, std::array<GridIndexType, 1>> periodicFaceMap_;
 
     const FeCache feCache_;
 
