@@ -194,13 +194,17 @@ int main(int argc, char** argv)
                 if (isPeriodic)
                 {
                     const auto periodicScv = fvGeometry.outsidePeriodicScv(scv);
-                    const auto periodicDof = momentumGridGeometry->periodicallyMappedDof(scv.dofIndex());
-                    const auto distance = scv.dofPosition() - periodicScv.dofPosition();
-                    if (std::abs(distance[0]) > eps
-                            || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
-                        DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
-                    if (std::abs(x[momentumIdx][periodicDof] - x[momentumIdx][scv.dofIndex()]) > eps)
-                        DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
+                    const auto periodicallyMappedDofs =
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(*momentumGridGeometry, scv.dofIndex());
+                    for (const auto periodicDof : periodicallyMappedDofs)
+                    {
+                        const auto distance = scv.dofPosition() - periodicScv.dofPosition();
+                        if (std::abs(distance[0]) > eps
+                                || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
+                            DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
+                        if (std::abs(x[momentumIdx][periodicDof] - x[momentumIdx][scv.dofIndex()]) > eps)
+                            DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
+                    }
                 }
 
             }
