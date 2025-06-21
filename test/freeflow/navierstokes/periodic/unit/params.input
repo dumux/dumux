@@ -9,6 +9,7 @@ EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
 TrivialSelector = true
+PeriodicInX = false
 
 [Component]
 LiquidDensity = 1

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "params.input" "periodic.dgf" "periodic_refined.dgf")
+dune_symlink_to_source_files(FILES "params.input" "periodic.dgf" "periodic_2d.dgf")
 dumux_add_test(NAME test_ff_navierstokes_periodic
                LABELS freeflow navierstokes
                SOURCES main.cc
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_nontrivial
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid
                                         -Problem.TrivialSelector false
-                                        -Grid.File periodic_refined.dgf
+                                        -Grid.File periodic_2d.dgf -Problem.PeriodicInX true
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond
@@ -57,7 +57,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond
                                         -Problem.TrivialSelector false
-                                        -Grid.File periodic_refined.dgf
+                                        -Grid.File periodic_2d.dgf -Problem.PeriodicInX true
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
@@ -72,7 +72,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond_box
                                         -Problem.TrivialSelector false
-                                        -Grid.File periodic_refined.dgf
+                                        -Grid.File periodic_2d.dgf -Problem.PeriodicInX true
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
@@ -87,7 +87,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
                                         -Problem.TrivialSelector false
-                                        -Grid.File periodic_refined.dgf
+                                        -Grid.File periodic_2d.dgf -Problem.PeriodicInX true
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
@@ -102,5 +102,5 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_box
                                         -Problem.TrivialSelector false
-                                        -Grid.File periodic_refined.dgf
+                                        -Grid.File periodic_2d.dgf -Problem.PeriodicInX true
                                         ")
