@@ -125,12 +125,8 @@ public:
     {
         std::bitset<DirichletValues::dimension> values;
 
-        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
-        {
-            const auto center = intersection.geometry().center();
-            if (intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-                values.set(0);
-        }
+        if (scv.dofIndex() == 0)
+            values.set(0);
 
         return values;
     }
