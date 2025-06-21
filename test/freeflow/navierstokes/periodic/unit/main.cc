@@ -215,6 +215,7 @@ int main(int argc, char** argv)
 
     // verify periodic mapping of dofs
     {
+        const bool periodicInX = getParam<bool>("Problem.PeriodicInX", false);
         const auto eps = 1e-6;
         const auto bBoxMax = momentumGridGeometry->bBoxMax();
         const auto bBoxMin = momentumGridGeometry->bBoxMin();
@@ -225,7 +226,9 @@ int main(int argc, char** argv)
             for (const auto& scv : scvs(fvGeometry))
             {
                 const bool isPeriodic = std::min(scv.dofPosition()[1]-bBoxMin[1],
-                                                 bBoxMax[1]-scv.dofPosition()[1]) < eps;
+                                                 bBoxMax[1]-scv.dofPosition()[1]) < eps
+                    || (periodicInX && std::min(scv.dofPosition()[0]-bBoxMin[0],
+                                                 bBoxMax[0]-scv.dofPosition()[0]) < eps);
                 if (isPeriodic != momentumGridGeometry->dofOnPeriodicBoundary(scv.dofIndex()))
                     DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
                 if (isPeriodic)
@@ -236,8 +239,10 @@ int main(int argc, char** argv)
                     for (const auto periodicDof : periodicallyMappedDofs)
                     {
                         //const auto distance = scv.dofPosition() - periodicScv.dofPosition();
-                        //if (std::abs(distance[0]) > eps
+                        //if ((std::abs(distance[0]) > eps
                         //        || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
+                        //   && (!periodicInX || std::abs(distance[1]) > eps
+                        //        || std::abs(std::abs(distance[0]) - (bBoxMax[0]-bBoxMin[0]) ) > eps ))
                         //    DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
                         for (int i = 0; i < x[momentumIdx][periodicDof].size(); ++i)
                             if (std::abs(x[momentumIdx][periodicDof][i] - x[momentumIdx][scv.dofIndex()][i]) > eps)
