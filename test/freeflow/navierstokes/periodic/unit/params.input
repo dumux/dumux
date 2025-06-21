@@ -21,7 +21,7 @@ MaxSteps = 10
 MaxRelativeShift = 1e-5
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true
 
 [Flux]
 UpwindWeight = 0.5
