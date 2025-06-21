@@ -1,0 +1,25 @@
+DGF
+% SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
+
+INTERVAL
+0 0            % lower left corner
+1 1            % upper right corner
+40 40          % number of cells in each direction
+#
+Simplex
+#
+
+PERIODICFACETRANSFORMATION
+1 0, 0 1 + 0 1  % make periodic in y-direction
+#
+
+BOUNDARYDOMAIN
+DEFAULT 1
+#
+
+GRIDPARAMETER
+OVERLAP 1
+#
+
+#
