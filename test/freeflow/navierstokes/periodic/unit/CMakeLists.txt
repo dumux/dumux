@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "params.input" "periodic.dgf")
+dune_symlink_to_source_files(FILES "params.input" "periodic.dgf" "periodic_refined.dgf")
 dumux_add_test(NAME test_ff_navierstokes_periodic
                LABELS freeflow navierstokes
                SOURCES main.cc
@@ -119,6 +119,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_nontrivial
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid
                                         -Problem.TrivialSelector false
+                                        -Grid.File periodic_refined.dgf
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond
@@ -133,6 +134,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond
                                         -Problem.TrivialSelector false
+                                        -Grid.File periodic_refined.dgf
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
@@ -147,6 +149,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond_box
                                         -Problem.TrivialSelector false
+                                        -Grid.File periodic_refined.dgf
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
@@ -156,11 +159,12 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
                COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 USESUBGRID=1 MOMENTUM_TYPETAG=PeriodicTestMomentumPQ1Bubble MASS_TYPETAG=PeriodicTestMassDiamond
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_subgrid_fine-reference.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_subgrid-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
                                         -Problem.TrivialSelector false
+                                        -Grid.File periodic_refined.dgf
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
@@ -170,9 +174,10 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
                COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 USESUBGRID=1 MOMENTUM_TYPETAG=PeriodicTestMomentumPQ1Bubble MASS_TYPETAG=PeriodicTestMassBox
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_subgrid_fine-reference.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_subgrid-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_box-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_box
                                         -Problem.TrivialSelector false
+                                        -Grid.File periodic_refined.dgf
                                         ")
