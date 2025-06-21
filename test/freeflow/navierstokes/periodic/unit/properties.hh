@@ -13,6 +13,13 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROPERTIES_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROPERTIES_HH
 
+#ifndef MOMENTUM_TYPETAG
+#define MOMENTUM_TYPETAG PeriodicTestMomentumStaggered
+#endif
+
+#ifndef MASS_TYPETAG
+#define MASS_TYPETAG PeriodicTestMassTpfa
+#endif
 
 #include <dune/grid/spgrid.hh>
 #if HAVE_DUNE_SUBGRID
@@ -22,6 +29,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
@@ -31,7 +39,10 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include "problem.hh"
 
@@ -44,8 +55,12 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct PeriodicTest {};
-struct PeriodicTestMomentum { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
-struct PeriodicTestMass { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct PeriodicTestMomentumStaggered { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct PeriodicTestMomentumDiamond { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
+struct PeriodicTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct PeriodicTestMassTpfa { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct PeriodicTestMassBox { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMassOneP, BoxModel>; };
+struct PeriodicTestMassDiamond { using InheritsFrom = std::tuple<PeriodicTest, NavierStokesMassOneP, FaceCenteredDiamondModel>; };
 } // end namespace TTag
 
 
@@ -70,11 +85,11 @@ struct Grid<TypeTag, TTag::PeriodicTest> {
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PeriodicTestMomentum>
+struct Problem<TypeTag, TTag::MOMENTUM_TYPETAG>
 { using type = PeriodicTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PeriodicTestMass>
+struct Problem<TypeTag, TTag::MASS_TYPETAG>
 { using type = PeriodicTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
@@ -87,7 +102,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::PeriodicTest> { static cons
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PeriodicTest>
 {
-    using Traits = MultiDomainTraits<TTag::PeriodicTestMomentum, TTag::PeriodicTestMass>;
+    using Traits = MultiDomainTraits<TTag::MOMENTUM_TYPETAG, TTag::MASS_TYPETAG>;
     using type = FreeFlowCouplingManager<Traits>;
 };
 

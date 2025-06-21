@@ -92,7 +92,7 @@ public:
         {
             if (usePressureDifference_ && scv.dofPosition()[1] < this->gridGeometry().bBoxMin()[1] + eps_)
             {
-                const auto& frontalScvf = (*scvfs(fvGeometry, scv).begin());
+                const auto& frontalScvf = (*scvfs(fvGeometry).begin());
                 source[Indices::momentumYBalanceIdx] = 100 * frontalScvf.area() / scv.volume();
             }
         }
