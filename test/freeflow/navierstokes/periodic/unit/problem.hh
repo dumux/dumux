@@ -129,12 +129,8 @@ public:
 
         if constexpr(!ParentType::isMomentumProblem())
         {
-            for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
-            {
-                const auto center = intersection.geometry().center();
-                if (intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-                    values.set(0);
-            }
+            if (scv.dofIndex() == 0)
+                values.set(0);
         } else {
             const static auto  pos_y = getParam<double>("Problem.MomentumInternalDirichletPosY", 0.5);
             if (useMomentumInternalDirichlet_ &&
