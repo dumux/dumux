@@ -108,9 +108,10 @@ int main(int argc, char** argv)
 #if HAVE_DUNE_SUBGRID && USESUBGRID
     auto selector = [](const auto& element) {
         const static auto trivialSelector = getParam<bool>("Problem.TrivialSelector", true);
+        const static auto radius = getParam<double>("Problem.Radius", 0.25);
         const auto distance = std::max(std::abs(element.geometry().center()[0] - 0.5),
                                        std::abs(element.geometry().center()[1] - 0.5));
-        return trivialSelector || distance > 0.25 - 1e-6;
+        return trivialSelector || distance > radius - 1e-6;
     };
     gridManager.init(selector);
 
