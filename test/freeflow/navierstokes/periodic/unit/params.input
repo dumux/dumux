@@ -9,6 +9,7 @@ EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
 TrivialSelector = true
+Radius = 0.25
 PeriodicInX = false
 
 [Component]
