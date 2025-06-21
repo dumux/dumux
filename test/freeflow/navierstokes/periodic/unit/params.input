@@ -9,6 +9,10 @@ EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
 TrivialSelector = true
+Velocity = -1.0
+UseVelocityProfile = false
+UseMomentumInternalDirichlet = false
+MomentumInternalDirichletPosY = 1.0
 
 [Component]
 LiquidDensity = 1
