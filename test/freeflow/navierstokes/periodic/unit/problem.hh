@@ -52,6 +52,8 @@ public:
     : ParentType(gridGeometry, couplingManager)
     {
         usePressureDifference_ = getParam<bool>("Problem.UsePressureDifference", false);
+        useMomentumInternalDirichlet_ = getParam<bool>("Problem.UseMomentumInternalDirichlet", false)
+            && !usePressureDifference_;
     }
 
     /*!
@@ -109,7 +111,7 @@ public:
 
     //! Enable internal Dirichlet constraints
     static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
+    { return true; }
 
     /*!
      * \brief Tag a degree of freedom to carry internal Dirichlet constraints.
@@ -125,11 +127,19 @@ public:
     {
         std::bitset<DirichletValues::dimension> values;
 
-        for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+        if constexpr(!ParentType::isMomentumProblem())
         {
-            const auto center = intersection.geometry().center();
-            if (intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
-                values.set(0);
+            for (const auto& intersection : intersections(this->gridGeometry().gridView(), element))
+            {
+                const auto center = intersection.geometry().center();
+                if (intersection.neighbor() && center[1] > this->gridGeometry().bBoxMax()[1] - eps_)
+                    values.set(0);
+            }
+        } else {
+            const static auto  pos_y = getParam<double>("Problem.MomentumInternalDirichletPosY", 0.5);
+            if (useMomentumInternalDirichlet_ &&
+                    std::abs(scv.dofPosition()[1] - this->gridGeometry().bBoxMax()[1]*pos_y) <  eps_)
+                values.set(1);
         }
 
         return values;
@@ -142,12 +152,28 @@ public:
      */
     DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        return DirichletValues(1.0);
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            return DirichletValues(1.0);
+        }
+        else
+        {
+            const static auto velocity = getParam<Scalar>("Problem.Velocity", -1.0);
+            const static auto useVelocityProfile = getParam<bool>("Problem.UseVelocityProfile", true);
+            Scalar velY = velocity;
+            if (useVelocityProfile)
+            {
+                const auto posX = scv.center()[0];
+                velY *= 4.0 * posX * (1.0 - posX);
+            }
+            return DirichletValues{0.0, velY};
+        }
     }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
     bool usePressureDifference_;
+    bool useMomentumInternalDirichlet_;
 };
 
 } // end namespace Dumux
