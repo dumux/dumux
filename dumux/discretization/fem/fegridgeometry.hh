@@ -13,6 +13,7 @@
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_FE_GRID_GEOMETRY_HH
 
+#include <ranges>
 #include <unordered_map>
 
 #include <dumux/common/indextraits.hh>
@@ -94,7 +95,12 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
+
+    //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
+    GridIndexType periodicallyMappedDofs(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::NotImplemented, "Periodic BC support for FEM schemes"); }
 
 private:

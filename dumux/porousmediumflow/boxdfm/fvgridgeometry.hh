@@ -17,6 +17,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 
+#include <ranges>
 #include <utility>
 #include <unordered_map>
 
@@ -188,7 +189,12 @@ public:
     bool dofOnPeriodicBoundary(std::size_t dofIdx) const { return false; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
+    const std::ranges::range auto& periodicallyMappedDofs(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
 private:
@@ -308,6 +314,8 @@ private:
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
+                // TODO: should use periodicGridTraits but carrying them around just to verify no
+                // periodicity?
                 // make sure we have no periodic boundaries
                 else if (intersection.boundary() && intersection.neighbor())
                     DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme");
@@ -508,7 +516,12 @@ public:
     { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
+    { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
+    const std::ranges::range auto& periodicallyMappedDofs(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
 private:
