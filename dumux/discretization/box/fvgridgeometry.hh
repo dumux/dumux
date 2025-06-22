@@ -14,6 +14,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
 
+#include <ranges>
 #include <utility>
 #include <unordered_map>
 #include <array>
@@ -181,11 +182,16 @@ public:
     { return periodicDofMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicDofMap_.at(dofIdx); }
+    { return periodicDofMap_.at(dofIdx)[0]; }
+
+    //! The indices of the vertices / d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicDofMap_.at(dofIdx)); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::unordered_map<GridIndexType, std::vector<GridIndexType>>& periodicDofMap() const
     { return periodicDofMap_; }
 
     //! local view of this object (constructed with the internal cache)
@@ -380,25 +386,46 @@ private:
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         const auto vPos = elementGeometry.corner(vIdx);
 
-                        const auto& outside = intersection.outside();
-                        const auto outsideGeometry = outside.geometry();
-                        for (const auto& isOutside : intersections(this->gridView(), outside))
+                        // recursively process periodic intersections containing the periodic vertex
+                        const auto processIntersection =
+                                [vIdxGlobal, this, &refElement, eps]
+                                (auto& vPos, auto& intersection, auto& processFunc)
                         {
-                            // only check periodic vertices of the periodic neighbor
-                            if (periodicGridTraits_.isPeriodic(isOutside))
+                            bool keepProcessing = false;
+                            const auto& outside = intersection.outside();
+                            const auto outsideGeometry = outside.geometry();
+                            for (const auto& isOutside : intersections(this->gridView(), outside))
                             {
-                                const auto fIdxOutside = isOutside.indexInInside();
-                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
-                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                // only check periodic vertices of the periodic neighbor
+                                if (this->periodicGridTraits_.isPeriodic(isOutside))
                                 {
-                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
-                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
-                                    const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                    if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
-                                        periodicDofMap_[vIdxGlobal] = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                    const auto fIdxOutside = isOutside.indexInInside();
+                                    const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
+                                    for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                    {
+                                        const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                        const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                        const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
+                                        if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        {
+                                            const auto periodicIdx = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                            if (!keepProcessing &&
+                                                    (periodicIdx==vIdxGlobal || std::ranges::count(periodicDofMap_[vIdxGlobal], periodicIdx)))
+                                                return;
+                                            if (std::abs(intersection.centerUnitOuterNormal() *
+                                                    isOutside.centerUnitOuterNormal()) > 1.0 - 1e-6)
+                                            {
+                                                periodicDofMap_[vIdxGlobal].insert(periodicDofMap_[vIdxGlobal].begin(), periodicIdx);
+                                                keepProcessing = true;
+                                                break;
+                                            }
+                                            processFunc(vPosOutside, isOutside, processFunc);
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        };
+                        processIntersection(vPos, intersection, processIntersection);
                     }
                 }
             }
@@ -419,7 +446,7 @@ private:
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicDofMap_;
+    std::unordered_map<GridIndexType, std::vector<GridIndexType>> periodicDofMap_;
 
     Cache cache_;
 
@@ -535,11 +562,16 @@ public:
     { return periodicDofMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicDofMap_.at(dofIdx); }
+    { return periodicDofMap_.at(dofIdx)[0]; }
+
+    //! The indices of the vertices / d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicDofMap_.at(dofIdx)); }
 
     //! Returns the map between dofs across periodic boundaries
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::unordered_map<GridIndexType, std::vector<GridIndexType>>& periodicDofMap() const
     { return periodicDofMap_; }
 
     //! local view of this object (constructed with the internal cache)
@@ -626,25 +658,46 @@ private:
                         const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
                         const auto vPos = elementGeometry.corner(vIdx);
 
-                        const auto& outside = intersection.outside();
-                        const auto outsideGeometry = outside.geometry();
-                        for (const auto& isOutside : intersections(this->gridView(), outside))
+                        // recursively process periodic intersections containing the periodic vertex
+                        const auto processIntersection =
+                                [vIdxGlobal, this, &refElement, eps]
+                                (auto& vPos, auto& intersection, auto& processFunc)
                         {
-                            // only check periodic vertices of the periodic neighbor
-                            if (periodicGridTraits_.isPeriodic(isOutside))
+                            bool keepProcessing = false;
+                            const auto& outside = intersection.outside();
+                            const auto outsideGeometry = outside.geometry();
+                            for (const auto& isOutside : intersections(this->gridView(), outside))
                             {
-                                const auto fIdxOutside = isOutside.indexInInside();
-                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
-                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                // only check periodic vertices of the periodic neighbor
+                                if (this->periodicGridTraits_.isPeriodic(isOutside))
                                 {
-                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
-                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
-                                    const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                    if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
-                                        periodicDofMap_[vIdxGlobal] = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                    const auto fIdxOutside = isOutside.indexInInside();
+                                    const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
+                                    for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                    {
+                                        const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                        const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                        const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
+                                        if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        {
+                                            const auto periodicIdx = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
+                                            if (!keepProcessing &&
+                                                    (periodicIdx==vIdxGlobal || std::ranges::count(periodicDofMap_[vIdxGlobal], periodicIdx)))
+                                                return;
+                                            if (std::abs(intersection.centerUnitOuterNormal() *
+                                                    isOutside.centerUnitOuterNormal()) > 1.0 - 1e-6)
+                                            {
+                                                periodicDofMap_[vIdxGlobal].insert(periodicDofMap_[vIdxGlobal].begin(), periodicIdx);
+                                                keepProcessing = true;
+                                                break;
+                                            }
+                                            processFunc(vPosOutside, isOutside, processFunc);
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        };
+                        processIntersection(vPos, intersection, processIntersection);
                     }
                 }
             }
@@ -667,7 +720,7 @@ private:
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary vertices
-    std::unordered_map<GridIndexType, GridIndexType> periodicDofMap_;
+    std::unordered_map<GridIndexType, std::vector<GridIndexType>> periodicDofMap_;
 
     Cache cache_;
 
