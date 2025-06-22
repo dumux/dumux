@@ -12,6 +12,7 @@
 #ifndef DUMUX_DISCRETIZATION_PNM_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_PNM_GRID_GEOMETRY_HH
 
+#include <ranges>
 #include <string>
 #include <utility>
 #include <unordered_map>
@@ -586,6 +587,11 @@ public:
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
+    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
@@ -776,6 +782,11 @@ public:
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
+    { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
+
+    //! The index of the vertex / d.o.f. on the other side of the periodic boundary
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::NotImplemented, "Periodic boundaries"); }
 
 private:
