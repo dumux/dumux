@@ -132,7 +132,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond
-                                        -Problem.TrivialSelector true
+                                        -Problem.TrivialSelector false
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
@@ -146,7 +146,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_diamond_box
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond_box-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_diamond_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_diamond_box
-                                        -Problem.TrivialSelector true
+                                        -Problem.TrivialSelector false
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
@@ -160,7 +160,7 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_diamond
-                                        -Problem.TrivialSelector true
+                                        -Problem.TrivialSelector false
                                         ")
 
 dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
@@ -174,5 +174,5 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_subgrid_pq1bubble_box
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_box-00000.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_subgrid_pq1bubble_box params.input
                                         -Problem.Name test_ff_navierstokes_periodic_subgrid_pq1bubble_box
-                                        -Problem.TrivialSelector true
+                                        -Problem.TrivialSelector false
                                         ")
