@@ -21,6 +21,7 @@
 #ifndef DUMUX_IO_GRID_MANAGER_BASE_HH
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/gridcapabilities.hh>
@@ -258,6 +259,22 @@ struct MultithreadingSupported<Dune::ALUGrid<dim, dimworld, elType, refinementTy
 };
 
 } // end namespace Grid::Capabilities
+
+template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
+struct PeriodicGridTraits<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
+{
+private:
+    using Grid = Dune::ALUGrid<dim, dimworld, elType, refinementType>;
+public:
+    struct SupportsPeriodicity : public std::true_type {};
+
+    PeriodicGridTraits(const Grid& grid) {};
+
+    bool isPeriodic (const typename Grid::LeafIntersection& intersection) const
+    {
+        return intersection.neighbor() && intersection.boundary();
+    }
+};
 
 #endif // HAVE_DUNE_ALUGRID
 

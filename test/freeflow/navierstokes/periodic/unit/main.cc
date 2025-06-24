@@ -32,6 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_sp.hh>
 #include <dumux/io/grid/gridmanager_sub.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 #include <dumux/io/grid/periodicgridtraits.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>

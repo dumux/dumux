@@ -25,6 +25,9 @@
 #if HAVE_DUNE_SUBGRID
 #include <dune/subgrid/subgrid.hh>
 #endif
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
@@ -48,6 +51,10 @@
 
 #ifndef USESUBGRID
 #define USESUBGRID 0
+#endif
+
+#ifndef USEALUGRID
+#define USEALUGRID 0
 #endif
 
 namespace Dumux::Properties {
@@ -75,7 +82,11 @@ struct FluidSystem<TypeTag, TTag::PeriodicTest>
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PeriodicTest> {
+#if HAVE_DUNE_ALUGRID && USEALUGRID
+    using HostGrid = Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>;
+#else
     using HostGrid = Dune::SPGrid<double, 2>;
+#endif
 #if HAVE_DUNE_SUBGRID && USESUBGRID
     using type = Dune::SubGrid<2, HostGrid>;
 #else
