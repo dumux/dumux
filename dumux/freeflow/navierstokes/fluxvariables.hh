@@ -14,7 +14,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
 
 namespace Dumux {
 
