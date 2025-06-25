@@ -4,7 +4,6 @@
 add_subdirectory(compositional)
 add_subdirectory(navierstokes)
 add_subdirectory(nonisothermal)
-add_subdirectory(rans)
 add_subdirectory(shallowwater)
 
 file(GLOB DUMUX_FREEFLOW_HEADERS *.hh *.inc)

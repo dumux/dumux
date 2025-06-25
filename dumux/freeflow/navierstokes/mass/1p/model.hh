@@ -41,7 +41,6 @@
 
 #include <dumux/freeflow/spatialparams.hh>
 #include <dumux/freeflow/navierstokes/iofields.hh>
-#include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 
@@ -78,13 +77,6 @@ struct NavierStokesMassOnePModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
 
     //! the indices
     using Indices = NavierStokesMassOnePIndices;
