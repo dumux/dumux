@@ -81,13 +81,6 @@ struct NavierStokesMomentumCVFEModelTraits
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
 
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
-
     //! the indices
     using Indices = NavierStokesMomentumCVFEIndices<dim()>;
 };

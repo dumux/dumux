@@ -40,7 +40,6 @@
 #include <dumux/common/properties/model.hh>
 
 #include <dumux/freeflow/spatialparams.hh>
-#include <dumux/freeflow/turbulencemodel.hh>
 #include "dumux/freeflow/navierstokes/iofields.hh"
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
@@ -89,13 +88,6 @@ struct NavierStokesMassOnePNCModelTraits
 
     //! Index of of a component balance eq. to be replaced by a total mass/mole balance
     static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
 
     //! the indices
     using Indices = NavierStokesMassOnePNCIndices;
