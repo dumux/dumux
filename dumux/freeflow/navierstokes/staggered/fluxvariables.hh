@@ -369,10 +369,6 @@ public:
 
                     continue;
                 }
-
-                // Handle wall-function fluxes (only required for RANS models)
-                if (incorporateWallFunction_(lateralFlux, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, localSubFaceIdx))
-                    continue;
             }
 
             // Check the consistency of the boundary conditions, exactly one of the following must be set
@@ -655,37 +651,6 @@ private:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
-    }
-
-    //! do nothing if no turbulence model is used
-    template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
-    bool incorporateWallFunction_(Args&&... args) const
-    { return false; }
-
-    //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
-    template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
-    bool incorporateWallFunction_(FacePrimaryVariables& lateralFlux,
-                                  const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementFaceVariables& elemFaceVars,
-                                  const std::size_t localSubFaceIdx) const
-    {
-        const auto eIdx = scvf.insideScvIdx();
-        const auto& lateralFace = fvGeometry.scvf(eIdx, scvf.pairData(localSubFaceIdx).localLateralFaceIdx);
-
-        if (problem.useWallFunction(element, lateralFace, Indices::velocity(scvf.directionIndex())))
-        {
-            FaceLateralSubControlVolumeFace lateralScvf(lateralStaggeredSCVFCenter_(lateralFace, scvf, localSubFaceIdx), 0.5*lateralFace.area());
-            const auto lateralBoundaryFace = makeStaggeredBoundaryFace(lateralFace, lateralStaggeredFaceCenter_(scvf, localSubFaceIdx));
-            lateralFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, lateralBoundaryFace)[Indices::velocity(scvf.directionIndex())]
-                                               * extrusionFactor_(elemVolVars, lateralFace) * Extrusion::area(fvGeometry, lateralScvf);
-            return true;
-        }
-        else
-            return false;
     }
 };
 

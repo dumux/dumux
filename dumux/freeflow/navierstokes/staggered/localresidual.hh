@@ -246,9 +246,6 @@ public:
                         result[eqIdx] = neumannFluxes[eqIdx + cellCenterOffset] * extrusionFactor * Extrusion::area(fvGeometry, scvf);
                 }
             }
-
-            // account for wall functions, if used
-            incorporateWallFunction_(result, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
         }
         return result;
     }
@@ -331,38 +328,6 @@ public:
             }
         }
         return result;
-    }
-
-private:
-
-    //! do nothing if no turbulence model is used
-    template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
-    void incorporateWallFunction_(Args&&... args) const
-    {}
-
-    //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
-    template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
-    void incorporateWallFunction_(CellCenterResidual& boundaryFlux,
-                                  const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const ElementFaceVariables& elemFaceVars) const
-    {
-        static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-        const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-
-        // account for wall functions, if used
-        for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
-        {
-            // use a wall function
-            if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
-            {
-                boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
-                                                           * extrusionFactor * Extrusion::area(fvGeometry, scvf);
-            }
-        }
     }
 };
 

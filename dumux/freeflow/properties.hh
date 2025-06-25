@@ -17,7 +17,6 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/flux/fourierslaw.hh>
 
-#include "turbulencemodel.hh"
 #include "spatialparams.hh"
 
 namespace Dumux {
