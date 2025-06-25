@@ -23,7 +23,6 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 
-// #include "staggeredupwindhelper.hh"
 #include "velocitygradients.hh"
 
 namespace Dumux {
