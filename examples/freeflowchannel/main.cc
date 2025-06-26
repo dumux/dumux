@@ -29,25 +29,27 @@
 
 // The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
-#include <dumux/assembly/staggeredfvassembler.hh>
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/traits.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 
 // The following class provides a convenient way of writing of dumux simulation results to VTK format.
-#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/freeflow/navierstokes/velocityoutput.hh>
 // The gridmanager constructs a grid from the information in the input or grid file.
 // Many different Dune grid implementations are supported, of which a list can be found
 // in `gridmanager.hh`.
 #include <dumux/io/grid/gridmanager.hh>
 
 // This class contains functionality for additional flux output.
-#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
+#include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
 
-// In this header, a `TypeTag` is defined, which collects
+// In this header three `TypeTag`s are defined, which collect
 // the properties that are required for the simulation.
 // It also contains the actual problem with initial and boundary conditions.
 // For detailed information, please have a look
@@ -74,18 +76,20 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
     // [[/codeblock]]
 
-    // We define a convenience alias for the type tag of the problem (`Properties::TTag::ChannelExample`). The type
-    // tag contains all the properties that are needed to define the model and the problem
-    // setup. Throughout the main file, we will obtain types defined for this type tag
-    // using the property system, i.e. with `GetPropType`.
-    using TypeTag = Properties::TTag::ChannelExample;
+    // We define convenience aliases for the type tags of the subproblems. The type
+    // tags contain all the properties that are needed to define the model and the problem
+    // setup. Throughout the main file, we will obtain types defined for these type tags
+    // using the property system, i.e. with `GetPropType`. Shared properties can be obtained through
+    // either of them.
+    using MomentumTypeTag = Properties::TTag::ChannelExampleMomentum;
+    using MassTypeTag = Properties::TTag::ChannelExampleMass;
 
     // #### Step 1: Create the grid
     // The `GridManager` class creates the grid from information given in the input file.
     // This can either be a grid file, or in the case of structured grids, one can specify the coordinates
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
     // [[codeblock]]
-    GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
+    GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
 
     // We compute on the leaf grid view.
@@ -96,80 +100,62 @@ int main(int argc, char** argv) try
     // First, a finite volume grid geometry is constructed from the grid that was created above.
     // This builds the sub-control volumes (`scv`) and sub-control volume faces (`scvf`) for each element
     // of the grid partition.
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
+    // This is done separately for the momentum and mass grid geometries.
+    using MomentumGridGeometry = GetPropType<MomentumTypeTag, Properties::GridGeometry>;
+    auto momentumGridGeometry = std::make_shared<MomentumGridGeometry>(leafGridView);
+    using MassGridGeometry = GetPropType<MassTypeTag, Properties::GridGeometry>;
+    auto massGridGeometry = std::make_shared<MassGridGeometry>(leafGridView);
 
-    // We now instantiate the `problem`, in which we define the boundary and initial conditions.
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    auto problem = std::make_shared<Problem>(gridGeometry);
+    // We introduce the multidomain coupling manager, which will couple the two subproblems for mass
+    // and momentum. The type can be obtained using either of the two type tags.
+    using CouplingManager = GetPropType<MomentumTypeTag, Properties::CouplingManager>;
+    auto couplingManager = std::make_shared<CouplingManager>();
 
-    // We set a solution vector `x` which consist of two parts: one part (indexed by `cellCenterIdx`)
+    // We now instantiate the problems, in which we define the boundary and initial conditions.
+    using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
+    auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
+    using MomentumProblem = GetPropType<MomentumTypeTag, Properties::Problem>;
+    auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
+
+    // We set a solution vector `x` which consist of two parts: one part (indexed by `massIdx`)
     // is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
-    // (indexed by `faceIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
-    // We initialize the solution vector by what was defined as the initial solution of the the problem.
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    // (indexed by `momentumIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
+    // The relevant types can be accessed through the MultiDomainTraits of the coupled problem.
+    // We initialize the solution vector by what was defined as the initial solution of the problem.
+    using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
+    using SolutionVector = typename Traits::SolutionVector;
+    constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
+    constexpr auto massIdx = CouplingManager::freeFlowMassIndex;
     SolutionVector x;
-    x[GridGeometry::cellCenterIdx()].resize(gridGeometry->numCellCenterDofs());
-    x[GridGeometry::faceIdx()].resize(gridGeometry->numFaceDofs());
-    problem->applyInitialSolution(x);
+    momentumProblem->applyInitialSolution(x[momentumIdx]);
+    massProblem->applyInitialSolution(x[massIdx]);
 
-    // The grid variables are used store variables (primary and secondary variables) on sub-control volumes and faces (volume and flux variables).
-    using GridVariables =GetPropType<TypeTag, Properties::GridVariables>;
-    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
-    gridVariables->init(x);
+    // The grid variables are used to store variables (primary and secondary variables) of the two subproblems.
+    using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
+    auto momentumGridVariables = std::make_shared<MomentumGridVariables>(momentumProblem, momentumGridGeometry);
+    using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
+    auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
+
+    // After initializing the coupling manager the coupling context is set up and the grid variables
+    // of the subproblems can be initialized.
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    momentumGridVariables->init(x[momentumIdx]);
+    massGridVariables->init(x[massIdx]);
 
     // We then initialize the predefined model-specific output VTK output.
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
-
-    // [[details]] calculation of surface fluxes
-    // We set up two surfaces over which fluxes are calculated.
-    // We determine the extend $`[xMin,xMax] \times [yMin,yMax]`$ of the physical domain.
-    // The first surface (added by the first call of `addSurface`) shall be placed at the middle of the channel.
-    // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the position of the surface (which is required for the flux calculation).
-    // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the surface. This assumes a regular cartesian grid.
-    // The second surface (second call of `addSurface`) is placed at the outlet of the channel.
-    FluxOverSurface<GridVariables,
-                    SolutionVector,
-                    GetPropType<TypeTag, Properties::ModelTraits>,
-                    GetPropType<TypeTag, Properties::LocalResidual>> flux(*gridVariables, x);
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    const Scalar xMin = gridGeometry->bBoxMin()[0];
-    const Scalar xMax = gridGeometry->bBoxMax()[0];
-    const Scalar yMin = gridGeometry->bBoxMin()[1];
-    const Scalar yMax = gridGeometry->bBoxMax()[1];
-
-    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
-    int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
-
-    const unsigned int refinement = getParam<unsigned int>("Grid.Refinement", 0);
-    numCellsX *= (1<<refinement);
-
-    const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
-
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
-    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-    flux.addSurface("middle", p0middle, p1middle);
-
-    const auto p0outlet = GlobalPosition{xMax, yMin};
-    const auto p1outlet = GlobalPosition{xMax, yMax};
-    flux.addSurface("outlet", p0outlet, p1outlet);
-    // [[/details]]
 
     // We create and initialize the `assembler` for the stationary problem.
     // This is where the Jacobian matrix for the Newton solver is assembled.
-    using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                 std::make_tuple(momentumGridVariables, massGridVariables),
+                                                 couplingManager);
 
     // We use UMFPack as direct linear solver within each Newton iteration.
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -183,36 +169,83 @@ int main(int argc, char** argv) try
     // the problem.
     // [[codeblock]]
     // alias for and instantiation of the newton solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    // [[/codeblock]]
+
+    // [[details]] calculation of surface fluxes
+    //
+    // We set up two surfaces over which fluxes are calculated.
+    // We determine the extent $`[xMin,xMax] \times [yMin,yMax]`$ of the physical domain.
+    // The first surface (added by the first call of `addSurface`) shall be placed at the middle of the channel.
+    // The second surface (second call of `addSurface`) is placed at the outlet of the channel.
+    // [[codeblock]]
+    FluxOverAxisAlignedSurface flux(*massGridVariables, x[massIdx], assembler->localResidual(massIdx));
+
+    using Scalar = typename Traits::Scalar;
+
+    const Scalar xMin = massGridGeometry->bBoxMin()[0];
+    const Scalar xMax = massGridGeometry->bBoxMax()[0];
+    const Scalar yMin = massGridGeometry->bBoxMin()[1];
+    const Scalar yMax = massGridGeometry->bBoxMax()[1];
+
+    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
+
+    using GridView = typename MassGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    const auto p0middle = GlobalPosition{planePosMiddleX, yMin};
+    const auto p1middle = GlobalPosition{planePosMiddleX, yMax};
+    flux.addAxisAlignedSurface("middle", p0middle, p1middle);
+
+    const auto p0outlet = GlobalPosition{xMax, yMin};
+    const auto p1outlet = GlobalPosition{xMax, yMax};
+    flux.addAxisAlignedSurface("outlet", p0outlet, p1outlet);
+
+    using FluxVariables = GetPropType<MassTypeTag, Properties::FluxVariables>;
+    auto volumeFlux = [&](const auto& element,
+                         const auto& fvGeometry,
+                         const auto& elemVolVars,
+                         const auto& scvf,
+                         const auto& elemFluxVarsCache)
+    {
+        FluxVariables fluxVars;
+        fluxVars.init(*massProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        return fluxVars.getAdvectiveFlux([](const auto& volVars) { return 1.0; });
+    };
+    // [[/codeblock]]
+    // [[/details]]
+    //
 
     // Solve the (potentially non-linear) system.
+    // [[codeblock]]
     nonLinearSolver.solve(x);
     // [[/codeblock]]
-    // In the following we calculate mass and volume fluxes over the planes specified above
-    // (you have to click to unfold the code showing how to set up the surface fluxes).
-    flux.calculateMassOrMoleFluxes();
-    flux.calculateVolumeFluxes();
-
-    // #### Final Output
-    // We write the VTK output and print the mass/energy/volume fluxes over the planes.
-    // We conclude by printing the dumux end message.
+    // In the following we calculate and print mass and volume fluxes over the planes specified above
+    // (you have to click to unfold the code showing how to set up the surface fluxes above).
     // [[codeblock]]
-    vtkWriter.write(1.0);
-
-    if (GetPropType<TypeTag, Properties::ModelTraits>::enableEnergyBalance())
+    flux.calculateAllFluxes();
+    if (GetPropType<MassTypeTag, Properties::ModelTraits>::enableEnergyBalance())
     {
-        std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        std::cout << "mass / energy flux at middle is: " << flux.flux("middle") << std::endl;
+        std::cout << "mass / energy flux at outlet is: " << flux.flux("outlet") << std::endl;
     }
     else
     {
-        std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        std::cout << "mass flux at middle is: " << flux.flux("middle") << std::endl;
+        std::cout << "mass flux at outlet is: " << flux.flux("outlet") << std::endl;
     }
 
-    std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-    std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
+    flux.calculateFluxes(volumeFlux);
+    std::cout << "volume flux at middle is: " << flux.flux("middle")[0] << std::endl;
+    std::cout << "volume flux at outlet is: " << flux.flux("outlet")[0] << std::endl;
+    // [[/codeblock]]
+
+    // #### Final Output
+    // We write the VTK output and conclude by printing the dumux end message.
+    // [[codeblock]]
+    vtkWriter.write(1.0);
 
     if (mpiHelper.rank() == 0)
         Parameters::print();
