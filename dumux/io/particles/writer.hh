@@ -75,6 +75,21 @@ public:
         );
     }
 
+    template<std::invocable<const Particle&> F>
+    void addParticleData(
+        F&& f, const std::string& name,
+        const GridFormat::Precision<std::invoke_result_t<F, Particle>> prec = {}
+    ){
+        writer_.set_point_field(name, std::forward<F>(f), prec);
+    }
+
+    void addParticleIDs()
+    {
+        writer_.set_point_field("id", [&] (const auto& p) -> std::size_t {
+            return p.id();
+        }, GridFormat::Precision<std::size_t>{});
+    }
+
 private:
     std::shared_ptr<ParticleCloud> cloud_;
     const std::string name_;
