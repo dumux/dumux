@@ -17,6 +17,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/istl/matrix.hh>
 
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
@@ -80,6 +81,94 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
+
+    using ParentType::evalStorage;
+    /*!
+     * \brief Compute the storage local residual, i.e. the deviation of the
+     *        storage term from zero for instationary problems.
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param prevElemVolVars The volume averaged variables for all
+     *                        sub-control volumes of the element at the previous time level
+     * \param curElemVolVars The volume averaged variables for all
+     *                       sub-control volumes of the element at the current  time level
+     */
+    ElementResidualVector evalStorage(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& prevElemVolVars,
+                                      const ElementVolumeVariables& curElemVolVars) const
+    {
+        assert(!this->isStationary() && "no time loop set for storage term evaluation");
+
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
+
+        // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
+        for (const auto& scv : scvs(fvGeometry))
+            this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
+
+        // allow for additional contributions (e.g. hybrid CVFE schemes)
+        this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
+
+        return residual;
+    }
+
+    /*!
+     * \brief Compute the flux and source
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVolVars The volume averaged variables for all
+     *                    sub-control volumes of the element at the current  time level
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param bcTypes The element boundary types
+     */
+    ElementResidualVector evalFluxAndSource(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                                            const ElementBoundaryTypes &bcTypes) const
+    {
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
+
+        // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
+        for (const auto& scv : scvs(fvGeometry))
+            this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
+
+        // forward to the local residual specialized for the discretization methods
+        for (auto&& scvf : scvfs(fvGeometry))
+            this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
+
+        // allow for additional contributions (e.g. hybrid CVFE schemes)
+        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
+
+        return residual;
+    }
+
+    //! add additional storage contributions (e.g. hybrid CVFE schemes)
+    void addToElementStorageResidual(ElementResidualVector& residual,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& prevElemVolVars,
+                                     const ElementVolumeVariables& curElemVolVars) const
+    {}
+
+    //! add additional flux and source contributions (e.g. hybrid CVFE schemes)
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& curElemVolVars,
+                                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           const ElementBoundaryTypes &bcTypes) const
+    {}
 
     //! evaluate flux residuals for one sub control volume face and add to residual
     void evalFlux(ElementResidualVector& residual,
@@ -155,7 +244,6 @@ public:
         return flux;
     }
 
-    using ParentType::evalStorage;
     /*!
      * \brief Compute the storage local residual, i.e. the deviation of the
      *        storage term from zero for instationary problems.

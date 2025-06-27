@@ -139,6 +139,32 @@ public:
         );
     }
 
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry, const Intersection& intersection)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
+            [&](const auto i)
+            {
+                auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i);
+                return CVFE::LocalDof
+                {
+                    static_cast<LocalIndexType>(localDofIdx),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), localDofIdx)),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+                }
+        );
+    }
+
+    //! get the position related to a localdof
+    template<class LocalDof>
+    auto dofPosition(const LocalDof& localDof) const
+    {
+        return GeometryHelper::dofPosition(this->element(), localDof.index());
+    }
+    
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL

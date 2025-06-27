@@ -376,6 +376,18 @@ public:
         return 0;
     }
 
+    //! Number of local dofs related to an intersection with index iIdx
+    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
+    }
+
+    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
+    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int ilocalDofIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
+    }
+
     template<class DofMapper>
     static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
     {
@@ -383,6 +395,14 @@ public:
             return dofMapper.subIndex(element, localDofIdx, dim);
         else
             return dofMapper.index(element);
+    }
+
+    static GlobalPosition dofPosition(const Element& element, unsigned int localDofIdx)
+    {
+        if (localDofIdx < numElementDofs(element.geometry().type())-1)
+            return element.geometry().corner(localDofIdx);
+        else
+            return element.geometry().center();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
@@ -604,6 +624,18 @@ public:
         return 1;
     }
 
+    //! Number of local dofs related to an intersection with index iIdx
+    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
+    }
+
+    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
+    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int ilocalDofIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
+    }
+
     template<class DofMapper>
     static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
     {
@@ -611,6 +643,14 @@ public:
             return dofMapper.subIndex(element, localDofIdx, dim);
         else
             return dofMapper.index(element);
+    }
+
+    static GlobalPosition dofPosition(const Element& element, unsigned int localDofIdx)
+    {
+        if (localDofIdx < numElementDofs(element.geometry().type())-1)
+            return element.geometry().corner(localDofIdx);
+        else
+            return element.geometry().center();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
