@@ -237,9 +237,9 @@ private:
 
         for (const auto& element : elements(problem_().gridGeometry().gridView()))
         {
-            fvGeometry.bindElement(element);
-            elemVolVars.bindElement(element, fvGeometry, sol_);
-            elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, sol_);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
             for (const auto& scvf : scvfs(fvGeometry))
             {
