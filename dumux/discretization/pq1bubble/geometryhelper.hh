@@ -333,15 +333,15 @@ public:
     { return geo_; }
 
     //! number of interior sub control volume faces
-    std::size_t numInteriorScvf() const
+    static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return boxHelper_.numInteriorScvf() + referenceElement(geo_).size(dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1) + Dune::referenceElement<Scalar, dim>(type).size(dim);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
-    std::size_t numBoundaryScvf(unsigned int localFacetIndex) const
+    static auto numBoundaryScvf(Dune::GeometryType type, unsigned int localFacetIndex)
     {
-        return referenceElement(geo_).size(localFacetIndex, 1, dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(localFacetIndex, 1, dim);
     }
 
     //! number of sub control volumes (number of codim-1 entities)
@@ -364,19 +364,31 @@ public:
         );
     }
 
-    template<class DofMapper>
-    auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localScvIdx) const
+    //! number of element dofs
+    static std::size_t numElementDofs(Dune::GeometryType type)
     {
-        if (localScvIdx < numScv()-1)
-            return dofMapper.subIndex(element, localScvIdx, dim);
+        return Dune::referenceElement<Scalar, dim>(type).size(dim) + 1;
+    }
+
+    //! number of hybrid dofs
+    static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
+    {
+        return 0;
+    }
+
+    template<class DofMapper>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
+    {
+        if (localDofIdx < numElementDofs(element.type())-1)
+            return dofMapper.subIndex(element, localDofIdx, dim);
         else
             return dofMapper.index(element);
     }
 
-    GlobalPosition dofPosition(unsigned int localScvIdx) const
+    GlobalPosition dofPosition(unsigned int localDofIdx) const
     {
-        if (localScvIdx < numScv()-1)
-            return geo_.corner(localScvIdx);
+        if (localDofIdx < numElementDofs(geo_.type())-1)
+            return geo_.corner(localDofIdx);
         else
             return geo_.center();
     }
@@ -391,7 +403,7 @@ public:
             };
         else
             return {
-                static_cast<LocalIndexType>(numScv()-1),
+                static_cast<LocalIndexType>(numElementDofs(geo_.type())-1),
                 static_cast<LocalIndexType>(localScvfIndex-numEdges)
             };
     }
@@ -434,6 +446,210 @@ private:
         );
     }
 
+    const typename Element::Geometry& geo_; //!< Reference to the element geometry
+    Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
+};
+
+template <class GridView, class ScvType, class ScvfType>
+class HybridPQ1BubbleGeometryHelper
+{
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using ScvCornerStorage = typename ScvType::Traits::CornerStorage;
+    using ScvfCornerStorage = typename ScvfType::Traits::CornerStorage;
+    using LocalIndexType = typename ScvType::Traits::LocalIndexType;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+public:
+
+    HybridPQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
+    : geo_(geometry)
+    , boxHelper_(geometry)
+    {}
+
+    //! Create a vector with the scv corners
+    ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
+    {
+        // proceed according to number of corners of the element
+        const auto numBoxScv = boxHelper_.numScv();
+        // reuse box geometry helper for the corner scvs
+        if (localScvIdx < numBoxScv)
+            return boxHelper_.getScvCorners(localScvIdx);
+
+        DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv corners call for hybrid dofs");
+    }
+
+    Dune::GeometryType getScvGeometryType(unsigned int localScvIdx) const
+    {
+        // proceed according to number of corners of the element
+        const auto numBoxScv = boxHelper_.numScv();
+
+        if (localScvIdx < numBoxScv)
+            return Dune::GeometryTypes::cube(dim);
+
+        DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv geometry call for hybrid dofs");
+    }
+
+    //! Create a vector with the corners of sub control volume faces
+    ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
+    {
+        // proceed according to number of corners
+        const auto numBoxScvf = boxHelper_.numInteriorScvf();
+        // reuse box geometry helper for the corner scvs
+        if (localScvfIdx < numBoxScvf)
+            return boxHelper_.getScvfCorners(localScvfIdx);
+
+        DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scvf corners call for hybrid dofs");
+    }
+
+    Dune::GeometryType getInteriorScvfGeometryType(unsigned int localScvfIdx) const
+    {
+        const auto numBoxScvf = boxHelper_.numInteriorScvf();
+        if (localScvfIdx < numBoxScvf)
+            return Dune::GeometryTypes::cube(dim-1);
+
+        DUNE_THROW(Dune::NotImplemented, "PQ1Bubble interior scvf geometry type call for hybrid dofs");
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
+                                             unsigned int indexInFacet) const
+    {
+        return boxHelper_.getBoundaryScvfCorners(localFacetIndex, indexInFacet);
+    }
+
+    Dune::GeometryType getBoundaryScvfGeometryType(unsigned int localScvfIdx) const
+    {
+        return Dune::GeometryTypes::cube(dim-1);
+    }
+
+    template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
+    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
+    {
+        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
+        normal /= normal.two_norm();
+
+        GlobalPosition v = dofPosition(scvPair[1]) - dofPosition(scvPair[0]);
+
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
+        return normal;
+    }
+
+    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
+    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
+    {
+        //! obtain normal vector by 90° counter-clockwise rotation of t
+        const auto t = p[1] - p[0];
+        GlobalPosition normal({-t[1], t[0]});
+        normal /= normal.two_norm();
+
+        GlobalPosition v = dofPosition(scvPair[1]) - dofPosition(scvPair[0]);
+
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
+        return normal;
+    }
+
+    //! the wrapped element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return geo_; }
+
+    //! number of interior sub control volume faces
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
+    //! number of boundary sub control volume faces for face localFacetIndex
+    static auto numBoundaryScvf(Dune::GeometryType type, unsigned int localFacetIndex)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(localFacetIndex, 1, dim);
+    }
+
+    //! number of sub control volumes (number of codim-1 entities)
+    std::size_t numScv() const
+    {
+        return boxHelper_.numScv();
+    }
+
+    //! get scv volume
+    Scalar scvVolume(unsigned int localScvIdx, const ScvCornerStorage& p) const
+    {
+        const auto scvType = getScvGeometryType(localScvIdx);
+
+        return Dumux::convexPolytopeVolume<dim>(
+            scvType,
+            [&](unsigned int i){ return p[i]; }
+        );
+    }
+
+    //! number of element dofs
+    static std::size_t numElementDofs(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim) + 1;
+    }
+
+    //! number of hybrid dofs
+    static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
+    {
+        return 1;
+    }
+
+    template<class DofMapper>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
+    {
+        if (localDofIdx < numElementDofs(element.type())-1)
+            return dofMapper.subIndex(element, localDofIdx, dim);
+        else
+            return dofMapper.index(element);
+    }
+
+    GlobalPosition dofPosition(unsigned int localDofIdx) const
+    {
+        if (localDofIdx < numElementDofs(geo_.type())-1)
+            return geo_.corner(localDofIdx);
+        else
+            return geo_.center();
+    }
+
+    std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
+    {
+        const auto numEdges = referenceElement(geo_).size(dim-1);
+        if (localScvfIndex < numEdges)
+            return {
+                static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 0, dim)),
+                static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localScvfIndex, dim-1, 1, dim))
+            };
+
+        DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv pair call for hybrid dofs");
+    }
+
+    std::array<LocalIndexType, 2> getScvPairForBoundaryScvf(unsigned int localFacetIndex, unsigned int localIsScvfIndex) const
+    {
+        const LocalIndexType insideScvIdx
+            = static_cast<LocalIndexType>(referenceElement(geo_).subEntity(localFacetIndex, 1, localIsScvfIndex, dim));
+        return { insideScvIdx, insideScvIdx };
+    }
+
+    bool isOverlappingScvf(unsigned int localScvfIndex) const
+    { return false; }
+
+    bool isOverlappingBoundaryScvf(unsigned int localFacetIndex) const
+    { return false; }
+
+    bool isOverlappingScv(unsigned int localScvIndex) const
+    { return false; }
+
+private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
     Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
 };

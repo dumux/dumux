@@ -23,6 +23,7 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
@@ -95,6 +96,49 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! iterate over dof indices that belong to dofs associated with control volumes
+    friend inline auto cvLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numLocalDofs()-GeometryHelper::numNonCVLocalDofs(fvGeometry.element().type())),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
+    }
+
+    //! iterate over dof indices that are treated as hybrid dofs using the finite element method
+    template<bool enable = GridGeometry::enableHybridCVFE, std::enable_if_t<enable, int> = 0>
+    friend inline auto nonCVLocalDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numLocalDofs()-GeometryHelper::numNonCVLocalDofs(fvGeometry.element().type()), fvGeometry.numLocalDofs()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
+    }
+
+    //! an iterator over all local dofs
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(fvGeometry.numLocalDofs()),
+            [&](const auto i) { return CVFE::LocalDof
+            {
+                static_cast<LocalIndexType>(i),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(fvGeometry.elementIndex())
+            }; }
+        );
+    }
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -112,6 +156,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return GeometryHelper::numElementDofs(element().type());
     }
 
     //! The total number of sub control volumes
@@ -184,6 +234,13 @@ public:
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
+        return ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx][0];
+    }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
@@ -207,7 +264,7 @@ public:
         if (scvf.boundary())
         {
             GeometryHelper helper(geo);
-            const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
+            const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {

@@ -16,6 +16,7 @@
 
 #include <utility>
 #include <unordered_map>
+#include <type_traits>
 
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -40,9 +41,20 @@
 namespace Dumux {
 
 namespace Detail {
+template<class T>
+using EnableHybridCVFE
+    = typename T::EnableHybridCVFE;
+
+template<class T>
+static constexpr bool enablesHybridCVFE
+    = Dune::Std::detected_or_t<std::false_type, EnableHybridCVFE, T>{};
+
 template<class GV, class T>
 using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
-    Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+    std::conditional_t<enablesHybridCVFE<T>,
+        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+        Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>
+    >,
     SpecifiesGeometryHelper,
     T
 >;
@@ -84,6 +96,17 @@ struct PQ1BubbleDefaultGridGeometryTraits
 
 /*!
  * \ingroup PQ1BubbleDiscretization
+ * \brief The default traits for the hybrid pq1bubble finite volume grid geometry
+ *        Defines the scv and scvf types and the mapper types
+ * \tparam the grid view type
+ */
+template<class BaseTraits>
+struct HybridPQ1BubbleCVFEGridGeometryTraits
+: public BaseTraits
+{ using EnableHybridCVFE = std::true_type; };
+
+/*!
+ * \ingroup PQ1BubbleDiscretization
  * \brief Base class for the finite volume geometry vector for pq1bubble schemes
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
@@ -112,6 +135,10 @@ public:
     using DiscretizationMethod = DiscretizationMethods::PQ1Bubble;
     static constexpr DiscretizationMethod discMethod{};
 
+    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
+
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -129,15 +156,20 @@ public:
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
-    //! Constructor
-    PQ1BubbleFVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    , dofMapper_(gridView, Traits::layout())
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    PQ1BubbleFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
+    , dofMapper_(this->gridView(), Traits::layout())
     , cache_(*this)
     , periodicGridTraits_(this->gridView().grid())
     {
         update_();
     }
+
+    //! Constructor
+    PQ1BubbleFVGridGeometry(const GridView& gridView)
+    : PQ1BubbleFVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! The dofMapper
     const DofMapper& dofMapper() const
@@ -198,7 +230,6 @@ public:
     { return { gg.cache_ }; }
 
 private:
-
     class PQ1BubbleGridGeometryCache
     {
         friend class PQ1BubbleFVGridGeometry;
@@ -285,6 +316,8 @@ private:
             numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
             cache_.scvs_[eIdx].resize(geometryHelper.numScv());
+
+            // Scvs related to control volumes
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < geometryHelper.numScv(); ++scvLocalIdx)
             {
                 auto corners = geometryHelper.getScvCorners(scvLocalIdx);
@@ -294,16 +327,17 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    geometryHelper.dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
                 );
             }
 
             // construct the sub control volume faces
-            numScvf_ += geometryHelper.numInteriorScvf();
-            cache_.scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
+            const auto numInteriorScvfs = GeometryHelper::numInteriorScvf(elementGeometry.type());
+            numScvf_ += numInteriorScvfs;
+            cache_.scvfs_[eIdx].resize(numInteriorScvfs);
             LocalIndexType scvfLocalIdx = 0;
-            for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
+            for (; scvfLocalIdx < numInteriorScvfs; ++scvfLocalIdx)
             {
                 const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
@@ -330,7 +364,7 @@ private:
                     cache_.hasBoundaryScvf_[eIdx] = true;
 
                     const auto localFacetIndex = intersection.indexInInside();
-                    const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
+                    const auto numBoundaryScvf = GeometryHelper::numBoundaryScvf(elementGeometry.type(), localFacetIndex);
                     numScvf_ += numBoundaryScvf;
                     numBoundaryScvf_ += numBoundaryScvf;
 
@@ -364,7 +398,6 @@ private:
                     }
 
                     // TODO also move this to helper class
-
                     // add all vertices on the intersection to the set of boundary vertices
                     for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
                     {
