@@ -24,6 +24,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/evalsolution.hh>
@@ -81,7 +82,9 @@ private:
 
     using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
 
-    using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    using LocalPosition = typename Element<freeFlowMassIndex>::Geometry::LocalCoordinate;
+    using GlobalPosition = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    using VelocityVector = GlobalPosition;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
 
     static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
@@ -201,11 +204,49 @@ public:
     }
 
     /*!
+     * \brief Returns the pressure at a given position
+     */
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const LocalPosition& pos,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolution(element, element.geometry(), gg, elemSol, element.geometry().global(pos))[pressureIdx];
+    }
+
+    /*!
      * \brief Returns the density at a given sub control volume face.
      */
     Scalar density(const Element<freeFlowMomentumIndex>& element,
                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        return this->density(element, fvGeometry, element.geometry().local(scvf.ipGlobal()), considerPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the density at a given sub control volume.
+     */
+    Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                   const SubControlVolume<freeFlowMomentumIndex>& scv,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        return this->density(element, fvGeometry, element.geometry().local(scv.dofPosition()), considerPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the density at a given position.
+     */
+    Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                   const LocalPosition& pos,
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
@@ -229,66 +270,17 @@ public:
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
-            localBasis.evaluateFunction(ipLocal, shapeValues);
+            localBasis.evaluateFunction(pos, shapeValues);
 
             Scalar rho = 0.0;
-            for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                rho += volVars.density()*shapeValues[scv.indexInElement()][0];
+                    this->momentumCouplingContext_()[0].prevElemVolVars[localDof.index()]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[localDof.index()];
+                rho += volVars.density()*shapeValues[localDof.index()][0];
             }
 
-            return rho;
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Density interpolation for discretization scheme " << MassDiscretizationMethod{}
-            );
-    }
-
-    /*!
-     * \brief Returns the density at a given sub control volume.
-     */
-    Scalar density(const Element<freeFlowMomentumIndex>& element,
-                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                   const SubControlVolume<freeFlowMomentumIndex>& scv,
-                   const bool considerPreviousTimeStep = false) const
-    {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
-        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, scv.elementIndex());
-
-        if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
-        {
-            const auto eIdx = scv.elementIndex();
-            const auto& scvI = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
-
-            const auto& volVars = considerPreviousTimeStep ?
-                this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
-                : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
-
-            return volVars.density();
-        }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
-        {
-            // TODO: cache the shape values when Box method is used
-            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-            const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
-            std::vector<ShapeValue> shapeValues;
-            const auto ipLocal = element.geometry().local(scv.dofPosition());
-            localBasis.evaluateFunction(ipLocal, shapeValues);
-
-            Scalar rho = 0.0;
-            for (const auto& scvI : scvs(this->momentumCouplingContext_()[0].fvGeometry))
-            {
-                const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
-                rho += volVars.density()*shapeValues[scvI.indexInElement()][0];
-            }
             return rho;
         }
         else
@@ -305,43 +297,7 @@ public:
                               const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                               const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
-        bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
-
-        if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
-        {
-            const auto eIdx = fvGeometry.elementIndex();
-            const auto& scv = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
-            const auto& volVars = considerPreviousTimeStep ?
-                this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-            return volVars.viscosity();
-        }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
-        {
-            // TODO: cache the shape values when Box method is used
-            using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-            const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
-            std::vector<ShapeValue> shapeValues;
-            const auto ipLocal = element.geometry().local(scvf.ipGlobal());
-            localBasis.evaluateFunction(ipLocal, shapeValues);
-
-            Scalar mu = 0.0;
-            for (const auto& scv : scvs(this->momentumCouplingContext_()[0].fvGeometry))
-            {
-                const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scv]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scv];
-                mu += volVars.viscosity()*shapeValues[scv.indexInElement()][0];
-            }
-
-            return mu;
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Viscosity interpolation for discretization scheme " << MassDiscretizationMethod{}
-            );
+        return this->effectiveViscosity(element, fvGeometry, element.geometry().local(scvf.ipGlobal()), considerPreviousTimeStep);
     }
 
     /*!
@@ -352,35 +308,47 @@ public:
                               const SubControlVolume<freeFlowMomentumIndex>& scv,
                               const bool considerPreviousTimeStep = false) const
     {
+        return this->effectiveViscosity(element, fvGeometry, element.geometry().local(scv.dofPosition()), considerPreviousTimeStep);
+    }
+
+    /*!
+     * \brief Returns the effective viscosity at a given position.
+     */
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const LocalPosition& pos,
+                              const bool considerPreviousTimeStep = false) const
+    {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
-            const auto& scvI = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
+            const auto& scv = this->momentumCouplingContext_()[0].fvGeometry.scv(eIdx);
+
             const auto& volVars = considerPreviousTimeStep ?
-                this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
-                : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
+                this->momentumCouplingContext_()[0].prevElemVolVars[scv]
+                : this->momentumCouplingContext_()[0].curElemVolVars[scv];
+
             return volVars.viscosity();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
-            // TODO: cache the shape values when Box method is used
+            // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            const auto ipLocal = element.geometry().local(scv.dofPosition());
-            localBasis.evaluateFunction(ipLocal, shapeValues);
+            localBasis.evaluateFunction(pos, shapeValues);
 
             Scalar mu = 0.0;
-            for (const auto& scvI : scvs(this->momentumCouplingContext_()[0].fvGeometry))
+            for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
             {
                 const auto& volVars = considerPreviousTimeStep ?
-                    this->momentumCouplingContext_()[0].prevElemVolVars[scvI]
-                    : this->momentumCouplingContext_()[0].curElemVolVars[scvI];
-                mu += volVars.viscosity()*shapeValues[scvI.indexInElement()][0];
+                    this->momentumCouplingContext_()[0].prevElemVolVars[localDof.index()]
+                    : this->momentumCouplingContext_()[0].curElemVolVars[localDof.index()];
+                mu += volVars.viscosity()*shapeValues[localDof.index()][0];
             }
 
             return mu;
@@ -411,8 +379,8 @@ public:
 
         // interpolate velocity at scvf
         VelocityVector velocity(0.0);
-        for (const auto& scv : scvs(fvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+        for (const auto& localDof : localDofs(fvGeometry))
+            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
 
         return velocity;
     }
@@ -432,8 +400,8 @@ public:
         std::vector<ShapeValue> shapeValues;
         localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
 
-        for (const auto& scv : scvs(momentumFvGeometry))
-            velocity.axpy(shapeValues[scv.localDofIndex()][0], this->curSol(freeFlowMomentumIndex)[scv.dofIndex()]);
+        for (const auto& localDof : localDofs(momentumFvGeometry))
+            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
 
         return velocity;
     }
@@ -553,6 +521,7 @@ public:
                 const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
                 const auto& fvGeometry = this->momentumCouplingContext_()[0].fvGeometry;
 
+                // ToDo: Replace once all mass models are also working with local dofs
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     if(scv.dofIndex() == dofIdxGlobalJ)
@@ -736,9 +705,10 @@ private:
             massFvGeometry.bindElement(element);
             const auto eIdx = momentumFvGeometry.elementIndex();
 
-            for (const auto& scv : scvs(momentumFvGeometry))
-                massAndEnergyToMomentumStencils_[eIdx].push_back(scv.dofIndex());
+            for (const auto& localDof : localDofs(momentumFvGeometry))
+                massAndEnergyToMomentumStencils_[eIdx].push_back(localDof.dofIndex());
 
+            // ToDo: Replace once all mass models are also working with local dofs
             for (const auto& scv : scvs(massFvGeometry))
                 momentumToMassAndEnergyStencils_[eIdx].push_back(scv.dofIndex());
         }
