@@ -13,11 +13,13 @@
 #ifndef DUMUX_IO_PARTICLES_WRITER_HH
 #define DUMUX_IO_PARTICLES_WRITER_HH
 
+#include <concepts>
 #include <memory>
 #include <fstream>
 #include <iomanip>
 #include <vector>
 #include <ranges>
+#include <type_traits>
 
 #include <dumux/io/gridwriter.hh>
 
@@ -34,6 +36,7 @@ namespace Dumux::IO::Particles {
 template <class ParticleCloud>
 class Writer
 {
+    using Particle = typename std::remove_cvref_t<ParticleCloud>::Particle;
 public:
     template <class Format>
     Writer(Format fmt, std::shared_ptr<ParticleCloud> cloud, const std::string& name)
@@ -57,7 +60,7 @@ public:
         const C& data, const std::string& name,
         const GridFormat::Precision<T>& prec
     ){
-        writer_.set_cell_field(name, [&] (const auto& p) -> std::ranges::range_value_t<C> {
+        writer_.set_point_field(name, [&] (const auto& p) -> std::ranges::range_value_t<C> {
             return data[p.id()];
         }, prec);
     }
@@ -70,6 +73,21 @@ public:
             data, name,
             GridFormat::Precision<GridFormat::MDRangeScalar<C>>{}
         );
+    }
+
+    template<std::invocable<const Particle&> F>
+    void addParticleData(
+        F&& f, const std::string& name,
+        const GridFormat::Precision<std::invoke_result_t<F, Particle>> prec = {}
+    ){
+        writer_.set_point_field(name, std::forward<F>(f), prec);
+    }
+
+    void addParticleIDs()
+    {
+        writer_.set_point_field("id", [&] (const auto& p) -> std::size_t {
+            return p.id();
+        }, GridFormat::Precision<std::size_t>{});
     }
 
 private:
