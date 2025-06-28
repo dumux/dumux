@@ -56,13 +56,13 @@ public:
     }
 
     //! Constructor with element and elemVolVars and fvGeometry
-    template<class ElementVolumeVariables>
-    CVFEElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
+    template<class ElementVariables>
+    CVFEElementSolution(const Element& element, const ElementVariables& elemVars,
                         const FVElementGeometry& fvGeometry)
     {
         priVars_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
-        for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
+        for (const auto& localDof : localDofs(fvGeometry))
+            priVars_[localDof.index()] = elemVars[localDof.index()].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
