@@ -18,10 +18,12 @@
 #include <dune/istl/matrix.hh>
 
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 namespace Dumux::Detail {
 
@@ -77,6 +79,9 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
+
+    using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<typename Element::Geometry::GlobalCoordinate,
+                                                             typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -180,7 +185,7 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+        const auto flux = this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
         if (!scvf.boundary())
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -221,23 +226,27 @@ public:
         // boundary faces
         else
         {
-            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, scv);
+            const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
 
             // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
             // For Dirichlet there is no addition to the residual here but they
             // are enforced strongly by replacing the residual entry afterwards.
             if (bcTypes.hasNeumann())
             {
-                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                NumEqVector boundaryFluxes;
+                if constexpr (Dumux::Detail::hasProblemBoundaryFluxFunction<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, FaceIpData>())
+                    boundaryFluxes = problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache, FaceIpData(scvf.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
+                else
+                    boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                neumannFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                boundaryFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
 
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     if (bcTypes.isNeumann(eqIdx))
-                        flux[eqIdx] += neumannFluxes[eqIdx];
+                        flux[eqIdx] += boundaryFluxes[eqIdx];
             }
         }
 
@@ -298,6 +307,20 @@ private:
         else
             return this->asImp().computeStorage(problem, scv, volVars);
     }
+
+    auto bcTypes_(const Problem& problem,
+                  const FVElementGeometry& fvGeometry,
+                  const SubControlVolumeFace& scvf,
+                  const ElementBoundaryTypes& elemBcTypes) const
+    {
+        // Check if problem supports the new boundaryTypes function for element intersections
+        // then we can always get bcTypes for intersections and the associated scvfs
+        if constexpr (Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridView::Intersection>())
+            return elemBcTypes.get(fvGeometry, scvf);
+        else
+            return elemBcTypes.get(fvGeometry, fvGeometry.scv(scvf.insideScvIdx()));
+    }
+
 };
 
 } // end namespace Dumux
