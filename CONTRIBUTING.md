@@ -10,9 +10,9 @@ Here are many easy things that you can do, like
 If you decide to contribute code please read this contribution guide.
 
 ## Style guide
-When contributing code to DuMu<sup>x</sup> please follow the [style guide](doc/styleguide.md). Your work will enjoy much smoother sailing if you stick to it with your changes. DuMu<sup>x</sup> is a pretty large project, and a consistent way of doing things really helps a lot when trying to find your way around the code.
+When contributing code to DuMu<sup>x</sup> please follow the [style guide](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/doc/styleguide.md). Your work will enjoy much smoother sailing if you stick to it with your changes. DuMu<sup>x</sup> is a pretty large project, and a consistent way of doing things really helps a lot when trying to find your way around the code.
 
-## Contributing
+## Making changes
 
 You should get your changes to us in the following way:
 
@@ -118,7 +118,7 @@ There are other methods for deprecating old interfaces, please see [ (cppref/dep
 In addition, please be sure to:
 
 *  mark all deprecated interfaces with the release after which the deprecated interface will be removed, and
-*  add a detailed description of the changes made to the [changelog](CHANGELOG.md)
+*  add a detailed description of the changes made to the [changelog](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/CHANGELOG.md)
 
 **In some more complicated cases,** guaranteeing backwards compatibility for all possible
 cases is not feasible, or would require enormous intrusive changes.  In this case, we recommend you do the following:
@@ -126,8 +126,8 @@ cases is not feasible, or would require enormous intrusive changes.  In this cas
 2.  Include a detailed description of the changes in the changelog.
 3.  Within the comments section of the merge request, mark one of the core developers,
  and document the reasons why guaranteeing backwards compatibility would not be feasible, and which cases will likely be effected.
-4.  The core developers will decide if the changes and efforts are sufficient during the next monthly core developers meeting (aka DumuxDay).
-5.  Should your efforts be deemed sufficient, continue with the standard MR procedure.
+1.  The core developers will decide if the changes and efforts are sufficient during the next monthly core developers meeting (aka DumuxDay).
+2.  Should your efforts be deemed sufficient, continue with the standard MR procedure.
 
 ## Patches
 
