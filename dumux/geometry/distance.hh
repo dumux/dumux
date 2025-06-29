@@ -293,6 +293,7 @@ static inline ctype squaredDistance(const Dune::FieldVector<ctype, dimWorld>& a,
 { return (a-b).two_norm2(); }
 
 
+#ifndef DOXYGEN
 namespace Detail {
 
 // helper struct to compute distance between two geometries, specialized below
@@ -355,6 +356,7 @@ struct GeometrySquaredDistance<Geo1, Geo2, dimWorld, 2, 0>
 };
 
 } // end namespace Detail
+#endif // DOXYGEN
 
 /*!
  * \ingroup Geometry
@@ -373,7 +375,7 @@ static inline auto distance(const Geo1& geo1, const Geo2& geo2)
 { using std::sqrt; return sqrt(squaredDistance(geo1, geo2)); }
 
 
-//! Distance implementation details
+#ifndef DOXYGEN
 namespace Detail {
 
 /*!
@@ -476,6 +478,7 @@ void closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
 }
 
 } // end namespace Detail
+#endif // DOXYGEN
 
 /*!
  * \ingroup Geometry

@@ -246,6 +246,11 @@
 @copydoc dumux/porenetwork/2p/model.hh
 @ingroup PoreNetworkModels
 
+@defgroup PNMTwoPNCModel 2pnc
+@brief Two-phase multi-component flow
+@copydoc dumux/porenetwork/2pnc/model.hh
+@ingroup PoreNetworkModels
+
 @defgroup PNMSolidEnergyModel solidenergy
 @brief Energy equation for the solid (heat equation)
 @copydoc dumux/porenetwork/solidenergy/model.hh

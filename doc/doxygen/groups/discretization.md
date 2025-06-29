@@ -21,11 +21,11 @@ Control-volume finite element schemes are based on finite element basis function
 @brief Face-centered finite-volume scheme based on non-conforming finite-element spaces.
 @ingroup CVFEDiscretization
 
-@defgroup BoxDiscretization Box FV scheme
+@defgroup BoxDiscretization PQ1 CVFE (Box) scheme
 @brief The box method is a collocated finite volume scheme with control volumes centered at grid nodes.
 @ingroup CVFEDiscretization
 
-@defgroup PQ1BubbleDiscretization PQ1 bubble scheme
+@defgroup PQ1BubbleDiscretization PQ1-B CVFE scheme
 @brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
 @ingroup CVFEDiscretization
 

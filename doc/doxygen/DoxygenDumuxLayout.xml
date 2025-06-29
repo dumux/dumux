@@ -13,10 +13,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- We manually create the navigation hierarchy of the pages -->
     <tab type="user" url="@ref installation" visible="yes" title="Installation" intro=""/>
     <tab type="user" url="@ref getting-started" visible="yes" title="Getting started" intro=""/>
-    <!-- The modules contains pages for each group and subpages for each subgroup -->
-    <!-- Note that extra documentation can be added to groups in separate markdown files -->
-    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
-    <tab type="user" url="@ref examples-and-tutorials" visible="yes" title="Examples and tutorials" intro=""/>
+    <tab type="usergroup" url="@ref examples-and-tutorials" visible="yes" title="Examples and learning material" intro="">
+      <tab type="user" url="@ref examples" visible="yes" title="Documented examples" intro=""/>
+    </tab>
     <tab type="usergroup" url="@ref understanding-dumux" visible="yes" title="Understanding DuMux" >
       <tab type="user" url="@ref basic-concepts" visible="yes" title="Basic concepts" intro=""/>
       <tab type="user" url="@ref runtime-parameters" visible="yes" title="Runtime parameters" intro=""/>
@@ -25,10 +24,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref directory-structure" visible="yes" title="Directory structure" intro=""/>
       <tab type="user" url="@ref cheatsheet" visible="yes" title="Cheatsheet" intro=""/>
     </tab>
-    <tab type="modules" visible="yes" title="Module documentation" intro=""/>
-    <tab type="user" url="@ref flow-and-transport-in-porous-media" visible="yes" title="Flow and transport in porous media" intro=""/>
-    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
+    <!-- The topics contains pages for each group and subpages for each subgroup -->
+    <!-- Note that extra documentation can be added to groups in separate markdown files -->
+    <!-- For this write @addtogroup <groupname> at the top of that markdown page -->
+    <tab type="modules" visible="yes" title="User documentation by topics" intro="" /> <!-- only doxygen < 1.9.8, now called topics -->
+    <tab type="topics" visible="yes" title="User documentation by topics" intro="" />
+    <!-- Add subpages here manually if they are supposed to appear in the navigation sidebar -->
+    <tab type="usergroup" url="@ref benchmarks" visible="yes" title="Benchmarks" intro="">
+      <tab type="user" url="@ref benchmark-richards-equation-evaportion" visible="yes" title="Richards Evaporation" intro=""/>
+      <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
+      <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
+    </tab>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
+    <tab type="user" url="@ref contribution-guidelines" visible="yes" title="Contribute to DuMux" intro=""/>
     <tab type="usergroup" title="Developer documentation">
       <tab type="user" url="@ref dumux-and-dune" visible="yes" title="Dumux and Dune" intro=""/>
       <tab type="user" url="@ref developing-dumux" visible="yes" title="Developing Dumux" intro=""/>
@@ -39,6 +47,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref printing-system-matrix" visible="yes" title="Printing system matrix" intro=""/>
       <tab type="user" url="@ref upgrading-dumux-programs-to-version" visible="yes" title="Upgrading to Dumux 3" intro=""/>
     </tab>
+    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="user" url="@ref citelist" visible="yes" title="Bibliography" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
@@ -50,6 +59,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="hierarchy" visible="yes" title="" intro=""/>
       <tab type="classmembers" visible="yes" title="" intro=""/>
     </tab>
+    <tab type="concepts" visible="yes" title="" />
     <tab type="examples" visible="yes" title="" intro=""/>
   </navindex>
 
@@ -173,9 +183,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <detaileddescription title="Description"/>
     <memberdecl>
       <nestedgroups visible="yes" title=""/>
-      <dirs visible="yes" title=""/>
-      <files visible="yes" title=""/>
-      <namespaces visible="yes" title=""/>
       <classes visible="yes" title=""/>
       <defines title=""/>
       <typedefs title=""/>
@@ -183,6 +190,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <enumvalues title=""/>
       <functions title=""/>
       <variables title=""/>
+      <namespaces visible="yes" title=""/>
+      <dirs visible="yes" title=""/>
+      <files visible="yes" title=""/>
       <signals title=""/>
       <publicslots title=""/>
       <protectedslots title=""/>

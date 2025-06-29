@@ -1,14 +1,16 @@
 # Doxygen top level groups
 
 @defgroup Models Mathematical models
-@brief The mathematical models implemented in DuMu<sup>x</sup>
+@brief The mathematical models implemented in DuMu<sup>x</sup>.
 
 @defgroup Discretization Discretization schemes
-@brief The discretization schemes available in DuMu<sup>x</sup>
+@brief The discretization schemes available in DuMu<sup>x</sup>.
 
 @defgroup Properties Properties and the property systems
+@brief Compile-time configuration and setup of DuMu<sup>x</sup> models and simulations.
 
 @defgroup Parameter Parameters and runtime configuration
+@brief Runtime parameters configuration and control of DuMu<sup>x</sup> simulations.
 
 @defgroup Material Constitutive models
 @brief Constitutive relations for fluids, solids, fluid-matrix interactions, and more
@@ -30,8 +32,6 @@ To view the description of individual constitutive models and classes, click on 
 
 @defgroup MultiDomain Multidomain framework
 @brief Coupling of several regular DuMu<sup>x</sup> problems
-@details The multi domain module allows coupling regular DuMu<sup>x</sup> problems.
-Several coupling modes are currently available.
 
 @defgroup Geometry Geometry
 @brief Algorithms for geometry computations (intersections, distances, ...).

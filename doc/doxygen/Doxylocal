@@ -10,6 +10,9 @@ PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
+                         @top_srcdir@/examples/README.md \
+                         @top_srcdir@/test/porousmediumflow/richards/benchmarks/README_benchmark_evaporation.md \
+                         @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
                          @srcdir@/README.md \
@@ -59,6 +62,7 @@ HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \
                          @srcdir@/dumux-custom.css
 
 HTML_FILE_EXTENSION    = .html
+HTML_INDEX_NUM_ENTRIES = 1
 
 USE_MATHJAX            = YES
 MATHJAX_VERSION        = MathJax_3
@@ -99,3 +103,9 @@ BRIEF_MEMBER_DESC = YES
 ALWAYS_DETAILED_SEC = NO
 # Document private virtual methods
 EXTRACT_PRIV_VIRTUAL = YES
+
+NUM_PROC_THREADS = 8
+DOT_NUM_THREADS = 8
+
+# Do not interpret README.md files as directory doc (since doxygen 1.13)
+IMPLICIT_DIR_DOCS = NO
