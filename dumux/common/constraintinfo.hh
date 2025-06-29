@@ -45,8 +45,65 @@ public:
      * \brief Reset for one equation.
      */
     void resetEq(int eqIdx)
+    { isConstraint_[eqIdx] = false; }
+
+    /*!
+     * \brief Set all as constraints.
+     */
+    void setAll()
     {
-        isConstraint_[eqIdx] = false;
+        for (int eqIdx = 0; eqIdx < numEq; ++ eqIdx)
+            set(eqIdx);
+    }
+
+    /*!
+     * \brief Set a constraint condition for a single equation
+     *
+     * \param eqIdx The index of the equation for which constraint is set
+     */
+    void set(int eqIdx)
+    { isConstraint_[eqIdx] = true; }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        constraint condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isConstraintEquation(unsigned eqIdx) const
+    { return isConstraint_[eqIdx]; }
+
+protected:
+    std::array<bool, numEq> isConstraint_;
+};
+
+/*!
+ * \ingroup Core
+ * \brief Class to specify information related to Dirichlet constraints
+ */
+template <int numEq>
+class DirichletConstraintInfo : public ConstraintInfo<numEq>
+{
+    using ParentType = ConstraintInfo<numEq>;
+public:
+    DirichletConstraintInfo()
+    { reset(); }
+
+    /*!
+     * \brief Reset for all equations.
+     */
+    void reset()
+    {
+        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
+            resetEq(eqIdx);
+    }
+
+    /*!
+     * \brief Reset for one equation.
+     */
+    void resetEq(int eqIdx)
+    {
+        ParentType::resetEq(eqIdx);
         eq2pvIdx_[eqIdx] = eqIdx;
         pv2eqIdx_[eqIdx] = eqIdx;
     }
@@ -71,8 +128,7 @@ public:
      */
     void set(int pvIdx, int eqIdx)
     {
-        resetEq(eqIdx);
-        isConstraint_[eqIdx] = true;
+        ParentType::set(eqIdx);
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -88,15 +144,6 @@ public:
      */
     void set(int pvIdx)
     { set(pvIdx, pvIdx); }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
-     *        constraint condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    bool isConstraintEquation(unsigned eqIdx) const
-    { return isConstraint_[eqIdx]; }
 
     /*!
      * \brief Returns the index of the equation which should be used
@@ -121,7 +168,6 @@ public:
     { return eq2pvIdx_[eqIdx]; }
 
 protected:
-    std::array<bool, numEq> isConstraint_;
     std::array<unsigned int, numEq> eq2pvIdx_, pv2eqIdx_;
 };
 
