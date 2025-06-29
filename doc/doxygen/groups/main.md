@@ -32,8 +32,6 @@ To view the description of individual constitutive models and classes, click on 
 
 @defgroup MultiDomain Multidomain framework
 @brief Coupling of several regular DuMu<sup>x</sup> problems
-@details The multi domain module allows coupling regular DuMu<sup>x</sup> problems.
-Several coupling modes are currently available.
 
 @defgroup Geometry Geometry
 @brief Algorithms for geometry computations (intersections, distances, ...).
