@@ -18,10 +18,10 @@ The framework enabling all these coupled simulations is called the MultiDomain f
 
 ![Structure of monolithic Jacobian matrix](mdstructure.png){html: width=50%}
 
-The multidomain frameworks uses block-structured matrices to assemble a single system matrix for the linear system
+The multidomain framework uses block-structured matrices to assemble a single system matrix for the linear system
 arising from the coupled problem (for example, in each Newton iteration of a nonlinear solver).
 
-The matrix is structured such that the diagonal blocks correspond each to one of the subproblems.
+The matrix is structured such that each of the diagonal blocks correspond to one of the subproblems.
 The off-diagonal blocks correspond to the coupling derivatives that represent interactions between the subproblems.
 The block-structured matrix can directly be used with compatible linear solvers.
 The block structure is also useful to construct partitioned solvers.
