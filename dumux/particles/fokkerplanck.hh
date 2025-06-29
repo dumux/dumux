@@ -32,7 +32,6 @@ namespace Dumux::Particles {
 
 /*!
  * \ingroup Particles
- * \ingroup FokkerPlanck
  *
  * \brief A particle solver for the Fokker-Planck equation
  *
