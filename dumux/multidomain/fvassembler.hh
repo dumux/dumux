@@ -65,9 +65,9 @@ bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
 
 namespace Detail {
 
-//! helper struct detecting if sub-problem has a constraintMap() function
+//! helper struct detecting if sub-problem has a constraints() function
 template<class P>
-using SubProblemConstraintsDetector = decltype(std::declval<P>().constraintMap());
+using SubProblemConstraintsDetector = decltype(std::declval<P>().constraints());
 
 template<class P>
 constexpr inline bool hasSubProblemGlobalConstraints()
@@ -257,7 +257,7 @@ public:
 
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
-            enforceGlobalConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
+            enforceGlobalDirichletConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -672,15 +672,15 @@ private:
 
     // enforce global constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforceGlobalConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
+    void enforceGlobalDirichletConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
     {
         if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
             auto& jac = jacRow[domainI];
-            auto applyConstraint = [&] (const auto& dofIdx,
-                                        const auto& values,
-                                        const auto eqIdx,
-                                        const auto pvIdx)
+            auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                                 const auto& values,
+                                                 const auto eqIdx,
+                                                 const auto pvIdx)
             {
                 (res)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
 
@@ -702,10 +702,11 @@ private:
 
             };
 
-            for (const auto& [dofIdx, constraintData] : this->problem(domainI).constraintMap())
+            for (const auto& constraintData : this->problem(domainI).constraints())
             {
                 const auto& constraintInfo = constraintData.constraintInfo();
-                const auto values = constraintData.values();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
                 // set the constraint in residual and jacobian
                 for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
                 {
@@ -713,7 +714,7 @@ private:
                     {
                         const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
                         assert(0 <= pvIdx && pvIdx < constraintInfo.size());
-                        applyConstraint(dofIdx, values, eqIdx, pvIdx);
+                        applyDirichletConstraint(dofIdx, values, eqIdx, pvIdx);
                     }
                 }
             }
