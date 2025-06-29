@@ -31,19 +31,29 @@ struct ConstraintData
     ConstraintValues values_;
 };
 
+template<class DirichletConstraintInfo, class DirichletValues, class GridIndexType>
+struct DirichletConstraintData : public ConstraintData<DirichletConstraintInfo, DirichletValues>
+{
+    GridIndexType dofIndex() const
+    { return dofIdx_; }
+
+    GridIndexType dofIdx_;
+};
+
 /*!
  * \ingroup Discretization
  * \brief Constraints related to Dirichlet boundaries.
  *        This class generates global constraints based on Dirichlet conditions
  *        set on grid intersections
  */
-template<class GG, class CInfo, class CValues>
+template<class GG, class Info, class Values>
 class DirichletConstraints
 {
 private:
     using GridIndexType = typename IndexTraits<typename GG::GridView>::GridIndex;
-    using ConstraintInfo = CInfo;
-    using ConstraintValues = CValues;
+    using DirichletConstraintInfo = Info;
+    using DirichletValues = Values;
+    using Data = DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
 public:
 
     /*!
@@ -55,7 +65,7 @@ public:
     template<class Problem, typename DirichletFunction>
     void update(const Problem& problem, const DirichletFunction& dirichletFunction)
     {
-        constraintInfoMap_.clear();
+        constraints_.clear();
 
         auto fvGeometry = localView(problem.gridGeometry());
         for (const auto& element : elements(problem.gridGeometry().gridView()))
@@ -71,25 +81,25 @@ public:
                 {
                     for (const auto& localDof : localDofs(fvGeometry, intersection))
                     {
-                        ConstraintInfo info;
+                        DirichletConstraintInfo info;
                         // set the Dirichlet constraints
-                        for (int eqIdx = 0; eqIdx < ConstraintValues::size(); ++eqIdx)
+                        for (int eqIdx = 0; eqIdx < DirichletValues::size(); ++eqIdx)
                             if (bcTypes.isDirichlet(eqIdx))
                                 info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
 
                         auto dirichletValues = dirichletFunction(fvGeometry, intersection, localDof);
-                        constraintInfoMap_[localDof.dofIndex()] = ConstraintData{std::move(info), std::move(dirichletValues)};
+                        constraints_.push_back(Data{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
                     }
                 }
             }
         }
     }
 
-    const auto& map() const
-    { return constraintInfoMap_; }
+    const auto& constraints() const
+    { return constraints_; }
 
 private:
-    std::unordered_map<GridIndexType, ConstraintData<ConstraintInfo, ConstraintValues>> constraintInfoMap_;
+    std::vector<Data> constraints_;
 };
 
 
