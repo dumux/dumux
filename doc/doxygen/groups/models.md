@@ -133,56 +133,17 @@
 
 @defgroup NavierStokesModel Navier-Stokes
 @brief Single-phase Navier-Stokes flow
-@copydoc dumux/freeflow/navierstokes/model.hh
+@copydoc dumux/freeflow/navierstokes/mass/1p/model.hh
 @ingroup FreeflowModels
-
-@defgroup RANSModel Reynolds-Averaged Navier-Stokes
-@brief Single-phase Reynolds-Averaged Navier-Stokes flow
-@copydoc dumux/freeflow/rans/model.hh
-@ingroup FreeflowModels
-
-@defgroup ZeroEqModel 0-Eq. Models
-@brief Zero-equation or algebraic turbulence models
-@copydoc dumux/freeflow/rans/zeroeq/model.hh
-@ingroup RANSModel
-
-@defgroup OneEqModel 1-Eq. Models
-@brief One-equation turbulence model by Spalart-Allmaras
-@copydoc dumux/freeflow/rans/oneeq/model.hh
-@ingroup RANSModel
-
-@defgroup TwoEqModel 2-Eq. Models
-@brief Two-equation turbulence models
-@ingroup RANSModel
-
-@defgroup KEpsilonModel K-epsilon model
-@brief K-epsilon model
-@copydoc dumux/freeflow/rans/twoeq/kepsilon/model.hh
-@ingroup TwoEqModel
-
-@defgroup KOmegaModel K-omega model
-@brief K-omega model
-@copydoc dumux/freeflow/rans/twoeq/komega/model.hh
-@ingroup TwoEqModel
-
-@defgroup LowReKEpsilonModel Low-Re k-epsilon model
-@brief Low-Re k-epsilon model
-@copydoc dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh
-@ingroup TwoEqModel
-
-@defgroup SSTModel SST model
-@brief SST model
-@copydoc dumux/freeflow/rans/twoeq/sst/model.hh
-@ingroup TwoEqModel
 
 @defgroup FreeflowNCModel Compositional
 @brief Single-phase multi-component free-flow flow models
-@copydoc dumux/freeflow/compositional/navierstokesncmodel.hh
+@copydoc dumux/freeflow/navierstokes/mass/1pnc/model.hh
 @ingroup FreeflowModels
 
 @defgroup FreeflowNIModel Nonisothermal
 @brief An energy equation adaptor for isothermal free-flow models
-@copydoc dumux/freeflow/nonisothermal/model.hh
+@copydoc dumux/freeflow/navierstokes/energy/model.hh
 @ingroup FreeflowModels
 
 <!-- ShallowWaterModels -->

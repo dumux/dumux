@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FreeflowNCModel
- * \copydoc Dumux::FreeflowNCIOFields
+ * \copydoc Dumux::NavierStokesMassOnePNCIOFields
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_1PNC_IO_FIELDS_HH
 #define DUMUX_NAVIERSTOKES_MASS_1PNC_IO_FIELDS_HH
