@@ -51,6 +51,9 @@ parser = argparse.ArgumentParser(
 # Optional arguments
 parser.add_argument("--dune-version", default="2.10", help="Dune version to be checked out.")
 parser.add_argument("--dumux-version", default="3.10", help="Dumux version to be checked out.")
+parser.add_argument(
+    "--download", action="store_true", default=False, help="Only download the packages."
+)
 args = vars(parser.parse_args())
 
 duneBranch = (
@@ -182,7 +185,19 @@ else:
     gitSetBranch("dumux", dumuxBranch)
 
 
-showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
+showMessage(
+    f"(2/{numSteps}) Step completed. All repositories have been cloned/downloaded into a containing folder."
+)
+
+if args["download"]:
+    logger.info("Possible next steps:")
+    logger.info("  you may now install additional packages using `dumux/bin/installexternal.py`")
+    logger.info("  you may adapt `dumux/cmake.opts` to your needs")
+    logger.info(
+        "  you can complete the installation with "
+        "`./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all`"
+    )
+    sys.exit(0)
 
 #################################################################
 #################################################################
