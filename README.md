@@ -110,7 +110,7 @@ our publications:
 
 # Automated Testing / Test suite
 
-* ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=72b09f): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.9/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.9)
+* ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=72b09f): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.10/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.10)
 * ![Master branch (development / unstable)](https://img.shields.io/badge/DuMux_branch-master-72b09f): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
 
 
