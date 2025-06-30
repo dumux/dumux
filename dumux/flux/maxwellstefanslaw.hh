@@ -32,6 +32,5 @@
 
 #include <dumux/flux/cctpfa/maxwellstefanslaw.hh>
 #include <dumux/flux/box/maxwellstefanslaw.hh>
-#include <dumux/flux/staggered/freeflow/maxwellstefanslaw.hh>
 
 #endif

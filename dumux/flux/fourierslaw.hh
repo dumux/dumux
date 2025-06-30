@@ -31,6 +31,5 @@
 #include <dumux/flux/cctpfa/fourierslaw.hh>
 #include <dumux/flux/ccmpfa/fourierslaw.hh>
 #include <dumux/flux/box/fourierslaw.hh>
-#include <dumux/flux/staggered/freeflow/fourierslaw.hh>
 
 #endif
