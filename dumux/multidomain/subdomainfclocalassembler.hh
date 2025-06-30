@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \ingroup MultiDomain
  * \brief An assembler for Jacobian and residual contribution per element (face-centered staggered methods) for multidomain problems
  */

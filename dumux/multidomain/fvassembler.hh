@@ -35,7 +35,6 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomaincvfelocalassembler.hh"
-#include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
 
@@ -159,12 +158,6 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
         using type = SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
-    };
-
-    template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
-    {
-        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
