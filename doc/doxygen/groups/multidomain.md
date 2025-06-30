@@ -14,10 +14,6 @@
 @brief Couples domains with equal-dimension multi-physics problems in a Free flow-Porous medium coupling.
 @ingroup BoundaryCoupling
 
-@defgroup StokesDarcyCoupling Stokes-Darcy domain coupling
-@brief Couples domains with equal-dimension multi-physics problems in a Stokes-Darcy coupling.
-@ingroup BoundaryCoupling
-
 @defgroup DualNetworkCoupling Coupling for dual network approach for pore network models
 @brief Coupling for dual network approach for pore network models
 @ingroup MultiDomain

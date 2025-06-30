@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::StaggeredFreeFlowVelocityOutput
+ * \copydoc Dumux::NavierStokesVelocityOutput
  */
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
