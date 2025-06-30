@@ -43,6 +43,5 @@
 #include <dumux/flux/cctpfa/fickslaw.hh>
 #include <dumux/flux/ccmpfa/fickslaw.hh>
 #include <dumux/flux/box/fickslaw.hh>
-#include <dumux/flux/staggered/freeflow/fickslaw.hh>
 
 #endif
