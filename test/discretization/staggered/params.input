@@ -1,3 +1,0 @@
-[Discretization]
-TvdApproach = Uniform # Uniform, Li, Hou
-DifferencingScheme = vanalbada # vanleer, vanalbada, minmod, superbee, umist, mclimiter, wahyd
