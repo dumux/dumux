@@ -51,6 +51,9 @@ parser = argparse.ArgumentParser(
 # Optional arguments
 parser.add_argument("--dune-version", default="2.10", help="Dune version to be checked out.")
 parser.add_argument("--dumux-version", default="3.10", help="Dumux version to be checked out.")
+parser.add_argument(
+    "--download", action="store_true", default=False, help="Only download the packages."
+)
 args = vars(parser.parse_args())
 
 duneBranch = (
@@ -183,6 +186,14 @@ else:
 
 
 showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
+
+if args.["download"]:
+    print(
+        "Interrupted installation. You may now install additional packages with "
+        "`dumux/bin/installexternal.py` or adapt `dumux/cmake.opts` before completing "
+        "installation with `./dune-common/bin/dunecontrol --opts=dumux/cmake.opts all`."
+    )
+    exit()
 
 #################################################################
 #################################################################
