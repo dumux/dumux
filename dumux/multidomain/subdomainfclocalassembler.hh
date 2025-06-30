@@ -29,7 +29,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \ingroup MultiDomain
  * \brief A base class for all face-centered staggered local assemblers
  * \tparam id the id of the sub domain
@@ -214,7 +214,7 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \ingroup MultiDomain
  * \brief The face-centered staggered scheme multidomain local assembler
  * \tparam id the id of the sub domain
@@ -228,7 +228,7 @@ class SubDomainFaceCenteredLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \ingroup MultiDomain
  * \brief Face-centered staggered scheme multi domain local assembler using numeric differentiation and implicit time discretization
  */
@@ -406,7 +406,7 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup StaggeredDiscretization
+ * \ingroup FaceCenteredStaggeredDiscretization
  * \ingroup MultiDomain
  * \brief Face-centered staggered scheme multi domain local assembler using numeric differentiation and explicit time discretization
  */
