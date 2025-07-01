@@ -18,7 +18,7 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/porenetwork/1pnc/model.hh>
+#include <dumux/porenetwork/2pnc/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1pnc/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/model.hh>
 
@@ -38,48 +38,35 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 #if ISOTHERMAL
-struct PNMOnePNCModel { using InheritsFrom = std::tuple<PNMOnePNC>; };
+struct PNMTwoPNCModel { using InheritsFrom = std::tuple<PNMTwoPNC>; };
 #else
-struct PNMOnePNCModel { using InheritsFrom = std::tuple<PNMOnePNCNI>; };
+struct PNMTwoPNCModel { using InheritsFrom = std::tuple<PNMTwoPNCNI>; };
 #endif
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::PNMOnePNCModel> { using type = Dumux::PNMOnePNCProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::PNMTwoPNCModel> { using type = Dumux::PNMTwoPNCProblem<TypeTag>; };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::PNMOnePNCModel>
+struct FluidSystem<TypeTag, TTag::PNMTwoPNCModel>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using H2OAir = FluidSystems::H2OAir<Scalar>;
-    static constexpr int phaseIdx = H2OAir::gasPhaseIdx;
-    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
-};
-
-//! The advection type
-template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::PNMOnePNCModel>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using TransmissibilityLaw = Dumux::PoreNetwork::TransmissibilityBruus<Scalar>;
-public:
-    using type =  Dumux::PoreNetwork::CreepingFlow<Scalar, TransmissibilityLaw>;
+    using type = FluidSystems::H2OAir<Scalar>;
 };
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMOnePNCModel> { using type = Dune::FoamGrid<1, 2>; };
+struct Grid<TypeTag, TTag::PNMTwoPNCModel> { using type = Dune::FoamGrid<1, 2>; };
 
 // default usesMoles
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::PNMOnePNCModel> { static constexpr bool value = true; };
+struct UseMoles<TypeTag, TTag::PNMTwoPNCModel> { static constexpr bool value = true; };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::PNMOnePNCModel>
+struct ReplaceCompEqIdx<TypeTag, TTag::PNMTwoPNCModel>
 {
     static constexpr auto value = 3;
 };
@@ -139,16 +126,16 @@ struct ReplaceCompEqIdx<TypeTag, TTag::FreeFlowOnePNC>
 
 ////////////////////////////////CouplingManager///////////////////////////////
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::PNMOnePNCModel>
+struct CouplingManager<TypeTag, TTag::PNMTwoPNCModel>
 {
-    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMOnePNCModel>;
+    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMTwoPNCModel>;
     using type = Dumux::FreeFlowPoreNetworkCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::FreeFlowOnePNC>
 {
-    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMOnePNCModel>;
+    using Traits = MultiDomainTraits<Properties::TTag::FreeFlowOnePNCMomentum, Properties::TTag::FreeFlowOnePNCMass, TTag::PNMTwoPNCModel>;
     using type = Dumux::FreeFlowPoreNetworkCouplingManager<Traits>;
 };
 

@@ -27,7 +27,7 @@ namespace Dumux {
  *         A two-dimensional pore-network region coupled to a free-flow model.
  */
 template <class TypeTag>
-class PNMOnePNCProblem : public PorousMediumFlowProblem<TypeTag>
+class PNMTwoPNCProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -44,13 +44,14 @@ class PNMOnePNCProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     template<class SpatialParams>
-    PNMOnePNCProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+    PNMTwoPNCProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                    std::shared_ptr<SpatialParams> spatialParams,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
     {
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         initialMoleFraction_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialMoleFraction", 2e-3);
+        initialSaturation_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialSaturation", 2e-3);
         onlyDiffusion_ = getParam<bool>("Problem.OnlyDiffusion", false);
 #if !ISOTHERMAL
         initialTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialTemperature", 273.15 + 20);
@@ -176,14 +177,19 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& pos) const
     {
         PrimaryVariables values(0.0);
+        values.setState(Indices::bothPhases);
         values[Indices::pressureIdx] = initialPressure_;
-        values[Indices::conti0EqIdx + 1] = initialMoleFraction_;
+        values[Indices::switchIdx] = initialSaturation_;
 
 #if !ISOTHERMAL
         values[Indices::temperatureIdx] = initialTemperature_;
 #endif
         return values;
     }
+
+    //!  Evaluate the initial invasion state of a pore throat
+    bool initialInvasionState(const Element& element) const
+    { return false; }
 
     //! Set the coupling manager
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
@@ -199,6 +205,7 @@ private:
 
     Scalar initialPressure_;
     Scalar initialMoleFraction_;
+    Scalar initialSaturation_;
     bool onlyDiffusion_;
 #if !ISOTHERMAL
     Scalar initialTemperature_;

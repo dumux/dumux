@@ -1,6 +1,6 @@
 [TimeLoop]
 TEnd = 10
-DtInitial = 1e-2
+DtInitial = 1e-3
 MaxTimeStepSize = 1
 
 [PNM.Grid]
@@ -27,18 +27,19 @@ OnlyDiffusion = false
 
 [FreeFlow.Problem]
 Name = ff
-PressureDifference = 10
+PressureDifference = 1
 InitialPressure = 1e5
 InitialMoleFraction = 0.0
 EnableInertiaTerms = false
 
 [PNM.Problem]
 Name = pnm
-InitialPressure = 1.01e5
+InitialPressure = 98053.5
 InitialMoleFraction = 2e-3
+InitialSaturation = 8e-1
 
 [Vtk]
-OutputName = test_isothermal
+OutputName = test_md_boundary_ff1p2c_pnm2p2c
 AddVelocity = true
 
 [Assembly]

@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     // Define the sub problem type tags
     using FreeFlowMomentumTypeTag = Properties::TTag::FreeFlowOnePNCMomentum;
     using FreeFlowMassTypeTag = Properties::TTag::FreeFlowOnePNCMass;
-    using PoreNetworkTypeTag = Properties::TTag::PNMOnePNCModel;
+    using PoreNetworkTypeTag = Properties::TTag::PNMTwoPNCModel;
 
     using PNMGridManager = Dumux::PoreNetwork::GridManager<2>;
     PNMGridManager pnmGridManager;
