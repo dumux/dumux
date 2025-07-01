@@ -67,6 +67,7 @@ private:
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;
     template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using SubControlVolume = typename FVElementGeometry<id>::SubControlVolume;
+    template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
 
     using VelocityVector = typename Element<freeFlowMomentumIndex>::Geometry::GlobalCoordinate;
 
@@ -87,6 +88,8 @@ private:
 
     using CouplingMapper = StaggeredFreeFlowPoreNetworkCouplingMapper;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
+
+    static constexpr bool adapterUsed_ = ModelTraits<poreNetworkIndex>::numFluidPhases() > 1;
 
 public:
 
@@ -198,10 +201,20 @@ public:
             if constexpr (ElementFluxVariablesCache<poreNetworkIndex>::GridFluxVariablesCache::cachingEnabled)
             {
                 const auto eIdx = ggJ.elementMapper().index(element);
-                gridVars_(poreNetworkIndex).gridFluxVarsCache().cache(eIdx, scvf.index()).update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf);
+                if constexpr (adapterUsed_)
+                    gridVars_(poreNetworkIndex).gridFluxVarsCache().cache(eIdx, scvf.index()).update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf,
+                            gridVars_(poreNetworkIndex).gridFluxVarsCache().invasionState().invaded(element));
+                else
+                    gridVars_(poreNetworkIndex).gridFluxVarsCache().cache(eIdx, scvf.index()).update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf);
             }
             else
-                context.elemFluxVarsCache[scvf].update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf);
+            {
+                if constexpr (adapterUsed_)
+                    context.elemFluxVarsCache[scvf].update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf,
+                            gridVars_(poreNetworkIndex).gridFluxVarsCache().invasionState().invaded(element));
+                else
+                    context.elemFluxVarsCache[scvf].update(this->problem(domainJ), element, context.fvGeometry, context.elemVolVars, scvf);
+            }
         }
     }
 
