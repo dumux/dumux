@@ -103,7 +103,7 @@ We want to use `YaspGrid`, an implementation of the dune grid interface for stru
 ```
 
 In this example, we want to discretize the momentum and mass balances with the staggered-grid and
-cell centered discretization schemes respectively:
+cell-centered finite volume discretization schemes, respectively:
 
 ```cpp
 #include <dumux/discretization/fcstaggered.hh>
@@ -345,7 +345,7 @@ condition for the momentum balance, which depends on the pressure, using the hel
 ```
 
 The following function specifies the __fluxes on Neumann boundaries__.
-We need to define fluxes for the balance equations (momentum or mass`).
+We need to define fluxes for the balance equations (momentum or mass).
 
 ```cpp
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
