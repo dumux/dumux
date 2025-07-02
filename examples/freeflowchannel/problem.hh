@@ -118,7 +118,7 @@ public:
     // [[/codeblock]]
 
     // The following function specifies the __fluxes on Neumann boundaries__.
-    // We need to define fluxes for the balance equations (momentum or mass`).
+    // We need to define fluxes for the balance equations (momentum or mass).
     // [[codeblock]]
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     BoundaryFluxes neumann(const Element& element,

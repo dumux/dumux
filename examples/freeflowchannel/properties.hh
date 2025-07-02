@@ -34,7 +34,7 @@
 // We want to use `YaspGrid`, an implementation of the dune grid interface for structured grids:
 #include <dune/grid/yaspgrid.hh>
 // In this example, we want to discretize the momentum and mass balances with the staggered-grid and
-// cell centered discretization schemes respectively:
+// cell-centered finite volume discretization schemes, respectively:
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
 // The fluid properties are specified in the following headers (we use a liquid with constant properties as the fluid phase):
