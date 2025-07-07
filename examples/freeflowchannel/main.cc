@@ -210,9 +210,14 @@ int main(int argc, char** argv) try
                          const auto& scvf,
                          const auto& elemFluxVarsCache)
     {
-        FluxVariables fluxVars;
-        fluxVars.init(*massProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-        return fluxVars.getAdvectiveFlux([](const auto& volVars) { return 1.0; });
+        if (scvf.boundary() && massProblem->boundaryTypes(element, scvf).hasNeumann())
+            return massProblem->neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)[0]/elemVolVars[scvf.insideScvIdx()].density();
+        else
+        {
+            FluxVariables fluxVars;
+            fluxVars.init(*massProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            return fluxVars.getAdvectiveFlux([](const auto& volVars) { return 1.0; });
+        }
     };
     // [[/codeblock]]
     // [[/details]]
