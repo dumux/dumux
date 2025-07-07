@@ -37,7 +37,7 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/assembly/diffmethod.hh> // analytic or numeric differentiation
 
-// The following class provides a convenient way of writing of dumux simulation results to VTK format.
+// The following class provides a convenient way of writing of dumux simulation results to VTK format and `velocityoutput.hh` allows to additionally write out velocity data of the staggered grid.
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 // The gridmanager constructs a grid from the information in the input or grid file.
@@ -120,7 +120,7 @@ int main(int argc, char** argv) try
     // We set a solution vector `x` which consist of two parts: one part (indexed by `massIdx`)
     // is for the pressure degrees of freedom (`dofs`) living in grid cell centers. Another part
     // (indexed by `momentumIdx`) is for degrees of freedom defining the normal velocities on grid cell faces.
-    // The relevant types can be accessed through the MultiDomainTraits of the coupled problem.
+    // The relevant types can be accessed through the `MultiDomainTraits` of the coupled problem.
     // We initialize the solution vector by what was defined as the initial solution of the problem.
     using Traits = MultiDomainTraits<MomentumTypeTag, MassTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
@@ -142,7 +142,7 @@ int main(int argc, char** argv) try
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 
-    // We then initialize the predefined model-specific output VTK output.
+    // We then initialize the predefined model-specific VTK output.
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
