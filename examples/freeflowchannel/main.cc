@@ -27,7 +27,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/initialize.hh>
 
-// The following files contain the non-linear Newton solver, the available linear solver backends and the assembler for the linear
+// The following files contain the non-linear Newton solver for multi-domain problems, the available linear solver backends and the assembler for the linear
 // systems arising from the staggered-grid discretization.
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -88,6 +88,8 @@ int main(int argc, char** argv) try
     // The `GridManager` class creates the grid from information given in the input file.
     // This can either be a grid file, or in the case of structured grids, one can specify the coordinates
     // of the corners of the grid and the number of cells to be used to discretize each spatial direction.
+    // 'Grid` is a property that is shared by both type tags (see `properties.hh`).
+    // As stated above, it can therefore be obtained through either `MassTypeTag` of `MomentumTypeTag`.
     // [[codeblock]]
     GridManager<GetPropType<MomentumTypeTag, Properties::Grid>> gridManager;
     gridManager.init();
