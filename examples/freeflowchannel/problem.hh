@@ -196,6 +196,18 @@ public:
     }
     // [[/codeblock]]
 
+    // In order to reduce numeric inaccuracies caused by large differences in magnitude
+    // between pressure and velocity gradient, we introduce a reference pressure,
+    // which is subtracted from the pressure in the computation of the momentum flux.
+    // [[codeblock]]
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    {
+        return 110000.0;
+    }
+    // [[/codeblock]]
+
 // The inlet is on the left side of the physical domain.
 // [[codeblock]]
 private:
