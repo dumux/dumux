@@ -20,7 +20,7 @@
 // ### Includes
 // [[details]] includes
 //
-// The `NavierStokesMomentum` and `NavierStokesMass` type tags specialize most of the properties
+// The `NavierStokesMomentum` and `NavierStokesMassOneP` type tags specialize most of the properties
 // required for Navier-Stokes single-phase flow simulations in DuMu<sup>x</sup>. We will use this in
 // the following to inherit the respective properties and subsequently specialize those properties
 // for our type tags, which we want to modify or for which no meaningful default can be set.

@@ -108,7 +108,8 @@ public:
             }
             else
             {
-                // We specify Dirichlet boundary conditions for the velocity on the remaining boundaries (lower and upper wall)
+                // We specify no-flow Neumann boundary conditions for the mass balance on the remaining boundaries (lower and upper wall)
+                // in addition to the Dirichlet boundary conditions for the velocity (momentum balance)
                 values.setAllNeumann();
             }
         }
@@ -167,8 +168,6 @@ public:
         {
             if (isInlet_(globalPos))
                 values = this->couplingManager().cellPressure(element, scvf);
-            else if (isOutlet_(globalPos))
-                values = outletPressure_;
         }
 
         return values;

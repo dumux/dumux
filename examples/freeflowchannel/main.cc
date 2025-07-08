@@ -179,8 +179,8 @@ int main(int argc, char** argv) try
     //
     // We set up two surfaces over which fluxes are calculated.
     // We determine the extent $`[xMin,xMax] \times [yMin,yMax]`$ of the physical domain.
-    // The first surface (added by the first call of `addSurface`) shall be placed at the middle of the channel.
-    // The second surface (second call of `addSurface`) is placed at the outlet of the channel.
+    // The first surface (added by the first call of `addAxisAlignedSurface`) shall be placed at the middle of the channel.
+    // The second surface (second call of `addAxisAlignedSurface`) is placed at the outlet of the channel.
     // [[codeblock]]
     FluxOverAxisAlignedSurface flux(*massGridVariables, x[massIdx], assembler->localResidual(massIdx));
 
