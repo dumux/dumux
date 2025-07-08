@@ -48,6 +48,9 @@
 // This class contains functionality for additional flux output.
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 
+// This class contains functionality to account for extruded domains.
+#include <dumux/discretization/extrusion.hh>
+
 
 // In this header three `TypeTag`s are defined, which collect
 // the properties that are required for the simulation.
@@ -206,6 +209,7 @@ int main(int argc, char** argv) try
     flux.addAxisAlignedSurface("outlet", p0outlet, p1outlet);
 
     using FluxVariables = GetPropType<MassTypeTag, Properties::FluxVariables>;
+    using Extrusion = Extrusion_t<MassGridGeometry>;
     auto volumeFlux = [&](const auto& element,
                          const auto& fvGeometry,
                          const auto& elemVolVars,
@@ -213,7 +217,8 @@ int main(int argc, char** argv) try
                          const auto& elemFluxVarsCache)
     {
         if (scvf.boundary() && massProblem->boundaryTypes(element, scvf).hasNeumann())
-            return massProblem->neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)[0]/elemVolVars[scvf.insideScvIdx()].density();
+            return massProblem->neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)[0]
+                    * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].density();
         else
         {
             FluxVariables fluxVars;
