@@ -73,8 +73,9 @@ public:
     // the flux needs to be fixed.
     // To set different conditions for the two subproblems, use `constexpr ParentType::isMomentumProblem()`
     // to distinguish between momentum and mass problem.
-    // To set Dirichlet conditions for the pressure, instead specify a solution-dependent Neumann
-    // condition for the momentum balance, which depends on the pressure, using the helper function.
+    // To set Dirichlet conditions for the pressure, we have to specify a solution-dependent Neumann
+    // condition for the momentum balance, which depends on the pressure.
+    // This condition can be obtained using the helper function `fixedPressureMomentumFlux`.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
