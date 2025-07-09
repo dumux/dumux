@@ -17,40 +17,49 @@
 //
 // ### Include files
 //
-// Include the `NavierStokesStaggeredProblem` class, the base
-// class from which we will derive.
-#include <dumux/freeflow/navierstokes/staggered/problem.hh>
 // Include the `NavierStokesBoundaryTypes` class which specifies the boundary types set in this problem.
 #include <dumux/freeflow/navierstokes/boundarytypes.hh>
+//
+// Include helper functions to compute values for boundary conditions
+#include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
+#include <dumux/freeflow/navierstokes/scalarfluxhelper.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 
 // ### The problem class
 // We enter the problem class `ChannelExampleProblem` where all necessary boundary conditions and initial conditions are set for our simulation.
-// As we are solving a problem related to free flow, we inherit from the base class `NavierStokesStaggeredProblem`.
+// As we are solving a problem related to free flow using a coupled model, we inherit from the base
+// class of the respective subproblem for momentum or mass balance (see `properties.hh`).
 // [[codeblock]]
 namespace Dumux {
 
-template <class TypeTag>
-class ChannelExampleProblem : public NavierStokesStaggeredProblem<TypeTag>
+template <class TypeTag, class BaseProblem>
+class ChannelExampleProblem : public BaseProblem
 {
     // A few convenience aliases used throughout this class.
-    using ParentType = NavierStokesStaggeredProblem<TypeTag>;
+    using ParentType = BaseProblem;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using BoundaryTypes = Dumux::NavierStokesBoundaryTypes<PrimaryVariables::size()>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Indices = typename ModelTraits::Indices;
+    using BoundaryTypes = typename ParentType::BoundaryTypes;
+    using InitialValues = typename ParentType::InitialValues;
+    using Sources = typename ParentType::Sources;
+    using DirichletValues = typename ParentType::DirichletValues;
+    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
     // This is the constructor of our problem class:
     // Within the constructor, we set the inlet velocity to a run-time specified value.
     // If no run-time value is specified, we set the outlet pressure to 1.1e5 Pa.
-    ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    ChannelExampleProblem(std::shared_ptr<const GridGeometry> gridGeometry,
+                          std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridGeometry, couplingManager)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.1e5);
@@ -59,33 +68,82 @@ public:
 
     // #### Boundary conditions
     // With the following function we define the __type of boundary conditions__ depending on the location.
-    // Three types of boundary conditions can be specified: Dirichlet, Neumann or outflow boundary conditions. On
+    // Two types of boundary conditions can be specified: Dirichlet or Neumann. On
     // Dirichlet boundaries, the values of the primary variables need to be fixed. On Neumann boundaries,
-    // values for derivatives need to be fixed. Outflow conditions set a gradient of zero in normal direction towards the boundary
-    // for the respective primary variables (excluding pressure).
-    // When Dirichlet conditions are set for the pressure, the velocity gradient
-    // with respect to the direction normal to the boundary is automatically set to zero.
+    // the flux needs to be fixed.
+    // To set different conditions for the two subproblems, use `constexpr ParentType::isMomentumProblem()`
+    // to distinguish between momentum and mass problem.
+    // To set Dirichlet conditions for the pressure, we have to specify a solution-dependent Neumann
+    // condition for the momentum balance, which depends on the pressure.
+    // This condition can be obtained using the helper function `fixedPressureMomentumFlux`.
     // [[codeblock]]
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        if (isInlet_(globalPos))
+        if constexpr(ParentType::isMomentumProblem())
         {
-            // We specify Dirichlet boundary conditions for the velocity on the left of our domain
+            // We specify Dirichlet boundary conditions for the velocity on most boundaries of our domain
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
-        }
-        else if (isOutlet_(globalPos))
-        {
-            // We fix the pressure on the right side of the domain
-            values.setDirichlet(Indices::pressureIdx);
+
+            if (isOutlet_(globalPos))
+            {
+                // We fix the pressure on the right side of the domain, for the momentum balance we compute the resulting flux
+                values.setAllNeumann();
+            }
         }
         else
         {
-            // We specify Dirichlet boundary conditions for the velocity on the remaining boundaries (lower and upper wall)
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
+            if (isInlet_(globalPos))
+            {
+                // We specify Dirichlet boundary conditions for the velocity on the left of our
+                // domain, the corresponding pressure can be obtained from the coupling manager
+                values.setDirichlet(Indices::pressureIdx);
+            }
+            else if (isOutlet_(globalPos))
+            {
+                // We fix the pressure on the right side of the domain through the momentum outflow,
+                // for the mass balance we may prescribe a pressure or a mass outflow computed from velocity fields
+                values.setNeumann(Indices::conti0EqIdx);
+            }
+            else
+            {
+                // We specify no-flow Neumann boundary conditions for the mass balance on the remaining boundaries (lower and upper wall)
+                // in addition to the Dirichlet boundary conditions for the velocity (momentum balance)
+                values.setAllNeumann();
+            }
+        }
+
+        return values;
+    }
+    // [[/codeblock]]
+
+    // The following function specifies the __fluxes on Neumann boundaries__.
+    // We need to define fluxes for the balance equations (momentum or mass).
+    // [[codeblock]]
+    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
+    BoundaryFluxes neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                           const SubControlVolumeFace& scvf) const
+    {
+        // No flow as default
+        BoundaryFluxes values(0.0);
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            // Compute the solution-dependent momentum flux for the specified pressure and zero normal velocity gradient
+            using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>;
+            values = FluxHelper::fixedPressureMomentumFlux(*this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/);
+        }
+        else
+        {
+            // Compute the solution-dependent mass flux based on velocity fields
+            using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+            if (isOutlet_(scvf.ipGlobal()))
+                values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
         }
 
         return values;
@@ -93,16 +151,25 @@ public:
     // [[/codeblock]]
 
     // The following function specifies the __values on Dirichlet boundaries__.
-    // We need to define values for the primary variables (velocity and pressure).
+    // We need to define values for the primary variables (velocity or pressure).
     // [[codeblock]]
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    DirichletValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
+        const auto& globalPos = scvf.ipGlobal();
         // Use the initial values as default Dirichlet values
-        PrimaryVariables values = initialAtPos(globalPos);
+        DirichletValues values = initialAtPos(globalPos);
 
-        // Set a no-slip condition at the top and bottom wall of the channel
-        if (!isInlet_(globalPos))
-            values[Indices::velocityXIdx] = 0.0;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            // Set a no-slip condition at the top and bottom wall of the channel
+            if (!isInlet_(globalPos))
+                values[Indices::velocityXIdx] = 0.0;
+        }
+        else
+        {
+            if (isInlet_(globalPos))
+                values = this->couplingManager().cellPressure(element, scvf);
+        }
 
         return values;
     }
@@ -110,16 +177,35 @@ public:
 
     // The following function defines the initial conditions.
     // [[codeblock]]
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
+        InitialValues values;
 
         // Set the pressure and velocity values
-        values[Indices::pressureIdx] = outletPressure_;
-        values[Indices::velocityXIdx] = inletVelocity_;
-        values[Indices::velocityYIdx] = 0.0;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityXIdx] = inletVelocity_;
+            values[Indices::velocityYIdx] = 0.0;
+        }
+        else
+        {
+            //std::cout << "setting outlet pressure at " << globalPos << std::endl;
+            values[Indices::pressureIdx] = outletPressure_;
+        }
 
         return values;
+    }
+    // [[/codeblock]]
+
+    // In order to reduce numeric inaccuracies caused by large differences in magnitude
+    // between pressure and velocity gradient, we introduce a reference pressure,
+    // which is subtracted from the pressure in the computation of the momentum flux.
+    // [[codeblock]]
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    {
+        return 110000.0;
     }
     // [[/codeblock]]
 
