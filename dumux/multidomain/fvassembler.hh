@@ -63,6 +63,18 @@ bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
 
 } // end namespace Grid::Capabilities
 
+namespace Detail {
+
+//! helper struct detecting if sub-problem has a constraints() function
+template<class P>
+using SubProblemConstraintsDetector = decltype(std::declval<P>().constraints());
+
+template<class P>
+constexpr inline bool hasSubProblemGlobalConstraints()
+{ return Dune::Std::is_detected<SubProblemConstraintsDetector, P>::value; }
+
+} // end namespace Detail
+
 /*!
  * \ingroup MultiDomain
  * \ingroup Assembly
@@ -240,10 +252,12 @@ public:
         {
             auto& jacRow = (*jacobian_)[domainId];
             auto& subRes = (*residual_)[domainId];
+            const auto& subSol = curSol[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
 
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, curSol[domainId]);
+            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
+            enforceGlobalDirichletConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -651,6 +665,57 @@ private:
                         for (auto it = jacCoupling[m.second].begin(); it != jacCoupling[m.second].end(); ++it)
                             (*it) = 0.0;
                     });
+                }
+            }
+        }
+    }
+
+    // enforce global constraints into the system matrix
+    template<std::size_t i, class JacRow, class Res, class GG, class Sol>
+    void enforceGlobalDirichletConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
+    {
+        if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
+        {
+            auto& jac = jacRow[domainI];
+            auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                                 const auto& values,
+                                                 const auto eqIdx,
+                                                 const auto pvIdx)
+            {
+                (res)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+
+                auto& row = jac[dofIdx];
+                for (auto col = row.begin(); col != row.end(); ++col)
+                    row[col.index()][eqIdx] = 0.0;
+
+                jac[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
+
+                using namespace Dune::Hybrid;
+                forEach(makeIncompleteIntegerSequence<JacRow::size(), domainI>(), [&](const auto couplingDomainId)
+                {
+                    auto& jacCoupling = jacRow[couplingDomainId];
+
+                    auto& rowCoupling = jacCoupling[dofIdx];
+                    for (auto colCoupling = rowCoupling.begin(); colCoupling != rowCoupling.end(); ++colCoupling)
+                        rowCoupling[colCoupling.index()][eqIdx] = 0.0;
+                });
+
+            };
+
+            for (const auto& constraintData : this->problem(domainI).constraints())
+            {
+                const auto& constraintInfo = constraintData.constraintInfo();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
+                // set the constraint in residual and jacobian
+                for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
+                {
+                    if (constraintInfo.isConstraintEquation(eqIdx))
+                    {
+                        const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < constraintInfo.size());
+                        applyDirichletConstraint(dofIdx, values, eqIdx, pvIdx);
+                    }
                 }
             }
         }

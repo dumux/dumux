@@ -78,6 +78,14 @@ using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
 >::template type<TypeTag, Impl, diffMethod, isImplicit>;
 
+//! helper struct detecting if problem has a constraints() function
+template<class P>
+using ProblemConstraintsDetector = decltype(std::declval<P>().constraints());
+
+template<class P>
+constexpr inline bool hasGlobalConstraints()
+{ return Dune::Std::is_detected<ProblemConstraintsDetector, P>::value; }
+
 } // end namespace Dumux::Detail
 
 namespace Dumux {
@@ -181,6 +189,21 @@ public:
         });
 
         enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
+
+        auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                             const auto& values,
+                                             const auto eqIdx,
+                                             const auto pvIdx)
+        {
+            (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+
+            auto& row = (*jacobian_)[dofIdx];
+            for (auto col = row.begin(); col != row.end(); ++col)
+                row[col.index()][eqIdx] = 0.0;
+
+            (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
+        };
+        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     /*!
@@ -196,6 +219,19 @@ public:
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
+
+        auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                             const auto& values,
+                                             const auto eqIdx,
+                                             const auto pvIdx)
+        {
+            auto& row = (*jacobian_)[dofIdx];
+            for (auto col = row.begin(); col != row.end(); ++col)
+            row[col.index()][eqIdx] = 0.0;
+
+            (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
+        };
+        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     //! compute the residuals using the internal residual
@@ -203,6 +239,15 @@ public:
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
+
+        auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                             const auto& values,
+                                             const auto eqIdx,
+                                             const auto pvIdx)
+        {
+            (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+        };
+        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     //! assemble a residual r
@@ -497,6 +542,30 @@ private:
                         if(it.index() == m.first)
                             setMatrixBlock(matrixBlock, -1.0);
 
+                    }
+                }
+            }
+        }
+    }
+
+    template<class Problem, class GG, typename ApplyFunction>
+    void enforceGlobalDirichletConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyDirichletConstraint)
+    {
+        if constexpr (Detail::hasGlobalConstraints<Problem>())
+        {
+            for (const auto& constraintData : problem.constraints())
+            {
+                const auto& constraintInfo = constraintData.constraintInfo();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
+                // set the constraint in residual and jacobian
+                for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
+                {
+                    if (constraintInfo.isConstraintEquation(eqIdx))
+                    {
+                        const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < constraintInfo.size());
+                        applyDirichletConstraint(dofIdx, values, eqIdx, pvIdx);
                     }
                 }
             }
