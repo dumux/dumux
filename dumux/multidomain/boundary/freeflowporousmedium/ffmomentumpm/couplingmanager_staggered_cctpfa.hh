@@ -19,7 +19,7 @@
 #include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/elementsolution.hh>
+#include <dumux/discretization/facecentered/staggered/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 #include "couplingmapper_staggered_cctpfa.hh"
