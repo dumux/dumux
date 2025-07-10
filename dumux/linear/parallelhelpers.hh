@@ -281,7 +281,7 @@ public:
     ParallelISTLHelperImpl(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
             initGhostsAndOwners_();
         else
             DUNE_THROW(Dune::InvalidStateException,
@@ -309,7 +309,7 @@ public:
     template<class Comm>
     void createParallelIndexSet(Comm& comm) const
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
         {
             if (gridView_.comm().size() <= 1)
             {
@@ -483,7 +483,7 @@ public:
     template<class Block, class Alloc>
     void makeNonOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
         {
             VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
             if (gridView_.comm().size() > 1)
@@ -770,7 +770,7 @@ public:
     template<class IsGhostFunc>
     void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Grid, rowDofCodim>::v)
         {
             if (gridView_.comm().size() <= 1)
                 return;
@@ -834,7 +834,7 @@ public:
      */
     void sumEntries(Matrix& A)
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Grid, rowDofCodim>::v)
         {
             if (gridView_.comm().size() <= 1)
                 return;

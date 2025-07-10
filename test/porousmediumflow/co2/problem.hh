@@ -219,7 +219,7 @@ public:
             {
                 VectorCommDataHandleSum<typename GridGeometry::VertexMapper, std::vector<Scalar>, GridView::dimension>
                 sumVolumeHandle(this->gridGeometry().vertexMapper(), vtkBoxVolume_);
-                if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+                if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>::v)
                     gridView.communicate(sumVolumeHandle,
                                          Dune::InteriorBorder_InteriorBorder_Interface,
                                          Dune::ForwardCommunication);

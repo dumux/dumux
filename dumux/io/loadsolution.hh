@@ -364,7 +364,7 @@ void loadSolution(SolutionVector& sol,
             LoadSolutionDataHandle<SolutionVector, typename GridGeometry::ElementMapper, 0>
                 dataHandle(sol, gridGeometry.elementMapper());
 
-            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, 0>)
+            if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, 0>::v)
                 gridGeometry.gridView().communicate(dataHandle,
                                                     Dune::InteriorBorder_All_Interface,
                                                     Dune::ForwardCommunication);
@@ -376,7 +376,7 @@ void loadSolution(SolutionVector& sol,
             LoadSolutionDataHandle<SolutionVector, typename GridGeometry::VertexMapper, GridView::dimension>
                 dataHandle(sol, gridGeometry.vertexMapper());
 
-            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+            if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>::v)
                 gridGeometry.gridView().communicate(dataHandle,
                                                     Dune::InteriorBorder_All_Interface,
                                                     Dune::ForwardCommunication);

@@ -173,7 +173,7 @@ public:
         // the red vertex for yellow border vertices
         VectorCommDataHandleMin<VertexMapper, std::vector<EntityColor>, dim>
             minHandle(vertexMapper, vertexColor_);
-        if constexpr (Detail::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>::v)
             gridView.communicate(minHandle,
                                  Dune::InteriorBorder_InteriorBorder_Interface,
                                  Dune::ForwardCommunication);
@@ -230,7 +230,7 @@ public:
         // demote the border orange vertices
         VectorCommDataHandleMax<VertexMapper, std::vector<EntityColor>, dim>
             maxHandle(vertexMapper, vertexColor_);
-        if constexpr (Detail::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridGeometry::GridView::Traits::Grid, dim>::v)
             gridView.communicate(maxHandle,
                                  Dune::InteriorBorder_InteriorBorder_Interface,
                                  Dune::ForwardCommunication);
