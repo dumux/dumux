@@ -99,11 +99,11 @@ public:
         }
     }
 
-    const auto& begin() const
-    { return constraints_.begin(); }
+    auto begin() const
+    { return constraints_.cbegin(); }
 
-    const auto& end() const
-    { return constraints_.end(); }
+    auto end() const
+    { return constraints_.cend(); }
 
 private:
     std::vector<Data> constraints_;
