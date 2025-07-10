@@ -329,6 +329,13 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
 };
@@ -465,6 +472,13 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
 };
@@ -597,6 +611,13 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry

@@ -416,6 +416,13 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<ctype, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
 private:
     template<class RefElement>
     GlobalPosition facetCenter_(unsigned int localFacetIndex, const RefElement& ref) const
