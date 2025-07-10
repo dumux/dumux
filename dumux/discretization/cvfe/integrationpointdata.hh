@@ -16,6 +16,32 @@ namespace Dumux::CVFE {
 
 /*!
  * \ingroup CVFEDiscretization
+ * \brief An integration point related to an element that included global and local positions
+ */
+template<class LocalPosition, class GlobalPosition>
+class IntegrationPointData
+{
+public:
+    IntegrationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : ipLocal_(std::move(localPos)), ipGlobal_(std::move(pos)) {}
+    IntegrationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  ipLocal_(localPos), ipGlobal_(pos) {}
+
+    //! The global position of the quadrature point
+    const GlobalPosition& ipGlobal() const
+    { return ipGlobal_; }
+
+    //! The local position of the quadrature point
+    const GlobalPosition& ipLocal() const
+    { return ipLocal_; }
+
+
+private:
+    LocalPosition ipLocal_;
+    GlobalPosition ipGlobal_;
+};
+
+
+/*!
+ * \ingroup CVFEDiscretization
  * \brief An integration point related to an element
  */
 template<class GlobalPosition>
