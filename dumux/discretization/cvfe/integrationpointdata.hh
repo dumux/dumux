@@ -19,11 +19,11 @@ namespace Dumux::CVFE {
  * \brief An integration point related to an element
  */
 template<class GlobalPosition>
-class IntegrationPointData
+class IntegrationPointDataGlobal
 {
 public:
-    IntegrationPointData(GlobalPosition&& pos) : ipGlobal_(std::move(pos)) {}
-    IntegrationPointData(const GlobalPosition& pos) : ipGlobal_(pos) {}
+    IntegrationPointDataGlobal(GlobalPosition&& pos) : ipGlobal_(std::move(pos)) {}
+    IntegrationPointDataGlobal(const GlobalPosition& pos) : ipGlobal_(pos) {}
 
     //! The global position of the quadrature point
     const GlobalPosition& ipGlobal() const
@@ -38,12 +38,12 @@ private:
  * \brief An integration point related to a face of an element
  */
 template<class GlobalPosition, class LocalIndex>
-class FaceIntegrationPointData : public IntegrationPointData<GlobalPosition>
+class FaceIntegrationPointDataGlobal : public IntegrationPointDataGlobal<GlobalPosition>
 {
-    using ParentType = IntegrationPointData<GlobalPosition>;
+    using ParentType = IntegrationPointDataGlobal<GlobalPosition>;
 public:
-    FaceIntegrationPointData(GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index) : ParentType(pos), normal_(std::move(n)), scvfIndex_(index) {}
-    FaceIntegrationPointData(const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index) : ParentType(pos), normal_(n), scvfIndex_(index) {}
+    FaceIntegrationPointDataGlobal(GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index) : ParentType(pos), normal_(std::move(n)), scvfIndex_(index) {}
+    FaceIntegrationPointDataGlobal(const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index) : ParentType(pos), normal_(n), scvfIndex_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const
