@@ -206,9 +206,9 @@ public:
     }
 
     template<class DofMapper>
-    auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localScvIdx) const
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localScvIdx)
     {
-        const auto numBoxScv = boxHelper_.numScv();
+        const auto numBoxScv = Dune::referenceElement<Scalar, dim>(element.type()).size(dim);
         if (localScvIdx < numBoxScv)
             return dofMapper.subIndex(element, localScvIdx, dim);
         else
