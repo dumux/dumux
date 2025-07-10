@@ -493,7 +493,6 @@ class NavierStokesMomentumProblemImpl<TypeTag, DiscretizationMethods::CVFE<DM>>
     static constexpr int dimWorld = GridView::dimensionworld;
 
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
-    using LocalPosition = typename Element::Geometry::LocalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -700,15 +699,16 @@ public:
      * \brief Returns the pressure at a given position.
      * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
      */
+    template<class IpData>
     Scalar pressure(const Element& element,
                     const FVElementGeometry& fvGeometry,
-                    const LocalPosition& pos,
+                    const IpData& ipData,
                     const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().pressureAtPos(element.geometry().global(pos));
+            return asImp_().pressureAtPos(ipData.ipGlobal());
         else
-            return couplingManager_->pressure(element, fvGeometry, pos, isPreviousTimeStep);
+            return couplingManager_->pressure(element, fvGeometry, ipData, isPreviousTimeStep);
     }
 
     /*!
@@ -752,15 +752,16 @@ public:
      * \brief Returns the density at a given position.
      * \note  Overload this if a fixed density shall be prescribed.
      */
+    template<class IpData>
     Scalar density(const Element& element,
                    const FVElementGeometry& fvGeometry,
-                   const LocalPosition& pos,
+                   const IpData& ipData,
                    const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().densityAtPos(element.geometry().global(pos));
+            return asImp_().densityAtPos(ipData.ipGlobal());
         else
-            return couplingManager_->density(element, fvGeometry, pos, isPreviousTimeStep);
+            return couplingManager_->density(element, fvGeometry, ipData, isPreviousTimeStep);
     }
 
     /*!
@@ -804,15 +805,16 @@ public:
      * \brief Returns the effective dynamic viscosity at a given position.
      * \note  Overload this if a fixed viscosity shall be prescribed.
      */
+    template<class IpData>
     Scalar effectiveViscosity(const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const LocalPosition& pos,
+                              const IpData& ipData,
                               const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().effectiveViscosityAtPos(element.geometry().global(pos));
+            return asImp_().effectiveViscosityAtPos(ipData.ipGlobal());
         else
-            return couplingManager_->effectiveViscosity(element, fvGeometry, pos, isPreviousTimeStep);
+            return couplingManager_->effectiveViscosity(element, fvGeometry, ipData, isPreviousTimeStep);
     }
 
     /*!

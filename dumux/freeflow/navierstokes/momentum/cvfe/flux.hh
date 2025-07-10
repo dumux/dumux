@@ -206,7 +206,7 @@ public:
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
         // get density from the problem
-        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), scvf);
+        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), ipData(fvGeometry, scvf));
 
         const auto vn = v*scvf.unitOuterNormal();
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -241,7 +241,7 @@ public:
         }
 
         // get viscosity from the problem
-        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, scvf);
+        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, ipData(fvGeometry, scvf));
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -270,7 +270,7 @@ public:
         const auto& scvf = context.scvFace();
 
         // The pressure force needs to take the extruded scvf area into account
-        const auto pressure = context.problem().pressure(element, fvGeometry, scvf);
+        const auto pressure = context.problem().pressure(element, fvGeometry, ipData(fvGeometry, scvf));
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
