@@ -413,6 +413,13 @@ public:
             return geo_.center();
     }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
         const auto numEdges = referenceElement(geo_).size(dim-1);
@@ -659,6 +666,13 @@ public:
             return geo_.corner(localDofIdx);
         else
             return geo_.center();
+    }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
