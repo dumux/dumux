@@ -19,6 +19,7 @@
 
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
@@ -86,8 +87,7 @@ public:
                                const VolumeVariables& volVars,
                                const bool isPreviousStorage) const
     {
-        const auto localPos = fvGeometry.element().geometry().local(scv.dofPosition());
-        return problem.density(fvGeometry.element(), fvGeometry, localPos, isPreviousStorage) * volVars.velocity();
+        return problem.density(fvGeometry.element(), fvGeometry, Dumux::CVFE::Detail::ipData(fvGeometry, scv), isPreviousStorage) * volVars.velocity();
     }
 
     /*!
@@ -110,8 +110,8 @@ public:
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
 
         // add rho*g (note that gravity might be zero in case it's disabled in the problem)
-        const auto localPos = fvGeometry.element().geometry().local(scv.dofPosition());
-        source +=  problem.density(element, fvGeometry, localPos) * problem.gravity();
+        const auto& ipData = Dumux::CVFE::Detail::ipData(fvGeometry, scv);
+        source +=  problem.density(element, fvGeometry, ipData) * problem.gravity();
 
         // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for Fluid Dynamics (2020)
@@ -124,13 +124,13 @@ public:
 
             // The velocity term is new with respect to Cartesian coordinates and handled below as a source term
             // It only enters the balance of the momentum balance in radial direction
-            source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, fvGeometry, localPos)
+            source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, fvGeometry, ipData)
                 * elemVolVars[scv].velocity(Extrusion::radialAxis) / (r*r);
 
             // Pressure term (needed because we incorporate pressure in terms of a surface integral).
             // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
             // is new with respect to Cartesian coordinates and handled below as a source term.
-            source[Extrusion::radialAxis] += problem.pressure(element, fvGeometry, localPos)/r;
+            source[Extrusion::radialAxis] += problem.pressure(element, fvGeometry, ipData)/r;
         }
 
         return source;

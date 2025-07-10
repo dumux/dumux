@@ -18,6 +18,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 #include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
@@ -206,8 +207,7 @@ public:
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
         // get density from the problem
-        const auto localPos = fvGeometry.element().geometry().local(scvf.ipGlobal());
-        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), localPos);
+        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), Dumux::CVFE::Detail::ipData(fvGeometry, scvf));
 
         const auto vn = v*scvf.unitOuterNormal();
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -242,8 +242,7 @@ public:
         }
 
         // get viscosity from the problem
-        const auto localPos = fvGeometry.element().geometry().local(scvf.ipGlobal());
-        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, localPos);
+        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, Dumux::CVFE::Detail::ipData(fvGeometry, scvf));
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -272,8 +271,7 @@ public:
         const auto& scvf = context.scvFace();
 
         // The pressure force needs to take the extruded scvf area into account
-        const auto localPos = fvGeometry.element().geometry().local(scvf.ipGlobal());
-        const auto pressure = context.problem().pressure(element, fvGeometry, localPos);
+        const auto pressure = context.problem().pressure(element, fvGeometry, Dumux::CVFE::Detail::ipData(fvGeometry, scvf));
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
