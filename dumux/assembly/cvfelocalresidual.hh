@@ -80,8 +80,8 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
 
-    using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<typename Element::Geometry::GlobalCoordinate,
-                                                             typename SubControlVolumeFace::Traits::LocalIndexType>;
+    using FaceIpData = Dumux::CVFE::FaceIntegrationPointDataGlobal<typename Element::Geometry::GlobalCoordinate,
+                                                                   typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
