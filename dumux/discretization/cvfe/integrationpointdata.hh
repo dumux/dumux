@@ -16,6 +16,32 @@ namespace Dumux::CVFE {
 
 /*!
  * \ingroup CVFEDiscretization
+ * \brief An integration point related to an element that included global and local positions
+ */
+template<class LocalPosition, class GlobalPosition>
+class IntegrationPointData
+{
+public:
+    IntegrationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : ipLocal_(std::move(localPos)), ipGlobal_(std::move(pos)) {}
+    IntegrationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  ipLocal_(localPos), ipGlobal_(pos) {}
+
+    //! The global position of the quadrature point
+    const GlobalPosition& ipGlobal() const
+    { return ipGlobal_; }
+
+    //! The local position of the quadrature point
+    const GlobalPosition& ipLocal() const
+    { return ipLocal_; }
+
+
+private:
+    LocalPosition ipLocal_;
+    GlobalPosition ipGlobal_;
+};
+
+
+/*!
+ * \ingroup CVFEDiscretization
  * \brief An integration point related to an element
  */
 template<class GlobalPosition>
@@ -57,6 +83,30 @@ private:
     GlobalPosition normal_;
     LocalIndex scvfIndex_;
 };
+
+namespace Detail {
+
+template<class FVElementGeometry>
+auto ipData(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolume& scv)
+{
+    const auto type = fvGeometry.element().type();
+    using IpData = IntegrationPointData<typename FVElementGeometry::Element::Geometry::LocalCoordinate,
+                                        typename FVElementGeometry::Element::Geometry::GlobalCoordinate>;
+    using GeometryHelper = FVElementGeometry::GridGeometry::Cache::GeometryHelper;
+    const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+
+    return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+}
+
+template<class FVElementGeometry>
+auto ipData(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolumeFace& scvf)
+{
+    using IpData = IntegrationPointData<typename FVElementGeometry::Element::Geometry::LocalCoordinate,
+                                        typename FVElementGeometry::Element::Geometry::GlobalCoordinate>;
+    return IpData(fvGeometry.element().geometry().local(scvf.ipGlobal()), scvf.ipGlobal());
+}
+
+} // end namespace Dumux::CVFE::Detail
 
 } // end namespace Dumux::CVFE
 
