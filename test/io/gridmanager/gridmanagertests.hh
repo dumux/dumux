@@ -285,7 +285,7 @@ private:
         if (gridView.comm().size() > 1)
         {
             VertexHandleNonZeroMin<GridView> dataHandle(boundaryMarker, gridView);
-            if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>)
+            if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, GridView::dimension>::v)
                 gridView.communicate(dataHandle,
                                      Dune::InteriorBorder_All_Interface,
                                      Dune::ForwardCommunication);

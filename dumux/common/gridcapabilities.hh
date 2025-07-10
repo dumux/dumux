@@ -14,14 +14,6 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-namespace Dumux::Detail {
-
-template<class Grid, int dofCodim>
-static constexpr bool canCommunicate =
-    Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
-
-} // namespace Dumux
-
 namespace Dumux::Grid::Capabilities {
 
 // Default implementation

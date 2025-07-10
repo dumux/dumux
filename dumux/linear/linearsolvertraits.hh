@@ -115,7 +115,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
     using DofMapper = typename GridGeometry::VertexMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = Grid::dimension;
-    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -144,7 +144,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
     using DofMapper = typename GridGeometry::ElementMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 0;
-    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -180,7 +180,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
     static constexpr int dofCodim = 1;
 
     static constexpr bool canCommunicate =
-        Dumux::Detail::canCommunicate<Grid, dofCodim>;
+        Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -198,7 +198,7 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCDiamond>
     using DofMapper = typename GridGeometry::DofMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 1;
-    static constexpr bool canCommunicate = Dumux::Detail::canCommunicate<Grid, dofCodim>;
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
     static const DofMapper& dofMapper(const GridGeometry& gg)
     { return { gg.dofMapper() }; }
