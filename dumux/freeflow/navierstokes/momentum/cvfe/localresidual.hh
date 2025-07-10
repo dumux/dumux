@@ -86,7 +86,7 @@ public:
                                const VolumeVariables& volVars,
                                const bool isPreviousStorage) const
     {
-        return problem.density(fvGeometry.element(), fvGeometry, scv, isPreviousStorage) * volVars.velocity();
+        return problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * volVars.velocity();
     }
 
     /*!
@@ -109,7 +109,8 @@ public:
         NumEqVector source = ParentType::computeSource(problem, element, fvGeometry, elemVolVars, scv);
 
         // add rho*g (note that gravity might be zero in case it's disabled in the problem)
-        source +=  problem.density(element, fvGeometry, scv) * problem.gravity();
+        const auto& data = ipData(fvGeometry, scv);
+        source +=  problem.density(element, fvGeometry, data) * problem.gravity();
 
         // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
         // See Ferziger/Peric: Computational methods for Fluid Dynamics (2020)
@@ -122,13 +123,13 @@ public:
 
             // The velocity term is new with respect to Cartesian coordinates and handled below as a source term
             // It only enters the balance of the momentum balance in radial direction
-            source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, fvGeometry, scv)
+            source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, fvGeometry, data)
                 * elemVolVars[scv].velocity(Extrusion::radialAxis) / (r*r);
 
             // Pressure term (needed because we incorporate pressure in terms of a surface integral).
             // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
             // is new with respect to Cartesian coordinates and handled below as a source term.
-            source[Extrusion::radialAxis] += problem.pressure(element, fvGeometry, scv)/r;
+            source[Extrusion::radialAxis] += problem.pressure(element, fvGeometry, data)/r;
         }
 
         return source;

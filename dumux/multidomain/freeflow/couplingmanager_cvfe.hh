@@ -29,6 +29,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -82,7 +83,6 @@ private:
 
     using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
 
-    using LocalPosition = typename Element<freeFlowMassIndex>::Geometry::LocalCoordinate;
     using GlobalPosition = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
     using VelocityVector = GlobalPosition;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -110,6 +110,10 @@ private:
 
     using MomentumDiscretizationMethod = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
     using MassDiscretizationMethod = typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod;
+
+    template<std::size_t id> using IpData
+        = Dumux::CVFE::IntegrationPointData<typename GridView<id>::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                            typename GridView<id>::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
 
 public:
 
@@ -174,41 +178,36 @@ public:
     /*!
      * \brief Returns the pressure at a given sub control volume face
      */
+    [[deprecated("This method will be removed after release (3.11). Use pressure(..., ipData) instead!")]]
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                     const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                     const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
-        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
-                                                   :  this->curSol(freeFlowMassIndex);
-        const auto elemSol = elementSolution(element, sol, gg);
-        return evalSolution(element, element.geometry(), gg, elemSol, scvf.ipGlobal())[pressureIdx];
+        const auto& globalPos = scvf.ipGlobal();
+        const auto& localPos = element.geometry().local(globalPos);
+        return this->pressure(element, fvGeometry, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the pressure at a given sub control volume
      */
+    [[deprecated("This method will be removed after release (3.11). Use pressure(..., ipData) instead!")]]
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                     const SubControlVolume<freeFlowMomentumIndex>& scv,
                     const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
-        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
-                                                   :  this->curSol(freeFlowMassIndex);
-        const auto elemSol = elementSolution(element, sol, gg);
-        return evalSolution(element, element.geometry(), gg, elemSol, scv.dofPosition())[pressureIdx];
+        return this->pressure(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
     }
 
     /*!
-     * \brief Returns the pressure at a given position
+     * \brief Returns the pressure at a given integration point
      */
+    template <class IpData>
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                    const LocalPosition& pos,
+                    const IpData& ipData,
                     const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
@@ -216,37 +215,42 @@ public:
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
-        return evalSolution(element, element.geometry(), gg, elemSol, element.geometry().global(pos))[pressureIdx];
+        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.ipLocal())[pressureIdx];
     }
 
     /*!
      * \brief Returns the density at a given sub control volume face.
      */
+    [[deprecated("This method will be removed after release (3.11). Use density(..., ipData) instead!")]]
     Scalar density(const Element<freeFlowMomentumIndex>& element,
                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
-        return this->density(element, fvGeometry, element.geometry().local(scvf.ipGlobal()), considerPreviousTimeStep);
+        const auto& globalPos = scvf.ipGlobal();
+        const auto& localPos = element.geometry().local(globalPos);
+        return this->density(element, fvGeometry,  IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the density at a given sub control volume.
      */
+    [[deprecated("This method will be removed after release (3.11). Use density(..., ipData) instead!")]]
     Scalar density(const Element<freeFlowMomentumIndex>& element,
                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const SubControlVolume<freeFlowMomentumIndex>& scv,
                    const bool considerPreviousTimeStep = false) const
     {
-        return this->density(element, fvGeometry, element.geometry().local(scv.dofPosition()), considerPreviousTimeStep);
+        return this->density(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the density at a given position.
      */
+    template <class IpData>
     Scalar density(const Element<freeFlowMomentumIndex>& element,
                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                   const LocalPosition& pos,
+                   const IpData& ipData,
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
@@ -270,7 +274,7 @@ public:
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            localBasis.evaluateFunction(pos, shapeValues);
+            localBasis.evaluateFunction(ipData.ipLocal(), shapeValues);
 
             Scalar rho = 0.0;
             for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
@@ -292,31 +296,36 @@ public:
     /*!
      * \brief Returns the effective viscosity at a given sub control volume face.
      */
+    [[deprecated("This method will be removed after release (3.11). Use effectiveViscosity(..., ipData) instead!")]]
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                               const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
                               const bool considerPreviousTimeStep = false) const
     {
-        return this->effectiveViscosity(element, fvGeometry, element.geometry().local(scvf.ipGlobal()), considerPreviousTimeStep);
+        const auto& globalPos = scvf.ipGlobal();
+        const auto& localPos = element.geometry().local(globalPos);
+        return this->effectiveViscosity(element, fvGeometry, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the effective viscosity at a given sub control volume.
      */
+    [[deprecated("This method will be removed after release (3.11). Use effectiveViscosity(..., ipData) instead!")]]
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                               const SubControlVolume<freeFlowMomentumIndex>& scv,
                               const bool considerPreviousTimeStep = false) const
     {
-        return this->effectiveViscosity(element, fvGeometry, element.geometry().local(scv.dofPosition()), considerPreviousTimeStep);
+        return this->effectiveViscosity(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the effective viscosity at a given position.
      */
+    template <class IpData>
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                              const LocalPosition& pos,
+                              const IpData& ipData,
                               const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
@@ -340,7 +349,7 @@ public:
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            localBasis.evaluateFunction(pos, shapeValues);
+            localBasis.evaluateFunction(ipData.ipLocal(), shapeValues);
 
             Scalar mu = 0.0;
             for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
