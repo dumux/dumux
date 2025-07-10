@@ -16,20 +16,26 @@ namespace Dumux::CVFE {
 
 /*!
  * \ingroup CVFEDiscretization
- * \brief An integration point related to an element
+ * \brief An integration point related to an element that includes global and local positions
  */
-template<class GlobalPosition>
+template<class LocalPosition, class GlobalPosition>
 class IntegrationPointData
 {
 public:
-    IntegrationPointData(GlobalPosition&& pos) : ipGlobal_(std::move(pos)) {}
-    IntegrationPointData(const GlobalPosition& pos) : ipGlobal_(pos) {}
+    IntegrationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : ipLocal_(std::move(localPos)), ipGlobal_(std::move(pos)) {}
+    IntegrationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  ipLocal_(localPos), ipGlobal_(pos) {}
 
     //! The global position of the quadrature point
     const GlobalPosition& ipGlobal() const
     { return ipGlobal_; }
 
+    //! The local position of the quadrature point
+    const GlobalPosition& ipLocal() const
+    { return ipLocal_; }
+
+
 private:
+    LocalPosition ipLocal_;
     GlobalPosition ipGlobal_;
 };
 
@@ -37,13 +43,15 @@ private:
  * \ingroup CVFEDiscretization
  * \brief An integration point related to a face of an element
  */
-template<class GlobalPosition, class LocalIndex>
-class FaceIntegrationPointData : public IntegrationPointData<GlobalPosition>
+template<class LocalPosition, class GlobalPosition, class LocalIndex>
+class FaceIntegrationPointData : public IntegrationPointData<LocalPosition, GlobalPosition>
 {
-    using ParentType = IntegrationPointData<GlobalPosition>;
+    using ParentType = IntegrationPointData<LocalPosition, GlobalPosition>;
 public:
-    FaceIntegrationPointData(GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index) : ParentType(pos), normal_(std::move(n)), scvfIndex_(index) {}
-    FaceIntegrationPointData(const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index) : ParentType(pos), normal_(n), scvfIndex_(index) {}
+    FaceIntegrationPointData(GlobalPosition&& localPos, GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index)
+    : ParentType(localPos, pos), normal_(std::move(n)), scvfIndex_(index) {}
+    FaceIntegrationPointData(const GlobalPosition& localPos, const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index)
+    : ParentType(localPos, pos), normal_(n), scvfIndex_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const
