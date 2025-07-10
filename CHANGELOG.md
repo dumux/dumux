@@ -16,6 +16,7 @@ times whenever multiple scvs were associated with the same localDof.
 - __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+- __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.10:
 
