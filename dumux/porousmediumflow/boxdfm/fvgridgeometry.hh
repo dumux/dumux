@@ -25,6 +25,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basegridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -98,7 +99,8 @@ class BoxDfmFVGridGeometry<Scalar, GV, true, Traits>
 {
     using ThisType = BoxDfmFVGridGeometry<Scalar, GV, true, Traits>;
     using ParentType = BaseGridGeometry<GV, Traits>;
-    using GridIndexType = typename GV::IndexSet::IndexType;
+    using GridIndexType = typename IndexTraits<GV>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GV>::LocalIndex;
 
     using Element = typename GV::template Codim<0>::Entity;
     using CoordScalar = typename GV::ctype;
@@ -125,13 +127,12 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! Export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template< class FractureGridAdapter >
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
+    , cache_(*this)
     {
         update_(fractureGridAdapter);
     }
@@ -176,10 +177,6 @@ public:
 
     //! The finite element cache for creating local FE bases
     const FeCache& feCache() const { return feCache_; }
-    //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const { return scvs_[eIdx]; }
-    //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const { return scvfs_[eIdx]; }
     //! If a vertex / d.o.f. is on the boundary
     bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
     //! If a vertex / d.o.f. is on a fracture
@@ -191,17 +188,64 @@ public:
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxDfmFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
 private:
+
+    class BoxDfmGridGeometryCache
+    {
+        friend class BoxDfmFVGridGeometry;
+    public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
+
+        explicit BoxDfmGridGeometryCache(const BoxDfmFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxDfmFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+        //! Get the global sub control volume indices of an element
+        const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
+        { return scvs_[eIdx]; }
+
+        //! Get the global sub control volume face indices of an element
+        const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
+        { return scvfs_[eIdx]; }
+
+
+    private:
+        void clear_()
+        {
+            scvs_.clear();
+            scvfs_.clear();
+        }
+
+        std::vector<std::vector<SubControlVolume>> scvs_;
+        std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+
+        const BoxDfmFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxDfmGridGeometryCache;
+
+private:
+    using GeometryHelper = typename Cache::GeometryHelper;
 
     template< class FractureGridAdapter >
     void update_(const FractureGridAdapter& fractureGridAdapter)
     {
-        scvs_.clear();
-        scvfs_.clear();
+        cache_.clear_();
 
-        auto numElements = this->gridView().size(0);
-        scvs_.resize(numElements);
-        scvfs_.resize(numElements);
+        const auto numElements = this->gridView().size(0);
+        cache_.scvs_.resize(numElements);
+        cache_.scvfs_.resize(numElements);
 
         boundaryDofIndices_.assign(numDofs(), false);
         fractureDofIndices_.assign(this->gridView.size(dim), false);
@@ -213,7 +257,7 @@ private:
         for (const auto& element : elements(this->gridView()))
         {
             // fill the element map with seeds
-            auto eIdx = this->elementMapper().index(element);
+            const auto eIdx = this->elementMapper().index(element);
 
             // count
             numScv_ += element.subEntities(dim);
@@ -227,32 +271,31 @@ private:
             GeometryHelper geometryHelper(elementGeometry);
 
             // construct the sub control volumes
-            scvs_[eIdx].resize(elementGeometry.corners());
-            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
+            cache_.scvs_[eIdx].resize(elementGeometry.corners());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
-                scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
-                                                            scvLocalIdx,
-                                                            eIdx,
-                                                            dofIdxGlobal);
+                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
+                                                                   scvLocalIdx,
+                                                                   eIdx,
+                                                                   dofIdxGlobal);
             }
 
             // construct the sub control volume faces
             LocalIndexType scvfLocalIdx = 0;
-            scvfs_[eIdx].resize(element.subEntities(dim-1));
+            cache_.scvfs_[eIdx].resize(element.subEntities(dim-1));
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
                 std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
                                                              static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
-                scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
-                                                                  element,
-                                                                  elementGeometry,
-                                                                  scvfLocalIdx,
-                                                                  std::move(localScvIndices));
+                cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
+                                                                         element,
+                                                                         elementGeometry,
+                                                                         scvfLocalIdx,
+                                                                         std::move(localScvIndices));
             }
 
             // construct the ...
@@ -290,12 +333,12 @@ private:
                         // find the scvs this scvf is belonging to
                         const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, isScvfLocalIdx, dim));
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                  intersection,
-                                                  isGeometry,
-                                                  isScvfLocalIdx,
-                                                  scvfLocalIdx++,
-                                                  std::move(localScvIndices));
+                        cache_.scvfs_[eIdx].emplace_back(geometryHelper,
+                                                         intersection,
+                                                         isGeometry,
+                                                         isScvfLocalIdx,
+                                                         scvfLocalIdx++,
+                                                         std::move(localScvIndices));
                     }
 
                     // add all vertices on the intersection to the set of
@@ -320,18 +363,18 @@ private:
 
                     // add fracture scv for each vertex of intersection
                     numScv_ += numCorners;
-                    const auto curNumScvs = scvs_[eIdx].size();
-                    scvs_[eIdx].reserve(curNumScvs+numCorners);
+                    const auto curNumScvs = cache_.scvs_[eIdx].size();
+                    cache_.scvs_[eIdx].reserve(curNumScvs+numCorners);
                     for (unsigned int vIdxLocal = 0; vIdxLocal < numCorners; ++vIdxLocal)
-                        scvs_[eIdx].emplace_back(geometryHelper,
-                                                 intersection,
-                                                 isGeometry,
-                                                 vIdxLocal,
-                                                 static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
-                                                 scvLocalIdx++,
-                                                 idxInInside,
-                                                 eIdx,
-                                                 isVertexIndices[vIdxLocal]);
+                        cache_.scvs_[eIdx].emplace_back(geometryHelper,
+                                                        intersection,
+                                                        isGeometry,
+                                                        vIdxLocal,
+                                                        static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, vIdxLocal, dim)),
+                                                        scvLocalIdx++,
+                                                        idxInInside,
+                                                        eIdx,
+                                                        isVertexIndices[vIdxLocal]);
 
                     // add fracture scvf for each edge of the intersection in 3d
                     if (dim == 3)
@@ -350,13 +393,13 @@ private:
 
                             // add scvf
                             numScvf_++;
-                            scvfs_[eIdx].emplace_back(geometryHelper,
-                                                      intersection,
-                                                      isGeometry,
-                                                      edgeIdx,
-                                                      scvfLocalIdx++,
-                                                      std::move(localScvIndices),
-                                                      intersection.boundary());
+                            cache_.scvfs_[eIdx].emplace_back(geometryHelper,
+                                                             intersection,
+                                                             isGeometry,
+                                                             edgeIdx,
+                                                             scvfLocalIdx++,
+                                                             std::move(localScvIndices),
+                                                             intersection.boundary());
                         }
                     }
 
@@ -373,13 +416,13 @@ private:
 
                         // add scvf
                         numScvf_++;
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                  intersection,
-                                                  isGeometry,
-                                                  /*idxOnIntersection*/0,
-                                                  scvfLocalIdx++,
-                                                  std::move(localScvIndices),
-                                                  intersection.boundary());
+                        cache_.scvfs_[eIdx].emplace_back(geometryHelper,
+                                                         intersection,
+                                                         isGeometry,
+                                                         /*idxOnIntersection*/0,
+                                                         scvfLocalIdx++,
+                                                         std::move(localScvIndices),
+                                                         intersection.boundary());
                     }
                 }
             }
@@ -387,9 +430,6 @@ private:
     }
 
     const FeCache feCache_;
-
-    std::vector<std::vector<SubControlVolume>> scvs_;
-    std::vector<std::vector<SubControlVolumeFace>> scvfs_;
 
     // TODO do we need those?
     std::size_t numScv_;
@@ -399,6 +439,8 @@ private:
     // vertices on the boundary & fracture facets
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> fractureDofIndices_;
+
+    Cache cache_;
 };
 
 /*!
@@ -442,14 +484,13 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template< class FractureGridAdapter >
     BoxDfmFVGridGeometry(const GridView gridView, const FractureGridAdapter& fractureGridAdapter)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    , cache_(*this)
     {
         update_(fractureGridAdapter);
     }
@@ -510,6 +551,34 @@ public:
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     std::size_t periodicallyMappedDof(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
+
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxDfmFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
+private:
+    class BoxDfmGridGeometryCache
+    {
+        friend class BoxDfmFVGridGeometry;
+    public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxDfmGeometryHelper_t<GV, Traits>;
+
+        explicit BoxDfmGridGeometryCache(const BoxDfmFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxDfmFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+    private:
+        const BoxDfmFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxDfmGridGeometryCache;
 
 private:
 
@@ -603,6 +672,8 @@ private:
     // facet mapper and markers which facets lie on interior boundaries
     typename Traits::FacetMapper facetMapper_;
     std::vector<bool> facetOnFracture_;
+
+    Cache cache_;
 };
 
 } // end namespace Dumux
