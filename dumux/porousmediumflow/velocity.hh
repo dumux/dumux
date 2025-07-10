@@ -19,6 +19,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/reservedvector.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
