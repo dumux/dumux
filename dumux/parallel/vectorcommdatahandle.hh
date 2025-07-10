@@ -53,6 +53,20 @@ namespace Detail {
             a = min(a,b);
         }
     };
+
+    // Check if state is set, if it is not, then copy the state and from the other process
+    struct PrivarState
+    {
+        template<class A,class B>
+        static void apply(A& a, B& b)
+        {
+            if (a.stateIsSet() && !b.stateIsSet())
+                b.setState(a.state());
+            else if (!a.stateIsSet() && b.stateIsSet())
+                a.setState(b.state());
+        }
+
+    };
 } // end namespace Detail
 
 /*!
@@ -122,6 +136,8 @@ using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Deta
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
+template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
+using VectorCommDataHandlePrivarState = VectorCommDataHandle<Mapper, Vector, codim, Detail::PrivarState, DataType>;
 } // end namespace Dumux
 
 #endif

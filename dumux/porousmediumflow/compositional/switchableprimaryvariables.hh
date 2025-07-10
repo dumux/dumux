@@ -43,6 +43,12 @@ public:
         return state_;
     }
 
+    //! Ask if the state has been set.
+    bool stateIsSet() const
+    {
+        return stateIsSet_;
+    }
+
     //! Set the state of this primary variable object, e.g. the phase presence.
     void setState(StateType state)
     {
