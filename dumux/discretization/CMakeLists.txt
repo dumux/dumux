@@ -9,7 +9,6 @@ add_subdirectory(fem)
 add_subdirectory(porenetwork)
 add_subdirectory(pq1bubble)
 add_subdirectory(projection)
-add_subdirectory(staggered)
 
 file(GLOB DUMUX_DISCRETIZATION_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_DISCRETIZATION_HEADERS}
