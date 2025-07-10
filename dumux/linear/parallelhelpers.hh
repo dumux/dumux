@@ -494,6 +494,21 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
+    //! \brief Make a vector consistent for overlapping domain decomposition methods
+    template<class Block, class Alloc>
+    void makeOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
+    {
+        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        {
+            VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
+            if (gridView_.comm().size() > 1)
+                gridView_.communicate(gs, Dune::Overlap_All_Interface,
+                                    Dune::ForwardCommunication);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+    }
+
     //! \brief Make a vector consistent for non-overlapping domain decomposition methods
     template<class... Blocks>
     void makeNonOverlappingConsistent(Dune::MultiTypeBlockVector<Blocks...>& v) const
