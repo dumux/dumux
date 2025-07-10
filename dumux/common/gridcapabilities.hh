@@ -14,43 +14,11 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-// TODO: The following is a temporary solution to make canCommunicate work.
-// Once it is resolved upstream
-// (https://gitlab.dune-project.org/core/dune-grid/issues/78),
-// it should be guarded by a DUNE_VERSION macro and removed later.
-
-#if HAVE_DUNE_UGGRID
-namespace Dune {
-template<int dim>
-class UGGrid;
-} // end namespace Dumux
-#endif // HAVE_DUNE_UGGRID
-
-namespace Dumux::Temp::Capabilities {
-
-template<class Grid, int codim>
-struct canCommunicate
-{
-  static const bool v = false;
-};
-
-#if HAVE_DUNE_UGGRID
-template<int dim, int codim>
-struct canCommunicate<Dune::UGGrid<dim>, codim>
-{
-  static const bool v = true;
-};
-#endif // HAVE_DUNE_UGGRID
-
-} // namespace Dumux::Temp::Capabilities
-// end workaround
-
 namespace Dumux::Detail {
 
 template<class Grid, int dofCodim>
 static constexpr bool canCommunicate =
-    Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-    || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+    Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
 } // namespace Dumux
 

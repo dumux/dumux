@@ -179,10 +179,8 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 1;
 
-    // TODO: see above for description of this workaround, remove second line if fixed upstream
     static constexpr bool canCommunicate =
-        Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-        || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v;
+        Dumux::Detail::canCommunicate<Grid, dofCodim>;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
