@@ -98,27 +98,63 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
-    friend inline auto fvLocalDofs(const PQ2FVElementGeometry& fvGeometry)
+    friend inline auto cvLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return std::views::iota(std::size_t(0), fvGeometry.numScv())
-             | std::views::filter([fvGeometry](size_t i) { return !fvGeometry.scv(i).isOverlapping(); })
-             | std::views::transform([fvGeometry](size_t i) { return CVFE::FVLocalDof{ static_cast<LocalIndexType>(i), fvGeometry }; });
+            | std::views::filter([&](size_t i) { return !fvGeometry.scv(i).isOverlapping(); })
+            | std::views::transform([&](size_t i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+            });
     }
 
-    friend inline auto hybridLocalDofs(const PQ2FVElementGeometry& fvGeometry)
+    friend inline auto nonCVLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return std::views::iota(std::size_t(0), fvGeometry.numScv())
-             | std::views::filter([fvGeometry](size_t i) { return fvGeometry.scv(i).isOverlapping(); })
-             | std::views::transform([fvGeometry](size_t i) {return CVFE::LocalDof{ static_cast<LocalIndexType>(i) };  });
+            | std::views::filter([&](size_t i) { return fvGeometry.scv(i).isOverlapping(); })
+            | std::views::transform([&](size_t i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+            });
     }
 
     friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return Dune::transformedRangeView(
-            Dune::range(std::size_t(0), fvGeometry.numScv()),
-            [](const auto i) { return CVFE::LocalDof{ static_cast<LocalIndexType>(i) }; }
+            Dune::range(std::size_t(0), fvGeometry.numScv()), [&](const auto i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+            }
         );
     }
+
+    // //! an iterator over all local dofs related to an intersection
+    // template<class Intersection>
+    // friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const Intersection& intersection)
+    // {
+    //     return Dune::transformedRangeView(
+    //         Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
+    //         [&](const auto i)
+    //         {
+    //             auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i);
+    //             return CVFE::LocalDof
+    //             {
+    //                 static_cast<LocalIndexType>(localDofIdx),
+    //                 static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), localDofIdx)),
+    //                 static_cast<GridIndexType>(fvGeometry.elementIndex())
+    //             };
+    //             }
+    //     );
+    // }
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
