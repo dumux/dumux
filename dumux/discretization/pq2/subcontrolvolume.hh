@@ -17,7 +17,6 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/pq2/geometryhelper.hh>
 
 namespace Dumux {
