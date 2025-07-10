@@ -179,12 +179,13 @@ private:
         // calculate the bounding box of the local partition of the grid view
         for (const auto& vertex : vertices(gridView_))
         {
-            for (int i=0; i<dimWorld; i++)
+            const auto pos = vertex.geometry().corner(0);
+            for (int i = 0; i < dimWorld; ++i)
             {
                 using std::min;
                 using std::max;
-                bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
-                bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
+                bBoxMin_[i] = min(bBoxMin_[i], pos[i]);
+                bBoxMax_[i] = max(bBoxMax_[i], pos[i]);
             }
         }
 
