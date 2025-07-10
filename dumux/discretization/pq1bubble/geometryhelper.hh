@@ -414,14 +414,6 @@ public:
             return dofMapper.index(element);
     }
 
-    static GlobalPosition dofPosition(const Element& element, unsigned int localDofIdx)
-    {
-        if (localDofIdx < numElementDofs(element.geometry().type())-1)
-            return element.geometry().corner(localDofIdx);
-        else
-            return element.geometry().center();
-    }
-
     GlobalPosition dofPosition(unsigned int localDofIdx) const
     {
         if (localDofIdx < numElementDofs(geo_.type())-1)
@@ -697,14 +689,6 @@ public:
             return dofMapper.subIndex(element, localDofIdx, dim);
         else
             return dofMapper.index(element);
-    }
-
-    static GlobalPosition dofPosition(const Element& element, unsigned int localDofIdx)
-    {
-        if (localDofIdx < numElementDofs(element.geometry().type())-1)
-            return element.geometry().corner(localDofIdx);
-        else
-            return element.geometry().center();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
