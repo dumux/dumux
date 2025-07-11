@@ -352,7 +352,7 @@ public:
     //! number of interior sub control volume faces
     static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim-1) + Dune::referenceElement<Scalar, dim>(type).size(dim);
+        return BoxHelper::numInteriorScvf(type) + Dune::referenceElement<Scalar, dim>(type).size(dim);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
@@ -640,7 +640,7 @@ public:
     //! number of interior sub control volume faces
     static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+        return BoxHelper::numInteriorScvf(type);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
