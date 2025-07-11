@@ -35,9 +35,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
-#include <dumux/freeflow/nonisothermal/model.hh>
-#include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
