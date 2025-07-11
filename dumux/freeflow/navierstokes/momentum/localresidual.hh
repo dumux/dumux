@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesResidualImpl
+ * \copydoc Dumux::NavierStokesMomentumResidual
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH

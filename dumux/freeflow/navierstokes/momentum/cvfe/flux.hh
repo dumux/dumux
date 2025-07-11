@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesFluxVariablesImpl
+ * \copydoc Dumux::NavierStokesMomentumFluxCVFE
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH

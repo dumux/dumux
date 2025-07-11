@@ -8,7 +8,7 @@
  * \file
  * \ingroup NavierStokesModel
  *
- * \copydoc Dumux::NavierStokesVolumeVariables
+ * \copydoc Dumux::NavierStokesScalarConservationModelVolumeVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_VOLUME_VARIABLES_HH

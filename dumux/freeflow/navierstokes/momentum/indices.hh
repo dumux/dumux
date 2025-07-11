@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesIndices
+ * \copydoc Dumux::NavierStokesMomentumIndices
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_INDICES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_INDICES_HH
