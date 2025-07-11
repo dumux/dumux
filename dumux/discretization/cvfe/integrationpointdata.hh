@@ -101,9 +101,15 @@ auto ipData(const FVElementGeometry& fvGeometry, const typename FVElementGeometr
 template<class FVElementGeometry>
 auto ipData(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolumeFace& scvf)
 {
+    const auto type = fvGeometry.element().type();
     using IpData = IntegrationPointData<typename FVElementGeometry::Element::Geometry::LocalCoordinate,
                                         typename FVElementGeometry::Element::Geometry::GlobalCoordinate>;
-    return IpData(fvGeometry.element().geometry().local(scvf.ipGlobal()), scvf.ipGlobal());
+    using GeometryHelper = FVElementGeometry::GridGeometry::Cache::GeometryHelper;
+
+    if(!scvf.boundary())
+        return IpData(GeometryHelper::localScvfCenter(type, scvf.index()), scvf.ipGlobal());
+    else
+        return IpData(fvGeometry.element().geometry().local(scvf.ipGlobal()), scvf.ipGlobal());
 }
 
 } // end namespace Dumux::CVFE::Detail
