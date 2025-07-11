@@ -347,6 +347,12 @@ public:
         return referenceElement(geo_).size(dim-1);
     }
 
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
     //! number of sub control volumes (number of vertices)
     std::size_t numScv() const
     {
@@ -528,6 +534,12 @@ public:
         return referenceElement(geo_).size(dim-1);
     }
 
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
     //! number of sub control volumes (number of vertices)
     std::size_t numScv() const
     {
@@ -703,6 +715,12 @@ public:
     std::size_t numInteriorScvf() const
     {
         return referenceElement(geo_).size(dim-1);
+    }
+
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
     }
 
     //! number of sub control volumes (number of vertices)
