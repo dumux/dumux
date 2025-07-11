@@ -23,6 +23,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/geometry/center.hh>
 
 namespace Dumux {
 
@@ -363,6 +364,18 @@ public:
         return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners_(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localFacetIndex, dim);
+    }
+
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
 };
@@ -532,6 +545,18 @@ public:
         return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
+
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
 };
@@ -695,6 +720,18 @@ public:
     static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
     {
         return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
     }
 
 private:
