@@ -25,6 +25,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/geometry/center.hh>
 
 namespace Dumux {
 
@@ -479,6 +480,18 @@ public:
             return true;
     }
 
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(BoxHelper::getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
+
 private:
     Scalar octahedronVolume_(const ScvCornerStorage& p) const
     {
@@ -736,6 +749,18 @@ public:
 
     bool isOverlappingScv(unsigned int localScvIndex) const
     { return false; }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(BoxHelper::getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry

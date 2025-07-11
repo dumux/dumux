@@ -20,6 +20,7 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/geometry/center.hh>
 
 namespace Dumux {
 
@@ -438,6 +439,18 @@ public:
     static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
     {
         return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex)
+    {
+        return Dumux::center(getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex));
     }
 
 private:
