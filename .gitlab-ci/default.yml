@@ -35,35 +35,32 @@ configure:
   stage: configure
   script:
     - |
+      # activate Python virtual env from container
+      source /dune/venv/bin/activate
+      python -m pip install -r requirements.txt
+    - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_CXX_FLAGS='-DDUNE_CHECK_BOUNDS=${DUMUX_ENABLE_DUNE_CHECKS} -DNDEBUG=${DUMUX_NDEBUG} -DDUNE_ISTL_WITH_CHECKING=${DUMUX_ENABLE_DUNE_CHECKS}'\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current cmake
     - dunecontrol --opts=opts_file.opts --current make -j8
-    # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
-    - |
-      if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
-        python3 -m pip install -r requirements.txt
-        cp -r /dune/modules/dune-common/build-cmake/dune-env build-cmake
-      fi
-    # create Python venv with ci dependencies
-    - |
-      mkdir build-cmake/ci-env
-      python3 -m venv build-cmake/ci-env
-      source build-cmake/ci-env/bin/activate
-      python3 -m pip install -r requirements.txt
-      pip list
+      # pass on dumux python module and dev tools
+    - mv /dune/venv/ ci-venv
   artifacts:
     paths:
       - build-cmake
+      - ci-venv
     expire_in: 3 hours
 
 
 linters:
   stage: linting
   script:
-    - source build-cmake/ci-env/bin/activate
+    - |
+      # activate Python virtual env from cache (job:configure artifacts)
+      rm -r /dune/venv
+      mv ci-venv /dune/venv
+      source /dune/venv/bin/activate
     # black
     - echo "Running black"
     - black --version
@@ -90,20 +87,13 @@ linters:
         cd ..
       fi
     # pylint and flake8
-    # restore Python virtual env from cache (job:configure artifacts)
     - echo "Running pylint and flake8"
-    - |
-      if [ -d "build-cmake/dune-env" ]; then
-        rm -r /dune/modules/dune-common/build-cmake/dune-env
-        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-      fi
     - |
       pylint --rcfile=.pylintrc bin
       pylint --rcfile=.pylintrc dumux/porenetwork/util/*.py
       flake8 bin
       flake8 dumux/porenetwork/util
       if [ -d build-cmake/python/dumux ] ; then
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         flake8 build-cmake/python/dumux
       fi
@@ -132,6 +122,7 @@ reuse:
     name: fsfe/reuse:latest
     entrypoint: [""]
   script:
+    - if [[ -d "ci-venv" ]]; then rm -r ci-venv; fi
     - reuse lint
 
 
@@ -205,13 +196,11 @@ doxygen:
 compile cpp:
   stage: build
   script:
-    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
-    # shouldn't be needed to compile C++ but currently is (https://gitlab.dune-project.org/core/dune-common/-/issues/279)
     - |
-      if [ -d "build-cmake/dune-env" ]; then
-        rm -r /dune/modules/dune-common/build-cmake/dune-env
-        mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-      fi
+      # activate Python virtual env from cache (job:configure artifacts)
+      rm -r /dune/venv
+      mv ci-venv /dune/venv
+      source /dune/venv/bin/activate
     - |
       pushd build-cmake
         make clean && make all
@@ -245,7 +234,11 @@ test cpp:
     DUMUX_NUM_THREADS: 4
   script:
     - |
-      source build-cmake/ci-env/bin/activate
+      # activate Python virtual env from cache (job:configure artifacts)
+      rm -r /dune/venv
+      mv ci-venv /dune/venv
+      source /dune/venv/bin/activate
+    - |
       pushd build-cmake
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
@@ -254,6 +247,8 @@ test cpp:
         fi
       popd
   needs:
+    - job: configure
+      artifacts: true
     - job: compile cpp
       artifacts: true
   artifacts:
@@ -270,7 +265,6 @@ test cmake:
     DUMUX_NUM_THREADS: 1
   script:
     - |
-      source build-cmake/ci-env/bin/activate
       ctest --test-dir build-cmake/test/cmake -VV
   needs:
     - job: compile cpp
@@ -285,7 +279,11 @@ test python:
     DUMUX_NUM_THREADS: 4
   script:
     - |
-      source build-cmake/ci-env/bin/activate
+      # activate Python virtual env from cache (job:configure artifacts)
+      rm -r /dune/venv
+      mv ci-venv /dune/venv
+      source /dune/venv/bin/activate
+    - |
       if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
         if [ ! -s changedfiles.txt ]; then
           echo "Skipping test selection: considering all Python tests."
@@ -307,12 +305,6 @@ test python:
           cp /dune/modules/dune-istl/cmake/modules/FindSuperLU.cmake /dune/modules/opm-common/cmake/Modules/FindSuperLU.cmake
         fi
 
-        # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
-        if [ -d "build-cmake/dune-env" ]; then
-          rm -r /dune/modules/dune-common/build-cmake/dune-env
-          mv build-cmake/dune-env /dune/modules/dune-common/build-cmake/dune-env
-        fi
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pushd build-cmake
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
           DUNE_LOG_LEVEL=DEBUG ctest --output-on-failure -L python
