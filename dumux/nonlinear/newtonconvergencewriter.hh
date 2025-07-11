@@ -49,7 +49,7 @@ class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector
     using Scalar = typename SolutionVector::block_type::value_type;
 
     static_assert(GridGeometry::discMethod != DiscretizationMethods::staggered,
-                  "This convergence writer does not work for the staggered method, use the StaggeredNewtonConvergenceWriter instead");
+                  "This convergence writer does not work for the staggered method!");
 public:
     /*!
      * \brief Constructor
