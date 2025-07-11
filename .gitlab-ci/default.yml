@@ -34,6 +34,8 @@ variables:
 configure:
   stage: configure
   script:
+      # activate Python virtual env from cache (job:configure artifacts)
+    - source /dune/venv/bin/activate
     - |
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
@@ -51,8 +53,11 @@ configure:
 linters:
   stage: linting
   script:
-    # install ci dependencies
-    - python -m pip install -r requirements.txt
+    - |
+      # activate Python virtual env from cache (job:configure artifacts)
+      source /dune/venv/bin/activate
+      # install ci dependencies
+      python -m pip install -r requirements.txt
     # black
     - echo "Running black"
     - black --version
@@ -86,12 +91,10 @@ linters:
       flake8 bin
       flake8 dumux/porenetwork/util
       if [ -d build-cmake/python/dumux ] ; then
-        source /dune/modules/dune-common/build-cmake/dune-env/bin/activate
         pylint --rcfile=.pylintrc build-cmake/python/dumux
         flake8 build-cmake/python/dumux
       fi
   needs:
-    # restore Python virtual env from cache (job:configure artifacts)
     - job: configure
       artifacts: true
 
@@ -189,6 +192,8 @@ doxygen:
 compile cpp:
   stage: build
   script:
+    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+    - source /dune/venv/bin/activate
     - |
       pushd build-cmake
         make clean && make all
@@ -205,7 +210,6 @@ compile cpp:
       - affectedtests.json
     expire_in: 3 hours
   needs:
-    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
     - job: configure
       artifacts: true
     - job: select tests
@@ -223,6 +227,7 @@ test cpp:
     DUMUX_NUM_THREADS: 4
   script:
     - |
+      source /dune/venv/bin/activate
       # install ci dependencies
       python -m pip install -r requirements.txt
       pushd build-cmake
@@ -262,8 +267,11 @@ test python:
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
     DUMUX_NUM_THREADS: 4
   script:
-    # install ci dependencies
-    - python -m pip install -r requirements.txt
+    - |
+      # activate Python virtual env from cache (job:configure artifacts) (Dune 2.9)
+      source /dune/venv/bin/activate
+      # install ci dependencies
+      python -m pip install -r requirements.txt
     - |
       if ( [ -d "build-cmake/python" ] && ([ ! -s changedfiles.txt ] || grep -q python "changedfiles.txt")); then
         if [ ! -s changedfiles.txt ]; then
@@ -294,7 +302,6 @@ test python:
         echo "No changes in the Python bindings/Python code detected: skipping tests."
       fi
   needs:
-    # restore Python virtual env from cache (job:configure artifacts) (Dune 2.9)
     - job: configure
       artifacts: true
     - job: select tests
