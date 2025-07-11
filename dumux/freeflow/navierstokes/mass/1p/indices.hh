@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesIndices
+ * \copydoc Dumux::NavierStokesMassOnePIndices
  */
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MASS_1P_INDICES_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_MASS_1P_INDICES_HH
