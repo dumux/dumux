@@ -81,7 +81,7 @@ public:
                             const GlobalPosition& normal,
                             const Element& element,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices,
+                            std::array<LocalIndexType, 2>&& scvIndices,
                             bool boundary = false)
     : center_(Dumux::center(corners))
     , unitOuterNormal_(normal)
@@ -103,7 +103,7 @@ public:
                             const Intersection& intersection,
                             LocalIndexType indexInIntersection,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices,
+                            std::array<LocalIndexType, 2>&& scvIndices,
                             bool boundary = false)
     : center_(Dumux::center(corners))
     , unitOuterNormal_(normal)
@@ -184,7 +184,7 @@ private:
     GlobalPosition unitOuterNormal_;
     Scalar area_;
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
+    std::array<LocalIndexType, 2> scvIndices_;
     bool boundary_;
     BoundaryFlag boundaryFlag_;
 };

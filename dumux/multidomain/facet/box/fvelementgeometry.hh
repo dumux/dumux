@@ -391,8 +391,10 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                         static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::array<LocalIndexType, 2> localScvIndices{{
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))
+            }};
 
             // create the sub-control volume face
             scvfs_.emplace_back(geometryHelper,
@@ -429,7 +431,9 @@ private:
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
                     // find the inside scv this scvf is belonging to (localIdx = element local vertex index)
-                    std::vector<LocalIndexType> localScvIndices = {vIndicesLocal[isScvfLocalIdx], vIndicesLocal[isScvfLocalIdx]};
+                    std::array<LocalIndexType, 2> localScvIndices{{
+                        vIndicesLocal[isScvfLocalIdx], vIndicesLocal[isScvfLocalIdx]
+                    }};
 
                     // create the sub-control volume face
                     scvfs_.emplace_back(geometryHelper,
