@@ -121,8 +121,6 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template<class FacetGridView, class CodimOneGridAdapter>
@@ -131,6 +129,7 @@ public:
                                    const CodimOneGridAdapter& codimOneGridAdapter,
                                    bool verbose = false)
     : ParentType(gridView)
+    , cache_(*this)
     {
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
@@ -194,14 +193,6 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
-    //! Get the local scvs for an element
-    const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
-    { return scvs_[eIdx]; }
-
-    //! Get the local scvfs for an element
-    const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
-    { return scvfs_[eIdx]; }
-
     //! If a d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -218,7 +209,54 @@ public:
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxFacetCouplingFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
 private:
+    class BoxFacetCouplingGridGeometryCache
+    {
+        friend class BoxFacetCouplingFVGridGeometry;
+    public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
+
+        explicit BoxFacetCouplingGridGeometryCache(const BoxFacetCouplingFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxFacetCouplingFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+        //! Get the global sub control volume indices of an element
+        const std::vector<SubControlVolume>& scvs(GridIndexType eIdx) const
+        { return scvs_[eIdx]; }
+
+        //! Get the global sub control volume face indices of an element
+        const std::vector<SubControlVolumeFace>& scvfs(GridIndexType eIdx) const
+        { return scvfs_[eIdx]; }
+
+
+    private:
+        void clear_()
+        {
+            scvs_.clear();
+            scvfs_.clear();
+        }
+
+        std::vector<std::vector<SubControlVolume>> scvs_;
+        std::vector<std::vector<SubControlVolumeFace>> scvfs_;
+
+        const BoxFacetCouplingFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxFacetCouplingGridGeometryCache;
+
+private:
+    using GeometryHelper = typename Cache::GeometryHelper;
 
     template<class FacetGridView, class CodimOneGridAdapter>
     void update_(const FacetGridView& facetGridView,
@@ -228,13 +266,13 @@ private:
         // enrich the vertex mapper subject to the provided facet grid
         this->vertexMapper().enrich(facetGridView, codimOneGridAdapter, verbose);
 
+        cache_.clear_();
+
         // resize containers
         const auto numDof = numDofs();
         const auto numElements = this->gridView().size(0);
-        scvs_.clear();
-        scvfs_.clear();
-        scvs_.resize(numElements);
-        scvfs_.resize(numElements);
+        cache_.scvs_.resize(numElements);
+        cache_.scvfs_.resize(numElements);
         boundaryDofIndices_.assign(numDof, false);
         interiorBoundaryDofIndices_.assign(numDof, false);
 
@@ -258,18 +296,16 @@ private:
             GeometryHelper geometryHelper(elementGeometry);
 
             // construct the sub control volumes
-            scvs_[eIdx].clear();
-            scvs_[eIdx].reserve(elementGeometry.corners());
+            cache_.scvs_[eIdx].resize(elementGeometry.corners());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
-                scvs_[eIdx].emplace_back(geometryHelper.getScvCorners(scvLocalIdx),
-                                         scvLocalIdx,
-                                         eIdx,
-                                         this->vertexMapper().subIndex(element, scvLocalIdx, dim));
+                cache_.scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper.getScvCorners(scvLocalIdx),
+                                                                   scvLocalIdx,
+                                                                   eIdx,
+                                                                   this->vertexMapper().subIndex(element, scvLocalIdx, dim));
 
             // construct the sub control volume faces
             LocalIndexType scvfLocalIdx = 0;
-            scvfs_[eIdx].clear();
-            scvfs_[eIdx].reserve(element.subEntities(dim-1));
+            cache_.scvfs_[eIdx].resize(element.subEntities(dim-1));
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
@@ -277,11 +313,11 @@ private:
                                                              static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
                 // create the sub-control volume face
-                scvfs_[eIdx].emplace_back(geometryHelper,
-                                          element,
-                                          elementGeometry,
-                                          scvfLocalIdx,
-                                          std::move(localScvIndices));
+                cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
+                                                                         element,
+                                                                         elementGeometry,
+                                                                         scvfLocalIdx,
+                                                                         std::move(localScvIndices));
             }
 
             // construct the sub control volume faces on the domain/interior boundaries
@@ -327,14 +363,14 @@ private:
                         std::vector<LocalIndexType> localScvIndices = {vIndicesLocal[isScvfLocalIdx], vIndicesLocal[isScvfLocalIdx]};
 
                         // create the sub-control volume face
-                        scvfs_[eIdx].emplace_back(geometryHelper,
-                                                  intersection,
-                                                  isGeometry,
-                                                  isScvfLocalIdx,
-                                                  scvfLocalIdx,
-                                                  std::move(localScvIndices),
-                                                  boundary,
-                                                  isOnFacet);
+                        cache_.scvfs_[eIdx].emplace_back(geometryHelper,
+                                                         intersection,
+                                                         isGeometry,
+                                                         isScvfLocalIdx,
+                                                         scvfLocalIdx,
+                                                         std::move(localScvIndices),
+                                                         boundary,
+                                                         isOnFacet);
 
                         // Mark vertices to be on domain and/or interior boundary
                         const auto dofIndex = this->vertexMapper().subIndex(element, vIndicesLocal[isScvfLocalIdx], dim);
@@ -351,9 +387,6 @@ private:
 
     const FeCache feCache_;
 
-    std::vector<std::vector<SubControlVolume>> scvs_;
-    std::vector<std::vector<SubControlVolumeFace>> scvfs_;
-
     // TODO do we need those?
     std::size_t numScv_;
     std::size_t numScvf_;
@@ -362,6 +395,8 @@ private:
     // vertices on domain/interior boundaries
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> interiorBoundaryDofIndices_;
+
+    Cache cache_;
 };
 
 /*!
@@ -406,8 +441,6 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     //! export the grid view type
     using GridView = GV;
-    //! export the geometry helper type
-    using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
 
     //! Constructor
     template<class FacetGridView, class CodimOneGridAdapter>
@@ -417,6 +450,7 @@ public:
                                    bool verbose = false)
     : ParentType(gridView)
     , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    , cache_(*this)
     {
         update_(facetGridView, codimOneGridAdapter, verbose);
     }
@@ -502,6 +536,35 @@ public:
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
+
+    //! local view of this object (constructed with the internal cache)
+    friend inline LocalView localView(const BoxFacetCouplingFVGridGeometry& gg)
+    { return { gg.cache_ }; }
+
+private:
+
+    class BoxFacetCouplingGridGeometryCache
+    {
+        friend class BoxFacetCouplingFVGridGeometry;
+    public:
+        //! export the geometry helper type
+        using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
+
+        explicit BoxFacetCouplingGridGeometryCache(const BoxFacetCouplingFVGridGeometry& gg)
+        : gridGeometry_(&gg)
+        {}
+
+        const BoxFacetCouplingFVGridGeometry& gridGeometry() const
+        { return *gridGeometry_; }
+
+    private:
+        const BoxFacetCouplingFVGridGeometry* gridGeometry_;
+    };
+
+public:
+    //! the cache type (only the caching implementation has this)
+    //! this alias should only be used by the local view implementation
+    using Cache = BoxFacetCouplingGridGeometryCache;
 
 private:
 
@@ -603,6 +666,8 @@ private:
     // facet mapper and markers which facets lie on interior boundaries
     typename Traits::FacetMapper facetMapper_;
     std::vector<bool> facetIsOnInteriorBoundary_;
+
+    Cache cache_;
 };
 
 } // end namespace Dumux
