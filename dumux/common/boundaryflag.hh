@@ -25,22 +25,25 @@ namespace Dumux {
 class BoundarySegmentIndexFlag
 {
 public:
+    using value_type = std::size_t;
+
     BoundarySegmentIndexFlag()
-    : flag_(std::numeric_limits<std::size_t>::max()) {}
+    : flag_(invalidFlag_) {}
 
     template<class Intersection>
     BoundarySegmentIndexFlag(const Intersection& i)
-    : flag_(std::numeric_limits<std::size_t>::max())
+    : flag_(invalidFlag_)
     {
         if (i.boundary())
             flag_ = i.boundarySegmentIndex();
     }
 
-    using value_type = std::size_t;
-
     value_type get() const { return flag_; }
 
+    operator bool() const { return flag_ != invalidFlag_; }
+
 private:
+    static constexpr value_type invalidFlag_ = std::numeric_limits<value_type>::max();
     value_type flag_;
 };
 
