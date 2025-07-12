@@ -311,8 +311,7 @@ private:
                     geometryHelper.normal(corners, localScvIndices),
                     element,
                     scvfLocalIdx,
-                    std::move(localScvIndices),
-                    false
+                    std::move(localScvIndices)
                 );
             }
 
@@ -340,8 +339,7 @@ private:
                             intersection,
                             isScvfLocalIdx,
                             scvfLocalIdx,
-                            std::move(localScvIndices),
-                            true
+                            std::move(localScvIndices)
                         );
 
                         cache_.scvfBoundaryGeometryKeys_[eIdx].emplace_back(std::array<LocalIndexType, 2>{{
