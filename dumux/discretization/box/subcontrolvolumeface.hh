@@ -80,7 +80,6 @@ public:
     BoxSubControlVolumeFace(const Corners& corners,
                             const GlobalPosition& normal,
                             const Element& element,
-                            const typename Element::Geometry& elemGeometry,
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
@@ -102,7 +101,6 @@ public:
     BoxSubControlVolumeFace(const Corners& corners,
                             const GlobalPosition& normal,
                             const Intersection& intersection,
-                            const typename Intersection::Geometry& isGeometry,
                             LocalIndexType indexInIntersection,
                             GridIndexType scvfIndex,
                             std::vector<LocalIndexType>&& scvIndices,

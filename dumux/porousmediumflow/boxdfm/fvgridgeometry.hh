@@ -293,7 +293,6 @@ private:
 
                 cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                                          element,
-                                                                         elementGeometry,
                                                                          scvfLocalIdx,
                                                                          std::move(localScvIndices));
             }
@@ -335,7 +334,6 @@ private:
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
                         cache_.scvfs_[eIdx].emplace_back(geometryHelper,
                                                          intersection,
-                                                         isGeometry,
                                                          isScvfLocalIdx,
                                                          scvfLocalIdx++,
                                                          std::move(localScvIndices));
@@ -395,7 +393,6 @@ private:
                             numScvf_++;
                             cache_.scvfs_[eIdx].emplace_back(geometryHelper,
                                                              intersection,
-                                                             isGeometry,
                                                              edgeIdx,
                                                              scvfLocalIdx++,
                                                              std::move(localScvIndices),
@@ -418,7 +415,6 @@ private:
                         numScvf_++;
                         cache_.scvfs_[eIdx].emplace_back(geometryHelper,
                                                          intersection,
-                                                         isGeometry,
                                                          /*idxOnIntersection*/0,
                                                          scvfLocalIdx++,
                                                          std::move(localScvIndices),

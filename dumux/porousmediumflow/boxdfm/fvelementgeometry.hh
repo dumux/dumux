@@ -497,7 +497,6 @@ private:
 
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                         element,
-                                                        elementGeometry,
                                                         scvfLocalIdx,
                                                         std::move(localScvIndices));
         }
@@ -537,7 +536,6 @@ private:
 
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
-                                        isGeometry,
                                         isScvfLocalIdx,
                                         scvfLocalIdx,
                                         std::move(localScvIndices));
@@ -582,7 +580,6 @@ private:
                         // add scvf
                         scvfs_.emplace_back(geometryHelper,
                                             intersection,
-                                            isGeometry,
                                             edgeIdx,
                                             scvfLocalIdx++,
                                             std::move(localScvIndices),
@@ -604,7 +601,6 @@ private:
                     // add scvf
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
-                                        isGeometry,
                                         /*idxOnIntersection*/0,
                                         scvfLocalIdx++,
                                         std::move(localScvIndices),

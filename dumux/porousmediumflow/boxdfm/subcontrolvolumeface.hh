@@ -83,7 +83,6 @@ public:
     template<class GeometryHelper, class Element>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Element& element,
-                               const typename Element::Geometry& elemGeometry,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices)
     : center_(0.0)
@@ -110,7 +109,6 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Intersection& intersection,
-                               const typename Intersection::Geometry& isGeometry,
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices)
@@ -137,7 +135,6 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Intersection& intersection,
-                               const typename Intersection::Geometry& isGeometry,
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
                                std::vector<LocalIndexType>&& scvIndices,

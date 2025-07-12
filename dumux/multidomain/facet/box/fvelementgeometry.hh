@@ -397,7 +397,6 @@ private:
             // create the sub-control volume face
             scvfs_.emplace_back(geometryHelper,
                                 element,
-                                elementGeometry,
                                 scvfLocalIdx,
                                 std::move(localScvIndices));
         }
@@ -435,7 +434,6 @@ private:
                     // create the sub-control volume face
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
-                                        isGeometry,
                                         isScvfLocalIdx,
                                         scvfLocalIdx,
                                         std::move(localScvIndices),
