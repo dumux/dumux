@@ -308,7 +308,6 @@ private:
                     corners,
                     geometryHelper.normal(corners, localScvIndices),
                     element,
-                    elementGeometry,
                     scvfLocalIdx,
                     std::move(localScvIndices),
                     false
@@ -337,7 +336,6 @@ private:
                             geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
                             intersection.centerUnitOuterNormal(),
                             intersection,
-                            isGeometry,
                             isScvfLocalIdx,
                             scvfLocalIdx,
                             std::move(localScvIndices),

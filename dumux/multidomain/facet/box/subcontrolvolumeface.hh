@@ -57,7 +57,6 @@ public:
     template<class GeometryHelper, class Element>
     BoxFacetCouplingSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                          const Element& element,
-                                         const typename Element::Geometry& elemGeometry,
                                          unsigned int scvfIndex,
                                          std::vector<LocalIndexType>&& scvIndices)
     : center_(0.0)
@@ -83,7 +82,6 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxFacetCouplingSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                          const Intersection& intersection,
-                                         const typename Intersection::Geometry& isGeometry,
                                          LocalIndexType indexInIntersection,
                                          GridIndexType scvfIndex,
                                          std::vector<LocalIndexType>&& scvIndices,
