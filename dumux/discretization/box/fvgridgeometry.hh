@@ -300,8 +300,10 @@ private:
             for (; scvfLocalIdx < element.subEntities(dim-1); ++scvfLocalIdx)
             {
                 // find the global and local scv indices this scvf is belonging to
-                std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                             static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+                std::array<LocalIndexType, 2> localScvIndices{{
+                    static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                    static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))
+                }};
 
                 const auto& corners = geometryHelper.getScvfCorners(scvfLocalIdx);
                 cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
@@ -330,7 +332,7 @@ private:
                     {
                         // find the scvs this scvf is belonging to
                         const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
-                        std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
+                        std::array<LocalIndexType, 2> localScvIndices{{insideScvIdx, insideScvIdx}};
 
                         cache_.scvfs_[eIdx].emplace_back(
                             geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),

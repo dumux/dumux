@@ -306,7 +306,7 @@ public:
 
     //! get scvf normal vector
     GlobalPosition normal(const ScvfCornerStorage& scvfCorners,
-                          const std::vector<unsigned int>& scvIndices) const
+                          const std::array<unsigned int, 2>&) const
     {
         auto normal = geo_.corner(1) - geo_.corner(0);
         normal /= normal.two_norm();
@@ -411,7 +411,7 @@ public:
     template <int w = dimWorld>
     typename std::enable_if<w == 3, GlobalPosition>::type
     normal(const ScvfCornerStorage& scvfCorners,
-           const std::vector<unsigned int>& scvIndices) const
+           const std::array<unsigned int, 2>& scvIndices) const
     {
         const auto v1 = geo_.corner(1) - geo_.corner(0);
         const auto v2 = geo_.corner(2) - geo_.corner(0);
@@ -433,7 +433,7 @@ public:
     template <int w = dimWorld>
     typename std::enable_if<w == 2, GlobalPosition>::type
     normal(const ScvfCornerStorage& scvfCorners,
-           const std::vector<unsigned int>& scvIndices) const
+           const std::array<unsigned int, 2>& scvIndices) const
     {
         //! obtain normal vector by 90° counter-clockwise rotation of t
         const auto t = scvfCorners[1] - scvfCorners[0];
@@ -569,7 +569,7 @@ public:
 
     //! get scvf normal vector
     GlobalPosition normal(const ScvfCornerStorage& p,
-                          const std::vector<unsigned int>& scvIndices) const
+                          const std::array<unsigned int, 2>& scvIndices) const
     {
         auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
         normal /= normal.two_norm();
