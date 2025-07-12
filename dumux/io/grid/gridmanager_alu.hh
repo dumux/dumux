@@ -228,10 +228,10 @@ template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRe
 class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
 {
 public:
-    BoundaryFlag() : flag_(-1) {}
+    BoundaryFlag() : flag_(invalidFlag_) {}
 
     template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1)
+    BoundaryFlag(const Intersection& i) : flag_(invalidFlag_)
     {
         if (i.boundary())
             flag_ = i.impl().boundaryId();
@@ -241,8 +241,11 @@ public:
 
     value_type get() const { return flag_; }
 
+    operator bool() const { return flag_ != invalidFlag_; }
+
 private:
-    int flag_;
+    static constexpr value_type invalidFlag_ = -1;
+    value_type flag_;
 };
 
 namespace Grid::Capabilities {
