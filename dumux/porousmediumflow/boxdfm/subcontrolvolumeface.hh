@@ -83,9 +83,8 @@ public:
     template<class GeometryHelper, class Element>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Element& element,
-                               const typename Element::Geometry& elemGeometry,
                                GridIndexType scvfIndex,
-                               std::vector<LocalIndexType>&& scvIndices)
+                               std::array<LocalIndexType, 2>&& scvIndices)
     : center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
@@ -110,10 +109,9 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Intersection& intersection,
-                               const typename Intersection::Geometry& isGeometry,
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
-                               std::vector<LocalIndexType>&& scvIndices)
+                               std::array<LocalIndexType, 2>&& scvIndices)
     : center_(0.0)
     , unitOuterNormal_(intersection.centerUnitOuterNormal())
     , scvfIndex_(scvfIndex)
@@ -137,10 +135,9 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxDfmSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                const Intersection& intersection,
-                               const typename Intersection::Geometry& isGeometry,
                                LocalIndexType indexInIntersection,
                                GridIndexType scvfIndex,
-                               std::vector<LocalIndexType>&& scvIndices,
+                               std::array<LocalIndexType, 2>&& scvIndices,
                                bool boundary)
     : center_(0.0)
     , scvfIndex_(scvfIndex)
@@ -232,7 +229,7 @@ private:
     GlobalPosition unitOuterNormal_;
     Scalar area_;
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
+    std::array<LocalIndexType, 2> scvIndices_;
     bool boundary_;
     bool isFractureScvf_;
     BoundaryFlag boundaryFlag_;

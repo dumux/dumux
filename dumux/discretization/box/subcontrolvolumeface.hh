@@ -80,15 +80,12 @@ public:
     BoxSubControlVolumeFace(const Corners& corners,
                             const GlobalPosition& normal,
                             const Element& element,
-                            const typename Element::Geometry& elemGeometry,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices,
-                            bool boundary = false)
+                            std::array<LocalIndexType, 2>&& scvIndices)
     : center_(Dumux::center(corners))
     , unitOuterNormal_(normal)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
-    , boundary_(boundary)
     , boundaryFlag_{}
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
@@ -102,16 +99,13 @@ public:
     BoxSubControlVolumeFace(const Corners& corners,
                             const GlobalPosition& normal,
                             const Intersection& intersection,
-                            const typename Intersection::Geometry& isGeometry,
                             LocalIndexType indexInIntersection,
                             GridIndexType scvfIndex,
-                            std::vector<LocalIndexType>&& scvIndices,
-                            bool boundary = false)
+                            std::array<LocalIndexType, 2>&& scvIndices)
     : center_(Dumux::center(corners))
     , unitOuterNormal_(normal)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
-    , boundary_(boundary)
     , boundaryFlag_{intersection}
     {
         area_ = Dumux::convexPolytopeVolume<dim>(
@@ -141,7 +135,7 @@ public:
     //! returns true if the sub control volume face is on the boundary
     bool boundary() const
     {
-        return boundary_;
+        return static_cast<bool>(boundaryFlag_);
     }
 
     const GlobalPosition& unitOuterNormal() const
@@ -186,8 +180,7 @@ private:
     GlobalPosition unitOuterNormal_;
     Scalar area_;
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
-    bool boundary_;
+    std::array<LocalIndexType, 2> scvIndices_;
     BoundaryFlag boundaryFlag_;
 };
 

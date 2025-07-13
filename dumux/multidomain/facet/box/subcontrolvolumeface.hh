@@ -57,9 +57,8 @@ public:
     template<class GeometryHelper, class Element>
     BoxFacetCouplingSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                          const Element& element,
-                                         const typename Element::Geometry& elemGeometry,
                                          unsigned int scvfIndex,
-                                         std::vector<LocalIndexType>&& scvIndices)
+                                         std::array<LocalIndexType, 2>&& scvIndices)
     : center_(0.0)
     , scvfIndex_(scvfIndex)
     , scvIndices_(std::move(scvIndices))
@@ -83,10 +82,9 @@ public:
     template<class GeometryHelper, class Intersection>
     BoxFacetCouplingSubControlVolumeFace(const GeometryHelper& geometryHelper,
                                          const Intersection& intersection,
-                                         const typename Intersection::Geometry& isGeometry,
                                          LocalIndexType indexInIntersection,
                                          GridIndexType scvfIndex,
-                                         std::vector<LocalIndexType>&& scvIndices,
+                                         std::array<LocalIndexType, 2>&& scvIndices,
                                          bool boundary,
                                          bool interiorBoundary)
     : center_(0.0)
@@ -183,7 +181,7 @@ private:
 
     // indices
     GridIndexType scvfIndex_;
-    std::vector<LocalIndexType> scvIndices_;
+    std::array<LocalIndexType, 2> scvIndices_;
 
     // indices valid for domain/interior boundary scvfs
     LocalIndexType facetIndex_;

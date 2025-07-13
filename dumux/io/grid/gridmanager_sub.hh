@@ -561,18 +561,21 @@ template<int dim, class HostGrid>
 class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
 {
 public:
-    BoundaryFlag() : flag_(-1) {}
+    BoundaryFlag() : flag_(invalidFlag_) {}
 
     template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(-1) {}
+    BoundaryFlag(const Intersection& i) : flag_(invalidFlag_) {}
 
     using value_type = int;
 
     value_type get() const
     { DUNE_THROW(Dune::NotImplemented, "Sub-grid doesn't implement boundary segment indices!"); }
 
+    operator bool() const { return flag_ != invalidFlag_; }
+
 private:
-    int flag_;
+    static constexpr value_type invalidFlag_ = -1;
+    value_type flag_;
 };
 
 //! SubGrid does not preserve intersection.boundary() at periodic boundaries of host grid

@@ -449,18 +449,18 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                         static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::array<LocalIndexType, 2> localScvIndices{{
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))
+            }};
 
             const auto& corners = geometryHelper.getScvfCorners(scvfLocalIdx);
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(
                 corners,
                 geometryHelper.normal(corners, localScvIndices),
                 element,
-                elementGeometry,
                 scvfLocalIdx,
-                std::move(localScvIndices),
-                false
+                std::move(localScvIndices)
             );
         }
 
@@ -476,17 +476,15 @@ private:
                 {
                     // find the scv this scvf is connected to
                     const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
-                    std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
+                    std::array<LocalIndexType, 2> localScvIndices{{insideScvIdx, insideScvIdx}};
 
                     scvfs_.emplace_back(
                         geometryHelper.getBoundaryScvfCorners(intersection.indexInInside(), isScvfLocalIdx),
                         intersection.centerUnitOuterNormal(),
                         intersection,
-                        isGeometry,
                         isScvfLocalIdx,
                         scvfLocalIdx,
-                        std::move(localScvIndices),
-                        true
+                        std::move(localScvIndices)
                     );
 
                     scvfBoundaryGeometryKeys_.emplace_back(std::array<LocalIndexType, 2>{{

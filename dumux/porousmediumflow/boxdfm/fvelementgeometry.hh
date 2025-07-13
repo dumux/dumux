@@ -492,12 +492,13 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                         static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::array<LocalIndexType, 2> localScvIndices{{
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                static_cast<LocalIndexType>(refElement.subEntity(scvfLocalIdx, dim-1, 1, dim))
+            }};
 
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                         element,
-                                                        elementGeometry,
                                                         scvfLocalIdx,
                                                         std::move(localScvIndices));
         }
@@ -533,11 +534,10 @@ private:
                 {
                     // find the scv this scvf is connected to
                     const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(refElement.subEntity(idxInInside, 1, isScvfLocalIdx, dim));
-                    std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
+                    std::array<LocalIndexType, 2> localScvIndices{{insideScvIdx, insideScvIdx}};
 
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
-                                        isGeometry,
                                         isScvfLocalIdx,
                                         scvfLocalIdx,
                                         std::move(localScvIndices));
@@ -571,8 +571,10 @@ private:
                     for (unsigned int edgeIdx = 0; edgeIdx < faceRefElement.size(1); ++edgeIdx)
                     {
                         // inside/outside scv indices in face local node numbering
-                        std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
-                                                                     static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))});
+                        std::array<LocalIndexType, 2> localScvIndices{{
+                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 0, dim-1)),
+                            static_cast<LocalIndexType>(faceRefElement.subEntity(edgeIdx, 1, 1, dim-1))
+                        }};
 
                         // add offset to get the right scv indices
                         std::for_each( localScvIndices.begin(),
@@ -582,7 +584,6 @@ private:
                         // add scvf
                         scvfs_.emplace_back(geometryHelper,
                                             intersection,
-                                            isGeometry,
                                             edgeIdx,
                                             scvfLocalIdx++,
                                             std::move(localScvIndices),
@@ -594,7 +595,7 @@ private:
                 else
                 {
                     // inside/outside scv indices in face local node numbering
-                    std::vector<LocalIndexType> localScvIndices({0, 1});
+                    std::array<LocalIndexType, 2> localScvIndices{{0, 1}};
 
                     // add offset such that the fracture scvs above are addressed
                     std::for_each( localScvIndices.begin(),
@@ -604,7 +605,6 @@ private:
                     // add scvf
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
-                                        isGeometry,
                                         /*idxOnIntersection*/0,
                                         scvfLocalIdx++,
                                         std::move(localScvIndices),
