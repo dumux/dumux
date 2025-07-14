@@ -24,6 +24,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
@@ -53,6 +54,9 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -164,7 +168,7 @@ public:
     {
         return GeometryHelper::dofPosition(this->element(), localDof.index());
     }
-    
+
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
     //! This is a free function found by means of ADL
@@ -307,6 +311,30 @@ public:
             };
         }
     }
+
+    //! Integration point data for an scv
+    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+    }
+
+    //! Integration point data for an scvf
+    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        const auto type = fvGeometry.element().type();
+        if(!scvf.boundary())
+            return IpData(GeometryHelper::localScvfCenter(type, scvf.index()), scvf.ipGlobal());
+        else
+        {
+            const auto localBoundaryIndex = scvf.index() - GeometryHelper::numInteriorScvf(type);
+            const auto& key = fvGeometry.ggCache_->scvfBoundaryGeometryKeys(fvGeometry.elementIndex())[localBoundaryIndex];
+            return IpData(GeometryHelper::localBoundaryScvfCenter(type, key[0], key[1]), scvf.ipGlobal());
+        }
+    }
+
 
 private:
     const GGCache* ggCache_;

@@ -26,6 +26,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 namespace Dumux {
 
@@ -53,6 +54,9 @@ class BoxFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -223,6 +227,29 @@ public:
             return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
     }
 
+    //! Integration point data for an scv
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+    }
+
+    //! Integration point data for an scvf
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        const auto type = fvGeometry.element().type();
+        if(!scvf.boundary())
+            return IpData(GeometryHelper::localScvfCenter(type, scvf.index()), scvf.ipGlobal());
+        else
+        {
+            const auto localBoundaryIndex = scvf.index() - GeometryHelper::numInteriorScvf(type);
+            const auto& key = fvGeometry.ggCache_->scvfBoundaryGeometryKeys(fvGeometry.elementIndex())[localBoundaryIndex];
+            return IpData(GeometryHelper::localBoundaryScvfCenter(type, key[0], key[1]), scvf.ipGlobal());
+        }
+    }
+
 private:
     const GGCache* ggCache_;
     GridIndexType eIdx_;
@@ -243,6 +270,8 @@ class BoxFVElementGeometry<GG, false>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -409,6 +438,29 @@ public:
         }
         else
             return { Dune::GeometryTypes::cube(dim-1), geometryHelper.getScvfCorners(scvf.index()) };
+    }
+
+    //! Integration point data for an scv
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+    }
+
+    //! Integration point data for an scvf
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        const auto type = fvGeometry.element().type();
+        if(!scvf.boundary())
+            return IpData(GeometryHelper::localScvfCenter(type, scvf.index()), scvf.ipGlobal());
+        else
+        {
+            const auto localBoundaryIndex = scvf.index() - GeometryHelper::numInteriorScvf(type);
+            const auto& key = fvGeometry.scvfBoundaryGeometryKeys[localBoundaryIndex];
+            return IpData(GeometryHelper::localBoundaryScvfCenter(type, key[0], key[1]), scvf.ipGlobal());
+        }
     }
 
 private:
