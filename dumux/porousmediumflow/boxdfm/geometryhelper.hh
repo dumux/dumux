@@ -116,18 +116,21 @@ public:
         // we have to use the corresponding facet geometry as the intersection geometry
         // might be rotated or flipped. This makes sure that the corners (dof location)
         // and corresponding scvfs are sorted in the same way
-        using Dune::referenceElement;
         const auto& geo = this->elementGeometry();
-        const auto type = referenceElement(geo).type(localFacetIndex, facetCodim);
+        const auto& ref = referenceElement(geo);
+        const auto type = ref.type(localFacetIndex, facetCodim);
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, [&](const auto& local){ return geo.global(local); },
+                                                                               localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, [&](const auto& local){ return geo.global(local); },
+                                                                               localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box fracture scvf geometries for dim=" << dim

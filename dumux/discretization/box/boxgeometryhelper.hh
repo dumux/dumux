@@ -23,6 +23,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/geometry/center.hh>
 
 namespace Dumux {
 
@@ -213,41 +214,40 @@ struct ScvfCorners<Dune::GeometryTypes::hexahedron>
     }};
 };
 
-// convert key array to global corner storage
-template<class S, class Geo, class KeyArray, std::size_t... I>
-S keyToCornerStorageImpl(const Geo& geo, const KeyArray& key, std::index_sequence<I...>)
+
+// convert key array to corner storage
+template<class S, class ReferenceElement, class Transformation, class KeyArray, std::size_t... I>
+S keyToCornerStorageImpl(const ReferenceElement& ref, Transformation&& trans, const KeyArray& key, std::index_sequence<I...>)
 {
-    using Dune::referenceElement;
-    const auto ref = referenceElement(geo);
     // key is a pair of a local sub-entity index (first) and the sub-entity's codim (second)
-    return { geo.global(ref.position(key[I].first, key[I].second))... };
+    return { trans(ref.position(key[I].first, key[I].second))... };
 }
 
-// convert key array to global corner storage
-template<class S, class Geo, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
-S keyToCornerStorage(const Geo& geo, const std::array<T, N>& key)
+// convert key array to corner storage
+template<class S, class ReferenceElement, class Transformation, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
+S keyToCornerStorage(const ReferenceElement& ref, Transformation&& trans, const std::array<T, N>& key)
 {
-    return keyToCornerStorageImpl<S>(geo, key, Indices{});
+    return keyToCornerStorageImpl<S>(ref, trans, key, Indices{});
 }
 
-// convert key array to global corner storage
+// convert key array to corner storage
 // for the i-th sub-entity of codim c (e.g. the i-th facet/codim-1-entity for boundaries)
-template<class S, class Geo, class KeyArray, std::size_t... I>
-S subEntityKeyToCornerStorageImpl(const Geo& geo, unsigned int i, unsigned int c, const KeyArray& key, std::index_sequence<I...>)
+template<class S, class ReferenceElement, class Transformation, class KeyArray, std::size_t... I>
+S subEntityKeyToCornerStorageImpl(const ReferenceElement& ref, Transformation&& trans,
+                                  unsigned int i, unsigned int c, const KeyArray& key, std::index_sequence<I...>)
 {
-    using Dune::referenceElement;
-    const auto ref = referenceElement(geo);
     // subEntity gives the subEntity number with respect to the codim-0 reference element
     // key is a pair of a local sub-entity index (first) and the sub-entity's codim (second) but here w.r.t. the sub-entity i/c
-    return { geo.global(ref.position(ref.subEntity(i, c, key[I].first, c+key[I].second), c+key[I].second))... };
+    return { trans(ref.position(ref.subEntity(i, c, key[I].first, c+key[I].second), c+key[I].second))... };
 }
 
-// convert key array to global corner storage
+// convert key array to corner storage
 // for the i-th sub-entity of codim c (e.g. the i-th facet/codim-1-entity for boundaries)
-template<class S, class Geo, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
-S subEntityKeyToCornerStorage(const Geo& geo, unsigned int i, unsigned int c, const std::array<T, N>& key)
+template<class S, class ReferenceElement, class Transformation, class T, std::size_t N, class Indices = std::make_index_sequence<N>>
+S subEntityKeyToCornerStorage(const ReferenceElement& ref, Transformation&& trans,
+                              unsigned int i, unsigned int c, const std::array<T, N>& key)
 {
-    return subEntityKeyToCornerStorageImpl<S>(geo, i, c, key, Indices{});
+    return subEntityKeyToCornerStorageImpl<S>(ref, trans, i, c, key, Indices{});
 }
 
 } // end namespace Detail::Box
@@ -282,8 +282,16 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
+        return getScvCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localScvIdx);
+    }
+
+    //! Create a vector with the scv corners
+    template<class Transformation>
+    static ScvCornerStorage getScvCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvIdx)
+    {
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::line>;
-        return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+        return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
     }
 
     ScvGeometry scvGeometry(unsigned int localScvIdx) const
@@ -294,8 +302,16 @@ public:
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
+        return getScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localScvfIdx);
+    }
+
+    //! Create a vector with the corners of sub control volume faces
+    template<class Transformation>
+    static ScvfCornerStorage getScvfCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvfIdx)
+    {
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::line>;
-        return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+        return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
     }
 
     //! Create the sub control volume face geometries on the boundary
@@ -303,6 +319,17 @@ public:
                                              unsigned int) const
     {
         return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    template<class Transformation>
+    static ScvfCornerStorage getBoundaryScvfCorners(Dune::GeometryType type,
+                                                    Transformation&& trans,
+                                                    unsigned int localFacetIndex,
+                                                    unsigned int indexInFacet)
+    {
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        return trans(ref.position(localFacetIndex, dim));
     }
 
     //! get scvf normal vector
@@ -320,6 +347,12 @@ public:
         return referenceElement(geo_).size(dim-1);
     }
 
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
     //! number of sub control volumes (number of vertices)
     std::size_t numScv() const
     {
@@ -329,6 +362,25 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners_(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localFacetIndex, dim);
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
@@ -358,17 +410,24 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
+        return getScvCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localScvIdx);
+    }
+
+    //! Create a vector with the scv corners
+    template<class Transformation>
+    static ScvCornerStorage getScvCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvIdx)
+    {
         // proceed according to number of corners of the element
-        const auto type = geo_.type();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -379,17 +438,24 @@ public:
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
+        return getScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localScvfIdx);
+    }
+
+    //! Create a vector with the corners of sub control volume faces
+    template<class Transformation>
+    static ScvfCornerStorage getScvfCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvfIdx)
+    {
         // proceed according to number of corners
-        const auto type = geo_.type();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
@@ -401,12 +467,23 @@ public:
     ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
                                              unsigned int indexInFacet) const
     {
+        return getBoundaryScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localFacetIndex, indexInFacet);
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    template<class Transformation>
+    static ScvfCornerStorage getBoundaryScvfCorners(Dune::GeometryType type,
+                                                    Transformation&& trans,
+                                                    unsigned int localFacetIndex,
+                                                    unsigned int indexInFacet)
+    {
         // we have to use the corresponding facet geometry as the intersection geometry
         // might be rotated or flipped. This makes sure that the corners (dof location)
         // and corresponding scvfs are sorted in the same way
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::line>;
         constexpr int facetCodim = 1;
-        return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+        return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, trans, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
     }
 
     //! get scvf normal vector for dim == 2, dimworld == 3
@@ -457,6 +534,12 @@ public:
         return referenceElement(geo_).size(dim-1);
     }
 
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
     //! number of sub control volumes (number of vertices)
     std::size_t numScv() const
     {
@@ -466,6 +549,25 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
@@ -495,21 +597,28 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
-        const auto type = geo_.type();
+        return getScvCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); }, localScvIdx);
+    }
+
+    //! Create a vector with the scv corners
+    template<class Transformation>
+    static ScvCornerStorage getScvCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvIdx)
+    {
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         if (type == Dune::GeometryTypes::tetrahedron)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::prism)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::prism>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
@@ -520,22 +629,29 @@ public:
     //! Create a vector with the scvf corners
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
+        return getScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localScvfIdx);
+    }
+
+    //! Create a vector with the scvf corners
+    template<class Transformation>
+    static ScvfCornerStorage getScvfCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvfIdx)
+    {
         // proceed according to number of corners
-        const auto type = geo_.type();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
         if (type == Dune::GeometryTypes::tetrahedron)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::prism)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::prism>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
             using Corners = Detail::Box::ScvfCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
@@ -544,30 +660,40 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(unsigned localFacetIndex,
+    ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
                                              unsigned int indexInFacet) const
+    {
+        return getBoundaryScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localFacetIndex, indexInFacet);
+    }
+
+    //! Create the sub control volume face geometries on the boundary
+    template<class Transformation>
+    static ScvfCornerStorage getBoundaryScvfCorners(Dune::GeometryType type,
+                                                    Transformation&& trans,
+                                                    unsigned localFacetIndex,
+                                                    unsigned int indexInFacet)
     {
         constexpr int facetCodim = 1;
 
         // we have to use the corresponding facet geometry as the intersection geometry
         // might be rotated or flipped. This makes sure that the corners (dof location)
         // and corresponding scvfs are sorted in the same way
-        using Dune::referenceElement;
-        const auto type = referenceElement(geo_).type(localFacetIndex, facetCodim);
-        if (type == Dune::GeometryTypes::triangle)
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        const auto facetType = ref.type(localFacetIndex, facetCodim);
+        if (facetType == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, trans, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
-        else if (type == Dune::GeometryTypes::quadrilateral)
+        else if (facetType == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::Box::ScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(geo_, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
+            return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, trans, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Box boundary scvf geometries for dim=" << dim
                                                             << " dimWorld=" << dimWorld
-                                                            << " type=" << type);
+                                                            << " type=" << facetType);
     }
 
     //! get scvf normal vector
@@ -591,6 +717,12 @@ public:
         return referenceElement(geo_).size(dim-1);
     }
 
+    //! number of interior sub control volume faces (number of edges)
+    static auto numInteriorScvf(Dune::GeometryType type)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+    }
+
     //! number of sub control volumes (number of vertices)
     std::size_t numScv() const
     {
@@ -600,6 +732,25 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry

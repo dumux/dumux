@@ -25,6 +25,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/geometry/center.hh>
 
 namespace Dumux {
 
@@ -175,6 +176,8 @@ class PQ1BubbleGeometryHelper
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
 
     PQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
@@ -185,33 +188,40 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
+        return getScvCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localScvIdx);
+    }
+
+    //! Create a vector with the scv corners
+    template<class Transformation>
+    static ScvCornerStorage getScvCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvIdx)
+    {
         // proceed according to number of corners of the element
-        const auto type = geo_.type();
-        const auto numBoxScv = boxHelper_.numScv();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        const auto numBoxScv = ref.size(dim);
         // reuse box geometry helper for the corner scvs
         if (localScvIdx < numBoxScv)
-            return boxHelper_.getScvCorners(localScvIdx);
+            return BoxHelper::getScvCorners(type, trans, localScvIdx);
 
         const auto localOverlappingScvIdx = localScvIdx-numBoxScv;
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::tetrahedron)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localOverlappingScvIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(geo_, Corners::keys[localOverlappingScvIdx]);
+            return Detail::Box::keyToCornerStorage<ScvCornerStorage>(ref, trans, Corners::keys[localOverlappingScvIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv geometries for dim=" << dim
@@ -241,33 +251,40 @@ public:
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
+        return getScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localScvfIdx);
+    }
+
+    //! Create a vector with the corners of sub control volume faces
+    template<class Transformation>
+    static ScvfCornerStorage getScvfCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvfIdx)
+    {
         // proceed according to number of corners
-        const auto type = geo_.type();
-        const auto numBoxScvf = boxHelper_.numInteriorScvf();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        const auto numBoxScvf = ref.size(dim-1);
         // reuse box geometry helper for the corner scvs
         if (localScvfIdx < numBoxScvf)
-            return boxHelper_.getScvfCorners(localScvfIdx);
+            return BoxHelper::getScvfCorners(type, trans, localScvfIdx);
 
         const auto localOverlappingScvfIdx = localScvfIdx-numBoxScvf;
         if (type == Dune::GeometryTypes::triangle)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::triangle>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::quadrilateral)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::quadrilateral>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::tetrahedron)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::tetrahedron>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localOverlappingScvfIdx]);
         }
         else if (type == Dune::GeometryTypes::hexahedron)
         {
             using Corners = Detail::PQ1Bubble::OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>;
-            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(geo_, Corners::keys[localOverlappingScvfIdx]);
+            return Detail::Box::keyToCornerStorage<ScvfCornerStorage>(ref, trans, Corners::keys[localOverlappingScvfIdx]);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scvf geometries for dim=" << dim
@@ -335,7 +352,7 @@ public:
     //! number of interior sub control volume faces
     static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim-1) + Dune::referenceElement<Scalar, dim>(type).size(dim);
+        return BoxHelper::numInteriorScvf(type) + Dune::referenceElement<Scalar, dim>(type).size(dim);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
@@ -413,6 +430,13 @@ public:
             return geo_.center();
     }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
         const auto numEdges = referenceElement(geo_).size(dim-1);
@@ -456,6 +480,18 @@ public:
             return true;
     }
 
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(BoxHelper::getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
+
 private:
     Scalar octahedronVolume_(const ScvCornerStorage& p) const
     {
@@ -467,7 +503,7 @@ private:
     }
 
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
-    Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
+    BoxHelper boxHelper_;
 };
 
 template <class GridView, class ScvType, class ScvfType>
@@ -484,6 +520,8 @@ class HybridPQ1BubbleGeometryHelper
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
 
     HybridPQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
@@ -494,11 +532,19 @@ public:
     //! Create a vector with the scv corners
     ScvCornerStorage getScvCorners(unsigned int localScvIdx) const
     {
+        return getScvCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localScvIdx);
+    }
+
+    //! Create a vector with the scv corners
+    template<class Transformation>
+    static ScvCornerStorage getScvCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvIdx)
+    {
         // proceed according to number of corners of the element
-        const auto numBoxScv = boxHelper_.numScv();
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        const auto numBoxScv = ref.size(dim);
         // reuse box geometry helper for the corner scvs
         if (localScvIdx < numBoxScv)
-            return boxHelper_.getScvCorners(localScvIdx);
+            return BoxHelper::getScvCorners(type, trans, localScvIdx);
 
         DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scv corners call for hybrid dofs");
     }
@@ -517,11 +563,19 @@ public:
     //! Create a vector with the corners of sub control volume faces
     ScvfCornerStorage getScvfCorners(unsigned int localScvfIdx) const
     {
+        return getScvfCorners(geo_.type(), [&](const auto& local){ return geo_.global(local); },  localScvfIdx);
+    }
+
+    //! Create a vector with the corners of sub control volume faces
+    template<class Transformation>
+    static ScvfCornerStorage getScvfCorners(Dune::GeometryType type, Transformation&& trans, unsigned int localScvfIdx)
+    {
         // proceed according to number of corners
-        const auto numBoxScvf = boxHelper_.numInteriorScvf();
-        // reuse box geometry helper for the corner scvs
+        const auto& ref = Dune::referenceElement<Scalar, dim>(type);
+        const auto numBoxScvf = ref.size(dim-1);
+        // reuse box geometry helper for scvfs
         if (localScvfIdx < numBoxScvf)
-            return boxHelper_.getScvfCorners(localScvfIdx);
+            return BoxHelper::getScvfCorners(type, trans, localScvfIdx);
 
         DUNE_THROW(Dune::NotImplemented, "PQ1Bubble scvf corners call for hybrid dofs");
     }
@@ -586,7 +640,7 @@ public:
     //! number of interior sub control volume faces
     static auto numInteriorScvf(Dune::GeometryType type)
     {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim-1);
+        return BoxHelper::numInteriorScvf(type);
     }
 
     //! number of boundary sub control volume faces for face localFacetIndex
@@ -661,6 +715,13 @@ public:
             return geo_.center();
     }
 
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
         const auto numEdges = referenceElement(geo_).size(dim-1);
@@ -688,6 +749,18 @@ public:
 
     bool isOverlappingScv(unsigned int localScvIndex) const
     { return false; }
+
+    //! local scvf center
+    static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
+    {
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
+    }
+
+    //! local boundary scvf center
+    static Element::Geometry::LocalCoordinate localBoundaryScvfCenter(Dune::GeometryType type, unsigned int localFacetIndex, unsigned int indexInFace)
+    {
+        return Dumux::center(BoxHelper::getBoundaryScvfCorners(type, [&](const auto& local){ return local; }, localFacetIndex, indexInFace));
+    }
 
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
