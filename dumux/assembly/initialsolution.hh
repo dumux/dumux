@@ -65,12 +65,6 @@ void assembleInitialSolution(SolutionVector& sol, const Problem& problem)
         }
     }
 
-    // staggered methods
-    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::staggered)
-    {
-        problem.applyInitialSolution(sol);
-    }
-
     // default: cell-centered methods
     else
     {

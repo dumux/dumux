@@ -60,7 +60,6 @@ class FVProblem
                                      std::vector<PointSource> >;
 
     static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
-    static constexpr bool isStaggered = GridGeometry::discMethod == DiscretizationMethods::staggered;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -197,9 +196,9 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isCVFE && !isStaggered)
+        if (!isCVFE)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than CVFE or staggered method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than CVFE method.");
         }
         else
             return asImp_().dirichletAtPos(scv.dofPosition());

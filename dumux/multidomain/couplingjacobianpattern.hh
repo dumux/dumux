@@ -58,64 +58,6 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
-/*!
- * \ingroup MultiDomain
- * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
- *        for the staggered scheme (degrees of freedom on cell centers)
- */
-template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::staggered &&
-                                    GridGeometryI::isCellCenter()), int> = 0>
-Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
-                                                Dune::index_constant<i> domainI,
-                                                const GridGeometryI& gridGeometryI,
-                                                Dune::index_constant<j> domainJ,
-                                                const GridGeometryJ& gridGeometryJ)
-{
-    Dune::MatrixIndexSet pattern(gridGeometryI.numDofs(), gridGeometryJ.numDofs());
-
-    for (const auto& elementI : elements(gridGeometryI.gridView()))
-    {
-        const auto ccGlobalI = gridGeometryI.elementMapper().index(elementI);
-        for (auto&& faceGlobalJ : couplingManager.couplingStencil(domainI, elementI, domainJ))
-                pattern.add(ccGlobalI, faceGlobalJ);
-    }
-
-    return pattern;
-}
-
-/*!
- * \ingroup MultiDomain
- * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
- *        for the staggered scheme (degrees of freedom on faces)
- */
-template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethods::staggered &&
-                                    GridGeometryI::isFace()), int> = 0>
-Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
-                                                Dune::index_constant<i> domainI,
-                                                const GridGeometryI& gridGeometryI,
-                                                Dune::index_constant<j> domainJ,
-                                                const GridGeometryJ& gridGeometryJ)
-{
-    Dune::MatrixIndexSet pattern(gridGeometryI.numDofs(), gridGeometryJ.numDofs());
-
-    auto fvGeometry = localView(gridGeometryI);
-    for (const auto& elementI : elements(gridGeometryI.gridView()))
-    {
-        fvGeometry.bindElement(elementI);
-
-        // loop over sub control faces
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            const auto faceGlobalI = scvf.dofIndex();
-            for (auto&& globalJ : couplingManager.couplingStencil(domainI, scvf, domainJ))
-                pattern.add(faceGlobalI, globalJ);
-        }
-    }
-
-    return pattern;
-}
 
 /*!
  * \ingroup MultiDomain

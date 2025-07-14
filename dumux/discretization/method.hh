@@ -109,14 +109,6 @@ using PQ1Bubble = CVFE<CVFEMethods::PQ1Bubble>;
 
 
 /*
- * \brief Staggered-grid finite volume scheme (old)
- */
-struct Staggered : public Utility::Tag<Staggered> {
-    static std::string name() { return "staggered"; }
-};
-
-
-/*
  * \brief Finite element method
  */
 struct FEM : public Utility::Tag<FEM> {
@@ -146,7 +138,6 @@ inline constexpr CCTpfa cctpfa{};
 inline constexpr CCMpfa ccmpfa{};
 inline constexpr Box box{};
 inline constexpr PQ1Bubble pq1bubble{};
-inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
 inline constexpr FCStaggered fcstaggered{};
 inline constexpr FCDiamond fcdiamond{};

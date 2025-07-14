@@ -54,52 +54,6 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 
 /*!
  * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern for the staggered method
- */
-template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethods::staggered) ), int> = 0>
-auto getJacobianPattern(const GridGeometry& gridGeometry)
-{
-    // resize the jacobian and the residual
-    const auto numDofs = gridGeometry.numDofs();
-    Dune::MatrixIndexSet pattern(numDofs, numDofs);
-
-    const auto& connectivityMap = gridGeometry.connectivityMap();
-
-    auto fvGeometry = localView(gridGeometry);
-    // evaluate the actual pattern
-    for (const auto& element : elements(gridGeometry.gridView()))
-    {
-        if(gridGeometry.isCellCenter())
-        {
-            // the global index of the element at hand
-            static constexpr auto cellCenterIdx = GridGeometry::cellCenterIdx();
-            const auto ccGlobalI = gridGeometry.elementMapper().index(element);
-            pattern.add(ccGlobalI, ccGlobalI);
-            for (auto&& ccGlobalJ : connectivityMap(cellCenterIdx, cellCenterIdx, ccGlobalI))
-                pattern.add(ccGlobalI, ccGlobalJ);
-        }
-        else
-        {
-            static constexpr auto faceIdx = GridGeometry::faceIdx();
-            fvGeometry.bindElement(element);
-
-            // loop over sub control faces
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const auto faceGlobalI = scvf.dofIndex();
-                pattern.add(faceGlobalI, faceGlobalI);
-                for (auto&& faceGlobalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
-                    pattern.add(faceGlobalI, faceGlobalJ);
-            }
-        }
-    }
-
-    return pattern;
-}
-
-/*!
- * \ingroup Assembly
  * \brief Helper function to generate Jacobian pattern for finite element scheme
  */
 template<class FEBasis>
