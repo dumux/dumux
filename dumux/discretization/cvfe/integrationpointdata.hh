@@ -39,37 +39,19 @@ private:
     GlobalPosition ipGlobal_;
 };
 
-
-/*!
- * \ingroup CVFEDiscretization
- * \brief An integration point related to an element
- */
-template<class GlobalPosition>
-class IntegrationPointDataGlobal
-{
-public:
-    IntegrationPointDataGlobal(GlobalPosition&& pos) : ipGlobal_(std::move(pos)) {}
-    IntegrationPointDataGlobal(const GlobalPosition& pos) : ipGlobal_(pos) {}
-
-    //! The global position of the quadrature point
-    const GlobalPosition& ipGlobal() const
-    { return ipGlobal_; }
-
-private:
-    GlobalPosition ipGlobal_;
-};
-
 /*!
  * \ingroup CVFEDiscretization
  * \brief An integration point related to a face of an element
  */
-template<class GlobalPosition, class LocalIndex>
-class FaceIntegrationPointDataGlobal : public IntegrationPointDataGlobal<GlobalPosition>
+template<class LocalPosition, class GlobalPosition, class LocalIndex>
+class FaceIntegrationPointData : public IntegrationPointData<LocalPosition, GlobalPosition>
 {
-    using ParentType = IntegrationPointDataGlobal<GlobalPosition>;
+    using ParentType = IntegrationPointData<LocalPosition, GlobalPosition>;
 public:
-    FaceIntegrationPointDataGlobal(GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index) : ParentType(pos), normal_(std::move(n)), scvfIndex_(index) {}
-    FaceIntegrationPointDataGlobal(const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index) : ParentType(pos), normal_(n), scvfIndex_(index) {}
+    FaceIntegrationPointData(GlobalPosition&& localPos, GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index)
+    : ParentType(localPos, pos), normal_(std::move(n)), scvfIndex_(index) {}
+    FaceIntegrationPointData(const GlobalPosition& localPos, const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index)
+    : ParentType(localPos, pos), normal_(n), scvfIndex_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const
