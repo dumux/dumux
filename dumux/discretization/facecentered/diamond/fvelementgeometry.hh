@@ -225,16 +225,6 @@ public:
         return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
     }
 
-    //! Integration point data for an scvf
-    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
-    {
-        const auto type = fvGeometry.element().type();
-        if(!scvf.boundary())
-            return IpData(GeometryHelper::localScvfCenter(type, scvf.index()), scvf.ipGlobal());
-        else
-            return IpData(GeometryHelper::localBoundaryScvfCenter(type, scvf.insideScvIdx()), scvf.ipGlobal());
-    }
-
 private:
     std::optional<Element> element_;
     GridIndexType eIdx_;
