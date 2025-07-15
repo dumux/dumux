@@ -13,7 +13,6 @@
 #define DUMUX_NAVIERSTOKES_MASS_1PNC_IO_FIELDS_HH
 
 #include <dumux/io/name.hh>
-#include <dumux/freeflow/navierstokes/iofields.hh>
 
 namespace Dumux {
 
@@ -50,10 +49,10 @@ struct NavierStokesMassOnePNCIOFields
     template <class ModelTraits, class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        // priVars: v_0, ..., v_dim-1, p, x_0, ..., x_numComp-1, otherPv ..., T
-        if (pvIdx > ModelTraits::dim() && pvIdx < ModelTraits::dim() + ModelTraits::numFluidComponents())
-            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - ModelTraits::dim())
-                                           : IOName::massFraction<FluidSystem>(0, pvIdx - ModelTraits::dim());
+        // priVars: p, x_0, ..., x_numComp-1, otherPv ..., T
+        if (pvIdx > 0 && pvIdx < ModelTraits::numFluidComponents() + 1)
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - 1)
+                                           : IOName::massFraction<FluidSystem>(0, pvIdx - 1);
         else
             return BaseOutputFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
 

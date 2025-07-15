@@ -207,7 +207,7 @@ public:
 
 //! The specific I/O fields
 // template<class TypeTag>
-// struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields; };
+// struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesMomentumIOFields; };
 
 }
 // }
