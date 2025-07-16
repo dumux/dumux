@@ -136,8 +136,48 @@ using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Deta
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
+/*!
+ * \ingroup Parallel
+ * \brief A data handle class to exchange primary variable state entries of a vector
+ */
+template<class Mapper, class Vector, int entityCodim,
+         class ScatterOperator, class DataT = typename Vector::value_type>
+class VCHPRvar
+  : public VectorCommDataHandle<Mapper, Vector, entityCodim, ScatterOperator, DataT>
+{
+public:
+  //! export type of data for message buffer
+  using DataType = DataT;
+  using ParentType = VectorCommDataHandle<Mapper, Vector, entityCodim, ScatterOperator, DataT>;
+
+  VCHPRvar(const Mapper& mapper, Vector& vector)
+  : ParentType::mapper_(mapper), ParentType::vector_(vector)
+  {}
+
+  //! pack data from user to message buffer
+  template<class MessageBuffer, class Entity>
+  void gather(MessageBuffer& buff, const Entity& entity) const
+  { buff.write(vector_[mapper_.index(entity)]); }
+
+  /*!
+   * \brief unpack data from message buffer to user
+   * \note n is the number of objects sent by the sender
+   */
+  template<class MessageBuffer, class Entity>
+  void scatter(MessageBuffer& buff, const Entity& entity, std::size_t n)
+  {
+      DataType x;
+      buff.read(x);
+      ScatterOperator::apply(vector_[mapper_.index(entity)], x.state());
+  }
+
+protected:
+  const Mapper& mapper_;
+  Vector& vector_;
+};
+
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
-using VectorCommDataHandlePrivarState = VectorCommDataHandle<Mapper, Vector, codim, Detail::PrivarState, DataType>;
+using VectorCommDataHandlePrivarState = VCHPRvar<Mapper, Vector, codim, Detail::PrivarState, DataType>;
 } // end namespace Dumux
 
 #endif
