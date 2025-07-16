@@ -43,5 +43,8 @@
 #include <dumux/flux/cctpfa/fickslaw.hh>
 #include <dumux/flux/ccmpfa/fickslaw.hh>
 #include <dumux/flux/box/fickslaw.hh>
+#if HAVE_DUMUX_OLD_STAGGERED
+#include <dumux/flux/staggered/freeflow/fickslaw.hh>
+#endif
 
 #endif

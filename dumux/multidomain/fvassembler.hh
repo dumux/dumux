@@ -39,8 +39,14 @@
 #include "assemblerview.hh"
 
 #include <dumux/discretization/method.hh>
+#if HAVE_DUMUX_OLD_STAGGERED
+#include <dumux/multidomain/subdomainstaggeredlocalassembler.hh>
+#endif
 
 namespace Dumux {
+
+template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM, bool implicit>
+class SubDomainStaggeredLocalAssembler;
 
 namespace Grid::Capabilities {
 
@@ -158,6 +164,12 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
         using type = SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
+    {
+        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
