@@ -15,9 +15,6 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/facecentered/staggered/elementsolution.hh>
-#if HAVE_DUMUX_OLD_STAGGERED
-#include <dumux/discretization/staggered/elementsolution.hh>
-#endif
 
 namespace Dumux {
 

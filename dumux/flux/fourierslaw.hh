@@ -31,8 +31,5 @@
 #include <dumux/flux/cctpfa/fourierslaw.hh>
 #include <dumux/flux/ccmpfa/fourierslaw.hh>
 #include <dumux/flux/box/fourierslaw.hh>
-#if HAVE_DUMUX_OLD_STAGGERED
-#include <dumux/flux/staggered/freeflow/fourierslaw.hh>
-#endif
 
 #endif
