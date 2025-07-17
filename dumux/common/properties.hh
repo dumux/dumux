@@ -122,25 +122,6 @@ DUMUX_DEFINE_PROPERTY(OnlyGasPhaseCanDisappear)       //!< reduces the phasestat
 DUMUX_DEFINE_PROPERTY(StressType)                     //!< The type used for the evaluation of stress tensors and forces
 
 /////////////////////////////////////////////////////////////
-// Properties used by the staggered-grid discretization method
-/////////////////////////////////////////////////////////////
-DUMUX_DEFINE_PROPERTY(NumEqCellCenter)                  //!< The number of equations for cell-centered dofs
-DUMUX_DEFINE_PROPERTY(NumEqFace)                        //!< The number of equations for face dofs
-DUMUX_DEFINE_PROPERTY(CellCenterSolutionVector)         //!< The solution vector type for cell-centered dofs
-DUMUX_DEFINE_PROPERTY(FaceSolutionVector)               //!< The solution vector type for face dofs
-DUMUX_DEFINE_PROPERTY(GridFaceVariables)                //!< Global vector containing face-related data
-DUMUX_DEFINE_PROPERTY(CellCenterPrimaryVariables)       //!< The primary variables container type for cell-centered dofs
-DUMUX_DEFINE_PROPERTY(FacePrimaryVariables)             //!< The primary variables container type for face dofs
-DUMUX_DEFINE_PROPERTY(IntersectionMapper)               //!< Specifies the intersection mapper
-DUMUX_DEFINE_PROPERTY(StaggeredPrimaryVariables)        //!< The hybrid primary variables container type
-DUMUX_DEFINE_PROPERTY(BaseEpsilon)                      //!< A base epsilon for numerical differentiation, can contain multiple values
-DUMUX_DEFINE_PROPERTY(FaceVariables)                    //!< Class containing local face-related data
-DUMUX_DEFINE_PROPERTY(BoundaryValues)                   //!< Class containing local boundary data
-DUMUX_DEFINE_PROPERTY(StaggeredFaceSolution)            //!< A vector containing the solution for a face (similar to ElementSolution)
-DUMUX_DEFINE_PROPERTY(EnableGridFaceVariablesCache)     //!< Switch on/off caching of face variables
-DUMUX_DEFINE_PROPERTY(UpwindSchemeOrder)                //!< Specifies the order of the upwinding scheme (1 == first order, 2 == second order(tvd methods))
-
-/////////////////////////////////////////////////////////////
 // Properties used by the mpnc model
 /////////////////////////////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(PressureFormulation)              //! the formulation of the pressure e.g most wetting first
