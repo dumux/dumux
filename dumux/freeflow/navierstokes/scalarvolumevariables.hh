@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesVolumeVariables
+ * \copydoc Dumux::NavierStokesScalarConservationModelVolumeVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_SCALAR_CONSERVATION_MODEL_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_SCALAR_CONSERVATION_MODEL_VOLUME_VARIABLES_HH

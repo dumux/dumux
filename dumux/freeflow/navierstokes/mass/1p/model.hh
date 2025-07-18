@@ -40,8 +40,6 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 
 #include <dumux/freeflow/spatialparams.hh>
-#include <dumux/freeflow/navierstokes/iofields.hh>
-#include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 
@@ -51,6 +49,7 @@
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "indices.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -78,13 +77,6 @@ struct NavierStokesMassOnePModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
 
     //! the indices
     using Indices = NavierStokesMassOnePIndices;
@@ -191,7 +183,7 @@ public:
 
 // ! The specific I/O fields
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::NavierStokesMassOneP> { using type = NavierStokesIOFields; };
+struct IOFields<TypeTag, TTag::NavierStokesMassOneP> { using type = NavierStokesMassOnePIOFields; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::NavierStokesMassOneP>
@@ -215,7 +207,7 @@ struct SpatialParams<TypeTag, TTag::NavierStokesMassOneP>
 //! Add temperature to the output
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOnePNI>
-{ using type = NavierStokesEnergyIOFields<NavierStokesIOFields>; };
+{ using type = NavierStokesEnergyIOFields<NavierStokesMassOnePIOFields>; };
 
 //! The model traits of the non-isothermal model
 template<class TypeTag>

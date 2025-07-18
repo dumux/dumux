@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesFluxVariablesImpl
+ * \copydoc Dumux::NavierStokesMomentumFluxVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_FLUXVARIABLES_HH
@@ -23,7 +23,6 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 
-// #include "staggeredupwindhelper.hh"
 #include "velocitygradients.hh"
 
 namespace Dumux {

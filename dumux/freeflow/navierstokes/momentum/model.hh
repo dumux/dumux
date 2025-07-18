@@ -39,15 +39,11 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/freeflow/properties.hh>
-#include <dumux/freeflow/nonisothermal/model.hh>
-#include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "indices.hh"
-// #include "iofields.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
@@ -85,13 +81,6 @@ struct NavierStokesMomentumModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
 
     //! the indices
     using Indices = NavierStokesMomentumIndices<dim()>;
@@ -218,7 +207,7 @@ public:
 
 //! The specific I/O fields
 // template<class TypeTag>
-// struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesIOFields; };
+// struct IOFields<TypeTag, TTag::NavierStokes> { using type = NavierStokesMomentumIOFields; };
 
 }
 // }

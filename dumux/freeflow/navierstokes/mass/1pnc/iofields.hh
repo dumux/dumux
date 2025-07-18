@@ -7,13 +7,12 @@
 /*!
  * \file
  * \ingroup FreeflowNCModel
- * \copydoc Dumux::FreeflowNCIOFields
+ * \copydoc Dumux::NavierStokesMassOnePNCIOFields
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_1PNC_IO_FIELDS_HH
 #define DUMUX_NAVIERSTOKES_MASS_1PNC_IO_FIELDS_HH
 
 #include <dumux/io/name.hh>
-#include <dumux/freeflow/navierstokes/iofields.hh>
 
 namespace Dumux {
 
@@ -21,7 +20,7 @@ namespace Dumux {
  * \ingroup FreeflowNCModel
  * \brief Adds I/O fields specific to the FreeflowNC model
  */
-template<class BaseOutputFields, bool turbulenceModel = false>
+template<class BaseOutputFields>
 struct NavierStokesMassOnePNCIOFields
 {
     //! Initialize the FreeflowNC specific output fields.
@@ -42,10 +41,6 @@ struct NavierStokesMassOnePNCIOFields
             if (j != FluidSystem::getMainComponent(0))
             {
                 out.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(0,0, j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
-
-                // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
-                if (turbulenceModel)
-                    out.addVolumeVariable([j](const auto& v){ return getEffectiveDiffusionCoefficient_(v, 0, j) - v.diffusionCoefficient(0,0, j); }, "D_t^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
             }
         }
     }
@@ -54,10 +49,10 @@ struct NavierStokesMassOnePNCIOFields
     template <class ModelTraits, class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        // priVars: v_0, ..., v_dim-1, p, x_0, ..., x_numComp-1, otherPv ..., T
-        if (pvIdx > ModelTraits::dim() && pvIdx < ModelTraits::dim() + ModelTraits::numFluidComponents())
-            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - ModelTraits::dim())
-                                           : IOName::massFraction<FluidSystem>(0, pvIdx - ModelTraits::dim());
+        // priVars: p, x_0, ..., x_numComp-1, otherPv ..., T
+        if (pvIdx > 0 && pvIdx < ModelTraits::numFluidComponents() + 1)
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - 1)
+                                           : IOName::massFraction<FluidSystem>(0, pvIdx - 1);
         else
             return BaseOutputFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
 

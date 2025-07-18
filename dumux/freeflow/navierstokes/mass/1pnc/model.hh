@@ -40,8 +40,7 @@
 #include <dumux/common/properties/model.hh>
 
 #include <dumux/freeflow/spatialparams.hh>
-#include <dumux/freeflow/turbulencemodel.hh>
-#include "dumux/freeflow/navierstokes/iofields.hh"
+#include <dumux/freeflow/navierstokes/mass/1p/iofields.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 #include <dumux/freeflow/navierstokes/scalarfluxvariablescachefiller.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -89,13 +88,6 @@ struct NavierStokesMassOnePNCModelTraits
 
     //! Index of of a component balance eq. to be replaced by a total mass/mole balance
     static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
-
-    //! The model does not include a turbulence model
-    static constexpr bool usesTurbulenceModel() { return false; }
-
-    //! return the type of turbulence model used
-    static constexpr auto turbulenceModel()
-    { return TurbulenceModel::none; }
 
     //! the indices
     using Indices = NavierStokesMassOnePNCIndices;
@@ -270,7 +262,7 @@ struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOnePNC>
 
 // ! The specific I/O fields
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::NavierStokesMassOnePNC> { using type = NavierStokesMassOnePNCIOFields<NavierStokesIOFields>; };
+struct IOFields<TypeTag, TTag::NavierStokesMassOnePNC> { using type = NavierStokesMassOnePNCIOFields<NavierStokesMassOnePIOFields>; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::NavierStokesMassOnePNC>
@@ -295,7 +287,7 @@ struct SpatialParams<TypeTag, TTag::NavierStokesMassOnePNC>
 
 //! Add temperature to the output
 template<class TypeTag>
-struct IOFields<TypeTag, TTag::NavierStokesMassOnePNCNI> { using type = NavierStokesEnergyIOFields<NavierStokesMassOnePNCIOFields<NavierStokesIOFields>>; };
+struct IOFields<TypeTag, TTag::NavierStokesMassOnePNCNI> { using type = NavierStokesEnergyIOFields<NavierStokesMassOnePNCIOFields<NavierStokesMassOnePIOFields>>; };
 
 //! The model traits of the non-isothermal model
 template<class TypeTag>

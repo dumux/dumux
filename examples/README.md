@@ -177,7 +177,7 @@ __You learn how to__
 * set outflow boundary conditions in the free-flow context
 
 __Model equations:__ 2D Stokes equations (`NavierStokes`)<br />
-__Discretization method:__ Finite volumes with staggered grid arrangement (`StaggeredFreeFlowModel`)
+__Discretization method:__ Finite volumes with face-centered degrees of freedom of the staggered grid arrangement (`FaceCenteredStaggeredModel`)
 
 </td>
 <td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/freeflowchannel/README.md?ref_type=heads">

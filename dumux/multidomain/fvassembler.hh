@@ -35,13 +35,18 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomaincvfelocalassembler.hh"
-#include "subdomainstaggeredlocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
 
 #include <dumux/discretization/method.hh>
+#if HAVE_DUMUX_OLD_STAGGERED
+#include <dumux/multidomain/subdomainstaggeredlocalassembler.hh>
+#endif
 
 namespace Dumux {
+
+template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM, bool implicit>
+class SubDomainStaggeredLocalAssembler;
 
 namespace Grid::Capabilities {
 
