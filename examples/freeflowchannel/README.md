@@ -88,7 +88,7 @@ the following to inherit the respective properties and subsequently specialize t
 for our type tags, which we want to modify or for which no meaningful default can be set.
 
 ```cpp
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -512,7 +512,7 @@ The following class provides a convenient way of writing of dumux simulation res
 
 ```cpp
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 ```
 
 The gridmanager constructs a grid from the information in the input or grid file.

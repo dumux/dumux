@@ -34,7 +34,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/vtk/intersectionwriter.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectionentityset.hh>

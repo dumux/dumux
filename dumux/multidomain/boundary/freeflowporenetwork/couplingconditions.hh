@@ -22,7 +22,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/flux/fickslaw_fwd.hh>
-#include <dumux/freeflow/navierstokes/momentum/velocitygradients.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/velocitygradients.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/traits.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/indexhelper.hh>
 
@@ -68,7 +68,7 @@ class FreeFlowPoreNetworkCouplingConditionsImplementationBase
     template<std::size_t id> using GlobalPosition = typename Element<id>::Geometry::GlobalCoordinate;
     template<std::size_t id> using NumEqVector = typename Problem<id>::Traits::NumEqVector;
 
-    using VelocityGradients = StaggeredVelocityGradients;
+    using VelocityGradients = FCStaggeredVelocityGradients;
 
 public:
     static constexpr auto freeFlowMomentumIndex = CouplingManager::freeFlowMomentumIndex;

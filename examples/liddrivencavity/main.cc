@@ -43,7 +43,7 @@
 
 // This class contains functionality for VTK output for models using the staggered finite volume scheme.
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 // We include the problem header used for this simulation.
 #include "properties.hh"

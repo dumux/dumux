@@ -27,7 +27,7 @@ for which we then specialize properties (compile time options) to the needs of t
 The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
 
 ```cpp
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -397,7 +397,7 @@ This class contains functionality for VTK output for models using the staggered 
 
 ```cpp
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 ```
 
 We include the problem header used for this simulation.
