@@ -7,10 +7,10 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesMomentumIndices
+ * \copydoc Dumux::NavierStokesMomentumFCStaggeredIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_INDICES_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_INDICES_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_INDICES_HH
 
 namespace Dumux {
 
@@ -21,7 +21,7 @@ namespace Dumux {
  * \tparam dimension The dimension of the problem
  */
 template <int dimension>
-struct NavierStokesMomentumIndices // TODO specialize for staggered / diamond / etc
+struct NavierStokesMomentumFCStaggeredIndices // TODO specialize for staggered / diamond / etc
 {
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
     static constexpr int dimYIdx = 1; //!< Index of the y-component of a vector of size dim

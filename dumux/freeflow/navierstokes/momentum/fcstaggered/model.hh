@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_MODEL_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_MODEL_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_MODEL_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_MODEL_HH
 
 #include <dune/common/fvector.hh>
 
@@ -83,7 +83,7 @@ struct NavierStokesMomentumModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     //! the indices
-    using Indices = NavierStokesMomentumIndices<dim()>;
+    using Indices = NavierStokesMomentumFCStaggeredIndices<dim()>;
 };
 
 /*!
@@ -99,7 +99,7 @@ template<class PV,
          class FSY,
          class FST,
          class MT>
-struct NavierStokesMomentumVolumeVariablesTraits
+struct NavierStokesMomentumFCStaggeredVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
@@ -158,7 +158,7 @@ public:
 
 //! The local residual
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumResidual<TypeTag>; };
+struct LocalResidual<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumFCStaggeredResidual<TypeTag>; };
 
 //! Set the volume variables property
 template<class TypeTag>
@@ -174,14 +174,14 @@ private:
     static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
     static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
-    using Traits = NavierStokesMomentumVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using Traits = NavierStokesMomentumFCStaggeredVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
-    using type = NavierStokesMomentumVolumeVariables<Traits>;
+    using type = NavierStokesMomentumFCStaggeredVolumeVariables<Traits>;
 };
 
 //! The flux variables
 template<class TypeTag>
-struct FluxVariables<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumFluxVariables<TypeTag>; };
+struct FluxVariables<TypeTag, TTag::NavierStokesMomentum> { using type = NavierStokesMomentumFCStaggeredFluxVariables<TypeTag>; };
 
 //! The point source
 template<class TypeTag>

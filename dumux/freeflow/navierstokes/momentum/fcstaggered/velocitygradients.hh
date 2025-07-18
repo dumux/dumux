@@ -7,10 +7,10 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::StaggeredVelocityGradients
+ * \copydoc Dumux::FCStaggeredVelocityGradients
  */
-#ifndef DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYGRADIENTS_HH
-#define DUMUX_NAVIERSTOKES_STAGGERED_VELOCITYGRADIENTS_HH
+#ifndef DUMUX_NAVIERSTOKES_FCSTAGGERED_VELOCITYGRADIENTS_HH
+#define DUMUX_NAVIERSTOKES_FCSTAGGERED_VELOCITYGRADIENTS_HH
 
 #include <optional>
 #include <dumux/common/exceptions.hh>
@@ -26,7 +26,7 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Helper class for calculating the velocity gradients for the Navier-Stokes model using the staggered grid discretization.
  */
-class StaggeredVelocityGradients
+class FCStaggeredVelocityGradients
 {
 public:
 

@@ -7,10 +7,10 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesMomentumResidual
+ * \copydoc Dumux::NavierStokesMomentumFCStaggeredResidual
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_LOCAL_RESIDUAL_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
@@ -26,7 +26,7 @@ namespace Dumux {
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
  */
 template<class TypeTag>
-class NavierStokesMomentumResidual
+class NavierStokesMomentumFCStaggeredResidual
 : public FaceCenteredLocalResidual<TypeTag>
 {
     using ParentType = FaceCenteredLocalResidual<TypeTag>;

@@ -10,8 +10,8 @@
  *
  * \copydoc Dumux::NavierStokesScalarConservationModelVolumeVariables
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_VOLUME_VARIABLES_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_VOLUME_VARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_VOLUME_VARIABLES_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_VOLUME_VARIABLES_HH
 
 
 namespace Dumux {
@@ -21,7 +21,7 @@ namespace Dumux {
  * \brief Volume variables for the single-phase Navier-Stokes model.
  */
 template <class Traits>
-class NavierStokesMomentumVolumeVariables
+class NavierStokesMomentumFCStaggeredVolumeVariables
 {
     using Scalar = typename Traits::PrimaryVariables::value_type;
 

@@ -9,15 +9,15 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesVelocityOutput
  */
-#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
-#define DUMUX_FREEFLOW_NAVIERSTOKES_VELOCITYOUTPUT_HH
+#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_VELOCITYOUTPUT_HH
+#define DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_VELOCITYOUTPUT_HH
 
 #include <type_traits>
 #include <dune/common/exceptions.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/momentum/velocityreconstruction.hh>
+#include "velocityreconstruction.hh"
 
 namespace Dumux {
 

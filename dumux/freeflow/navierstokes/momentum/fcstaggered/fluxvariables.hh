@@ -7,10 +7,10 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesMomentumFluxVariables
+ * \copydoc Dumux::NavierStokesMomentumFCStaggeredFluxVariables
  */
-#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FLUXVARIABLES_HH
-#define DUMUX_NAVIERSTOKES_MOMENTUM_FLUXVARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_FLUXVARIABLES_HH
+#define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_FLUXVARIABLES_HH
 
 #include <array>
 
@@ -29,10 +29,10 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
+ * \brief The flux variables class for the Navier-Stokes model using the fcstaggered grid discretization.
  */
 template<class TypeTag>
-class NavierStokesMomentumFluxVariables
+class NavierStokesMomentumFCStaggeredFluxVariables
 {
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -57,7 +57,7 @@ class NavierStokesMomentumFluxVariables
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
-    using VelocityGradients = StaggeredVelocityGradients;
+    using VelocityGradients = FCStaggeredVelocityGradients;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -66,7 +66,7 @@ class NavierStokesMomentumFluxVariables
 
 public:
 
-    NavierStokesMomentumFluxVariables(const Problem& problem,
+    NavierStokesMomentumFCStaggeredFluxVariables(const Problem& problem,
                                       const Element& element,
                                       const FVElementGeometry& fvGeometry,
                                       const SubControlVolumeFace& scvFace,

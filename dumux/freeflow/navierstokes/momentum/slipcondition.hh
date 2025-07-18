@@ -9,8 +9,8 @@
  * \ingroup NavierStokesModel
  * \brief Navier Stokes slip condition
  */
-#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
-#define DUMUX_FREEFLOW_NAVIERSTOKES_SLIPCONDITION_HH
+#ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_SLIPCONDITION_HH
+#define DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_SLIPCONDITION_HH
 
 #include <dune/common/fvector.hh>
 #include <dumux/common/tag.hh>
