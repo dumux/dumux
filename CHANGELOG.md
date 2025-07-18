@@ -20,6 +20,9 @@ times whenever multiple scvs were associated with the same localDof.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 
+- __FreeFlow__: Headers in the `freeflow/navierstokes/momentum` that were only related to the `fcstaggered` discretization were moved into a new subdirectory `fcstaggered`. The old headers are deprecated and will be removed after `release/3.11`. Please also note that class names were partly adapted
+to the new subdirectory.
+
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).
 
