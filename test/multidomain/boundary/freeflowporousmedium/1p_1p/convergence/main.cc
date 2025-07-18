@@ -33,7 +33,7 @@
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>

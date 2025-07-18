@@ -28,7 +28,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>

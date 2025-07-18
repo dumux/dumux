@@ -31,7 +31,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include "properties.hh"
 

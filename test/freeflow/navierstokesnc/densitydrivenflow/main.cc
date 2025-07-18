@@ -31,7 +31,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>

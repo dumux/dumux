@@ -19,7 +19,7 @@
 // [[details]] includes
 //
 // The single-phase flow Navier-Stokes equations are solved by coupling a momentum balance model to a mass balance model.
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>

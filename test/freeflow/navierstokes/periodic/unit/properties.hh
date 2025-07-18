@@ -22,7 +22,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>

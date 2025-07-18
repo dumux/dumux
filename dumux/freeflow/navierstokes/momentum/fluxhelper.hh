@@ -16,8 +16,8 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/freeflow/navierstokes/momentum/velocitygradients.hh>
-#include <dumux/freeflow/navierstokes/slipcondition.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/velocitygradients.hh>
+#include "slipcondition.hh"
 
 namespace Dumux {
 
@@ -121,11 +121,11 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
 
             // lateral face normal to boundary (integration point touches boundary)
             if (scv.boundary())
-                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
+                flux[scv.dofAxis()] -= mu * FCStaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars)
                                                * scvf.directionSign();
             // lateral face coinciding with boundary
             else if (scvf.boundary())
-                flux[scv.dofAxis()] -= mu * StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
+                flux[scv.dofAxis()] -= mu * FCStaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars)
                                               * scvf.directionSign();
 
             // advective terms
@@ -270,7 +270,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                 const Scalar velGradJI = [&]
                 {
                     if (elemVolVars.hasVolVars(orthogonalScvf.outsideScvIdx()))
-                        return StaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
+                        return FCStaggeredVelocityGradients::velocityGradJI(fvGeometry, scvf, elemVolVars);
                     else
                         return tangentialVelocityGradient;
                 }();
@@ -355,7 +355,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
                 const Scalar velGradIJ = [&]
                 {
                     if (elemVolVars.hasVolVars(scvf.outsideScvIdx()))
-                        return StaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
+                        return FCStaggeredVelocityGradients::velocityGradIJ(fvGeometry, scvf, elemVolVars);
                     else
                         return tangentialVelocityGradient;
                 }();

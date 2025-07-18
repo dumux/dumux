@@ -39,7 +39,7 @@
 
 // The following class provides a convenient way of writing of dumux simulation results to VTK format and `velocityoutput.hh` allows to additionally write out velocity data of the staggered grid.
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/freeflow/navierstokes/velocityoutput.hh>
+#include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 // The gridmanager constructs a grid from the information in the input or grid file.
 // Many different Dune grid implementations are supported, of which a list can be found
 // in `gridmanager.hh`.

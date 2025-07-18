@@ -24,7 +24,7 @@
 // required for Navier-Stokes single-phase flow simulations in DuMu<sup>x</sup>. We will use this in
 // the following to inherit the respective properties and subsequently specialize those properties
 // for our type tags, which we want to modify or for which no meaningful default can be set.
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>

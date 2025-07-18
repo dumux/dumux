@@ -18,7 +18,7 @@
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 
 #include <dumux/flux/maxwellstefanslaw.hh>
 #include <dumux/material/fluidsystems/base.hh>

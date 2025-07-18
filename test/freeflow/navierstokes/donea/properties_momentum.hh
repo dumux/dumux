@@ -35,7 +35,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
-#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
