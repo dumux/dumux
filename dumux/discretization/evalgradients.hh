@@ -33,7 +33,7 @@ namespace Detail{
  * \param geometry The element geometry
  * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
- * \param globalPos The global position
+ * \param localPos The local position
  * \param ignoreState If true, the state of primary variables is ignored
  *
  * \return Dune::FieldVector with as many entries as dimension of
@@ -41,12 +41,12 @@ namespace Detail{
  *         a GlobalCoordinate object holding the priVar gradient.
  */
 template<class Element, class GridGeometry, class CVFEElemSol>
-auto evalCVFEGradients(const Element& element,
-                       const typename Element::Geometry& geometry,
-                       const GridGeometry& gridGeometry,
-                       const CVFEElemSol& elemSol,
-                       const typename Element::Geometry::GlobalCoordinate& globalPos,
-                       bool ignoreState = false)
+auto evalCVFEGradientsAtLocalPos(const Element& element,
+                                 const typename Element::Geometry& geometry,
+                                 const GridGeometry& gridGeometry,
+                                 const CVFEElemSol& elemSol,
+                                 const typename Element::Geometry::LocalCoordinate& localPos,
+                                 bool ignoreState = false)
 {
     // determine if all states are the same at all vertices
     using HasState = decltype(isValid(Detail::hasState())(elemSol[0]));
@@ -61,7 +61,6 @@ auto evalCVFEGradients(const Element& element,
 
         // evaluate the shape function gradients at the scv center
         using ShapeJacobian = typename std::decay_t< decltype(localBasis) >::Traits::JacobianType;
-        const auto localPos = geometry.local(globalPos);
         std::vector< ShapeJacobian > shapeJacobian;
         localBasis.evaluateJacobian(localPos, shapeJacobian);
 
@@ -103,6 +102,28 @@ auto evalCVFEGradients(const Element& element,
  * \param geometry The element geometry
  * \param gridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
+ * \param localPos The local position
+ * \param ignoreState If true, the state of primary variables is ignored
+ */
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+auto evalGradientsAtLocalPos(const Element& element,
+                             const typename Element::Geometry& geometry,
+                             const typename FVElementGeometry::GridGeometry& gridGeometry,
+                             const CVFEElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
+                             const typename Element::Geometry::LocalCoordinate& localPos,
+                             bool ignoreState = false)
+{
+    return Detail::evalCVFEGradientsAtLocalPos(element, geometry, gridGeometry, elemSol, localPos, ignoreState);
+}
+
+/*!
+ * \brief Evaluates the gradient of a given CVFE element solution to a given global position.
+ * \ingroup Discretization
+ *
+ * \param element The element
+ * \param geometry The element geometry
+ * \param gridGeometry The finite volume grid geometry
+ * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \param ignoreState If true, the state of primary variables is ignored
  */
@@ -114,7 +135,8 @@ auto evalGradients(const Element& element,
                    const typename Element::Geometry::GlobalCoordinate& globalPos,
                    bool ignoreState = false)
 {
-    return Detail::evalCVFEGradients(element, geometry, gridGeometry, elemSol, globalPos, ignoreState);
+    const auto& localPos = geometry.local(globalPos);
+    return evalGradientsAtLocalPos(element, geometry, gridGeometry, elemSol, localPos, ignoreState);
 }
 
 /*!

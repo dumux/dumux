@@ -21,6 +21,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
 
 namespace Dumux {
 
@@ -45,6 +46,8 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
 
 public:
     //! export type of subcontrol volume face
@@ -211,6 +214,15 @@ public:
                 GeometryHelper(geo).getScvfCorners(scvf.index())
             };
         }
+    }
+
+    //! Integration point data for an scv
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
     }
 
 private:
