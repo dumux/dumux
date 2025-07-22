@@ -223,7 +223,6 @@ public:
             std::vector<RangeType> integralShapeFunctions(localBasis.size(), RangeType(0.0));
 
             // We apply mass lumping such that we only need to calculate the integral of basis functions
-            // such that we don't evaluate the solution but only integrate the basis functions
             const auto& geometry = element.geometry();
             const auto& quadRule = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), intOrder);
             for (const auto& quadPoint : quadRule)
