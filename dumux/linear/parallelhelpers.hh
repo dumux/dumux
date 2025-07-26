@@ -506,7 +506,7 @@ public:
                                     Dune::ForwardCommunication);
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
+            DUNE_THROW(Dune::InvalidStateException, "Cannot call makeOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
     //! \brief Make a vector consistent for non-overlapping domain decomposition methods
