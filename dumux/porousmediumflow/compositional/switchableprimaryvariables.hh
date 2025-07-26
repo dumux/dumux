@@ -52,6 +52,12 @@ public:
         stateIsSet_ = true;
     }
 
+    //! Ask if the state has been set.
+    bool stateIsSet() const
+    {
+        return stateIsSet_;
+    }
+
     //! Invalidate the state
     void invalidateState()
     {
