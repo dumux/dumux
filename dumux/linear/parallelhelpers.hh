@@ -500,6 +500,16 @@ public:
     {
         if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
         {
+            // Iterate over the gridView_ to make overlap entries 0. This is necessary to make
+            // `VectorCommDataHandleSum` work properly.
+            for (const auto& element : elements(gridView_))
+            {
+                const auto eIdx = gridView_.indexSet().index(element);
+                if (element.partitionType() == Dune::OverlapEntity)
+                {
+                    v[eIdx] = 0;
+                }
+            }
             VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
             if (gridView_.comm().size() > 1)
                 gridView_.communicate(gs, Dune::Overlap_All_Interface,
