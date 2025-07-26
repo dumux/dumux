@@ -54,17 +54,16 @@ namespace Detail {
         }
     };
 
-    // Check if state is set (indicated by a value greater than 0)
-    // If it is not set, then copy the state and from the other process
+    // Check if state is set, if it is not, then copy the state and from the other process
     struct PrivarState
     {
         template<class A,class B>
         static void apply(A& a, B& b)
         {
-            if (a<1)
-                a=b;
-            else if (b<1)
-                b=a;
+            if (a.stateIsSet() && !b.stateIsSet())
+                b.setState(a.state());
+            else if (!a.stateIsSet() && b.stateIsSet())
+                a.setState(b.state());
         }
 
     };
@@ -137,12 +136,6 @@ using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Deta
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
-/*!
- * \brief A specialized data handle in case that the primary variable states are not set on non-owned dofs.
- *        To actually use this, one has to provide a vector where for all these unset states a value below 0 is set.
- *        To check if a primary variable state is set use the function `stateIsSet()`.
- *        The `Vector` type should be of `std::vector<int>` or `std::vector<unsigned int>`.
- */
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandlePrivarState = VectorCommDataHandle<Mapper, Vector, codim, Detail::PrivarState, DataType>;
 } // end namespace Dumux
