@@ -65,6 +65,7 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
     using Map = Tpetra::Map<LocalIDType, GlobalIDType, NodeType>;
 
     const auto rank = gridGeometry.gridView().comm().rank();
+    // Obtain the DuMux mapper
     const auto& mapper = gridGeometry.dofMapper();
     std::vector<std::size_t> isOwned(mapper.size(), rank); // row owned by this process
 
@@ -72,16 +73,32 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
 
     const auto numRowsGlobal_ = gridGeometry.dofMapper().size();
     const auto rowMap_ = Teuchos::rcp(new Map (numRowsGlobal_, GlobalIDType{0}, comm));
+    // TODO: Obtain the "Dumux" pattern
+    // TEST: Let me check what the compiler would do...
+    auto pattern = getJacobianPattern<true>(*gridGeometry);
+    // #=%notes
+    // the way it is done in dumux in jacobianpattern.hh:
+    // in line 31 an object of type `Dune::MatrixIndexSet` pattern is created.
+    // this is then in fvassembler.hh somehow exported into the jacobian (line 357)
+    // #%% Question: Do I need this type of pattern object?
+    // notes%=#
 
     for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
     {
 
     }
 
-    Teuchos::ArrayRCP<std::size_t> numEntPerRow(numRows);
+    // #=&notes
+    // TEST: what happens if I simply put `numRowsGlobal_` into this?
+    // Note also, that we use global and local differently in Trilinos as in Dumux!
+    // notes%=#
+    Teuchos::ArrayRCP<std::size_t> numEntPerRow(numRowsGlobal_);
     // std::cout << "Dumux pattern: numRows: " << numRows << std::endl;
-    for (std::size_t rowIdx = 0; rowIdx < numRows; ++rowIdx)
+    for (std::size_t rowIdx = 0; rowIdx < numRowsGlobal_; ++rowIdx)
     {
+        // #=%notes
+        // We seem here to collect the number of Entries per row.
+        // notes%=#
         numEntPerRow[rowIdx] = pattern.rowsize(rowIdx);
         // std::cout << "Dumux pattern: rowIdx: " << rowIdx << ", numEntPerRow: " << numEntPerRow[rowIdx] << std::endl;
     }
