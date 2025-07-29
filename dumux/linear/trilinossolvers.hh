@@ -62,6 +62,12 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
     using NodeType = typename Graph::node_type;
     using LocalIDType = typename Graph::local_ordinal_type;
     using GlobalIDType = typename Graph::global_ordinal_type;
+    // Define the Trilinos Map
+    // #=%notes
+    // Question: What Type of Map do we use here? What type of information does it need from
+    //           the current process?
+    // Quesiton: is this a **contiguous map**?
+    // notes%=#
     using Map = Tpetra::Map<LocalIDType, GlobalIDType, NodeType>;
 
     const auto rank = gridGeometry.gridView().comm().rank();
@@ -69,28 +75,74 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
     const auto& mapper = gridGeometry.dofMapper();
     std::vector<std::size_t> isOwned(mapper.size(), rank); // row owned by this process
 
-
-
+    // Get the number of Rows over **all** processes.
     const auto numRowsGlobal_ = gridGeometry.dofMapper().size();
+    // #=%notes
+    // Here the Map object will be instanciated, it seems as if this is a contiguous map.
+    // Note that we can also create a map when we prescribe the number of entries on each MPI process.
+    // We could do this:
+    /*
+    * ```
+    * const numLocalIndices = gridGeometry.numDofs();
+    */
+    // So we can create the map such that we provide for each process the number of entries.
+    // But this idea would maybe not work here. We would need to do this for a jacobian. We would need
+    // to obtain `numRowsLocal`.
+    // `numRowsGlobal_`: should be the total number of entries in the Trilinos sense. This means
+    // it is the number of entries over all MPI processes.
+    // To me it seems as if we should also obtain the `numRowsLocal` variable.
+    // notes%=#
+    // #--Idea: We should here obtain the local jacobian shouldn't we?
     const auto rowMap_ = Teuchos::rcp(new Map (numRowsGlobal_, GlobalIDType{0}, comm));
-    // TODO: Obtain the "Dumux" pattern
-    // TEST: Let me check what the compiler would do...
+    // Obtain the "Dumux" pattern, obviously a (Trilinos) global pattern.
     auto pattern = getJacobianPattern<true>(*gridGeometry);
     // #=%notes
     // the way it is done in dumux in jacobianpattern.hh:
     // in line 31 an object of type `Dune::MatrixIndexSet` pattern is created.
     // this is then in fvassembler.hh somehow exported into the jacobian (line 357)
     // #%% Question: Do I need this type of pattern object?
+    // ->now I think, that it is not correct to obtain `pattern` this way:
+    // ```
+    // auto pattern = getJacobianPattern<true>(*gridGeometry);
+    // ```
+    // The reason is, that we need the pattern for the local process and should then give the information to
+    // the map. Somehow this is what I try to express...
     // notes%=#
 
+    // #==Question
+    // What would we like to do here?
+    // #-> Assumption:
+    // Seems as if we need only the interior dofs. This depends on how the Trilinos Map is set up.
+    // It may be a similar issue as with gridformat. (see the merge-request/ resp merge in dumux-spe11:
+    // [Draft: Feature/parallelize sequential coupling](https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11/-/merge_requests/40)
+    // #.. Any other ideas???
+    // --##
     for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
     {
-
+        // #%%Question Was the idea here to collect the pattern from the Trilinos local indices??
+        // The answer seems now to be very obvious: Here we iterate over the interior elements.
+        // We want to construct the pattern for the Trilinos local pattern.
+        // It is obvious, that in this loop we want to get some Trilinos local information for the current
+        // MPI process.
+        // Also not that the box method does not use overlaps.
+        // #-> Blitz!
+        // Seems as if I could resolve part of the riddle: The connectivity map is the centerpiece of it.
+        // It is working to get the connection between the solution vector entries and it is therefore also useful
+        // to create a sparsity graph. Isn't it???
+        // =#==
     }
 
-    // #=&notes
+    // #=%notes
     // TEST: what happens if I simply put `numRowsGlobal_` into this?
     // Note also, that we use global and local differently in Trilinos as in Dumux!
+    // -> Next iteration of thoughts:
+    // This obviously compiled. However, it may be incorrect. Therefore, it is imperative to check how the array
+    // will be used by the map!
+    // #->Assumption:
+    // Maybe we want to expose the local indices (in the Trilinos sense!) to get performance advantages.
+    // ##->Conclusion type:
+    // It seems as if `numRows` was thought to be a Trilinos local numRows, means that it is the number of rows
+    // in a dumux process.
     // notes%=#
     Teuchos::ArrayRCP<std::size_t> numEntPerRow(numRowsGlobal_);
     // std::cout << "Dumux pattern: numRows: " << numRows << std::endl;
@@ -104,6 +156,11 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
     }
 
     const auto colMap_ = rowMap_;
+    // #=%notes
+    // The `Graph` is templated, and it is a `Tpetra::CrsGraph` object.
+    // It seems as if in the following we want to use the local graphs to add all up to the global mapping.
+    // somehow... not clear what I want to say here.
+    // notes%=#
     auto graph = Teuchos::rcp(new Graph(rowMap_, colMap_, numEntPerRow()));
     for (std::size_t rowIdx = 0; rowIdx < numRows; ++rowIdx)
     {
@@ -113,6 +170,11 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
             }, pattern.columnIndices(rowIdx))
         );
 
+        // #=%notes
+        // indees it seems as if we make use of the local indices (in the Trilinos sense).
+        // So we do bother ourselves with this implementation detail, obviously to get the
+        // performance benefit
+        // notes%=#
         graph->insertLocalIndices(rowIdx, colIndices());
     }
 
@@ -155,6 +217,7 @@ class DirectSolverAmesos2 : public LinearSolver
     using SolverMatrix = Tpetra::CrsMatrix<Scalar, LocalIDType, GlobalIDType, NodeType>;
     using SolverVector = Tpetra::MultiVector<Scalar, LocalIDType, GlobalIDType, NodeType>;
     using Solver = Amesos2::Solver<SolverMatrix, SolverVector>;
+    // We use a CrsGraph
     using Graph = Tpetra::CrsGraph<LocalIDType, GlobalIDType, NodeType>;
 
     typedef Kokkos::DefaultHostExecutionSpace                     HostExecSpaceType;
