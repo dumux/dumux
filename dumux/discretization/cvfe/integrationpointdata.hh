@@ -30,13 +30,35 @@ public:
     { return ipGlobal_; }
 
     //! The local position of the quadrature point
-    const GlobalPosition& ipLocal() const
+    const LocalPosition& ipLocal() const
     { return ipLocal_; }
 
 
 private:
     LocalPosition ipLocal_;
     GlobalPosition ipGlobal_;
+};
+
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief An integration point related to a localDof of an element, giving its global and local positions
+ */
+template<class LocalPosition, class GlobalPosition, class LocalIndex>
+class LocalDofIntegrationPointData : public IntegrationPointData<LocalPosition, GlobalPosition>
+{
+    using ParentType = IntegrationPointData<LocalPosition, GlobalPosition>;
+public:
+    LocalDofIntegrationPointData(LocalPosition&& localPos, GlobalPosition&& pos, LocalIndex index)
+    : ParentType(localPos, pos), localDofIndex_(index) {}
+    LocalDofIntegrationPointData(const LocalPosition& localPos, const GlobalPosition& pos, LocalIndex index)
+    : ParentType(localPos, pos), localDofIndex_(index) {}
+
+    //! The local index of the corresponding dof
+    LocalIndex localDofIndex() const
+    { return localDofIndex_; }
+
+private:
+    LocalIndex localDofIndex_;
 };
 
 /*!
