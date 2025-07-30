@@ -54,9 +54,10 @@ class BoxFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
 
+    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                             LocalIndexType>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -233,7 +234,7 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
     }
 
 private:
@@ -256,8 +257,9 @@ class BoxFVElementGeometry<GG, false>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                             LocalIndexType>;
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -432,7 +434,7 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
     }
 
 private:
