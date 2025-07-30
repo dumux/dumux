@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-#include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/concepts/localdofs_.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 #include "variablesdeflectionpolicy.hh"
@@ -86,7 +86,7 @@ public:
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
     const Variables& operator [](const ScvOrLocalDof& scvOrLocalDof) const
     {
-        if constexpr (Dumux::Detail::LocalDofs::isLocalDofType<ScvOrLocalDof>())
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return gridVolVars().volVars(eIdx_, scvOrLocalDof.index());
         else
             return gridVolVars().volVars(eIdx_, scvOrLocalDof.indexInElement());
@@ -256,7 +256,7 @@ public:
 
         // update cv related dofs where there exists a localDof
         for (const auto& localDof : localDofs(fvGeometry))
-            variables_[localDof.index()].update(elemSol, gridVolVars().problem(), fvGeometry, localDof);
+            variables_[localDof.index()].update(elemSol, gridVolVars().problem(), fvGeometry, ipData(fvGeometry, localDof));
     }
 
     const Variables& operator [](std::size_t localIdx) const
@@ -268,7 +268,7 @@ public:
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
     const Variables& operator [](const ScvOrLocalDof& scvOrLocalDof) const
     {
-        if constexpr (Dumux::Detail::LocalDofs::isLocalDofType<ScvOrLocalDof>())
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.index()];
         else
             return variables_[scvOrLocalDof.indexInElement()];
@@ -277,7 +277,7 @@ public:
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
     Variables& operator [](const ScvOrLocalDof& scvOrLocalDof)
     {
-        if constexpr (Dumux::Detail::LocalDofs::isLocalDofType<ScvOrLocalDof>())
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.index()];
         else
             return variables_[scvOrLocalDof.indexInElement()];
