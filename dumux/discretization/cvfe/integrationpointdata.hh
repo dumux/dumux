@@ -12,6 +12,8 @@
 #ifndef DUMUX_CVFE_IP_DATA_HH
 #define DUMUX_CVFE_IP_DATA_HH
 
+#include <type_traits>
+
 namespace Dumux::CVFE {
 
 /*!
@@ -63,6 +65,33 @@ private:
 
 /*!
  * \ingroup CVFEDiscretization
+ * \brief An integration point related to a global position of an element, giving its local positions by a mapping
+ */
+template<class LocalMapping, class GlobalPosition>
+class IntegrationPointDataLocalMapping
+{
+    using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPosition&>;
+
+public:
+    IntegrationPointDataLocalMapping(LocalMapping&& mapping, GlobalPosition&& pos) : localMapping_(std::move(mapping)), ipGlobal_(std::move(pos)) {}
+    IntegrationPointDataLocalMapping(LocalMapping&& mapping, const GlobalPosition& pos) : localMapping_(std::move(mapping)), ipGlobal_(pos) {}
+
+    //! The global position of the quadrature point
+    const GlobalPosition& ipGlobal() const
+    { return ipGlobal_; }
+
+    //! The local position of the quadrature point
+    const LocalPosition ipLocal() const
+    { return localMapping_(ipGlobal_); }
+
+
+private:
+    LocalMapping localMapping_;
+    GlobalPosition ipGlobal_;
+};
+
+/*!
+ * \ingroup CVFEDiscretization
  * \brief An integration point related to a face of an element
  */
 template<class LocalPosition, class GlobalPosition, class LocalIndex>
@@ -86,6 +115,19 @@ public:
 private:
     GlobalPosition normal_;
     LocalIndex scvfIndex_;
+};
+
+// Construct ipData for local mapping and global position
+template<class Element, class GlobalPosition>
+auto ipData(const Element& element, const GlobalPosition& pos)
+{
+    // Pass lambda function for calculating local position
+    // This call is quite expensive such that this ipData should rather be used if ipLocal() is not called very often
+    return  IntegrationPointDataLocalMapping(
+                [&] (const GlobalPosition& pos)
+                { return element.geometry().local(pos); },
+                pos
+            );
 };
 
 } // end namespace Dumux::CVFE
