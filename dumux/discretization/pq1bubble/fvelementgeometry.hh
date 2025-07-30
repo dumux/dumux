@@ -322,6 +322,18 @@ public:
         return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
     }
 
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey),
+                      GeometryHelper::dofPosition(fvGeometry.element(), localDof.index()),
+                      localDof.index());
+    }
+
 private:
     const GGCache* ggCache_;
     GridIndexType eIdx_;
