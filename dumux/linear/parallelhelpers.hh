@@ -498,22 +498,22 @@ public:
     template<class Block, class Alloc>
     void makeOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Traits::Grid, dofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
         {
             // Iterate over the gridView_ to make overlap entries 0. This is necessary to make
             // `VectorCommDataHandleSum` work properly.
             for (const auto& element : elements(gridView_))
             {
-                const auto eIdx = gridView_.indexSet().index(element);
                 if (element.partitionType() == Dune::OverlapEntity)
-                {
-                    v[eIdx] = 0;
-                }
+                    v[gridView_.indexSet().index(element)] = 0;
             }
-            VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
-            if (gridView_.comm().size() > 1)
-                gridView_.communicate(gs, Dune::Overlap_All_Interface,
+            if (gridView_.comm().size()>1)
+            {
+                VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
+                if (gridView_.comm().size() > 1)
+                    gridView_.communicate(gs, Dune::Overlap_All_Interface,
                                     Dune::ForwardCommunication);
+            }
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
