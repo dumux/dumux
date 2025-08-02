@@ -505,6 +505,7 @@ public:
             for (const auto& element : elements(gridView_))
                 if (element.partitionType() == Dune::OverlapEntity)
                     v[gridView_.indexSet().index(element)] = 0;
+
             if (gridView_.comm().size() > 1)
             {
                 VectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, dofCodim, Block> gs(mapper_, v);
