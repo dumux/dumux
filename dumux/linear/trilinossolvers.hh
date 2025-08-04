@@ -70,6 +70,7 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
 
 
 
+    // NOTE: numRowsGlobal_ in the next line is not global in the sense of Trilinos!
     const auto numRowsGlobal_ = gridGeometry.dofMapper().size();
     const auto rowMap_ = Teuchos::rcp(new Map (numRowsGlobal_, GlobalIDType{0}, comm));
 
