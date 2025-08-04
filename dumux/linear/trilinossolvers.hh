@@ -72,10 +72,14 @@ auto sparsityGraph(const GridGeometry& gridGeometry, CommPtr comm)
 
     // NOTE: numRowsGlobal_ in the next line is not global in the sense of Trilinos!
     const auto numRowsGlobal_ = gridGeometry.dofMapper().size();
+    // NOTE: This is currently made for reason of making this code compilable!
+    const auto numRows = gridGeometry.dofMapper().size();
     const auto rowMap_ = Teuchos::rcp(new Map (numRowsGlobal_, GlobalIDType{0}, comm));
 
+    auto pattern = getJacobianPattern<true>(gridGeometry); // obtain the pattern for the given discretization scheme.
     for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
     {
+        // It seems to be worth testing this first: Built the pattern for the local matrix
 
     }
 
