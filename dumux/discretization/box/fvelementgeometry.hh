@@ -240,6 +240,18 @@ public:
         return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
     }
 
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+    }
+
+
 private:
     const GGCache* ggCache_;
     GridIndexType eIdx_;
@@ -442,6 +454,17 @@ public:
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
         return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+    }
+
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
     }
 
 private:
