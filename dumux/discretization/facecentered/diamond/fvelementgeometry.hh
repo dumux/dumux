@@ -164,6 +164,7 @@ public:
     void bindElement(const Element& element) &
     {
         element_ = element;
+        elementGeometry_.emplace(element.geometry());
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -174,6 +175,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -187,10 +192,9 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         return {
-            SubControlVolume::Traits::geometryType(geo.type()),
-            GeometryHelper(geo).getScvCorners(scv.indexInElement())
+            SubControlVolume::Traits::geometryType((*elementGeometry_).type()),
+            GeometryHelper(*elementGeometry_).getScvCorners(scv.indexInElement())
         };
     }
 
@@ -198,21 +202,20 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         if (scvf.boundary())
         {
             // use the information that each boundary scvf corresponds to one scv constructed around the same facet
             const auto localFacetIndex = scvf.insideScvIdx();
             return {
-                referenceElement(geo).type(localFacetIndex, 1),
-                GeometryHelper(geo).getBoundaryScvfCorners(localFacetIndex)
+                referenceElement(*elementGeometry_).type(localFacetIndex, 1),
+                GeometryHelper(*elementGeometry_).getBoundaryScvfCorners(localFacetIndex)
             };
         }
         else
         {
             return {
-                SubControlVolumeFace::Traits::interiorGeometryType(geo.type()),
-                GeometryHelper(geo).getScvfCorners(scvf.index())
+                SubControlVolumeFace::Traits::interiorGeometryType((*elementGeometry_).type()),
+                GeometryHelper(*elementGeometry_).getScvfCorners(scvf.index())
             };
         }
     }
@@ -228,6 +231,7 @@ public:
 
 private:
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
     GridIndexType eIdx_;
     const GGCache* ggCache_;
 };
