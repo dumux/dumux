@@ -243,6 +243,7 @@ public:
         element_ = element;
         // cache element index
         eIdx_ = gridGeometry().elementMapper().index(element);
+        elementGeometry_.emplace(element.geometry());
     }
 
     //! Returns true if bind/bindElement has already been called
@@ -252,6 +253,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -279,8 +284,7 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Geometry of overlapping scv");
 
         assert(isBound());
-        const auto geo = element().geometry();
-        const GeometryHelper helper(geo);
+        const GeometryHelper helper(*elementGeometry_);
         return {
             helper.getScvGeometryType(scv.indexInElement()),
             helper.getScvCorners(scv.indexInElement())
@@ -291,10 +295,9 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         if (scvf.boundary())
         {
-            GeometryHelper helper(geo);
+            GeometryHelper helper(*elementGeometry_);
             const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
@@ -305,7 +308,7 @@ public:
         }
         else
         {
-            GeometryHelper helper(geo);
+            GeometryHelper helper(*elementGeometry_);
             return {
                 helper.getInteriorScvfGeometryType(scvf.index()),
                 helper.getScvfCorners(scvf.index())
@@ -339,6 +342,7 @@ private:
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 };
 
 } // end namespace Dumux
