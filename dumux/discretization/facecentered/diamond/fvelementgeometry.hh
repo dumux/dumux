@@ -240,6 +240,17 @@ public:
         return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
     }
 
+    //! Integration point data for a global position
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
+    {
+        // Create ipData that does not automatically calculate the local position but only if it is called
+        return  IntegrationPointDataLocalMapping(
+                    [&] (const typename Element::Geometry::GlobalCoordinate& pos)
+                    { return fvGeometry.elementGeometry().local(pos); },
+                    globalPos
+                );
+    }
+
 private:
     std::optional<Element> element_;
     std::optional<typename Element::Geometry> elementGeometry_;
