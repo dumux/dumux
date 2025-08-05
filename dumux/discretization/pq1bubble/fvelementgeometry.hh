@@ -331,10 +331,9 @@ public:
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey),
-                      GeometryHelper::dofPosition(fvGeometry.element(), localDof.index()),
-                      localDof.index());
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
     }
 
 private:
