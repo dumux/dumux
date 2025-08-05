@@ -180,6 +180,7 @@ public:
     void bindElement(const Element& element) &
     {
         element_ = element;
+        elementGeometry_.emplace(element.geometry());
         // cache element index
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
@@ -191,6 +192,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The bound element's index in the grid view
     GridIndexType elementIndex() const
@@ -208,16 +213,14 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(*elementGeometry_).getScvCorners(scv.indexInElement()) };
     }
 
     //! Geometry of a sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        const GeometryHelper geometryHelper(geo);
+        const GeometryHelper geometryHelper(*elementGeometry_);
         if (scvf.boundary())
         {
             const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
@@ -242,6 +245,7 @@ private:
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 };
 
 //! specialization in case the FVElementGeometries are not stored
@@ -381,6 +385,7 @@ public:
     {
         element_ = element;
         eIdx_ = gridGeometry().elementMapper().index(element);
+        elementGeometry_.emplace(element.geometry());
         makeElementGeometries_();
     }
 
@@ -391,6 +396,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The bound element's index in the grid view
     GridIndexType elementIndex() const
@@ -408,16 +417,14 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        return { Dune::GeometryTypes::cube(dim), GeometryHelper(geo).getScvCorners(scv.indexInElement()) };
+        return { Dune::GeometryTypes::cube(dim), GeometryHelper(*elementGeometry_).getScvCorners(scv.indexInElement()) };
     }
 
     //! Geometry of a sub control volume face
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
-        const GeometryHelper geometryHelper(geo);
+        const GeometryHelper geometryHelper(*elementGeometry_);
         if (scvf.boundary())
         {
             const auto localBoundaryIndex = scvf.index() - geometryHelper.numInteriorScvf();
@@ -444,7 +451,7 @@ private:
 
         // get the element geometry
         const auto& element = *element_;
-        const auto elementGeometry = element.geometry();
+        const auto& elementGeometry = *elementGeometry_;
         const auto refElement = referenceElement(elementGeometry);
 
         // get the sub control volume geometries of this element
@@ -528,6 +535,7 @@ private:
     //! The bound element
     GridIndexType eIdx_;
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 
     //! The global geometry cache
     const GGCache* ggCache_;
