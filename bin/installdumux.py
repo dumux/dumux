@@ -78,6 +78,14 @@ parser.add_argument(
     help="Use this to pass in arguments to git clone. For example -g='--depth 1' for shallow checkouts.",
 )
 
+parser.add_argument(
+    "-P",
+    "--bypass-check-for-prerequisites",
+    dest='flag_bypass_prerequisites_check',
+    action="store_true", default=False,
+    help="Do not check for prerequisites.",
+)
+
 args = vars(parser.parse_args())
 
 duneBranch = (
@@ -166,23 +174,29 @@ with open("installdumux.log", "w") as _:
 # (1/3) Check some prerequisites
 #################################################################
 #################################################################
-programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
-showMessage(f"(1/3) Checking all prerequisites: {' '.join(programs)}...")
+if not args["flag_bypass_prerequisites_check"] :
 
-# check some prerequisites
-for program in programs:
-    if which(program) is None:
-        logger.error("An error occurred while checking for prerequisites.")
-        logger.error(f"The required program '{program}' has not been found.")
-        sys.exit(1)
+    programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
+    showMessage(f"(1/3) Checking all prerequisites: {' '.join(programs)}...")
 
-if which("paraview") is None:
-    logger.warning("ParaView could not be found. (You might have it but we can't find it.)")
-    logger.warning("We recommend installing ParaView to view simulation results.")
+    # check some prerequisites
+    for program in programs:
+        if which(program) is None:
+            logger.error("An error occurred while checking for prerequisites.")
+            logger.error(f"The required program '{program}' has not been found.")
+            sys.exit(1)
 
-checkCppVersion()
+    if which("paraview") is None:
+        logger.warning("ParaView could not be found. (You might have it but we can't find it.)")
+        logger.warning("We recommend installing ParaView to view simulation results.")
 
-showMessage("(1/3) Step completed. All prerequisites found.")
+    checkCppVersion()
+
+    showMessage("(1/3) Step completed. All prerequisites found.")
+
+else:
+    showMessage(f"(1/3) Bypassing checking of prerequisites.")
+    showMessage(f"(1/3) Continuing with git clone")
 
 #################################################################
 #################################################################
