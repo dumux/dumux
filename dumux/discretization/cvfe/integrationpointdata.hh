@@ -117,19 +117,6 @@ private:
     LocalIndex scvfIndex_;
 };
 
-// Construct ipData for local mapping and global position
-template<class Element, class GlobalPosition>
-auto ipData(const Element& element, const GlobalPosition& pos)
-{
-    // Pass lambda function for calculating local position
-    // This call is quite expensive such that this ipData should rather be used if ipLocal() is not called very often
-    return  IntegrationPointDataLocalMapping(
-                [&] (const GlobalPosition& pos)
-                { return element.geometry().local(pos); },
-                pos
-            );
-};
-
 } // end namespace Dumux::CVFE
 
 #endif
