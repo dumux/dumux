@@ -46,8 +46,9 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                             LocalIndexType>;
 
 public:
     //! export type of subcontrol volume face
@@ -163,6 +164,7 @@ public:
     void bindElement(const Element& element) &
     {
         element_ = element;
+        elementGeometry_.emplace(element.geometry());
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -173,6 +175,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -186,10 +192,9 @@ public:
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         return {
-            SubControlVolume::Traits::geometryType(geo.type()),
-            GeometryHelper(geo).getScvCorners(scv.indexInElement())
+            SubControlVolume::Traits::geometryType((*elementGeometry_).type()),
+            GeometryHelper(*elementGeometry_).getScvCorners(scv.indexInElement())
         };
     }
 
@@ -197,21 +202,20 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         if (scvf.boundary())
         {
             // use the information that each boundary scvf corresponds to one scv constructed around the same facet
             const auto localFacetIndex = scvf.insideScvIdx();
             return {
-                referenceElement(geo).type(localFacetIndex, 1),
-                GeometryHelper(geo).getBoundaryScvfCorners(localFacetIndex)
+                referenceElement(*elementGeometry_).type(localFacetIndex, 1),
+                GeometryHelper(*elementGeometry_).getBoundaryScvfCorners(localFacetIndex)
             };
         }
         else
         {
             return {
-                SubControlVolumeFace::Traits::interiorGeometryType(geo.type()),
-                GeometryHelper(geo).getScvfCorners(scvf.index())
+                SubControlVolumeFace::Traits::interiorGeometryType((*elementGeometry_).type()),
+                GeometryHelper(*elementGeometry_).getScvfCorners(scvf.index())
             };
         }
     }
@@ -222,11 +226,34 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+    }
+
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+    }
+
+    //! Integration point data for a global position
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
+    {
+        // Create ipData that does not automatically calculate the local position but only if it is called
+        return  IntegrationPointDataLocalMapping(
+                    [&] (const typename Element::Geometry::GlobalCoordinate& pos)
+                    { return fvGeometry.elementGeometry().local(pos); },
+                    globalPos
+                );
     }
 
 private:
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
     GridIndexType eIdx_;
     const GGCache* ggCache_;
 };

@@ -13,7 +13,6 @@
 #ifndef DUMUX_DISCRETIZATION_CVFE_VARIABLES_DEFLECTION_POLICY_HH
 #define DUMUX_DISCRETIZATION_CVFE_VARIABLES_DEFLECTION_POLICY_HH
 
-#include <type_traits>
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -57,10 +56,10 @@ public:
     {
         if (deflectAll_)
             for (const auto& localDofI : localDofs(fvGeometry_))
-                elementVariables_[localDofI].update(elemSol, problem, fvGeometry_, localDofI);
+                elementVariables_[localDofI].update(elemSol, problem, fvGeometry_, ipData(fvGeometry_, localDofI));
         else
         {
-            elementVariables_[localDof].update(elemSol, problem, fvGeometry_, localDof);
+            elementVariables_[localDof].update(elemSol, problem, fvGeometry_, ipData(fvGeometry_, localDof));
         }
     }
 

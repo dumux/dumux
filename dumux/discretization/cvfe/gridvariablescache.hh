@@ -17,6 +17,8 @@
 
 #include <dumux/parallel/parallel_for.hh>
 
+#include <dumux/common/concepts/localdofs_.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cvfe/elementvariables.hh>
@@ -83,7 +85,7 @@ public:
 
             variables_[eIdx].resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
             for (const auto& localDof : localDofs(fvGeometry))
-                variables_[eIdx][localDof.index()].update(elemSol, problem, fvGeometry, localDof);
+                variables_[eIdx][localDof.index()].update(elemSol, problem, fvGeometry, ipData(fvGeometry, localDof));
         });
     }
 
@@ -92,7 +94,7 @@ public:
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
     const Variables& volVars(const ScvOrLocalDof& scvOrLocalDof) const
     {
-        if constexpr (Dumux::Detail::LocalDofs::isLocalDofType<ScvOrLocalDof>())
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
         else
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];
@@ -101,7 +103,7 @@ public:
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
     Variables& volVars(const ScvOrLocalDof& scvOrLocalDof)
     {
-        if constexpr (Dumux::Detail::LocalDofs::isLocalDofType<ScvOrLocalDof>())
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
         else
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];

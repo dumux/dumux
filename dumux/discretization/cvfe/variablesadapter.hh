@@ -12,6 +12,7 @@
 #define DUMUX_CVFE_LOCAL_VARIABLES_ADAPTER_HH
 
 #include <dune/common/std/type_traits.hh>
+#include <dumux/common/concepts/ipdata_.hh>
 
 namespace Dumux::Detail::CVFE {
 
@@ -47,21 +48,21 @@ public:
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param fvGeometry The local finite volume geometry
-     * \param localDof The local dof
+     * \param ipData The integration point data
      */
-    template<class ElementSolution, class Problem, class FVElementGeometry, class LocalDof>
+    template<class ElementSolution, class Problem, class FVElementGeometry, Concept::LocalDofIpData IpData>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
                 const FVElementGeometry& fvGeometry,
-                const LocalDof& localDof)
+                const IpData& ipData)
     {
         // As default we assume that for each localDof there is a corresponding scv
         // such that the update interface of VolumeVariables can still be used.
         if constexpr (hasUpdateFunctionForScvs<VolumeVariables, ElementSolution, Problem,
                       typename FVElementGeometry::Element, typename FVElementGeometry::SubControlVolume>())
-            VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(localDof.index()));
+            VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(ipData.localDofIndex()));
         else
-            VolumeVariables::update(elemSol, problem, fvGeometry, localDof);
+            VolumeVariables::update(elemSol, problem, fvGeometry, ipData);
     };
 };
 

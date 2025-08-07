@@ -54,8 +54,9 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                     typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                             LocalIndexType>;
 
 public:
     //! export the element type
@@ -242,6 +243,7 @@ public:
         element_ = element;
         // cache element index
         eIdx_ = gridGeometry().elementMapper().index(element);
+        elementGeometry_.emplace(element.geometry());
     }
 
     //! Returns true if bind/bindElement has already been called
@@ -251,6 +253,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -278,8 +284,7 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Geometry of overlapping scv");
 
         assert(isBound());
-        const auto geo = element().geometry();
-        const GeometryHelper helper(geo);
+        const GeometryHelper helper(*elementGeometry_);
         return {
             helper.getScvGeometryType(scv.indexInElement()),
             helper.getScvCorners(scv.indexInElement())
@@ -290,10 +295,9 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         if (scvf.boundary())
         {
-            GeometryHelper helper(geo);
+            GeometryHelper helper(*elementGeometry_);
             const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
@@ -304,7 +308,7 @@ public:
         }
         else
         {
-            GeometryHelper helper(geo);
+            GeometryHelper helper(*elementGeometry_);
             return {
                 helper.getInteriorScvfGeometryType(scvf.index()),
                 helper.getScvfCorners(scvf.index())
@@ -318,7 +322,29 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition());
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+    }
+
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+    }
+
+    //! Integration point data for a global position
+    friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
+    {
+        // Create ipData that does not automatically calculate the local position but only if it is called
+        return  IntegrationPointDataLocalMapping(
+                    [&] (const typename Element::Geometry::GlobalCoordinate& pos)
+                    { return fvGeometry.elementGeometry().local(pos); },
+                    globalPos
+                );
     }
 
 private:
@@ -326,6 +352,7 @@ private:
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 };
 
 } // end namespace Dumux

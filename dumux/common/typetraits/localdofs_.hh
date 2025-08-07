@@ -86,16 +86,6 @@ using LocalDof_t = Dune::Std::detected_or_t<
     FVG
 >;
 
-//! helper struct detecting if a type corresponds to a local dof
-template<class Imp>
-constexpr inline bool isLocalDofType()
-{
-    using LocalIndexType = std::decay_t<decltype(index(std::declval<Imp>()))>;
-    using GridIndexType = std::decay_t<decltype(std::declval<Imp>().dofIndex())>;
-
-    return std::is_base_of_v<Dumux::CVFE::LocalDof<LocalIndexType, GridIndexType>, Imp>;
-}
-
 } // end namespace Dumux::Detail::LocalDofs
 
 #endif
