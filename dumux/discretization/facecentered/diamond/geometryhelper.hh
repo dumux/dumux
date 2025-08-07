@@ -364,12 +364,6 @@ public:
         return geo_.global(referenceElement(geo_).position(localFacetIndex, 1));
     }
 
-    static GlobalPosition facetCenter(const Element& element, unsigned int localFacetIndex)
-    {
-        const auto& geo = element.geometry();
-        return geo.global(referenceElement(geo).position(localFacetIndex, 1));
-    }
-
     std::array<LocalIndexType, 2> getInsideOutsideScvForScvf(unsigned int localEdgeIndex)
     {
         const auto type = geo_.type();
