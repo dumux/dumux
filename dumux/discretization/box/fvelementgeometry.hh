@@ -248,11 +248,11 @@ public:
     friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
         // Create ipData that does not automatically calculate the local position but only if it is called
-        return  IntegrationPointDataLocalMapping(
-                    [&] (const typename Element::Geometry::GlobalCoordinate& pos)
-                    { return fvGeometry.elementGeometry().local(pos); },
-                    globalPos
-                );
+        return CVFE::IntegrationPointDataLocalMapping{
+            [&] (const typename Element::Geometry::GlobalCoordinate& pos)
+            { return fvGeometry.elementGeometry().local(pos); },
+            globalPos
+        };
     }
 
 private:
@@ -467,11 +467,10 @@ public:
     friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
         // Create ipData that does not automatically calculate the local position but only if it is called
-        return  IntegrationPointDataLocalMapping(
-                    [&] (const typename Element::Geometry::GlobalCoordinate& pos)
-                    { return fvGeometry.elementGeometry().local(pos); },
-                    globalPos
-                );
+        return CVFE::IntegrationPointDataLocalMapping{
+            [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
+            globalPos
+        };
     }
 
 private:
