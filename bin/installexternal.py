@@ -220,6 +220,15 @@ parser.add_argument(
 parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
 
+parser.add_argument(
+    "-g",
+    "--git-clone-arguments",
+    dest='git-clone-arguments',
+    required=False,
+    default="",
+    help="Use this to pass in arguments to git clone. For example use -g='--depth 1' for shallow checkouts.",
+)
+
 cmdArgs = vars(parser.parse_args())
 
 
@@ -241,11 +250,13 @@ def runCommand(command, currentDir="."):
                 sys.exit(1)
 
 
-def gitClone(url, branch=None):
+def gitClone(url, branch=None, clone_args=""):
     """Clone a repository from a given URL"""
     clone = ["git", "clone"]
     if branch:
         clone += ["-b", branch]
+    if clone_args:
+        clone += clone_args.split()
     runCommand(command=[*clone, url])
 
 
@@ -384,7 +395,7 @@ def installExternal(parameters):
                 installFromTarball(package, parameters, externalDir, finalMessage)
             else:
                 # Clone from repo
-                gitClone(EXTERNAL_URLS[package], branch)
+                gitClone(EXTERNAL_URLS[package], branch, parameters["git-clone-arguments"])
                 # Save message to be shown at the end
                 finalMessage.append(f"{package} has been successfully cloned.")
         else:

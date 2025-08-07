@@ -51,6 +51,33 @@ parser = argparse.ArgumentParser(
 # Optional arguments
 parser.add_argument("--dune-version", default="2.10", help="Dune version to be checked out.")
 parser.add_argument("--dumux-version", default="3.10", help="Dumux version to be checked out.")
+
+parser.add_argument(
+    "-d",
+    "--target-directory",
+    dest='target_directory',
+    required=False,
+    default="./dumux",
+    help="Directory this script creates, where the dune-modules are being installed."
+)
+
+parser.add_argument(
+    "-D",
+    "--download-only",
+    dest='flag_downloadonly',
+    action="store_true", default=False,
+    help="Only download the modules. Do not compile.",
+)
+
+parser.add_argument(
+    "-g",
+    "--git-clone-arguments",
+    dest='git-clone-arguments',
+    required=False,
+    default="",
+    help="Use this to pass in arguments to git clone. For example -g='--depth 1' for shallow checkouts.",
+)
+
 args = vars(parser.parse_args())
 
 duneBranch = (
@@ -111,11 +138,16 @@ def runCommand(command, workdir="."):
                 sys.exit(1)
 
 
-def gitClone(url, branch=None):
+def gitClone(url, branch=None, clone_args=""):
     """Clone git repo"""
     clone = ["git", "clone"]
+
     if branch:
         clone += ["-b", branch]
+
+    if clone_args:
+        clone += clone_args.split()
+
     runCommand(command=[*clone, url])
 
 
@@ -158,8 +190,8 @@ showMessage("(1/3) Step completed. All prerequisites found.")
 #################################################################
 #################################################################
 # make a new folder containing everything
-os.makedirs("./dumux", exist_ok=True)
-os.chdir("dumux")
+os.makedirs(args["target_directory"], exist_ok=True)
+os.chdir(args["target_directory"])
 
 showMessage(
     "(2/3) Cloning repositories. This may take a while. "
@@ -169,14 +201,14 @@ showMessage(
 # the core modules
 for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
     if not os.path.exists(f"dune-{module}"):
-        gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch)
+        gitClone(f"https://gitlab.dune-project.org/core/dune-{module}.git", duneBranch, args["git-clone-arguments"])
     else:
         logger.info(f"Skip cloning dune-{module} because the folder already exists.")
         gitSetBranch(f"dune-{module}", duneBranch)
 
 # dumux
 if not os.path.exists("dumux"):
-    gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
+    gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch, args["git-clone-arguments"])
 else:
     logger.info("Skip cloning dumux because the folder already exists.")
     gitSetBranch("dumux", dumuxBranch)
@@ -184,11 +216,18 @@ else:
 
 showMessage("(2/3) Step completed. All repositories have been cloned into a containing folder.")
 
+
 #################################################################
 #################################################################
 # (3/3) Configure and build
 #################################################################
 #################################################################
+if args["flag_downloadonly"] :
+    showMessage(
+        "(3/3) Skipping configure and build according to the given download-only option. Finishing now. "
+    )
+    sys.exit()
+
 showMessage(
     "(3/3) Configure and build dune modules and dumux using dunecontrol. "
     "This may take several minutes..."
