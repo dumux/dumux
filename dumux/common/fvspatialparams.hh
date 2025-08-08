@@ -34,6 +34,7 @@ class FVSpatialParams
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -48,6 +49,24 @@ public:
     {
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dimWorld-1] = -9.81;
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at an integration point
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    template<class IpData, class ElementSolution>
+    Scalar extrusionFactor(const FVElementGeometry& fvGeometry,
+                           const IpData& ipData,
+                           const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().extrusionFactorAtPos(ipData.ipGlobal());
     }
 
     /*!
@@ -76,6 +95,18 @@ public:
         // As a default, i.e. if the user's spatial parameters do not overload
         // any extrusion factor method, return 1.0
         return 1.0;
+    }
+
+    /*!
+     * \brief Return the temperature at an integration point
+     */
+    template<class IpData, class ElementSolution>
+    Scalar temperature(const FVElementGeometry& fvGeometry,
+                       const IpData& ipData,
+                       const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return asImp_().temperatureAtPos(ipData.ipGlobal());
     }
 
     /*!
