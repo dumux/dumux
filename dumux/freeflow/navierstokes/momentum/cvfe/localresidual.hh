@@ -22,7 +22,7 @@
 
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/fem/integrationpointdata.hh>
+#include <dumux/discretization/fem/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/integrationpointdata.hh>
 #include <dumux/assembly/cvfelocalresidual.hh>
 
@@ -85,9 +85,9 @@ class NavierStokesMomentumCVFELocalResidual
     using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BaseIpData = Dumux::CVFE::IntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate, GlobalPosition>;
-    using IpData = FEIntegrationPointData<GlobalPosition, LocalBasis>;
+    using IpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
     using BoundaryFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
-    using FaceIpData = FEFaceIntegrationPointData<GlobalPosition, LocalBasis, BoundaryFlag>;
+    using FaceIpData = FEFaceInterpolationPointData<GlobalPosition, LocalBasis, BoundaryFlag>;
     using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache>;
     using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVolumeVariables, IpData>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
