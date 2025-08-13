@@ -180,7 +180,7 @@ public:
      * \brief Returns the curvature radius within the throat.
      */
     Scalar curvatureRadius() const
-    { return surfaceTension_ / pc_;}
+    { return surfaceTension_ / std::max(pc_, 1e-16); }
 
     /*!
      * \brief Returns the cross-sectional area of a wetting layer within
