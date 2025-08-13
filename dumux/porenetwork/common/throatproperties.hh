@@ -245,7 +245,7 @@ inline constexpr Scalar wettingLayerCrossSectionalArea(const Scalar curvatureRad
                                                        const Scalar cornerHalfAngle) noexcept
 {
     // the wetting layer does not form in a throat where (contactAngle + cornerHalfAngle) > 90°
-    if (contactAngle + cornerHalfAngle >= M_PI/2.0)
+    if (contactAngle + cornerHalfAngle >= 0.5*M_PI)
         return 0.0;
 
     using std::sin;
