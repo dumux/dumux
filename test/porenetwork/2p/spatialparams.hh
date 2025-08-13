@@ -51,7 +51,7 @@ public:
 
 
     //! \brief Function for defining the contact angle
-    int contactAngleAtPos(const GlobalPosition& globalPos) const
+    Scalar contactAngleAtPos(const GlobalPosition& globalPos) const
     { return theta_; }
 
     //! \brief Function for defining the surface tension
