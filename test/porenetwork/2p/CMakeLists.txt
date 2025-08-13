@@ -16,6 +16,18 @@ dumux_add_test(NAME test_pnm_2p
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p-00093.vtp
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p")
 
+dumux_add_test(NAME test_pnm_2p_without_corner_flow
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_without_corner_flow-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_without_corner_flow-00114.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_without_corner_flow params.input
+                                        -Problem.Name test_pnm_2p_without_corner_flow -SpatialParams.ContactAngle 0.8")
+
 dumux_add_test(NAME test_pnm_2pni
                SOURCES main.cc
                LABELS porenetwork
