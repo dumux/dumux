@@ -121,7 +121,7 @@ public:
     { return this->asImp_().contactAngleAtPos(scv.center()); }
 
     //! \brief Function for defining the Contact Angle
-    int contactAngleAtPos(const GlobalPosition& globalPos) const
+    Scalar contactAngleAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
@@ -253,7 +253,7 @@ public:
      * \return the contact angle
      * \param globalPos The global position
      */
-    int contactAngleAtPos(const GlobalPosition& globalPos) const
+    Scalar contactAngleAtPos(const GlobalPosition& globalPos) const
     {
         static const Scalar theta = getParam<Scalar>("SpatialParams.ContactAngle", 0.0);
         return theta;
