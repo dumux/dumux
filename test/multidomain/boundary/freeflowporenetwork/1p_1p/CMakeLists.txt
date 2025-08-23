@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(nonisothermal)
+add_subdirectory(3D)
+
 add_input_file_links()
 
 dumux_add_test(NAME test_md_boundary_ff1p_pnm1p

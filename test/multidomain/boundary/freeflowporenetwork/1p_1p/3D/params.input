@@ -1,0 +1,49 @@
+[PNM.Grid]
+LowerLeft = 0 -2e-3 0
+UpperRight = 1e-2 2e-3 2e-3 
+NumPores = 5 2 2 # 3d grid (PNM) always needs 1 cell (hence 2 pores) in z direction
+PoreInscribedRadius = 5e-4
+ThroatInscribedRadius = 5e-4
+BoundaryPoreLabels = xMin:0 xMax:1 yMin:2 yMax:3 zMin:4 zMax:5
+DeletionProbability = 0 0 0 1 1 1 1 1 1 1 1 1 1
+PriorityList =  0 1 4 5 2 3 # 0 1
+RemoveThroatsOnBoundary = 5
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+
+[FreeFlow.Grid]
+LowerLeft = -5e-3 -3e-3 2e-3
+UpperRight =  1.5e-2 3e-3 5e-3
+UpstreamCells0 = 2
+UpstreamCells1 = 2
+CellsPerPore = 1
+DownstreamCells0 = 2
+DownstreamCells1 = 2
+Cells2 = 6
+
+[Problem]
+EnableGravity = false
+
+[FreeFlow.Problem]
+Name = ff
+InletPressure = 1.1e5
+OutletPressure = 1e5
+EnableInertiaTerms = false
+
+[PNM.Problem]
+Name = pnm
+InletPressure = 1.1e5
+OutletPressure = 1e5
+
+[Vtk]
+OutputName = test
+
+[Component]
+LiquidDensity = 1e3
+LiquidKinematicViscosity = 1e-6
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4
+
+[SpatialParams]
+Temperature = 298.0
