@@ -185,16 +185,16 @@ private:
     }
 
     bool onLeftBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 0; }
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 1; } //xMin
 
     bool onRightBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 1; }
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; } //xMax
 
     bool onLowerBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; }
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 5; } //zMin
 
     bool onUpperBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 3; }
+    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 6; } //zMax
 
 
     std::shared_ptr<CouplingManager> couplingManager_;
