@@ -98,6 +98,7 @@ public:
             {
                 values.setCouplingNeumann(Indices::momentumXBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
+                values.setCouplingNeumann(Indices::momentumZBalanceIdx);
             }
             // else if (onInlet_(globalPos) || onOutlet_(globalPos))
             //     values.setAllNeumann();
