@@ -53,6 +53,8 @@ public:
         initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
         outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
+
+        verticalFlow_ = getParamFromGroup<bool>(this->paramGroup(), "Problem.VerticalFlow", false);
     }
 
     /*!
@@ -93,7 +95,10 @@ public:
             //     bcTypes.setAllDirichlet(); //pressure (and Temperature) fixed for inflow from bottom
             // else
             //     bcTypes.setAllNeumann();
-            bcTypes.setAllNeumann();
+            if (verticalFlow_ && onInlet_(scv))
+                bcTypes.setAllDirichlet();
+            else
+                bcTypes.setAllNeumann();
         }
         return bcTypes;
     }
@@ -106,10 +111,10 @@ public:
                                const SubControlVolume& scv) const
     {
         PrimaryVariables priVars (0.0);
-        // if(onInlet_(scv))
-        // {
-        //     priVars[Indices::pressureIdx] = inletPressure_;
-        // }
+        if(onInlet_(scv) && verticalFlow_)
+        {
+            priVars[Indices::pressureIdx] = inletPressure_;
+        }
         // else if(onOutlet_(scv))
         // {
         //     priVars[Indices::pressureIdx] = outletPressure_;
@@ -176,12 +181,18 @@ public:
 private:
     bool onInlet_(const SubControlVolume& scv) const
     {
-        return onLeftBoundary_(scv);
+        if (verticalFlow_)
+            return onLowerBoundary_(scv);
+        else
+            return onLeftBoundary_(scv);
     }
 
     bool onOutlet_(const SubControlVolume& scv) const
     {
-        return onRightBoundary_(scv);
+        if (verticalFlow_)
+            return false;
+        else
+            return onRightBoundary_(scv);
     }
 
     bool onLeftBoundary_(const SubControlVolume& scv) const
@@ -201,6 +212,7 @@ private:
     Scalar initialPressure_;
     Scalar inletPressure_;
     Scalar outletPressure_;
+    bool verticalFlow_;
 };
 
 } // end namespace Dumux
