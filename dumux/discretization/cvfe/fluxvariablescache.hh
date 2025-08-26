@@ -15,7 +15,7 @@
 #include <dune/common/fvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
-#include <dumux/discretization/cvfe/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 namespace Dumux {
 
@@ -45,7 +45,7 @@ class CVFEFluxVariablesCache
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 
-    using IpData = Dumux::CVFE::IntegrationPointData<LocalPosition, GlobalPosition>;
+    using IpData = Dumux::CVFE::InterpolationPointData<LocalPosition, GlobalPosition>;
 
 public:
     //! whether the cache needs an update when the solution changes
@@ -73,7 +73,7 @@ public:
         const auto geometry = element.geometry();
         const auto& localBasis = fvGeometry.feLocalBasis();
 
-        // evaluate shape functions and gradients at the integration point
+        // evaluate shape functions and gradients at the interpolation point
         ipGlobal_ = globalPos;
         ipLocal_ = geometry.local(globalPos);
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal_);
@@ -92,13 +92,13 @@ public:
     const GlobalPosition& ipLocal() const { return ipLocal_; }
     //! returns the ipData for which this cache has been updated
     IpData ipData() const { return IpData(ipLocal(), ipGlobal()); }
-    //! returns the shape function gradients in local coordinates at the integration point
+    //! returns the shape function gradients in local coordinates at the interpolation point
     const std::vector<ShapeJacobian>& shapeJacobian() const { return shapeJacobian_; }
-    //! returns the shape function values at the integration point
+    //! returns the shape function values at the interpolation point
     const std::vector<ShapeValue>& shapeValues() const { return shapeValues_; }
-    //! returns inverse transposed jacobian at the integration point
+    //! returns inverse transposed jacobian at the interpolation point
     const JacobianInverseTransposed& jacInvT() const { return jacInvT_; }
-    //! returns the shape function gradients in global coordinates at the integration point
+    //! returns the shape function gradients in global coordinates at the interpolation point
     const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:

@@ -162,12 +162,12 @@ public:
     { return constraints_; }
 
     /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given integration point.
+     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables related to the element
      * \param elemFluxVarsCache The element flux variables cache
-     * \param faceIpData Integration point data
+     * \param faceIpData Interpolation point data
      */
     template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
     BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,

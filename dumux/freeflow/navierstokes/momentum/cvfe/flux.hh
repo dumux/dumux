@@ -84,12 +84,12 @@ private:
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Context for interpolating data on integration points
+ * \brief Context for interpolating data on interpolation points
  *
  * \tparam Problem the problem type to solve
  * \tparam FVElementGeometry the element geometry type
  * \tparam ElementVolumeVariables the element volume variables type
- * \tparam IpData the integration point data type
+ * \tparam IpData the interpolation point data type
  */
 template<class Problem,
          class FVElementGeometry,
