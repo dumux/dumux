@@ -24,21 +24,21 @@ template<class LocalPosition, class GlobalPosition>
 class InterpolationPointData
 {
 public:
-    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : ipLocal_(std::move(localPos)), ipGlobal_(std::move(pos)) {}
-    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  ipLocal_(localPos), ipGlobal_(pos) {}
+    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : local_(std::move(localPos)), global_(std::move(pos)) {}
+    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  local_(localPos), global_(pos) {}
 
     //! The global position of the quadrature point
-    const GlobalPosition& ipGlobal() const
-    { return ipGlobal_; }
+    const GlobalPosition& global() const
+    { return global_; }
 
     //! The local position of the quadrature point
-    const LocalPosition& ipLocal() const
-    { return ipLocal_; }
+    const LocalPosition& local() const
+    { return local_; }
 
 
 private:
-    LocalPosition ipLocal_;
-    GlobalPosition ipGlobal_;
+    LocalPosition local_;
+    GlobalPosition global_;
 };
 
 /*!
@@ -73,21 +73,21 @@ class InterpolationPointDataLocalMapping
     using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPosition&>;
 
 public:
-    InterpolationPointDataLocalMapping(LocalMapping&& mapping, GlobalPosition&& pos) : localMapping_(std::move(mapping)), ipGlobal_(std::move(pos)) {}
-    InterpolationPointDataLocalMapping(LocalMapping&& mapping, const GlobalPosition& pos) : localMapping_(std::move(mapping)), ipGlobal_(pos) {}
+    InterpolationPointDataLocalMapping(LocalMapping&& mapping, GlobalPosition&& pos) : localMapping_(std::move(mapping)), global_(std::move(pos)) {}
+    InterpolationPointDataLocalMapping(LocalMapping&& mapping, const GlobalPosition& pos) : localMapping_(std::move(mapping)), global_(pos) {}
 
     //! The global position of the quadrature point
-    const GlobalPosition& ipGlobal() const
-    { return ipGlobal_; }
+    const GlobalPosition& global() const
+    { return global_; }
 
     //! The local position of the quadrature point
-    const LocalPosition ipLocal() const
-    { return localMapping_(ipGlobal_); }
+    const LocalPosition local() const
+    { return localMapping_(global_); }
 
 
 private:
     LocalMapping localMapping_;
-    GlobalPosition ipGlobal_;
+    GlobalPosition global_;
 };
 
 /*!

@@ -66,7 +66,7 @@ public:
                            const ElementSolution& elemSol) const
     {
         // forward to generic interface
-        return asImp_().extrusionFactorAtPos(ipData.ipGlobal());
+        return asImp_().extrusionFactorAtPos(ipData.global());
     }
 
     /*!
@@ -106,7 +106,7 @@ public:
                        const ElementSolution& elemSol) const
     {
         // forward to generic interface
-        return asImp_().temperatureAtPos(ipData.ipGlobal());
+        return asImp_().temperatureAtPos(ipData.global());
     }
 
     /*!

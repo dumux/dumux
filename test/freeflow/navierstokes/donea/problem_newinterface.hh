@@ -71,7 +71,7 @@ public:
 
         constraints_.update(*this,
             [&, this](const auto& fvGeometry, const auto&, const auto& localDof) {
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).ipGlobal());
+                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
             }
         );
     }
@@ -84,7 +84,7 @@ public:
 
         constraints_.update(*this,
             [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).ipGlobal());
+                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
             }
         );
     }
@@ -179,8 +179,8 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto x = faceIpData.ipGlobal()[0];
-            const auto y = faceIpData.ipGlobal()[1];
+            const auto x = faceIpData.global()[0];
+            const auto y = faceIpData.global()[1];
 
             Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
             momentumFlux[0][0] = -2.0*mu_*dxU_(x,y) + p_(x);

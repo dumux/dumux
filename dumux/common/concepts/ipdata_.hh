@@ -19,8 +19,8 @@ namespace Dumux::Concept {
 template<class T>
 concept IpData = requires(T a)
 {
-    a.ipGlobal();
-    a.ipLocal();
+    a.global();
+    a.local();
 };
 
 template<class T>

@@ -33,23 +33,23 @@ public:
     // The constructor
     template<class Geometry>
     FEInterpolationPointData(const Geometry& geometry,
-                             const LocalPosition& ipLocal,
+                             const LocalPosition& local,
                              const LocalBasis& localBasis)
-    : ipLocal_(ipLocal),
-      ipGlobal_(geometry.global(ipLocal))
+    : local_(local),
+      global_(geometry.global(local))
     {
         auto numLocalDofs = localBasis.size();
 
         // set the shape values
         shapeValues_.resize(numLocalDofs);
-        localBasis.evaluateFunction(ipLocal, shapeValues_);
+        localBasis.evaluateFunction(local, shapeValues_);
 
         // the local shape function gradients
         std::vector<JacobianType> shapeGrads(numLocalDofs);
-        localBasis.evaluateJacobian(ipLocal, shapeGrads);
+        localBasis.evaluateJacobian(local, shapeGrads);
 
         // the global shape function gradients
-        const auto jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+        const auto jacInvT = geometry.jacobianInverseTransposed(local);
         shapeGradients_.resize(numLocalDofs, GlobalPosition(0.0));
         for (unsigned int i = 0; i < numLocalDofs; ++i)
             jacInvT.umv(shapeGrads[i][0], shapeGradients_[i]);
@@ -72,16 +72,16 @@ public:
     { return shapeGradients_[i]; }
 
     //! The local position of the quadrature point
-    const LocalPosition& ipLocal() const
-    { return ipLocal_; }
+    const LocalPosition& local() const
+    { return local_; }
 
     //! The global position of the quadrature point
-    const GlobalPosition& ipGlobal() const
-    { return ipGlobal_; }
+    const GlobalPosition& global() const
+    { return global_; }
 
 private:
-    LocalPosition ipLocal_;
-    GlobalPosition ipGlobal_;
+    LocalPosition local_;
+    GlobalPosition global_;
 
     ShapeValues shapeValues_;
     ShapeGradients shapeGradients_;
@@ -103,11 +103,11 @@ public:
     // The constructor
     template<class Geometry>
     FEFaceInterpolationPointData(const Geometry& geometry,
-                                 const LocalPosition& ipLocal,
+                                 const LocalPosition& local,
                                  const LocalBasis& localBasis,
                                  const GlobalPosition& n,
                                  const BoundaryFlag& bFlag)
-    : ParentType(geometry, ipLocal, localBasis), normal_(n), boundaryFlag_(bFlag)
+    : ParentType(geometry, local, localBasis), normal_(n), boundaryFlag_(bFlag)
     {}
 
     //! The unit outer normal vector at the quadrature point
