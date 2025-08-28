@@ -15,9 +15,11 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <tuple>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -25,6 +27,8 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -56,6 +60,55 @@ void writeError_(std::ofstream& logFile, const Error& error)
 }
 
 template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, Dune::FieldVector<double, 2>>  calculateL2AndH1Errors_(const Problem& problem,
+                                                                          const GridVariables& gridVariables,
+                                                                          const SolutionVector& x,
+                                                                          int order = 5)
+{
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    Dune::FieldVector<double, 2> errors(0.0);
+    const auto& gg = problem.gridGeometry();
+    auto fvGeometry = localView(gg);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    for (const auto& element : elements(gg.gridView()))
+    {
+        fvGeometry.bindElement(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight =  qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gg, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            errors[0] += (solDiff * solDiff) * qpVolumeWeight;
+
+            const auto gradAnalyticalSolution = problem.gradAnalyticalSolution(globalPos);
+            const auto gradNumericalSolution = evalGradientsAtLocalPos(element, geometry, gg, elemSol, localPos);
+            const auto gradDiff = gradNumericalSolution - gradAnalyticalSolution;
+            double gradDiffNorm = 0.0;
+            for(int i = 0; i < gradDiff.size(); ++i)
+                gradDiffNorm += gradDiff[i]*gradDiff[i];
+
+            errors[1] += (solDiff * solDiff + gradDiffNorm) * qpVolumeWeight;
+        }
+    }
+    errors[0] = std::sqrt(errors[0]);
+    errors[1] = std::sqrt(errors[1]);
+
+    return {totalVolume, errors};
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
 void printErrors(std::shared_ptr<Problem> problem,
                  const GridVariables& gridVariables,
                  const SolutionVector& x)
@@ -66,25 +119,40 @@ void printErrors(std::shared_ptr<Problem> problem,
 
     if (printErrors)
     {
-        NavierStokesTest::ErrorsSubProblem errors(problem, x);
+        // For CVFE schemes we can directly calculate the L2 and H1 errors by using quadrature rules
+        if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+        {
+            const auto [totalVolume, errors] = calculateL2AndH1Errors_(*problem, gridVariables, x);
 
-        std::ofstream logFile(problem->name() + ".csv", std::ios::app);
-        auto totalVolume = errors.totalVolume();
-        auto numDofs = errors.numDofs();
-        // For the staggered scheme, the control volumes are overlapping
-        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
-            totalVolume /= dim;
+            std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+            auto numDofs = problem->gridGeometry().numDofs();
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
 
-        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
-        logFile << numDofs << ", ";
-        logFile << std::pow(totalVolume / numDofs, 1.0/dim);
-        const auto& componentErrors = errors.l2Absolute();
-        // Calculate L2-error for velocity field
-        Dune::FieldVector<double, 1> velError(0.0);
-        velError[0] = std::sqrt(componentErrors * componentErrors);
+            writeError_(logFile, errors);
+            logFile << "\n";
+        }
+        else
+        {
+            NavierStokesTest::ErrorsSubProblem errors(problem, x);
 
-        writeError_(logFile, velError);
-        logFile << "\n";
+            std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+            auto totalVolume = errors.totalVolume();
+            auto numDofs = errors.numDofs();
+            // For the staggered scheme, the control volumes are overlapping
+            if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+                totalVolume /= dim;
+
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
+            const auto& componentErrors = errors.l2Absolute();
+            // Calculate L2-error for velocity field
+            Dune::FieldVector<double, 1> velError(0.0);
+            velError[0] = std::sqrt(componentErrors * componentErrors);
+
+            writeError_(logFile, velError);
+            logFile << "\n";
+        }
     }
 }
 
