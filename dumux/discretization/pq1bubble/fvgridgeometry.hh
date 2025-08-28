@@ -397,12 +397,13 @@ private:
                         scvfLocalIdx++;
                     }
 
+                    const auto numDofsIntersection = GeometryHelper::numLocalDofsIntersection(elementGeometry.type(), localFacetIndex);
                     // TODO also move this to helper class
-                    // add all vertices on the intersection to the set of boundary vertices
-                    for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
+                    // add all dofs on the intersection to the set of boundary dofs
+                    for (int ilocalDofIdx = 0; ilocalDofIdx < numDofsIntersection; ++ilocalDofIdx)
                     {
-                        const auto vIdx = refElement.subEntity(localFacetIndex, 1, localVIdx, dim);
-                        const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
+                        auto localDofIdx = GeometryHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
+                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localDofIdx);
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
