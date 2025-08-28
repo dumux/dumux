@@ -103,11 +103,11 @@ public:
     { return "DefaultPhaseName"; }
 
     /*!
-     * \brief Return the human readable name of a fluid phase
+     * \brief Return the human readable name of a component
      *
-     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx index of the component
      */
-    static std::string componentName(int phaseIdx)
+    static std::string componentName(int compIdx)
     { return "DefaultComponentName"; }
 
     // \}
