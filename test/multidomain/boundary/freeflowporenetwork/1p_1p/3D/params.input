@@ -29,7 +29,6 @@ Name = ff
 InletPressure = 1.01e5
 OutletPressure = 1e5
 EnableInertiaTerms = false
-VerticalFlow = false
 
 [PNM.Problem]
 Name = pnm
