@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
@@ -13,6 +13,7 @@
 #ifndef DUMUX_DISCRETIZTAION_PQ2_HH
 #define DUMUX_DISCRETIZTAION_PQ2_HH
 
+#include <concepts>
 #include <type_traits>
 
 #include <dune/common/fvector.hh>
@@ -21,16 +22,20 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/localdoftraits.hh>
+#include <dumux/discretization/defaultlocaloperator.hh>
+#include <dumux/discretization/elementboundarytypes.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
@@ -64,10 +69,10 @@ struct GridVolumeVariables<TypeTag, TTag::PQ2HybridModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
 public:
-    using type = CVFEGridVolumeVariables<Traits, enableCache>;
+    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
 };
 
 //! The flux variables cache class
@@ -103,15 +108,17 @@ struct ElementBoundaryTypes<TypeTag, TTag::PQ2HybridModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
-    using type = CVFEElementBoundaryTypes<BoundaryTypes>;
+    // Check if problem has new boundaryTypes interface
+    // then use ElementIntersectionBoundaryTypes
+    using type = std::conditional_t<
+        Dumux::Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, typename GG::LocalView, typename GG::GridView::Intersection>(),
+        Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
+        Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
+    >;
 };
-
-//! Set the BaseLocalResidual to HybridCVFELocalResidual
-template<class TypeTag>
-struct BaseLocalResidual<TypeTag, TTag::PQ2HybridModel>
-{ using type = CVFELocalResidual<TypeTag>; };
 
 } // namespace Dumux::Properties
 
@@ -122,12 +129,10 @@ struct ProblemTraits<Problem, DiscretizationMethods::PQ2>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Element = typename GG::GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GG::SubControlVolume;
 public:
     using GridGeometry = GG;
-    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
-    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, intersection)
+    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView, typename GG::GridView::Intersection>::type;
 };
 
 template<class GridView>
@@ -136,6 +141,18 @@ struct LocalDofTraits<GridView, DiscretizationMethods::PQ2>
     static constexpr int dim = GridView::dimension;
     // Dofs are located at the vertices and element
     static constexpr int numCubeElementDofs = (1<<dim)+ dim*(1<<(dim-1));
+};
+
+template<class TypeTag>
+concept PQ2HybridModel = std::is_same_v<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    DiscretizationMethods::PQ2
+>;
+
+template<PQ2HybridModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using type = CVFELocalResidual<TypeTag>;
 };
 
 } // end namespace Dumux::Detail
