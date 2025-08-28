@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
@@ -112,13 +112,13 @@ class PQ2FVGridGeometry
 
     static_assert(dim > 1, "Only implemented for dim > 1");
 
-    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
-    static_assert(enableHybridCVFE, "Only hybrid scheme implemented for pq2");
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::PQ2;
     static constexpr DiscretizationMethod discMethod{};
+
+    static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
+    static_assert(enableHybridCVFE, "Only hybrid scheme implemented for pq2");
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
@@ -282,59 +282,47 @@ private:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
-            const auto refElement = referenceElement(elementGeometry);
 
             const auto& localCoefficients = this->feCache().get(element.type()).localCoefficients();
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
 
-            numScv_ += geometryHelper.numElementDofs();
-            assert(localCoefficients.size() ==  geometryHelper.numElementDofs());
+            numScv_ += geometryHelper.numScv();
             // construct the sub control volumes
-            // we make sure that the local scv index corresponds to the local basis index
-            cache_.scvs_[eIdx].resize(geometryHelper.numElementDofs());
-            std::vector<LocalIndexType> scvIdxMap(geometryHelper.numElementDofs());
+            cache_.scvs_[eIdx].resize(geometryHelper.numScv());
+
             for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
             {
-                auto localDofIdx = geometryHelper.localKeyToLocalDofIndex(localCoefficients.localKey(keyIdx));
-                scvIdxMap[localDofIdx] = keyIdx;
-
-                if(localDofIdx < geometryHelper.numScv())
+                const auto& localKey = localCoefficients.localKey(keyIdx);
+                // Reorder the indices such that indices for scvs come first
+                auto localIdx = GeometryHelper::localKeyToReorderedLocalDofIndex(element.type(), localKey);
+                // If the dof is a vertex, we construct scvs
+                if(localKey.codim() == dim)
                 {
-                    auto corners = geometryHelper.getScvCorners(localDofIdx);
-                    cache_.scvs_[eIdx][keyIdx] = SubControlVolume(
-                        geometryHelper.scvVolume(localDofIdx, corners),
-                        geometryHelper.dofPosition(localDofIdx),
+                    // With the new localIdx, scvs can be constructed as for the Box method
+                    auto corners = geometryHelper.getScvCorners(localIdx);
+                    cache_.scvs_[eIdx][localIdx] = SubControlVolume(
+                        geometryHelper.scvVolume(localIdx, corners),
+                        geometryHelper.dofPosition(localKey),
                         Dumux::center(corners),
+                        localIdx,
                         keyIdx,
                         eIdx,
-                        geometryHelper.dofIndex(this->dofMapper(), element, localDofIdx),
-                        geometryHelper.isOverlappingScv(localDofIdx)
-                    );
-                }
-                else
-                {
-                    cache_.scvs_[eIdx][keyIdx] = SubControlVolume(
-                        elementGeometry.volume(),
-                        geometryHelper.dofPosition(localDofIdx),
-                        elementGeometry.center(),
-                        keyIdx,
-                        eIdx,
-                        geometryHelper.dofIndex(this->dofMapper(), element, localDofIdx),
-                        true
+                        geometryHelper.dofIndex(this->dofMapper(), element, localKey),
+                        false
                     );
                 }
             }
 
-            // construct the sub control volume faces
-            numScvf_ += geometryHelper.numInteriorScvf();
-            cache_.scvfs_[eIdx].resize(geometryHelper.numInteriorScvf());
+            // construct the sub control volume faces, this is the same as for the Box method
+            const auto numInteriorScvfs = GeometryHelper::numInteriorScvf(elementGeometry.type());
+            numScvf_ += numInteriorScvfs;
+            cache_.scvfs_[eIdx].resize(numInteriorScvfs);
             LocalIndexType scvfLocalIdx = 0;
-            for (; scvfLocalIdx < geometryHelper.numInteriorScvf(); ++scvfLocalIdx)
+            for (; scvfLocalIdx < numInteriorScvfs; ++scvfLocalIdx)
             {
-                const auto scvPairTemp = geometryHelper.getScvPairForScvf(scvfLocalIdx);
-                std::array<LocalIndexType, 2> scvPair = {scvIdxMap[scvPairTemp[0]], scvIdxMap[scvPairTemp[1]]};
+                const auto scvPair = geometryHelper.getScvPairForScvf(scvfLocalIdx);
                 const auto corners = geometryHelper.getScvfCorners(scvfLocalIdx);
                 const auto area = Dumux::convexPolytopeVolume<dim-1>(
                     geometryHelper.getInteriorScvfGeometryType(scvfLocalIdx),
@@ -344,7 +332,7 @@ private:
                 cache_.scvfs_[eIdx][scvfLocalIdx] = SubControlVolumeFace(
                     Dumux::center(corners),
                     area,
-                    geometryHelper.normal(corners, scvPairTemp),
+                    geometryHelper.normal(corners, scvPair),
                     std::move(scvPair),
                     scvfLocalIdx,
                     geometryHelper.isOverlappingScvf(scvfLocalIdx)
@@ -359,18 +347,17 @@ private:
                     cache_.hasBoundaryScvf_[eIdx] = true;
 
                     const auto localFacetIndex = intersection.indexInInside();
-                    const auto numBoundaryScvf = geometryHelper.numBoundaryScvf(localFacetIndex);
+                    const auto numBoundaryScvf = GeometryHelper::numBoundaryScvf(elementGeometry.type(), localFacetIndex);
                     numScvf_ += numBoundaryScvf;
                     numBoundaryScvf_ += numBoundaryScvf;
 
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < numBoundaryScvf; ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        const auto scvPairTemp = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
-                        std::array<LocalIndexType, 2> scvPair = {scvIdxMap[scvPairTemp[0]], scvIdxMap[scvPairTemp[1]]};
+                        const auto scvPair = geometryHelper.getScvPairForBoundaryScvf(localFacetIndex, isScvfLocalIdx);
                         const auto corners = geometryHelper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx);
                         const auto area = Dumux::convexPolytopeVolume<dim-1>(
-                            geometryHelper.getBoundaryScvfGeometryType(localFacetIndex, isScvfLocalIdx),
+                            geometryHelper.getBoundaryScvfGeometryType(isScvfLocalIdx),
                             [&](unsigned int i){ return corners[i]; }
                         );
                         cache_.scvfs_[eIdx].emplace_back(
@@ -380,7 +367,7 @@ private:
                             std::move(scvPair),
                             scvfLocalIdx,
                             typename SubControlVolumeFace::Traits::BoundaryFlag{ intersection },
-                            geometryHelper.isOverlappingBoundaryScvf(localFacetIndex, isScvfLocalIdx)
+                            geometryHelper.isOverlappingBoundaryScvf(localFacetIndex)
                         );
 
                         // store look-up map to construct boundary scvf geometries
@@ -393,24 +380,13 @@ private:
                         scvfLocalIdx++;
                     }
 
-                    // TODO also move this to helper class
-                    unsigned int numCorners = intersection.geometry().corners();
-                    // add all vertices on the intersection to the set of boundary vertices
-                    for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
+                    for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
                     {
-                        if(localVIdx < numCorners)
+                        if(GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(keyIdx)))
                         {
-                            const auto vIdx = refElement.subEntity(localFacetIndex, 1, localVIdx, dim);
-                            const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
-                            boundaryDofIndices_[vIdxGlobal] = true;
+                            const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(keyIdx));
+                            boundaryDofIndices_[dofIdxGlobal] = true;
                         }
-                        else
-                        {
-                            const auto vIdx = refElement.subEntity(localFacetIndex, 1, localVIdx-numCorners, dim-1);
-                            const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim-1);
-                            boundaryDofIndices_[vIdxGlobal] = true;
-                        }
-
                     }
                 }
 
@@ -420,31 +396,34 @@ private:
                     this->setPeriodic();
 
                     // find the mapped periodic vertex of all vertices on periodic boundaries
-                    const auto fIdx = intersection.indexInInside();
-                    const auto numFaceVerts = refElement.size(fIdx, 1, dim);
                     const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
-                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    for (int localDofIdx = 0; localDofIdx < localCoefficients.size(); ++localDofIdx)
                     {
-                        const auto vIdx = refElement.subEntity(fIdx, 1, localVIdx, dim);
-                        const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
-                        const auto vPos = elementGeometry.corner(vIdx);
+                        if(!GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(localDofIdx)))
+                            continue;
+
+                        const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
+                        const auto dofPos = geometryHelper.dofPosition(localCoefficients.localKey(localDofIdx));
 
                         const auto& outside = intersection.outside();
                         const auto outsideGeometry = outside.geometry();
+                        const auto& localCoefficientsOut = this->feCache().get(outsideGeometry.type()).localCoefficients();
                         for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
                             // only check periodic vertices of the periodic neighbor
                             if (isOutside.boundary() && isOutside.neighbor())
                             {
-                                const auto fIdxOutside = isOutside.indexInInside();
-                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
-                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
+                                for (int localDofIdxOut = 0; localDofIdxOut < localCoefficientsOut.size(); ++localDofIdxOut)
                                 {
-                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
-                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                    const auto& localKeyOut = localCoefficientsOut.localKey(localDofIdxOut);
+                                    if(!GeometryHelper::localDofOnIntersection(outsideGeometry.type(), isOutside.indexInInside(), localKeyOut))
+                                        continue;
+
+                                    const auto dofIdxGlobalOut = GeometryHelper::dofIndex(this->dofMapper(), outside, localKeyOut);
+                                    const auto dofPosOutside =  GeometryHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                    if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
-                                        periodicVertexMap_[vIdxGlobal] = this->dofMapper().subIndex(outside, vIdxOutside, dim);
+                                    if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)
+                                        periodicVertexMap_[dofIdxGlobal] = dofIdxGlobalOut;
                                 }
                             }
                         }
@@ -466,10 +445,10 @@ private:
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
 
-    // vertices on the boundary
+    // dofs on the boundary
     std::vector<bool> boundaryDofIndices_;
 
-    // a map for periodic boundary vertices
+    // a map for periodic boundary dofs
     std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
 
     Cache cache_;
