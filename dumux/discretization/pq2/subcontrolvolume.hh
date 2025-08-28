@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
@@ -68,6 +68,7 @@ public:
                         const GlobalPosition& dofPosition,
                         const GlobalPosition& center,
                         const LocalIndexType indexInElement,
+                        const LocalIndexType localDofIndex,
                         const GridIndexType eIdx,
                         const GridIndexType dofIdx,
                         bool overlapping = false)
@@ -76,6 +77,7 @@ public:
     , dofPosition_(dofPosition)
     , volume_(volume)
     , indexInElement_(indexInElement)
+    , localDofIndex_(localDofIndex)
     , eIdx_(eIdx)
     , dofIdx_(dofIdx)
     , overlapping_(overlapping)
@@ -106,13 +108,14 @@ public:
     { return eIdx_; }
 
     LocalIndexType localDofIndex() const
-    { return indexInElement_; }
+    { return localDofIndex_; }
 
 private:
     GlobalPosition center_;
     GlobalPosition dofPosition_;
     Scalar volume_;
     LocalIndexType indexInElement_;
+    LocalIndexType localDofIndex_;
     GridIndexType eIdx_;
     GridIndexType dofIdx_;
     bool overlapping_;
