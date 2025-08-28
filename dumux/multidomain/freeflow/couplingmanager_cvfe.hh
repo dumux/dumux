@@ -215,7 +215,7 @@ public:
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
-        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.ipLocal())[pressureIdx];
+        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local())[pressureIdx];
     }
 
     /*!
@@ -274,7 +274,7 @@ public:
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            localBasis.evaluateFunction(ipData.ipLocal(), shapeValues);
+            localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar rho = 0.0;
             for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))
@@ -349,7 +349,7 @@ public:
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
             const auto& localBasis = this->momentumCouplingContext_()[0].fvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
-            localBasis.evaluateFunction(ipData.ipLocal(), shapeValues);
+            localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar mu = 0.0;
             for (const auto& localDof : localDofs(this->momentumCouplingContext_()[0].fvGeometry))

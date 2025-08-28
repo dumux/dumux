@@ -706,7 +706,7 @@ public:
                     const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().pressureAtPos(ipData.ipGlobal());
+            return asImp_().pressureAtPos(ipData.global());
         else
             return couplingManager_->pressure(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -759,7 +759,7 @@ public:
                    const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().densityAtPos(ipData.ipGlobal());
+            return asImp_().densityAtPos(ipData.global());
         else
             return couplingManager_->density(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -812,7 +812,7 @@ public:
                               const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().effectiveViscosityAtPos(ipData.ipGlobal());
+            return asImp_().effectiveViscosityAtPos(ipData.global());
         else
             return couplingManager_->effectiveViscosity(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -966,7 +966,7 @@ public:
                    const ElementVariables& elemVars,
                    const IpData& ipData) const
     {
-        return asImp_().sourceAtPos(ipData.ipGlobal());
+        return asImp_().sourceAtPos(ipData.global());
     }
 
     /*!
@@ -1015,7 +1015,7 @@ public:
                               const FaceIpData& faceIpData) const
     {
         // forward it to the method which only takes the global coordinate
-        return asImp_().dirichletAtPos(faceIpData.ipGlobal());
+        return asImp_().dirichletAtPos(faceIpData.global());
     }
 
     /*!
@@ -1032,7 +1032,7 @@ public:
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
                                 const FaceIpData& faceIpData) const
     {
-        return asImp_().boundaryFluxAtPos(faceIpData.ipGlobal());
+        return asImp_().boundaryFluxAtPos(faceIpData.global());
     }
 
     /*!
@@ -1076,7 +1076,7 @@ public:
                     const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().pressureAtPos(ipData.ipGlobal());
+            return asImp_().pressureAtPos(ipData.global());
         else
             return couplingManager_->pressure(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -1100,7 +1100,7 @@ public:
                    const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().densityAtPos(ipData.ipGlobal());
+            return asImp_().densityAtPos(ipData.global());
         else
             return couplingManager_->density(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -1125,7 +1125,7 @@ public:
                               const bool isPreviousTimeStep = false) const
     {
         if constexpr (std::is_empty_v<CouplingManager>)
-            return asImp_().effectiveViscosityAtPos(ipData.ipGlobal());
+            return asImp_().effectiveViscosityAtPos(ipData.global());
         else
             return couplingManager_->effectiveViscosity(element, fvGeometry, ipData, isPreviousTimeStep);
     }
@@ -1169,7 +1169,7 @@ public:
     template<class IpData>
     InitialValues initial(const FVElementGeometry& fvGeometry, const IpData& ipData) const
     {
-        return asImp_().initialAtPos(ipData.ipGlobal());
+        return asImp_().initialAtPos(ipData.global());
     }
 
 private:
