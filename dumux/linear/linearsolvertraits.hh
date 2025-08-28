@@ -138,14 +138,20 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ1Bubble>
 
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
-: public LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
+: public LinearSolverTraitsBase<GridGeometry>
 {
-    using Grid = typename GridGeometry::GridView::Traits::Grid;
     using DofMapper = typename GridGeometry::DofMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
 
-    static constexpr bool canCommunicate =
-        Dumux::Detail::canCommunicate<Grid, Grid::dimension>
-        && Dumux::Detail::canCommunicate<Grid, 1> ;
+    static constexpr int dofCodim = Grid::dimension;
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{ (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) };
+
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
+                                          && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
 
     static const DofMapper& dofMapper(const GridGeometry& gg)
     { return { gg.dofMapper() }; }
