@@ -26,14 +26,14 @@ EnableGravity = false
 
 [FreeFlow.Problem]
 Name = ff
-InletPressure = 1.1e5
+InletPressure = 1.01e5
 OutletPressure = 1e5
 EnableInertiaTerms = false
 VerticalFlow = false
 
 [PNM.Problem]
 Name = pnm
-InletPressure = 1.1e5
+InletPressure = 1.01e5
 OutletPressure = 1e5
 VerticalFlow = false
 
@@ -49,3 +49,7 @@ NumericDifference.BaseEpsilon = 1e-4
 
 [SpatialParams]
 Temperature = 298.0
+
+[Newton]
+MaxSteps = 50
+MaxRelativeShift = 1e-5
