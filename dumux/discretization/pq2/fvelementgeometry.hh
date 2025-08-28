@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
@@ -25,8 +25,9 @@
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
-
 #include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/cvfe/integrationpointdata.hh>
+
 #include <dumux/discretization/pq2/geometryhelper.hh>
 
 namespace Dumux {
@@ -55,6 +56,10 @@ class PQ2FVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                             LocalIndexType>;
+
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -98,14 +103,34 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! range over sub control volumes related to a local dof.
+    template<class LocalDof>
+    friend inline auto scvs(const PQ2FVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto& element = fvGeometry.element();
+        const auto& gg = fvGeometry.gridGeometry();
+        const auto& localKey = fvGeometry.feLocalCoefficients().localKey(localDof.index());
+        const auto scvIdx =  GeometryHelper::localKeyToReorderedLocalDofIndex(element.type(), localKey);
+
+        // TODO: Replace by empty range?
+        auto idx = scvIdx < fvGeometry.numScv() ? std::views::iota(0,1) : std::views::iota(0,0);
+
+        return idx | std::views::transform(
+            [&, scvIdx](const auto i) -> const typename PQ2FVElementGeometry::SubControlVolume& { return fvGeometry.scv(scvIdx); }
+        );
+    }
+
     friend inline auto cvLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
-        return std::views::iota(std::size_t(0), fvGeometry.numScv())
-            | std::views::filter([&](size_t i) { return !fvGeometry.scv(i).isOverlapping(); })
+        return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
+            | std::views::filter([&](size_t i) {
+                    return GeometryHelper::isCVLocalDof(fvGeometry.element().type(),
+                                                        fvGeometry.feLocalCoefficients().localKey(i)); })
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -113,12 +138,15 @@ public:
 
     friend inline auto nonCVLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
-        return std::views::iota(std::size_t(0), fvGeometry.numScv())
-            | std::views::filter([&](size_t i) { return fvGeometry.scv(i).isOverlapping(); })
+        return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
+            | std::views::filter([&](size_t i) {
+                    return !GeometryHelper::isCVLocalDof(fvGeometry.element().type(),
+                                                         fvGeometry.feLocalCoefficients().localKey(i)); })
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -127,34 +155,35 @@ public:
     friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return Dune::transformedRangeView(
-            Dune::range(std::size_t(0), fvGeometry.numScv()), [&](const auto i) {
+            Dune::range(std::size_t(0), fvGeometry.numLocalDofs()), [&](const auto i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             }
         );
     }
 
-    // //! an iterator over all local dofs related to an intersection
-    // template<class Intersection>
-    // friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const Intersection& intersection)
-    // {
-    //     return Dune::transformedRangeView(
-    //         Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
-    //         [&](const auto i)
-    //         {
-    //             auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i);
-    //             return CVFE::LocalDof
-    //             {
-    //                 static_cast<LocalIndexType>(localDofIdx),
-    //                 static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), localDofIdx)),
-    //                 static_cast<GridIndexType>(fvGeometry.elementIndex())
-    //             };
-    //             }
-    //     );
-    // }
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const Intersection& intersection)
+    {
+        return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
+            | std::views::filter([&](size_t i) {
+                return GeometryHelper::localDofOnIntersection(fvGeometry.element().type(),
+                                                              intersection.indexInInside(),
+                                                              fvGeometry.feLocalCoefficients().localKey(i)); })
+            | std::views::transform([&](size_t i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+            });
+    }
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
@@ -179,6 +208,12 @@ public:
     const auto& feLocalCoefficients() const
     {
         return gridGeometry().feCache().get(element_->type()).localCoefficients();
+    }
+
+    //! The total number of element-local dofs
+    std::size_t numLocalDofs() const
+    {
+        return GeometryHelper::numElementDofs(element().type());
     }
 
     //! The total number of sub control volumes
@@ -229,6 +264,7 @@ public:
         element_ = element;
         // cache element index
         eIdx_ = gridGeometry().elementMapper().index(element);
+        elementGeometry_.emplace(element.geometry());
     }
 
     //! Returns true if bind/bindElement has already been called
@@ -238,6 +274,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The bound element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -251,13 +291,20 @@ public:
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
+        return ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx][0];
+    }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
+        const auto& geo = elementGeometry();
         const GeometryHelper helper(geo);
-        const auto idx =  helper.localKeyToLocalDofIndex(this->feLocalCoefficients().localKey(scv.indexInElement()));
+        const auto idx =  GeometryHelper::localKeyToReorderedLocalDofIndex(geo.type(), this->feLocalCoefficients().localKey(scv.localDofIndex()));
         return {
             helper.getScvGeometryType(idx),
             helper.getScvCorners(idx)
@@ -268,21 +315,20 @@ public:
     typename SubControlVolumeFace::Traits::Geometry geometry(const SubControlVolumeFace& scvf) const
     {
         assert(isBound());
-        const auto geo = element().geometry();
         if (scvf.boundary())
         {
-            GeometryHelper helper(geo);
-            const auto localScvfIdx = scvf.index() - helper.numInteriorScvf();
+            GeometryHelper helper(*elementGeometry_);
+            const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
             const auto [localFacetIndex, isScvfLocalIdx]
                 = ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx];
             return {
-                helper.getBoundaryScvfGeometryType(localFacetIndex, isScvfLocalIdx),
+                helper.getBoundaryScvfGeometryType(isScvfLocalIdx),
                 helper.getBoundaryScvfCorners(localFacetIndex, isScvfLocalIdx)
             };
         }
         else
         {
-            GeometryHelper helper(geo);
+            GeometryHelper helper(*elementGeometry_);
             return {
                 helper.getInteriorScvfGeometryType(scvf.index()),
                 helper.getScvfCorners(scvf.index())
@@ -290,11 +336,42 @@ public:
         }
     }
 
+    //! Integration point data for an scv
+    friend inline IpData ipData(const PQ2FVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.feLocalCoefficients().localKey(scv.localDofIndex());
+
+        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+    }
+
+    //! Integration point data for a localDof
+    template<class LocalDof>
+    friend inline IpData ipData(const PQ2FVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        const auto type = fvGeometry.element().type();
+        const auto& localKey = fvGeometry.feLocalCoefficients().localKey(localDof.index());
+        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+
+        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+    }
+
+    //! Integration point data for a global position
+    friend inline auto ipData(const PQ2FVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
+    {
+        // Create ipData that does not automatically calculate the local position but only if it is called
+        return CVFE::IntegrationPointDataLocalMapping{
+            [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
+            globalPos
+        };
+    }
+
 private:
     const GGCache* ggCache_;
     GridIndexType eIdx_;
 
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 };
 
 } // end namespace Dumux
