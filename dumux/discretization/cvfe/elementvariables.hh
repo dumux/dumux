@@ -89,7 +89,7 @@ public:
         if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return gridVolVars().volVars(eIdx_, scvOrLocalDof.index());
         else
-            return gridVolVars().volVars(eIdx_, scvOrLocalDof.indexInElement());
+            return gridVolVars().volVars(eIdx_, scvOrLocalDof.localDofIndex());
     }
 
     /*!
@@ -254,7 +254,7 @@ public:
         // resize variables to the required size
         variables_.resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
-        // update cv related dofs where there exists a localDof
+        // update variables related to localDofs
         for (const auto& localDof : localDofs(fvGeometry))
             variables_[localDof.index()].update(elemSol, gridVolVars().problem(), fvGeometry, ipData(fvGeometry, localDof));
     }
@@ -271,7 +271,7 @@ public:
         if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.index()];
         else
-            return variables_[scvOrLocalDof.indexInElement()];
+            return variables_[scvOrLocalDof.localDofIndex()];
     }
 
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
@@ -280,7 +280,7 @@ public:
         if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.index()];
         else
-            return variables_[scvOrLocalDof.indexInElement()];
+            return variables_[scvOrLocalDof.localDofIndex()];
     }
 
     //! The grid variables cache object we are a restriction of
