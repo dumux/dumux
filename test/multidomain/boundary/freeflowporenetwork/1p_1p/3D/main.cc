@@ -40,7 +40,7 @@
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(
-    std::vector<Dune::FieldVector<double, 2>>& faceVelocity,
+    std::vector<Dune::FieldVector<double, 3>>& faceVelocity,
     const GridGeometry& gridGeometry,
     const GridVariables& gridVariables,
     const SolutionVector& x
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
     vtkWriterFF.write(1.0);
     pmVtkWriter.write(1.0);
 
-    std::vector<Dune::FieldVector<double, 2>> faceVelocity(sol[freeFlowMomentumIndex].size());
+    std::vector<Dune::FieldVector<double, 3>> faceVelocity(sol[freeFlowMomentumIndex].size());
     updateVelocities(faceVelocity, *freeFlowMomentumGridGeometry, *freeFlowMomentumGridVariables, sol[freeFlowMomentumIndex]);
 
     ConformingIntersectionWriter faceVtk(freeFlowMomentumGridGeometry->gridView());
