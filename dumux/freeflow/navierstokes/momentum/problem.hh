@@ -947,7 +947,7 @@ public:
     {}
 
     /*!
-     * \brief Evaluate the source term at a given integration point, related to the residual of a local dof
+     * \brief Evaluate the source term at a given interpolation point, related to the residual of a local dof
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
@@ -955,7 +955,7 @@ public:
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All volume variables for the element
-     * \param ipData Integration point data
+     * \param ipData Interpolation point data
      *
      * For this method, the return parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
@@ -1008,7 +1008,7 @@ public:
      *        control volume.
      *
      * \param fvGeometry The finite-volume geometry
-     * \param faceIpData Face integration point data
+     * \param faceIpData Face interpolation point data
      */
     template<class FaceIpData>
     DirichletValues dirichlet(const FVElementGeometry& fvGeometry,
@@ -1019,12 +1019,12 @@ public:
     }
 
     /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given integration point.
+     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
-     * \param faceIpData Face integration point data
+     * \param faceIpData Face interpolation point data
      */
     template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
     BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
@@ -1066,7 +1066,7 @@ public:
     { return 0.0; }
 
     /*!
-     * \brief Returns the pressure at given integration point data.
+     * \brief Returns the pressure at given interpolation point data.
      * \note  Overload this if a fixed pressure shall be prescribed (e.g., given by an analytical solution).
      */
     template<class IpData>
@@ -1090,7 +1090,7 @@ public:
     }
 
     /*!
-     * \brief Returns the density at given integration point data.
+     * \brief Returns the density at given interpolation point data.
      * \note  Overload this if a fixed density shall be prescribed.
      */
     template<class IpData>
@@ -1164,7 +1164,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value at an integration point
+     * \brief Evaluate the initial value at an interpolation point
      */
     template<class IpData>
     InitialValues initial(const FVElementGeometry& fvGeometry, const IpData& ipData) const

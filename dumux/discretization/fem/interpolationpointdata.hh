@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup FEMDiscretization
- * \brief Shape functions and gradients at an integration point
+ * \brief Shape functions and gradients at an interpolation point
  */
 #ifndef DUMUX_DISCRETIZATION_FE_INTEGRATION_POINT_DATA_HH
 #define DUMUX_DISCRETIZATION_FE_INTEGRATION_POINT_DATA_HH
@@ -17,7 +17,7 @@
 namespace Dumux {
 
 template<class GlobalPosition, class LocalBasis>
-class FEIntegrationPointData
+class FEInterpolationPointData
 {
     using LocalPosition = typename LocalBasis::Traits::DomainType;
     using RangeType = typename LocalBasis::Traits::RangeType;
@@ -28,13 +28,13 @@ class FEIntegrationPointData
 
 public:
     // The default constructor
-    FEIntegrationPointData() = delete;
+    FEInterpolationPointData() = delete;
 
     // The constructor
     template<class Geometry>
-    FEIntegrationPointData(const Geometry& geometry,
-                           const LocalPosition& ipLocal,
-                           const LocalBasis& localBasis)
+    FEInterpolationPointData(const Geometry& geometry,
+                             const LocalPosition& ipLocal,
+                             const LocalBasis& localBasis)
     : ipLocal_(ipLocal),
       ipGlobal_(geometry.global(ipLocal))
     {
@@ -89,24 +89,24 @@ private:
 
 /*!
  * \ingroup FEMDiscretization
- * \brief Integration point data related to a face of an element
+ * \brief Interpolation point data related to a face of an element
  */
 template<class GlobalPosition, class LocalBasis, class BoundaryFlag>
-class FEFaceIntegrationPointData : public FEIntegrationPointData<GlobalPosition, LocalBasis>
+class FEFaceInterpolationPointData : public FEInterpolationPointData<GlobalPosition, LocalBasis>
 {
-    using ParentType = FEIntegrationPointData<GlobalPosition, LocalBasis>;
+    using ParentType = FEInterpolationPointData<GlobalPosition, LocalBasis>;
     using LocalPosition = typename LocalBasis::Traits::DomainType;
 public:
     // The default constructor
-    FEFaceIntegrationPointData() = delete;
+    FEFaceInterpolationPointData() = delete;
 
     // The constructor
     template<class Geometry>
-    FEFaceIntegrationPointData(const Geometry& geometry,
-                               const LocalPosition& ipLocal,
-                               const LocalBasis& localBasis,
-                               const GlobalPosition& n,
-                               const BoundaryFlag& bFlag)
+    FEFaceInterpolationPointData(const Geometry& geometry,
+                                 const LocalPosition& ipLocal,
+                                 const LocalBasis& localBasis,
+                                 const GlobalPosition& n,
+                                 const BoundaryFlag& bFlag)
     : ParentType(geometry, ipLocal, localBasis), normal_(n), boundaryFlag_(bFlag)
     {}
 

@@ -41,7 +41,7 @@ public:
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param fvGeometry The local geometry
-     * \param ipData The integration point data
+     * \param ipData The interpolation point data
      */
     template<class ElementSolution, class Problem, class FVElementGeometry, Concept::LocalDofIpData IpData>
     void update(const ElementSolution& elemSol,

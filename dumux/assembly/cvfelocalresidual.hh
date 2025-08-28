@@ -23,7 +23,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
-#include <dumux/discretization/cvfe/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 namespace Dumux::Detail {
 
@@ -80,9 +80,9 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
 
-    using FaceIpData = Dumux::CVFE::FaceIntegrationPointData<typename Element::Geometry::LocalCoordinate,
-                                                             typename Element::Geometry::GlobalCoordinate,
-                                                             typename SubControlVolumeFace::Traits::LocalIndexType>;
+    using FaceIpData = Dumux::CVFE::FaceInterpolationPointData<typename Element::Geometry::LocalCoordinate,
+                                                               typename Element::Geometry::GlobalCoordinate,
+                                                               typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;

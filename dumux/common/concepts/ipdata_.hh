@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Concepts
- * \brief Concepts related to integration point data
+ * \brief Concepts related to interpolation point data
  */
 #ifndef DUMUX_CONCEPTS_IPDATA__HH
 #define DUMUX_CONCEPTS_IPDATA__HH

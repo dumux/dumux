@@ -29,7 +29,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
-#include <dumux/discretization/cvfe/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -112,8 +112,8 @@ private:
     using MassDiscretizationMethod = typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod;
 
     template<std::size_t id> using IpData
-        = Dumux::CVFE::IntegrationPointData<typename GridView<id>::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                            typename GridView<id>::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
+        = Dumux::CVFE::InterpolationPointData<typename GridView<id>::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                              typename GridView<id>::template Codim<0>::Entity::Geometry::GlobalCoordinate>;
 
 public:
 
@@ -202,7 +202,7 @@ public:
     }
 
     /*!
-     * \brief Returns the pressure at a given integration point
+     * \brief Returns the pressure at a given interpolation point
      */
     template <class IpData>
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,

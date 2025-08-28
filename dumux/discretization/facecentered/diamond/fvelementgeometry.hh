@@ -21,7 +21,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
-#include <dumux/discretization/cvfe/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 namespace Dumux {
 
@@ -46,9 +46,9 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                             LocalIndexType>;
+    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                               LocalIndexType>;
 
 public:
     //! export type of subcontrol volume face
@@ -213,7 +213,7 @@ public:
         }
     }
 
-    //! Integration point data for an scv
+    //! Interpolation point data for an scv
     friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolume& scv)
     {
         const auto type = fvGeometry.element().type();
@@ -222,7 +222,7 @@ public:
         return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
     }
 
-    //! Integration point data for a localDof
+    //! Interpolation point data for a localDof
     template<class LocalDof>
     friend inline IpData ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
@@ -233,11 +233,11 @@ public:
         return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
     }
 
-    //! Integration point data for a global position
+    //! Interpolation point data for a global position
     friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
         // Create ipData that does not automatically calculate the local position but only if it is called
-        return CVFE::IntegrationPointDataLocalMapping{
+        return CVFE::InterpolationPointDataLocalMapping{
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
             globalPos
         };
