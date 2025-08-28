@@ -16,6 +16,7 @@
 
 #include <utility>
 #include <unordered_map>
+#include <type_traits>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
@@ -35,6 +36,8 @@
 #include <dumux/discretization/pq2/subcontrolvolume.hh>
 #include <dumux/discretization/pq2/subcontrolvolumeface.hh>
 #include <dumux/discretization/extrusion.hh>
+
+#include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
 
@@ -120,6 +123,8 @@ public:
     static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
     static_assert(enableHybridCVFE, "Only hybrid scheme implemented for pq2");
 
+    //! export basic grid geometry type for the alternative constructor
+    using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
@@ -134,15 +139,23 @@ public:
     using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 2>;
     //! export the grid view type
     using GridView = GV;
+    //! export whether the grid(geometry) supports periodicity
+    using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
 
-    //! Constructor
-    PQ2FVGridGeometry(const GridView gridView)
-    : ParentType(gridView)
-    , dofMapper_(gridView, Traits::layout())
+    //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
+    PQ2FVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
+    : ParentType(std::move(gg))
+    , dofMapper_(this->gridView(), Traits::layout())
     , cache_(*this)
+    , periodicGridTraits_(this->gridView().grid())
     {
         update_();
     }
+
+    //! Constructor
+    PQ2FVGridGeometry(const GridView& gridView)
+    : PQ2FVGridGeometry(std::make_shared<BasicGridGeometry>(gridView))
+    {}
 
     //! The dofMapper
     const DofMapper& dofMapper() const
@@ -188,15 +201,15 @@ public:
 
     //! If a vertex / d.o.f. is on a periodic boundary
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
-    { return periodicVertexMap_.count(dofIdx); }
+    { return periodicDofMap_.count(dofIdx); }
 
     //! The index of the vertex / d.o.f. on the other side of the periodic boundary
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicVertexMap_.at(dofIdx); }
+    { return periodicDofMap_.at(dofIdx); }
 
     //! Returns the map between dofs across periodic boundaries
     const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
-    { return periodicVertexMap_; }
+    { return periodicDofMap_; }
 
     //! local view of this object (constructed with the internal cache)
     friend inline LocalView localView(const PQ2FVGridGeometry& gg)
@@ -391,7 +404,7 @@ private:
                 }
 
                 // inform the grid geometry if we have periodic boundaries
-                else if (intersection.boundary() && intersection.neighbor())
+                else if (periodicGridTraits_.isPeriodic(intersection))
                 {
                     this->setPeriodic();
 
@@ -423,7 +436,7 @@ private:
                                     const auto dofPosOutside =  GeometryHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)
-                                        periodicVertexMap_[dofIdxGlobal] = dofIdxGlobalOut;
+                                        periodicDofMap_[dofIdxGlobal] = dofIdxGlobalOut;
                                 }
                             }
                         }
@@ -449,9 +462,11 @@ private:
     std::vector<bool> boundaryDofIndices_;
 
     // a map for periodic boundary dofs
-    std::unordered_map<GridIndexType, GridIndexType> periodicVertexMap_;
+    std::unordered_map<GridIndexType, GridIndexType> periodicDofMap_;
 
     Cache cache_;
+
+    PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
 } // end namespace Dumux
