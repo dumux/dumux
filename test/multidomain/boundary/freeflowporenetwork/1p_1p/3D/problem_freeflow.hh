@@ -90,7 +90,7 @@ public:
                                 const SubControlVolumeFace& scvf) const
     {
         BoundaryTypes values;
-        // const auto& globalPos = scvf.center(); //avoid ambiguities at corners
+        const auto& globalPos = scvf.center(); //avoid ambiguities at corners
 
         if constexpr (ParentType::isMomentumProblem())
         {
@@ -100,8 +100,8 @@ public:
                 values.setCouplingNeumann(Indices::momentumYBalanceIdx);
                 values.setCouplingNeumann(Indices::momentumZBalanceIdx);
             }
-            // else if (onInlet_(globalPos) || onOutlet_(globalPos))
-            //     values.setAllNeumann();
+            else if (onInlet_(globalPos) || onOutlet_(globalPos))
+                values.setAllNeumann();
             else
                 values.setAllDirichlet(); //e.g. fixed velocities at walls
         }
@@ -109,10 +109,10 @@ public:
         {
             if (couplingManager_->isCoupled(CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex, scvf))
                 values.setAllCouplingNeumann(); //mass and energy coupling
-            // else if (onInlet_(globalPos))
-            //     values.setAllDirichlet();
-            // else if (onOutlet_(globalPos))
-            //     values.setAllNeumann();
+            else if (onInlet_(globalPos))
+                values.setAllDirichlet();
+            else if (onOutlet_(globalPos))
+                values.setAllNeumann();
             else
                 values.setAllNeumann(); //outflow or zero flux BCs for p,T
         }
@@ -128,17 +128,17 @@ public:
     {
         DirichletValues values(0.0); //velocity is 0.0
 
-        // if constexpr (!ParentType::isMomentumProblem())
-        // {
-        //     if (onInlet_(globalPos))
-        //     {
-        //         values[Indices::pressureIdx] = inletPressure_;
-        //     }
-        //     else if (onOutlet_(globalPos))
-        //     {
-        //         values[Indices::pressureIdx] = outletPressure_;
-        //     }
-        // }
+        if constexpr (!ParentType::isMomentumProblem())
+        {
+            if (onInlet_(globalPos))
+            {
+                values[Indices::pressureIdx] = inletPressure_;
+            }
+            else if (onOutlet_(globalPos))
+            {
+                values[Indices::pressureIdx] = outletPressure_;
+            }
+        }
         return values;
     }
 
@@ -166,7 +166,7 @@ public:
                            const SubControlVolumeFace& scvf) const
     {
         BoundaryFluxes values(0.0);
-        // const auto& globalPos = scvf.ipGlobal();
+        const auto& globalPos = scvf.ipGlobal();
         using SlipVelocityPolicy = NavierStokesSlipVelocity<typename GridGeometry::DiscretizationMethod,  NavierStokes::SlipConditions::BJ>;
         using FluxHelper = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod, SlipVelocityPolicy>;
 
@@ -184,20 +184,20 @@ public:
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache
                 );
             }
-            // else if (onInlet_(globalPos))
-            // {
-            //     values = FluxHelper::fixedPressureMomentumFlux(
-            //         *this, fvGeometry, scvf, elemVolVars,
-            //         elemFluxVarsCache, inletPressure_, true /*zeroNormalVelocityGradient*/
-            //     );
-            // }
-            // else if (onOutlet_(globalPos))
-            // {
-            //     values = FluxHelper::fixedPressureMomentumFlux(
-            //         *this, fvGeometry, scvf, elemVolVars,
-            //         elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
-            //     );
-            // }
+            else if (onInlet_(globalPos))
+            {
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars,
+                    elemFluxVarsCache, inletPressure_, true /*zeroNormalVelocityGradient*/
+                );
+            }
+            else if (onOutlet_(globalPos))
+            {
+                values = FluxHelper::fixedPressureMomentumFlux(
+                    *this, fvGeometry, scvf, elemVolVars,
+                    elemFluxVarsCache, outletPressure_, true /*zeroNormalVelocityGradient*/
+                );
+            }
         }
         else
         {
@@ -207,16 +207,17 @@ public:
                     CouplingManager::freeFlowMassIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars);
             }
-            // else if (onOutlet_(globalPos))
-            // {
-            //     using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-            //     // values = FluxHelper::scalarOutflowFlux(
-            //     //     *this, element, fvGeometry, scvf, elemVolVars, std::move(outletPressure_)
-            //     // );
-            //     values = FluxHelper::scalarOutflowFlux(
-            //         *this, element, fvGeometry, scvf, elemVolVars
-            //     );
-            // }
+            else if (onOutlet_(globalPos))
+            {
+                using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
+                DirichletValues outsideBoundaryPriVars = dirichletAtPos(globalPos);
+                values = FluxHelper::scalarOutflowFlux(
+                    *this, element, fvGeometry, scvf, elemVolVars, std::move(outsideBoundaryPriVars)
+                );
+                // values = FluxHelper::scalarOutflowFlux(
+                //     *this, element, fvGeometry, scvf, elemVolVars
+                // );
+            }
         }
 
         return values;
