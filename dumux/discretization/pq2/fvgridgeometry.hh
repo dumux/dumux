@@ -308,11 +308,10 @@ private:
             for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
             {
                 const auto& localKey = localCoefficients.localKey(keyIdx);
-                // Reorder the indices such that indices for scvs come first
-                auto localIdx = GeometryHelper::localKeyToReorderedLocalDofIndex(element.type(), localKey);
                 // If the dof is a vertex, we construct scvs
                 if(localKey.codim() == dim)
                 {
+                    const auto localIdx = localKey.subEntity();
                     // With the new localIdx, scvs can be constructed as for the Box method
                     auto corners = geometryHelper.getScvCorners(localIdx);
                     cache_.scvs_[eIdx][localIdx] = SubControlVolume(
