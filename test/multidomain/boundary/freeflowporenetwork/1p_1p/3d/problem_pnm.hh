@@ -49,11 +49,7 @@ public:
                    std::shared_ptr<SpatialParams> spatialParams,
                    std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, spatialParams, "PNM"), couplingManager_(couplingManager)
-    {
-        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
-        inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
-        outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
-    }
+    { }
 
     /*!
      * \name Simulation steering
@@ -149,26 +145,7 @@ public:
     { return *couplingManager_; }
 
 private:
-    bool onInlet_(const SubControlVolume& scv) const
-    {
-        return onLeftBoundary_(scv);
-    }
-
-    bool onOutlet_(const SubControlVolume& scv) const
-    {
-        return onRightBoundary_(scv);
-    }
-
-    bool onLeftBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 1; } //xMin
-
-    bool onRightBoundary_(const SubControlVolume& scv) const
-    { return this->gridGeometry().poreLabel(scv.dofIndex()) == 2; } //xMax
-
     std::shared_ptr<CouplingManager> couplingManager_;
-    Scalar initialPressure_;
-    Scalar inletPressure_;
-    Scalar outletPressure_;
 };
 
 } // end namespace Dumux
