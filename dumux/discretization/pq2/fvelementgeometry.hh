@@ -26,7 +26,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
-#include <dumux/discretization/cvfe/integrationpointdata.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/discretization/pq2/geometryhelper.hh>
 
@@ -56,9 +56,9 @@ class PQ2FVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::LocalDofIntegrationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                             typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                             LocalIndexType>;
+    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
+                                                               LocalIndexType>;
 
 public:
     //! export the element type
@@ -70,8 +70,7 @@ public:
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
     //! the maximum number of scvs per element (here for cubes)
-    // ToDo get this from GG
-    static constexpr std::size_t maxNumElementScvs = (1<<dim)+ dim*(1<<(dim-1));
+    static constexpr std::size_t maxNumElementDofs = GridGeometry::maxNumElementDofs;
 
     //! Constructor
     PQ2FVElementGeometry(const GGCache& ggCache)
@@ -107,13 +106,11 @@ public:
     template<class LocalDof>
     friend inline auto scvs(const PQ2FVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
-        const auto& element = fvGeometry.element();
-        const auto& gg = fvGeometry.gridGeometry();
         const auto& localKey = fvGeometry.feLocalCoefficients().localKey(localDof.index());
-        const auto scvIdx =  GeometryHelper::localKeyToReorderedLocalDofIndex(element.type(), localKey);
+        const auto scvIdx = localKey.subEntity();;
 
         // TODO: Replace by empty range?
-        auto idx = scvIdx < fvGeometry.numScv() ? std::views::iota(0,1) : std::views::iota(0,0);
+        auto idx = (localKey.codim() == dim) ? std::views::iota(0,1) : std::views::iota(0,0);
 
         return idx | std::views::transform(
             [&, scvIdx](const auto i) -> const typename PQ2FVElementGeometry::SubControlVolume& { return fvGeometry.scv(scvIdx); }
@@ -123,9 +120,7 @@ public:
     friend inline auto cvLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
-            | std::views::filter([&](size_t i) {
-                    return GeometryHelper::isCVLocalDof(fvGeometry.element().type(),
-                                                        fvGeometry.feLocalCoefficients().localKey(i)); })
+            | std::views::filter([&](size_t i) { return fvGeometry.feLocalCoefficients().localKey(i).codim() == dim; })
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
@@ -139,9 +134,7 @@ public:
     friend inline auto nonCVLocalDofs(const PQ2FVElementGeometry& fvGeometry)
     {
         return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
-            | std::views::filter([&](size_t i) {
-                    return !GeometryHelper::isCVLocalDof(fvGeometry.element().type(),
-                                                         fvGeometry.feLocalCoefficients().localKey(i)); })
+            | std::views::filter([&](size_t i) { return !(fvGeometry.feLocalCoefficients().localKey(i).codim() == dim); })
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
@@ -213,7 +206,7 @@ public:
     //! The total number of element-local dofs
     std::size_t numLocalDofs() const
     {
-        return GeometryHelper::numElementDofs(element().type());
+        return feLocalCoefficients().size();
     }
 
     //! The total number of sub control volumes
@@ -304,10 +297,10 @@ public:
         assert(isBound());
         const auto& geo = elementGeometry();
         const GeometryHelper helper(geo);
-        const auto idx =  GeometryHelper::localKeyToReorderedLocalDofIndex(geo.type(), this->feLocalCoefficients().localKey(scv.localDofIndex()));
+        const auto scvIdx = this->feLocalCoefficients().localKey(scv.localDofIndex()).subEntity();
         return {
-            helper.getScvGeometryType(idx),
-            helper.getScvCorners(idx)
+            helper.getScvGeometryType(scvIdx),
+            helper.getScvCorners(scvIdx)
         };
     }
 
@@ -360,7 +353,7 @@ public:
     friend inline auto ipData(const PQ2FVElementGeometry& fvGeometry, const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
         // Create ipData that does not automatically calculate the local position but only if it is called
-        return CVFE::IntegrationPointDataLocalMapping{
+        return CVFE::InterpolationPointDataLocalMapping{
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
             globalPos
         };
