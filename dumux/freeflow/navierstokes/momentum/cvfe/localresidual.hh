@@ -298,25 +298,24 @@ public:
                     NumEqVector fluxAndSourceTerm(0.0);
                     // add advection term
                     if (problem.enableInertiaTerms())
-                        fluxAndSourceTerm += density*(v*ipData.gradN(localDofIdx))*v;
+                        fluxAndSourceTerm -= density*(v*ipData.gradN(localDofIdx))*v;
 
                     // add diffusion term
-                    fluxAndSourceTerm -= enableUnsymmetrizedVelocityGradient ?
+                    fluxAndSourceTerm += enableUnsymmetrizedVelocityGradient ?
                                             mu*mv(gradV, ipData.gradN(localDofIdx))
                                             : mu*mv(gradV + getTransposed(gradV), ipData.gradN(localDofIdx));
 
                     // add pressure term
-                    fluxAndSourceTerm += problem.pressure(element, fvGeometry, ipData) * ipData.gradN(localDofIdx);
-
-                    // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
-                    fluxAndSourceTerm += density * problem.gravity();
+                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * ipData.gradN(localDofIdx);
 
                     // finally add source and Neumann term and add everything to residual
-                    const auto sourceAtIp = problem.source(fvGeometry, elemVolVars, ipData);
+                    auto sourceAtIp = problem.source(fvGeometry, elemVolVars, ipData);
+                    // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
+                    sourceAtIp += density * problem.gravity();;
 
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
-                        fluxAndSourceTerm[eqIdx] += ipData.shapeValue(localDofIdx) * sourceAtIp[eqIdx];
+                        fluxAndSourceTerm[eqIdx] -= ipData.shapeValue(localDofIdx) * sourceAtIp[eqIdx];
                         residual[localDofIdx][eqIdx] += qWeight*fluxAndSourceTerm[eqIdx];
                     }
                 }
