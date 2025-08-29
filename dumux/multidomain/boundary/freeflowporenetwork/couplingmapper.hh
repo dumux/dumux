@@ -127,8 +127,19 @@ public:
                                                                                    FreeFlowMomentumGridGeometry::GridView::dimensionworld>;
 
                 PoreIntersectionGeometryType poreIntersectionGeometry(lowerLeft, upperRight, axes);
-                const auto allCoupledFreeFlowElements = intersectingEntities(std::move(poreIntersectionGeometry), ffMomentumGridGeometry.boundingBoxTree());
+                auto allCoupledFreeFlowElements = intersectingEntities(std::move(poreIntersectionGeometry), ffMomentumGridGeometry.boundingBoxTree());
 
+                // search for duplicate free flow element indexes and remove them
+                if (allCoupledFreeFlowElements.size() > 1)
+                {
+                    std::ranges::sort(allCoupledFreeFlowElements, [](const auto& a, const auto& b)
+                    { return a.second() < b.second(); });
+
+                    auto removeIt = std::ranges::unique(allCoupledFreeFlowElements, [](const auto& a, const auto& b)
+                    { return a.second() == b.second(); });
+
+                    allCoupledFreeFlowElements.erase(removeIt.begin(), allCoupledFreeFlowElements.end());
+                }
 
                 for (const auto& ffElementInfo : allCoupledFreeFlowElements)
                 {
