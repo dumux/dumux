@@ -88,6 +88,18 @@ struct PQ2DefaultGridGeometryTraits
     using LocalView = PQ2FVElementGeometry<GridGeometry, enableCache>;
 
     using EnableHybridCVFE = std::true_type;
+
+    // The maximum values correspond to cubes
+    // This can be overwritten by the user when knowing the grid entity types
+    static constexpr std::size_t maxNumElementDofs = []()
+        {
+            if constexpr (GridView::dimension == 1)
+                return 3;
+            else if constexpr (GridView::dimension == 2)
+                return 9;
+            else if constexpr (GridView::dimension == 3)
+                return 27;
+        }();
 };
 
 /*!
@@ -122,6 +134,8 @@ public:
 
     static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
     static_assert(enableHybridCVFE, "Only hybrid scheme implemented for pq2");
+
+    static constexpr std::size_t maxNumElementDofs = Traits::maxNumElementDofs;
 
     //! export basic grid geometry type for the alternative constructor
     using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
