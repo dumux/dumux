@@ -92,6 +92,8 @@ struct PQ1BubbleDefaultGridGeometryTraits
 
     template<class GridGeometry, bool enableCache>
     using LocalView = PQ1BubbleFVElementGeometry<GridGeometry, enableCache>;
+
+    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension) + 1;
 };
 
 /*!
@@ -136,6 +138,8 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
+
+    static constexpr std::size_t maxNumElementDofs = Traits::maxNumElementDofs;
 
     //! export basic grid geometry type for the alternative constructor
     using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
