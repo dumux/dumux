@@ -17,7 +17,6 @@
 
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
