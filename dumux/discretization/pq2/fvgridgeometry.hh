@@ -65,13 +65,15 @@ struct PQ2MapperTraits :public DefaultMapperTraits<GridView>
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
     /**
-     * \brief layout for vertices and edges
+     * \brief layout for vertices and edges and elements (and faces in 3D) for the case of cubes
      *
      */
     static Dune::MCMGLayout layout()
     {
         return [](Dune::GeometryType gt, int dimgrid) {
-            return (gt.dim() == 0) || (gt.dim() == 1);
+            return (gt.dim() == 0) || (gt.dim() == 1)
+                || (gt.dim() == dimgrid && gt == Dune::GeometryTypes::cube(dimgrid))
+                || (dimgrid == 3 && gt == Dune::GeometryTypes::cube(dimgrid-1));
         };
     }
 };
