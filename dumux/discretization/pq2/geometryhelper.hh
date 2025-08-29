@@ -205,104 +205,42 @@ public:
         );
     }
 
-    //! number of element dofs
-    static std::size_t numElementDofs(Dune::GeometryType type)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        return refElement.size(dim) + refElement.size(dim-1);
-    }
-
-    //! number of hybrid dofs
-    static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        return refElement.size(dim-1);
-    }
-
     //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
     template<class LocalKey>
     static auto localDofOnIntersection(Dune::GeometryType type, unsigned int iIdx, const LocalKey& localKey)
     {
         const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        auto reorderedIdx = localKeyToReorderedLocalDofIndex(type, localKey);
-        if(localKey.codim() == dim)
-        {
-            const auto numVerticesIntersection = refElement.size(iIdx, 1, dim);
-            for(std::size_t iVIdx=0; iVIdx < numVerticesIntersection; iVIdx++)
-                if(reorderedIdx == refElement.subEntity(iIdx, 1, iVIdx, dim))
-                    return true;
-        }
-        else if(localKey.codim() == dim-1)
-        {
-            reorderedIdx -= refElement.size(dim);
-            const auto numE = refElement.size(iIdx, 1, dim-1);
-            for(std::size_t iEIdx=0; iEIdx < numE; iEIdx++)
-                if(reorderedIdx == refElement.subEntity(iIdx, 1, iEIdx, dim-1))
-                    return true;
-        }
+
+        const auto numEntitiesIntersection = refElement.size(iIdx, 1, localKey.codim());
+        for(std::size_t idx=0; idx < numEntitiesIntersection; idx++)
+            if(localKey.subEntity() == refElement.subEntity(iIdx, 1, idx, localKey.codim()))
+                return true;
 
         return false;
-    }
-
-    template<class LocalKey>
-    static LocalIndexType localKeyToReorderedLocalDofIndex(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        if(localKey.codim() == dim)
-            return localKey.subEntity();
-        else
-            return refElement.size(dim) + localKey.subEntity();
-    }
-
-    template<class LocalKey>
-    static bool isCVLocalDof(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        return localKeyToReorderedLocalDofIndex(type, localKey) < refElement.size(dim) ;
     }
 
     template<class DofMapper, class LocalKey>
     static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
     {
-        const auto numBoxScv = Dune::referenceElement<Scalar, dim>(element.type()).size(dim);
-        const auto localIdx = localKeyToReorderedLocalDofIndex(element.type(), localKey);
-        if (localIdx < numBoxScv)
-            return dofMapper.subIndex(element, localIdx, dim);
-        else
-        {
-            const auto localEdgeScvIdx = localIdx - numBoxScv;
-            return dofMapper.subIndex(element, localEdgeScvIdx, dim-1);
-        }
-    }
-
-    template<class LocalKey>
-    GlobalPosition dofPosition(const LocalKey& localKey) const
-    {
-        const auto numBoxScv = boxHelper_.numScv();
-        const auto localIdx = localKeyToReorderedLocalDofIndex(geo_.type(), localKey);
-        if (localIdx < numBoxScv)
-            return geo_.corner(localIdx);
-        else
-        {
-            const auto ref = referenceElement(geo_);
-            const auto localEdgeScvIdx = localIdx - numBoxScv;
-            return geo_.global(ref.position(localEdgeScvIdx, dim-1));
-        }
+        // All dofs are directly related to grid entities, i.e localKey.index() is always zero
+        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim());
     }
 
     template<class Geometry, class LocalKey>
     static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
     {
-        const auto numBoxScv = Dune::referenceElement<Scalar, dim>(geo.type()).size(dim);
-        const auto localIdx = localKeyToReorderedLocalDofIndex(geo.type(), localKey);
-        if (localIdx < numBoxScv)
-            return geo.corner(localIdx);
+        if(localKey.codim() == dim)
+            return geo.corner(localKey.subEntity());
+        else if(localKey.codim() == 0) // should only be called for cubes
+            return geo.center();
         else
-        {
-            const auto ref = referenceElement(geo);
-            const auto localEdgeScvIdx = localIdx - numBoxScv;
-            return geo.global(ref.position(localEdgeScvIdx, dim-1));
-        }
+            return geo.global(localDofPosition(geo.type(), localKey));
+    }
+
+    template<class LocalKey>
+    GlobalPosition dofPosition(const LocalKey& localKey) const
+    {
+        return dofPosition(geo_, localKey);
     }
 
     //! local dof position
