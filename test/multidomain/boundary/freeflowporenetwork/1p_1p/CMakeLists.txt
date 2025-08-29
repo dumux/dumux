@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(nonisothermal)
-add_subdirectory(3D)
+add_subdirectory(3d)
 
 add_input_file_links()
 

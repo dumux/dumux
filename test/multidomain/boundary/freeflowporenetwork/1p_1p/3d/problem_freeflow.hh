@@ -59,7 +59,6 @@ public:
     , couplingManager_(couplingManager)
     {
         problemName_ = getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
-        initialPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InitialPressure", 1e5);
         inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure", 1.01e5);
         outletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.OutletPressure", 1e5);
     }
@@ -285,7 +284,7 @@ private:
 
     std::string problemName_;
     static constexpr Scalar eps_ = 1e-6;
-    Scalar initialPressure_;
+
     Scalar inletPressure_;
     Scalar outletPressure_;
 
