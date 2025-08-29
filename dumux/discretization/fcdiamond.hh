@@ -23,7 +23,6 @@
 #include <dumux/assembly/cvfelocalresidual.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
-#include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -131,14 +130,6 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
-};
-
-template<class GridView>
-struct LocalDofTraits<GridView, DiscretizationMethods::FCDiamond>
-{
-    static constexpr int dim = GridView::dimension;
-    // Dofs are located at the facets
-    static constexpr int numCubeElementDofs = 2*dim;
 };
 
 template<class TypeTag>

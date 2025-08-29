@@ -27,7 +27,6 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
-#include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
@@ -125,14 +124,6 @@ public:
     using GridGeometry = GG;
     // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
     using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
-};
-
-template<class GridView>
-struct LocalDofTraits<GridView, DiscretizationMethods::Box>
-{
-    static constexpr int dim = GridView::dimension;
-    // Dofs are located at the corners
-    static constexpr int numCubeElementDofs = (1<<dim);
 };
 
 template<class TypeTag>

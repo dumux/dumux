@@ -28,7 +28,6 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
-#include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/elementboundarytypes.hh>
 
@@ -148,14 +147,6 @@ public:
     using GridGeometry = GG;
     // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, intersection)
     using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView, typename GG::GridView::Intersection>::type;
-};
-
-template<class GridView>
-struct LocalDofTraits<GridView, DiscretizationMethods::PQ1Bubble>
-{
-    static constexpr int dim = GridView::dimension;
-    // Dofs are located at the vertices and element
-    static constexpr int numCubeElementDofs = (1<<dim) + 1;
 };
 
 template<class TypeTag>
