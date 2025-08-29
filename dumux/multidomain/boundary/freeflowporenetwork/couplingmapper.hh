@@ -19,6 +19,8 @@
 #include <unordered_map>
 #include <tuple>
 #include <vector>
+#include <set>
+#include <ranges>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -126,13 +128,15 @@ public:
                                                                                    FreeFlowMomentumGridGeometry::GridView::dimension-1,
                                                                                    FreeFlowMomentumGridGeometry::GridView::dimensionworld>;
 
-                PoreIntersectionGeometryType poreIntersectionGeometry(lowerLeft, upperRight, axes);
-                const auto allCoupledFreeFlowElements = intersectingEntities(std::move(poreIntersectionGeometry), ffMomentumGridGeometry.boundingBoxTree());
+                auto allCoupledFreeFlowElements = intersectingEntities(PoreIntersectionGeometryType{lowerLeft, upperRight, axes}, ffMomentumGridGeometry.boundingBoxTree());
 
 
-                for (const auto& ffElementInfo : allCoupledFreeFlowElements)
+                auto indexView = allCoupledFreeFlowElements | std::views::transform([](const auto& isInfo) { return isInfo.second(); });
+
+                std::set<std::size_t> uniqueFreeFlowIndexes(indexView.begin(), indexView.end());
+
+                for (const auto freeFlowElementIndex : uniqueFreeFlowIndexes)
                 {
-                    const auto freeFlowElementIndex = ffElementInfo.second();
                     pnmElementToFreeFlowElementsMap_[pnmElementIdx].push_back(freeFlowElementIndex);
                     freeFlowElementToPNMElementMap_[freeFlowElementIndex] = pnmElementIdx;
 
