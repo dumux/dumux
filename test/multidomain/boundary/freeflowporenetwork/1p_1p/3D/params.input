@@ -34,7 +34,6 @@ EnableInertiaTerms = false
 Name = pnm
 InletPressure = 1.01e5
 OutletPressure = 1e5
-VerticalFlow = false
 
 [Vtk]
 OutputName = test_3d
