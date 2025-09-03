@@ -177,12 +177,12 @@ group = parser.add_argument_group(title="your choice of packages")
 packages = group.add_argument("packages", nargs="+", metavar="PACKAGES", action="store_choice")
 packages.add_choice(
     "dumux-extensions",
-    help="Download dumux-course, dumux-lecture, \
+    help="Download dumux-course, dumux-lecture, dumux-old-staggered, \
                     dune-alugrid, dune-foamgrid and dune-subgrid.",
 )
 packages.add_choice(
     "dumux-course",
-    help="Download dumux-course, \
+    help="Download dumux-course, dumux-old-staggered, \
                     dune-alugrid, dune-foamgrid and dune-subgrid.",
 )
 packages.add_choice(
@@ -219,7 +219,7 @@ options.add_argument(
 
 parser.add_argument("--dune-branch", default="releases/2.10", help="Dune branch to be checked out.")
 parser.add_argument(
-    "--dumux-branch", default="releases/3.10", help="Dumux branch to be checked out."
+    "--dumux-branch", default="releases/3.11", help="Dumux branch to be checked out."
 )
 parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
@@ -463,12 +463,14 @@ PACKAGE_NAMES = {
     "dumux-extensions": [
         "dumux-lecture",
         "dumux-course",
+        "dumux-old-staggered",
         "dune-alugrid",
         "dune-foamgrid",
         "dune-subgrid",
     ],
     "dumux-course": [
         "dumux-course",
+        "dumux-old-staggered",
         "dune-alugrid",
         "dune-foamgrid",
         "dune-subgrid",
