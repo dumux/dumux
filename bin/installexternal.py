@@ -177,10 +177,13 @@ group = parser.add_argument_group(title="your choice of packages")
 packages = group.add_argument("packages", nargs="+", metavar="PACKAGES", action="store_choice")
 packages.add_choice(
     "dumux-extensions",
-    help="Download dumux-course, dumux-lecture, dune-alugrid, dune-foamgrid and dune-subgrid.",
+    help="Download dumux-course, dumux-lecture, \
+                    dune-alugrid, dune-foamgrid and dune-subgrid.",
 )
 packages.add_choice(
-    "dumux-course", help="Download dumux-course, dune-alugrid, dune-foamgrid and dune-subgrid."
+    "dumux-course",
+    help="Download dumux-course, \
+                    dune-alugrid, dune-foamgrid and dune-subgrid.",
 )
 packages.add_choice(
     "dune-extensions",
@@ -191,6 +194,7 @@ packages.add_choice("optimization", help="Download and install glpk and nlopt.")
 packages.add_choice("others", help="Download and install opm and gstat.")
 packages.add_choice("lecture", help="Download dumux-lecture.")
 packages.add_choice("course", help="Download dumux-course.")
+packages.add_choice("old-staggered", help="Download dumux-old-staggered.")
 packages.add_choice("ug", help="Download dune-uggrid.")
 packages.add_choice("alugrid", help="Download dune-alugrid.")
 packages.add_choice("foamgrid", help="Download dune-foamgrid.")
@@ -439,6 +443,7 @@ DUMUX_GIT_BASEURL = "https://git.iws.uni-stuttgart.de/dumux-repositories/"
 EXTERNAL_URLS = {
     "dumux-lecture": DUMUX_GIT_BASEURL + "dumux-lecture.git",
     "dumux-course": DUMUX_GIT_BASEURL + "dumux-course.git",
+    "dumux-old-staggered": DUMUX_GIT_BASEURL + "dumux-old-staggered.git",
     "dune-uggrid": DUNE_GIT_BASEURL + "/staging/dune-uggrid.git",
     "dune-alugrid": DUNE_GIT_BASEURL + "extensions/dune-alugrid.git",
     "dune-foamgrid": DUNE_GIT_BASEURL + "extensions/dune-foamgrid.git",
@@ -462,7 +467,12 @@ PACKAGE_NAMES = {
         "dune-foamgrid",
         "dune-subgrid",
     ],
-    "dumux-course": ["dumux-course", "dune-alugrid", "dune-foamgrid", "dune-subgrid"],
+    "dumux-course": [
+        "dumux-course",
+        "dune-alugrid",
+        "dune-foamgrid",
+        "dune-subgrid",
+    ],
     "dune-extensions": [
         "dune-uggrid",
         "dune-alugrid",
