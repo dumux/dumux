@@ -256,6 +256,8 @@ def gitClone(url, branch=None):
 def branchName(package, parameters):
     """Get the correct branch name"""
     # Set the branch
+    if "dumux-old-staggered" in package:
+        return "master"
     if "dumux" in package:
         return parameters["dumux_branch"]
     if "mmesh" in package:
