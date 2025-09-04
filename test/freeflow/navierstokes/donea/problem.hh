@@ -233,6 +233,33 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Return the gradient of the analytical solution of the problem at a given position
+     *
+     * \param globalPos The global position
+     */
+    Dune::FieldVector<DirichletValues, dimWorld> gradAnalyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    {
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        Dune::FieldVector<DirichletValues, dimWorld> values;
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            values[Indices::velocityXIdx][0] = dxU_(x,y);
+            values[Indices::velocityXIdx][1] = dyU_(x,y);
+            values[Indices::velocityYIdx][0] = dxV_(x,y);
+            values[Indices::velocityYIdx][1] = dyV_(x,y);
+        }
+        else
+        {
+            values[Indices::pressureIdx][0] = dxP_(x,y);
+            values[Indices::pressureIdx][1] = dyP_(x,y);
+        }
+
+        return values;
+    }
+
     // \}
 
     /*!
