@@ -15,6 +15,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/reservedblockvector.hh>
@@ -54,7 +55,7 @@ class FVLocalResidual
 
 public:
     //! the container storing all element residuals
-    using ElementResidualVector = ReservedBlockVector<NumEqVector, FVElementGeometry::maxNumElementScvs>;
+    using ElementResidualVector = ReservedBlockVector<NumEqVector, Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>()>;
 
     //! the constructor
     FVLocalResidual(const Problem* problem,

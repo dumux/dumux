@@ -17,7 +17,6 @@
 
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/discretization/localdoftraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
@@ -35,10 +34,8 @@ class CVFEElementSolution
 
     static constexpr int dim = GridView::dimension;
 
-    // Dofs are located at corners and in the element center
-    static constexpr int numCubeDofs = Detail::LocalDofTraits<
-        GridView, typename GridGeometry::DiscretizationMethod
-    >::numCubeElementDofs;
+    // Maximum number of local element dofs
+    static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
 
 public:
     //! export the primary variables type
@@ -111,7 +108,7 @@ public:
     { return priVars_[i]; }
 
 private:
-    Dune::ReservedVector<PrimaryVariables, numCubeDofs> priVars_;
+    Dune::ReservedVector<PrimaryVariables, maxNumLocalDofs> priVars_;
 };
 
 //! Make an element solution for control-volume finite element schemes

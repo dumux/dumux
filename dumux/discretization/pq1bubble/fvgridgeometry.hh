@@ -92,6 +92,8 @@ struct PQ1BubbleDefaultGridGeometryTraits
 
     template<class GridGeometry, bool enableCache>
     using LocalView = PQ1BubbleFVElementGeometry<GridGeometry, enableCache>;
+
+    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension) + 1;
 };
 
 /*!
@@ -136,6 +138,8 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     static constexpr bool enableHybridCVFE = Detail::enablesHybridCVFE<Traits>;
+
+    static constexpr std::size_t maxNumElementDofs = Traits::maxNumElementDofs;
 
     //! export basic grid geometry type for the alternative constructor
     using BasicGridGeometry = BasicGridGeometry_t<GV, Traits>;
@@ -397,12 +401,13 @@ private:
                         scvfLocalIdx++;
                     }
 
+                    const auto numDofsIntersection = GeometryHelper::numLocalDofsIntersection(elementGeometry.type(), localFacetIndex);
                     // TODO also move this to helper class
-                    // add all vertices on the intersection to the set of boundary vertices
-                    for (int localVIdx = 0; localVIdx < numBoundaryScvf; ++localVIdx)
+                    // add all dofs on the intersection to the set of boundary dofs
+                    for (int ilocalDofIdx = 0; ilocalDofIdx < numDofsIntersection; ++ilocalDofIdx)
                     {
-                        const auto vIdx = refElement.subEntity(localFacetIndex, 1, localVIdx, dim);
-                        const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
+                        auto localDofIdx = GeometryHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
+                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localDofIdx);
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }

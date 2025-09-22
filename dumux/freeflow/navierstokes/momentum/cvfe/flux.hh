@@ -209,8 +209,8 @@ public:
         const Scalar density = context.problem().density(context.element(), context.fvGeometry(), fluxVarCache.ipData());
 
         const auto vn = v*scvf.unitOuterNormal();
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& insideVolVars = elemVolVars[fvGeometry.scv(scvf.insideScvIdx())];
+        const auto& outsideVolVars = elemVolVars[fvGeometry.scv(scvf.outsideScvIdx())];
         const auto upwindVelocity = vn > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
         const auto downwindVelocity = vn > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
@@ -235,7 +235,7 @@ public:
         Tensor gradV(0.0);
         for (const auto& localDof : localDofs(fvGeometry))
         {
-            const auto& volVars = elemVolVars[localDof.index()];
+            const auto& volVars = elemVolVars[localDof];
             for (int dir = 0; dir < dim; ++dir)
                 gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
         }
@@ -257,7 +257,7 @@ public:
         if (enableDilatationTerm)
             diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
 
-        diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
         return diffusiveFlux;
     }
 
@@ -280,7 +280,7 @@ public:
         const auto referencePressure = context.problem().referencePressure();
 
         NumEqVector pn(scvf.unitOuterNormal());
-        pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
 
         return pn;
     }

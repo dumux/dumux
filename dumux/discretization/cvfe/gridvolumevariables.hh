@@ -17,6 +17,8 @@
 
 #include <dumux/parallel/parallel_for.hh>
 
+#include <dumux/common/concepts/localdofs_.hh>
+
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cvfe/elementvolumevariables.hh>
@@ -84,13 +86,23 @@ public:
         });
     }
 
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    const VolumeVariables& volVars(const SubControlVolume& scv) const
-    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
+    const VolumeVariables& volVars(const ScvOrLocalDof& scvOrLocalDof) const
+    {
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
+            return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
+        else
+            return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];
+    }
 
-    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
-    VolumeVariables& volVars(const SubControlVolume& scv)
-    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+    template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
+    VolumeVariables& volVars(const ScvOrLocalDof& scvOrLocalDof)
+    {
+        if constexpr (Concept::LocalDof<ScvOrLocalDof>)
+            return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
+        else
+            return volumeVariables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];
+    }
 
     const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx) const
     { return volumeVariables_[eIdx][scvIdx]; }

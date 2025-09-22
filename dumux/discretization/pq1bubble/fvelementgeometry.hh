@@ -68,8 +68,7 @@ public:
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
     //! the maximum number of scvs per element (2^dim for cubes)
-    // ToDo get this from GG
-    static constexpr std::size_t maxNumElementScvs = (1<<dim) + 1;
+    static constexpr std::size_t maxNumElementDofs = GridGeometry::maxNumElementDofs;
 
     //! Constructor
     PQ1BubbleFVElementGeometry(const GGCache& ggCache)

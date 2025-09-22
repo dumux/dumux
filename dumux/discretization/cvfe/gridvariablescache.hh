@@ -97,7 +97,7 @@ public:
         if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
         else
-            return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];
+            return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.localDofIndex()];
     }
 
     template<class ScvOrLocalDof, typename std::enable_if_t<!std::is_integral<ScvOrLocalDof>::value, int> = 0>
@@ -106,7 +106,7 @@ public:
         if constexpr (Concept::LocalDof<ScvOrLocalDof>)
             return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.index()];
         else
-            return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.indexInElement()];
+            return variables_[scvOrLocalDof.elementIndex()][scvOrLocalDof.localDofIndex()];
     }
 
     const Variables& volVars(const std::size_t eIdx, const std::size_t localIdx) const
