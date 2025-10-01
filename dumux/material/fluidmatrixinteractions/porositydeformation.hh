@@ -36,6 +36,7 @@ public:
      * \param element The finite element
      * \param elemSol The element solution
      * \param globalPos The global position (in the element)
+     * \param refDivU The reference divergence of the displacement field (initial/undeformed state)
      * \param refPoro The solid matrix porosity without deformation
      * \param minPoro A minimum porosity value
      * \param maxPoro A maximum porosity value
@@ -54,6 +55,7 @@ public:
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
                                    const ElemSol& elemSol,
+                                   const Scalar& refDivU,
                                    Scalar refPoro,
                                    Scalar minPoro = 0.0,
                                    Scalar maxPoro = 1.0)
@@ -63,9 +65,38 @@ public:
         const auto gradU = evalGradients(element, element.geometry(), gridGeometry, elemSol, globalPos);
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
+        divU -= refDivU;
 
         using std::clamp;
-        return clamp((refPoro+divU)/(1.0+divU), minPoro, maxPoro);
+        return clamp((refPoro+divU), minPoro, maxPoro);
+    }
+
+    /*!
+     * \brief Calculates the porosity at a position inside an element
+     * \note This assumes the primary variables to be organized such that
+     *       the displacements in the different grid directions are stored
+     *       in the first entries of the primary variable vector.
+     *
+     *
+     * \param gridGeometry The finite volume grid geometry
+     * \param element The finite element
+     * \param elemSol The element solution
+     * \param scv The sub-control volume
+     * \param refDivU The reference divergence of the displacement field (initial/undeformed state)
+     * \param refPoro The solid matrix porosity without deformation
+     * \param minPoro A minimum porosity value
+     */
+    template< class FVGridGeom, class ElemSol >
+    static Scalar evaluatePorosity(const FVGridGeom& gridGeometry,
+                                   const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
+                                   const typename FVGridGeom::SubControlVolume& scv,
+                                   const ElemSol& elemSol,
+                                   const Scalar& refDivU,
+                                   Scalar refPoro,
+                                   Scalar minPoro = 0.0)
+    {
+        // evaluate the porosity at the scv center
+        return evaluatePorosity(gridGeometry, element, scv.center(), elemSol, refDivU, refPoro, minPoro);
     }
 
     /*!
@@ -91,7 +122,7 @@ public:
                                    Scalar minPoro = 0.0)
     {
         // evaluate the porosity at the scv center
-        return evaluatePorosity(gridGeometry, element, scv.center(), elemSol, refPoro, minPoro);
+        return evaluatePorosity(gridGeometry, element, scv.center(), elemSol, /*refDivU*/ 0.0, refPoro, minPoro);
     }
 };
 
