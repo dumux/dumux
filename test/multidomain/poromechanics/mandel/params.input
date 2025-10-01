@@ -1,0 +1,50 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 100 10
+Cells = 40 4
+
+[Problem]
+Name = mandel
+Force = 6e8 # Applied force intensity (N/m)
+EnableGravity = false
+WaterBulkModulus =  3.3e9 # kf = M * phi
+EModulus = 5.94e9 # Young's Modulus (Pa)
+Nu = 0.2 # Poisson's Ratio
+Nuu = 0.44 # Undrained Poisson's Ratio
+Alpha = 1.0 # Biot's Coefficient
+MModulus = 1.65e10 # Biot's Modulus (Pa)
+Viscosity = 1e-3 # Viscosity of Fluid (Pa*s)
+Permeability = 9.8692326671601E-14  # m^2 (=100 Darcy)
+InitialPorosity = 0.2
+NBeta = 240
+
+[OneP.Problem]
+Name = flow
+
+[PoroElastic.Problem]
+Name = mech
+
+[Component]
+SolidDensity = 2700 # kg/m^3
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[Newton]
+MaxRelativeShift = 1e-10
+MaxSteps = 50
+ResidualReduction = 1e-8
+EnableShiftCriterion = true
+EnableResidualCriterion = false
+
+[TimeLoop]
+TEnd = 5000
+Dt = 10
+MaxTimeStepSize = 10
+CheckPoints = 10 20 50 100 200 500 1000 2000 3000 5000
+Scheme = ImplicitEuler #DIRK3
+
+[Vtk]
+OutputName = test_mandel
+AddVelocity = true
