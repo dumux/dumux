@@ -121,14 +121,14 @@ for i in range(num_time_step):
 legend_elements = []
 # Add time entries with colors
 for i in range(num_time_step):
-    legend_elements.append(Patch(facecolor=f"C{i}", label=f"t={selected_times[i]:.3f}"))
+    legend_elements.append(Patch(facecolor=f"C{i}", label=f"t={selected_times[i]:.0f}s"))
 # Add solution type markers
 legend_elements.append(Line2D([0], [0], marker='x', color='gray', linestyle='', markersize=8, label='Numerical'))
 legend_elements.append(Line2D([0], [0], color='gray', linestyle='--', label='Analytical'))
 
 plt.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=9)
-plt.xlabel('x-coordinate')
-plt.ylabel('Normalized Pressure')
+plt.xlabel('x-coordinate [m]')
+plt.ylabel('Normalized Pressure [-]')
 plt.title('Mandel Test: Normalized Pressure Evolution Over Time')
 plt.xlim(0, 100)
 plt.ylim(bottom=0)
