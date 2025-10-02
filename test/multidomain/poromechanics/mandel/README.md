@@ -63,7 +63,7 @@ $$
 The mass conservation (fluid balance) equation is expressed as (see the [single phase model description](https://dumux.org/docs/doxygen/master/group___one_p_model.html)):
 
 $$
-\frac{\partial (\phi\, \varrho)}{\partial t} + \nabla \cdot \left\{ - \varrho\, \frac{\mathbf{K}}{\mu} \left( \nabla p - \varrho\, \mathbf{g} \right) \right\} = q
+\frac{\partial (\phi\, \varrho)}{\partial t} + \nabla \cdot \left\{ - \varrho\, \frac{\mathbf{K}}{\mu} \nabla p \right\} = 0
 $$
 
 ### 4.3. Coupling Equations
