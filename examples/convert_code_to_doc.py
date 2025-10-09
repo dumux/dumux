@@ -37,8 +37,10 @@ def cppRules():
     """
     Define a list of rules to apply for cpp source code
     """
+    # REUSE-IgnoreStart
     suppressHeader = Suppress(Combine("// -*-" + SkipTo("SPDX-License-Identifier:" + Optional(restOfLine)
                     + LineEnd() + "//" + LineEnd(), include=True)))
+    # REUSE-IgnoreEnd
     suppressHeaderGuard = Suppress("#ifndef" + Optional(restOfLine) + LineEnd() + "#define" + Optional(restOfLine))
     suppressEndHeaderGuard = Suppress("#endif" + Optional(restOfLine))
 
