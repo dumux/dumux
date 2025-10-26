@@ -141,7 +141,7 @@ vectors only have two entries.
 
 Depending on the grid manager, further parameters are recognized.
 `UGGrid`, for example, supports simplex elements as well as hexahedral elements
-(called ``cube'' in Dune). When creating a structured grid, we can select the cell type as follows
+(called "cube" in Dune). When creating a structured grid, we can select the cell type as follows
 
 ```ini
 [Grid]
