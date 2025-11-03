@@ -9,6 +9,7 @@ accounting for non-published commits and local changes
 import os
 import sys
 import textwrap
+from pathlib import Path
 
 from util.common import getPersistentVersions, hasUntrackedFiles, versionTable, getPatches
 from util.moduleinfo import getModuleInfo
@@ -65,8 +66,11 @@ def filterDependencies(dependencies, skipFolders=None):
     if skipFolders is None:
         return dependencies
 
+    # Normalize folder names using pathlib
+    skipNames = [Path(folder).name for folder in skipFolders]
+
     def skipFolder(folderName):
-        return any(folderName == os.path.basename(path) for path in skipFolders)
+        return Path(folderName).name in skipNames
 
     return [dep for dep in dependencies if not skipFolder(dep["folder"])]
 
