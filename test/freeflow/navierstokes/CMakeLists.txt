@@ -7,6 +7,7 @@ add_subdirectory(donea)
 add_subdirectory(kovasznay)
 add_subdirectory(periodic)
 add_subdirectory(permeabilityupscaling)
+add_subdirectory(rotatingcylinders)
 add_subdirectory(sincos)
 add_subdirectory(unstructured)
 
