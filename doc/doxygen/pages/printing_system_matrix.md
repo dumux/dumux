@@ -9,6 +9,9 @@ We add the output within the `solveLinearSystem_` overload for `Dune::MultiTypeB
 ```cpp
     //  MultiTypeBlockMatrix is not supported for printing, needs to be converted first
 
+    const auto& A = this->assembler().jacobian();
+    const auto& b = this->assembler().residual();
+
     // create the bcrs matrix the IterativeSolver backend can handle
     const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
 
