@@ -530,6 +530,11 @@ private:
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
             for (const auto& element : elements(gridGeometry().gridView()))
             {
+                if (!velocityOutput_->enableOutput() &&
+                    element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
+                }
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -733,6 +738,11 @@ private:
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
             for (const auto& element : elements(gridGeometry().gridView()))
             {
+                if (!velocityOutput_->enableOutput() &&
+                    element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
+                }
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
