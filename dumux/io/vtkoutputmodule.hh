@@ -528,8 +528,13 @@ private:
 
             auto fvGeometry = localView(gridGeometry());
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
-            for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry().gridView()))
             {
+                if (!velocityOutput_->enableOutput() &&
+                    element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
+                }
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -542,6 +547,19 @@ private:
                 {
                     fvGeometry.bindElement(element);
                     elemVolVars.bindElement(element, fvGeometry, sol_);
+                }
+
+                // velocity output
+                if (velocityOutput_->enableOutput())
+                {
+                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                }
+                else if (element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
                 }
 
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
@@ -559,15 +577,6 @@ private:
                         for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                             volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo_[i].get(volVars);
                     }
-                }
-
-                // velocity output
-                if (velocityOutput_->enableOutput())
-                {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
-
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
                 }
 
                 //! the rank
@@ -727,8 +736,13 @@ private:
             // now we go element-local to extract values at local dof locations
             auto fvGeometry = localView(gridGeometry());
             auto elemVolVars = localView(gridVariables_.curGridVolVars());
-            for (const auto& element : elements(gridGeometry().gridView(), Dune::Partitions::interior))
+            for (const auto& element : elements(gridGeometry().gridView()))
             {
+                if (!velocityOutput_->enableOutput() &&
+                    element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
+                }
                 const auto eIdxGlobal = gridGeometry().elementMapper().index(element);
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
@@ -750,6 +764,18 @@ private:
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                     volVarVectorData[i][eIdxGlobal].resize(numLocalDofs);
 
+                // velocity output
+                if (velocityOutput_->enableOutput())
+                {
+                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                }
+                else if (element.partitionType() != Dune::PartitionType::InteriorEntity)
+                {
+                    continue;
+                }
+
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
                     for (const auto& scv : scvs(fvGeometry))
@@ -764,14 +790,6 @@ private:
                         for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                             volVarVectorData[i][eIdxGlobal][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
                     }
-                }
-
-                // velocity output
-                if (velocityOutput_->enableOutput())
-                {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
                 }
 
                 //! the rank
