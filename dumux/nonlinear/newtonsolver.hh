@@ -1097,6 +1097,29 @@ private:
             DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on a remote process");
     }
 
+    void synchronizeExceptions_(const std::string& stepName)
+    {
+        int anyRankCaughtException = 0;
+        if (comm_.size() > 1)
+            anyRankCaughtException = comm_.max(anyRankCaughtException);
+        if (anyRankCaughtException)
+        {
+            DUNE_THROW(NumericalProblemRemote, "" << solverName_ << " on rank " << comm_.rank() << " aborting in " << stepName << " due to exception on a remote process");
+        }
+    }
+
+    bool broadcastException_(const NumericalProblem& e) const
+    {
+        if (!e.isRemote())
+        {
+            int anyRankCaughtException = 1;
+            if (comm_.size() > 1)
+                anyRankCaughtException = comm_.max(anyRankCaughtException);
+            return true;
+        }
+        return false;
+    }
+
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const Variables& vars)
