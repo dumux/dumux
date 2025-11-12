@@ -38,6 +38,22 @@ public:
     // constructor with error message
     explicit NumericalProblem(const std::string &s)
     { this->message(s); }
+
+    virtual bool isRemote() const
+    { return false; }
+};
+
+/*!
+ * \ingroup Core
+ * \brief Exception thrown if a fixable numerical problem occurred on a remote MPI rank.
+ *
+ * used to synchronize ranks before collective communication to rejoin error handling
+ */
+class NumericalProblemRemote : public NumericalProblem
+{
+public:
+    bool isRemote() const override
+    { return true; }
 };
 
 /*!
