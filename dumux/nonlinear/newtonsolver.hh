@@ -936,12 +936,7 @@ private:
             broadcastException_(e);
         }
 
-        // make sure all processes were successful
-        int allProcessesConverged = static_cast<int>(converged);
-        if (comm_.size() > 1)
-            allProcessesConverged = comm_.min(static_cast<int>(converged));
-
-        if (allProcessesConverged)
+        if (converged)
         {
             totalSucceededIter_ += numSteps_;
             numConverged_++;
@@ -961,7 +956,7 @@ private:
             newtonFail(vars);
         }
 
-        return static_cast<bool>(allProcessesConverged);
+        return converged;
     }
 
     /*!
@@ -1075,6 +1070,7 @@ private:
     void callAndCheck_(Func&& run, const std::string& stepName)
     {
         bool successful = false;
+        bool successfulRemote = true;
         try {
             run();
             successful = true;
@@ -1082,17 +1078,13 @@ private:
         }
         catch (const Dumux::NumericalProblem& e)
         {
+            successfulRemote = false;
             successful = e.isRemote();
 
             if (verbosity_ >= 1)
                 std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
             broadcastException_(e);
         }
-
-        // make sure all processes converged
-        int successfulRemote = static_cast<int>(successful);
-        if (comm_.size() > 1)
-            successfulRemote = comm_.min(static_cast<int>(successful));
 
         if (!successful)
             DUNE_THROW(NumericalProblem, "" << solverName_ << " caught exception during " << stepName << " on process " << comm_.rank());
