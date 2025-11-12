@@ -924,6 +924,7 @@ private:
             converged = solveImpl_(
                 vars, assembleTimer, solveTimer, updateTimer
             );
+            synchronizeExceptions_("solveImpl_");
         }
 
         // Dumux::NumericalProblem may be recovered from
@@ -932,6 +933,7 @@ private:
             if (verbosity_ >= 1)
                 std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
             converged = false;
+            broadcastException_(e);
         }
 
         // make sure all processes were successful
@@ -1076,13 +1078,15 @@ private:
         try {
             run();
             successful = true;
+            synchronizeExceptions_("callAndCheck_(" + stepName + ")");
         }
         catch (const Dumux::NumericalProblem& e)
         {
-            successful = false;
+            successful = e.isRemote();
 
             if (verbosity_ >= 1)
                 std::cout << solverName_ << " caught exception: \"" << e.what() << "\"\n";
+            broadcastException_(e);
         }
 
         // make sure all processes converged
@@ -1159,6 +1163,7 @@ private:
     virtual void newtonComputeShift_(const SolutionVector &u1,
                                      const SolutionVector &u2)
     {
+        synchronizeExceptions_("newtonComputeShift_");
         shift_ = Detail::Newton::maxRelativeShift<Scalar>(u1, u2);
         if (comm_.size() > 1)
             shift_ = comm_.max(shift_);
