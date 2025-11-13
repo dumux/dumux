@@ -544,21 +544,23 @@ public:
                       const SolutionVector& uLastIter,
                       const ResidualVector& deltaU)
     {
-        if (useLineSearch_)
-            lineSearchUpdate_(vars, uLastIter, deltaU);
+        callAndCheck_("newtonUpdate", [&]{
+            if (useLineSearch_)
+                lineSearchUpdate_(vars, uLastIter, deltaU);
 
-        else if (useChop_)
-            choppedUpdate_(vars, uLastIter, deltaU);
+            else if (useChop_)
+                choppedUpdate_(vars, uLastIter, deltaU);
 
-        else
-        {
-            auto uCurrentIter = uLastIter;
-            Backend::axpy(-1.0, deltaU, uCurrentIter);
-            solutionChanged_(vars, uCurrentIter);
+            else
+            {
+                auto uCurrentIter = uLastIter;
+                Backend::axpy(-1.0, deltaU, uCurrentIter);
+                solutionChanged_(vars, uCurrentIter);
 
-            if (enableResidualCriterion_)
-                computeResidualReduction_(vars);
-        }
+                if (enableResidualCriterion_)
+                    computeResidualReduction_(vars);
+            }
+        });
 
         if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonComputeShift_(Backend::dofs(vars), uLastIter);
@@ -1007,7 +1009,7 @@ private:
 
             // linearize the problem at the current solution
             assembleTimer.start();
-            callAndCheck_([&]{ assembleLinearSystem(vars); }, "assemble");
+            callAndCheck_("assemble", [&]{ assembleLinearSystem(vars); });
             assembleTimer.stop();
 
             ///////////////
@@ -1070,7 +1072,7 @@ private:
     }
 
     template<std::invocable Func>
-    void callAndCheck_(Func&& run, const std::string& stepName)
+    void callAndCheck_(const std::string& stepName, Func&& run)
     {
         bool successful = false;
         try {
