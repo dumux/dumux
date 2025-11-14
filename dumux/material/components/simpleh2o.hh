@@ -310,55 +310,6 @@ public:
     {
         return 1e-03;
     }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
-     * source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     * @ T= 281.15K (8°C) , p=0.1MPa)
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
-    {
-        return 4180.0;
-    }
-
-    /*!
-     * \brief Thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of water.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-       return 0.679;
-    }
-
-    /*!
-     * \brief Thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ of steam.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasThermalConductivity(Scalar temperature, Scalar pressure)
-    {
-       return 0.025;
-    }
-
-    /*!
-     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)]}\f$.
-     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
-     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
-    {
-        return 2.08e3;
-    }
-
 };
 
 template <class Scalar>
