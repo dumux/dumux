@@ -9,8 +9,8 @@
  * \ingroup Components
  * \brief A simpler version of pure water
  */
-#ifndef DUMUX_SIMPLER_H2O_HH
-#define DUMUX_SIMPLER_H2O_HH
+#ifndef DUMUX_SIMPLIFIED_H2O_HH
+#define DUMUX_SIMPLIFIED_H2O_HH
 
 #include <iostream>
 #include <ostream>
@@ -28,24 +28,27 @@ namespace Dumux::Components {
 
 /*!
  * \ingroup Components
- * \brief A simple version of water
- * This water version uses constant or linear functions for most quantities
+ * \brief A simpler version of pure water
+ * 
+ * This water implementation uses constant or linear functions for most quantities.
+ * This corresponds to approximation by Taylor series around the given reference state
+ * and truncating at 0th or 1th order.
  * All parameters initialized once based on the H2OType and a user-provided
  * temperature and pressure. Using this H2O makes sense if temperature and
  * pressure only vary in a small range and most values can therefore be
  * assumed constants. In order for the values to best match your simulation
  * scenario, adjust the temperature and pressure by setting the parameters
- * SimplerH2O.Pressure and SimplerH2O.Temperature.
+ * SimplifiedH2O.Pressure and SimplifiedH2O.Temperature.
  * Water vapor is assumed to be an ideal gas.
  *
  * \tparam Scalar The type used for scalar values
  * \tparam H2OType The base water component type we extract values from
  */
 template <class Scalar, class H2OType = H2O<Scalar>>
-class SimplerH2O
-: public Components::Base<Scalar, SimplerH2O<Scalar> >
-, public Components::Liquid<Scalar, SimplerH2O<Scalar> >
-, public Components::Gas<Scalar, SimplerH2O<Scalar> >
+class SimplifiedH2O
+: public Components::Base<Scalar, SimplifiedH2O<Scalar> >
+, public Components::Liquid<Scalar, SimplifiedH2O<Scalar> >
+, public Components::Gas<Scalar, SimplifiedH2O<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
     using H2O = H2OType;
@@ -56,7 +59,7 @@ public:
      */
     static Scalar temperature()
     {
-        static const Scalar T = getParam<Scalar>("SimplerH2O.Temperature", 293.15);
+        static const Scalar T = getParam<Scalar>("SimplifiedH2O.Temperature", 293.15);
         return T;
     }
 
@@ -65,7 +68,7 @@ public:
      */
     static Scalar pressure()
     {
-        static const Scalar p = getParam<Scalar>("SimplerH2O.Pressure", 1.0e5);
+        static const Scalar p = getParam<Scalar>("SimplifiedH2O.Pressure", 1.0e5);
         return p;
     }
 
@@ -73,7 +76,7 @@ public:
      * \brief A human readable name for the water.
      */
     static std::string name()
-    { return "SimplerH2O"; }
+    { return "H2O"; }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.
@@ -340,7 +343,7 @@ public:
      */
     static void reportReference(std::ostream& stream = std::cout)
     {
-        stream << "SimplerH2O reference state:\n"
+        stream << "H2O (simplified) reference state:\n"
                << "-- temperature: " << temperature() << " K"
                << "-- pressure: " << pressure() << " Pa\n"
                << std::endl;
@@ -351,7 +354,7 @@ public:
      */
     static void reportLiquid(std::ostream& stream = std::cout)
     {
-        stream << "SimplerH2O configuration (liquid):\n"
+        stream << "H2O (simplified) configuration (liquid):\n"
                << "-- density: " << liquidDensity() << " kg/m^3\n"
                << "-- viscosity: " << liquidViscosity() << " Pa*s\n"
                << "-- heat capacity: " << liquidHeatCapacity() << " J/(kg*K)\n"
@@ -365,7 +368,7 @@ public:
      */
     static void reportGas(std::ostream& stream = std::cout)
     {
-        stream << "SimplerH2O configuration (gas):\n"
+        stream << "H2O (simplified) configuration (gas):\n"
                << "-- density: " << gasDensity() << " kg/m^3\n"
                << "-- viscosity: " << gasViscosity() << " Pa*s\n"
                << "-- heat capacity: " << gasHeatCapacity() << " J/(kg*K)\n"
