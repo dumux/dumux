@@ -12,10 +12,18 @@
  *
  * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
  * \f[
- *    \frac{\partial (\varrho  v)}{\partial t}
- *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
- *    - \lambda_\text{eff} \nabla  T \right) - q_T = 0
+ *    \frac{\partial (\varrho  u)}{\partial t}
+ *    + \nabla \cdot \left( \varrho h {\mathbf{v}}
+ *    - \lambda_\text{eff} \nabla  T \right) - q^h = 0
  * \f]
+ * where:
+ * * \f$ \varrho \f$ is the fluid density,
+ * * \f$ u \f$ is the fluid's specific internal energy,
+ * * \f$ h \f$ is the fluid's specific enthalpy,
+ * * \f$ \mathbf{v} \f$ the fluid velocity,
+ * * \f$ \lambda_\text{eff} \f$ is the effective heat conductivity,
+ * * \f$ T \f$ is the temperature,
+ * * \f$ q^h \f$ is a source or sink term.
  *
  *
  * For laminar Navier-Stokes flow the effective thermal conductivity is the fluid
