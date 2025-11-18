@@ -17,13 +17,13 @@
  *    - \lambda_\text{eff} \nabla  T \right) - q^h = 0
  * \f]
  * where:
- * * \f$ \varrho \f$ is the fluid density,
- * * \f$ u \f$ is the fluid's specific internal energy,
- * * \f$ h \f$ is the fluid's specific enthalpy,
- * * \f$ \mathbf{v} \f$ the fluid velocity,
- * * \f$ \lambda_\text{eff} \f$ is the effective heat conductivity,
- * * \f$ T \f$ is the temperature,
- * * \f$ q^h \f$ is a source or sink term.
+ * * \f$ \varrho \f$ is the fluid density (in \f$ \mathrm{kg}\,\mathrm{m}^{-3} \f$),
+ * * \f$ u \f$ is the fluid's specific internal energy (in \f$ \mathrm{J}\,\mathrm{kg}^{-1} \f$),
+ * * \f$ h \f$ is the fluid's specific enthalpy (in \f$ \mathrm{J}\,\mathrm{kg}^{-1} \f$),
+ * * \f$ \mathbf{v} \f$ is the fluid velocity (in \f$ \mathrm{m}\,\mathrm{s}^{-1} \f$),
+ * * \f$ \lambda_\text{eff} \f$ is the effective thermal conductivity (in \f$ \mathrm{W}\,\mathrm{m}^{-1}\,\mathrm{K}^{-1} \f$),
+ * * \f$ T \f$ is the temperature (in K),
+ * * \f$ q^h \f$ is a volume-specific source or sink term for the energy (in \f$ \mathrm{W}\,\mathrm{m}^{-3} \f$).
  *
  *
  * For laminar Navier-Stokes flow the effective thermal conductivity is the fluid
