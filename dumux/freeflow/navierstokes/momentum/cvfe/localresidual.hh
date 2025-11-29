@@ -311,7 +311,7 @@ public:
                     // finally add source and Neumann term and add everything to residual
                     auto sourceAtIp = problem.source(fvGeometry, elemVolVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
-                    sourceAtIp += density * problem.gravity();;
+                    sourceAtIp += density * problem.gravity();
 
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
