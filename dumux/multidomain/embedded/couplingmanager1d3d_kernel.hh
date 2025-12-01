@@ -75,7 +75,11 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
     static constexpr bool isBox()
     { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
-    static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
+    template<std::size_t id>
+    static constexpr bool isTpfa()
+    { return GridGeometry<id>::discMethod == DiscretizationMethods::cctpfa; }
+
+    static_assert(!isBox<bulkIdx>() && (isBox<lowDimIdx>() || isTpfa<lowDimIdx>()), "The kernel coupling method is only implemented for 3D tpfa and 1D box or tpfa discretizations.");
     static_assert(Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v, "The kernel coupling method is only implemented for structured grids");
 
     enum {

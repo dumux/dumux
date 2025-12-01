@@ -82,6 +82,14 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfabox_kernel
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+              COMMAND ./test_md_embedded_1d3d_1p1p_tpfabox_kernel
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfabox_kernel)
+
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_convergence
               LABELS multidomain multidomain_embedded 1p
               TIMEOUT 3600
