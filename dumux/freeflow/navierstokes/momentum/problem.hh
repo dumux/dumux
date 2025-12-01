@@ -860,6 +860,16 @@ public:
         return asImp_().initialAtPos(scv.dofPosition());
     }
 
+    const CouplingManager& couplingManager() const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            DUNE_THROW(Dune::InvalidStateException,
+                    "Accessing coupling manager of an uncoupled problem is not possible."
+                );
+        else
+            return *couplingManager_;
+    }
+
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
