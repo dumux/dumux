@@ -1,0 +1,27 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 2
+Cells = 50 100
+
+[TimeLoop]
+TEnd = 3.0
+DtInitial = 0.001
+MaxTimeStepSize = 0.01
+
+[Problem]
+Name = test_ff_2p_rising_bubble
+EnableGravity = true
+EnableInertiaTerms = false
+SurfaceTension = 24.5
+InterfaceThickness = 0.1
+Mobility = 10.0
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1e-3
+
+[Newton]
+MinSteps = 1
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-5
+MaxSteps = 50
