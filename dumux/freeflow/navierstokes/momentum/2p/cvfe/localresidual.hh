@@ -83,7 +83,6 @@ public:
         flux += fluxHelper.advectiveMomentumFlux(context);
         flux += fluxHelper.diffusiveMomentumFlux(context);
         flux += fluxHelper.pressureContribution(context);
-
         flux += problem.interfaceFlux(context);
 
         return flux;

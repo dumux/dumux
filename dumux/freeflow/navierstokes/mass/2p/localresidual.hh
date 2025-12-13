@@ -67,7 +67,7 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        storage[Indices::conti0EqIdx] = volVars.density();
+        storage[Indices::conti0EqIdx] = volVars.pressure()*1e-15;
         storage[Indices::phaseFieldEqIdx] = volVars.phaseField();
         storage[Indices::chemicalPotentialEqIdx] = 0.0;
         return storage;
@@ -96,16 +96,11 @@ public:
         const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
         const Scalar volumeFlux = velocity*scvf.unitOuterNormal()
             *Extrusion::area(fvGeometry, scvf)*elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-        flux[Indices::conti0EqIdx] = upwindSchemeMultiplier_(
-            elemVolVars, scvf, volumeFlux,
-            [](const auto& volVars) { return volVars.density(); }
-        )*volumeFlux;
+        flux[Indices::conti0EqIdx] = volumeFlux;
 
         const auto& fluxVarCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, dimWorld> gradPhaseField(0.0);
         Dune::FieldVector<Scalar, dimWorld> gradChemicalPotential(0.0);
-        const auto& shapeValues = fluxVarCache.shapeValues();
-        Scalar avgPhaseField = 0.0;
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
@@ -118,19 +113,16 @@ public:
                 volVars.chemicalPotential(),
                 fluxVarCache.gradN(scv.indexInElement())
             );
-
-            avgPhaseField += shapeValues[scv.indexInElement()]*volVars.phaseField();
         }
 
         // advection of the phase field
-        // flux[Indices::phaseFieldEqIdx] = upwindSchemeMultiplier_(
-        //     elemVolVars, scvf, volumeFlux,
-        //     [](const auto& volVars) { return volVars.phaseField(); }
-        // )*volumeFlux;
+        flux[Indices::phaseFieldEqIdx] = upwindSchemeMultiplier_(
+            elemVolVars, scvf, volumeFlux,
+            [](const auto& volVars) { return volVars.phaseField(); }
+        )*volumeFlux;
 
-        const auto weighting = 1.0; //avgPhaseField*avgPhaseField - 1.0;
         flux[Indices::phaseFieldEqIdx] += -1.0*vtmv(
-            scvf.unitOuterNormal(), weighting*weighting*problem.mobility(), gradChemicalPotential
+            scvf.unitOuterNormal(), problem.mobility(), gradChemicalPotential
         )*scvf.area();
 
         flux[Indices::chemicalPotentialEqIdx] = -1.0*vtmv(
@@ -156,8 +148,6 @@ public:
     {
         NumEqVector source(0.0);
 
-        source[Indices::chemicalPotentialEqIdx] = elemVolVars[scv].chemicalPotential();
-
         // add contributions from problem (e.g. double well potential)
         source += problem.source(element, fvGeometry, elemVolVars, scv);
 
@@ -175,7 +165,7 @@ private:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        constexpr Scalar upwindWeight = 0.5; // TODO: pass this from outside?
+        constexpr Scalar upwindWeight = 1.0; // TODO: pass this from outside?
 
         using std::signbit;
         if (signbit(flux)) // if sign of flux is negative
