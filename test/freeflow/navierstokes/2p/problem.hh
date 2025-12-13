@@ -56,6 +56,7 @@ class ThreeDChannelTestProblem : public BaseProblem
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
     using Extrusion = Extrusion_t<GridGeometry>;
 
@@ -94,15 +95,13 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isTop_(scv.dofPosition()))
-                values.setAllNeumann();
-            else if (isSide_(scv.dofPosition()))
-                values.setNeumann(Indices::momentumBalanceIdx(dimWorld-1)); // full slip at sides
-            else
+            if (isTop_(scv.dofPosition()) || isBottom_(scv.dofPosition()))
                 values.setAllDirichlet();
+            else
+                values.setAllNeumann();
         }
         else
-            values.setNeumann(Indices::conti0EqIdx);
+            values.setAllNeumann();
 
         return values;
     }
@@ -118,21 +117,16 @@ public:
                    const SubControlVolume &scv) const
 
     {
-        if constexpr (ParentType::isMomentumProblem())
+        Sources source(0.0);
+        if constexpr (!ParentType::isMomentumProblem())
         {
-            Sources source(0.0);
-            source[Indices::momentumBalanceIdx(dimWorld-1)] = -1000.0 * gravity()[dimWorld-1];
-            return source;
-        }
-        else
-        {
-            Sources source(0.0);
-            const auto& phi = elemVolVars[scv].phaseField();
+            const auto& volVars = elemVolVars[scv];
+            const auto phi = volVars.phaseField();
             // Double-well potential derivative: f'(φ) = (γ/ε)·φ(φ²-1)
             // f(φ) = (γ/ε)·(1/4)(φ²-1)² → f'(φ) = (γ/ε)·(1/2)·2φ(φ²-1)
-            source[Indices::chemicalPotentialEqIdx] = -energyScale_*phi*(phi*phi - 1.0);
-            return source;
+            source[Indices::chemicalPotentialEqIdx] = volVars.chemicalPotential() - energyScale_*phi*(phi*phi - 1.0);
         }
+        return source;
     }
 
     /*!
@@ -165,10 +159,46 @@ public:
         BoundaryFluxes values(0.0);
         if constexpr (!ParentType::isMomentumProblem())
         {
-            if (isTop_(scvf.ipGlobal()))
+            if (isSide_(scvf.ipGlobal()))
             {
-                const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-                values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+                values[Indices::conti0EqIdx] = 0.0;
+                values[Indices::phaseFieldEqIdx] = 0.0;
+            }
+        }
+        else
+        {
+            if (this->enableInertiaTerms())
+            {
+                if (isSide_(scvf.ipGlobal()))
+                {
+                    // advective term: vv*n
+                    const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
+                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
+                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
+
+                    // stress tensor
+                    Tensor gradV(0.0);
+                    for (const auto& localDof : localDofs(fvGeometry))
+                    {
+                        const auto& volVars = elemVolVars[localDof];
+                        for (int dir = 0; dir < dim; ++dir)
+                            gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
+                    }
+
+                    // get viscosity from the problem
+                    const auto mu = this->couplingManager().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
+                    // compute -mu*gradV*n*dA
+                    BoundaryFluxes momFlux = mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
+                    momFlux *= -mu;
+
+                    const auto pressure = this->couplingManager().pressure(element, fvGeometry, fluxVarCache.ipData());
+                    momFlux += pressure * scvf.unitOuterNormal();
+
+                    const auto normal = scvf.unitOuterNormal();
+                    values += (momFlux * normal) * normal;
+                }
             }
         }
 
@@ -207,10 +237,12 @@ public:
 
         const Scalar radius = 0.25;
         const Scalar dist = std::hypot(pos[0] - centerX, pos[1] - centerY);
-        initial[Indices::phaseFieldIdx] = std::tanh( 2.0*(radius - dist) / interfaceThickness_ );
 
-        const Scalar curvature = 2.0 / radius; // 2D bubble
-        initial[Indices::chemicalPotentialIdx] = scaledSurfaceTension_ * curvature;
+        // Phase field: equilibrium tanh profile φ(r) = tanh((R-r)/ε)
+        // For the double-well f(φ) = (γ/ε)·(1/4)(φ²-1)², the equilibrium requires:
+        // -γε·∇²φ + (γ/ε)·φ(φ²-1) = μ
+        initial[Indices::phaseFieldIdx] = std::tanh((radius - dist) / interfaceThickness_);
+        initial[Indices::chemicalPotentialIdx] = 0.0;
 
         return initial;
     }
@@ -233,35 +265,43 @@ public:
         const auto gradPhi = this->couplingManager().gradPhaseField(element, fvGeometry, fluxVarCache.ipData());
         const auto normal = scvf.unitOuterNormal();
 
+        // T_cap = γε[∇φ⊗∇φ]
         return (scaledSurfaceTension_ * interfaceThickness_)
-            * ((gradPhi * normal) * gradPhi - 0.5 * (gradPhi * gradPhi) * normal)
+            * ((gradPhi * normal) * gradPhi)
             * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
     }
 
     Scalar mixtureViscosity(const Scalar phaseField) const
     {
-        constexpr Scalar eta1 = 1.0;
+        constexpr Scalar eta1 = 10.0;
         constexpr Scalar eta2 = 10.0;
         return 0.5 * ((1.0 + phaseField) * eta1 + (1.0 - phaseField) * eta2);
     }
 
     Scalar mixtureDensity(const Scalar phaseField) const
     {
-        constexpr Scalar rho1 = 100.0;
+        constexpr Scalar rho1 = 500.0;
         constexpr Scalar rho2 = 1000.0;
-        return rho2;
         return 0.5 * ((1.0 + phaseField) * rho1 + (1.0 - phaseField) * rho2);
+    }
+
+    Scalar mixtureDensityDerivative() const
+    {
+        constexpr Scalar rho1 = 500.0;
+        constexpr Scalar rho2 = 1000.0;
+        return 0.5 * (rho1  - rho2);
     }
 
 private:
     bool isTop_(const GlobalPosition& pos, const Scalar eps = eps_) const
     { return pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps; }
 
+    bool isBottom_(const GlobalPosition& pos, const Scalar eps = eps_) const
+    { return pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps; }
+
     bool isSide_(const GlobalPosition& pos) const
-    {
-        return pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps_ ||
-                pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps_;
-    }
+    { return pos[0] < this->gridGeometry().bBoxMin()[0] + eps_ ||
+             pos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     static constexpr Scalar eps_ = 1e-6;
     Scalar energyScale_, mobility_, surfaceTension_, interfaceThickness_, scaledSurfaceTension_;
