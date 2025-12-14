@@ -1,0 +1,19 @@
+[Grid]
+File = beam.msh
+
+[Problem]
+Name = test_hyperelastic_buckling_box
+
+[SpatialParams]
+YoungsModulus = 10
+YoungsModulus2 = 0.2
+PoissonRatio = 0.47
+PoissonRatio2 = 0.47
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
