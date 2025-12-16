@@ -58,12 +58,8 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-
-        const auto& priVars = elemSol[scv.localDofIndex()];
-
-        const auto phaseField = std::clamp<Scalar>(priVars[Indices::phaseFieldIdx], -1.0, 1.0);
-        density_ = problem.mixtureDensity(phaseField);
-        viscosity_ = problem.mixtureViscosity(phaseField);
+        density_ = problem.mixtureDensity(this->phaseField());
+        viscosity_ = problem.mixtureViscosity(this->phaseField());
     }
 
     /*!

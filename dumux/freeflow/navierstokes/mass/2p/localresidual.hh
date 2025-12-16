@@ -67,7 +67,7 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        storage[Indices::conti0EqIdx] = volVars.pressure()*1e-15;
+        storage[Indices::conti0EqIdx] = 0.0;
         storage[Indices::phaseFieldEqIdx] = volVars.phaseField();
         storage[Indices::chemicalPotentialEqIdx] = 0.0;
         return storage;
@@ -94,8 +94,7 @@ public:
 
         // TODO variable extrusion factor?
         const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-        const Scalar volumeFlux = velocity*scvf.unitOuterNormal()
-            *Extrusion::area(fvGeometry, scvf)*elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
         flux[Indices::conti0EqIdx] = volumeFlux;
 
         const auto& fluxVarCache = elemFluxVarsCache[scvf];

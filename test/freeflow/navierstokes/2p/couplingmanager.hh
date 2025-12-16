@@ -40,6 +40,10 @@ public:
     static constexpr auto freeFlowMomentumIndex = typename Traits::template SubDomain<0>::Index();
     static constexpr auto freeFlowMassIndex = typename Traits::template SubDomain<1>::Index();
 
+    static constexpr int phaseFieldIdx = VolumeVariables<freeFlowMassIndex>::Indices::phaseFieldIdx;
+    static constexpr int chemicalPotentialIdx = VolumeVariables<freeFlowMassIndex>::Indices::chemicalPotentialIdx;
+    static constexpr int pressureIdx = VolumeVariables<freeFlowMomentumIndex>::Indices::pressureIdx;
+
     // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
     // to manager the solution vector storage outside this class
     using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
@@ -48,14 +52,14 @@ public:
      * \brief Returns the pressure at a given interpolation point
      */
     template <class IpData>
-    auto gradPhaseField(const Element<freeFlowMomentumIndex>& element,
-                        const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                        const IpData& ipData) const
+    auto gradients(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                   const IpData& ipData) const
     {
         const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
         const auto& sol = this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
-        return evalGradientsAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local())[VolumeVariables<freeFlowMassIndex>::Indices::phaseFieldIdx];
+        return evalGradientsAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
     }
 };
 

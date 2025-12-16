@@ -9,6 +9,8 @@
 
 #include <dune/common/float_cmp.hh>
 
+#include <algorithm>
+
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -95,7 +97,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isTop_(scv.dofPosition()) || isBottom_(scv.dofPosition()))
+            if (isTop_(scv.dofPosition()))
                 values.setAllDirichlet();
             else
                 values.setAllNeumann();
@@ -164,41 +166,62 @@ public:
                 values[Indices::conti0EqIdx] = 0.0;
                 values[Indices::phaseFieldEqIdx] = 0.0;
             }
+
+            else if (isBottom_(scvf.ipGlobal()))
+            {
+                values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)*scvf.unitOuterNormal();
+                values[Indices::phaseFieldEqIdx] = 0.0;
+            }
         }
         else
         {
-            if (this->enableInertiaTerms())
+            if (isSide_(scvf.ipGlobal()))
             {
-                if (isSide_(scvf.ipGlobal()))
+                const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                if (this->enableInertiaTerms())
                 {
                     // advective term: vv*n
-                    const auto& fluxVarCache = elemFluxVarsCache[scvf];
                     const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
                     const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
                     const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
                     values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-
-                    // stress tensor
-                    Tensor gradV(0.0);
-                    for (const auto& localDof : localDofs(fvGeometry))
-                    {
-                        const auto& volVars = elemVolVars[localDof];
-                        for (int dir = 0; dir < dim; ++dir)
-                            gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
-                    }
-
-                    // get viscosity from the problem
-                    const auto mu = this->couplingManager().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
-                    // compute -mu*gradV*n*dA
-                    BoundaryFluxes momFlux = mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
-                    momFlux *= -mu;
-
-                    const auto pressure = this->couplingManager().pressure(element, fvGeometry, fluxVarCache.ipData());
-                    momFlux += pressure * scvf.unitOuterNormal();
-
-                    const auto normal = scvf.unitOuterNormal();
-                    values += (momFlux * normal) * normal;
                 }
+
+                // stress tensor
+                Tensor gradV(0.0);
+                for (const auto& localDof : localDofs(fvGeometry))
+                {
+                    const auto& volVars = elemVolVars[localDof];
+                    for (int dir = 0; dir < dim; ++dir)
+                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
+                }
+
+                // get viscosity from the problem
+                const auto mu = this->couplingManager().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
+                // compute -mu*gradV*n*dA
+                BoundaryFluxes momFlux = mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
+                momFlux *= -mu;
+
+                const auto pressure = this->couplingManager().pressure(element, fvGeometry, fluxVarCache.ipData());
+                momFlux += pressure * scvf.unitOuterNormal();
+
+                const auto normal = scvf.unitOuterNormal();
+                values += (momFlux * normal) * normal;
+            }
+
+            else if (isBottom_(scvf.ipGlobal()))
+            {
+                const auto& fluxVarCache = elemFluxVarsCache[scvf];
+                if (this->enableInertiaTerms())
+                {
+                    // advective term: vv*n
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
+                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
+                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
+                }
+
+                // zero pressure at bottom
             }
         }
 
@@ -236,12 +259,16 @@ public:
         const Scalar centerY = 0.5;
 
         const Scalar radius = 0.25;
-        const Scalar dist = std::hypot(pos[0] - centerX, pos[1] - centerY);
+        //const Scalar dist = std::hypot(pos[0] - centerX, pos[1] - centerY);
+        const Scalar distX = std::abs((pos[0] - centerX));
+        const Scalar distY = std::abs((pos[1] - centerY));
 
-        // Phase field: equilibrium tanh profile φ(r) = tanh((R-r)/ε)
-        // For the double-well f(φ) = (γ/ε)·(1/4)(φ²-1)², the equilibrium requires:
-        // -γε·∇²φ + (γ/ε)·φ(φ²-1) = μ
-        initial[Indices::phaseFieldIdx] = std::tanh((radius - dist) / interfaceThickness_);
+        // Phase field: smooth square profile. Use the infinity-norm distance
+        // max(|dx|,|dy|) so that the level set max(|dx|,|dy|)=radius describes
+        // a square of half-side length `radius`. The tanh provides a smooth
+        // diffuse-interface transition of thickness ~interfaceThickness_.
+        const Scalar maxDist = std::max(distX, distY);
+        initial[Indices::phaseFieldIdx] = std::tanh((radius - maxDist) / interfaceThickness_);
         initial[Indices::chemicalPotentialIdx] = 0.0;
 
         return initial;
@@ -261,14 +288,22 @@ public:
         const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
+        const auto& shapeValues = fluxVarCache.shapeValues();
 
-        const auto gradPhi = this->couplingManager().gradPhaseField(element, fvGeometry, fluxVarCache.ipData());
+        const auto grads = this->couplingManager().gradients(element, fvGeometry, fluxVarCache.ipData());
+        const auto& gradPhi = grads[CouplingManager::phaseFieldIdx];
+        const auto& gradChemicalPotential = grads[CouplingManager::chemicalPotentialIdx];
         const auto normal = scvf.unitOuterNormal();
+        std::decay_t<decltype(gradPhi)> v(0.0);
+        for (const auto& localDof : localDofs(fvGeometry))
+            v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
-        // T_cap = γε[∇φ⊗∇φ]
-        return (scaledSurfaceTension_ * interfaceThickness_)
-            * ((gradPhi * normal) * gradPhi)
-            * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        // T_cap n = γε[∇φ⊗∇φ] n
+        // T_diff n = v ⊗ (M ∇μ) 1/2 (ρ1 - ρ2) n
+        return (
+            (scaledSurfaceTension_ * interfaceThickness_) * (gradPhi * (gradPhi * normal))
+            //- v * (gradChemicalPotential * normal) * this->mobility() * this->mixtureDensityDerivative()
+        ) * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
     }
 
     Scalar mixtureViscosity(const Scalar phaseField) const
@@ -280,14 +315,14 @@ public:
 
     Scalar mixtureDensity(const Scalar phaseField) const
     {
-        constexpr Scalar rho1 = 500.0;
+        constexpr Scalar rho1 = 100.0;
         constexpr Scalar rho2 = 1000.0;
         return 0.5 * ((1.0 + phaseField) * rho1 + (1.0 - phaseField) * rho2);
     }
 
     Scalar mixtureDensityDerivative() const
     {
-        constexpr Scalar rho1 = 500.0;
+        constexpr Scalar rho1 = 100.0;
         constexpr Scalar rho2 = 1000.0;
         return 0.5 * (rho1  - rho2);
     }

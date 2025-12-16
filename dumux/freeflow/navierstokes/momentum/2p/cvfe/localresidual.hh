@@ -69,6 +69,15 @@ public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
+    NumEqVector computeStorage(const Problem& problem,
+                               const FVElementGeometry& fvGeometry,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars,
+                               const bool isPreviousStorage) const
+    {
+        return NumEqVector(0.0);
+    }
+
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
