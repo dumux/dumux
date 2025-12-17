@@ -14,6 +14,7 @@
 
 #include <dumux/multidomain/freeflow/couplingmanager_cvfe.hh>
 #include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {
 
@@ -60,6 +61,17 @@ public:
         const auto& sol = this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
         return evalGradientsAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
+    }
+
+    template <class IpData>
+    auto values(const Element<freeFlowMomentumIndex>& element,
+                const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                const IpData& ipData) const
+    {
+        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& sol = this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
     }
 };
 
