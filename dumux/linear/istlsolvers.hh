@@ -58,12 +58,19 @@ template<template<class,class,class,int> class Preconditioner, int blockLevel = 
 class IstlDefaultBlockLevelPreconditionerFactory
 {
 public:
-    template<class TL, class M>
-    auto operator() (TL typeList, const M& matrix, const Dune::ParameterTree& config)
+    template<class OI, class M>
+    auto operator() (OI opInfo, const M& matrix, const Dune::ParameterTree& config)
     {
-        using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-        using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-        using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+#if DUNE_VERSION_LT(DUNE_ISTL,2,11)
+        using Matrix = typename Dune::TypeListElement<0, decltype(opInfo)>::type;
+        using Domain = typename Dune::TypeListElement<1, decltype(opInfo)>::type;
+        using Range = typename Dune::TypeListElement<2, decltype(opInfo)>::type;
+#else
+        using OpInfo = std::decay_t<decltype(opInfo)>;
+        using Matrix = typename OpInfo::matrix_type;
+        using Domain = typename OpInfo::domain_type;
+        using Range  = typename OpInfo::range_type;
+#endif
         std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
             = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
         return preconditioner;
@@ -73,12 +80,19 @@ public:
 template<template<class,class,class> class Preconditioner>
 class IstlDefaultPreconditionerFactory
 {
-    template<class TL, class M>
-    auto operator() (TL typeList, const M& matrix, const Dune::ParameterTree& config)
+    template<class OI, class M>
+    auto operator() (OI opInfo, const M& matrix, const Dune::ParameterTree& config)
     {
-        using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-        using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-        using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+#if DUNE_VERSION_LT(DUNE_ISTL,2,11)
+        using Matrix = typename Dune::TypeListElement<0, decltype(opInfo)>::type;
+        using Domain = typename Dune::TypeListElement<1, decltype(opInfo)>::type;
+        using Range = typename Dune::TypeListElement<2, decltype(opInfo)>::type;
+#else
+        using OpInfo = std::decay_t<decltype(opInfo)>;
+        using Matrix = typename OpInfo::matrix_type;
+        using Domain = typename OpInfo::domain_type;
+        using Range  = typename OpInfo::range_type;
+#endif
         std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
             = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
         return preconditioner;
