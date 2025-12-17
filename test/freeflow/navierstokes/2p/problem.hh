@@ -71,16 +71,24 @@ public:
         surfaceTension_ = getParam<Scalar>("Problem.SurfaceTension", 24.5);
         interfaceThickness_ = getParam<Scalar>("Problem.InterfaceThickness", 0.08);
 
-        // Mobility M controls diffusion rate in CH equation: flux = -M(φ²-1)²∇μ
+        // Mobility M controls diffusion rate in CH equation: flux = -M∇μ
         // Typical scaling: M ~ ε² for interface-controlled dynamics
         mobility_ = getParam<Scalar>("Problem.Mobility", 1.0);
 
         // Surface tension energy γ appears in: μ = -γε∇²φ + (γ/ε)f'(φ)
-        // Standard CH uses γ = 3σ/(2√2) where σ is physical surface tension
+        // For f(φ) = (1/4)(φ²-1)², the surface energy integral gives σ_eff = γ·(2√2/3),
+        // so to recover the physical surface tension σ, we need γ = 3σ/(2√2).
         scaledSurfaceTension_ = surfaceTension_ * 3.0 / (2.0 * std::sqrt(2.0)) * getParam<Scalar>("Problem.SurfaceTensionFactor", 1.0);
 
         // Energy scale (γ/ε) for the double-well potential derivative: f'(φ) = (γ/ε)φ(φ²-1)
         energyScale_ = scaledSurfaceTension_ / interfaceThickness_ * getParam<Scalar>("Problem.EnergyScaleFactor", 1.0);
+
+        // fluid parameters
+        rho1_ = getParam<Scalar>("Problem.Density1", 1.0);
+        rho2_ = getParam<Scalar>("Problem.Density2", 1000.0);
+        eta1_ = getParam<Scalar>("Problem.Viscosity1", 1.0);
+        eta2_ = getParam<Scalar>("Problem.Viscosity2", 10.0);
+        g_ = getParam<Scalar>("Problem.Gravity", 0.98);
     }
 
     /*!
@@ -127,6 +135,13 @@ public:
             // Double-well potential derivative: f'(φ) = (γ/ε)·φ(φ²-1)
             // f(φ) = (γ/ε)·(1/4)(φ²-1)² → f'(φ) = (γ/ε)·(1/2)·2φ(φ²-1)
             source[Indices::chemicalPotentialEqIdx] = volVars.chemicalPotential() - energyScale_*phi*(phi*phi - 1.0);
+        }
+        else
+        {
+            const auto ip = ipData(fvGeometry, scv);
+            const auto gradPhi = this->couplingManager().gradients(element, fvGeometry, ip)[CouplingManager::phaseFieldIdx];
+            const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
+            source = gradPhi * mu;
         }
         return source;
     }
@@ -235,7 +250,8 @@ public:
 
     Scalar surfaceTension() const
     {
-        return scaledSurfaceTension_*interfaceThickness_;
+        // Returns γε, the coefficient in front of the Laplacian in the chem. potential
+        return scaledSurfaceTension_ * interfaceThickness_;
     }
 
     /*!
@@ -275,7 +291,7 @@ public:
     }
 
     GravityVector gravity() const
-    { return {0.0, -0.98}; }
+    { return {0.0, -g_}; }
 
     /*!
      * \brief Returns the interface flux contribution due to the capillary forces
@@ -298,33 +314,33 @@ public:
         for (const auto& localDof : localDofs(fvGeometry))
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
-        // T_cap n = γε[∇φ⊗∇φ] n
-        // T_diff n = v ⊗ (M ∇μ) 1/2 (ρ1 - ρ2) n
-        return (
-            (scaledSurfaceTension_ * interfaceThickness_) * (gradPhi * (gradPhi * normal))
-            //- v * (gradChemicalPotential * normal) * this->mobility() * this->mixtureDensityDerivative()
-        ) * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        // Korteweg traction (AGG07 form):
+        // T_cap n = γε[(∇φ ⊗ ∇φ)] n --> instead we do this as source term
+        // T_diff n = v ⊗ (M ∇μ) 1/2 (ρ1 - ρ2) n if considering conservative form and inertia
+
+        if (this->enableInertiaTerms())
+            return (
+                v * (gradChemicalPotential * normal) * this->mobility() * this->mixtureDensityDerivative()
+            ) * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+
+        return std::decay_t<decltype(gradPhi)>(0.0);
     }
 
     Scalar mixtureViscosity(const Scalar phaseField) const
     {
-        constexpr Scalar eta1 = 10.0;
-        constexpr Scalar eta2 = 10.0;
-        return 0.5 * ((1.0 + phaseField) * eta1 + (1.0 - phaseField) * eta2);
+        const auto phi = std::clamp(phaseField, -1.0, 1.0);
+        return 0.5 * ((1.0 + phi) * eta1_ + (1.0 - phi) * eta2_);
     }
 
     Scalar mixtureDensity(const Scalar phaseField) const
     {
-        constexpr Scalar rho1 = 100.0;
-        constexpr Scalar rho2 = 1000.0;
-        return 0.5 * ((1.0 + phaseField) * rho1 + (1.0 - phaseField) * rho2);
+        const auto phi = std::clamp(phaseField, -1.0, 1.0);
+        return 0.5 * ((1.0 + phi) * rho1_ + (1.0 - phi) * rho2_);
     }
 
     Scalar mixtureDensityDerivative() const
     {
-        constexpr Scalar rho1 = 100.0;
-        constexpr Scalar rho2 = 1000.0;
-        return 0.5 * (rho1  - rho2);
+        return 0.5 * (rho1_  - rho2_);
     }
 
 private:
@@ -340,6 +356,9 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
     Scalar energyScale_, mobility_, surfaceTension_, interfaceThickness_, scaledSurfaceTension_;
+    Scalar rho1_, rho2_;
+    Scalar eta1_, eta2_;
+    Scalar g_;
 };
 
 } // end namespace Dumux

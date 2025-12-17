@@ -5,8 +5,8 @@ Cells = 50 100
 
 [TimeLoop]
 TEnd = 3.0
-DtInitial = 0.001
-MaxTimeStepSize = 0.01
+DtInitial = 0.01
+MaxTimeStepSize = 0.05
 
 [Problem]
 Name = test_ff_2p_rising_bubble
@@ -14,13 +14,23 @@ EnableGravity = true
 EnableInertiaTerms = false
 SurfaceTension = 24.5
 InterfaceThickness = 0.04
-Mobility = 10.0
+Mobility = 1.0
+Density1 = 10.0
+Density2 = 1000.0
+Viscosity1 = 1.0
+Viscosity2 = 10.0
+Gravity = 0.98
 
 [Component]
 LiquidDensity = 1000.0
 LiquidDynamicViscosity = 10.0
 
+[Flux]
+UpwindWeight = 1.0
+
 [Newton]
 MinSteps = 1
 MaxSteps = 20
-MaxRelativeShift = 1e-9
+MaxRelativeShift = 1e-7
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-8
