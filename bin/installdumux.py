@@ -65,6 +65,8 @@ dumuxBranch = (
     else "releases/" + args["dumux_version"]
 )
 
+NUM_STEPS = 2 if args["download"] else 3
+
 
 def showMessage(message):
     """Pretty print message"""
@@ -134,11 +136,11 @@ with open("installdumux.log", "w") as _:
 
 #################################################################
 #################################################################
-# (1/3) Check some prerequisites
+# (1) Check some prerequisites
 #################################################################
 #################################################################
 programs = ["git", "gcc", "g++", "cmake", "pkg-config"]
-showMessage(f"(1/3) Checking all prerequisites: {' '.join(programs)}...")
+showMessage(f"(1/{NUM_STEPS}) Checking all prerequisites: {' '.join(programs)}...")
 
 # check some prerequisites
 for program in programs:
@@ -148,16 +150,19 @@ for program in programs:
         sys.exit(1)
 
 if which("paraview") is None:
-    logger.warning("ParaView could not be found. (You might have it but we can't find it.)")
+    logger.warning(
+        "ParaView could not be found. (You might have it but we can't find it (e.g. on macOS).)"
+    )
     logger.warning("We recommend installing ParaView to view simulation results.")
 
 checkCppVersion()
 
-showMessage("(1/3) Step completed. All prerequisites found.")
+
+showMessage(f"(1/{NUM_STEPS}) Step completed. All prerequisites found.")
 
 #################################################################
 #################################################################
-# (2/3) Clone modules
+# (2) Clone modules
 #################################################################
 #################################################################
 # make a new folder containing everything
@@ -165,7 +170,7 @@ os.makedirs("./dumux", exist_ok=True)
 os.chdir("dumux")
 
 showMessage(
-    "(2/3) Cloning repositories. This may take a while. "
+    f"(2/{NUM_STEPS}) Cloning repositories. This may take a while. "
     "Make sure to be connected to the internet..."
 )
 
@@ -186,7 +191,8 @@ else:
 
 
 showMessage(
-    f"(2/{numSteps}) Step completed. All repositories have been cloned/downloaded into a containing folder."
+    f"(2/{NUM_STEPS}) Step completed. All repositories have been cloned/downloaded"
+    "into a containing folder."
 )
 
 if args["download"]:
@@ -201,18 +207,19 @@ if args["download"]:
 
 #################################################################
 #################################################################
-# (3/3) Configure and build
+# (3) Configure and build
 #################################################################
 #################################################################
 showMessage(
-    "(3/3) Configure and build dune modules and dumux using dunecontrol. "
+    f"(3/{NUM_STEPS}) Configure and build dune modules and dumux using dunecontrol. "
     "This may take several minutes..."
 )
 
 # run dunecontrol
 runCommand(command=["./dune-common/bin/dunecontrol", "--opts=dumux/cmake.opts", "all"])
 
-showMessage("(3/3) Step completed. Successfully configured and built dune and dumux.")
+
+showMessage(f"(3/{NUM_STEPS}) Step completed. Successfully configured and built dune and dumux.")
 
 #################################################################
 #################################################################
