@@ -6,7 +6,7 @@
 finite volume discretization methods, model coupling for multi-physics applications,
 and flow and transport applications in porous media.
 
-DuMu<sup>x</sup> is based on the [DUNE][a] framework from which it uses
+DuMu<sup>x</sup> is based on the [DUNE][b] framework from which it uses
 the versatile [grid interface](https://gitlab.dune-project.org/core/dune-grid) [[2][], [3][]], [vector and matrix types](https://gitlab.dune-project.org/core/dune-common), [geometry](https://gitlab.dune-project.org/core/dune-geometry) and [local basis functions](https://gitlab.dune-project.org/core/dune-localfunctions), and [linear solvers](https://gitlab.dune-project.org/core/dune-istl).
 DuMu<sup>x</sup> then provides
 
@@ -26,8 +26,6 @@ for a more detailed description of the goals, the development history,
 and motivations behind DuMu<sup>x</sup>.
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active) ![GitLab Last Commit](https://img.shields.io/gitlab/last-commit/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de%2F) ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=72b09f)
-
-
 
 [TOC]
 
@@ -74,7 +72,6 @@ DuMu<sup>x</sup> is research software developed at research institutions.
 You can cite **specific releases** via [**DaRUS**](https://darus.uni-stuttgart.de/dataverse/iws_lh2_dumux) (from 3.6) or **Zenodo**:
 [![zenodo badge](https://zenodo.org/badge/DOI/10.5281/zenodo.2479594.svg)](https://doi.org/10.5281/zenodo.2479594). You can also cite individual code files or even lines via [**SoftwareHeritage**](https://archive.softwareheritage.org/swh:1:dir:e947c9ac369afd90195080e4a06bbde2e1e150ca;origin=https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git;visit=swh:1:snp:3cf49b55de0218903103d428c378e356d7d4d082;anchor=swh:1:rev:11871e4abf619d4cb3f938aedd7a2dea47ce1e87).
 
-
 If you are using DuMu<sup>x</sup> in scientific publications and in
 the academic context, please cite (at least one of)
 our publications:
@@ -107,12 +104,10 @@ our publications:
     journal = {Advances in Water Resources}}
 ```
 
-
 # Automated Testing / Test suite
 
 * ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=72b09f): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.10/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.10)
 * ![Master branch (development / unstable)](https://img.shields.io/badge/DuMux_branch-master-72b09f): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
-
 
 DuMu<sup>x</sup> features many tests (some unit tests and test problems) that
 are continuously and automatically tested in the GitLab-CI framework (see badges).
@@ -169,7 +164,6 @@ and the script [dumux/bin/installexternal.py](https://git.iws.uni-stuttgart.de/d
 A weekly coverage report of the test suite is created by gcovr/gcov. The report
 currently doesn't include non-instantiated code, so the real coverage is likely lower. However,
 only a few lines of code are never instantiated in the comprehensive test suite.
-
 
 # Contributing
 
