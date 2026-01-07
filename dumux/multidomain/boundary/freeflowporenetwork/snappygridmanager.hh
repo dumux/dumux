@@ -422,7 +422,8 @@ private:
         //check for overlap of lower left and first pore body
         const auto firstPoreBody = points[0];
         const auto firstPoreMinBound = firstPoreBody.pos - firstPoreBody.radius;
-        if (firstPoreMinBound < ffGridLowerLeft[directionIndex])
+
+        if (firstPoreMinBound < ffGridLowerLeft[directionIndex] - eps_)
         {
             DUNE_THROW(Dune::RangeError, "The first pore body with min bound " + std::to_string(firstPoreMinBound) + " intersects"
                 "with the start of the FF-grid in direction " + std::to_string(directionIndex));
@@ -431,7 +432,7 @@ private:
         //check for overlap of upper right and last pore body
         const auto lastPoreBody = points[points.size() - 1];
         const auto lastPoreMaxBound = lastPoreBody.pos + lastPoreBody.radius;
-        if (lastPoreMaxBound > ffGridUpperRight[directionIndex])
+        if (lastPoreMaxBound > ffGridUpperRight[directionIndex] + eps_)
         {
             DUNE_THROW(Dune::RangeError, "The last pore body with max bound " + std::to_string(lastPoreMaxBound) + " intersects"
                 "with the end of the FF-grid in direction " + std::to_string(directionIndex));
@@ -449,9 +450,9 @@ private:
         const auto firstPoreBody = points[0];
         const auto firstPoreMinBound = firstPoreBody.pos - firstPoreBody.radius;
 
-        if (firstPoreMinBound > ffGridLowerLeft[directionIndex])
+        if (firstPoreMinBound > ffGridLowerLeft[directionIndex] + eps_)
             upstreamDomainExists = true;
-        else if (firstPoreMinBound == ffGridLowerLeft[directionIndex]) //this position has already been added
+        else if ((firstPoreMinBound >= ffGridLowerLeft[directionIndex] - eps_) && (firstPoreMinBound <= ffGridLowerLeft[directionIndex] + eps_)) //this position has already been added
         {
             Dune::dwarn << "Warning: No upstream domain detected, as `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`.\n"
                         "\tHence upstream grid generation for free-flow will be skipped!\n";
@@ -547,9 +548,9 @@ private:
         const auto lastPoreBody = points[points.size() - 1];
         const auto lastPoreMaxBound = lastPoreBody.pos + lastPoreBody.radius;
 
-        if (lastPoreMaxBound < ffGridUpperRight[directionIndex])
+        if (lastPoreMaxBound < ffGridUpperRight[directionIndex] - eps_)
             downstreamDomainExists = true;
-        else if (lastPoreMaxBound == ffGridUpperRight[directionIndex]) //this position has already been added
+        else if ((lastPoreMaxBound >= ffGridUpperRight[directionIndex] - eps_) && (lastPoreMaxBound <= ffGridUpperRight[directionIndex] + eps_))//this position has already been added
         {
             Dune::dwarn << "Warning: No downstream domain detected, as `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`.\n"
                         "\tHence downstream grid generation for free-flow will be skipped!\n";
@@ -656,9 +657,9 @@ private:
 
             // check for intersections with poreMinBound
             // Note: overlap "poreMinBound < positions[directionIndex].back()" checked by checkForOverlapsFFPNM_
-            if (poreMinBound > positions[directionIndex].back())
+            if (poreMinBound > positions[directionIndex].back() +  eps_)
                 positions[directionIndex].push_back(poreMinBound);
-            else if (poreMinBound == gridLowerLeft[directionIndex]) //this position has already been added
+            else if ((poreMinBound >= gridLowerLeft[directionIndex] - eps_) && (poreMinBound <= gridLowerLeft[directionIndex] + eps_)) //this position has already been added
             {
                 Dune::dwarn << "Warning: `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`. "
                     "PoreMinBound will not be added as interface position, as gridLowerLeft[" + std::to_string(directionIndex) +
@@ -670,9 +671,9 @@ private:
 
             // check for intersections with poreMaxBound
             // Note: overlap "poreMaxBound > gridUpperRight[directionIndex]" checked by checkForOverlapsFFPNM_
-            if (poreMaxBound < gridUpperRight[directionIndex])
+            if (poreMaxBound < gridUpperRight[directionIndex] - eps_)
                 positions[directionIndex].push_back(poreMaxBound);
-            else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight will be added later on
+            else if ((poreMaxBound >= gridUpperRight[directionIndex] - eps_) && (poreMaxBound <= gridUpperRight[directionIndex] + eps_)) //this is fine as gridUpperRight will be added later on
             {
                 Dune::dwarn << "Warning: `poreMaxBound = gridUpperRight[" + std::to_string(directionIndex) + "]`. "
                     "PoreMaxBound will not be added as interface position, as gridUpperRight[" + std::to_string(directionIndex) +
@@ -772,6 +773,7 @@ private:
 
     std::string modelParamGroup_ = "";
     GridConstructionData gridConstructionData_;
+    const Scalar eps_ = 1e-10;
 };
 
 } // end namespace Dumux::PoreNetwork
