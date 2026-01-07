@@ -346,6 +346,8 @@ public:
                 for (auto x : pointsOnLine)
                     std::cout << x.pos << std::endl;
 
+                checkForOverlapsFFPNM_(i, lowerLeft, upperRight, pointsOnLine);
+
                 // check for user-defined additional points in the upstream area
                 const ScalarVector upstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, "Grid.UpstreamPositions" + std::to_string(i), ScalarVector{});
 
@@ -402,7 +404,30 @@ public:
     { return gridConstructionData_; }
 
 private:
+    template<class PointsOnLine>
+    void checkForOverlapsFFPNM_(const int directionIndex,
+                                const GlobalPosition& ffGridLowerLeft,
+                                const GlobalPosition& ffGridUpperRight,
+                                const PointsOnLine& points) const
+    {
+        //check for overlap of lower left and first pore body
+        const auto firstPoreBody = points[0];
+        const auto firstPoreMinBound = firstPoreBody.pos - firstPoreBody.radius;
+        if (firstPoreMinBound < ffGridLowerLeft[directionIndex])
+        {
+            DUNE_THROW(Dune::RangeError, "The first pore body with min bound " + std::to_string(firstPoreMinBound) + " intersects"
+                "with the start of the FF-grid in direction " + std::to_string(directionIndex));
+        }
 
+        //check for overlap of upper right and last pore body
+        const auto lastPoreBody = points[points.size() - 1];
+        const auto lastPoreMaxBound = lastPoreBody.pos + lastPoreBody.radius;
+        if (lastPoreMaxBound > ffGridUpperRight[directionIndex])
+        {
+            DUNE_THROW(Dune::RangeError, "The last pore body with max bound " + std::to_string(lastPoreMaxBound) + " intersects"
+                "with the end of the FF-grid in direction " + std::to_string(directionIndex));
+        }
+    }
     /////////////////////////////////////////////////////
     //// Inlet //////////////////////////////////////////
     /////////////////////////////////////////////////////
@@ -549,20 +574,23 @@ private:
         // set the points for the pore body positions
         for (const auto& point : points)
         {
-            const auto left = point.pos - point.radius;
-            const auto right = point.pos + point.radius;
+            const auto poreMinBound = point.pos - point.radius;
+            const auto poreMaxBound = point.pos + point.radius;
 
-            if (left < positions[directionIndex].back())
-                DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect!");
+            // check for intersections with poreMinBound
+            // Note: overlap "poreMinBound < positions[directionIndex].back()" checked by checkForOverlapsFFPNM_
+            if (poreMinBound > positions[directionIndex].back())
+                positions[directionIndex].push_back(poreMinBound);
+            else
+                DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
 
-            if (left > gridLowerLeft[directionIndex])
-                positions[directionIndex].push_back(left);
+            // check for intersections with poreMaxBound
+            // Note: overlap "poreMaxBound > gridUpperRight[directionIndex]" checked by checkForOverlapsFFPNM_
+            if (poreMaxBound < gridUpperRight[directionIndex])
+                positions[directionIndex].push_back(poreMaxBound);
 
-            if (right < gridUpperRight[directionIndex])
-                positions[directionIndex].push_back(right);
-
-            interFacePositions[directionIndex]->push_back(left);
-            interFacePositions[directionIndex]->push_back(right);
+            interFacePositions[directionIndex]->push_back(poreMinBound);
+            interFacePositions[directionIndex]->push_back(poreMaxBound);
             assert(interFacePositions[directionIndex].has_value());
         }
     }
