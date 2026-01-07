@@ -14,6 +14,7 @@
 
 #include <bitset>
 #include <optional>
+#include <string>
 #include <dune/common/float_cmp.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
@@ -349,19 +350,25 @@ public:
                 checkForOverlapsFFPNM_(i, lowerLeft, upperRight, pointsOnLine);
 
                 // check for user-defined additional points in the upstream area
+                const bool upstreamDomainExists = hasUpstreamDomain_(i, lowerLeft, pointsOnLine);
                 const ScalarVector upstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, "Grid.UpstreamPositions" + std::to_string(i), ScalarVector{});
-
-                addUpstreamPositions_(i, upstreamPositions, positions, pointsOnLine);
-                addUpstreamCells_(i, upstreamPositions, cells);
+                if (upstreamDomainExists)
+                {
+                    addUpstreamPositions_(i, upstreamPositions, positions, pointsOnLine);
+                    addUpstreamCells_(i, upstreamPositions, cells);
+                }
 
                 addCouplingPositions_(i, positions, pointsOnLine, interFacePositions, lowerLeft, upperRight);
                 addCouplingCells_(i, cells, pointsOnLine);
 
-                // check for user-defined additional points in the downstream area
+                const bool downstreamDomainExists = hasDownstreamDomain_(i, upperRight, pointsOnLine);
                 const ScalarVector downstreamPositions = getParamFromGroup<ScalarVector>(modelParamGroup, "Grid.DownstreamPositions" + std::to_string(i), ScalarVector{});
-
-                addDownstreamPositions_(i, downstreamPositions, positions, upperRight);
-                addDownstreamCells_(i, downstreamPositions, cells);
+                if (downstreamDomainExists)
+                {
+                    // check for user-defined additional points in the downstream area
+                    addDownstreamPositions_(i, downstreamPositions, positions, upperRight);
+                    addDownstreamCells_(i, downstreamPositions, cells);
+                }
 
                 // set the upper right positions
                 positions[i].push_back(upperRight[i]);
@@ -370,8 +377,10 @@ public:
                 // use 1 by default
                 grading[i].resize(positions[i].size()-1, 1.0);
 
-                addUpstreamGrading_(i, upstreamPositions, grading);
-                addDownstreamGrading_(i, downstreamPositions, positions, grading);
+                if (upstreamDomainExists)
+                    addUpstreamGrading_(i, upstreamPositions, grading);
+                if (downstreamDomainExists)
+                    addDownstreamGrading_(i, downstreamPositions, positions, grading);
             }
             else // i == couplingPlaneNormalDirectionIndex
             {
@@ -431,6 +440,35 @@ private:
     /////////////////////////////////////////////////////
     //// Inlet //////////////////////////////////////////
     /////////////////////////////////////////////////////
+    template<class PointsOnLine>
+    const bool hasUpstreamDomain_(const int directionIndex,
+                               const GlobalPosition& ffGridLowerLeft,
+                               const PointsOnLine& points) const
+    {
+        bool upstreamDomainExists = false;
+        const auto firstPoreBody = points[0];
+        const auto firstPoreMinBound = firstPoreBody.pos - firstPoreBody.radius;
+
+        if (firstPoreMinBound > ffGridLowerLeft[directionIndex])
+            upstreamDomainExists = true;
+        else if (firstPoreMinBound == ffGridLowerLeft[directionIndex]) //this position has already been added
+        {
+            Dune::dwarn << "Warning: No upstream domain detected, as `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`.\n"
+                        "\tHence upstream grid generation for free-flow will be skipped!\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.UpstreamCells"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.UpstreamCells" + std::to_string(directionIndex) + " will not have any effect.\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.UpstreamPositions"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.UpstreamPositions" + std::to_string(directionIndex) + " will not have any effect.\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.UpstreamGrading"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.UpstreamGrading" + std::to_string(directionIndex) + " will not have any effect.\n";
+            upstreamDomainExists = false;
+        }
+        else //check by checkForOverlapsFFPNM_
+            DUNE_THROW(Dune::RangeError, "The first pore body with min bound " + std::to_string(firstPoreMinBound) + " intersects"
+                "with the start of the FF-grid in direction " + std::to_string(directionIndex));
+
+        return upstreamDomainExists;
+    }
 
     template<class PointsOnLine>
     void addUpstreamPositions_(const int directionIndex,
@@ -495,6 +533,35 @@ private:
     /////////////////////////////////////////////////////
     //// Outlet /////////////////////////////////////////
     /////////////////////////////////////////////////////
+    template<class PointsOnLine>
+    const bool hasDownstreamDomain_(const int directionIndex,
+                               const GlobalPosition& ffGridUpperRight,
+                               const PointsOnLine& points) const
+    {
+        bool downstreamDomainExists = false;
+        const auto lastPoreBody = points[points.size() - 1];
+        const auto lastPoreMaxBound = lastPoreBody.pos + lastPoreBody.radius;
+
+        if (lastPoreMaxBound < ffGridUpperRight[directionIndex])
+            downstreamDomainExists = true;
+        else if (lastPoreMaxBound == ffGridUpperRight[directionIndex]) //this position has already been added
+        {
+            Dune::dwarn << "Warning: No downstream domain detected, as `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`.\n"
+                        "\tHence downstream grid generation for free-flow will be skipped!\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.DownstreamCells"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.DownstreamCells" + std::to_string(directionIndex) + " will not have any effect.\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.DownstreamPositions"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.DownstreamPositions" + std::to_string(directionIndex) + " will not have any effect.\n";
+            if (hasParamInGroup(modelParamGroup_, "Grid.DownstreamGrading"  + std::to_string(directionIndex)))
+                Dune::dwarn << "Warning: Grid.DownstreamGrading" + std::to_string(directionIndex) + " will not have any effect.\n";
+            downstreamDomainExists = false;
+        }
+        else  //check by checkForOverlapsFFPNM_
+            DUNE_THROW(Dune::RangeError, "The last pore body with max bound " + std::to_string(lastPoreMaxBound) + " intersects"
+                "with the end of the FF-grid in direction " + std::to_string(directionIndex));
+
+        return downstreamDomainExists;
+    }
 
     void addDownstreamPositions_(const int directionIndex,
                                  const ScalarVector& downstreamPositions,
@@ -581,6 +648,13 @@ private:
             // Note: overlap "poreMinBound < positions[directionIndex].back()" checked by checkForOverlapsFFPNM_
             if (poreMinBound > positions[directionIndex].back())
                 positions[directionIndex].push_back(poreMinBound);
+            else if (poreMinBound == gridLowerLeft[directionIndex]) //this position has already been added
+            {
+                Dune::dwarn << "Warning: `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`. "
+                    "PoreMinBound will not be added as interface position, as gridLowerLeft[" + std::to_string(directionIndex) +
+                    "] has already been added.\n";
+                std::cout << std::endl;
+            }
             else
                 DUNE_THROW(Dune::RangeError, "Pore body radii are too large, they intersect each other!");
 
@@ -588,6 +662,13 @@ private:
             // Note: overlap "poreMaxBound > gridUpperRight[directionIndex]" checked by checkForOverlapsFFPNM_
             if (poreMaxBound < gridUpperRight[directionIndex])
                 positions[directionIndex].push_back(poreMaxBound);
+            else if (poreMaxBound == gridUpperRight[directionIndex]) //this is fine as gridUpperRight will be added later on
+            {
+                Dune::dwarn << "Warning: `poreMaxBound = gridUpperRight[" + std::to_string(directionIndex) + "]`. "
+                    "PoreMaxBound will not be added as interface position, as gridUpperRight[" + std::to_string(directionIndex) +
+                    "] will be added in a next step.\n";
+                std::cout << std::endl;
+            }
 
             interFacePositions[directionIndex]->push_back(poreMinBound);
             interFacePositions[directionIndex]->push_back(poreMaxBound);
