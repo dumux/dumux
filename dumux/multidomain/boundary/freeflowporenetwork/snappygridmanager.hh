@@ -498,7 +498,12 @@ private:
                                                                      IntVector{});
 
         if (cellsUpstream.empty())
-            return;
+        {
+            if (upstreamPositions.empty())
+                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, but should contain exactly one entry (as upstream domain exists and no additional UpstreamPositions" << std::to_string(directionIndex) << " are specified)");
+            else
+                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, but must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+        }
 
         if (cellsUpstream.size() != upstreamPositions.size() + 1)
             DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
@@ -589,7 +594,12 @@ private:
                                                                        IntVector{});
 
         if (downstreamcells.empty())
-            return;
+        {
+            if (downstreamPositions.empty())
+                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, but should contain exactly one entry (as downstream domain exists and no additional DownstreamPositions" << std::to_string(directionIndex) << " are specified)");
+            else
+                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, but must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+        }
 
         if (downstreamcells.size() != downstreamPositions.size() + 1)
             DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
