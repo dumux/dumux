@@ -79,7 +79,7 @@ $`\mathbf{S_f}`$ are given as
 ```math
 \mathbf{S_b} = \begin{bmatrix} 0 \\ -gh \frac{\partial z}{\partial x}
                \\ -gh \frac{\partial z}{\partial y}\end{bmatrix},
-\mathbf{S_f} = \begin{bmatrix} 0 \\ghS_{fx} \\ghS_{fy}\end{bmatrix},
+\mathbf{S_f} = \begin{bmatrix} 0 \\ -ghS_{fx} \\ -ghS_{fy}\end{bmatrix},
 ```
 
 with the bed surface $`z`$. $`S_{fx}`$ and $`S_{fy}`$ are the bed shear stess
