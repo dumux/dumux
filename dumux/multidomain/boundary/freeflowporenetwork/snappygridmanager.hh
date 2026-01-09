@@ -425,7 +425,7 @@ private:
             upstreamDomainExists_ = true;
         else if (firstPoreMinBound < ffGridLowerLeft[directionIndex] - eps_) //check for overlap of lower left and first pore body
         {
-            DUNE_THROW(Dune::RangeError, "\n\tThe first pore body with min bound " + std::to_string(firstPoreMinBound) + " intersects "
+            DUNE_THROW(Dumux::ParameterException, "\n\tThe first pore body with min bound " + std::to_string(firstPoreMinBound) + " intersects "
                 "with the start of the FF-grid in direction " + std::to_string(directionIndex) + ".\n");
         }
         else //start of ff grid aligns with min bound of first pore body -> no upstream part is added to ff grid
@@ -435,7 +435,7 @@ private:
                 hasParamInGroup(modelParamGroup_, "Grid.UpstreamPositions"  + std::to_string(directionIndex)) ||
                 hasParamInGroup(modelParamGroup_, "Grid.UpstreamGrading"  + std::to_string(directionIndex)))
             {
-                DUNE_THROW(Dune::RangeError, "\n\tYou specified one or more\"Grid.Upstream\" parameters.\n"
+                DUNE_THROW(Dumux::ParameterException, "\n\tYou specified one or more\"Grid.Upstream\" parameters.\n"
                     "\tHowever, no upstream domain was detected, as `poreMinBound = gridLowerLeft[" + std::to_string(directionIndex) + "]`.\n");
             }
         }
@@ -448,7 +448,7 @@ private:
             downstreamDomainExists_ = true;
         else if (lastPoreMaxBound > ffGridUpperRight[directionIndex] + eps_) //check for overlap of upper right and last pore body
         {
-            DUNE_THROW(Dune::RangeError, "\n\tThe last pore body with max bound " + std::to_string(lastPoreMaxBound) + " intersects "
+            DUNE_THROW(Dumux::ParameterException, "\n\tThe last pore body with max bound " + std::to_string(lastPoreMaxBound) + " intersects "
                 "with the end of the FF-grid in direction " + std::to_string(directionIndex) + ".\n");
         }
         else  //end of ff grid aligns with max bound of last pore body -> no downstream domain is added to ff grid
@@ -459,7 +459,7 @@ private:
                 hasParamInGroup(modelParamGroup_, "Grid.DownstreamPositions"  + std::to_string(directionIndex)) ||
                 hasParamInGroup(modelParamGroup_, "Grid.DownstreamGrading"  + std::to_string(directionIndex)))
             {
-                DUNE_THROW(Dune::RangeError, "\n\tYou specified one or more \"Grid.Downstream\" parameters.\n"
+                DUNE_THROW(Dumux::ParameterException, "\n\tYou specified one or more \"Grid.Downstream\" parameters.\n"
                     "\tHowever, no downstream domain was detected, as `poreMaxBound = gridUpperRight[" + std::to_string(directionIndex) + "]`.\n");
             }
         }
