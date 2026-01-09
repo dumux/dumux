@@ -498,13 +498,17 @@ private:
         if (cellsUpstream.empty())
         {
             if (upstreamPositions.empty())
-                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, but should contain exactly one entry (as upstream domain exists and no additional UpstreamPositions" << std::to_string(directionIndex) << " are specified)");
+                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, "
+                    "but should contain exactly one entry (as upstream domain exists and no additional UpstreamPositions"
+                    << std::to_string(directionIndex) << " are specified)");
             else
-                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, but must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+                DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " is empty, "
+                    "but must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
         }
 
         if (cellsUpstream.size() != upstreamPositions.size() + 1)
-            DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex) << " must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+            DUNE_THROW(Dumux::ParameterException, "UpstreamCells" << std::to_string(directionIndex)
+                << " must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
 
         for (int c : cellsUpstream)
         {
@@ -526,7 +530,8 @@ private:
         if (!upstreamGrading.empty())
         {
             if (upstreamGrading.size() != upstreamPositions.size() + 1)
-                DUNE_THROW(Dune::RangeError, "UpstreamGrading"  << std::to_string(directionIndex) << " must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+                DUNE_THROW(Dune::RangeError, "UpstreamGrading"  << std::to_string(directionIndex)
+                    << " must equal UpstreamPositions" << std::to_string(directionIndex) <<  " + 1");
 
             for (int i = 0; i < upstreamPositions.size() + 1; ++i)
                 grading[directionIndex][i] = upstreamGrading[i];
@@ -564,13 +569,17 @@ private:
         if (downstreamcells.empty())
         {
             if (downstreamPositions.empty())
-                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, but should contain exactly one entry (as downstream domain exists and no additional DownstreamPositions" << std::to_string(directionIndex) << " are specified)");
+                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, "
+                    "but should contain exactly one entry (as downstream domain exists and no additional DownstreamPositions"
+                    << std::to_string(directionIndex) << " are specified)");
             else
-                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, but must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+                DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " is empty, "
+                    "but must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
         }
 
         if (downstreamcells.size() != downstreamPositions.size() + 1)
-            DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex) << " must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+            DUNE_THROW(Dumux::ParameterException, "DownstreamCells" << std::to_string(directionIndex)
+                << " must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
 
         for (int c : downstreamcells)
         {
@@ -593,7 +602,8 @@ private:
         if (!downstreamGrading.empty())
         {
             if (downstreamGrading.size() != downstreamPositions.size() + 1)
-                DUNE_THROW(Dune::RangeError, "DownstreamGrading"  << std::to_string(directionIndex) << " must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
+                DUNE_THROW(Dune::RangeError, "DownstreamGrading"  << std::to_string(directionIndex)
+                    << " must equal DownstreamPositions" << std::to_string(directionIndex) <<  " + 1");
 
             const int offSet = gridPositions[directionIndex].size() - downstreamPositions.size() - 2;
             for (int i = 0; i < downstreamPositions.size() + 1; ++i)
