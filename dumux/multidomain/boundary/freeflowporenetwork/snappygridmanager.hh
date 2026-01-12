@@ -452,9 +452,6 @@ private:
                              const ScalarVector& upstreamPositions,
                              std::array<ScalarVector, dim>& grading)
     {
-        if (upstreamPositions.empty())
-            return;
-
         const ScalarVector upstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, "Grid.UpstreamGrading"  + std::to_string(directionIndex), ScalarVector{});
 
         if (!upstreamGrading.empty())
@@ -515,9 +512,6 @@ private:
                                std::array<ScalarVector, dim>& gridPositions,
                                std::array<ScalarVector, dim>& grading)
     {
-        if (downstreamPositions.empty())
-            return;
-
         const ScalarVector downstreamGrading = getParamFromGroup<ScalarVector>(modelParamGroup_, "Grid.DownstreamGrading"  + std::to_string(directionIndex), ScalarVector{});
 
         if (!downstreamGrading.empty())
