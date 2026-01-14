@@ -24,7 +24,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/distance.hh>
 
-#include <dumux/multidomain/embedded/couplingmanagerbase.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
 #include <dumux/multidomain/embedded/cylinderintegration.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
@@ -50,13 +50,14 @@ class Embedded1d3dCouplingManager;
  */
 template<class MDTraits>
 class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
-: public EmbeddedCouplingManagerBase<MDTraits, Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>>
+: public Embedded1d3dCouplingManagerBase<MDTraits, Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>>
 {
     using ThisType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>;
-    using ParentType = EmbeddedCouplingManagerBase<MDTraits, ThisType>;
+    using ParentType = Embedded1d3dCouplingManagerBase<MDTraits, ThisType>;
+    using BaseType = EmbeddedCouplingManagerBase<MDTraits, ParentType>; //TODO: Better naming?
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
-    using PointSourceData = typename ParentType::PointSourceTraits::PointSourceData;
+    using PointSourceData = typename BaseType::PointSourceTraits::PointSourceData;
 
     static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
     static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
@@ -102,7 +103,6 @@ public:
               const SolutionVector& curSol)
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
-        computeLowDimVolumeFractions();
 
         const auto refinement = getParamFromGroup<int>(bulkProblem->paramGroup(), "Grid.Refinement", 0);
         if (refinement > 0)
@@ -276,61 +276,11 @@ public:
         std::cout << "[coupling] Finished preparing manager in " << watch.elapsed() << " seconds." << std::endl;
     }
 
-    //! Compute the low dim volume fraction in the bulk domain cells
-    void computeLowDimVolumeFractions()
-    {
-        // resize the storage vector
-        lowDimVolumeInBulkElement_.resize(this->gridView(bulkIdx).size(0));
-        // get references to the grid geometries
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
-
-        // compute the low dim volume fractions
-        for (const auto& is : intersections(this->glue()))
-        {
-            // all inside elements are identical...
-            const auto& inside = is.targetEntity(0);
-            const auto intersectionGeometry = is.geometry();
-            const auto lowDimElementIdx = lowDimGridGeometry.elementMapper().index(inside);
-
-            // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
-            const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
-            for (int outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
-            {
-                const auto& outside = is.domainEntity(outsideIdx);
-                const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
-                lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
-            }
-        }
-    }
-
     /*!
      * \brief Methods to be accessed by the subproblems
      */
     // \{
 
-    //! Return a reference to the bulk problem
-    Scalar radius(std::size_t id) const
-    {
-        const auto& data = this->pointSourceData()[id];
-        return this->problem(lowDimIdx).spatialParams().radius(data.lowDimElementIdx());
-    }
-
-    //! The volume the lower dimensional domain occupies in the bulk domain element
-    // For one-dimensional low dim domain we assume radial tubes
-    Scalar lowDimVolume(const Element<bulkIdx>& element) const
-    {
-        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
-        return lowDimVolumeInBulkElement_[eIdx];
-    }
-
-    //! The volume fraction the lower dimensional domain occupies in the bulk domain element
-    // For one-dimensional low dim domain we assume radial tubes
-    Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
-    {
-        const auto totalVolume = element.geometry().volume();
-        return lowDimVolume(element) / totalVolume;
-    }
 
     //! return all source ids for a bulk elements
     const std::vector<std::size_t>& bulkSourceIds(GridIndex<bulkIdx> eIdx, int scvIdx = 0) const
@@ -349,7 +299,7 @@ public:
     /*!
      * \brief Extended source stencil (for the bulk domain)
      */
-    const typename ParentType::template CouplingStencils<bulkIdx>::mapped_type&
+    const typename BaseType::template CouplingStencils<bulkIdx>::mapped_type&
     extendedSourceStencil(std::size_t eIdx) const
     {
         const auto& sourceStencils = extendedSourceStencil_.stencil();
@@ -570,8 +520,7 @@ private:
 
     //! the extended source stencil object for kernel coupling
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
-    //! vector for the volume fraction of the lowdim domain in the bulk domain cells
-    std::vector<Scalar> lowDimVolumeInBulkElement_;
+
     //! kernel sources to integrate for each bulk element
     std::vector<std::array<std::vector<std::size_t>, isBox<bulkIdx>() ? 1<<bulkDim : 1>> bulkSourceIds_;
     //! the integral of the kernel for each point source / integration point, i.e. weight for the source
