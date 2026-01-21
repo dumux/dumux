@@ -38,10 +38,11 @@ namespace Dumux {
  * This friction law calculates the stress between the flowing fluid and the bottom,
  * which is called bottom shear stress, using the Nikuradse \cite Nikuradse1950 friction law
  *
- *\f$\tau_{x} = \frac{\kappa^2}{(ln\frac{12h}{ks})^2} u \sqrt{u^2 + v^2}\f$ and
- *\f$\tau_{y} = \frac{\kappa^2}{(ln\frac{12h}{ks})^2} v \sqrt{u^2 + v^2}\f$
+ *\f$\tau_{x} = \frac{\rho \kappa^2}{(ln\frac{12h}{ks})^2} u \sqrt{u^2 + v^2}\f$ and
+ *\f$\tau_{y} = \frac{\rho \kappa^2}{(ln\frac{12h}{ks})^2} v \sqrt{u^2 + v^2}\f$
  *
- * with the dimensionless Karman's constant \f$\mathrm{\kappa}\f$, the quivalent sand roughness
+ * with \f$\mathrm{\rho}\f$ the water density in \f$\mathrm{[kg/m^3]}\f$,
+ * the dimensionless Karman's constant \f$\mathrm{\kappa}\f$, the quivalent sand roughness
  * \f$\mathrm{ks}\f$ in \f$\mathrm{[m]}\f$ and the water depth \f$\mathrm{h}\f$
  * in \f$\mathrm{[m]}\f$.
  *
