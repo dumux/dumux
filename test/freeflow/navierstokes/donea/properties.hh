@@ -16,6 +16,10 @@
 #define ENABLECACHING 0
 #endif
 
+#ifndef ENABLEFLUXVARSCACHING
+#define ENABLEFLUXVARSCACHING ENABLECACHING
+#endif
+
 #ifndef NAVIER_STOKES_MOMENTUM_MODEL
 #define NAVIER_STOKES_MOMENTUM_MODEL NavierStokesMomentum
 #endif
@@ -50,6 +54,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq2.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
@@ -123,8 +128,8 @@ public:
 };
 #endif
 
-#ifdef QUADRATURE_RULE_MOMENTUM
-// use custom quadrature rules
+#ifdef PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM
+// use custom quadrature rules for hybrid pq1bubble scheme
 template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
 {
@@ -135,11 +140,32 @@ private:
 
     // Higher order quadrature rule only works for hybrid pq1bubble scheme
     // since we can't generate geometries for overlapping scvs
-    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE_MOMENTUM, QUADRATURE_RULE_MOMENTUM>;
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM, PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM>;
     using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
 
 public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
+};
+#endif
+
+#ifdef PQ2_QUADRATURE_RULE_MOMENTUM
+// use custom quadrature rules for hybrid pq2 scheme
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using QuadTraits = PQ2QuadratureTraits<GridView,
+                                           Dumux::QuadratureRules::MidpointQuadrature,
+                                           PQ2_QUADRATURE_RULE_MOMENTUM,
+                                           PQ2_QUADRATURE_RULE_MOMENTUM,
+                                           PQ2_QUADRATURE_RULE_MOMENTUM>;
+
+public:
+    using type = PQ2FVGridGeometry<Scalar, GridView, enableCache, PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
 };
 #endif
 
@@ -153,7 +179,7 @@ private:
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using QuadTraits = BoxQuadratureTraits<GridView, QUADRATURE_RULE_MASS, QUADRATURE_RULE_MASS>;
+    using QuadTraits = BoxQuadratureTraits<GridView, Dumux::QuadratureRules::MidpointQuadrature, QUADRATURE_RULE_MASS>;
 
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, DefaultMapperTraits<GridView>, QuadTraits>>;
@@ -172,7 +198,7 @@ struct Grid<TypeTag, TTag::DoneaTest>
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
 

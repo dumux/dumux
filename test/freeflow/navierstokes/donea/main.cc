@@ -29,6 +29,7 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -39,6 +40,52 @@
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
+
+#if HAVE_UMFPACK
+#include <umfpack.h>
+#endif
+
+#ifndef USE_STOKES_SOLVER
+#define USE_STOKES_SOLVER 0
+#endif
+
+template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
+auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
+                   std::shared_ptr<MassGG> massGridGeometry,
+                   std::shared_ptr<MomP> momentumProblem,
+                   MomIdx momentumIdx, MassIdx massIdx)
+{
+    Vector dirichletDofs;
+    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+    dirichletDofs = 0.0;
+
+    auto fvGeometry = localView(*momentumGridGeometry);
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        fvGeometry.bind(element);
+
+        for (const auto& intersection : intersections(momentumGridGeometry->gridView(), element))
+        {
+            if(intersection.boundary() == false)
+                continue;
+
+            const auto bcTypes = momentumProblem->boundaryTypes(fvGeometry, intersection);
+            if (bcTypes.hasDirichlet())
+            {
+                for (auto&& localDof : localDofs(fvGeometry, intersection))
+                {
+                        for (int i = 0; i < bcTypes.size(); ++i)
+                            if (bcTypes.isDirichlet(i))
+                                dirichletDofs[momentumIdx][localDof.index()][i] = 1.0;
+                }
+            }
+        }
+    }
+
+    return dirichletDofs;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -134,8 +181,16 @@ int main(int argc, char** argv)
                                                  couplingManager);
 
     // the linear solver
+#if USE_STOKES_SOLVER
+    using Matrix = typename Assembler::JacobianMatrix;
+    using Vector = typename Assembler::ResidualType;
+    using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+    auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+    auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+#else
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
