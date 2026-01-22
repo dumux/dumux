@@ -15,6 +15,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/diameter.hh>
+#include <dumux/common/integrate.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -184,10 +185,16 @@ public:
         }
         else
         {
-            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            //const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            //values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             if (addBoxStabilization_)
                 values[Indices::conti0EqIdx] += stabilizationFlux_(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+            auto normalVelocity = [&](const GlobalPosition& pos)
+                                { return this->interpolateVelocity(fvGeometry, pos) * scvf.unitOuterNormal() ;};
+            const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
+            const auto geometry = fvGeometry.geometry(scvf);
+            values[Indices::conti0EqIdx] = insideDensity * applyQuadrature(geometry, normalVelocity, 4);
+            values /= scvf.area();
         }
 
         return values;

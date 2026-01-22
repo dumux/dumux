@@ -1081,6 +1081,18 @@ public:
             return couplingManager_->pressure(element, fvGeometry, ipData, isPreviousTimeStep);
     }
 
+    template<class GlobalPosition>
+    Scalar interpolatePressure(const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const GlobalPosition& pos,
+                               const bool isPreviousTimeStep = false) const
+    {
+        if constexpr (std::is_empty_v<CouplingManager>)
+            return asImp_().pressureAtPos(pos);
+        else
+            return couplingManager_->interpolatePressure(element, fvGeometry, pos, isPreviousTimeStep);
+    }
+
     /*!
      * \brief Returns the pressure at a given position.
      */

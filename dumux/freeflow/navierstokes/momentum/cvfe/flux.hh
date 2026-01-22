@@ -17,8 +17,11 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/integrate.hh>
 
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
 
 namespace Dumux {
 
@@ -231,33 +234,62 @@ public:
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
-        // interpolate velocity gradient at scvf
-        Tensor gradV(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[localDof];
-            for (int dir = 0; dir < dim; ++dir)
-                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
-        }
-
         // get viscosity from the problem
         const auto mu = context.problem().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-        // compute -mu*gradV*n*dA
-        NumEqVector diffusiveFlux = enableUnsymmetrizedVelocityGradient ?
-                mv(gradV, scvf.unitOuterNormal())
-                : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal());
+        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
 
+        const auto geometry = fvGeometry.geometry(scvf);
+        auto Dn = [&](const GlobalPosition& pos)
+                {
+                    const auto& localPos = geometry.local(pos);
+
+                    auto gradSol = evalGradients(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos);
+                    auto D = gradSol;
+                    if(!enableUnsymmetrizedVelocityGradient)
+                        for(int i=0; i < gradSol.size(); i++)
+                            for(int j=0; j<gradSol[i].size(); j++)
+                                D[i][j] += gradSol[j][i];
+
+                    const auto normal = scvf.unitOuterNormal();
+
+                    GlobalPosition dn(0.0);
+                    for(int i=0; i < normal.size(); i++)
+                        dn[i] = D[i]*normal;
+
+                    return dn;
+                };
+
+        auto diffusiveFlux = applyQuadrature(geometry, Dn, 4);
         diffusiveFlux *= -mu;
+        diffusiveFlux *= elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
 
-        static const bool enableDilatationTerm = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
-        if (enableDilatationTerm)
-            diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
+        // // interpolate velocity gradient at scvf
+        // Tensor gradV(0.0);
+        // for (const auto& localDof : localDofs(fvGeometry))
+        // {
+        //     const auto& volVars = elemVolVars[localDof];
+        //     for (int dir = 0; dir < dim; ++dir)
+        //         gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
+        // }
 
-        diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        // // compute -mu*gradV*n*dA
+        // NumEqVector diffusiveFlux = enableUnsymmetrizedVelocityGradient ?
+        //         mv(gradV, scvf.unitOuterNormal())
+        //         : mv(gradV + getTransposed(gradV),scvf.unitOuterNormal());
+
+        // diffusiveFlux *= -mu;
+
+        // static const bool enableDilatationTerm = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
+        // if (enableDilatationTerm)
+        //     diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
+
+        // diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+
         return diffusiveFlux;
     }
 
@@ -270,8 +302,13 @@ public:
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
+        auto pressure = [&](const typename Element::Geometry::GlobalCoordinate& pos)
+                            { return context.problem().interpolatePressure(element, fvGeometry, pos); };
+
+        const auto geometry = fvGeometry.geometry(scvf);
+
         // The pressure force needs to take the extruded scvf area into account
-        const auto pressure = context.problem().pressure(element, fvGeometry, fluxVarCache.ipData());
+        const auto p = applyQuadrature(geometry, pressure, 4);
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
@@ -280,7 +317,7 @@ public:
         const auto referencePressure = context.problem().referencePressure();
 
         NumEqVector pn(scvf.unitOuterNormal());
-        pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        pn *= (p-referencePressure*Extrusion::area(fvGeometry, scvf))*elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
 
         return pn;
     }

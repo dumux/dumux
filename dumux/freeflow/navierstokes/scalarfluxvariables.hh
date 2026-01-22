@@ -13,6 +13,7 @@
 #define DUMUX_NAVIERSTOKES_SCALAR_CONSERVATION_MODEL_FLUXVARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/common/integrate.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/flux/fluxvariablesbase.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -43,6 +44,7 @@ class NavierStokesScalarConservationModelFluxVariables
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using Extrusion = Extrusion_t<typename ProblemTraits<Problem>::GridGeometry>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 
@@ -56,8 +58,11 @@ public:
                            const int phaseIdx,
                            const ElementFluxVariablesCache& elemFluxVarsCache)
         {
-            const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(fvGeometry, scvf)*extrusionFactor_(elemVolVars, scvf);
+            auto normalVelocity = [&](const GlobalPosition& pos)
+                                    { return problem.interpolateVelocity(fvGeometry, pos) * scvf.unitOuterNormal() ;};
+
+            const auto geometry = fvGeometry.geometry(scvf);
+            const Scalar volumeFlux = applyQuadrature(geometry, normalVelocity, 4)*extrusionFactor_(elemVolVars, scvf);
             return volumeFlux;
         }
     };
@@ -71,8 +76,11 @@ public:
         if constexpr (ModelTraits::enableAdvection())
         {
             const auto& scvf = this->scvFace();
-            const auto velocity = this->problem().faceVelocity(this->element(), this->fvGeometry(), scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*Extrusion::area(this->fvGeometry(), scvf)*extrusionFactor_(this->elemVolVars(), scvf);
+            auto normalVelocity = [&](const GlobalPosition& pos)
+                                    { return this->problem().interpolateVelocity(this->fvGeometry(), pos) * scvf.unitOuterNormal() ;};
+
+            const auto geometry = this->fvGeometry().geometry(scvf);
+            const Scalar volumeFlux = applyQuadrature(geometry, normalVelocity, 4)*extrusionFactor_(this->elemVolVars(), scvf);
             return UpwindScheme::apply(*this, upwindTerm, volumeFlux, 0/*phaseIdx*/);
         }
         else

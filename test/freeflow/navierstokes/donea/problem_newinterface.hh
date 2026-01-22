@@ -20,6 +20,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/integrate.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
@@ -183,10 +184,13 @@ public:
             const auto y = faceIpData.global()[1];
 
             Dune::FieldMatrix<Scalar, dimWorld, dimWorld> momentumFlux(0.0);
-            momentumFlux[0][0] = -2.0*mu_*dxU_(x,y) + p_(x);
+            momentumFlux[0][0] = -2.0*mu_*dxU_(x,y);
             momentumFlux[0][1] = -mu_*dyU_(x,y) - mu_*dxV_(x,y);
             momentumFlux[1][0] = momentumFlux[0][1];
-            momentumFlux[1][1] = -2.0*mu_*dyV_(x,y) + p_(x);
+            momentumFlux[1][1] = -2.0*mu_*dyV_(x,y);
+
+            for(int i=0; i < dimWorld; i++)
+                momentumFlux[i][i] += p_(x);
 
             const auto normal = faceIpData.unitOuterNormal();
             momentumFlux.mv(normal, values);
@@ -194,8 +198,14 @@ public:
         else
         {
             const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
+            auto normalVelocity = [&](const GlobalPosition& pos)
+                                    { return this->interpolateVelocity(fvGeometry, pos) * scvf.unitOuterNormal() ;};
             const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(fvGeometry.element(), fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            const auto geometry = fvGeometry.geometry(scvf);
+            values[Indices::conti0EqIdx] = insideDensity * applyQuadrature(geometry, normalVelocity, 4);
+            values /= scvf.area();
+
+            // values[Indices::conti0EqIdx] = this->faceVelocity(fvGeometry.element(), fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
         }
 
         return values;

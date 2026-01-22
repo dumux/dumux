@@ -218,6 +218,20 @@ public:
         return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local())[pressureIdx];
     }
 
+    template <class GlobalPosition>
+    Scalar interpolatePressure(const Element<freeFlowMomentumIndex>& element,
+                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                               const GlobalPosition& pos,
+                               const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, element.geometry().local(pos))[pressureIdx];
+    }
+
     /*!
      * \brief Returns the density at a given sub control volume face.
      */
@@ -408,6 +422,28 @@ public:
         VelocityVector velocity(0.0);
         std::vector<ShapeValue> shapeValues;
         localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
+
+        for (const auto& localDof : localDofs(momentumFvGeometry))
+            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
+
+        return velocity;
+    }
+
+    /*!
+     * \brief Returns the velocity at the element center.
+     */
+    VelocityVector interpolateVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry, const GlobalPosition& pos) const
+    {
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), fvGeometry.element());
+
+        const auto& momentumFvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
+        const auto& localBasis = momentumFvGeometry.feLocalBasis();
+
+        // interpolate velocity at scvf
+        VelocityVector velocity(0.0);
+        std::vector<ShapeValue> shapeValues;
+        const auto ipLocal = fvGeometry.element().geometry().local(pos);
+        localBasis.evaluateFunction(ipLocal, shapeValues);
 
         for (const auto& localDof : localDofs(momentumFvGeometry))
             velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);

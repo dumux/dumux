@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <type_traits>
+#include <concepts>
 
 #include <dune/common/typetraits.hh>
 #include <dune/geometry/quadraturerules.hh>
@@ -26,6 +27,7 @@
 #include <dumux/common/doubleexpintegrator.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/extrusion.hh>
 
 namespace Dumux {
 
@@ -79,6 +81,13 @@ struct FieldTypeImpl<T, typename std::enable_if<(sizeof(std::declval<T>()[0]) > 
 
 template<class T>
 using FieldType = typename FieldTypeImpl<T>::type;
+
+template<typename T, typename Scalar>
+concept IsQuadratureIntegrable = requires(T val, Scalar qWeight)
+{
+    { val += qWeight * val } -> std::same_as<T&>;
+};
+
 
 } // end namespace Detail
 #endif
@@ -257,6 +266,33 @@ Scalar integrateScalarFunction(const Function& f,
 {
     return DoubleExponentialIntegrator<Scalar>::integrate(f, lowerBound, upperBound, targetAbsoluteError);
 }
+
+/*!
+ * \brief Integrate some function (vector- or matrix-valued) over a geometry using a quadrature
+ * \param geometry the geometry type
+ * \param f the integrand (invocable with a global coordinate)
+ * \param order the order of the quadrature rule
+ * \return The approximated integral
+ */
+template<class Extrusion = NoExtrusion, class Geometry, class Function>
+requires std::invocable<Function, typename Geometry::GlobalCoordinate> &&
+         Detail::IsQuadratureIntegrable<std::invoke_result_t<Function, typename Geometry::GlobalCoordinate>, typename Geometry::ctype>
+auto applyQuadrature(const Geometry& geometry, const Function& f, int order)
+{
+    using Scalar = typename Geometry::ctype;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
+    using FunctionType = std::invoke_result_t<Function, GlobalPosition>;
+    FunctionType val(0.0);
+    const auto &quad = Dune::QuadratureRules<Scalar, std::decay_t<decltype(geometry)>::mydimension>::rule(geometry.type(), order);
+    for (auto &&qp : quad)
+    {
+        const auto ipGlobal = geometry.global(qp.position());
+        val += qp.weight() * Extrusion::integrationElement(geometry, qp.position()) * f(ipGlobal);
+    }
+
+    return val;
+}
+
 
 } // end namespace Dumux
 
