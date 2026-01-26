@@ -23,10 +23,10 @@
 #include <type_traits>
 
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 #include <dune/geometry/type.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/pq2/pq2hierarchicalfecache.hh>
 
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -166,7 +166,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    using FeCache = Dune::LagrangeLocalFiniteElementCache<CoordScalar, Scalar, dim, 2>;
+    using FeCache = PQ2HierarchicalFECache<CoordScalar, Scalar, dim>;
     //! export the grid view type
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
