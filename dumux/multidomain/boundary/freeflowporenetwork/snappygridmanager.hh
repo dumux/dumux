@@ -15,7 +15,10 @@
 #include <bitset>
 #include <optional>
 #include <string>
+#include <dune/common/debugstream.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
+#include <dumux/common/parameters.hh>
 #include <dune/geometry/axisalignedcubegeometry.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/io/grid/gridmanager.hh>
