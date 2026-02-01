@@ -16,6 +16,10 @@
 #define ENABLECACHING true
 #endif
 
+#ifndef ENABLEFLUXVARSCACHING
+#define ENABLEFLUXVARSCACHING ENABLECACHING
+#endif
+
 #ifndef GRIDTYPE
 #define GRIDTYPE Dune::YaspGrid<2>
 #endif
@@ -131,7 +135,7 @@ struct Grid<TypeTag, TTag::DoneaTestMomentum> { using type = GRIDTYPE; };
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLECACHING; };
 
