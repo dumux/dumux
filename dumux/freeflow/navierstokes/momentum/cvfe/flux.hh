@@ -119,7 +119,12 @@ public:
     , fvGeometry_(fvGeometry)
     , elemVolVars_(elemVolVars)
     , ipData_(ipData)
-    {}
+    , velocity_(0.0)
+    , gradVelocity_(0.0)
+    {
+        calculateVelocity_();
+        calculateGradVelocity();
+    }
 
     const Problem& problem() const
     { return problem_; }
@@ -136,33 +141,36 @@ public:
     const IpData& ipData() const
     { return ipData_; }
 
-    GlobalPosition velocity() const
+    const GlobalPosition& velocity() const
+    { return velocity_; }
+
+    const Tensor& gradVelocity() const
+    { return gradVelocity_; }
+
+private:
+    void calculateVelocity_()
     {
-        GlobalPosition v(0.0);
         const auto& shapeValues = ipData_.shapeValues();
         for (const auto& localDof : localDofs(fvGeometry_))
-            v.axpy(shapeValues[localDof.index()][0], elemVolVars_[localDof.index()].velocity());
-
-        return v;
+            velocity_.axpy(shapeValues[localDof.index()][0], elemVolVars_[localDof.index()].velocity());
     }
 
-    Tensor gradVelocity() const
+    void calculateGradVelocity()
     {
-        Tensor gradV(0.0);
         for (const auto& localDof : localDofs(fvGeometry_))
         {
             const auto& volVars = elemVolVars_[localDof.index()];
             for (int dir = 0; dir < dim; ++dir)
-                gradV[dir].axpy(volVars.velocity(dir), ipData_.gradN(localDof.index()));
+                gradVelocity_[dir].axpy(volVars.velocity(dir), ipData_.gradN(localDof.index()));
         }
-        return gradV;
     }
 
-private:
     const Problem& problem_;
     const FVElementGeometry& fvGeometry_;
     const ElementVolumeVariables& elemVolVars_;
     const IpData& ipData_;
+    GlobalPosition velocity_;
+    Tensor gradVelocity_;
 };
 
 /*!
@@ -186,7 +194,7 @@ class NavierStokesMomentumFluxCVFE
 
 public:
     /*!
-     * \brief Returns the diffusive momentum flux due to viscous forces
+     * \brief Returns the advective momentum flux
      */
     template<class Context>
     NumEqVector advectiveMomentumFlux(const Context& context) const
@@ -281,6 +289,108 @@ public:
 
         NumEqVector pn(scvf.unitOuterNormal());
         pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+
+        return pn;
+    }
+};
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief The flux function class for the Navier-Stokes model using control-volume finite element schemes
+ */
+template<class GridGeometry, class NumEqVector>
+class NavierStokesMomentumFluxFunctionCVFE
+{
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename NumEqVector::value_type;
+
+    using Extrusion = Extrusion_t<GridGeometry>;
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
+    static_assert(NumEqVector::dimension == dimWorld, "Wrong dimension of velocity vector");
+
+public:
+    /*!
+     * \brief Returns the advective momentum flux contribution for a given integrated velocity at the face
+     */
+    template<class Problem, class FVElementGeometry, class ElementVariables,
+             class ElementFluxVariablesCache, class SubControlVolumeFace, class VelocityVector>
+    NumEqVector advectiveMomentumFluxIntegral(const Problem& problem,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVariables& elemVars,
+                                              const ElementFluxVariablesCache& elemFluxVarsCache,
+                                              const SubControlVolumeFace& scvf,
+                                              const VelocityVector& integratedVelocity) const
+    {
+        if (!problem.enableInertiaTerms())
+            return NumEqVector(0.0);
+
+        // get density from the problem
+        const Scalar density = problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scvf));
+
+        const auto vn_integral = integratedVelocity*scvf.unitOuterNormal();
+        const auto& insideVolVars = elemVars[fvGeometry.scv(scvf.insideScvIdx())];
+        const auto& outsideVolVars = elemVars[fvGeometry.scv(scvf.outsideScvIdx())];
+        const auto upwindVelocity = vn_integral > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
+        const auto downwindVelocity = vn_integral > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
+        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+        const auto advectiveFlux = density*vn_integral * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
+
+        return advectiveFlux;
+    }
+
+    /*!
+     * \brief Returns the diffusive momentum flux due to viscous forces
+     */
+    template<class Context>
+    NumEqVector diffusiveMomentumFluxIntegrand(const Context& context) const
+    {
+        const auto& element = context.element();
+        const auto& fvGeometry = context.fvGeometry();
+        const auto& ipData = context.ipData();
+
+        // get viscosity from the problem
+        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, ipData);
+
+        static const bool enableUnsymmetrizedVelocityGradient
+            = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+
+        // compute -mu*gradV*n*dA
+        const auto& gradV = context.gradVelocity();
+        NumEqVector diffusiveFluxIntegrand = enableUnsymmetrizedVelocityGradient ?
+                mv(gradV, ipData.unitOuterNormal())
+                : mv(gradV + getTransposed(gradV), ipData.unitOuterNormal());
+
+        diffusiveFluxIntegrand *= -mu;
+
+        static const bool enableDilatationTerm = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
+        if (enableDilatationTerm)
+            diffusiveFluxIntegrand += 2.0/3.0 * mu * trace(gradV) * ipData.unitOuterNormal();
+
+        return diffusiveFluxIntegrand;
+    }
+
+    template<class Context>
+    NumEqVector pressureFluxIntegrand(const Context& context) const
+    {
+        const auto& element = context.element();
+        const auto& fvGeometry = context.fvGeometry();
+        const auto& ipData = context.ipData();
+
+        // The pressure force integrand
+        const auto pressure = context.problem().pressure(element, fvGeometry, ipData);
+
+        // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
+        // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
+        // Subtracting a constant reference value from the actual pressure contribution helps improving cancellation issues.
+        const auto referencePressure = context.problem().referencePressure();
+
+        NumEqVector pn(ipData.unitOuterNormal());
+        pn *= (pressure-referencePressure);
 
         return pn;
     }
