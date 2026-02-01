@@ -51,6 +51,8 @@
 
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
+#include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
@@ -99,6 +101,26 @@ private:
     using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
     using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+#endif
+
+#ifdef QUADRATURE_RULE
+// use custom quadrature rules
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    // Higher order quadrature rule only works for hybrid pq1bubble scheme
+    // since we can't generate geometries for overlapping scvs
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE, QUADRATURE_RULE>;
+    using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
+
+public:
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
 };
 #endif
 
