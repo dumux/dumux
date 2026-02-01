@@ -94,15 +94,20 @@ private:
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to a face of an element
  */
-template<class LocalPosition, class GlobalPosition, class LocalIndex>
-class FaceInterpolationPointData : public InterpolationPointData<LocalPosition, GlobalPosition>
+template<class BaseClass, class LocalIndex>
+class FaceInterpolationPointData : public BaseClass
 {
-    using ParentType = InterpolationPointData<LocalPosition, GlobalPosition>;
+    using GlobalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().global())>;
+    using LocalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().local())>;
+
 public:
-    FaceInterpolationPointData(GlobalPosition&& localPos, GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index)
-    : ParentType(localPos, pos), normal_(std::move(n)), scvfIndex_(index) {}
-    FaceInterpolationPointData(const GlobalPosition& localPos, const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index)
-    : ParentType(localPos, pos), normal_(n), scvfIndex_(index) {}
+    template<class... Args>
+    FaceInterpolationPointData(GlobalPosition&& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(std::move(n)), scvfIndex_(index) {}
+
+    template<class... Args>
+    FaceInterpolationPointData(const GlobalPosition& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(n), scvfIndex_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const

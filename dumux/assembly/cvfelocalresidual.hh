@@ -80,9 +80,9 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
 
-    using FaceIpData = Dumux::CVFE::FaceInterpolationPointData<typename Element::Geometry::LocalCoordinate,
-                                                               typename Element::Geometry::GlobalCoordinate,
-                                                               typename SubControlVolumeFace::Traits::LocalIndexType>;
+    using IpData = Dumux::CVFE::InterpolationPointData<typename Element::Geometry::LocalCoordinate,
+                                                       typename Element::Geometry::GlobalCoordinate>;
+    using FaceIpData = Dumux::CVFE::FaceInterpolationPointData<IpData, typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -239,7 +239,7 @@ public:
                 {
                     const auto& fluxVarsCache = elemFluxVarsCache[scvf];
                     boundaryFluxes = problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache,
-                                                          FaceIpData(fluxVarsCache.ipLocal(), fluxVarsCache.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
+                                                          FaceIpData(scvf.unitOuterNormal(), scvf.index(), fluxVarsCache.ipLocal(), fluxVarsCache.ipGlobal()));
                 }
                 else
                     boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
