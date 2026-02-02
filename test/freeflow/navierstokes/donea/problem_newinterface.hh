@@ -69,12 +69,17 @@ public:
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
-        CVFE::appendDirichletConstraints(*this,
-            [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            },
-            constraints_
-        );
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            CVFE::appendDirichletConstraints(*this,
+                [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
+                    return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
+                },
+                constraints_
+            );
+        }
+        else if(!useNeumann_)
+            appendInternalConstraints_();
     }
 
     DoneaTestProblemNewInterface(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -158,7 +163,7 @@ public:
     { return analyticalSolution(globalPos); }
 
     /*!
-     * \brief Return constraint map
+     * \brief Return  Dirichlet boundary constraints and internal constraints.
      */
     const auto& constraints() const
     { return constraints_; }
@@ -291,6 +296,29 @@ private:
 
     Scalar dxxV_ (Scalar x, Scalar y) const
     { return -f2_(y)*dddf2_(x); }
+
+    void appendInternalConstraints_()
+    {
+        static_assert(GridGeometry::discMethod == DiscretizationMethods::box, "Internal Dirichlet constraints only implemented for Box mass discretization scheme.");
+
+        static constexpr Scalar eps = 1e-8;
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                if  ((scv.dofPosition() - this->gridGeometry().bBoxMin()).two_norm() < eps)
+                {
+                    ConstraintInfo info;
+                    info.setAll();
+
+                    DirichletValues dirichletValues(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]);
+                    constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), scv.dofIndex()});
+                }
+            }
+        }
+    }
 
     bool useNeumann_;
     Scalar mu_;
