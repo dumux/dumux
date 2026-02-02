@@ -50,7 +50,7 @@ class DoneaTestProblemNewInterface : public BaseProblem
     using ConstraintInfo = Dumux::DirichletConstraintInfo<ModelTraits::numEq()>;
     using ConstraintValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
     using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
-    using DirichletConstraints = Dumux::DirichletConstraints<DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>>;
+    using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
 
@@ -69,10 +69,11 @@ public:
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
-        constraints_.update(*this,
-            [&, this](const auto& fvGeometry, const auto&, const auto& localDof) {
+        CVFE::appendDirichletConstraints(*this,
+            [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
                 return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            }
+            },
+            constraints_
         );
     }
 
@@ -82,10 +83,11 @@ public:
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
-        constraints_.update(*this,
+        CVFE::appendDirichletConstraints(*this,
             [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
                 return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            }
+            },
+            constraints_
         );
     }
 
@@ -158,7 +160,7 @@ public:
     /*!
      * \brief Return constraint map
      */
-    const DirichletConstraints& constraints() const
+    const auto& constraints() const
     { return constraints_; }
 
     /*!
@@ -292,7 +294,7 @@ private:
 
     bool useNeumann_;
     Scalar mu_;
-    DirichletConstraints constraints_;
+    std::vector<DirichletConstraintData> constraints_;
 };
 
 } // end namespace Dumux

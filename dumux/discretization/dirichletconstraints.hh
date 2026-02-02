@@ -46,71 +46,72 @@ struct DirichletConstraintData : public ConstraintData<DirichletConstraintInfo, 
     GridIndexType dofIdx_;
 };
 
+} // end namespace Dumux
+
+
+namespace Dumux::CVFE::Detail {
+
+template <typename C>
+concept DirichletConstraintContainer = requires(
+    C& c,
+    typename C::value_type v,
+    typename C::value_type::ConstraintInfo info,
+    typename C::value_type::ConstraintValues vals,
+    typename C::value_type::GridIndexType idx
+){
+    c.push_back(v);
+    { typename C::value_type{info, vals, idx} };
+};
+
+} // end namespace Dumux::CVFE::Detail
+
+
+namespace Dumux::CVFE {
+
 /*!
- * \ingroup Discretization
- * \brief Constraints related to Dirichlet boundaries.
- *        This class generates global constraints based on Dirichlet conditions
- *        set on grid intersections
+ * \brief Append constraints for Dirichlet boundaries.
+ *
+ * \param problem The problem object which needs to be simulated
+ * \param dirichletFunction Function for evaluating Dirichlet boundary conditions
+ * \param constraints The constraints to be appended to
  */
-template<class Data>
-class DirichletConstraints
+template<class Problem, class DirichletFunction, Detail::DirichletConstraintContainer Constraints>
+void appendDirichletConstraints(const Problem& problem,
+                                const DirichletFunction& dirichletFunction,
+                                Constraints& constraints)
 {
-    using GridIndexType = typename Data::GridIndexType;
-    using DirichletConstraintInfo = typename Data::ConstraintInfo;
+    using Data = typename Constraints::value_type;
+    using ConstraintInfo = typename Data::ConstraintInfo;
     using DirichletValues = typename Data::ConstraintValues;
 
-public:
-    /*!
-     * \brief Update the boundary types for all element intersections.
-     *
-     * \param problem The problem object which needs to be simulated
-     * \param dirichletFunction Function for evaluating Dirichlet boundary conditions
-     */
-    template<class Problem, typename DirichletFunction>
-    void update(const Problem& problem, const DirichletFunction& dirichletFunction)
+    auto fvGeometry = localView(problem.gridGeometry());
+    for (const auto& element : elements(problem.gridGeometry().gridView()))
     {
-        constraints_.clear();
-
-        auto fvGeometry = localView(problem.gridGeometry());
-        for (const auto& element : elements(problem.gridGeometry().gridView()))
+        fvGeometry.bind(element);
+        for (const auto& intersection : intersections(problem.gridGeometry().gridView(), element))
         {
-            fvGeometry.bind(element);
-            for (const auto& intersection : intersections(problem.gridGeometry().gridView(), element))
+            if(!intersection.boundary() || intersection.neighbor())
+                continue;
+
+            const auto& bcTypes = problem.boundaryTypes(fvGeometry, intersection);
+            if (bcTypes.hasDirichlet())
             {
-                if(!intersection.boundary() || intersection.neighbor())
-                    continue;
-
-                const auto& bcTypes = problem.boundaryTypes(fvGeometry, intersection);
-                if (bcTypes.hasDirichlet())
+                for (const auto& localDof : localDofs(fvGeometry, intersection))
                 {
-                    for (const auto& localDof : localDofs(fvGeometry, intersection))
-                    {
-                        DirichletConstraintInfo info;
-                        // set the Dirichlet constraints
-                        for (int eqIdx = 0; eqIdx < DirichletValues::size(); ++eqIdx)
-                            if (bcTypes.isDirichlet(eqIdx))
-                                info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
+                    ConstraintInfo info;
+                    // set the Dirichlet constraints
+                    for (int eqIdx = 0; eqIdx < DirichletValues::size(); ++eqIdx)
+                        if (bcTypes.isDirichlet(eqIdx))
+                            info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
 
-                        auto dirichletValues = dirichletFunction(fvGeometry, intersection, localDof);
-                        constraints_.push_back(Data{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
-                    }
+                    auto dirichletValues = dirichletFunction(fvGeometry, intersection, localDof);
+                    constraints.push_back(Data{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
                 }
             }
         }
     }
+}
 
-    auto begin() const
-    { return constraints_.cbegin(); }
-
-    auto end() const
-    { return constraints_.cend(); }
-
-private:
-    std::vector<Data> constraints_;
-};
-
-static_assert(std::ranges::range<DirichletConstraints<DirichletConstraintData<int, int, int>>>);
-
-} // namespace Dumux
+} // end namespace Dumux::CVFE
 
 #endif
