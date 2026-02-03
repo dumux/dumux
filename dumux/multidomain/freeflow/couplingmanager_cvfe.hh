@@ -416,6 +416,29 @@ public:
     }
 
     /*!
+     * \brief Returns the velocity at an interpolation point.
+     */
+    template <class IpData>
+    VelocityVector velocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
+                            const IpData& ipData,
+                            const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !this->isTransient_));
+
+        const auto& element = fvGeometry.element();
+        bindCouplingContext_(Dune::index_constant<freeFlowMassIndex>(), element);
+
+        const auto& momentumFvGeometry = this->massAndEnergyCouplingContext_()[0].fvGeometry;
+        const auto& gg = momentumFvGeometry.gridGeometry();
+
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMomentumIndex]
+                                                   :  this->curSol(freeFlowMomentumIndex);
+
+        const auto elemSol = elementSolution(element, sol, gg);
+        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
+    }
+
+    /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
      *        the given domain I element's residual depends on.
      */

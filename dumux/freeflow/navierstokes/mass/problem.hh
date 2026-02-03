@@ -96,6 +96,18 @@ public:
     }
 
     /*!
+     * \brief Returns the velocity at a given interpolation point.
+     */
+    template<class IpData>
+    VelocityVector velocity(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocity(fvGeometry, ipData);
+        else
+            return asImp_().velocityAtPos(ipData.global());
+    }
+
+    /*!
      * \brief Returns the velocity at the element center.
      */
     VelocityVector elementVelocity(const FVElementGeometry& fvGeometry) const
@@ -306,6 +318,18 @@ public:
             return couplingManager_->faceVelocity(element, scvf);
         else
             return asImp_().velocityAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the velocity at a given interpolation point.
+     */
+    template<class IpData>
+    VelocityVector velocity(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocity(fvGeometry, ipData);
+        else
+            return asImp_().velocityAtPos(ipData.global());
     }
 
     /*!
