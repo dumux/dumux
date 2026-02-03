@@ -202,7 +202,7 @@ public:
         {
             const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
             const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->faceVelocity(fvGeometry.element(), fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
+            values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
         }
 
         return values;

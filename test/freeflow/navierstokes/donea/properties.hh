@@ -123,6 +123,43 @@ public:
 };
 #endif
 
+#ifdef QUADRATURE_RULE_MOMENTUM
+// use custom quadrature rules
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    // Higher order quadrature rule only works for hybrid pq1bubble scheme
+    // since we can't generate geometries for overlapping scvs
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE_MOMENTUM, QUADRATURE_RULE_MOMENTUM>;
+    using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
+
+public:
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
+};
+#endif
+
+#ifdef QUADRATURE_RULE_MASS
+// use custom quadrature rules
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DoneaTestMass>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using QuadTraits = BoxQuadratureTraits<GridView, QUADRATURE_RULE_MASS, QUADRATURE_RULE_MASS>;
+
+public:
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, DefaultMapperTraits<GridView>, QuadTraits>>;
+};
+#endif
+
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
