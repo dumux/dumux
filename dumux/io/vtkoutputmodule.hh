@@ -360,6 +360,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
     static constexpr bool isBox = GridGeometry::discMethod == DiscretizationMethods::box;
     static constexpr bool isDiamond = GridGeometry::discMethod == DiscretizationMethods::fcdiamond;
     static constexpr bool isPQ1Bubble = GridGeometry::discMethod == DiscretizationMethods::pq1bubble;
+    static constexpr bool isPQ2 = GridGeometry::discMethod == DiscretizationMethods::pq2;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; Dumux::Vtk::Precision precision_; };
@@ -589,7 +590,7 @@ private:
             //////////////////////////////////////////////////////////////
 
             // volume variables if any
-            if constexpr (isBox || isPQ1Bubble)
+            if constexpr (isBox || isPQ1Bubble || isPQ2)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                     this->addVertexData( Field(gridGeometry().gridView(), gridGeometry().dofMapper(), volVarScalarData[i],
@@ -877,7 +878,7 @@ private:
     {
         // TODO this should actually always be dofMapper.size()
         // maybe some discretizations needs special treatment (?)
-        if constexpr (isBox || isDiamond || isPQ1Bubble)
+        if constexpr (isBox || isDiamond || isPQ1Bubble || isPQ2)
             return gridGeometry().dofMapper().size();
         else
             return gridGeometry().elementMapper().size();
