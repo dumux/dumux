@@ -20,12 +20,17 @@ namespace Dumux::CVFE {
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to an element that includes global and local positions
  */
-template<class LocalPosition, class GlobalPosition>
+template<class LocalPos, class GlobalPos>
 class InterpolationPointData
 {
 public:
-    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : local_(std::move(localPos)), global_(std::move(pos)) {}
-    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  local_(localPos), global_(pos) {}
+    using LocalPosition = LocalPos;
+    using GlobalPosition = GlobalPos;
+
+    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos)
+    : local_(std::move(localPos)), global_(std::move(pos)) {}
+    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos)
+    :  local_(localPos), global_(pos) {}
 
     //! The global position of the quadrature point
     const GlobalPosition& global() const
@@ -34,7 +39,6 @@ public:
     //! The local position of the quadrature point
     const LocalPosition& local() const
     { return local_; }
-
 
 private:
     LocalPosition local_;
@@ -67,12 +71,13 @@ private:
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to a global position of an element, giving its local positions by a mapping
  */
-template<class LocalMapping, class GlobalPosition>
+template<class LocalMapping, class GlobalPos>
 class InterpolationPointDataLocalMapping
 {
-    using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPosition&>;
-
 public:
+    using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPos&>;
+    using GlobalPosition = GlobalPos;
+
     InterpolationPointDataLocalMapping(LocalMapping&& mapping, GlobalPosition&& pos) : localMapping_(std::move(mapping)), global_(std::move(pos)) {}
     InterpolationPointDataLocalMapping(LocalMapping&& mapping, const GlobalPosition& pos) : localMapping_(std::move(mapping)), global_(pos) {}
 
@@ -83,7 +88,6 @@ public:
     //! The local position of the quadrature point
     const LocalPosition local() const
     { return localMapping_(global_); }
-
 
 private:
     LocalMapping localMapping_;
@@ -97,10 +101,10 @@ private:
 template<class BaseClass, class LocalIndex>
 class FaceInterpolationPointData : public BaseClass
 {
+public:
     using GlobalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().global())>;
     using LocalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().local())>;
 
-public:
     template<class... Args>
     FaceInterpolationPointData(GlobalPosition&& n, LocalIndex index, Args&&... args)
     : BaseClass(std::forward<Args>(args)...), normal_(std::move(n)), scvfIndex_(index) {}
