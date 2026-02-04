@@ -126,6 +126,26 @@ private:
     LocalIndex scvfIndex_;
 };
 
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief Wraps interpolation point data and adds a quadrature point index for use in quadrature loops
+ */
+template<class IpData>
+class IndexedQuadratureInterpolationPointData : public IpData
+{
+public:
+    template<class... Args>
+    IndexedQuadratureInterpolationPointData(std::size_t qpIdx, Args&&... args)
+    : IpData(std::forward<Args>(args)...), qpIndex_(qpIdx) {}
+
+    //! The quadrature point index
+    std::size_t qpIndex() const
+    { return qpIndex_; }
+
+private:
+    std::size_t qpIndex_;
+};
+
 } // end namespace Dumux::CVFE
 
 #endif
