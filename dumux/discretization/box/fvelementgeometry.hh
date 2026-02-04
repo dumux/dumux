@@ -28,6 +28,7 @@
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
 
@@ -70,6 +71,10 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export the scv interpolation point data type
+    using ScvQuadratureRule = typename GG::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename GG::ScvfQuadratureRule;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
@@ -259,18 +264,18 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
     template<class LocalDof>
-    friend inline IpData ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
         const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
 
-        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+        return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
 
     //! Interpolation point data for a global position
@@ -327,6 +332,10 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! the quadrature rule type for scvs
+    using ScvQuadratureRule = typename GG::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename GG::ScvfQuadratureRule;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
@@ -515,18 +524,18 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
     template<class LocalDof>
-    friend inline IpData ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
         const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
 
-        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+        return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
 
     //! Interpolation point data for a global position

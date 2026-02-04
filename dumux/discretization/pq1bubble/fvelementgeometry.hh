@@ -16,7 +16,6 @@
 
 #include <optional>
 #include <utility>
-
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
@@ -25,6 +24,7 @@
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 #include <dumux/discretization/pq1bubble/geometryhelper.hh>
 
@@ -54,9 +54,6 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                               LocalIndexType>;
 
     using BaseIpData = CVFE::InterpolationPointData<
                         typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
@@ -72,6 +69,10 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! the quadrature rule type for scvs
+    using ScvQuadratureRule = typename GG::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename GG::ScvfQuadratureRule;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementDofs = GridGeometry::maxNumElementDofs;
 
@@ -314,23 +315,23 @@ public:
     }
 
     //! Interpolation point data for an scv
-    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolume& scv)
+    friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolume& scv)
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
     template<class LocalDof>
-    friend inline IpData ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
         const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
 
-        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+        return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
 
     //! Interpolation point data for a global position

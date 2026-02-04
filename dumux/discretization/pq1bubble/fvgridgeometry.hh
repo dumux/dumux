@@ -79,13 +79,20 @@ struct PQ1BubbleMapperTraits :public DefaultMapperTraits<GridView>
 
 /*!
  * \ingroup PQ1BubbleDiscretization
+ * \brief Quadrature rule traits for PQ1Bubble discretization
+ */
+template<class GridView, class ScvRule = Dumux::QuadratureRules::MidpointQuadrature, class ScvfRule = Dumux::QuadratureRules::MidpointQuadrature>
+using PQ1BubbleQuadratureTraits = CVFE::DefaultQuadratureTraits<GridView, ScvRule, ScvfRule>;
+
+/*!
+ * \ingroup PQ1BubbleDiscretization
  * \brief The default traits for the pq1bubble finite volume grid geometry
  *        Defines the scv and scvf types and the mapper types
  * \tparam the grid view type
  */
-template<class GridView, class MapperTraits = PQ1BubbleMapperTraits<GridView>>
+template<class GridView, class MapperTraits = PQ1BubbleMapperTraits<GridView>, class QuadratureTraits = PQ1BubbleQuadratureTraits<GridView>>
 struct PQ1BubbleDefaultGridGeometryTraits
-: public MapperTraits
+: public MapperTraits, public QuadratureTraits
 {
     using SubControlVolume = PQ1BubbleSubControlVolume<GridView>;
     using SubControlVolumeFace = PQ1BubbleSubControlVolumeFace<GridView>;
@@ -159,6 +166,10 @@ public:
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
+    //! the quadrature rule type for scvs
+    using ScvQuadratureRule = typename Traits::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename Traits::ScvfQuadratureRule;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     PQ1BubbleFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)

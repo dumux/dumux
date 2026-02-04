@@ -49,12 +49,19 @@ using FaceCenteredDiamondGeometryHelper_t = Dune::Std::detected_or_t<
 
 /*!
  * \ingroup DiamondDiscretization
+ * \brief Quadrature rule traits for FaceCenteredDiamond discretization
+ */
+template<class GridView, class ScvRule = Dumux::QuadratureRules::MidpointQuadrature, class ScvfRule = Dumux::QuadratureRules::MidpointQuadrature>
+using FaceCenteredDiamondQuadratureTraits = CVFE::DefaultQuadratureTraits<GridView, ScvRule, ScvfRule>;
+
+/*!
+ * \ingroup DiamondDiscretization
  * \brief The default traits for the face-centered diamond finite volume grid geometry
  *        Defines the scv and scvf types and the mapper types
  * \tparam GridView the grid view type
  */
-template<class GridView>
-struct FaceCenteredDiamondDefaultGridGeometryTraits : public DefaultMapperTraits<GridView>
+template<class GridView, class QuadratureTraits = FaceCenteredDiamondQuadratureTraits<GridView>>
+struct FaceCenteredDiamondDefaultGridGeometryTraits : public DefaultMapperTraits<GridView>, public QuadratureTraits
 {
     using SubControlVolume = FaceCenteredDiamondSubControlVolume<GridView>;
     using SubControlVolumeFace = FaceCenteredDiamondSubControlVolumeFace<GridView>;
@@ -109,6 +116,10 @@ public:
     using FeCache = NonconformingFECache<Scalar, Scalar, dim>;
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
+    //! the quadrature rule type for scvs
+    using ScvQuadratureRule = typename Traits::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename Traits::ScvfQuadratureRule;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
