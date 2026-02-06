@@ -217,7 +217,8 @@ public:
         using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
         using GridView = typename FVElementGeometry::GridGeometry::GridView;
         using BoundaryFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
-        using FaceIpData = FEFaceInterpolationPointData<GlobalPosition, LocalBasis, BoundaryFlag>;
+        using BaseIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
+        using FaceIpData = FEFaceInterpolationPointData<BaseIpData, BoundaryFlag, int>;
 
         const auto& element = fvGeometry.element();
         for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
@@ -240,7 +241,7 @@ public:
 
                 // get quadrature rule weight for intersection
                 Scalar qWeight = quadPoint.weight() * Extrusion::integrationElement(isGeometry, quadPoint.position());
-                FaceIpData faceIpData(geometry, local, localBasis, intersection.centerUnitOuterNormal(), BoundaryFlag{ intersection });
+                FaceIpData faceIpData(intersection.centerUnitOuterNormal(), BoundaryFlag{ intersection }, intersection.indexInInside(), geometry, local, localBasis);
 
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
                 {

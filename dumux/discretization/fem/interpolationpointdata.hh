@@ -100,26 +100,22 @@ private:
 
 /*!
  * \ingroup FEMDiscretization
- * \brief Interpolation point data related to a face of an element
+ * \brief An interpolation point related to an intersection
  */
-template<class GlobalPosition, class LocalBasis, class BoundaryFlag>
-class FEFaceInterpolationPointData : public FEInterpolationPointData<GlobalPosition, LocalBasis>
+template<class BaseClass, class BoundaryFlag, class LocalIndex>
+class FEFaceInterpolationPointData : public BaseClass
 {
-    using ParentType = FEInterpolationPointData<GlobalPosition, LocalBasis>;
-    using LocalPosition = typename LocalBasis::Traits::DomainType;
 public:
-    // The default constructor
-    FEFaceInterpolationPointData() = delete;
+    using GlobalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().global())>;
+    using LocalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().local())>;
 
-    // The constructor
-    template<class Geometry>
-    FEFaceInterpolationPointData(const Geometry& geometry,
-                                 const LocalPosition& local,
-                                 const LocalBasis& localBasis,
-                                 const GlobalPosition& n,
-                                 const BoundaryFlag& bFlag)
-    : ParentType(geometry, local, localBasis), normal_(n), boundaryFlag_(bFlag)
-    {}
+    template<class... Args>
+    FEFaceInterpolationPointData(GlobalPosition&& n, BoundaryFlag&& bFlag, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(std::move(n)), boundaryFlag_(std::move(bFlag)), index_(index) {}
+
+    template<class... Args>
+    FEFaceInterpolationPointData(const GlobalPosition& n, const BoundaryFlag& bFlag, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(n), boundaryFlag_(bFlag), index_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const
@@ -129,11 +125,15 @@ public:
     typename BoundaryFlag::value_type boundaryFlag() const
     { return boundaryFlag_.get(); }
 
+    //! The local index of an intersection (default is intersection.indexInInside())
+    LocalIndex intersectionIndex() const
+    { return index_; }
+
 private:
     const GlobalPosition& normal_;
     BoundaryFlag boundaryFlag_;
+    LocalIndex index_;
 };
-
 
 } // end namespace Dumux
 
