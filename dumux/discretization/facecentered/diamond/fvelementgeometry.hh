@@ -50,6 +50,11 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
                                                                typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
                                                                LocalIndexType>;
 
+    using BaseIpData = CVFE::InterpolationPointData<
+                        typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                        typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate
+                        >;
+
 public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
@@ -241,6 +246,13 @@ public:
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
             globalPos
         };
+    }
+
+    //! Interpolation point data for scvf
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        return CVFE::FaceInterpolationPointData<BaseIpData, LocalIndexType>
+                    { scvf.unitOuterNormal(), scvf.index(), fvGeometry.elementGeometry().local(scvf.ipGlobal()), scvf.ipGlobal() };
     }
 
 private:

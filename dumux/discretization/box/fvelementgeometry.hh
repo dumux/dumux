@@ -56,9 +56,11 @@ class BoxFVElementGeometry<GG, true>
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
 
-    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                               LocalIndexType>;
+    using BaseIpData = CVFE::InterpolationPointData<
+                        typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                        typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate
+                        >;
+
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -282,6 +284,13 @@ public:
         };
     }
 
+    //! Interpolation point data for scvf
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        return CVFE::FaceInterpolationPointData<BaseIpData, LocalIndexType>
+                    { scvf.unitOuterNormal(), scvf.index(), fvGeometry.elementGeometry().local(scvf.ipGlobal()), scvf.ipGlobal() };
+    }
+
 private:
     const GGCache* ggCache_;
     GridIndexType eIdx_;
@@ -303,9 +312,12 @@ class BoxFVElementGeometry<GG, false>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                               LocalIndexType>;
+
+    using BaseIpData = CVFE::InterpolationPointData<
+                        typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                        typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate
+                        >;
+
 public:
     //! export the element type
     using Element = typename GridView::template Codim<0>::Entity;
@@ -525,6 +537,13 @@ public:
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
             globalPos
         };
+    }
+
+    //! Interpolation point data for scvf
+    friend inline auto ipData(const BoxFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        return CVFE::FaceInterpolationPointData<BaseIpData, LocalIndexType>
+                    { scvf.unitOuterNormal(), scvf.index(), fvGeometry.elementGeometry().local(scvf.ipGlobal()), scvf.ipGlobal() };
     }
 
 private:
