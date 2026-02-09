@@ -56,9 +56,6 @@ public:
             if (nonCVLocalDofs(fvGeometry).empty())
                 return;
 
-            static const auto intOrder
-                = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderStorage", 4);
-
             const auto& localBasis = fvGeometry.feLocalBasis();
             std::vector<RangeType> integralShapeFunctions(localBasis.size(), RangeType(0.0));
 
@@ -66,17 +63,17 @@ public:
             const auto& geometry = fvGeometry.elementGeometry();
             const auto& element = fvGeometry.element();
             using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
-            using IpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
-            const auto& quadRule = Dune::QuadratureRules<Scalar, FVElementGeometry::GridGeometry::GridView::dimension>::rule(geometry.type(), intOrder);
-            for (const auto& quadPoint : quadRule)
+            using FeIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
+
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
-                const Scalar qWeight = quadPoint.weight()*Extrusion::integrationElement(geometry, quadPoint.position());
+                const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
-                IpData ipData(geometry, quadPoint.position(), localBasis);
+                FeIpData feIpData(geometry, ipData.local(), ipData.global(), localBasis);
 
                 // get density from the problem
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
-                    integralShapeFunctions[localDof.index()] += ipData.shapeValue(localDof.index())*qWeight;
+                    integralShapeFunctions[localDof.index()] += qpData.weight() * feIpData.shapeValue(localDof.index());
             }
 
             for (const auto& localDof : nonCVLocalDofs(fvGeometry))
@@ -127,24 +124,16 @@ public:
 
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
-            static const auto intOrder
-                = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderFluxAndSource", 4);
 
-            const auto& localBasis = fvGeometry.feLocalBasis();
-
-            const auto& geometry = fvGeometry.elementGeometry();
             const auto& element = fvGeometry.element();
-            using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
-            using IpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
-            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, IpData>;
-            const auto& quadRule = Dune::QuadratureRules<Scalar, FVElementGeometry::GridGeometry::GridView::dimension>::rule(geometry.type(), intOrder);
-            for (const auto& quadPoint : quadRule)
+            using FluxVariablesCache = typename ElementFluxVariablesCache::FluxVariablesCache;
+            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
-                const Scalar qWeight = quadPoint.weight()*Extrusion::integrationElement(geometry, quadPoint.position());
-
+                const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
-                IpData ipData(geometry, quadPoint.position(), localBasis);
-                FluxFunctionContext context(problem, fvGeometry, elemVars, ipData);
+                const auto& cache = elemFluxVarsCache[ipData];
+                FluxFunctionContext context(problem, fvGeometry, elemVars, cache);
                 const auto& v = context.velocity();
                 const auto& gradV = context.gradVelocity();
 
@@ -159,25 +148,26 @@ public:
                     NumEqVector fluxAndSourceTerm(0.0);
                     // add advection term
                     if (problem.enableInertiaTerms())
-                        fluxAndSourceTerm -= density*(v*ipData.gradN(localDofIdx))*v;
+                        fluxAndSourceTerm -= density*(v*cache.gradN(localDofIdx))*v;
 
                     // add diffusion term
                     fluxAndSourceTerm += enableUnsymmetrizedVelocityGradient ?
-                                            mu*mv(gradV, ipData.gradN(localDofIdx))
-                                            : mu*mv(gradV + getTransposed(gradV), ipData.gradN(localDofIdx));
+                                            mu*mv(gradV, cache.gradN(localDofIdx))
+                                            : mu*mv(gradV + getTransposed(gradV), cache.gradN(localDofIdx));
 
                     // add pressure term
-                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * ipData.gradN(localDofIdx);
+                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * cache.gradN(localDofIdx);
 
                     // finally add source and Neumann term and add everything to residual
                     auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
 
+                    const auto& shapeValues = cache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
-                        fluxAndSourceTerm[eqIdx] -= ipData.shapeValue(localDofIdx) * sourceAtIp[eqIdx];
-                        residual[localDofIdx][eqIdx] += qWeight*fluxAndSourceTerm[eqIdx];
+                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];
+                        residual[localDofIdx][eqIdx] += qpData.weight()*fluxAndSourceTerm[eqIdx];
                     }
                 }
             }
@@ -208,9 +198,6 @@ public:
     {
         ResidualVector flux(0.0);
 
-        static const auto intOrder
-            = getParamFromGroup<int>(problem.paramGroup(), "Assembly.FEIntegrationOrderBoundary", 4);
-
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         const auto& geometry = fvGeometry.elementGeometry();
@@ -231,21 +218,16 @@ public:
                 continue;
 
             // select quadrature rule for intersection faces (dim-1)
-            auto isGeometry = intersection.geometry();
-            constexpr auto faceDim = FVElementGeometry::GridGeometry::GridView::dimension - 1;
-            const auto& faceRule = Dune::QuadratureRules<Scalar, faceDim>::rule(isGeometry.type(), intOrder);
-            for (const auto& quadPoint : faceRule)
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
             {
-                // position of quadrature point in local coordinates of element
-                auto local = geometry.local(isGeometry.global(quadPoint.position()));
-
+                const auto& ipData = qpData.ipData();
                 // get quadrature rule weight for intersection
-                Scalar qWeight = quadPoint.weight() * Extrusion::integrationElement(isGeometry, quadPoint.position());
-                FaceIpData faceIpData(intersection.centerUnitOuterNormal(), BoundaryFlag{ intersection }, intersection.indexInInside(), geometry, local, localBasis);
+                FaceIpData faceIpData(intersection.centerUnitOuterNormal(), intersection.indexInInside(), BoundaryFlag{ intersection },
+                                      geometry, ipData.local(), ipData.global(), localBasis);
 
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
                 {
-                    const auto& boundaryFlux = qWeight*problem.boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, faceIpData);
+                    const auto& boundaryFlux = qpData.weight()*problem.boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, faceIpData);
                     // only add fluxes to equations for which Neumann is set
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                         if (bcTypes.isNeumann(eqIdx))
