@@ -73,6 +73,10 @@ public:
     using ScvQuadratureRule = typename GG::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
     using ScvfQuadratureRule = typename GG::ScvfQuadratureRule;
+    //! the quadrature rule type for elements
+    using ElementQuadratureRule = typename GG::ElementQuadratureRule;
+    //! the quadrature rule type for intersections
+    using IntersectionQuadratureRule = typename GG::IntersectionQuadratureRule;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementDofs = GridGeometry::maxNumElementDofs;
 
