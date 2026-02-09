@@ -198,15 +198,6 @@ public:
     {
         ResidualVector flux(0.0);
 
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        const auto& geometry = fvGeometry.elementGeometry();
-        using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
-        using GridView = typename FVElementGeometry::GridGeometry::GridView;
-        using BoundaryFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
-        using BaseIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
-        using FaceIpData = FEFaceInterpolationPointData<BaseIpData, BoundaryFlag, int>;
-
         const auto& element = fvGeometry.element();
         for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
@@ -217,23 +208,7 @@ public:
             if (!bcTypes.hasNeumann())
                 continue;
 
-            // select quadrature rule for intersection faces (dim-1)
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
-            {
-                const auto& ipData = qpData.ipData();
-                // get quadrature rule weight for intersection
-                FaceIpData faceIpData(intersection.centerUnitOuterNormal(), intersection.indexInInside(), BoundaryFlag{ intersection },
-                                      geometry, ipData.local(), ipData.global(), localBasis);
-
-                for (const auto& localDof : nonCVLocalDofs(fvGeometry))
-                {
-                    const auto& boundaryFlux = qpData.weight()*problem.boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, faceIpData);
-                    // only add fluxes to equations for which Neumann is set
-                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                        if (bcTypes.isNeumann(eqIdx))
-                            flux[localDof.index()][eqIdx] += faceIpData.shapeValue(localDof.index()) * boundaryFlux[eqIdx];
-                }
-            }
+            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, intersection, bcTypes);
         }
         residual += flux;
     }

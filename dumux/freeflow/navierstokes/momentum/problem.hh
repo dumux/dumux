@@ -1043,6 +1043,41 @@ public:
     }
 
     /*!
+     * \brief Evaluates the boundary flux integrals for an intersection related to finite element residuals.
+     *
+     * \param residual The residual vector to which the boundary flux contributions are added
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param intersection The intersection
+     * \param bcTypes The boundary condition types
+     */
+    template<class ResidualVector, class ElementVariables, class ElementFluxVariablesCache, class BoundaryTypes>
+    void addBoundaryFluxIntegrals(ResidualVector& residual,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVariables& elemVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection,
+                                  const BoundaryTypes& bcTypes) const
+    {
+        // quadrature rule for intersections (dim-1)
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
+        {
+            const auto& ipData = qpData.ipData();
+            const auto& cache = elemFluxVarsCache[ipData];
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+            {
+                const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, ipData);
+                const auto& shapeValues = cache.shapeValues();
+                // only add fluxes to equations for which Neumann is set
+                for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
+                    if (bcTypes.isNeumann(eqIdx))
+                        residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
+            }
+        }
+    }
+
+    /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
      * \param fvGeometry The finite-volume geometry
