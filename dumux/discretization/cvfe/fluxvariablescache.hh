@@ -12,10 +12,14 @@
 #ifndef DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
 #define DUMUX_DISCRETIZATION_CVFE_FLUXVARIABLES_CACHE_HH
 
+#include <type_traits>
+
 #include <dune/common/fvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
 
@@ -48,10 +52,12 @@ class CVFEFluxVariablesCache
     using IpData = Dumux::CVFE::InterpolationPointData<LocalPosition, GlobalPosition>;
 
 public:
+    using ScvfQuadratureRule = CVFE::Detail::ScvfQuadratureRuleType<FVElementGeometry>;
+
     //! whether the cache needs an update when the solution changes
     static bool constexpr isSolDependent = false;
 
-    //! update the cache for an scvf
+    //! update the cache for an scvf (only enabled for MidpointQuadrature)
     template< class Problem, class ElementVolumeVariables >
     void update(const Problem& problem,
                 const Element& element,
@@ -59,7 +65,10 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace& scvf)
     {
-        update(problem, element, fvGeometry, elemVolVars, scvf.ipGlobal());
+        if constexpr (std::is_same_v<ScvfQuadratureRule, QuadratureRules::MidpointQuadrature>)
+            this->update(problem, element, fvGeometry, elemVolVars, scvf.ipGlobal());
+        else
+            DUNE_THROW(Dune::NotImplemented, "CVFEFluxVariablesCache: update for scvf only implemented for MidpointQuadrature.");
     }
 
     //! update the cache for a given global position
@@ -70,26 +79,32 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const GlobalPosition& globalPos)
     {
-        const auto geometry = element.geometry();
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // evaluate shape functions and gradients at the interpolation point
+        const auto& geometry = elementGeometry_(fvGeometry);
         ipGlobal_ = globalPos;
         ipLocal_ = geometry.local(globalPos);
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal_);
-        localBasis.evaluateJacobian(ipLocal_, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal_, shapeValues_); // shape values for rho
+        evaluateBasis_(fvGeometry);
+    }
 
-        // compute the gradN at for every scv/dof
-        gradN_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
-        for (const auto& localDof: localDofs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[localDof.index()][0], gradN_[localDof.index()]);
+    //! update the cache for interpolation point data
+    template< class Problem, class ElementVolumeVariables, Concept::IpData IpData >
+    void update(const Problem& problem,
+                const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
+                const IpData& ipData)
+    {
+        const auto& geometry = elementGeometry_(fvGeometry);
+        ipGlobal_ = ipData.global();
+        ipLocal_ = ipData.local();
+        jacInvT_ = geometry.jacobianInverseTransposed(ipLocal_);
+        evaluateBasis_(fvGeometry);
     }
 
     //! returns the global position for which this cache has been updated
     const GlobalPosition& ipGlobal() const { return ipGlobal_; }
     //! returns the local position for which this cache has been updated
-    const GlobalPosition& ipLocal() const { return ipLocal_; }
+    const LocalPosition& ipLocal() const { return ipLocal_; }
     //! returns the ipData for which this cache has been updated
     IpData ipData() const { return IpData(ipLocal(), ipGlobal()); }
     //! returns the shape function gradients in local coordinates at the interpolation point
@@ -102,6 +117,29 @@ public:
     const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:
+    static decltype(auto) elementGeometry_(const FVElementGeometry& fvGeometry)
+    {
+        if constexpr (requires { fvGeometry.elementGeometry(); })
+            return fvGeometry.elementGeometry();
+        else
+            return fvGeometry.element().geometry();
+    }
+
+    //! update the cache for a given local and global position
+    void evaluateBasis_(const FVElementGeometry& fvGeometry)
+    {
+        const auto& localBasis = fvGeometry.feLocalBasis();
+
+        // evaluate shape functions and gradients at the interpolation point
+        localBasis.evaluateJacobian(ipLocal_, shapeJacobian_);
+        localBasis.evaluateFunction(ipLocal_, shapeValues_); // shape values for rho
+
+        // compute the gradN at for every scv/dof
+        gradN_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
+        for (const auto& localDof: localDofs(fvGeometry))
+            jacInvT_.mv(shapeJacobian_[localDof.index()][0], gradN_[localDof.index()]);
+    }
+
     std::vector<GlobalPosition> gradN_;
     std::vector<ShapeJacobian> shapeJacobian_;
     std::vector<ShapeValue> shapeValues_;
