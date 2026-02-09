@@ -22,12 +22,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/boundary_.hh>
 
 #include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
+#include <dumux/discretization/elementboundarytypes.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
@@ -104,9 +106,16 @@ struct ElementBoundaryTypes<TypeTag, TTag::BoxModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
-    using type = CVFEElementBoundaryTypes<BoundaryTypes>;
+    // Check if problem has new boundaryTypes interface
+    // then use ElementIntersectionBoundaryTypes
+    using type = std::conditional_t<
+        Dumux::Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, typename GG::LocalView, typename GG::GridView::Intersection>(),
+        Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
+        Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
+    >;
 };
 
 } // namespace Dumux::Properties
@@ -118,12 +127,10 @@ struct ProblemTraits<Problem, DiscretizationMethods::Box>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Element = typename GG::GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GG::SubControlVolume;
 public:
     using GridGeometry = GG;
-    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
-    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolume>()))>;
+    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, intersection)
+    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView, typename GG::GridView::Intersection>::type;
 };
 
 template<class TypeTag>

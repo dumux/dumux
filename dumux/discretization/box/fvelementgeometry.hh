@@ -26,6 +26,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 namespace Dumux {
@@ -115,6 +116,25 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const Intersection& intersection)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(intersection.indexInInside(), 1, dim)),
+            [&](const auto i)
+            {
+                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(intersection.indexInInside(), 1, i, dim);
+                return CVFE::LocalDof
+                {
+                    static_cast<LocalIndexType>(localDofIdx),
+                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+                }
+        );
+    }
+
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
@@ -193,6 +213,13 @@ public:
     //! The bound element's index in the grid view
     GridIndexType elementIndex() const
     { return eIdx_; }
+
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
+        return ggCache_->scvfBoundaryGeometryKeys(eIdx_)[localScvfIdx][0];
+    }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const
@@ -334,6 +361,26 @@ public:
         return Dune::IteratorRange<Iter>(fvGeometry.scvfs_.begin(), fvGeometry.scvfs_.end());
     }
 
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const Intersection& intersection)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(intersection.indexInInside(), 1, dim)),
+            [&](const auto i)
+            {
+                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(intersection.indexInInside(), 1, i, dim);
+                return CVFE::LocalDof
+                {
+                    static_cast<LocalIndexType>(localDofIdx),
+                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
+                    static_cast<GridIndexType>(fvGeometry.elementIndex())
+                };
+                }
+        );
+    }
+
+
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
@@ -412,6 +459,13 @@ public:
     //! The bound element's index in the grid view
     GridIndexType elementIndex() const
     { return eIdx_; }
+
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        const auto localScvfIdx = scvf.index() - GeometryHelper::numInteriorScvf(element().type());
+        return scvfBoundaryGeometryKeys_[localScvfIdx][0];
+    }
 
     //! The grid geometry we are a restriction of
     const GridGeometry& gridGeometry() const

@@ -86,7 +86,14 @@ struct Problem<TypeTag, TTag::DoneaTestMomentum>
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::DoneaTestMass>
-{ using type = DoneaTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
+{
+#if NEW_PROBLEM_INTERFACE
+    using type = DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>;
+#else
+    using type = DoneaTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>;
+#endif
+
+};
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DoneaTest>
