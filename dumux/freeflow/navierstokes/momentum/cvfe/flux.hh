@@ -138,9 +138,6 @@ public:
     const ElementVolumeVariables& elemVolVars() const
     { return elemVolVars_; }
 
-    const IpData& ipData() const
-    { return ipData_; }
-
     const GlobalPosition& velocity() const
     { return velocity_; }
 
@@ -346,12 +343,11 @@ public:
     /*!
      * \brief Returns the diffusive momentum flux due to viscous forces
      */
-    template<class Context>
-    NumEqVector diffusiveMomentumFluxIntegrand(const Context& context) const
+    template<class Context, class IpData>
+    NumEqVector diffusiveMomentumFluxIntegrand(const Context& context, const IpData& ipData) const
     {
         const auto& element = context.element();
         const auto& fvGeometry = context.fvGeometry();
-        const auto& ipData = context.ipData();
 
         // get viscosity from the problem
         const auto mu = context.problem().effectiveViscosity(element, fvGeometry, ipData);
@@ -374,12 +370,11 @@ public:
         return diffusiveFluxIntegrand;
     }
 
-    template<class Context>
-    NumEqVector pressureFluxIntegrand(const Context& context) const
+    template<class Context, class IpData>
+    NumEqVector pressureFluxIntegrand(const Context& context, const IpData& ipData) const
     {
         const auto& element = context.element();
         const auto& fvGeometry = context.fvGeometry();
-        const auto& ipData = context.ipData();
 
         // The pressure force integrand
         const auto pressure = context.problem().pressure(element, fvGeometry, ipData);
