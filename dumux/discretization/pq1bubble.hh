@@ -33,11 +33,13 @@
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/hybrid/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/hybrid/fluxvariablescache.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -91,7 +93,7 @@ public:
 
 //! The flux variables cache class
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::PQ1BubbleBase>
+struct FluxVariablesCache<TypeTag, TTag::PQ1BubbleModel>
 {
 private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -102,7 +104,7 @@ public:
 
 //! The grid flux variables cache vector class
 template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::PQ1BubbleBase>
+struct GridFluxVariablesCache<TypeTag, TTag::PQ1BubbleModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
@@ -114,6 +116,33 @@ private:
     >;
 public:
     using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+};
+
+//! The flux variables cache class
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::PQ1BubbleHybridModel>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = HybridCVFEFluxVariablesCache<Scalar, GridGeometry>;
+};
+
+//! The grid flux variables cache vector class
+template<class TypeTag>
+struct GridFluxVariablesCache<TypeTag, TTag::PQ1BubbleHybridModel>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluxVariablesCache = GetPropTypeOr<TypeTag,
+        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
+    >;
+public:
+    using type = HybridCVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the default for the ElementBoundaryTypes
