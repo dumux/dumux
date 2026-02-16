@@ -91,9 +91,8 @@ class NavierStokesMomentumCVFELocalResidual
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
     using FeResidual = NavierStokesMomentumFELocalResidual<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
-    using FeIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
-    using FeFaceIpData = Dumux::CVFE::FaceInterpolationPointData<FeIpData, typename SubControlVolumeFace::Traits::LocalIndexType>;
-    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FeFaceIpData>;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
+    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
     using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
 
 public:
@@ -282,18 +281,15 @@ public:
         NumEqVector flux(0.0);
         GlobalPosition velIntegral(0.0);
         FluxFunctionHelper fluxFunctionHelper;
-        const auto& localBasis = fvGeometry.feLocalBasis();
-        const auto& elementGeo = fvGeometry.elementGeometry();
 
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
         {
-            const auto& faceIpData = qpData.ipData();
-            FeFaceIpData feIpData(faceIpData.unitOuterNormal(), faceIpData.scvfIndex(), elementGeo, faceIpData.local(), faceIpData.global(), localBasis);
-            FluxFunctionContext context(problem, fvGeometry, elemVars, feIpData);
+            const auto& fluxVarsCache = elemFluxVarsCache[qpData.ipData()];
+            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, fluxVarsCache);
 
             velIntegral += context.velocity() * qpData.weight();
-            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context)
-                                      + fluxFunctionHelper.pressureFluxIntegrand(context) );
+            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
+                                      + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
         }
         flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf, velIntegral);
 

@@ -16,26 +16,50 @@
 #include <vector>
 #include <utility>
 
+#include <dune/common/std/type_traits.hh>
+
+#include <dumux/common/concepts/ipdata_.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
+
 namespace Dumux {
+
+namespace Detail {
+
+template<class FluxVariablesCache>
+using DefinesScvfQuadratureRule = typename FluxVariablesCache::ScvfQuadratureRule;
+
+template<class FluxVariablesCache>
+using ScvfQuadratureRuleOrDefault_t = Dune::Std::detected_or_t<QuadratureRules::MidpointQuadrature,
+                                                               DefinesScvfQuadratureRule,
+                                                               FluxVariablesCache>;
+
+} // namespace Detail
 
 /*!
  * \ingroup CVFEDiscretization
  * \brief The flux variables caches for an element
- * \note The class is specialized for a version with and without caching
+ * \note The class is specialized for caching enabled/disabled and for different quadrature rules
  * If grid caching is enabled the flux caches are stored for the whole gridview in the corresponding
  * GridFluxVariablesCache which is memory intensive but faster. For caching disabled the
  * flux caches are locally computed for each element whenever needed.
  */
-template<class GFVC, bool cachingEnabled>
-class CVFEElementFluxVariablesCache
+template<class GFVC, bool cachingEnabled, class ScvfQuadratureRule>
+class CVFEElementFluxVariablesCacheImpl
 {};
 
 /*!
  * \ingroup CVFEDiscretization
- * \brief The flux variables caches for an element with caching enabled
+ * \brief The flux variables caches for an element
  */
-template<class GFVC>
-class CVFEElementFluxVariablesCache<GFVC, true>
+template<class GFVC, bool cachingEnabled>
+using CVFEElementFluxVariablesCache = CVFEElementFluxVariablesCacheImpl<GFVC, cachingEnabled, Detail::ScvfQuadratureRuleOrDefault_t<typename GFVC::FluxVariablesCache>>;
+
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief The flux variables caches for an element with caching enabled (for general quadrature rules)
+ */
+template<class GFVC, class ScvfQR>
+class CVFEElementFluxVariablesCacheImpl<GFVC, true, ScvfQR>
 {
 public:
     //! export the type of the grid flux variables cache
@@ -44,10 +68,10 @@ public:
     //! export the type of the flux variables cache
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
-    CVFEElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    CVFEElementFluxVariablesCacheImpl(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
+    // Function is called prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
@@ -61,9 +85,9 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                       const FVElementGeometry& fvGeometry,
-                                       const ElementVolumeVariables& elemVolVars) &&
+    CVFEElementFluxVariablesCacheImpl bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars) &&
     {
         this->bind(element, fvGeometry, elemVolVars);
         return std::move(*this);
@@ -81,9 +105,9 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const ElementVolumeVariables& elemVolVars) &&
+    CVFEElementFluxVariablesCacheImpl bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars) &&
     {
         this->bindElement(element, fvGeometry, elemVolVars);
         return std::move(*this);
@@ -102,10 +126,10 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVolumeVariables& elemVolVars,
-                                           const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    CVFEElementFluxVariablesCacheImpl bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
     {
         this->bindScvf(element, fvGeometry, elemVolVars, scvf);
         return std::move(*this);
@@ -120,7 +144,22 @@ public:
     // access operator
     template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return gridFluxVarsCache().cache(eIdx_, scvf.index()); }
+    {
+        if constexpr (std::is_same_v<ScvfQR, QuadratureRules::MidpointQuadrature>)
+            return gridFluxVarsCache().cache(eIdx_, scvf.index());
+        else
+            DUNE_THROW(Dune::NotImplemented, "CVFEElementFluxVariablesCache: Scvf access operator only implemented for MidpointQuadrature.");
+    }
+
+    // access cache for given interpolation point data
+    template<Concept::ScvfIpData IpData>
+    const FluxVariablesCache& operator [](const IpData& ipData) const
+    {
+        if constexpr (std::is_same_v<ScvfQR, QuadratureRules::MidpointQuadrature>)
+            return gridFluxVarsCache().cache(eIdx_, ipData.scvfIndex());
+        else
+            return gridFluxVarsCache().cache(eIdx_, ipData.scvfIndex(), ipData.qpIndex());
+    }
 
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
@@ -133,10 +172,10 @@ private:
 
 /*!
  * \ingroup CVFEDiscretization
- * \brief The flux variables caches for an element with caching disabled
+ * \brief The flux variables caches for an element with caching disabled (MidpointQuadrature)
  */
 template<class GFVC>
-class CVFEElementFluxVariablesCache<GFVC, false>
+class CVFEElementFluxVariablesCacheImpl<GFVC, false, QuadratureRules::MidpointQuadrature>
 {
 public:
     //! export the type of the grid flux variables cache
@@ -145,10 +184,10 @@ public:
     //! export the type of the flux variables cache
     using FluxVariablesCache = typename GFVC::FluxVariablesCache;
 
-    CVFEElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    CVFEElementFluxVariablesCacheImpl(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
+    // Function is called prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
     template<class FVElementGeometry, class ElementVolumeVariables>
     void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
@@ -164,9 +203,9 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                       const FVElementGeometry& fvGeometry,
-                                       const ElementVolumeVariables& elemVolVars) &&
+    CVFEElementFluxVariablesCacheImpl bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars) &&
     {
         this->bind(element, fvGeometry, elemVolVars);
         return std::move(*this);
@@ -189,9 +228,9 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const ElementVolumeVariables& elemVolVars) &&
+    CVFEElementFluxVariablesCacheImpl bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars) &&
     {
         this->bindElement(element, fvGeometry, elemVolVars);
         return std::move(*this);
@@ -213,10 +252,10 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class ElementVolumeVariables>
-    CVFEElementFluxVariablesCache bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVolumeVariables& elemVolVars,
-                                           const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    CVFEElementFluxVariablesCacheImpl bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
     {
         this->bindScvf(element, fvGeometry, elemVolVars, scvf);
         return std::move(*this);
@@ -249,6 +288,16 @@ public:
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 
+    // access cache for a given interpolation point data
+    template<Concept::ScvfIpData IpData>
+    const FluxVariablesCache& operator [](const IpData& ipData) const
+    { return fluxVarsCache_[ipData.scvfIndex()]; }
+
+    // access cache for a given interpolation point data
+    template<Concept::ScvfIpData IpData>
+    FluxVariablesCache& operator [](const IpData& ipData)
+    { return fluxVarsCache_[ipData.scvfIndex()]; }
+
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
@@ -256,6 +305,152 @@ public:
 private:
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
+};
+
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief The flux variables caches for an element with caching disabled (general quadrature)
+ */
+template<class GFVC, class ScvfQR>
+class CVFEElementFluxVariablesCacheImpl<GFVC, false, ScvfQR>
+{
+public:
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename GFVC::FluxVariablesCache;
+
+    CVFEElementFluxVariablesCacheImpl(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
+
+    // Function is called prior to flux calculations on the element.
+    // We assume the FVGeometries to be bound at this point
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+              const FVElementGeometry& fvGeometry,
+              const ElementVolumeVariables& elemVolVars) &
+    {
+        bindElement(element, fvGeometry, elemVolVars);
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CVFEElementFluxVariablesCacheImpl bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bind(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars) &
+    {
+        // temporary resizing of the cache
+        fluxVarsCache_.resize(fvGeometry.numScvf());
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto quadRule = CVFE::quadratureRule(fvGeometry, scvf);
+            fluxVarsCache_[scvf.index()].resize(std::ranges::size(quadRule));
+            for (const auto& qpData : quadRule)
+                fluxVarsCache_[scvf.index()][qpData.ipData().qpIndex()].update(
+                    gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, qpData.ipData()
+                );
+        }
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CVFEElementFluxVariablesCacheImpl bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars) &&
+    {
+        this->bindElement(element, fvGeometry, elemVolVars);
+        return std::move(*this);
+    }
+
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf) &
+    {
+        fluxVarsCache_.resize(fvGeometry.numScvf());
+        const auto quadRule = CVFE::quadratureRule(fvGeometry, scvf);
+        fluxVarsCache_[scvf.index()].resize(std::ranges::size(quadRule));
+        for (const auto& qpData : quadRule)
+            fluxVarsCache_[scvf.index()][qpData.ipData().qpIndex()].update(
+                gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, qpData.ipData()
+            );
+    }
+
+    /*!
+    * \brief bind the local view (r-value overload)
+    * This overload is called when an instance of this class is a temporary in the usage context
+    * This allows a usage like this: `const auto view = localView(...).bind(element);`
+    */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    CVFEElementFluxVariablesCacheImpl bindScvf(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const typename FVElementGeometry::SubControlVolumeFace& scvf) &&
+    {
+        this->bindScvf(element, fvGeometry, elemVolVars, scvf);
+        return std::move(*this);
+    }
+
+    /*!
+     * \brief Update the caches if the volume variables have changed and the cache is solution-dependent
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void update(const typename FVElementGeometry::Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        if constexpr (FluxVariablesCache::isSolDependent)
+        {
+            fluxVarsCache_.resize(fvGeometry.numScvf());
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                const auto quadRule = CVFE::quadratureRule(fvGeometry, scvf);
+                fluxVarsCache_[scvf.index()].resize(std::ranges::size(quadRule));
+                for (const auto& qpData : quadRule)
+                    fluxVarsCache_[scvf.index()][qpData.ipData().qpIndex()].update(
+                        gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, qpData.ipData()
+                    );
+            }
+        }
+    }
+
+    // access cache for a given interpolation point data
+    template<Concept::ScvfQpIpData IpData>
+    const FluxVariablesCache& operator [](const IpData& ipData) const
+    { return fluxVarsCache_[ipData.scvfIndex()][ipData.qpIndex()]; }
+
+    // access cache for a given interpolation point data
+    template<Concept::ScvfQpIpData IpData>
+    FluxVariablesCache& operator [](const IpData& ipData)
+    { return fluxVarsCache_[ipData.scvfIndex()][ipData.qpIndex()]; }
+
+    //! The global object we are a restriction of
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
+
+private:
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
+    std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
 };
 
 } // end namespace Dumux
