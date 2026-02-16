@@ -12,7 +12,9 @@
 
 #include <config.h>
 
+#include <cmath>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -38,6 +40,7 @@
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
+#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "properties.hh"
 
@@ -86,6 +89,89 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     return dirichletDofs;
 }
 
+namespace Dumux {
+
+template<class Error>
+void writeError_(std::ofstream& logFile, const Error& error)
+{
+    for (const auto& e : error)
+        logFile << ", " << e;
+}
+
+template<class MomentumProblem, class MassProblem,
+         class MomentumGridVariables, class MassGridVariables,
+         class SolutionVector, class MomentumIdx, class MassIdx>
+void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                 std::shared_ptr<MassProblem> massProblem,
+                 const MomentumGridVariables& momentumGridVariables,
+                 const MassGridVariables& massGridVariables,
+                 const SolutionVector& x,
+                 const MomentumIdx momentumIdx,
+                 const MassIdx massIdx)
+{
+    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+    static constexpr int dim = MomentumGridGeometry::GridView::dimension;
+
+    // print discrete L2 and Linfity errors
+    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
+
+    if (!printErrors && !printConvergenceTestFile)
+        return;
+
+    if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
+                  && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>)
+    {
+        // first print momentum
+        {
+        const auto [totalVolume, errors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+
+        if (printErrors)
+            std::cout << "[Errors] velocity L2 = " << errors[0] << " H1 = " << errors[1] << std::endl;
+
+        if (printConvergenceTestFile)
+        {
+            std::ofstream logFile(momentumProblem->name() + "_errors_velocity.csv", std::ios::app);
+            auto numDofs = momentumProblem->gridGeometry().numDofs();
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
+            writeError_(logFile, errors);
+            logFile << "\n";
+        }
+        }
+
+        // now print mass
+        {
+        const auto [totalVolume, errors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
+
+        if (printErrors)
+            std::cout << "[Errors] pressure L2 = " << errors[0] << " H1 = " << errors[1] << std::endl;
+
+        if (printConvergenceTestFile)
+        {
+            std::ofstream logFile(massProblem->name() + "_errors_pressure.csv", std::ios::app);
+            auto numDofs = massProblem->gridGeometry().numDofs();
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
+            writeError_(logFile, errors);
+            logFile << "\n";
+        }
+        }
+    }
+    else
+    {
+        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
+        NavierStokesTest::ErrorCSVWriter(
+            momentumProblem, massProblem, std::to_string(x[massIdx].size())
+        ).printErrors(errors);
+
+        if (printConvergenceTestFile)
+            NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+    }
+}
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -199,20 +285,7 @@ int main(int argc, char** argv)
     // linearize & solve
     nonLinearSolver.solve(x);
 
-    // print discrete L2 and Linfity errors
-    const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
-    const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
-
-    if (printErrors || printConvergenceTestFile)
-    {
-        NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
-        NavierStokesTest::ErrorCSVWriter(
-            momentumProblem, massProblem, std::to_string(x[massIdx].size())
-        ).printErrors(errors);
-
-        if (printConvergenceTestFile)
-            NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
-    }
+    Dumux::printErrors(momentumProblem, massProblem, *momentumGridVariables, *massGridVariables, x, momentumIdx, massIdx);
 
     // write vtk output
     vtkWriter.write(1.0);

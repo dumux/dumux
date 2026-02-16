@@ -238,11 +238,11 @@ public:
      *
      * \param globalPos The global position
      */
-    Dune::FieldVector<DirichletValues, dimWorld> gradAnalyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
+    Dune::FieldVector<GlobalPosition, DirichletValues::dimension> gradAnalyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
-        Dune::FieldVector<DirichletValues, dimWorld> values;
+        Dune::FieldVector<GlobalPosition, DirichletValues::dimension> values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
