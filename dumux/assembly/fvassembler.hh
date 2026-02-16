@@ -239,15 +239,6 @@ public:
     {
         resetResidual_();
         assembleResidual(*residual_, curSol);
-
-        auto applyDirichletConstraint = [&] (const auto& dofIdx,
-                                             const auto& values,
-                                             const auto eqIdx,
-                                             const auto pvIdx)
-        {
-            (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
-        };
-        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     //! assemble a residual r
@@ -260,6 +251,15 @@ public:
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleResidual(r);
         });
+
+        auto applyDirichletConstraint = [&] (const auto& dofIdx,
+                                             const auto& values,
+                                             const auto eqIdx,
+                                             const auto pvIdx)
+        {
+            r[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+        };
+        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     /*!
@@ -506,7 +506,7 @@ private:
     }
 
     template<class GG>
-    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry)
+    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
     {
         if constexpr (Detail::hasPeriodicDofMap<GG>())
         {
@@ -549,7 +549,7 @@ private:
     }
 
     template<class Problem, class GG, typename ApplyFunction>
-    void enforceGlobalDirichletConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyDirichletConstraint)
+    void enforceGlobalDirichletConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyDirichletConstraint) const
     {
         if constexpr (Detail::hasGlobalConstraints<Problem>())
         {
