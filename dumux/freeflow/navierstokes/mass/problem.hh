@@ -16,6 +16,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
 
@@ -95,6 +96,18 @@ public:
     }
 
     /*!
+     * \brief Returns the velocity at a given interpolation point.
+     */
+    template<class IpData>
+    VelocityVector velocity(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocity(fvGeometry, ipData);
+        else
+            return asImp_().velocityAtPos(ipData.global());
+    }
+
+    /*!
      * \brief Returns the velocity at the element center.
      */
     VelocityVector elementVelocity(const FVElementGeometry& fvGeometry) const
@@ -170,6 +183,7 @@ public:
 
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }
+    static constexpr bool providesIntegralInterface() { return true; }
 
     /*!
      * \brief The constructor
@@ -250,6 +264,27 @@ public:
     }
 
     /*!
+     * \brief Evaluates the boundary flux integral for a scvf.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub-control volume face
+     */
+    template<class ElementVariables, class ElementFluxVariablesCache>
+    BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
+                                        const ElementVariables& elemVars,
+                                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                                        const SubControlVolumeFace& scvf) const
+    {
+        BoundaryFluxes flux(0.0);
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+            flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, qpData.ipData());
+
+        return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+    }
+
+    /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
      * \param fvGeometry The finite-volume geometry
@@ -283,6 +318,18 @@ public:
             return couplingManager_->faceVelocity(element, scvf);
         else
             return asImp_().velocityAtPos(scvf.ipGlobal());
+    }
+
+    /*!
+     * \brief Returns the velocity at a given interpolation point.
+     */
+    template<class IpData>
+    VelocityVector velocity(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocity(fvGeometry, ipData);
+        else
+            return asImp_().velocityAtPos(ipData.global());
     }
 
     /*!

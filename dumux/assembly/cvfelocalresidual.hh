@@ -21,9 +21,11 @@
 #include <dumux/common/typetraits/boundary_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux::Detail {
 
@@ -46,6 +48,18 @@ using SCVFIsOverlappingDetector = decltype(
 template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
+
+template<class Problem>
+using ProvidesIntegralInterfaceDetector = decltype(Problem::providesIntegralInterface());
+
+template<class Problem>
+constexpr inline bool providesIntegralInterface()
+{
+    if constexpr (Dune::Std::is_detected<ProvidesIntegralInterfaceDetector, Problem>::value)
+        return Problem::providesIntegralInterface();
+    else
+        return false;
+}
 
 } // end namespace Dumux::Detail
 
@@ -79,10 +93,6 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
-
-    using FaceIpData = Dumux::CVFE::FaceInterpolationPointData<typename Element::Geometry::LocalCoordinate,
-                                                               typename Element::Geometry::GlobalCoordinate,
-                                                               typename SubControlVolumeFace::Traits::LocalIndexType>;
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -220,40 +230,56 @@ public:
     {
         NumEqVector flux(0.0);
 
-        // inner faces
-        if (!scvf.boundary())
-            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-        // boundary faces
-        else
+        if constexpr (Detail::providesIntegralInterface<Problem>())
         {
-            const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
-
-            // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
-            // For Dirichlet there is no addition to the residual here but they
-            // are enforced strongly by replacing the residual entry afterwards.
-            if (bcTypes.hasNeumann())
+            if(!scvf.boundary())
+                flux += this->asImp().fluxIntegral(fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+            else
             {
-                NumEqVector boundaryFluxes;
-                if constexpr (Dumux::Detail::hasProblemBoundaryFluxFunction<Problem, FVElementGeometry, ElementVolumeVariables, ElementFluxVariablesCache, FaceIpData>())
+                const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
+
+                // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
+                // For Dirichlet there is no addition to the residual here but they
+                // are enforced strongly by replacing the residual entry afterwards.
+                if (bcTypes.hasNeumann())
                 {
-                    const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-                    boundaryFluxes = problem.boundaryFlux(fvGeometry, elemVolVars, elemFluxVarsCache,
-                                                          FaceIpData(fluxVarsCache.ipLocal(), fluxVarsCache.ipGlobal(), scvf.unitOuterNormal(), scvf.index()));
+                    NumEqVector boundaryFluxes = problem.boundaryFluxIntegral(fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+
+                    // only add fluxes to equations for which Neumann is set
+                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                        if (bcTypes.isNeumann(eqIdx))
+                            flux[eqIdx] += boundaryFluxes[eqIdx];
                 }
-                else
-                    boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-
-                // multiply neumann fluxes with the area and the extrusion factor
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                boundaryFluxes *= Extrusion::area(fvGeometry, scvf)*elemVolVars[scv].extrusionFactor();
-
-                // only add fluxes to equations for which Neumann is set
-                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    if (bcTypes.isNeumann(eqIdx))
-                        flux[eqIdx] += boundaryFluxes[eqIdx];
             }
         }
+        else
+        {
+            if(!scvf.boundary())
+            {
+                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            }
+            else
+            {
+                const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
+
+                // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
+                // For Dirichlet there is no addition to the residual here but they
+                // are enforced strongly by replacing the residual entry afterwards.
+                if (bcTypes.hasNeumann())
+                {
+                    NumEqVector boundaryFluxes;
+                    boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                    // multiply neumann fluxes with the area and the extrusion factor
+                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    boundaryFluxes *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
+
+                    // only add fluxes to equations for which Neumann is set
+                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                        if (bcTypes.isNeumann(eqIdx))
+                            flux[eqIdx] += boundaryFluxes[eqIdx];
+                }
+            }
+       }
 
         return flux;
     }
@@ -281,23 +307,73 @@ public:
                      const ElementVolumeVariables& curElemVolVars,
                      const SubControlVolume& scv) const
     {
-        const auto& curVolVars = curElemVolVars[scv];
-        const auto& prevVolVars = prevElemVolVars[scv];
+        if constexpr (Detail::providesIntegralInterface<Problem>())
+        {
+            NumEqVector prevStorage = this->asImp().storageIntegral(fvGeometry, prevElemVolVars, scv, /*previous time level?*/true);
+            NumEqVector storage = this->asImp().storageIntegral(fvGeometry, curElemVolVars, scv, /*previous time level?*/false);
 
-        // Compute storage with the model specific storage residual
-        // This addresses issues #792/#940 in ad-hoc way by additionally providing crude time level information (previous or current)
-        // to the low-level interfaces if this is supported by the LocalResidual implementation
-        NumEqVector prevStorage = computeStorageImpl_(problem, fvGeometry, scv, prevVolVars, /*previous time level?*/true);
-        NumEqVector storage = computeStorageImpl_(problem, fvGeometry, scv, curVolVars, /*previous time level?*/false);
+            storage -= prevStorage;
+            storage /= this->timeLoop().timeStepSize();
 
-        prevStorage *= prevVolVars.extrusionFactor();
-        storage *= curVolVars.extrusionFactor();
+            residual[scv.localDofIndex()] += storage;
+        }
+        else
+        {
+            const auto& curVolVars = curElemVolVars[scv];
+            const auto& prevVolVars = prevElemVolVars[scv];
 
-        storage -= prevStorage;
-        storage *= Extrusion::volume(fvGeometry, scv);
-        storage /= this->timeLoop().timeStepSize();
+            // Compute storage with the model specific storage residual
+            // This addresses issues #792/#940 in ad-hoc way by additionally providing crude time level information (previous or current)
+            // to the low-level interfaces if this is supported by the LocalResidual implementation
+            NumEqVector prevStorage = computeStorageImpl_(problem, fvGeometry, scv, prevVolVars, /*previous time level?*/true);
+            NumEqVector storage = computeStorageImpl_(problem, fvGeometry, scv, curVolVars, /*previous time level?*/false);
 
-        residual[scv.localDofIndex()] += storage;
+            prevStorage *= prevVolVars.extrusionFactor();
+            storage *= curVolVars.extrusionFactor();
+
+            storage -= prevStorage;
+            storage *= Extrusion::volume(fvGeometry, scv);
+            storage /= this->timeLoop().timeStepSize();
+
+            residual[scv.localDofIndex()] += storage;
+        }
+    }
+
+    using ParentType::evalSource;
+    /*!
+     * \brief Compute the source local residual, i.e. the deviation of the
+     *        source term from zero.
+     *
+     * \param residual The residual vector to fill
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param curElemVolVars The volume averaged variables for all
+     *                       sub-control volumes of the element at the current  time level
+     * \param scv The sub control volume the source term is integrated over
+     */
+    void evalSource(ElementResidualVector& residual,
+                    const Problem& problem,
+                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const ElementVolumeVariables& curElemVolVars,
+                    const SubControlVolume& scv) const
+    {
+        NumEqVector source(0.0);
+        if constexpr (Detail::providesIntegralInterface<Problem>())
+            source = this->asImp().sourceIntegral(fvGeometry, curElemVolVars, scv);
+        else
+        {
+            //! Compute source with the model specific source residual
+            source = this->asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+            source *= Extrusion::volume(fvGeometry, scv);
+
+            const auto& curVolVars = curElemVolVars[scv];
+            source *= curVolVars.extrusionFactor();
+        }
+        //! subtract source from local rate (sign convention in user interface)
+        residual[scv.localDofIndex()] -= source;
     }
 
 private:

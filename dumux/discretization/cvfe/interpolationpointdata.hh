@@ -20,12 +20,17 @@ namespace Dumux::CVFE {
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to an element that includes global and local positions
  */
-template<class LocalPosition, class GlobalPosition>
+template<class LocalPos, class GlobalPos>
 class InterpolationPointData
 {
 public:
-    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos) : local_(std::move(localPos)), global_(std::move(pos)) {}
-    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos) :  local_(localPos), global_(pos) {}
+    using LocalPosition = LocalPos;
+    using GlobalPosition = GlobalPos;
+
+    InterpolationPointData(LocalPosition&& localPos, GlobalPosition&& pos)
+    : local_(std::move(localPos)), global_(std::move(pos)) {}
+    InterpolationPointData(const LocalPosition& localPos, const GlobalPosition& pos)
+    :  local_(localPos), global_(pos) {}
 
     //! The global position of the quadrature point
     const GlobalPosition& global() const
@@ -34,7 +39,6 @@ public:
     //! The local position of the quadrature point
     const LocalPosition& local() const
     { return local_; }
-
 
 private:
     LocalPosition local_;
@@ -67,12 +71,13 @@ private:
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to a global position of an element, giving its local positions by a mapping
  */
-template<class LocalMapping, class GlobalPosition>
+template<class LocalMapping, class GlobalPos>
 class InterpolationPointDataLocalMapping
 {
-    using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPosition&>;
-
 public:
+    using LocalPosition = std::invoke_result_t<LocalMapping, const GlobalPos&>;
+    using GlobalPosition = GlobalPos;
+
     InterpolationPointDataLocalMapping(LocalMapping&& mapping, GlobalPosition&& pos) : localMapping_(std::move(mapping)), global_(std::move(pos)) {}
     InterpolationPointDataLocalMapping(LocalMapping&& mapping, const GlobalPosition& pos) : localMapping_(std::move(mapping)), global_(pos) {}
 
@@ -84,7 +89,6 @@ public:
     const LocalPosition local() const
     { return localMapping_(global_); }
 
-
 private:
     LocalMapping localMapping_;
     GlobalPosition global_;
@@ -94,15 +98,20 @@ private:
  * \ingroup CVFEDiscretization
  * \brief An interpolation point related to a face of an element
  */
-template<class LocalPosition, class GlobalPosition, class LocalIndex>
-class FaceInterpolationPointData : public InterpolationPointData<LocalPosition, GlobalPosition>
+template<class BaseClass, class LocalIndex>
+class FaceInterpolationPointData : public BaseClass
 {
-    using ParentType = InterpolationPointData<LocalPosition, GlobalPosition>;
 public:
-    FaceInterpolationPointData(GlobalPosition&& localPos, GlobalPosition&& pos, GlobalPosition&& n, LocalIndex index)
-    : ParentType(localPos, pos), normal_(std::move(n)), scvfIndex_(index) {}
-    FaceInterpolationPointData(const GlobalPosition& localPos, const GlobalPosition& pos, const GlobalPosition& n, LocalIndex index)
-    : ParentType(localPos, pos), normal_(n), scvfIndex_(index) {}
+    using GlobalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().global())>;
+    using LocalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().local())>;
+
+    template<class... Args>
+    FaceInterpolationPointData(GlobalPosition&& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(std::move(n)), scvfIndex_(index) {}
+
+    template<class... Args>
+    FaceInterpolationPointData(const GlobalPosition& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(n), scvfIndex_(index) {}
 
     //! The unit outer normal vector at the quadrature point
     const GlobalPosition& unitOuterNormal() const
@@ -115,6 +124,26 @@ public:
 private:
     GlobalPosition normal_;
     LocalIndex scvfIndex_;
+};
+
+/*!
+ * \ingroup CVFEDiscretization
+ * \brief Wraps interpolation point data and adds a quadrature point index for use in quadrature loops
+ */
+template<class IpData>
+class IndexedQuadratureInterpolationPointData : public IpData
+{
+public:
+    template<class... Args>
+    IndexedQuadratureInterpolationPointData(std::size_t qpIdx, Args&&... args)
+    : IpData(std::forward<Args>(args)...), qpIndex_(qpIdx) {}
+
+    //! The quadrature point index
+    std::size_t qpIndex() const
+    { return qpIndex_; }
+
+private:
+    std::size_t qpIndex_;
 };
 
 } // end namespace Dumux::CVFE

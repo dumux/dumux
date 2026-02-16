@@ -22,12 +22,15 @@
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup DiamondDiscretization
  * \brief Element-wise grid geometry (local view)
+ * \tparam GG the grid geometry type
+ * \tparam cachingEnabled if the grid geometry is cached or not
  */
 template<class GG, bool cachingEnabled>
 class FaceCenteredDiamondFVElementGeometry;
@@ -46,9 +49,11 @@ class FaceCenteredDiamondFVElementGeometry<GG, /*cachingEnabled*/true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
-    using IpData = Dumux::CVFE::LocalDofInterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
-                                                               typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate,
-                                                               LocalIndexType>;
+
+    using BaseIpData = CVFE::InterpolationPointData<
+                        typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
+                        typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate
+                        >;
 
 public:
     //! export type of subcontrol volume face
@@ -56,6 +61,10 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GG;
+    //! the quadrature rule type for scvs
+    using ScvQuadratureRule = typename GG::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename GG::ScvfQuadratureRule;
 
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 2*GridView::dimension;
@@ -219,18 +228,18 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return IpData(GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex());
+        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
     template<class LocalDof>
-    friend inline IpData ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
         const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
 
-        return IpData(localPos, fvGeometry.elementGeometry().global(localPos), localDof.index());
+        return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
 
     //! Interpolation point data for a global position
@@ -241,6 +250,13 @@ public:
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) { return fvGeometry.elementGeometry().local(pos); },
             globalPos
         };
+    }
+
+    //! Interpolation point data for scvf
+    friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf)
+    {
+        return CVFE::FaceInterpolationPointData<BaseIpData, LocalIndexType>
+                    { scvf.unitOuterNormal(), scvf.index(), fvGeometry.elementGeometry().local(scvf.ipGlobal()), scvf.ipGlobal() };
     }
 
 private:

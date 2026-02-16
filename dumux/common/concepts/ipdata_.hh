@@ -14,6 +14,28 @@
 
 #include <concepts>
 
+namespace Dumux::Concept::Detail{
+
+    template<class T>
+    concept LocalDofIndexProvider = requires(T a)
+    {
+        a.localDofIndex();
+    };
+
+    template<class T>
+    concept ScvfIndexProvider = requires(T a)
+    {
+        a.scvfIndex();
+    };
+
+    template<class T>
+    concept QpIndexProvider = requires(T a)
+    {
+        a.qpIndex();
+    };
+
+} // end namespace Dumux::Concept::Detail
+
 namespace Dumux::Concept {
 
 template<class T>
@@ -23,14 +45,15 @@ concept IpData = requires(T a)
     a.local();
 };
 
-template<class T>
-concept LocalDofIndexProvider = requires(T a)
-{
-    a.localDofIndex();
-};
 
 template<class T>
-concept LocalDofIpData = IpData<T> && LocalDofIndexProvider<T>;
+concept LocalDofIpData = IpData<T> && Detail::LocalDofIndexProvider<T>;
+
+template<class T>
+concept ScvfIpData = IpData<T> && Detail::ScvfIndexProvider<T>;
+
+template<class T>
+concept ScvfQpIpData = ScvfIpData<T> && Detail::QpIndexProvider<T>;
 
 } // end namespace Dumux::Concept
 

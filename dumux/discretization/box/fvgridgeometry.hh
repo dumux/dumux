@@ -46,13 +46,20 @@ using BoxGeometryHelper_t = Dune::Std::detected_or_t<
 
 /*!
  * \ingroup BoxDiscretization
+ * \brief Quadrature rule traits for Box discretization
+ */
+template<class GridView, class ScvRule = Dumux::QuadratureRules::MidpointQuadrature, class ScvfRule = Dumux::QuadratureRules::MidpointQuadrature>
+using BoxQuadratureTraits = CVFE::DefaultQuadratureTraits<GridView, ScvRule, ScvfRule>;
+
+/*!
+ * \ingroup BoxDiscretization
  * \brief The default traits for the box finite volume grid geometry
  *        Defines the scv and scvf types and the mapper types
  * \tparam the grid view type
  */
-template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>, class QuadratureTraits = BoxQuadratureTraits<GridView>>
 struct BoxDefaultGridGeometryTraits
-: public MapperTraits
+: public MapperTraits, public QuadratureTraits
 {
     using SubControlVolume = BoxSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView>;
@@ -116,6 +123,10 @@ public:
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
+    //! export the scv interpolation point data type
+    using ScvQuadratureRule = typename Traits::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename Traits::ScvfQuadratureRule;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
@@ -468,6 +479,10 @@ public:
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
     using SupportsPeriodicity = typename PeriodicGridTraits<typename GV::Grid>::SupportsPeriodicity;
+    //! export the scv interpolation point data type
+    using ScvQuadratureRule = typename Traits::ScvQuadratureRule;
+    //! the quadrature rule type for scvfs
+    using ScvfQuadratureRule = typename Traits::ScvfQuadratureRule;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     BoxFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
