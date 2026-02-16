@@ -57,6 +57,7 @@
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
+#include <dumux/discretization/pq2.hh>
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
@@ -108,8 +109,8 @@ public:
 };
 #endif
 
-#ifdef QUADRATURE_RULE
-// use custom quadrature rules
+#ifdef PQ1BUBBLE_QUADRATURE_RULE
+// use custom quadrature rules for hybrid pq1bubble scheme
 template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
 {
@@ -120,11 +121,32 @@ private:
 
     // Higher order quadrature rule only works for hybrid pq1bubble scheme
     // since we can't generate geometries for overlapping scvs
-    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE, QUADRATURE_RULE>;
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, PQ1BUBBLE_QUADRATURE_RULE, PQ1BUBBLE_QUADRATURE_RULE>;
     using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
 
 public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
+};
+#endif
+
+#ifdef PQ2_QUADRATURE_RULE
+// use custom quadrature rules for hybrid pq2 scheme
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using QuadTraits = PQ2QuadratureTraits<GridView,
+                                           Dumux::QuadratureRules::MidpointQuadrature,
+                                           PQ2_QUADRATURE_RULE,
+                                           PQ2_QUADRATURE_RULE,
+                                           PQ2_QUADRATURE_RULE>;
+
+public:
+    using type = PQ2FVGridGeometry<Scalar, GridView, enableCache, PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
 };
 #endif
 

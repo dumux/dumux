@@ -15,9 +15,11 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <tuple>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -25,6 +27,8 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/extrusion.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -44,6 +48,7 @@
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
+#include <test/freeflow/navierstokes/errors_cvfe.hh>
 #include "properties_momentum.hh"
 
 namespace Dumux {
@@ -66,25 +71,40 @@ void printErrors(std::shared_ptr<Problem> problem,
 
     if (printErrors)
     {
-        NavierStokesTest::ErrorsSubProblem errors(problem, x);
+        // For CVFE schemes we can directly calculate the L2 and H1 errors by using quadrature rules
+        if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+        {
+            const auto [totalVolume, errors] = calculateL2AndH1Errors(*problem, gridVariables, x);
 
-        std::ofstream logFile(problem->name() + ".csv", std::ios::app);
-        auto totalVolume = errors.totalVolume();
-        auto numDofs = errors.numDofs();
-        // For the staggered scheme, the control volumes are overlapping
-        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
-            totalVolume /= dim;
+            std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+            auto numDofs = problem->gridGeometry().numDofs();
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
 
-        logFile << Fmt::format("{:.5e}", errors.time()) << ", ";
-        logFile << numDofs << ", ";
-        logFile << std::pow(totalVolume / numDofs, 1.0/dim);
-        const auto& componentErrors = errors.l2Absolute();
-        // Calculate L2-error for velocity field
-        Dune::FieldVector<double, 1> velError(0.0);
-        velError[0] = std::sqrt(componentErrors * componentErrors);
+            writeError_(logFile, errors);
+            logFile << "\n";
+        }
+        else
+        {
+            NavierStokesTest::ErrorsSubProblem errors(problem, x);
 
-        writeError_(logFile, velError);
-        logFile << "\n";
+            std::ofstream logFile(problem->name() + ".csv", std::ios::app);
+            auto totalVolume = errors.totalVolume();
+            auto numDofs = errors.numDofs();
+            // For the staggered scheme, the control volumes are overlapping
+            if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+                totalVolume /= dim;
+
+            logFile << numDofs << ", ";
+            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
+            const auto& componentErrors = errors.l2Absolute();
+            // Calculate L2-error for velocity field
+            Dune::FieldVector<double, 1> velError(0.0);
+            velError[0] = std::sqrt(componentErrors * componentErrors);
+
+            writeError_(logFile, velError);
+            logFile << "\n";
+        }
     }
 }
 
@@ -121,7 +141,8 @@ void updateVelocities(
             for (const auto& scv : scvs(fvGeometry))
                 faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
         }
-        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble)
+        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble
+                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2)
         {
             const auto elemGeo = element.geometry();
             const auto elemSol = elementSolution(element, x, gridGeometry);
@@ -209,7 +230,8 @@ int main(int argc, char** argv)
 
     ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
     // face quantities have no special significance for the PQ1Bubble scheme
-    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble)
+    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
+                  && GridGeometry::discMethod != DiscretizationMethods::pq2)
     {
         faceVtk.addField(dofIdx, "dofIdx");
         faceVtk.addField(faceVelocity, "velocityVector");
@@ -238,7 +260,8 @@ int main(int argc, char** argv)
     Dumux::updateVelocities(velocity, faceVelocity, *gridGeometry, *gridVariables, x);
     writer.write(baseName + discSuffix + "_1");
 
-    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble)
+    if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
+                  && GridGeometry::discMethod != DiscretizationMethods::pq2)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
 
     Dumux::printErrors(problem, *gridVariables, x);

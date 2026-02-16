@@ -371,7 +371,8 @@ private:
 
         using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
         // We do not consider the overlapping Dofs, i.e. elements, in the errors
-        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble
+                      || GridGeometry::discMethod == DiscretizationMethods::pq2)
             numDofs_ -= problem_->gridGeometry().gridView().size(0);
 
         ErrorVector sumReference(0.0);
@@ -432,7 +433,8 @@ private:
                             sumReference[dirIdx] += vReference * vReference * Extrusion::volume(fvGeometry, scv);
                         }
                     }
-                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+                    else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble
+                                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
                     {
                         if(!scv.isOverlapping())
                         {
