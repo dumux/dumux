@@ -34,6 +34,12 @@ namespace Dumux::Concept::Detail{
         a.qpIndex();
     };
 
+    template<class T>
+    concept IntersectionIndexProvider = requires(T a)
+    {
+        a.intersectionIndex();
+    };
+
 } // end namespace Dumux::Concept::Detail
 
 namespace Dumux::Concept {
@@ -45,7 +51,6 @@ concept IpData = requires(T a)
     a.local();
 };
 
-
 template<class T>
 concept LocalDofIpData = IpData<T> && Detail::LocalDofIndexProvider<T>;
 
@@ -54,6 +59,15 @@ concept ScvfIpData = IpData<T> && Detail::ScvfIndexProvider<T>;
 
 template<class T>
 concept ScvfQpIpData = ScvfIpData<T> && Detail::QpIndexProvider<T>;
+
+template<class T>
+concept QIpData = IpData<T> && Detail::QpIndexProvider<T>;
+
+template<class T>
+concept IntersectionIpData = IpData<T> && Detail::IntersectionIndexProvider<T>;
+
+template<class T>
+concept IntersectionQpIpData = IntersectionIpData<T> && Detail::QpIndexProvider<T>;
 
 } // end namespace Dumux::Concept
 
