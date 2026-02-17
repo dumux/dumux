@@ -262,7 +262,7 @@ public:
 
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
-            enforceGlobalDirichletConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
+            enforceProblemConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -287,7 +287,12 @@ public:
         forEach(integralRange(Dune::Hybrid::size(r)), [&](const auto domainId)
         {
             auto& subRes = r[domainId];
+            const auto& subSol = curSol[domainId];
             this->assembleResidual_(domainId, subRes, curSol);
+
+            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+            enforcePeriodicConstraints_(domainId, subRes, *gridGeometry, subSol);
+            enforceProblemConstraints_(domainId, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -617,7 +622,7 @@ private:
 
     // build periodic constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
     {
         if constexpr (Detail::hasPeriodicDofMap<GG>())
         {
@@ -677,7 +682,7 @@ private:
 
     // enforce global constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforceGlobalDirichletConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol)
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
     {
         if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
@@ -720,6 +725,50 @@ private:
                         const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
                         assert(0 <= pvIdx && pvIdx < constraintInfo.size());
                         applyDirichletConstraint(dofIdx, values, eqIdx, pvIdx);
+                    }
+                }
+            }
+        }
+    }
+
+    // build periodic constraints in residual only
+    template<std::size_t i, class Res, class GG, class Sol>
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    {
+        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        {
+            for (const auto& m : gridGeometry.periodicDofMap())
+            {
+                if (m.first < m.second)
+                {
+                    // add the second row to the first
+                    res[m.first] += res[m.second];
+
+                    // enforce the solution of the first periodic DOF to the second one
+                    res[m.second] = curSol[m.second] - curSol[m.first];
+                }
+            }
+        }
+    }
+
+    // enforce global constraints in residual only
+    template<std::size_t i, class Res, class GG, class Sol>
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    {
+        if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
+        {
+            for (const auto& constraintData : this->problem(domainI).constraints())
+            {
+                const auto& constraintInfo = constraintData.constraintInfo();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
+                for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
+                {
+                    if (constraintInfo.isConstraintEquation(eqIdx))
+                    {
+                        const auto pvIdx = constraintInfo.eqToPriVarIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < constraintInfo.size());
+                        res[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
                     }
                 }
             }
