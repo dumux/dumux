@@ -63,13 +63,16 @@ public:
      * \param numericDifferenceMethod The numeric difference method
      *        (1: forward differences (default), 0: central differences, -1: backward differences, 5: five-point stencil method)
      */
-    template<class Function, class Scalar, class FunctionEvalType>
+    template<class Function, class Scalar, class EpsType, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,
                                   FunctionEvalType& derivative,
                                   const FunctionEvalType& fx0,
-                                  const Scalar eps,
+                                  const EpsType eps,
                                   const int numericDifferenceMethod = 1)
-    {
+    requires(
+        std::is_same_v<Scalar, decltype(std::declval<Scalar>() + std::declval<EpsType>())>
+        && std::is_same_v<Scalar, decltype(std::declval<Scalar>() - std::declval<EpsType>())>
+    ){
         // Five-point stencil numeric difference,
         // Abramowitz & Stegun, Table 25.2.
         // The error is proportional to eps^4.
@@ -78,9 +81,9 @@ public:
             derivative = function(x0 + eps);
             derivative -= function(x0 - eps);
             derivative *= 8.0;
-            derivative += function(x0 - 2*eps);
-            derivative -= function(x0 + 2*eps);
-            derivative /= 12*eps;
+            derivative += function(x0 - 2.0*eps);
+            derivative -= function(x0 + 2.0*eps);
+            derivative /= 12.0*eps;
             return;
         }
 

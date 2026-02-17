@@ -1,3 +1,4 @@
+
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
@@ -11,6 +12,8 @@
  */
 #ifndef DUMUX_ASSEMBLY_NUMERIC_EPSILON_HH
 #define DUMUX_ASSEMBLY_NUMERIC_EPSILON_HH
+
+#include <cmath>
 
 #include <dune/common/fvector.hh>
 #include <dumux/common/parameters.hh>
@@ -27,7 +30,8 @@ namespace Dumux {
 template<class Scalar, int numEq>
 class NumericEpsilon
 {
-    using NumEqVector = Dune::FieldVector<Scalar, numEq>;
+    using Magnitude = std::decay_t<decltype(abs(std::declval<Scalar>()))>;
+    using NumEqVector = Dune::FieldVector<Magnitude, numEq>;
 
 public:
     explicit NumericEpsilon(const std::string& paramGroup = "")
@@ -44,8 +48,8 @@ public:
      */
     Scalar operator() (Scalar priVar, int priVarIdx) const noexcept
     {
-        return magnitude_[priVarIdx] > 0.0 ? baseEps_*magnitude_[priVarIdx]
-                                           : NumericDifferentiation::epsilon(priVar, baseEps_);
+        return magnitude_[priVarIdx] > 0.0 ? Scalar(baseEps_*magnitude_[priVarIdx])
+                                           : Scalar(NumericDifferentiation::epsilon(priVar, baseEps_));
     }
 
 private:
