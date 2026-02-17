@@ -329,7 +329,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/t
 {
     using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>;
     using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, Detail::CVFE::Impl<Implementation, ThisType>, true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
@@ -410,7 +410,7 @@ public:
             {
                 partialDerivs = 0.0;
 
-                auto evalResiduals = [&](Scalar priVar)
+                auto evalResiduals = [&](PrimaryVariable priVar)
                 {
                     // update the volume variables and compute element residual
                     elemSol[localIdx][pvIdx] = priVar;
@@ -426,7 +426,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalResiduals, elemSol[localIdx][pvIdx], partialDerivs, origResiduals,
                                                           eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
