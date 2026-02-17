@@ -89,11 +89,31 @@ private:
 
     static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
 
-    struct MomentumCouplingContext
+    template<class ElementSolution>
+    struct MomentumCouplingContextNoCaching
     {
-        FVElementGeometry<freeFlowMassIndex> fvGeometry;
-        ElementVolumeVariables<freeFlowMassIndex> curElemVolVars;
-        ElementVolumeVariables<freeFlowMassIndex> prevElemVolVars;
+        MomentumCouplingContextNoCaching(ElementSolution&& elemSol)
+        : elemSol_(std::move(elemSol)) {}
+
+        template<class GridVolVars, class FvElementGeometry, class SubControlVolume>
+        auto vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        {
+            const auto& problem = gridVolVars.problem();
+            VolumeVariables<freeFlowMassIndex> volVars;
+            volVars.update(elemSol_, problem, fvGeometry.element(), scv);
+            return volVars;
+        }
+
+        ElementSolution elemSol_;
+    };
+
+    struct MomentumCouplingContextGlobalCaching
+    {
+        template<class GridVolVars, class FvElementGeometry, class SubControlVolume>
+        const auto& vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        {
+            return gridVolVars.volVars(scv);
+        }
     };
 
     using MomentumDiscretizationMethod = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
@@ -236,35 +256,39 @@ public:
                    const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto context = makeMomentumCouplingContext_(element);
+
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+
+        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        massFvGeometry.bind(element);
+        const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
+        const auto& gridVolVars = considerPreviousTimeStep ? gridVars_(freeFlowMassIndex).curGridVolVars()
+                                                           : gridVars_(freeFlowMassIndex).prevGridVolVars();
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
-            const auto& scv = context.fvGeometry.scv(eIdx);
+            const auto& scv = massFvGeometry.scv(eIdx);
 
-            const auto& volVars = considerPreviousTimeStep ?
-                context.prevElemVolVars[scv]
-                : context.curElemVolVars[scv];
+            const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
 
             return volVars.density();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
         {
-            // TODO: cache the shape values when Box method is used
+            // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-            const auto& localBasis = context.fvGeometry.feLocalBasis();
+            const auto& localBasis = massFvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
             localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar rho = 0.0;
-            for (const auto& localDof : localDofs(context.fvGeometry))
+            for (const auto& scv : scvs(massFvGeometry))
             {
-                const auto& volVars = considerPreviousTimeStep ?
-                    context.prevElemVolVars[localDof.index()]
-                    : context.curElemVolVars[localDof.index()];
-                rho += volVars.density()*shapeValues[localDof.index()][0];
+                const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
+                rho += volVars.density()*shapeValues[scv.localDofIndex()][0];
             }
 
             return rho;
@@ -311,15 +335,22 @@ public:
                               const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto context = makeMomentumCouplingContext_(element);
+
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
+                                                   :  this->curSol(freeFlowMassIndex);
+
+        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        massFvGeometry.bind(element);
+        const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
+        const auto& gridVolVars = considerPreviousTimeStep ? gridVars_(freeFlowMassIndex).curGridVolVars()
+                                                           : gridVars_(freeFlowMassIndex).prevGridVolVars();
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
-            const auto& scv = context.fvGeometry.scv(eIdx);
+            const auto& scv = massFvGeometry.scv(eIdx);
 
-            const auto& volVars = considerPreviousTimeStep ? context.prevElemVolVars[scv]
-                                                           : context.curElemVolVars[scv];
+            const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
 
             return volVars.viscosity();
         }
@@ -328,17 +359,15 @@ public:
         {
             // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-            const auto& localBasis = context.fvGeometry.feLocalBasis();
+            const auto& localBasis = massFvGeometry.feLocalBasis();
             std::vector<ShapeValue> shapeValues;
             localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar mu = 0.0;
-            for (const auto& localDof : localDofs(context.fvGeometry))
+            for (const auto& scv : scvs(massFvGeometry))
             {
-                const auto& volVars = considerPreviousTimeStep ?
-                    context.prevElemVolVars[localDof.index()]
-                    : context.curElemVolVars[localDof.index()];
-                mu += volVars.viscosity()*shapeValues[localDof.index()][0];
+                const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
+                mu += volVars.viscosity()*shapeValues[scv.localDofIndex()][0];
             }
 
             return mu;
@@ -592,21 +621,14 @@ public:
     }
 
 private:
-    MomentumCouplingContext makeMomentumCouplingContext_(const Element<freeFlowMomentumIndex>& elementI) const
+    template<class SolutionVector>
+    auto makeMomentumCouplingContext_(const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
+                                      const SolutionVector& sol) const
     {
-        auto fvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
-        fvGeometry.bind(elementI);
-
-        auto curElemVolVars = localView(gridVars_(freeFlowMassIndex).curGridVolVars());
-        curElemVolVars.bind(elementI, fvGeometry, this->curSol(freeFlowMassIndex));
-
-        auto prevElemVolVars = isTransient_ ? localView(gridVars_(freeFlowMassIndex).prevGridVolVars())
-                                            : localView(gridVars_(freeFlowMassIndex).curGridVolVars());
-
-        if (isTransient_)
-            prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
-
-        return MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars)};
+        if constexpr (ElementVolumeVariables<freeFlowMassIndex>::GridVolumeVariables::cachingEnabled)
+            return MomentumCouplingContextGlobalCaching{};
+        else
+            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, fvGeometry.gridGeometry())};
     }
 
     /*!
@@ -634,7 +656,6 @@ private:
         else
             DUNE_THROW(Dune::InvalidStateException, "The gridVariables pointer was not set. Use setGridVariables() before calling this function");
     }
-
 
     void computeCouplingStencils_()
     {
