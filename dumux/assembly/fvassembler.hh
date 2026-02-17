@@ -220,6 +220,8 @@ public:
             localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
 
+        enforcePeriodicConstraints_(*jacobian_, curSol, *gridGeometry_);
+
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
                                              const auto eqIdx,
@@ -251,6 +253,8 @@ public:
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleResidual(r);
         });
+
+        enforcePeriodicConstraints_(*residual_, curSol, *gridGeometry_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -543,6 +547,64 @@ private:
                             setMatrixBlock(matrixBlock, -1.0);
 
                     }
+                }
+            }
+        }
+    }
+
+    template<class GG>
+    void enforcePeriodicConstraints_(JacobianMatrix& jac, const SolutionVector& curSol, const GG& gridGeometry) const
+    {
+        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        {
+            for (const auto& m : gridGeometry.periodicDofMap())
+            {
+                if (m.first < m.second)
+                {
+                    // add the second row to the first
+                    const auto end = jac[m.second].end();
+                    for (auto it = jac[m.second].begin(); it != end; ++it)
+                        jac[m.first][it.index()] += (*it);
+
+                    // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
+                    auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                    {
+                        for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                            matrixBlock[eIdx][eIdx] = diagValue;
+                    };
+
+                    for (auto it = jac[m.second].begin(); it != end; ++it)
+                    {
+                        auto& matrixBlock = *it;
+                        matrixBlock = 0.0;
+
+                        assert(matrixBlock.N() == matrixBlock.M());
+                        if(it.index() == m.second)
+                            setMatrixBlock(matrixBlock, 1.0);
+
+                        if(it.index() == m.first)
+                            setMatrixBlock(matrixBlock, -1.0);
+
+                    }
+                }
+            }
+        }
+    }
+
+    template<class GG>
+    void enforcePeriodicConstraints_(ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
+    {
+        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        {
+            for (const auto& m : gridGeometry.periodicDofMap())
+            {
+                if (m.first < m.second)
+                {
+                    // add the second row to the first
+                    res[m.first] += res[m.second];
+
+                    // enforce constraint in second row
+                    res[m.second] = curSol[m.second] - curSol[m.first];
                 }
             }
         }
