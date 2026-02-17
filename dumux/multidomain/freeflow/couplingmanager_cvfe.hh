@@ -96,15 +96,6 @@ private:
         ElementVolumeVariables<freeFlowMassIndex> prevElemVolVars;
     };
 
-    struct MassAndEnergyCouplingContext
-    {
-        MassAndEnergyCouplingContext(FVElementGeometry<freeFlowMomentumIndex>&& f)
-        : fvGeometry(std::move(f))
-        {}
-
-        FVElementGeometry<freeFlowMomentumIndex> fvGeometry;
-    };
-
     using MomentumDiscretizationMethod = typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod;
     using MassDiscretizationMethod = typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod;
 
@@ -365,9 +356,9 @@ public:
                                 const SubControlVolumeFace<freeFlowMassIndex>& scvf) const
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
-        const auto context = makeMassAndEnergyCouplingContext_(element);
+        auto fvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        fvGeometry.bindElement(element);
 
-        const auto& fvGeometry = context.fvGeometry;
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         std::vector<ShapeValue> shapeValues;
@@ -387,9 +378,9 @@ public:
      */
     VelocityVector elementVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry) const
     {
-        const auto context = makeMassAndEnergyCouplingContext_(fvGeometry.element());
+        auto momentumFvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        momentumFvGeometry.bindElement(fvGeometry.element());
 
-        const auto& momentumFvGeometry = context.fvGeometry;
         const auto& localBasis = momentumFvGeometry.feLocalBasis();
 
         // interpolate velocity at scvf
@@ -414,10 +405,9 @@ public:
         assert(!(considerPreviousTimeStep && !this->isTransient_));
 
         const auto& element = fvGeometry.element();
-        const auto context = makeMassAndEnergyCouplingContext_(element);
-
-        const auto& momentumFvGeometry = context.fvGeometry;
-        const auto& gg = momentumFvGeometry.gridGeometry();
+        const auto& gg = this->problem(freeFlowMomentumIndex).gridGeometry();
+        auto momentumFvGeometry = localView(gg);
+        momentumFvGeometry.bindElement(fvGeometry.element());
 
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMomentumIndex]
                                                    :  this->curSol(freeFlowMomentumIndex);
@@ -617,14 +607,6 @@ private:
             prevElemVolVars.bindElement(elementI, fvGeometry, (*prevSol_)[freeFlowMassIndex]);
 
         return MomentumCouplingContext{std::move(fvGeometry), std::move(curElemVolVars), std::move(prevElemVolVars)};
-    }
-
-    MassAndEnergyCouplingContext makeMassAndEnergyCouplingContext_(const Element<freeFlowMassIndex>& elementI) const
-    {
-        const auto& gridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
-        auto fvGeometry = localView(gridGeometry);
-        fvGeometry.bindElement(elementI);
-        return MassAndEnergyCouplingContext{std::move(fvGeometry)};
     }
 
     /*!
