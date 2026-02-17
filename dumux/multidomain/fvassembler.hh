@@ -262,7 +262,7 @@ public:
 
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
-            enforceGlobalDirichletConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
+            enforceProblemConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -292,7 +292,7 @@ public:
 
             const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
             enforcePeriodicConstraints_(domainId, subRes, *gridGeometry, subSol);
-            enforceGlobalDirichletConstraints_(domainId, subRes, *gridGeometry, subSol);
+            enforceProblemConstraints_(domainId, subRes, *gridGeometry, subSol);
         });
     }
 
@@ -682,7 +682,7 @@ private:
 
     // enforce global constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforceGlobalDirichletConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
     {
         if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
@@ -753,7 +753,7 @@ private:
 
     // enforce global constraints in residual only
     template<std::size_t i, class Res, class GG, class Sol>
-    void enforceGlobalDirichletConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
     {
         if constexpr (Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
