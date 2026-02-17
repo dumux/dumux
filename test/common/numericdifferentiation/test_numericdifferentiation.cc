@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
         if constexpr (std::is_same_v<std::decay_t<decltype(dfx0)>, std::complex<double>>)
         {
-            std::cout << Fmt::format("Scalar test: f'(1) = {:.15e} + {:.15e}i; exact: {:.15e} + {:.15e}i\n",
+            std::cout << Fmt::format("Scalar test:\n-- f'(1) = {:.15e} + {:.15e}i \n-- exact: {:.15e} + {:.15e}i\n",
                                       dfx0.real(), dfx0.imag(), dfx0Exact.real(), dfx0Exact.imag());
 
             if constexpr (std::is_same_v<std::decay_t<decltype(eps)>, std::complex<double>>)
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            std::cout << Fmt::format("Scalar test: f'(1) = {:.15e}; exact: {:.15e}\n", dfx0, dfx0Exact)
+            std::cout << Fmt::format("Scalar test:\n-- f'(1) = {:.15e} \n-- exact: {:.15e}\n", dfx0, dfx0Exact)
                       << Fmt::format("-- eps = {:.15e}, tol = {:.15e}, method = {}\n", eps, tol, numDiffMethod);
 
             if (!Dune::FloatCmp::eq(dfx0, dfx0Exact, tol))
@@ -79,12 +79,17 @@ int main(int argc, char* argv[])
         NumericDifferentiation::partialDerivative(funcVec, x0, dfx0Vec, fx0Vec, eps, numDiffMethod);
         const Dune::FieldVector<Scalar, 2> dfx0ExactVec = dfuncVec(x0);
 
-        // std::cout << Fmt::format("Vector test: f'(1) = {:.15e}, {:.15e}; exact: {:.15e}, {:.15e}\n", dfx0Vec[0], dfx0Vec[1], dfx0ExactVec[0], dfx0ExactVec[1])
-        //           << Fmt::format("-- eps = {:.15e}, tol = {:.15e}, method = {}\n", eps, tol, numDiffMethod);
-
-
         if constexpr (std::is_same_v<Scalar, std::complex<double>>)
         {
+            std::cout << Fmt::format("Vector test: \n-- f'(1) = {:.15e} + {:.15e}i, {:.15e} + {:.15e}i \n-- exact: {:.15e} + {:.15e}i, {:.15e} + {:.15e}i\n",
+                                      dfx0Vec[0].real(), dfx0Vec[0].imag(), dfx0Vec[1].real(), dfx0Vec[1].imag(),
+                                      dfx0ExactVec[0].real(), dfx0ExactVec[0].imag(), dfx0ExactVec[1].real(), dfx0ExactVec[1].imag());
+
+             if constexpr (std::is_same_v<std::decay_t<decltype(eps)>, std::complex<double>>)
+                std::cout << Fmt::format("-- eps = {:.15e} + {:.15e}i, tol = {:.15e}, method = {}\n", eps.real(), eps.imag(), tol, numDiffMethod);
+            else
+                std::cout << Fmt::format("-- eps = {:.15e}, tol = {:.15e}, method = {}\n", eps, tol, numDiffMethod);
+
             // for complex numbers we compare the real and imaginary parts separately
             if (!Dune::FloatCmp::eq(dfx0Vec[0].real(), dfx0ExactVec[0].real(), tol) || !Dune::FloatCmp::eq(dfx0Vec[0].imag(), dfx0ExactVec[0].imag(), tol) ||
                 !Dune::FloatCmp::eq(dfx0Vec[1].real(), dfx0ExactVec[1].real(), tol) || !Dune::FloatCmp::eq(dfx0Vec[1].imag(), dfx0ExactVec[1].imag(), tol))
@@ -95,6 +100,9 @@ int main(int argc, char* argv[])
         }
         else
         {
+            std::cout << Fmt::format("Vector test: \n-- f'(1) = {:.15e}, {:.15e} \n-- exact: {:.15e}, {:.15e}\n", dfx0Vec[0], dfx0Vec[1], dfx0ExactVec[0], dfx0ExactVec[1])
+                      << Fmt::format("-- eps = {:.15e}, tol = {:.15e}, method = {}\n", eps, tol, numDiffMethod);
+
             if (!Dune::FloatCmp::eq(dfx0Vec, dfx0ExactVec, tol))
             {
                 std::cout << "--> FAILED\n";
