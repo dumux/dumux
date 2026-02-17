@@ -48,7 +48,8 @@ computeConnectedElements(const GridGeometry& gg)
     }
 
     else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
-                       || GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+                       || GridGeometry::discMethod == DiscretizationMethods::pq1bubble
+                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
     {
         static constexpr int dim = GridGeometry::GridView::dimension;
         connectedElements.resize(gg.gridView().size(dim));
@@ -63,8 +64,7 @@ computeConnectedElements(const GridGeometry& gg)
 
     else if constexpr (
         GridGeometry::discMethod == DiscretizationMethods::fcstaggered
-        || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
-    )
+        || GridGeometry::discMethod == DiscretizationMethods::ccmpfa)
     {
         // for MPFA-O schemes the assembly of each element residual touches all vertex neighbors
         // for face-centered staggered it is all codim-2 neighbors (vertex neighbors in 2D, edge neighbors in 3D)
@@ -133,9 +133,8 @@ void addNeighborColors(const GridGeometry& gg,
     if constexpr (
         GridGeometry::discMethod == DiscretizationMethods::cctpfa
         || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
-        || GridGeometry::discMethod == DiscretizationMethods::fcstaggered
-    )
-    {
+        || GridGeometry::discMethod == DiscretizationMethods::fcstaggered)
+        {
         // we modify neighbor elements during the assembly
         // check who else modifies these neighbor elements
         const auto& eMapper = gg.elementMapper();
@@ -155,7 +154,8 @@ void addNeighborColors(const GridGeometry& gg,
     }
 
     else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
-                       || GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+                       || GridGeometry::discMethod == DiscretizationMethods::pq1bubble
+                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
     {
         // we modify the vertex dofs of our element during the assembly
         // check who else modifies these vertex dofs
@@ -297,6 +297,7 @@ template<> struct SupportsColoring<DiscretizationMethods::Box> : public std::tru
 template<> struct SupportsColoring<DiscretizationMethods::FCStaggered> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::FCDiamond> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::PQ1Bubble> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::PQ2> : public std::true_type {};
 
 } // end namespace Dumux
 
