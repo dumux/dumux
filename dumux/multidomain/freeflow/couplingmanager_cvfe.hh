@@ -706,7 +706,7 @@ struct CouplingManagerSupportsMultithreadedAssemblySelector;
 // multi-threading is not supported because we have only one coupling context instance and a mutable cache
 template<class Traits, class D>
 struct CouplingManagerSupportsMultithreadedAssemblySelector<Traits, DiscretizationMethods::CVFE<D>>
-{ using type = std::false_type; };
+{ using type = std::true_type; };
 
 } // end namespace Detail
 
