@@ -203,7 +203,7 @@ public:
 
             (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
         };
-        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     /*!
@@ -233,7 +233,7 @@ public:
 
             (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
         };
-        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     //! compute the residuals using the internal residual
@@ -263,7 +263,7 @@ public:
         {
             r[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
         };
-        enforceGlobalDirichletConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
     }
 
     /*!
@@ -611,7 +611,7 @@ private:
     }
 
     template<class Problem, class GG, typename ApplyFunction>
-    void enforceGlobalDirichletConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyDirichletConstraint) const
+    void enforceProblemConstraints_(const Problem& problem, const GG& gridGeometry, const ApplyFunction& applyDirichletConstraint) const
     {
         if constexpr (Detail::hasGlobalConstraints<Problem>())
         {
