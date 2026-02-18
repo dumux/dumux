@@ -36,24 +36,23 @@ namespace Dumux::ShallowWater {
  *
  * \return cellStateOutside The outer cell state
  */
-template<class Scalar, class GlobalPosition>
-std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
-                                              const Scalar waterDepthInside,
-                                              const Scalar velocityXInside,
-                                              const Scalar velocityYInside,
-                                              const Scalar gravity,
-                                              const GlobalPosition& nxy)
-
+template <class Scalar, class GlobalPosition>
+    std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
+                                                  const Scalar waterDepthInside,
+                                                  const Scalar velocityXInside,
+                                                  const Scalar velocityYInside,
+                                                  const Scalar gravity,
+                                                  const GlobalPosition &nxy)
 {
     std::array<Scalar, 3> cellStateOutside;
     cellStateOutside[0] = waterDepthBoundary;
-
     using std::sqrt;
-    const auto uboundIn = nxy[0] * velocityXInside  + nxy[1] * velocityYInside;
-    const auto uboundQut =  uboundIn + 2.0 * sqrt(gravity * waterDepthInside) - 2.0 * sqrt(gravity * cellStateOutside[0]);
+    const auto uNormalIn = nxy[0] * velocityXInside + nxy[1] * velocityYInside;
+    const auto uTangentialIn = -nxy[1] * velocityXInside + nxy[0] * velocityYInside;
+    const auto uNormalOut = uNormalIn + 2.0 * sqrt(gravity * waterDepthInside) - 2.0 * sqrt(gravity * cellStateOutside[0]);
 
-    cellStateOutside[1] = (nxy[0] * uboundQut); // we only use the normal part
-    cellStateOutside[2] = (nxy[1] * uboundQut); // we only use the normal part
+    cellStateOutside[1] = (nxy[0] * uNormalOut - nxy[1] * uTangentialIn);
+    cellStateOutside[2] = (nxy[1] * uNormalOut + nxy[0] * uTangentialIn);
 
     return cellStateOutside;
 }
