@@ -47,6 +47,10 @@
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
+
 #include "properties.hh"
 
 #if HAVE_DUNE_FOAMGRID
@@ -67,7 +71,6 @@ void computeWallShearStress(
     static constexpr auto dimWorld = GridView::dimensionworld;
 
     using GlobalPosition = typename GridVariables::GridGeometry::GlobalCoordinate;
-    using Scalar = typename GlobalPosition::value_type;
 
     using Grid = Dune::FoamGrid<dim-1, dimWorld>;
     Dune::GridFactory<Grid> factory;
@@ -155,7 +158,6 @@ void computeWallShearStress(
 
     auto fvGeometry = localView(gg);
     auto elemVolVars = localView(gridVariables.curGridVolVars());
-    auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
     for (const auto& element : elements(gv))
     {
         const auto h = Dumux::diameter(element.geometry());
@@ -164,38 +166,43 @@ void computeWallShearStress(
         );
         fvGeometry.bind(element);
         elemVolVars.bind(element, fvGeometry, curSol);
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
-        for (const auto& scvf : scvfs(fvGeometry))
+        for (const auto& intersection : intersections(gv, element))
         {
-            if (scvf.boundary())
+            if (intersection.boundary())
             {
-                const auto ip = scvf.ipGlobal();
 
-                // assemble wss = sigma*n - (sigma*n*n)*n
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                using Tensor = Dune::FieldMatrix<Scalar, dim>;
-                Tensor sigma(0.0);
-                for (const auto& scv : scvs(fvGeometry))
+                for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, intersection, Dumux::QuadratureRules::DuneQuadrature<2>()))
                 {
-                    const auto& volVars = elemVolVars[scv];
-                    for (int dir = 0; dir < dim; ++dir)
-                        sigma[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(scv.indexInElement()));
+                    const auto& ipData = qpData.ipData();
+
+                    // assemble wss = sigma*n - (sigma*n*n)*n
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto& elementGeometry = fvGeometry.elementGeometry();
+                    const auto gradV = evalGradientsAtLocalPos(element, elementGeometry, gg, elemSol, ipData.local());
+
+                    auto D = gradV;
+                    for(int i=0; i < gradV.size(); i++)
+                        for(int j=0; j<gradV[i].size(); j++)
+                            D[i][j] += gradV[j][i];
+
+                    GlobalPosition sigman(0.0);
+                    const auto normal = ipData.unitOuterNormal();
+                    for(int i=0; i < normal.size(); i++)
+                        sigman[i] = D[i]*normal;
+
+                    sigman *= -problem.effectiveViscosity(element, fvGeometry, ipData);
+                    sigman += problem.pressure(element, fvGeometry, ipData)*normal;
+
+                    const auto normalStress = (sigman * normal)*normal;
+                    const auto wss = sigman - normalStress;
+
+                    // make sure we hit all triangles of this face
+                    const auto points = Dumux::EmbeddedCoupling::circlePoints(ipData.global(), normal, 0.05*h, 4);
+                    for (const auto& p : points)
+                        for (auto b : intersectingEntities(p, tree))
+                            wallShearStress[b] = wss;
                 }
-                sigma += Dumux::getTransposed(sigma);
-                sigma *= -problem.effectiveViscosity(element, fvGeometry, scvf);
-                for (int dir = 0; dir < dim; ++dir)
-                    sigma[dir][dir] += problem.pressure(element, fvGeometry, scvf);
-
-                const auto sigman = Dumux::mv(sigma, scvf.unitOuterNormal());
-                const auto normalStress = (sigman * scvf.unitOuterNormal())*scvf.unitOuterNormal();
-                const auto wss = sigman - normalStress;
-
-                // make sure we hit all triangles of this face
-                const auto points = Dumux::EmbeddedCoupling::circlePoints(ip, scvf.unitOuterNormal(), 0.05*h, 4);
-                for (const auto& p : points)
-                    for (auto b : intersectingEntities(p, tree))
-                        wallShearStress[b] = wss;
             }
         }
     }
