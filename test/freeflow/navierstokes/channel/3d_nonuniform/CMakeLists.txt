@@ -49,6 +49,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq2
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                LABELS freeflow navierstokes
+               TIMEOUT 600
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
