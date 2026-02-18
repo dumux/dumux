@@ -37,12 +37,12 @@ namespace Dumux::ShallowWater {
  * \return cellStateOutside The outer cell state
  */
 template <class Scalar, class GlobalPosition>
-    std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
-                                                  const Scalar waterDepthInside,
-                                                  const Scalar velocityXInside,
-                                                  const Scalar velocityYInside,
-                                                  const Scalar gravity,
-                                                  const GlobalPosition &nxy)
+std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
+                                              const Scalar waterDepthInside,
+                                              const Scalar velocityXInside,
+                                              const Scalar velocityYInside,
+                                              const Scalar gravity,
+                                              const GlobalPosition &nxy)
 {
     std::array<Scalar, 3> cellStateOutside;
     cellStateOutside[0] = waterDepthBoundary;
