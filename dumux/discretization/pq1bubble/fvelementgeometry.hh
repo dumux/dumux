@@ -118,7 +118,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -133,7 +134,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -147,7 +149,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), i)),
+                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -165,7 +168,8 @@ public:
                 return CVFE::LocalDof
                 {
                     static_cast<LocalIndexType>(localDofIdx),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), localDofIdx)),
+                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                                        fvGeometry.feLocalCoefficients().localKey(localDofIdx))),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
                 }
@@ -189,6 +193,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! Get the local finite element coefficients
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
