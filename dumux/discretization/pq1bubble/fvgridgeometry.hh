@@ -60,23 +60,29 @@ using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
 >;
 } // end namespace Detail
 
-template <class GridView>
+template <class GridView, std::size_t numCubeBubbles = 1>
 struct PQ1BubbleMapperTraits :public DefaultMapperTraits<GridView>
 {
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    static_assert(numCubeBubbles == 1 || numCubeBubbles == 2,
+                  "PQ1BubbleMapperTraits supports numCubeBubbles = 1 or 2");
+    static constexpr std::size_t numCubeBubbleDofs = numCubeBubbles;
 
     /**
-     * \brief layout for elements and vertices
-     *
+     * \brief Layout for elements (numCubeBubbleDofs) and vertices
      */
     static Dune::MCMGLayout layout()
     {
         return [](Dune::GeometryType gt, int dimgrid) {
-            return (gt.dim() == dimgrid) || (gt.dim() == 0);
+            if (gt.dim() == 0)
+                return int(1);
+
+            if (gt.dim() == dimgrid)
+                return gt.isCube() ? int(numCubeBubbleDofs) : int(1);
+
+            return int(0);
         };
     }
-
-    static constexpr std::size_t numCubeBubbleDofs = 1;
 };
 
 /*!
@@ -334,6 +340,9 @@ private:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
+            if (!enableHybridCVFE && elementGeometry.type().isCube() && Traits::numCubeBubbleDofs > 1)
+                DUNE_THROW(Dune::NotImplemented, "Multiple bubble dofs for cube elements only for hybrid scheme.");
+
             const auto refElement = referenceElement(elementGeometry);
             const auto& localCoefficients = this->feCache().get(element.type()).localCoefficients();
 
