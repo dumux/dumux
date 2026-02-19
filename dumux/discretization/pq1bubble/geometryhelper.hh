@@ -405,13 +405,10 @@ public:
         return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
     }
 
-    template<class DofMapper>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
+    template<class DofMapper, class LocalKey>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
     {
-        if (localDofIdx < numElementDofs(element.type())-1)
-            return dofMapper.subIndex(element, localDofIdx, dim);
-        else
-            return dofMapper.index(element);
+        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
@@ -682,13 +679,11 @@ public:
         return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
     }
 
-    template<class DofMapper>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, unsigned int localDofIdx)
+    template<class DofMapper, class LocalKey>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
     {
-        if (localDofIdx < numElementDofs(element.type())-1)
-            return dofMapper.subIndex(element, localDofIdx, dim);
-        else
-            return dofMapper.index(element);
+        // For cube elements we have to add the additional index for the bubble dof
+        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const

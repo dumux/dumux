@@ -332,6 +332,7 @@ private:
             // get the element geometry
             auto elementGeometry = element.geometry();
             const auto refElement = referenceElement(elementGeometry);
+            const auto& localCoefficients = this->feCache().get(element.type()).localCoefficients();
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -350,7 +351,7 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(scvLocalIdx)),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
                 );
             }
@@ -426,7 +427,7 @@ private:
                     for (int ilocalDofIdx = 0; ilocalDofIdx < numDofsIntersection; ++ilocalDofIdx)
                     {
                         auto localDofIdx = GeometryHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
-                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localDofIdx);
+                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }
