@@ -78,7 +78,7 @@ public:
             priVars_[localDofIdx] = sol[
                 gridGeometry.dofMapper().subIndex(
                     element, localKey.subEntity(), localKey.codim()
-                )
+                ) + localKey.index()
             ];
         }
     }
