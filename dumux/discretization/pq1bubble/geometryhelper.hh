@@ -495,7 +495,7 @@ private:
     BoxHelper boxHelper_;
 };
 
-template <class GridView, class ScvType, class ScvfType>
+template <class GridView, class ScvType, class ScvfType, std::size_t numCubeBubbleDofs>
 class HybridPQ1BubbleGeometryHelper
 {
     using Scalar = typename GridView::ctype;
@@ -658,13 +658,14 @@ public:
     //! number of element dofs
     static std::size_t numElementDofs(Dune::GeometryType type)
     {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim) + 1;
+        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(type).size(dim);
+        return numVertexDofs + (type.isCube() ? numCubeBubbleDofs : 1);
     }
 
     //! number of hybrid dofs
     static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
     {
-        return 1;
+        return type.isCube() ? numCubeBubbleDofs : 1;
     }
 
     //! Number of local dofs related to an intersection with index iIdx
@@ -688,7 +689,8 @@ public:
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
     {
-        if (localDofIdx < numElementDofs(geo_.type())-1)
+        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(geo_.type()).size(dim);
+        if (localDofIdx < numVertexDofs)
             return geo_.corner(localDofIdx);
         else
             return geo_.center();
