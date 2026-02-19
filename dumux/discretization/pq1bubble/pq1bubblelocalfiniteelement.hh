@@ -34,14 +34,15 @@
 namespace Dumux::Detail {
 
 /*!
- * \brief P1/Q1 + Bubble on the reference element
+ * \brief P1/Q1 + Bubble functions on the reference element
  *
  * \tparam D Type to represent the field in the domain
  * \tparam R Type to represent the field in the range
  * \tparam dim Dimension of the domain element
  * \tparam typeId The geometry type
+ * \tparam numCubeBubbleDofs The number of bubble dofs for cube elements
  */
-template<class D, class R, unsigned int dim, Dune::GeometryType::Id typeId>
+template<class D, class R, unsigned int dim, Dune::GeometryType::Id typeId, std::size_t numCubeBubbleDofs>
 class PQ1BubbleLocalBasis
 {
     using PQ1FiniteElement = std::conditional_t<
@@ -49,8 +50,10 @@ class PQ1BubbleLocalBasis
         Dune::LagrangeCubeLocalFiniteElement<D, R, dim, 1>,
         Dune::LagrangeSimplexLocalFiniteElement<D, R, dim, 1>
     >;
-    static constexpr std::size_t numDofs
-        = Dune::GeometryType{ typeId } == Dune::GeometryTypes::cube(dim) ? (1<<dim)+1 : (dim+1)+1;
+    static constexpr bool isCube = Dune::GeometryType{ typeId } == Dune::GeometryTypes::cube(dim);
+    static constexpr std::size_t numVertexDofs = isCube ? (1<<dim) : (dim+1);
+    static constexpr std::size_t numBubbleDofs = isCube ? numCubeBubbleDofs : 1;
+    static constexpr std::size_t numDofs = numVertexDofs + numBubbleDofs;
 public:
     using Traits = Dune::LocalBasisTraits<
         D, dim, Dune::FieldVector<D, dim>,
@@ -84,10 +87,15 @@ public:
         const auto& p1Basis = pq1FiniteElement_.localBasis();
         p1Basis.evaluateFunction(x, out);
         const auto bubble = evaluateBubble_(x);
+
         out.resize(size());
-        out.back() = bubble;
-        for (int i = 0; i < numDofs-1; ++i)
-            out[i] -= pq1AtCenter_[i]*out.back();
+        out[numVertexDofs] = bubble;
+
+        if constexpr (numBubbleDofs == 2)
+            out[numVertexDofs+1] = scaling_(x)*bubble;
+
+        for (std::size_t i = 0; i < numVertexDofs; ++i)
+            out[i] -= pq1AtCenter_[i]*out[numVertexDofs];
     }
 
     /*!
@@ -103,14 +111,17 @@ public:
         std::vector<typename Traits::RangeType> shapeValues;
         p1Basis.evaluateFunction(x, shapeValues);
 
+        const auto bubble = evaluateBubble_(x);
         const auto bubbleJacobian = evaluateBubbleJacobian_(x);
 
-        for (int i = 0; i < numDofs-1; ++i)
+        for (std::size_t i = 0; i < numVertexDofs; ++i)
             for (int k = 0; k < dim; ++k)
                 out[i][0][k] -= pq1AtCenter_[i]*bubbleJacobian[0][k];
 
         out.resize(size());
-        out.back() = bubbleJacobian;
+        out[numVertexDofs] = bubbleJacobian;
+        if constexpr (numBubbleDofs == 2)
+            out[numVertexDofs+1] = scaling_(x)*bubbleJacobian + bubble[0]*scalingJacobian_(x);
     }
 
     /** \brief Evaluate partial derivatives of any order of all shape functions
@@ -191,6 +202,26 @@ private:
             DUNE_THROW(Dune::NotImplemented, "Bubble function for " << type() << " dim = " << dim);
     }
 
+    auto scaling_(const typename Traits::DomainType& x) const
+    {
+        if constexpr (dim == 2)
+            return (x[0]-0.5) + (x[1]-0.5);
+        else if constexpr (dim == 3)
+            return (x[0]-0.5) + (x[1]-0.5) + (x[2]-0.5);
+        else
+            DUNE_THROW(Dune::NotImplemented, "Bubble function function for dim = " << dim);
+    }
+
+    typename Traits::JacobianType scalingJacobian_(const typename Traits::DomainType& x) const
+    {
+        if constexpr (dim == 2)
+            return {{1.0, 1.0}};
+        else if constexpr (dim == 3)
+            return {{1.0, 1.0, 1.0}};
+        else
+            DUNE_THROW(Dune::NotImplemented, "Bubble function function for dim = " << dim);
+    }
+
     PQ1FiniteElement pq1FiniteElement_;
     std::vector<typename Traits::RangeType> pq1AtCenter_;
 };
@@ -199,12 +230,15 @@ private:
  * \brief Associations of the P1/Q1 + Bubble degrees of freedom to the facets of the reference element
  * \tparam dim Dimension of the reference element
  * \tparam typeId The geometry type
+ * \tparam numCubeBubbleDofs The number of bubble dofs for cube elements
  */
-template<int dim, Dune::GeometryType::Id typeId>
+template<int dim, Dune::GeometryType::Id typeId, std::size_t numCubeBubbleDofs>
 class PQ1BubbleLocalCoefficients
 {
-    static constexpr std::size_t numDofs
-        = Dune::GeometryType{ typeId } == Dune::GeometryTypes::cube(dim) ? (1<<dim)+1 : (dim+1)+1;
+    static constexpr bool isCube = Dune::GeometryType{ typeId } == Dune::GeometryTypes::cube(dim);
+    static constexpr std::size_t numVertexDofs = isCube ? (1<<dim) : (dim+1);
+    static constexpr std::size_t numBubbleDofs = isCube ? numCubeBubbleDofs : 1;
+    static constexpr std::size_t numDofs = numVertexDofs + numBubbleDofs;
 public:
 
     PQ1BubbleLocalCoefficients()
@@ -215,11 +249,12 @@ public:
         // - the local number of the function to evaluate
 
         // vertex dofs
-        for (std::size_t i=0; i<size()-1; i++)
+        for (std::size_t i = 0; i < numVertexDofs; ++i)
             localKeys_[i] = Dune::LocalKey(i, dim, 0);
 
-        // cell dof
-        localKeys_.back() = Dune::LocalKey(0, 0, 0);
+        // cell dof(s)
+        for (std::size_t i = 0; i < numBubbleDofs; ++i)
+            localKeys_[numVertexDofs + i] = Dune::LocalKey(0, 0, i);
     }
 
     //! Number of coefficients
@@ -255,6 +290,8 @@ public:
     void interpolate (const F& f, std::vector<C>& out) const
     {
         constexpr auto dim = LocalBasis::Traits::dimDomain;
+        if constexpr (LocalBasis::type() == Dune::GeometryTypes::cube(dim))
+            DUNE_THROW(Dune::NotImplemented, "Interpolation for Q1 bubble not implemented yet");
 
         out.resize(LocalBasis::size());
 
@@ -278,12 +315,15 @@ namespace Dumux {
  * \tparam R type used for function values
  * \tparam dim dimension of the reference element
  * \tparam typeId The geometry type
+ * \tparam numCubeBubbleDofs The number of bubble dofs for cube elements
  */
-template<class D, class R, int dim, Dune::GeometryType::Id typeId>
+template<class D, class R, int dim, Dune::GeometryType::Id typeId, std::size_t numCubeBubbleDofs = 1>
 class PQ1BubbleLocalFiniteElement
 {
-    using Basis = Detail::PQ1BubbleLocalBasis<D, R, dim, typeId>;
-    using Coefficients = Detail::PQ1BubbleLocalCoefficients<dim, typeId>;
+    static_assert(numCubeBubbleDofs == 1 || numCubeBubbleDofs == 2,
+                    "P1/Q1 bubble FE supports numCubeBubbleDofs = 1 or 2");
+    using Basis = Detail::PQ1BubbleLocalBasis<D, R, dim, typeId, numCubeBubbleDofs>;
+    using Coefficients = Detail::PQ1BubbleLocalCoefficients<dim, typeId, numCubeBubbleDofs>;
     using Interpolation = Detail::PQ1BubbleLocalInterpolation<Basis>;
 
     static constexpr Dune::GeometryType gt = Dune::GeometryType{ typeId };

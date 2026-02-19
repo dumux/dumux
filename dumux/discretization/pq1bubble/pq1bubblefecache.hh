@@ -24,15 +24,17 @@
 
 namespace Dumux {
 
-template< class CoordScalar, class Scalar, unsigned int dim>
+template< class CoordScalar, class Scalar, unsigned int dim, std::size_t numCubeBubbleDofs = 1>
 class PQ1BubbleFECache
 {
     static_assert(dim == 2 || dim == 3, "P1/Q1 bubble FE spaces only implemented for 2D and 3D grids");
+    static_assert(numCubeBubbleDofs == 1 || numCubeBubbleDofs == 2,
+                    "P1/Q1 bubble FE spaces supports numCubeBubbleDofs = 1 or 2");
 
     // These are so-called non-conforming finite element spaces
     // the local basis is only continuous at given points on the faces
-    using P1Bubble = Dumux::PQ1BubbleLocalFiniteElement<CoordScalar, Scalar, dim, Dune::GeometryTypes::simplex(dim).toId()>;
-    using Q1Bubble = Dumux::PQ1BubbleLocalFiniteElement<CoordScalar, Scalar, dim, Dune::GeometryTypes::cube(dim).toId()>;
+    using P1Bubble = Dumux::PQ1BubbleLocalFiniteElement<CoordScalar, Scalar, dim, Dune::GeometryTypes::simplex(dim).toId(), 1>;
+    using Q1Bubble = Dumux::PQ1BubbleLocalFiniteElement<CoordScalar, Scalar, dim, Dune::GeometryTypes::cube(dim).toId(), numCubeBubbleDofs>;
 
 public:
     using FiniteElementType = Dune::LocalFiniteElementVirtualInterface<typename P1Bubble::Traits::LocalBasisType::Traits>;
