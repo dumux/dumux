@@ -52,7 +52,7 @@ static constexpr bool enablesHybridCVFE
 template<class GV, class T>
 using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
     std::conditional_t<enablesHybridCVFE<T>,
-        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace, T::numCubeBubbleDofs>,
         Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>
     >,
     SpecifiesGeometryHelper,
@@ -75,6 +75,8 @@ struct PQ1BubbleMapperTraits :public DefaultMapperTraits<GridView>
             return (gt.dim() == dimgrid) || (gt.dim() == 0);
         };
     }
+
+    static constexpr std::size_t numCubeBubbleDofs = 1;
 };
 
 /*!
@@ -104,7 +106,8 @@ struct PQ1BubbleDefaultGridGeometryTraits
     template<class GridGeometry, bool enableCache>
     using LocalView = PQ1BubbleFVElementGeometry<GridGeometry, enableCache>;
 
-    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension) + 1;
+    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension)
+                                                    + MapperTraits::numCubeBubbleDofs;
 };
 
 /*!
@@ -165,7 +168,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
+    using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim, Traits::numCubeBubbleDofs>;
     //! export the grid view type
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
