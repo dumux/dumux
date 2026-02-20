@@ -674,6 +674,16 @@ private:
 
         for (const auto& element : elements(momentumGridGeometry.gridView()))
         {
+            // Throw error for pq1bubble scheme on cube elements if not using the hybrid variant
+            if constexpr ((MomentumDiscretizationMethod{} == DiscretizationMethods::pq1bubble))
+            {
+                if(element.type().isCube() && !GridGeometry<freeFlowMomentumIndex>::enableHybridCVFE)
+                    DUNE_THROW(Dune::InvalidStateException,
+                        "Coupled Navier-Stokes problem on cube elements requires hybrid variant of pq1bubble, "
+                        "which implements two bubble functions for stability reasons."
+                    );
+            }
+
             momentumFvGeometry.bindElement(element);
             massFvGeometry.bindElement(element);
             const auto eIdx = momentumFvGeometry.elementIndex();
