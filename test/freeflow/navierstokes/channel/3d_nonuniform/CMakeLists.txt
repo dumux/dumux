@@ -43,7 +43,7 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex-00001.vtu
                                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex params.input
                                 -Problem.Name test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex
-                                -Grid.File channel.msh -Assembly.Multithreading false")
+                                -Grid.File channel.msh")
 
 dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq2
                SOURCES main.cc
