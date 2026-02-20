@@ -73,7 +73,11 @@ private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Traits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView>>;
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView>;
+    // For hybrid scheme we use two bubble functions on cubes
+    // when only using one bubble function stability issues can arise, especially for coupled problems
+    static constexpr std::size_t numCubeBubbles = 2;
+    using Traits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView, numCubeBubbles>, QuadTraits>>;
 public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, Traits>;
 };
