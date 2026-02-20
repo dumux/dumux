@@ -35,8 +35,16 @@ public:
     //! export type of the grid variables cache
     using GridVariablesCache = GVC;
 
+    //! deprecated: use GridVariablesCache
+    [[deprecated("Will be removed after release 3.12. Use GridVariablesCache.")]]
+    using GridVolumeVariables = GridVariablesCache;
+
     //! export type of the volume variables
     using Variables = typename GridVariablesCache::Variables;
+
+    //! deprecated: use Variables
+    [[deprecated("Will be removed after release 3.12. Use Variables.")]]
+    using VolumeVariables = Variables;
 
     //! export primary variable type
     using PrimaryVariables = typename Variables::PrimaryVariables;
@@ -46,6 +54,10 @@ public:
 
     //! export type of the finite volume grid geometry
     using GridDataCache = GDC;
+
+    //! deprecated: use GridDataCache
+    [[deprecated("Will be removed after release 3.12. Use GridDataCache.")]]
+    using GridFluxVariablesCache = GridDataCache;
 
     template<class Problem>
     GridVariables(std::shared_ptr<Problem> problem,
@@ -124,6 +136,16 @@ public:
     GridDataCache& gridDataCache()
     { return gridDataCache_; }
 
+    //! deprecated: use gridDataCache()
+    [[deprecated("Will be removed after release 3.12. Use gridDataCache().")]]
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    { return gridDataCache(); }
+
+    //! deprecated: use gridDataCache()
+    [[deprecated("Will be removed after release 3.12. Use gridDataCache().")]]
+    GridFluxVariablesCache& gridFluxVarsCache()
+    { return gridDataCache(); }
+
     //! return the current variables
     const GridVariablesCache& curGridVars() const
     { return curGridVars_; }
@@ -132,6 +154,16 @@ public:
     GridVariablesCache& curGridVars()
     { return curGridVars_; }
 
+    //! deprecated: use curGridVars()
+    [[deprecated("Will be removed after release 3.12. Use curGridVars().")]]
+    const GridVolumeVariables& curGridVolVars() const
+    { return curGridVars(); }
+
+    //! deprecated: use curGridVars()
+    [[deprecated("Will be removed after release 3.12. Use curGridVars().")]]
+    GridVolumeVariables& curGridVolVars()
+    { return curGridVars(); }
+
     //! return the variables of the previous time step (for instationary problems)
     const GridVariablesCache& prevGridVars() const
     { return prevGridVars_; }
@@ -139,6 +171,16 @@ public:
     //! return the variables of the previous time step (for instationary problems)
     GridVariablesCache& prevGridVars()
     { return prevGridVars_; }
+
+    //! deprecated: use prevGridVars()
+    [[deprecated("Will be removed after release 3.12. Use prevGridVars().")]]
+    const GridVolumeVariables& prevGridVolVars() const
+    { return prevGridVars(); }
+
+    //! deprecated: use prevGridVars()
+    [[deprecated("Will be removed after release 3.12. Use prevGridVars().")]]
+    GridVolumeVariables& prevGridVolVars()
+    { return prevGridVars(); }
 
     //! return the finite volume grid geometry
     const GridGeometry& gridGeometry() const
