@@ -29,3 +29,12 @@ BaseEpsilon = 0.1
 MinSteps = 1
 EnableAbsoluteResidualCriterion = true
 MaxAbsoluteResidual = 1e-5
+
+[LinearSolver]
+MaxIterations = 500
+ResidualReduction = 1e-10
+SymmetrizeDirichlet = false
+DirectSolverForVelocity = true
+GMResRestart = 500
+Type = gmres
+Verbosity = 1
