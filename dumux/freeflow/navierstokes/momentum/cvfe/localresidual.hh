@@ -86,7 +86,7 @@ class NavierStokesMomentumCVFELocalResidual
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BaseIpData = Dumux::CVFE::InterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate, GlobalPosition>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
-    using FeResidual = NavierStokesMomentumFELocalResidual<Scalar, NumEqVector, LocalBasis, Extrusion>;
+    using FeResidual = NavierStokesMomentumFELocalResidualTerms<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
     using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
 

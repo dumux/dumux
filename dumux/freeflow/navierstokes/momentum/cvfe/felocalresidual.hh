@@ -27,7 +27,7 @@ namespace Dumux {
  * \brief Helper class for evaluating FE-based local residuals
  */
 template<class Scalar, class NumEqVector, class LocalBasis, class Extrusion>
-class NavierStokesMomentumFELocalResidual
+class NavierStokesMomentumFELocalResidualTerms
 {
     using RangeType = typename LocalBasis::Traits::RangeType;
 
