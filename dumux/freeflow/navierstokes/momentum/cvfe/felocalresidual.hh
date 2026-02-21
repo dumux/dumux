@@ -214,6 +214,70 @@ public:
     }
 };
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Element-wise calculation of the Navier-Stokes residual for models using FE discretizations
+ */
+template<class TypeTag>
+class NavierStokesMomentumFELocalResidual
+: public DiscretizationDefaultLocalOperator<TypeTag>
+{
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
+
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+
+    using GridVariablesCache = typename GridVariables::GridVolumeVariables;
+    using ElementVariables = typename GridVariablesCache::LocalView;
+
+    using GridDataCache = typename GridVariables::GridFluxVariablesCache;
+    using ElementDataCache = typename GridDataCache::LocalView;
+
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+
+    using Extrusion = Extrusion_t<GridGeometry>;
+
+    using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeResidual = NavierStokesMomentumFELocalResidualTerms<Scalar, NumEqVector, LocalBasis, Extrusion>;
+
+public:
+    //! Use the parent type's constructor
+    using ElementResidualVector = typename ParentType::ElementResidualVector;
+    using ParentType::ParentType;
+
+    void addToElementStorageResidual(ElementResidualVector& residual,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVariables& prevElemVolVars,
+                                     const ElementVariables& curElemVolVars) const
+    {
+        FeResidual::addStorageTerms(
+            residual, problem, fvGeometry, prevElemVolVars, curElemVolVars, this->timeLoop().timeStepSize()
+        );
+    }
+
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVariables& elemVars,
+                                           const ElementDataCache& elemDataCache,
+                                           const ElementBoundaryTypes &elemBcTypes) const
+    {
+        FeResidual::addFluxAndSourceTerms(
+            residual, problem, fvGeometry, elemVars, elemDataCache, elemBcTypes
+        );
+    }
+};
+
 } // end namespace Dumux
 
 #endif
