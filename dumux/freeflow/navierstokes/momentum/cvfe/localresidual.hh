@@ -52,9 +52,9 @@ constexpr inline bool hasProblemSourceWithIpDataInterface()
  */
 template<class TypeTag>
 class NavierStokesMomentumCVFELocalResidual
-: public CVFELocalResidual<TypeTag>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = CVFELocalResidual<TypeTag>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
