@@ -12,6 +12,7 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 
+#include <dune/common/std/type_traits.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/geometry/quadraturerules.hh>
 
@@ -19,6 +20,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/concepts/datacache_.hh>
 
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
@@ -62,8 +64,8 @@ class NavierStokesMomentumCVFELocalResidual
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Variables = typename GridVariablesCache::VolumeVariables;
 
-    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
-    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using GridDataCache = typename GridVariables::GridFluxVariablesCache;
+    using ElementDataCache = typename GridDataCache::LocalView;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -87,12 +89,12 @@ class NavierStokesMomentumCVFELocalResidual
     using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BaseIpData = Dumux::CVFE::InterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate, GlobalPosition>;
-    using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVariables, ElementFluxVariablesCache>;
+    using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVariables, ElementDataCache>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
     using FeResidual = NavierStokesMomentumFELocalResidual<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
-    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
-    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
+    using DataCache = Concept::DataCache_t<GridDataCache>;
+    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, DataCache>;
     using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
 
 public:
@@ -243,16 +245,16 @@ public:
      * \param fvGeometry The finite volume geometry context
      * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux computation
+     * \param elemDataCache The cache related to flux computation
      */
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVariables& elemVars,
                             const SubControlVolumeFace& scvf,
-                            const ElementFluxVariablesCache& elemFluxVarsCache) const
+                            const ElementDataCache& elemDataCache) const
     {
-        FluxContext context(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf);
+        FluxContext context(problem, fvGeometry, elemVars, elemDataCache, scvf);
         FluxHelper fluxHelper;
 
         NumEqVector flux(0.0);
@@ -267,13 +269,13 @@ public:
      *
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemFluxVarsCache the flux variable caches for the element's flux stencils
+     * \param elemDataCache the caches for the element's flux calculations
      * \param scvf The sub control volume face
      *
      */
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
-                             const ElementFluxVariablesCache& elemFluxVarsCache,
+                             const ElementDataCache& elemDataCache,
                              const SubControlVolumeFace& scvf) const
     {
         const auto& problem = this->asImp().problem();
@@ -284,14 +286,14 @@ public:
 
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
         {
-            const auto& fluxVarsCache = elemFluxVarsCache[qpData.ipData()];
+            const auto& fluxVarsCache = elemDataCache[qpData.ipData()];
             FluxFunctionContext context(this->problem(), fvGeometry, elemVars, fluxVarsCache);
 
             velIntegral += context.velocity() * qpData.weight();
             flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
                                       + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
         }
-        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf, velIntegral);
+        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, elemDataCache, scvf, velIntegral);
 
         flux *= elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
 
@@ -315,11 +317,11 @@ public:
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
                                            const ElementVariables& elemVars,
-                                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           const ElementDataCache& elemDataCache,
                                            const ElementBoundaryTypes &elemBcTypes) const
     {
         FeResidual::addFluxAndSourceTerms(
-            residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes
+            residual, problem, fvGeometry, elemVars, elemDataCache, elemBcTypes
         );
     }
 };
