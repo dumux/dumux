@@ -42,7 +42,7 @@ std::array<Scalar, 3> fixedWaterDepthBoundary(const Scalar waterDepthBoundary,
                                               const Scalar velocityXInside,
                                               const Scalar velocityYInside,
                                               const Scalar gravity,
-                                              const GlobalPosition &nxy)
+                                              const GlobalPosition& nxy)
 {
     std::array<Scalar, 3> cellStateOutside;
     cellStateOutside[0] = waterDepthBoundary;
