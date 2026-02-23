@@ -23,6 +23,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/concepts/datacache_.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/typetraits/boundary_.hh>
 
@@ -334,15 +335,15 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/t
     using GridVolumeVariables = GetPropType<TypeTag, Properties::GridVolumeVariables>;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using GridCache = Concept::GridCache_t<GridVariables>;
+    using DataCache = Concept::DataCache_t<GridCache>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
 
-    static constexpr bool enableGridFluxVarsCache
-        = GridVariables::GridFluxVariablesCache::cachingEnabled;
-    static constexpr bool solutionDependentFluxVarsCache
-        = GridVariables::GridFluxVariablesCache::FluxVariablesCache::isSolDependent;
+    static constexpr bool enableGridFluxVarsCache = GridCache::cachingEnabled;
+    static constexpr bool solutionDependentFluxVarsCache = DataCache::isSolDependent;
 
 public:
 
