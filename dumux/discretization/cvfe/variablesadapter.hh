@@ -58,8 +58,14 @@ public:
     {
         // As default we assume that for each localDof there is a corresponding scv
         // such that the update interface of VolumeVariables can still be used.
-        if constexpr (hasUpdateFunctionForScvs<VolumeVariables, ElementSolution, Problem,
-                      typename FVElementGeometry::Element, typename FVElementGeometry::SubControlVolume>())
+        if constexpr (requires {
+            typename FVElementGeometry::SubControlVolume;
+            requires hasUpdateFunctionForScvs<VolumeVariables,
+                                              ElementSolution,
+                                              Problem,
+                                              typename FVElementGeometry::Element,
+                                              typename FVElementGeometry::SubControlVolume>();
+        })
             VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(ipData.localDofIndex()));
         else
             VolumeVariables::update(elemSol, problem, fvGeometry, ipData);
