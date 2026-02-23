@@ -220,12 +220,16 @@ public:
                                         + problem.density(fvGeometry.element(), fvGeometry, qpData.ipData()) * problem.gravity());
         }
 
-        // ToDo: point source data with ipData
-        // add contribution from possible point sources
-        if (!problem.pointSourceMap().empty())
-            source += Extrusion::volume(fvGeometry, scv) * problem.scvPointSources(fvGeometry.element(), fvGeometry, elemVars, scv);
-
         source *= elemVars[scv].extrusionFactor();
+
+        // add contribution from possible point sources
+        const auto& pointSources = problem.pointSources();
+        if (!pointSources.empty())
+            for (const auto& context : pointSources.contexts(fvGeometry, scv))
+            {
+                auto psValues = pointSources.eval(fvGeometry, elemVars, context);
+                source += psValues;
+            }
 
         return source;
     }

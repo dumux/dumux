@@ -21,6 +21,7 @@
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
+#include <dumux/common/problemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/freeflow/navierstokes/momentum/boundarytypes.hh>
 
@@ -883,9 +884,9 @@ private:
  */
 template<class TypeTag>
 class CVFENavierStokesMomentumProblem
-: public FVProblemWithSpatialParams<TypeTag>
+: public Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -898,8 +899,7 @@ class CVFENavierStokesMomentumProblem
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
 
     static constexpr int dim = GridView::dimension;
@@ -1029,6 +1029,7 @@ public:
      * \param elemVars All variables for the element
      * \param scvf The sub-control volume face
      */
+    template<class SubControlVolumeFace>
     BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
                                         const ElementVariables& elemVars,
                                         const SubControlVolumeFace& scvf) const
@@ -1048,7 +1049,7 @@ public:
      * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The sub-control volume face
      */
-    template<class ElementFluxVariablesCache>
+    template<class ElementFluxVariablesCache, class SubControlVolumeFace>
     [[deprecated("This function is deprecated and will be removed after release 3.11. "
                  "Use boundaryFluxIntegral without elemFluxVarsCache instead.")]]
     BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,

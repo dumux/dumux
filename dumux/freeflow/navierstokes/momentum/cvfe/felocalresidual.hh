@@ -121,8 +121,11 @@ public:
             if (nonCVLocalDofs(fvGeometry).empty())
                 return;
 
-            if (!problem.pointSourceMap().empty())
-                DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            if constexpr (requires { problem.pointSources(); })
+            {
+                if (!problem.pointSources().empty())
+                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            }
 
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -234,8 +237,11 @@ public:
             if (nonCVLocalDofs(fvGeometry).empty())
                 return;
 
-            if (!problem.pointSourceMap().empty())
-                DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            if constexpr (requires { problem.pointSources(); })
+            {
+                if (!problem.pointSources().empty())
+                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            }
 
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
