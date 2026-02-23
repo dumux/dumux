@@ -18,6 +18,11 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
+#include <dumux/common/math.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
@@ -30,6 +35,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -37,7 +43,223 @@
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
+#include <dumux/geometry/diameter.hh>
+#include <dumux/geometry/geometricentityset.hh>
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/multidomain/embedded/circlepoints.hh>
+
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
+
 #include "properties.hh"
+
+#ifndef USE_STOKES_SOLVER
+#define USE_STOKES_SOLVER 0
+#endif
+
+template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
+auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
+                   std::shared_ptr<MassGG> massGridGeometry,
+                   std::shared_ptr<MomP> momentumProblem,
+                   MomIdx momentumIdx, MassIdx massIdx)
+{
+    Vector dirichletDofs;
+    dirichletDofs[momentumIdx].resize(momentumGridGeometry->numDofs());
+    dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
+    dirichletDofs = 0.0;
+
+    auto fvGeometry = localView(*momentumGridGeometry);
+    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    {
+        fvGeometry.bind(element);
+
+        for (const auto& intersection : intersections(momentumGridGeometry->gridView(), element))
+        {
+            if(intersection.boundary() == false)
+                continue;
+
+            const auto bcTypes = momentumProblem->boundaryTypes(fvGeometry, intersection);
+            if (bcTypes.hasDirichlet())
+            {
+                for (auto&& localDof : localDofs(fvGeometry, intersection))
+                {
+                        for (int i = 0; i < bcTypes.size(); ++i)
+                            if (bcTypes.isDirichlet(i))
+                                dirichletDofs[momentumIdx][localDof.index()][i] = 1.0;
+                }
+            }
+        }
+    }
+
+    return dirichletDofs;
+}
+
+#if HAVE_DUNE_FOAMGRID
+// Compute the wall shear stress
+template<class VelSolutionVector, class GridVariables, class CouplingManager, class Assembler>
+void computeWallShearStress(
+    const VelSolutionVector& curSol,
+    const GridVariables& gridVariables,
+    CouplingManager& couplingManager,
+    const Assembler& assembler
+){
+    const auto& problem = gridVariables.curGridVolVars().problem();
+    const auto& gg = problem.gridGeometry();
+    const auto& gv = gg.gridView();
+
+    using GridView = typename GridVariables::GridGeometry::GridView;
+    static constexpr int dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+
+    using GlobalPosition = typename GridVariables::GridGeometry::GlobalCoordinate;
+
+    using Grid = Dune::FoamGrid<dim-1, dimWorld>;
+    Dune::GridFactory<Grid> factory;
+    {
+        std::vector<std::vector<std::vector<unsigned int>>> elems;
+        elems.reserve(gg.numBoundaryScvf());
+        std::vector<bool> insertedVertex(gv.size(dim), false);
+        std::vector<int> vertexIndexMap(gv.size(dim), -1);
+        std::vector<Dune::FieldVector<double, 3>> points;
+        points.reserve(gg.numBoundaryScvf()*4);
+        std::size_t boundaryElementIndex = 0;
+        for (const auto& element : elements(gv))
+        {
+            for (const auto& intersection : intersections(gv, element))
+            {
+                if (intersection.boundary())
+                {
+                    const auto insideIdx = intersection.indexInInside();
+                    const auto refElement = referenceElement(element);
+                    const auto numVertices = refElement.size(insideIdx, 1, dim);
+                    if (numVertices == 3)
+                        elems.push_back({std::vector<unsigned int>{}});
+                    else if (numVertices == 4)
+                        elems.push_back({std::vector<unsigned int>{},
+                                            std::vector<unsigned int>{}}); // add two triangles
+                    else
+                        DUNE_THROW(Dune::NotImplemented,
+                            "Wall shear stress for boundary type with " << numVertices << " corners"
+                        );
+
+
+                    for (int i = 0; i < numVertices; ++i)
+                    {
+                        const auto localVIdx = refElement.subEntity(insideIdx, 1, i, dim);
+                        const auto& vertex = element.template subEntity<dim>(localVIdx);
+                        const auto vIdx = gg.vertexMapper().index(vertex);
+                        if (!insertedVertex[vIdx])
+                        {
+                            vertexIndexMap[vIdx] = points.size();
+                            points.push_back(vertex.geometry().corner(0));
+                            insertedVertex[vIdx] = true;
+                        }
+
+                        if (numVertices == 3)
+                            elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+
+                        else if (numVertices == 4)
+                        {
+                            // add two triangles
+                            if (i == 0)
+                                elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+                            else if (i == 1 || i == 2)
+                            {
+                                elems[boundaryElementIndex][0].push_back(vertexIndexMap[vIdx]);
+                                elems[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
+                            }
+                            else
+                                elems[boundaryElementIndex][1].push_back(vertexIndexMap[vIdx]);
+                        }
+                        else
+                            DUNE_THROW(Dune::NotImplemented,
+                                "Wall shear stress for boundary type with " << numVertices << " corners"
+                            );
+                    }
+
+                    ++boundaryElementIndex;
+                }
+            }
+        }
+
+        for (const auto& p : points)
+            factory.insertVertex(p);
+        for (const auto& e : elems)
+            for (const auto& ee : e)
+                factory.insertElement(Dune::GeometryTypes::simplex(dim-1), ee);
+    }
+
+    auto bGrid = factory.createGrid();
+
+    using ElementSet = Dumux::GridViewGeometricEntitySet<typename Grid::LeafGridView, 0>;
+    using Tree = Dumux::BoundingBoxTree<ElementSet>;
+    Tree tree(std::make_shared<ElementSet>(bGrid->leafGridView()));
+
+    std::vector<GlobalPosition> wallShearStress(bGrid->leafGridView().size(0));
+
+    auto fvGeometry = localView(gg);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    for (const auto& element : elements(gv))
+    {
+        const auto h = Dumux::diameter(element.geometry());
+        couplingManager.bindCouplingContext(
+            CouplingManager::freeFlowMomentumIndex, element, assembler
+        );
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, curSol);
+
+        for (const auto& intersection : intersections(gv, element))
+        {
+            if (intersection.boundary())
+            {
+
+                for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, intersection, Dumux::QuadratureRules::DuneQuadrature<2>()))
+                {
+                    const auto& ipData = qpData.ipData();
+
+                    // assemble wss = sigma*n - (sigma*n*n)*n
+                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                    const auto& elementGeometry = fvGeometry.elementGeometry();
+                    const auto gradV = evalGradientsAtLocalPos(element, elementGeometry, gg, elemSol, ipData.local());
+
+                    auto D = gradV;
+                    for(int i=0; i < gradV.size(); i++)
+                        for(int j=0; j<gradV[i].size(); j++)
+                            D[i][j] += gradV[j][i];
+
+                    GlobalPosition sigman(0.0);
+                    const auto normal = ipData.unitOuterNormal();
+                    for(int i=0; i < normal.size(); i++)
+                        sigman[i] = D[i]*normal;
+
+                    sigman *= -problem.effectiveViscosity(element, fvGeometry, ipData);
+                    sigman += problem.pressure(element, fvGeometry, ipData)*normal;
+
+                    const auto normalStress = (sigman * normal)*normal;
+                    const auto wss = sigman - normalStress;
+
+                    // make sure we hit all triangles of this face
+                    const auto points = Dumux::EmbeddedCoupling::circlePoints(ipData.global(), normal, 0.05*h, 4);
+                    for (const auto& p : points)
+                        for (auto b : intersectingEntities(p, tree))
+                            wallShearStress[b] = wss;
+                }
+            }
+        }
+    }
+
+    Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView> bMapper(
+        bGrid->leafGridView(), Dune::mcmgLayout(Dune::Codim<0>())
+    );
+    using Field = Dumux::Vtk::Field<typename Grid::LeafGridView>;
+    Dune::VTKWriter<typename Grid::LeafGridView> writer(bGrid->leafGridView());
+    writer.addCellData(Field(
+        bGrid->leafGridView(), bMapper, wallShearStress, "wallShearStress", dimWorld
+    ).get());
+    writer.write(problem.name() + "_wall_shear_stress");
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -123,8 +345,17 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // the linearize and solve
+#if USE_STOKES_SOLVER
+    using Matrix = typename Assembler::JacobianMatrix;
+    using Vector = typename Assembler::ResidualType;
+    using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+    auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+    auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+#else
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
+
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
     nonLinearSolver.solve(x);
@@ -137,7 +368,7 @@ int main(int argc, char** argv)
     momentumProblem->computeFluxes(x[momentumIdx]);
 
 #if HAVE_DUNE_FOAMGRID
-    momentumProblem->computeWallShearStress(x[momentumIdx], *momentumGridVariables, *couplingManager, *assembler);
+    computeWallShearStress(x[momentumIdx], *momentumGridVariables, *couplingManager, *assembler);
 #endif
 
     timer.stop();
