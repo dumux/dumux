@@ -52,7 +52,7 @@ static constexpr bool enablesHybridCVFE
 template<class GV, class T>
 using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
     std::conditional_t<enablesHybridCVFE<T>,
-        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>,
+        Dumux::HybridPQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace, T::numCubeBubbleDofs>,
         Dumux::PQ1BubbleGeometryHelper<GV, typename T::SubControlVolume, typename T::SubControlVolumeFace>
     >,
     SpecifiesGeometryHelper,
@@ -60,19 +60,27 @@ using PQ1BubbleGeometryHelper_t = Dune::Std::detected_or_t<
 >;
 } // end namespace Detail
 
-template <class GridView>
+template <class GridView, std::size_t numCubeBubbles = 1>
 struct PQ1BubbleMapperTraits :public DefaultMapperTraits<GridView>
 {
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    static_assert(numCubeBubbles == 1 || numCubeBubbles == 2,
+                  "PQ1BubbleMapperTraits supports numCubeBubbles = 1 or 2");
+    static constexpr std::size_t numCubeBubbleDofs = numCubeBubbles;
 
     /**
-     * \brief layout for elements and vertices
-     *
+     * \brief Layout for elements (numCubeBubbleDofs) and vertices
      */
     static Dune::MCMGLayout layout()
     {
         return [](Dune::GeometryType gt, int dimgrid) {
-            return (gt.dim() == dimgrid) || (gt.dim() == 0);
+            if (gt.dim() == 0)
+                return int(1);
+
+            if (gt.dim() == dimgrid)
+                return gt.isCube() ? int(numCubeBubbleDofs) : int(1);
+
+            return int(0);
         };
     }
 };
@@ -104,7 +112,8 @@ struct PQ1BubbleDefaultGridGeometryTraits
     template<class GridGeometry, bool enableCache>
     using LocalView = PQ1BubbleFVElementGeometry<GridGeometry, enableCache>;
 
-    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension) + 1;
+    static constexpr std::size_t maxNumElementDofs = (1<<GridView::dimension)
+                                                    + MapperTraits::numCubeBubbleDofs;
 };
 
 /*!
@@ -165,7 +174,7 @@ public:
     //! export dof mapper type
     using DofMapper = typename Traits::DofMapper;
     //! export the finite element cache type
-    using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim>;
+    using FeCache = Dumux::PQ1BubbleFECache<CoordScalar, Scalar, dim, Traits::numCubeBubbleDofs>;
     //! export the grid view type
     using GridView = GV;
     //! export whether the grid(geometry) supports periodicity
@@ -331,7 +340,11 @@ private:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
+            if (!enableHybridCVFE && elementGeometry.type().isCube() && Traits::numCubeBubbleDofs > 1)
+                DUNE_THROW(Dune::NotImplemented, "Multiple bubble dofs for cube elements only for hybrid scheme.");
+
             const auto refElement = referenceElement(elementGeometry);
+            const auto& localCoefficients = this->feCache().get(element.type()).localCoefficients();
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -350,7 +363,7 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    GeometryHelper::dofIndex(this->dofMapper(), element, scvLocalIdx),
+                    GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(scvLocalIdx)),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
                 );
             }
@@ -426,7 +439,7 @@ private:
                     for (int ilocalDofIdx = 0; ilocalDofIdx < numDofsIntersection; ++ilocalDofIdx)
                     {
                         auto localDofIdx = GeometryHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
-                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localDofIdx);
+                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }

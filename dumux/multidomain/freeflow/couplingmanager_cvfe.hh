@@ -16,6 +16,7 @@
 #include <tuple>
 #include <vector>
 #include <deque>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
@@ -671,9 +672,13 @@ private:
         momentumToMassAndEnergyStencils_.resize(momentumGridGeometry.gridView().size(0));
 
         assert(massAndEnergyToMomentumStencils_.size() == momentumToMassAndEnergyStencils_.size());
+        bool hasCubeElements = false;
 
         for (const auto& element : elements(momentumGridGeometry.gridView()))
         {
+            if(element.type().isCube())
+                hasCubeElements = true;
+
             momentumFvGeometry.bindElement(element);
             massFvGeometry.bindElement(element);
             const auto eIdx = momentumFvGeometry.elementIndex();
@@ -684,6 +689,17 @@ private:
             // ToDo: Replace once all mass models are also working with local dofs
             for (const auto& scv : scvs(massFvGeometry))
                 momentumToMassAndEnergyStencils_[eIdx].push_back(scv.dofIndex());
+        }
+
+        // Print warning for pq1bubble scheme on cube elements if not using the hybrid variant
+        if constexpr ((MomentumDiscretizationMethod{} == DiscretizationMethods::pq1bubble))
+        {
+            if(hasCubeElements && !GridGeometry<freeFlowMomentumIndex>::enableHybridCVFE)
+            {
+                std::cerr << "Warning: Coupled Navier-Stokes problem on cube elements uses non-hybrid pq1bubble. "
+                          << "The hybrid variant is recommended because it implements two bubble functions for stability reasons."
+                          << std::endl;
+            }
         }
     }
 
