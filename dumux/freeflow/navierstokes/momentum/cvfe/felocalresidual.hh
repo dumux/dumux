@@ -13,6 +13,7 @@
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FE_LOCAL_RESIDUAL_HELPER_HH
 
 #include <dune/geometry/quadraturerules.hh>
+#include <dumux/common/concepts/datacache_.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -101,16 +102,16 @@ public:
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemFluxVarsCache The element flux variables cache
+     * \param elemDataCache The element data cache
      * \param elemBcTypes The element boundary types
      */
     template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementFluxVariablesCache, class ElementBoundaryTypes>
+             class ElementVariables, class ElementDataCache, class ElementBoundaryTypes>
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
                                       const FVElementGeometry& fvGeometry,
                                       const ElementVariables& elemVars,
-                                      const ElementFluxVariablesCache& elemFluxVarsCache,
+                                      const ElementDataCache& elemDataCache,
                                       const ElementBoundaryTypes& elemBcTypes)
     {
         if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
@@ -126,13 +127,13 @@ public:
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
             const auto& element = fvGeometry.element();
-            using FluxVariablesCache = typename ElementFluxVariablesCache::FluxVariablesCache;
+            using FluxVariablesCache = Concept::DataCache_t<ElementDataCache>;
             using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
             for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
                 const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
-                const auto& cache = elemFluxVarsCache[ipData];
+                const auto& cache = elemDataCache[ipData];
                 FluxFunctionContext context(problem, fvGeometry, elemVars, cache);
                 const auto& v = context.velocity();
                 const auto& gradV = context.gradVelocity();
@@ -173,7 +174,7 @@ public:
             }
 
             if (elemBcTypes.hasNeumann())
-                addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes);
+                addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemDataCache, elemBcTypes);
         }
     }
 
@@ -184,16 +185,16 @@ public:
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemFluxVarsCache The element flux variables cache
+     * \param elemDataCache The element data cache
      * \param elemBcTypes The element boundary types
      */
     template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementFluxVariablesCache, class ElementBoundaryTypes>
+             class ElementVariables, class ElementDataCache, class ElementBoundaryTypes>
     static void addBoundaryFluxes(ResidualVector& residual,
                                   const Problem& problem,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVariables& elemVars,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const ElementDataCache& elemDataCache,
                                   const ElementBoundaryTypes& elemBcTypes)
     {
         ResidualVector flux(0.0);
@@ -208,7 +209,7 @@ public:
             if (!bcTypes.hasNeumann())
                 continue;
 
-            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, intersection, bcTypes);
+            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemDataCache, intersection, bcTypes);
         }
         residual += flux;
     }
@@ -229,7 +230,7 @@ class NavierStokesMomentumFELocalResidual
     using GridVariablesCache = typename GridVariables::GridVolumeVariables;
     using ElementVariables = typename GridVariablesCache::LocalView;
 
-    using GridDataCache = typename GridVariables::GridFluxVariablesCache;
+    using GridDataCache = Concept::GridCache_t<GridVariables>;
     using ElementDataCache = typename GridDataCache::LocalView;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
