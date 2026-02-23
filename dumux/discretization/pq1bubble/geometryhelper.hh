@@ -22,6 +22,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
@@ -746,6 +747,81 @@ public:
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
     Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
+};
+
+template <class GridView, std::size_t numCubeBubbleDofs>
+class FEPQ1BubbleGeometryHelper
+{
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+
+public:
+
+    FEPQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
+    : geo_(geometry)
+    {}
+
+    //! the wrapped element geometry
+    const typename Element::Geometry& elementGeometry() const
+    { return geo_; }
+
+    //! number of element dofs
+    static std::size_t numElementDofs(Dune::GeometryType type)
+    {
+        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(type).size(dim);
+        return numVertexDofs + (type.isCube() ? numCubeBubbleDofs : 1);
+    }
+
+    //! number of hybrid dofs
+    static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
+    {
+        return numElementDofs(type);
+    }
+
+    //! Number of local dofs related to an intersection with index iIdx
+    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
+    }
+
+    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
+    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int ilocalDofIdx)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
+    }
+
+    template<class DofMapper, class LocalKey>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
+    {
+        // For cube elements we have to add the additional index for the bubble dof
+        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
+    }
+
+    GlobalPosition dofPosition(unsigned int localDofIdx) const
+    {
+        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(geo_.type()).size(dim);
+        if (localDofIdx < numVertexDofs)
+            return geo_.corner(localDofIdx);
+        else
+            return geo_.center();
+    }
+
+    //! local dof position
+    template<class LocalKey>
+    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
+private:
+    const typename Element::Geometry& geo_; //!< Reference to the element geometry
 };
 
 } // end namespace Dumux
