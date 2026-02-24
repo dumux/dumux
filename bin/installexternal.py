@@ -9,6 +9,7 @@
 """
 install external stuff for dumux
 """
+
 import os
 import shutil
 import re
@@ -233,14 +234,12 @@ def runCommand(command, currentDir="."):
         with subprocess.Popen(command, stdout=log, stderr=log, universal_newlines=True) as popen:
             returnCode = popen.wait()
             if returnCode:
-                message = textwrap.dedent(
-                    f"""
+                message = textwrap.dedent(f"""
                     (Error) The command {command} returned with non-zero exit code
                     If you can't fix the problem yourself consider reporting your issue
                     on the mailing list (dumux@listserv.uni-stuttgart.de) and
                     attach the file 'installexternal.log'
-                """
-                )
+                """)
                 showMessage(message)
                 sys.exit(1)
 

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-""" Generate tables for CO2 fluid properties.
+"""Generate tables for CO2 fluid properties.
 
 The tables are generated using the NIST (National Institute of Standards
 and Technology) Standard Reference Database Number 69

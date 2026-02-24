@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-""""
+""" "
 Remove clutter after the last #endif (header guard)
 in C++ header files
 """

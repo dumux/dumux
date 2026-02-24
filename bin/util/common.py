@@ -14,7 +14,6 @@ import subprocess
 import traceback
 import shlex
 
-
 TERM_FORMATTING = {
     "warning": "\033[1;31m",
     "highlight": "\033[1;34m",

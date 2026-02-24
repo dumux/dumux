@@ -6,6 +6,7 @@
 """
 One click install script for dumux
 """
+
 import os
 import sys
 import argparse

@@ -7,7 +7,6 @@ from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
 
-
 _components = {
     "Air": "dumux/material/components/air.hh",
     "H2O": "dumux/material/components/h2o.hh",

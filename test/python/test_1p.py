@@ -90,6 +90,7 @@ class SpatialParams:
 spatialParams = SpatialParams()
 model["SpatialParams"] = Property.fromInstance(spatialParams)
 
+
 # Define the problem
 @PorousMediumFlowProblem(gridGeometry=gridGeometry, spatialParams=spatialParams)
 class Problem:

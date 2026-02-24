@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-""""
+""" "
 Script to generate an install script for a dune-module,
 accounting for non-published commits and local changes
 """

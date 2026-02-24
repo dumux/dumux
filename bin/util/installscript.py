@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-""""
+""" "
 Helper functions to generate an install script for a dune-module,
 accounting for non-published commits and local changes
 """
@@ -135,9 +135,7 @@ def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", 
         writer.writeSheBang()
 
         script.write("\n")
-        writer.writeComment(
-            textwrap.dedent(
-                f"""\
+        writer.writeComment(textwrap.dedent(f"""\
 
             This installs the module {modName} and its dependencies.
             The exact revisions used are listed in the table below.
@@ -145,9 +143,7 @@ def makeInstallScript(modPath, dependencies, scriptName, topFolderName="DUMUX", 
             If so, all patches are required to be the current folder, or,
             in the one that you specified as argument to this script.
 
-        """
-            )
-        )
+        """))
 
         script.write("\n")
         writer.writeComment(versionTable(dependencies))
@@ -204,18 +200,14 @@ def printFoundVersionInfo(dependenciesWithVersions):
 def printFinalMessage(topFolderName=None):
     """Final message after the install script has been created"""
     if topFolderName:
-        description = textwrap.dedent(
-            f"""\
+        description = textwrap.dedent(f"""\
             Running this script will create a folder `{topFolderName}`, clone all modules
             into it, configure the entire project and build the contained applications
-        """
-        )
+        """)
     else:
-        description = textwrap.dedent(
-            """\
+        description = textwrap.dedent("""\
             Running this script will clone all modules into the folder from which it is
             called, configure the entire project and build the contained applications
-        """
-        )
+        """)
 
     printProgressInfo(["Info:", description])
