@@ -19,8 +19,13 @@
 
 namespace Dumux::Concept {
 
-template<class L>
-concept LocalDof = std::is_base_of_v<Dumux::CVFE::LocalDof<typename L::LocalIndexType, typename L::GridIndexType>, L>;
+template<class LD>
+concept LocalDof = requires (const LD& ld)
+{
+    ld.index();
+    ld.dofIndex();
+    ld.elementIndex();
+};
 
 } // end namespace Dumux::Concept
 
