@@ -21,6 +21,24 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+template<class ElementVariables>
+consteval auto primaryVariablesType()
+{
+    if constexpr (requires { typename ElementVariables::Variables::PrimaryVariables; })
+        return std::type_identity<typename ElementVariables::Variables::PrimaryVariables>{};
+    else if constexpr (requires { typename ElementVariables::VolumeVariables::PrimaryVariables; })
+        return std::type_identity<typename ElementVariables::VolumeVariables::PrimaryVariables>{};
+    else
+        return std::type_identity<void>{};
+}
+
+template<class ElementVariables>
+using PrimaryVariables_t = typename decltype(primaryVariablesType<ElementVariables>())::type;
+
+} // end namespace Detail
+
 /*!
  * \ingroup CVFEDiscretization
  * \brief The element solution vector
@@ -124,14 +142,16 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 }
 
 //!  Make an element solution for control-volume finite element schemes
-template<class Element, class ElementVolumeVariables, class FVElementGeometry>
-auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
--> std::enable_if_t<DiscretizationMethods::isCVFE<typename FVElementGeometry::GridGeometry::DiscretizationMethod>,
+template<class Element, class ElementVariables, class FVElementGeometry>
+auto elementSolution(const Element& element, const ElementVariables& elemVars, const FVElementGeometry& gg)
+-> std::enable_if_t<DiscretizationMethods::isCVFE<typename FVElementGeometry::GridGeometry::DiscretizationMethod>
+                    && !std::is_void_v<Detail::PrimaryVariables_t<ElementVariables>>,
                     CVFEElementSolution<FVElementGeometry,
-                                       typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
+                                        Detail::PrimaryVariables_t<ElementVariables>>
+                    >
 {
-    using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
-    return CVFEElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVolVars, gg);
+    using PrimaryVariables = Detail::PrimaryVariables_t<ElementVariables>;
+    return CVFEElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVars, gg);
 }
 
 } // end namespace Dumux
