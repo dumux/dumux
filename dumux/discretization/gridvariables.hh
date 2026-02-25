@@ -23,9 +23,8 @@ namespace Dumux {
  * \brief The grid variables class for general schemes, storing variables and data on the grid
  * \tparam the type of the grid geometry
  * \tparam the type of the grid variables cache
- * \tparam the type of the grid data (interpolation data) cache
  */
-template<class GG, class GVC, class GDC>
+template<class GG, class GVC>
 class GridVariables
 {
 public:
@@ -44,16 +43,12 @@ public:
     //! export scalar
     using Scalar = typename PrimaryVariables::value_type;
 
-    //! export type of the finite volume grid geometry
-    using GridDataCache = GDC;
-
     template<class Problem>
     GridVariables(std::shared_ptr<Problem> problem,
                   std::shared_ptr<const GridGeometry> gridGeometry)
     : gridGeometry_(gridGeometry)
     , curGridVars_(*problem)
     , prevGridVars_(*problem)
-    , gridDataCache_(*problem)
     {}
 
     //! initialize all variables (stationary case)
@@ -61,10 +56,7 @@ public:
     void init(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
-        curGridVars_.update(*gridGeometry_, curSol);
-
-        // update the data cache (always force data cache update on initialization)
-        gridDataCache_.update(*gridGeometry_, curGridVars_, curSol, true);
+        curGridVars_.init(*gridGeometry_, curSol);
 
         // set the variables of the previous time step in case we have an instationary problem
         // note that this means some memory overhead in the case of enabled caching, however
@@ -75,13 +67,10 @@ public:
 
     //! update all variables
     template<class SolutionVector>
-    void update(const SolutionVector& curSol, bool forceDataCacheUpdate = false)
+    void update(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
         curGridVars_.update(*gridGeometry_, curSol);
-
-        // update the data cache
-        gridDataCache_.update(*gridGeometry_, curGridVars_, curSol, forceDataCacheUpdate);
     }
 
     //! update all variables after grid adaption
@@ -89,7 +78,7 @@ public:
     void updateAfterGridAdaption(const SolutionVector& curSol)
     {
         // update (always force data cache update as the grid changed)
-        update(curSol, true);
+        curGridVars_.init(*gridGeometry_, curSol);
 
         // for instationary problems also update the variables
         // for the previous time step to the new grid
@@ -111,18 +100,7 @@ public:
     {
         // set the new time step variables to old variables
         curGridVars_ = prevGridVars_;
-
-        // update the data cache
-        gridDataCache_.update(*gridGeometry_, curGridVars_, solution);
     }
-
-    //! return the data cache
-    const GridDataCache& gridDataCache() const
-    { return gridDataCache_; }
-
-    //! return the data cache
-    GridDataCache& gridDataCache()
-    { return gridDataCache_; }
 
     //! return the current variables
     const GridVariablesCache& curGridVars() const
@@ -150,8 +128,6 @@ protected:
 private:
     GridVariablesCache curGridVars_; //!< the current variables (primary and secondary variables)
     GridVariablesCache prevGridVars_; //!< the previous time step's variables (primary and secondary variables)
-
-    GridDataCache gridDataCache_; //!< the data cache
 };
 
 } // end namespace Dumux
