@@ -267,9 +267,8 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ1BubbleModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
@@ -287,9 +286,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=cube
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ1BubbleHybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
@@ -306,9 +304,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ1BubbleHybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
@@ -325,13 +322,12 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq1bubble_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ1BubbleHybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
-               COMPILE_DEFINITIONS PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<2>
+               COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<2>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::MidpointQuadrature
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -381,13 +377,12 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ2HybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
-               COMPILE_DEFINITIONS PQ2_QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
+               COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
@@ -405,13 +400,12 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=cube
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ2HybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
-               COMPILE_DEFINITIONS PQ2_QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
+               COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMPILE_DEFINITIONS USE_STOKES_SOLVER=1

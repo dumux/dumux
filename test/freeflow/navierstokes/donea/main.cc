@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 
     // define the type tags for this problem
     using MomentumTypeTag = Properties::TTag::DoneaTestMomentum;
-    using MassTypeTag = Properties::TTag::DoneaTestMass;
+    using MassTypeTag = Properties::TTag::TYPETAG_MASS;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
