@@ -201,8 +201,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
                 LABELS freeflow navierstokes donea
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                 COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
-                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
                 COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                 COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                 COMMAND ${DUMUX_RUNTEST}
@@ -217,8 +216,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleHybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
@@ -233,11 +231,10 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_si
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleHybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
-               COMPILE_DEFINITIONS PQ1BUBBLE_QUADRATURE_RULE=Dumux::QuadratureRules::DuneQuadrature<2>
+               COMPILE_DEFINITIONS QUADRATURE_RULE=Dumux::QuadratureRules::DuneQuadrature<2>
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -350,8 +347,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_simplex
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ2HybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
@@ -368,8 +364,7 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube
                LABELS freeflow navierstokes donea
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
-               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ2HybridModel
-               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
