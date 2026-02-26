@@ -32,6 +32,10 @@
 #define DISCRETIZATION_MODEL FaceCenteredStaggeredModel
 #endif
 
+#ifndef TYPETAG_MOMENTUM
+#define TYPETAG_MOMENTUM DoneaTestMomentum
+#endif
+
 #ifndef NEW_PROBLEM_INTERFACE
 #define NEW_PROBLEM_INTERFACE 0
 #endif
@@ -66,12 +70,16 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct DoneaTestMomentum { using InheritsFrom = std::tuple<NAVIER_STOKES_MODEL, DISCRETIZATION_MODEL>; };
+struct DoneaTest { };
+struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MODEL, DISCRETIZATION_MODEL>; };
+struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
+struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 } // end namespace TTag
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTestMomentum>
+struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 #if NEW_PROBLEM_INTERFACE
     using type = Dumux::DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>;
@@ -82,7 +90,7 @@ struct Problem<TypeTag, TTag::DoneaTestMomentum>
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DoneaTestMomentum>
+struct FluidSystem<TypeTag, TTag::DoneaTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -91,7 +99,7 @@ struct FluidSystem<TypeTag, TTag::DoneaTestMomentum>
 #if NEW_VARIABLES_INTERFACE
 // the variables
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::DoneaTestMomentum>
+struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -109,10 +117,10 @@ public:
 };
 #endif
 
-#ifdef PQ1BUBBLE_QUADRATURE_RULE
+#ifdef QUADRATURE_RULE
 // use custom quadrature rules for hybrid pq1bubble scheme
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -121,18 +129,16 @@ private:
 
     // Higher order quadrature rule only works for hybrid pq1bubble scheme
     // since we can't generate geometries for overlapping scvs
-    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, PQ1BUBBLE_QUADRATURE_RULE, PQ1BUBBLE_QUADRATURE_RULE>;
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE, QUADRATURE_RULE>;
     using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
 
 public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
 };
-#endif
 
-#ifdef PQ2_QUADRATURE_RULE
 // use custom quadrature rules for hybrid pq2 scheme
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -141,9 +147,9 @@ private:
 
     using QuadTraits = PQ2QuadratureTraits<GridView,
                                            Dumux::QuadratureRules::MidpointQuadrature,
-                                           PQ2_QUADRATURE_RULE,
-                                           PQ2_QUADRATURE_RULE,
-                                           PQ2_QUADRATURE_RULE>;
+                                           QUADRATURE_RULE,
+                                           QUADRATURE_RULE,
+                                           QUADRATURE_RULE>;
 
 public:
     using type = PQ2FVGridGeometry<Scalar, GridView, enableCache, PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
@@ -152,14 +158,14 @@ public:
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DoneaTestMomentum> { using type = GRIDTYPE; };
+struct Grid<TypeTag, TTag::DoneaTest> { using type = GRIDTYPE; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridGeometryCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTestMomentum> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLECACHING; };
 
 } // end namespace Dumux::Properties
 

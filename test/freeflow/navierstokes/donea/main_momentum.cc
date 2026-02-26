@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using TypeTag = Properties::TTag::DoneaTestMomentum;
+    using TypeTag = Properties::TTag::TYPETAG_MOMENTUM;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
