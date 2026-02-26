@@ -178,8 +178,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tags for this problem
-    using MomentumTypeTag = Properties::TTag::DoneaTestMomentum;
-    using MassTypeTag = Properties::TTag::DoneaTestMass;
+    using MomentumTypeTag = Properties::TTag::TYPETAG_MOMENTUM;
+    using MassTypeTag = Properties::TTag::TYPETAG_MASS;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
