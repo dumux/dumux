@@ -14,18 +14,14 @@
 #define DUMUX_CVFE_LOCAL_RESIDUAL_HH
 
 #include <dune/common/std/type_traits.hh>
-#include <dune/geometry/type.hh>
-#include <dune/istl/matrix.hh>
 
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/typetraits/boundary_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
-#include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
-#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux::Detail {
 
@@ -49,18 +45,6 @@ template<class Imp>
 constexpr inline bool hasScvfIsOverlapping()
 { return Dune::Std::is_detected<SCVFIsOverlappingDetector, Imp>::value; }
 
-template<class Problem>
-using ProvidesIntegralInterfaceDetector = decltype(Problem::providesIntegralInterface());
-
-template<class Problem>
-constexpr inline bool providesIntegralInterface()
-{
-    if constexpr (Dune::Std::is_detected<ProvidesIntegralInterfaceDetector, Problem>::value)
-        return Problem::providesIntegralInterface();
-    else
-        return false;
-}
-
 } // end namespace Dumux::Detail
 
 
@@ -77,7 +61,6 @@ class CVFELocalResidual : public FVLocalResidual<TypeTag>
 {
     using ParentType = FVLocalResidual<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::LocalResidual>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
@@ -126,9 +109,6 @@ public:
         for (const auto& scv : scvs(fvGeometry))
             this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
 
-        // allow for additional contributions (e.g. hybrid CVFE schemes)
-        this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars);
-
         return residual;
     }
 
@@ -161,30 +141,8 @@ public:
         for (auto&& scvf : scvfs(fvGeometry))
             this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
 
-        // allow for additional contributions (e.g. hybrid CVFE schemes)
-        this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
-
         return residual;
     }
-
-    //! add additional storage contributions (e.g. hybrid CVFE schemes)
-    void addToElementStorageResidual(ElementResidualVector& residual,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& prevElemVolVars,
-                                     const ElementVolumeVariables& curElemVolVars) const
-    {}
-
-    //! add additional flux and source contributions (e.g. hybrid CVFE schemes)
-    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
-                                           const Problem& problem,
-                                           const Element& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVolumeVariables& curElemVolVars,
-                                           const ElementFluxVariablesCache& elemFluxVarsCache,
-                                           const ElementBoundaryTypes &bcTypes) const
-    {}
 
     //! evaluate flux residuals for one sub control volume face and add to residual
     void evalFlux(ElementResidualVector& residual,
@@ -230,56 +188,31 @@ public:
     {
         NumEqVector flux(0.0);
 
-        if constexpr (Detail::providesIntegralInterface<Problem>())
+        if(!scvf.boundary())
         {
-            if(!scvf.boundary())
-                flux += this->asImp().fluxIntegral(fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-            else
-            {
-                const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
-
-                // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
-                // For Dirichlet there is no addition to the residual here but they
-                // are enforced strongly by replacing the residual entry afterwards.
-                if (bcTypes.hasNeumann())
-                {
-                    NumEqVector boundaryFluxes = problem.boundaryFluxIntegral(fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-
-                    // only add fluxes to equations for which Neumann is set
-                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                        if (bcTypes.isNeumann(eqIdx))
-                            flux[eqIdx] += boundaryFluxes[eqIdx];
-                }
-            }
+            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
         else
         {
-            if(!scvf.boundary())
-            {
-                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-            }
-            else
-            {
-                const auto& bcTypes = bcTypes_(problem, fvGeometry, scvf, elemBcTypes);
+            const auto& bcTypes = elemBcTypes.get(fvGeometry, fvGeometry.scv(scvf.insideScvIdx()));
 
-                // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
-                // For Dirichlet there is no addition to the residual here but they
-                // are enforced strongly by replacing the residual entry afterwards.
-                if (bcTypes.hasNeumann())
-                {
-                    NumEqVector boundaryFluxes;
-                    boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
-                    // multiply neumann fluxes with the area and the extrusion factor
-                    const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    boundaryFluxes *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
+            // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
+            // For Dirichlet there is no addition to the residual here but they
+            // are enforced strongly by replacing the residual entry afterwards.
+            if (bcTypes.hasNeumann())
+            {
+                NumEqVector boundaryFluxes;
+                boundaryFluxes = problem.neumann(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                // multiply neumann fluxes with the area and the extrusion factor
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                boundaryFluxes *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scv].extrusionFactor();
 
-                    // only add fluxes to equations for which Neumann is set
-                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                        if (bcTypes.isNeumann(eqIdx))
-                            flux[eqIdx] += boundaryFluxes[eqIdx];
-                }
+                // only add fluxes to equations for which Neumann is set
+                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                    if (bcTypes.isNeumann(eqIdx))
+                        flux[eqIdx] += boundaryFluxes[eqIdx];
             }
-       }
+        }
 
         return flux;
     }
@@ -307,36 +240,23 @@ public:
                      const ElementVolumeVariables& curElemVolVars,
                      const SubControlVolume& scv) const
     {
-        if constexpr (Detail::providesIntegralInterface<Problem>())
-        {
-            NumEqVector prevStorage = this->asImp().storageIntegral(fvGeometry, prevElemVolVars, scv, /*previous time level?*/true);
-            NumEqVector storage = this->asImp().storageIntegral(fvGeometry, curElemVolVars, scv, /*previous time level?*/false);
+        const auto& curVolVars = curElemVolVars[scv];
+        const auto& prevVolVars = prevElemVolVars[scv];
 
-            storage -= prevStorage;
-            storage /= this->timeLoop().timeStepSize();
+        // Compute storage with the model specific storage residual
+        // This addresses issues #792/#940 in ad-hoc way by additionally providing crude time level information (previous or current)
+        // to the low-level interfaces if this is supported by the LocalResidual implementation
+        NumEqVector prevStorage = computeStorageImpl_(problem, fvGeometry, scv, prevVolVars, /*previous time level?*/true);
+        NumEqVector storage = computeStorageImpl_(problem, fvGeometry, scv, curVolVars, /*previous time level?*/false);
 
-            residual[scv.localDofIndex()] += storage;
-        }
-        else
-        {
-            const auto& curVolVars = curElemVolVars[scv];
-            const auto& prevVolVars = prevElemVolVars[scv];
+        prevStorage *= prevVolVars.extrusionFactor();
+        storage *= curVolVars.extrusionFactor();
 
-            // Compute storage with the model specific storage residual
-            // This addresses issues #792/#940 in ad-hoc way by additionally providing crude time level information (previous or current)
-            // to the low-level interfaces if this is supported by the LocalResidual implementation
-            NumEqVector prevStorage = computeStorageImpl_(problem, fvGeometry, scv, prevVolVars, /*previous time level?*/true);
-            NumEqVector storage = computeStorageImpl_(problem, fvGeometry, scv, curVolVars, /*previous time level?*/false);
+        storage -= prevStorage;
+        storage *= Extrusion::volume(fvGeometry, scv);
+        storage /= this->timeLoop().timeStepSize();
 
-            prevStorage *= prevVolVars.extrusionFactor();
-            storage *= curVolVars.extrusionFactor();
-
-            storage -= prevStorage;
-            storage *= Extrusion::volume(fvGeometry, scv);
-            storage /= this->timeLoop().timeStepSize();
-
-            residual[scv.localDofIndex()] += storage;
-        }
+        residual[scv.localDofIndex()] += storage;
     }
 
     using ParentType::evalSource;
@@ -361,17 +281,12 @@ public:
                     const SubControlVolume& scv) const
     {
         NumEqVector source(0.0);
-        if constexpr (Detail::providesIntegralInterface<Problem>())
-            source = this->asImp().sourceIntegral(fvGeometry, curElemVolVars, scv);
-        else
-        {
-            //! Compute source with the model specific source residual
-            source = this->asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
-            source *= Extrusion::volume(fvGeometry, scv);
+        //! Compute source with the model specific source residual
+        source = this->asImp().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+        source *= Extrusion::volume(fvGeometry, scv);
 
-            const auto& curVolVars = curElemVolVars[scv];
-            source *= curVolVars.extrusionFactor();
-        }
+        const auto& curVolVars = curElemVolVars[scv];
+        source *= curVolVars.extrusionFactor();
         //! subtract source from local rate (sign convention in user interface)
         residual[scv.localDofIndex()] -= source;
     }
@@ -388,20 +303,6 @@ private:
         else
             return this->asImp().computeStorage(problem, scv, volVars);
     }
-
-    auto bcTypes_(const Problem& problem,
-                  const FVElementGeometry& fvGeometry,
-                  const SubControlVolumeFace& scvf,
-                  const ElementBoundaryTypes& elemBcTypes) const
-    {
-        // Check if problem supports the new boundaryTypes function for element intersections
-        // then we can always get bcTypes for intersections and the associated scvfs
-        if constexpr (Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridView::Intersection>())
-            return elemBcTypes.get(fvGeometry, scvf);
-        else
-            return elemBcTypes.get(fvGeometry, fvGeometry.scv(scvf.insideScvIdx()));
-    }
-
 };
 
 } // end namespace Dumux
