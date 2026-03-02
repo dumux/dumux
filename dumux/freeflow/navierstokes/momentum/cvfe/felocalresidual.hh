@@ -106,6 +106,8 @@ public:
      */
     template<class ResidualVector, class Problem, class FVElementGeometry,
              class ElementVariables, class ElementFluxVariablesCache, class ElementBoundaryTypes>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use addFluxAndSourceTerms(residual, problem, fvGeometry, elemVars, elemBcTypes) instead.")]]
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
                                       const FVElementGeometry& fvGeometry,
@@ -189,6 +191,8 @@ public:
      */
     template<class ResidualVector, class Problem, class FVElementGeometry,
              class ElementVariables, class ElementFluxVariablesCache, class ElementBoundaryTypes>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemBcTypes) instead.")]]
     static void addBoundaryFluxes(ResidualVector& residual,
                                   const Problem& problem,
                                   const FVElementGeometry& fvGeometry,
@@ -209,6 +213,121 @@ public:
                 continue;
 
             problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, intersection, bcTypes);
+        }
+        residual += flux;
+    }
+
+    /*!
+     * \brief Add flux and source residual contribution for non-CV local dofs
+     *
+     * \param residual The element residual vector to add to
+     * \param problem The problem to solve
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVars The variables for all local dofs of the element
+     * \param elemBcTypes The element boundary types
+     */
+    template<class ResidualVector, class Problem, class FVElementGeometry,
+             class ElementVariables, class ElementBoundaryTypes>
+    static void addFluxAndSourceTerms(ResidualVector& residual,
+                                      const Problem& problem,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVariables& elemVars,
+                                      const ElementBoundaryTypes& elemBcTypes)
+    {
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        {
+            // Make sure we don't iterate over quadrature points if there are no hybrid dofs
+            if (nonCVLocalDofs(fvGeometry).empty())
+                return;
+
+            if (!problem.pointSourceMap().empty())
+                DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+
+            static const bool enableUnsymmetrizedVelocityGradient
+                = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+
+            const auto& element = fvGeometry.element();
+            using Cache = typename ElementVariables::InterpolationPointData;
+            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, Cache>;
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
+            {
+                const auto& ipData = qpData.ipData();
+                // Obtain and store shape function values and gradients at the current quad point
+                const auto& cache = elemVars[ipData];
+                FluxFunctionContext context(problem, fvGeometry, elemVars, cache);
+                const auto& v = context.velocity();
+                const auto& gradV = context.gradVelocity();
+
+                // get viscosity from the problem
+                const Scalar mu = problem.effectiveViscosity(element, fvGeometry, ipData);
+                // get density from the problem
+                const Scalar density = problem.density(element, fvGeometry, ipData);
+
+                for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                {
+                    const auto localDofIdx = localDof.index();
+                    NumEqVector fluxAndSourceTerm(0.0);
+                    // add advection term
+                    if (problem.enableInertiaTerms())
+                        fluxAndSourceTerm -= density*(v*cache.gradN(localDofIdx))*v;
+
+                    // add diffusion term
+                    fluxAndSourceTerm += enableUnsymmetrizedVelocityGradient ?
+                                            mu*mv(gradV, cache.gradN(localDofIdx))
+                                            : mu*mv(gradV + getTransposed(gradV), cache.gradN(localDofIdx));
+
+                    // add pressure term
+                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * cache.gradN(localDofIdx);
+
+                    // finally add source and Neumann term and add everything to residual
+                    auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
+                    // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
+                    sourceAtIp += density * problem.gravity();
+
+                    const auto& shapeValues = cache.shapeValues();
+                    for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
+                    {
+                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];
+                        residual[localDofIdx][eqIdx] += qpData.weight()*fluxAndSourceTerm[eqIdx];
+                    }
+                }
+            }
+
+            if (elemBcTypes.hasNeumann())
+                addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemBcTypes);
+        }
+    }
+
+    /*!
+     * \brief Evaluate Neumann boundary contributions
+     *
+     * \param residual The element residual vector to add to
+     * \param problem The problem to solve
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVars The variables for all local dofs of the element
+     * \param elemBcTypes The element boundary types
+     */
+    template<class ResidualVector, class Problem, class FVElementGeometry,
+             class ElementVariables, class ElementBoundaryTypes>
+    static void addBoundaryFluxes(ResidualVector& residual,
+                                  const Problem& problem,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVariables& elemVars,
+                                  const ElementBoundaryTypes& elemBcTypes)
+    {
+        ResidualVector flux(0.0);
+
+        const auto& element = fvGeometry.element();
+        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        {
+            if (!intersection.boundary())
+                continue;
+
+            const auto& bcTypes = elemBcTypes.get(fvGeometry, intersection);
+            if (!bcTypes.hasNeumann())
+                continue;
+
+            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, intersection, bcTypes);
         }
         residual += flux;
     }
