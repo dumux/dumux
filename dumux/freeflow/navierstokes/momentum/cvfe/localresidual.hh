@@ -269,6 +269,8 @@ public:
      *
      */
     template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use fluxIntegral without elemFluxVarsCache instead.")]]
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
                              const ElementFluxVariablesCache& elemFluxVarsCache,
@@ -299,6 +301,41 @@ public:
         return flux;
     }
 
+    /*!
+     * \brief Calculates the flux integral over a sub control volume face.
+     *
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVars The variables for all local dofs of the element
+     * \param scvf The sub control volume face
+     *
+     */
+    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+                             const ElementVariables& elemVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        const auto& problem = this->asImp().problem();
+
+        NumEqVector flux(0.0);
+        GlobalPosition velIntegral(0.0);
+        FluxFunctionHelper fluxFunctionHelper;
+        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, typename GridVariablesCache::InterpolationPointData>;
+
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+        {
+            const auto& cache = elemVars[qpData.ipData()];
+            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, cache);
+
+            velIntegral += context.velocity() * qpData.weight();
+            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
+                                      + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
+        }
+        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, scvf, velIntegral);
+
+        flux *= elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+
+        return flux;
+    }
+
     void addToElementStorageResidual(ElementResidualVector& residual,
                                      const Problem& problem,
                                      const Element& element,
@@ -312,6 +349,8 @@ public:
     }
 
     template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use addToElementFluxAndSourceResidual without elemFluxVarsCache instead.")]]
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const Element& element,
@@ -324,6 +363,19 @@ public:
             residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes
         );
     }
+
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVariables& elemVars,
+                                           const ElementBoundaryTypes &elemBcTypes) const
+    {
+        FeResidual::addFluxAndSourceTerms(
+            residual, problem, fvGeometry, elemVars, elemBcTypes
+        );
+    }
+
 };
 
 } // end namespace Dumux
