@@ -20,12 +20,12 @@
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
 
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fem/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
-#include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/felocalresidual.hh>
@@ -52,9 +52,9 @@ constexpr inline bool hasProblemSourceWithIpDataInterface()
  */
 template<class TypeTag>
 class NavierStokesMomentumCVFELocalResidual
-: public CVFELocalResidual<TypeTag>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = CVFELocalResidual<TypeTag>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
