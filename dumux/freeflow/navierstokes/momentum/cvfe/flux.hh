@@ -315,11 +315,10 @@ public:
      * \brief Returns the advective momentum flux contribution for a given integrated velocity at the face
      */
     template<class Problem, class FVElementGeometry, class ElementVariables,
-             class ElementFluxVariablesCache, class SubControlVolumeFace, class VelocityVector>
+             class SubControlVolumeFace, class VelocityVector>
     NumEqVector advectiveMomentumFluxIntegral(const Problem& problem,
                                               const FVElementGeometry& fvGeometry,
                                               const ElementVariables& elemVars,
-                                              const ElementFluxVariablesCache& elemFluxVarsCache,
                                               const SubControlVolumeFace& scvf,
                                               const VelocityVector& integratedVelocity) const
     {
