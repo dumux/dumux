@@ -16,6 +16,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/method.hh>
 #include "velocityreconstruction.hh"
 
@@ -26,7 +27,10 @@ namespace Dumux {
  * \brief Velocity output for staggered free-flow models
  */
 template<class GridVariables>
-class NavierStokesVelocityOutput : public VelocityOutput<GridVariables>
+class NavierStokesVelocityOutput;
+
+template<Concept::FVGridVariables GridVariables>
+class NavierStokesVelocityOutput<GridVariables> : public VelocityOutput<GridVariables>
 {
     using ParentType = VelocityOutput<GridVariables>;
     using GridGeometry = typename GridVariables::GridGeometry;
@@ -103,6 +107,79 @@ private:
         velocity[eIdx] = elemVolVars.gridVolVars().problem().elementVelocity(fvGeometry);
     }
 
+
+    bool enableOutput_;
+};
+
+template<Concept::GridVariables GridVariables>
+class NavierStokesVelocityOutput<GridVariables> : public VelocityOutput<GridVariables>
+{
+    using ParentType = VelocityOutput<GridVariables>;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridVariablesCache = typename GridVariables::GridVariablesCache;
+    using ElementVariables = typename GridVariablesCache::LocalView;
+    using Variables = typename ElementVariables::Variables;
+    using FluidSystem = typename Variables::FluidSystem;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FieldType = typename ParentType::FieldType;
+
+public:
+    using VelocityVector = typename ParentType::VelocityVector;
+
+    NavierStokesVelocityOutput(const std::string& paramGroup = "")
+    {
+        enableOutput_ = getParamFromGroup<bool>(paramGroup, "Vtk.AddVelocity", true);
+    }
+
+    bool enableOutput() const override { return enableOutput_; }
+
+    std::string phaseName(int phaseIdx) const override { return FluidSystem::phaseName(phaseIdx); }
+
+    int numFluidPhases() const override { return Variables::numFluidPhases(); }
+
+    FieldType fieldType() const override { return FieldType::element; }
+
+    void calculateVelocity(VelocityVector& velocity,
+                           const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVariables& elemVars,
+                           int phaseIdx) const override
+    {
+        using CouplingManager = std::decay_t<decltype(elemVars.gridVariablesCache().problem().couplingManager())>;
+        using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
+        if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
+            calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVars);
+        else if constexpr (DiscretizationMethods::isCVFE<typename MomGG::DiscretizationMethod>)
+            calculateVelocityForCVFESchemes_(velocity, element, fvGeometry, elemVars);
+        else
+            DUNE_THROW(Dune::NotImplemented, "Navier-Stokes velocity output for scheme " << MomGG::discMethod);
+    }
+
+private:
+    void calculateVelocityForStaggeredGrid_(VelocityVector& velocity,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVariables& elemVars) const
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
+        {
+            return elemVars.gridVariablesCache().problem().faceVelocity(element, fvGeometry, scvf);
+        };
+
+        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
+    }
+
+    void calculateVelocityForCVFESchemes_(VelocityVector& velocity,
+                                          const Element& element,
+                                          const FVElementGeometry& fvGeometry,
+                                          const ElementVariables& elemVars) const
+    {
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        velocity[eIdx] = elemVars.gridVariablesCache().problem().elementVelocity(fvGeometry);
+    }
 
     bool enableOutput_;
 };
