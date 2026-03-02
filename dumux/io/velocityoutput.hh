@@ -15,8 +15,7 @@
 #include <vector>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
+#include <dumux/common/concepts/variables_.hh>
 
 namespace Dumux {
 
@@ -25,7 +24,10 @@ namespace Dumux {
  * \brief Velocity output for implicit (porous media) models
  */
 template<class GridVariables>
-class VelocityOutput
+class VelocityOutput;
+
+template<Concept::FVGridVariables GridVariables>
+class VelocityOutput<GridVariables>
 {
     using Scalar = typename GridVariables::Scalar;
     static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
@@ -72,6 +74,44 @@ public:
                                    const FVElementGeometry& fvGeometry,
                                    const ElementVolumeVariables& elemVolVars,
                                    const ElementFluxVarsCache& elemFluxVarsCache,
+                                   int phaseIdx) const
+    {}
+};
+
+template<Concept::GridVariables GridVariables>
+class VelocityOutput<GridVariables>
+{
+    using Scalar = typename GridVariables::Scalar;
+    static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
+    using GridVariablesCache = typename GridVariables::GridVariablesCache;
+    using ElementVariables = typename GridVariablesCache::LocalView;
+    using FVElementGeometry = typename GridVariables::GridGeometry::LocalView;
+    using Element = typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity;
+
+public:
+    using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
+
+    enum class FieldType
+    {
+        element, vertex, automatic
+    };
+
+    VelocityOutput() = default;
+
+    virtual ~VelocityOutput() {};
+
+    virtual bool enableOutput() const { return false; }
+
+    virtual std::string phaseName(int phaseIdx) const { return "none"; }
+
+    virtual FieldType fieldType() const { return FieldType::automatic; }
+
+    virtual int numFluidPhases() const { return 0; }
+
+    virtual void calculateVelocity(VelocityVector& velocity,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVariables& elemVars,
                                    int phaseIdx) const
     {}
 };
