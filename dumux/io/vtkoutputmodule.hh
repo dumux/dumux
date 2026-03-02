@@ -29,6 +29,7 @@
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dune/grid/common/partitionset.hh>
 
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
@@ -344,7 +345,7 @@ class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridG
     using ParentType = VtkOutputModuleBase<typename GridVariables::GridGeometry>;
     using GridGeometry = typename GridVariables::GridGeometry;
 
-    using VV = typename GridVariables::VolumeVariables;
+    using VV = Concept::Variables_t<GridVariables>;
     using Scalar = typename GridVariables::Scalar;
 
     using GridView = typename GridGeometry::GridView;
@@ -458,7 +459,7 @@ public:
 
 protected:
     // some return functions for differing implementations to use
-    const auto& problem() const { return gridVariables_.curGridVolVars().problem(); }
+    const auto& problem() const { return curGridVariables_().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
     const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
     const SolutionVector& sol() const { return sol_; }
@@ -468,6 +469,14 @@ protected:
 
     using VelocityOutput = VelocityOutputType;
     const VelocityOutput& velocityOutput() const { return *velocityOutput_; }
+
+    const auto& curGridVariables_() const
+    {
+        if constexpr (Concept::FVGridVariables<GridVariables>)
+            return gridVariables_.curGridVolVars();
+        else
+            return gridVariables_.curGridVars();
+    }
 
 private:
 
@@ -528,7 +537,7 @@ private:
             if (addProcessRank_) rank.resize(numCells);
 
             auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+            auto elemVolVars = localView(curGridVariables_());
             for (const auto& element : elements(gridGeometry().gridView()))
             {
                 if (!velocityOutput_->enableOutput() &&
@@ -553,10 +562,18 @@ private:
                 // velocity output
                 if (velocityOutput_->enableOutput())
                 {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+                    if constexpr (Concept::FVGridVariables<GridVariables>)
+                    {
+                        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
 
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                        for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                            velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                    }
+                    else
+                    {
+                        for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                            velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, phaseIdx);
+                    }
                 }
                 else if (element.partitionType() != Dune::PartitionType::InteriorEntity)
                 {
@@ -736,7 +753,7 @@ private:
 
             // now we go element-local to extract values at local dof locations
             auto fvGeometry = localView(gridGeometry());
-            auto elemVolVars = localView(gridVariables_.curGridVolVars());
+            auto elemVolVars = localView(curGridVariables_());
             for (const auto& element : elements(gridGeometry().gridView()))
             {
                 if (!velocityOutput_->enableOutput() &&
@@ -768,9 +785,17 @@ private:
                 // velocity output
                 if (velocityOutput_->enableOutput())
                 {
-                    const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
-                    for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
-                        velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                    if constexpr (Concept::FVGridVariables<GridVariables>)
+                    {
+                        const auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache()).bind(element, fvGeometry, elemVolVars);
+                        for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                            velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, elemFluxVarsCache, phaseIdx);
+                    }
+                    else
+                    {
+                        for (int phaseIdx = 0; phaseIdx < velocityOutput_->numFluidPhases(); ++phaseIdx)
+                            velocityOutput_->calculateVelocity(velocity[phaseIdx], element, fvGeometry, elemVolVars, phaseIdx);
+                    }
                 }
                 else if (element.partitionType() != Dune::PartitionType::InteriorEntity)
                 {
