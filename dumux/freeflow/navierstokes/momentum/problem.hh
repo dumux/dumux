@@ -17,6 +17,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
@@ -891,8 +892,8 @@ class CVFENavierStokesMomentumProblem
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables>;
+    using ElementVariables = typename GridVariablesCache::LocalView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -964,7 +965,7 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      */
-    template<class ElementVariables, class IpData>
+    template<class IpData>
     Sources source(const FVElementGeometry& fvGeometry,
                    const ElementVariables& elemVars,
                    const IpData& ipData) const
@@ -1029,7 +1030,7 @@ public:
      * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The sub-control volume face
      */
-    template<class ElementVariables, class ElementFluxVariablesCache>
+    template<class ElementFluxVariablesCache>
     BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
                                         const ElementVariables& elemVars,
                                         const ElementFluxVariablesCache& elemFluxVarsCache,
@@ -1052,7 +1053,7 @@ public:
      * \param intersection The intersection
      * \param bcTypes The boundary condition types
      */
-    template<class ResidualVector, class ElementVariables, class ElementFluxVariablesCache, class BoundaryTypes>
+    template<class ResidualVector, class ElementFluxVariablesCache, class BoundaryTypes>
     void addBoundaryFluxIntegrals(ResidualVector& residual,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVariables& elemVars,
@@ -1085,7 +1086,7 @@ public:
      * \param elemFluxVarsCache The element flux variables cache
      * \param faceIpData Face interpolation point data
      */
-    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
+    template<class ElementFluxVariablesCache, class FaceIpData>
     BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
                                 const ElementVariables& elemVars,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
