@@ -201,6 +201,27 @@ public:
     {}
 
     /*!
+     * \brief update variables of domain i that depend on variables in domain j after the coupling context has been updated
+     *
+     * \param domainI the index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param elemVolVars the element volume variables (all volume variables in the element local stencil) to be updated
+     *
+     * \note Such variables do not necessarily exist and then this function does nothing (default)
+     * \note some examples
+     *       from poromechanics: the porosity of (physical) domain i (porous medium flow) depends on the displacement vector of physical domain j (mechanics)
+     *       from domaindecomposition: the transmissibilities for fluxes of domain i to domain j depend on the permeability in domain j
+     *                                 (which might depend in turn on the primary variables of domain i)
+     * \note this overload is for the case that the new grid variables concept is used and thus,
+     *       all cached data is stored / updated in the grid variables.
+     */
+    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVars>
+    void updateCoupledVariables(Dune::index_constant<i> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                UpdatableElementVars& elemVars)
+    {}
+
+    /*!
      * \brief Updates the entire solution vector, e.g. before assembly or after grid adaption
      *         Overload might want to overload function if the solution vector is stored outside this class
      *         to make sure updates don't happen more than once.
