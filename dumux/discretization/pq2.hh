@@ -21,10 +21,12 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/boundary_.hh>
 
 #include <dumux/assembly/cvfelocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual_.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
@@ -143,7 +145,14 @@ concept PQ2HybridModel = std::is_same_v<
 template<PQ2HybridModel TypeTag>
 struct DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using type = CVFELocalResidual<TypeTag>;
+private:
+    using GV = GetPropType<TypeTag, Properties::GridVariables>;
+    static constexpr bool usesGeneralGridVariables =
+        Dumux::Concept::GridVariables<GV> && !Dumux::Concept::FVGridVariables<GV>;
+public:
+    using type = std::conditional_t<usesGeneralGridVariables,
+                                    Dumux::Experimental::CVFELocalResidual<TypeTag>,
+                                    Dumux::CVFELocalResidual<TypeTag>>;
 };
 
 } // end namespace Dumux::Detail
