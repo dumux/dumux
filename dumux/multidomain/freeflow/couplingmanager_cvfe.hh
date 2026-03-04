@@ -24,6 +24,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -70,10 +71,10 @@ private:
     template<std::size_t id> using SubControlVolume = typename FVElementGeometry<id>::SubControlVolume;
     template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridVariables = typename Traits::template SubDomain<id>::GridVariables;
-    template<std::size_t id> using ElementVolumeVariables = typename GridVariables<id>::GridVolumeVariables::LocalView;
-    template<std::size_t id> using GridFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache;
+    template<std::size_t id> using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables<id>>;
+    template<std::size_t id> using ElementVariables = typename GridVariablesCache<id>::LocalView;
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
-    template<std::size_t id> using VolumeVariables = GetPropType<SubDomainTypeTag<id>, Properties::VolumeVariables>;
+    template<std::size_t id> using Variables = Concept::Variables_t<GridVariables<id>>;
 
     using Scalar = typename Traits::Scalar;
     using SolutionVector = typename Traits::SolutionVector;
@@ -82,7 +83,7 @@ private:
 
     using GridVariablesTuple = typename Traits::template TupleOfSharedPtr<GridVariables>;
 
-    using FluidSystem = typename VolumeVariables<freeFlowMassIndex>::FluidSystem;
+    using FluidSystem = typename Variables<freeFlowMassIndex>::FluidSystem;
 
     using GlobalPosition = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
     using VelocityVector = GlobalPosition;
@@ -100,8 +101,11 @@ private:
         auto vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
         {
             const auto& problem = gridVolVars.problem();
-            VolumeVariables<freeFlowMassIndex> volVars;
-            volVars.update(elemSol_, problem, fvGeometry.element(), scv);
+            Variables<freeFlowMassIndex> volVars;
+            if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
+                volVars.update(elemSol_, problem, fvGeometry.element(), scv);
+            else
+                volVars.update(elemSol_, problem, fvGeometry, ipData(fvGeometry, scv));
             return volVars;
         }
 
@@ -113,7 +117,10 @@ private:
         template<class GridVolVars, class FvElementGeometry, class SubControlVolume>
         const auto& vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
         {
-            return gridVolVars.volVars(scv);
+            if constexpr (requires { gridVolVars.volVars(scv); })
+                return gridVolVars.volVars(scv);
+            else
+                return gridVolVars.variables(scv);
         }
     };
 
@@ -126,7 +133,7 @@ private:
 
 public:
 
-    static constexpr auto pressureIdx = VolumeVariables<freeFlowMassIndex>::Indices::pressureIdx;
+    static constexpr auto pressureIdx = Variables<freeFlowMassIndex>::Indices::pressureIdx;
 
     /*!
      * \brief Methods to be accessed by main
@@ -264,8 +271,7 @@ public:
         auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
-        const auto& gridVolVars = considerPreviousTimeStep ? gridVars_(freeFlowMassIndex).curGridVolVars()
-                                                           : gridVars_(freeFlowMassIndex).prevGridVolVars();
+        const auto& gridVolVars = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
@@ -343,8 +349,7 @@ public:
         auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
-        const auto& gridVolVars = considerPreviousTimeStep ? gridVars_(freeFlowMassIndex).curGridVolVars()
-                                                           : gridVars_(freeFlowMassIndex).prevGridVolVars();
+        const auto& gridVolVars = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
@@ -531,7 +536,7 @@ public:
     {
         this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
-        if constexpr (ElementVolumeVariables<freeFlowMassIndex>::GridVolumeVariables::cachingEnabled)
+        if constexpr (GridVariablesCache<freeFlowMassIndex>::cachingEnabled)
         {
             if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
             {
@@ -544,7 +549,10 @@ public:
                     fvGeometry.bind(deflectedElement);
                     const auto& scv = fvGeometry.scv(dofIdxGlobalJ);
 
-                    gridVars_(freeFlowMassIndex).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
+                    if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
+                        subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, deflectedElement, scv);
+                    else
+                        subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, ipData(fvGeometry, scv)).update(std::move(elemSol), problem, deflectedElement, scv);
                 }
             }
             else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
@@ -563,7 +571,10 @@ public:
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         if (scv.dofIndex() == dofIdxGlobalJ)
-                            this->gridVars_(freeFlowMassIndex).curGridVolVars().volVars(scv).update(std::move(elemSol), problem, deflectedElement, scv);
+                            if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
+                                this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, deflectedElement, scv);
+                            else
+                                this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, fvGeometry, ipData(fvGeometry, scv));
                     }
                 }
             }
@@ -622,11 +633,51 @@ public:
     }
 
 private:
+    template<std::size_t i>
+    const auto& subDomainGridVars_(Dune::index_constant<i> domainIdx, bool current) const
+    {
+        if constexpr (Concept::FVGridVariables<GridVariables<i>>)
+            return current ? gridVars_(domainIdx).curGridVolVars()
+                           : gridVars_(domainIdx).prevGridVolVars();
+        else
+            return current ? gridVars_(domainIdx).curGridVars()
+                           : gridVars_(domainIdx).prevGridVars();
+    }
+
+    template<std::size_t i>
+    auto& subDomainGridVars_(Dune::index_constant<i> domainIdx, bool current)
+    {
+        if constexpr (Concept::FVGridVariables<GridVariables<i>>)
+            return current ? gridVars_(domainIdx).curGridVolVars()
+                           : gridVars_(domainIdx).prevGridVolVars();
+        else
+            return current ? gridVars_(domainIdx).curGridVars()
+                           : gridVars_(domainIdx).prevGridVars();
+    }
+
+    template<std::size_t i, class Scv>
+    auto& subDomainVariables_(Dune::index_constant<i> domainIdx, bool current, const Scv& scv)
+    {
+        if constexpr (Concept::FVGridVariables<GridVariables<i>>)
+            return subDomainGridVars_(domainIdx, current).volVars(scv);
+        else
+            return subDomainGridVars_(domainIdx, current).variables(scv);
+    }
+
+    template<std::size_t i, class Scv>
+    const auto& subDomainVariables_(Dune::index_constant<i> domainIdx, bool current, const Scv& scv) const
+    {
+        if constexpr (Concept::FVGridVariables<GridVariables<i>>)
+            return subDomainGridVars_(domainIdx, current).volVars(scv);
+        else
+            return subDomainGridVars_(domainIdx, current).variables(scv);
+    }
+
     template<class SolutionVector>
     auto makeMomentumCouplingContext_(const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
                                       const SolutionVector& sol) const
     {
-        if constexpr (ElementVolumeVariables<freeFlowMassIndex>::GridVolumeVariables::cachingEnabled)
+        if constexpr (GridVariablesCache<freeFlowMassIndex>::cachingEnabled)
             return MomentumCouplingContextGlobalCaching{};
         else
             return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, fvGeometry.gridGeometry())};
