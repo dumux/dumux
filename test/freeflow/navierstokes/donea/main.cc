@@ -34,6 +34,7 @@
 #include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
@@ -260,7 +261,11 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // use the multidomain FV assembler
+#if NEW_PROBLEM_INTERFACE
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
