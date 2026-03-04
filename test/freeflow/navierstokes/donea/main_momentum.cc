@@ -30,6 +30,7 @@
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include <dumux/assembly/assembler.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -117,7 +118,15 @@ void updateVelocities(
     const SolutionVector& x
 ){
     auto fvGeometry = localView(gridGeometry);
-    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
     for (const auto& element : elements(gridGeometry.gridView()))
     {
         fvGeometry.bind(element);
@@ -242,7 +251,11 @@ int main(int argc, char** argv)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
     }
 
+#if NEW_PROBLEM_INTERFACE
+    using Assembler = Assembler<TypeTag, DiffMethod::numeric>;
+#else
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
