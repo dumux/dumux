@@ -1083,11 +1083,11 @@ public:
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
         {
             const auto& ipData = qpData.ipData();
-            const auto& cache = elemVars[ipData];
+            const auto& ipCache = cache(elemVars, ipData);
             for (const auto& localDof : nonCVLocalDofs(fvGeometry))
             {
                 const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, ipData);
-                const auto& shapeValues = cache.shapeValues();
+                const auto& shapeValues = ipCache.shapeValues();
                 // only add fluxes to equations for which Neumann is set
                 for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
                     if (bcTypes.isNeumann(eqIdx))
