@@ -501,13 +501,11 @@ def processInstallScript(script, modulePath, readme, remoteURL=None):
 
 def noRemoteURLInfo(newModule):
     """Print information if not remote is present"""
-    return textwrap.dedent(
-        f"""\
+    return textwrap.dedent(f"""\
         No remote URL given for new module {newModule}.
         Please remember to replace the placeholder `$remoteurl`
         in README.md of the new module {newModule} once a remote is available.
-    """
-    )
+    """)
 
 
 def infoInitial(moduleDirectory, subFolder, sourceFiles):
@@ -516,8 +514,7 @@ def infoInitial(moduleDirectory, subFolder, sourceFiles):
     sourcesList = makeStringList(sourceFiles)
     subFolderList = makeStringList(subFolder)
 
-    return textwrap.dedent(
-        """\
+    return textwrap.dedent("""\
         This script will extract the following subfolder(s) of
         the module '{0}':
         {1}
@@ -535,8 +532,7 @@ def infoInitial(moduleDirectory, subFolder, sourceFiles):
         best of your knowledge.
 
         Important: the new module should NOT depend on the module '{0}'
-    """
-    ).format(moduleDirectory, subFolderList, sourcesList)
+    """).format(moduleDirectory, subFolderList, sourcesList)
 
 
 def infoReadmeMain(moduleDirectory, subFolder, sourceFiles):
@@ -548,8 +544,7 @@ def infoReadmeMain(moduleDirectory, subFolder, sourceFiles):
     subFolderString = "".join([f"*   `{d}`\n" for d in subFolder])
     sourceString = "".join([f"*   `{relativePath(s)}`\n" for s in sourceFiles])
 
-    return textwrap.dedent(
-        """\
+    return textwrap.dedent("""\
         This file has been created automatically. Please adapt it to your needs.
 
         ## Content
@@ -566,14 +561,12 @@ def infoReadmeMain(moduleDirectory, subFolder, sourceFiles):
         module by using `dunecontrol`. For building and running the executables,
         please go to the build folders corresponding to the sources listed above.
 
-    """
-    ).format(moduleDirectory, subFolderString, sourceString)
+    """).format(moduleDirectory, subFolderString, sourceString)
 
 
 def infoReadmeLicense():
     """License part of the README.md document"""
-    return textwrap.dedent(
-        """\
+    return textwrap.dedent("""\
 
         ## License
 
@@ -582,8 +575,7 @@ def infoReadmeLicense():
         The GPL can be found under [GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt)
         provided in the `LICENSES` directory located at the topmost of the source code tree.
 
-    """
-    )
+    """)
 
 
 def infoReadmeInstallation(remoteURL, installScriptName, newModuleName):
@@ -594,8 +586,7 @@ def infoReadmeInstallation(remoteURL, installScriptName, newModuleName):
     if not remoteURL:
         remoteURL = "$remoteurl"
         remoteHints = "\nImportant: $remoteurl has to be corrected!\n"
-    return textwrap.dedent(
-        """\
+    return textwrap.dedent("""\
 
         ## Installation
 
@@ -614,14 +605,12 @@ def infoReadmeInstallation(remoteURL, installScriptName, newModuleName):
         This will clone all modules into the directory `DUMUX`,
         configure your module with `dunecontrol` and build tests.
 
-    """
-    ).format(installScriptName, remoteHints, remoteURL, newModuleName, installScriptPath)
+    """).format(installScriptName, remoteHints, remoteURL, newModuleName, installScriptPath)
 
 
 def infoFinal(newModuleName):
     """Print success message with information"""
-    return textwrap.dedent(
-        f"""\
+    return textwrap.dedent(f"""\
         ========================================================================
 
         The module was extracted successfully!
@@ -629,8 +618,7 @@ def infoFinal(newModuleName):
         The extracted module is contained in the subfolder '{newModuleName}'.
         You can configure it with
         ./dune-common/bin/dunecontrol --opts={newModuleName}/cmake.opts --only={newModuleName} all
-    """
-    )
+    """)
 
 
 ###############

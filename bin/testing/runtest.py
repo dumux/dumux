@@ -6,7 +6,6 @@
 Helper script to run tests: use dumux_runtest.py instead
 """
 
-
 from dumux_runtest import runTest
 
 if __name__ == "__main__":

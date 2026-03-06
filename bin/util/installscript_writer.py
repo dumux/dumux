@@ -82,9 +82,7 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
 
     def writePreamble(self, topFolderName=None):
         """Write preable of the script (utility functions)"""
-        self.ostream.write(
-            textwrap.dedent(
-                """\
+        self.ostream.write(textwrap.dedent("""\
 
             exitWithError()
             {
@@ -123,9 +121,7 @@ class InstallScriptWriterBash(InstallScriptWriterInterface):
                 popd
             }
 
-        """
-            )
-        )
+        """))
         top = topFolderName if topFolderName else "."
         self.ostream.write(f'TOP="{top}"\n')
         self.ostream.write("mkdir -p $TOP\n")
@@ -186,9 +182,7 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
     def writePreamble(self, topFolderName=None):
         """Write the preamble of the script"""
         top = topFolderName if topFolderName else "."
-        self.ostream.write(
-            textwrap.dedent(
-                f"""\
+        self.ostream.write(textwrap.dedent(f"""\
 
             import os
             import sys
@@ -228,9 +222,7 @@ class InstallScriptWriterPython(InstallScriptWriterInterface):
                     patchFile.write(patch)
                 runFromSubFolder(['git', 'apply', 'tmp.patch'], subFolder)
                 os.remove(patchPath)
-        """
-            )
-        )
+        """))
 
     def writeInstallation(self, dependency):
         """Write installation part of the script"""
