@@ -39,9 +39,16 @@
 #include <dumux/discretization/cvfe/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
+#include <dumux/discretization/pq1bubble/fegridgeometry.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/cvfe/hybrid/fluxvariablescache.hh>
+
+#include <dumux/assembly/localresidual.hh>
+#include <dumux/discretization/fem/elementvariables.hh>
+#include <dumux/discretization/fem/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/gridvariables.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -50,9 +57,11 @@ namespace Dumux::Properties {
 //! Type tag for the pq1bubble scheme.
 // Create new type tags
 namespace TTag {
-struct PQ1BubbleBase { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
-struct PQ1BubbleModel { using InheritsFrom = std::tuple<PQ1BubbleBase>; };
-struct PQ1BubbleHybridModel { using InheritsFrom = std::tuple<PQ1BubbleBase>; };
+struct PQ1BubbleBase { using InheritsFrom = std::tuple<GridProperties>; };
+struct PQ1BubbleFVBase { using InheritsFrom = std::tuple<FiniteVolumeModel,PQ1BubbleBase>; };
+struct PQ1BubbleModel { using InheritsFrom = std::tuple<PQ1BubbleFVBase>; };
+struct PQ1BubbleHybridModel { using InheritsFrom = std::tuple<PQ1BubbleFVBase>; };
+struct PQ1BubbleFEModel { using InheritsFrom = std::tuple<PQ1BubbleBase>; };
 } // end namespace TTag
 
 //! Set the default for the grid geometry
@@ -84,9 +93,57 @@ public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, Traits>;
 };
 
+//! Set the default for the grid geometry for fe model
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::PQ1BubbleFEModel>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = PQ1BubbleFEGridGeometry<Scalar, GridView, enableCache>;
+};
+
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PQ1BubbleFEModel>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::FE::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::FE::FEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::GridVariables<GG, GVC>;
+};
+
+//! TODO: Replace property
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PQ1BubbleFEModel> { static constexpr bool value = false; };
+
+//! TODO: Replace and move to LinearAlgebra traits
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::PQ1BubbleFEModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
+
+//! TODO: Replace and move to LinearAlgebra traits
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::PQ1BubbleFEModel>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+public:
+    using type = typename Dune::BCRSMatrix<MatrixBlock>;
+};
+
 //! The grid volume variables vector class
 template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleBase>
+struct GridVolumeVariables<TypeTag, TTag::PQ1BubbleFVBase>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
@@ -202,6 +259,13 @@ public:
                                     Dumux::Experimental::CVFELocalResidual<TypeTag>,
                                     Dumux::CVFELocalResidual<TypeTag>>;
 };
+
+template<class T>
+concept PQ1BubbleFEModel = PQ1BubbleModel<T> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ1BubbleFEModel, T>();
+
+template<PQ1BubbleFEModel TypeTag>
+struct DiscretizationDefaultLocalOperator<TypeTag>
+{ using type = LocalResidual<TypeTag>; };
 
 } // end namespace Dumux::Detail
 
