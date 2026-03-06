@@ -35,6 +35,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
+#include <dumux/common/spatialparams.hh>
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/method.hh>
@@ -42,6 +43,7 @@
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/felocalresidual.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/volumevariables.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/indices.hh>
 
@@ -115,7 +117,9 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 //! The type tag for the single-phase, isothermal Navier-Stokes model
-struct NavierStokesMomentumCVFE { using InheritsFrom = std::tuple<FreeFlow>; };
+struct NavierStokesMomentumCVFEBase { using InheritsFrom = std::tuple<FreeFlow>; };
+struct NavierStokesMomentumCVFE { using InheritsFrom = std::tuple<NavierStokesMomentumCVFEBase>; };
+struct NavierStokesMomentumFE { using InheritsFrom = std::tuple<NavierStokesMomentumCVFEBase>; };
 } // end namespace TTag
 
 ///////////////////////////////////////////////////////////////////////////
@@ -123,7 +127,7 @@ struct NavierStokesMomentumCVFE { using InheritsFrom = std::tuple<FreeFlow>; };
 ///////////////////////////////////////////////////////////////////////////
 //!< states some specifics of the Navier-Stokes model
 template<class TypeTag>
-struct ModelTraits<TypeTag, TTag::NavierStokesMomentumCVFE>
+struct ModelTraits<TypeTag, TTag::NavierStokesMomentumCVFEBase>
 {
 private:
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
@@ -139,7 +143,7 @@ public:
  *        This can be done in the problem.
  */
 template<class TypeTag>
-struct FluidState<TypeTag, TTag::NavierStokesMomentumCVFE>{
+struct FluidState<TypeTag, TTag::NavierStokesMomentumCVFEBase>{
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -152,9 +156,33 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::NavierStokesMomentumCVFE>
 { using type = NavierStokesMomentumCVFELocalResidual<TypeTag>; };
 
+//! The local residual
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokesMomentumFE>
+{ using type = NavierStokesMomentumFELocalResidual<TypeTag>; };
+
+// Set the default spatial parameters for the fe scheme
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::NavierStokesMomentumFE>
+{
+    template<class GG, class S>
+    struct DefaultSpatialParams
+    : public Dumux::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>
+    {
+    private:
+        using ParentType = Dumux::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>;
+    public:
+        using ParentType::ParentType;
+    };
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dumux::SpatialParams<GridGeometry, Scalar, DefaultSpatialParams<GridGeometry, Scalar>>;
+};
+
 //! Set the volume variables property
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::NavierStokesMomentumCVFE>
+struct VolumeVariables<TypeTag, TTag::NavierStokesMomentumCVFEBase>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -175,7 +203,7 @@ public:
 // i.e. the pressure is supplied via the problem as an analytical solution
 // or from a separate computation
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::NavierStokesMomentumCVFE>
+struct CouplingManager<TypeTag, TTag::NavierStokesMomentumCVFEBase>
 {
     struct EmptyCouplingManager {};
     using type = EmptyCouplingManager;
