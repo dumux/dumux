@@ -253,8 +253,8 @@ public:
             {
                 const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
-                const auto& cache = elemVars[ipData];
-                FluxFunctionContext context(problem, fvGeometry, elemVars, cache);
+                const auto& ipCache = cache(elemVars, ipData);
+                FluxFunctionContext context(problem, fvGeometry, elemVars, ipCache);
                 const auto& v = context.velocity();
                 const auto& gradV = context.gradVelocity();
 
@@ -269,22 +269,22 @@ public:
                     NumEqVector fluxAndSourceTerm(0.0);
                     // add advection term
                     if (problem.enableInertiaTerms())
-                        fluxAndSourceTerm -= density*(v*cache.gradN(localDofIdx))*v;
+                        fluxAndSourceTerm -= density*(v*ipCache.gradN(localDofIdx))*v;
 
                     // add diffusion term
                     fluxAndSourceTerm += enableUnsymmetrizedVelocityGradient ?
-                                            mu*mv(gradV, cache.gradN(localDofIdx))
-                                            : mu*mv(gradV + getTransposed(gradV), cache.gradN(localDofIdx));
+                                            mu*mv(gradV, ipCache.gradN(localDofIdx))
+                                            : mu*mv(gradV + getTransposed(gradV), ipCache.gradN(localDofIdx));
 
                     // add pressure term
-                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * cache.gradN(localDofIdx);
+                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * ipCache.gradN(localDofIdx);
 
                     // finally add source and Neumann term and add everything to residual
                     auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
 
-                    const auto& shapeValues = cache.shapeValues();
+                    const auto& shapeValues = ipCache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
                         fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];

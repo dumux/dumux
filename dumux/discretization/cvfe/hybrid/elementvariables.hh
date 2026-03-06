@@ -123,20 +123,18 @@ public:
     const Variables& operator [](const IpData& ipData) const
     { return gridVariablesCache().variables(eIdx_, ipData.localDofIndex()); }
 
-    // access cache for given interpolation point data
-    template<Concept::ScvfQpIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return gridVariablesCache().scvfCache(eIdx_, ipData.scvfIndex(), ipData.qpIndex()); }
-
-    // access cache for given interpolation point data of a boundary intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return gridVariablesCache().boundaryIntersectionCache(eIdx_, ipData.intersectionIndex(), ipData.qpIndex()); }
-
-    // access cache for given interpolation point data of an element quadrature point
-    template<Concept::QIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return gridVariablesCache().elementCache(eIdx_, ipData.qpIndex()); }
+    template<class IpData>
+    requires (Concept::ScvfQpIpData<IpData> || Concept::IntersectionQpIpData<IpData> || Concept::QIpData<IpData>)
+    friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
+                                               const IpData& ipData)
+    {
+        if constexpr (Concept::ScvfQpIpData<IpData>)
+            return elemVars.gridVariablesCache().scvfCache(elemVars.eIdx_, ipData.scvfIndex(), ipData.qpIndex());
+        else if constexpr (Concept::IntersectionQpIpData<IpData>)
+            return elemVars.gridVariablesCache().boundaryIntersectionCache(elemVars.eIdx_, ipData.intersectionIndex(), ipData.qpIndex());
+        else
+            return elemVars.gridVariablesCache().elementCache(elemVars.eIdx_, ipData.qpIndex());
+    }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -368,35 +366,18 @@ public:
     Variables& operator [](const IpData& ipData)
     { return variables_[ipData.localDofIndex()]; }
 
-    // access cache for a given interpolation point data
-    template<Concept::ScvfQpIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex()); }
-
-    // access cache for a given interpolation point data
-    template<Concept::ScvfQpIpData IpData>
-    InterpolationPointData& operator [](const IpData& ipData)
-    { return ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex()); }
-
-    // access cache for a given interpolation point data of an intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return ipDataCache_->boundaryIntersectionCache(ipData.intersectionIndex(), ipData.qpIndex()); }
-
-    // access cache for a given interpolation point data of an intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
-    InterpolationPointData& operator [](const IpData& ipData)
-    { return ipDataCache_->boundaryIntersectionCache(ipData.intersectionIndex(), ipData.qpIndex()); }
-
-    // access cache for a given interpolation point data of an element quadrature point
-    template<Concept::QIpData IpData>
-    const InterpolationPointData& operator [](const IpData& ipData) const
-    { return ipDataCache_->elementCache(ipData.qpIndex()); }
-
-    // access cache for a given interpolation point data of an element quadrature point
-    template<Concept::QIpData IpData>
-    InterpolationPointData& operator [](const IpData& ipData)
-    { return ipDataCache_->elementCache(ipData.qpIndex()); }
+    template<class IpData>
+    requires (Concept::ScvfQpIpData<IpData> || Concept::IntersectionQpIpData<IpData> || Concept::QIpData<IpData>)
+    friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
+                                               const IpData& ipData)
+    {
+        if constexpr (Concept::ScvfQpIpData<IpData>)
+            return elemVars.ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex());
+        else if constexpr (Concept::IntersectionQpIpData<IpData>)
+            return elemVars.ipDataCache_->boundaryIntersectionCache(ipData.intersectionIndex(), ipData.qpIndex());
+        else
+            return elemVars.ipDataCache_->elementCache(ipData.qpIndex());
+    }
 
     //! The grid variables cache object we are a restriction of
     const GridVariablesCache& gridVariablesCache() const
