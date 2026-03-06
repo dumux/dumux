@@ -13,6 +13,7 @@
 #define DUMUX_BASE_LOCAL_RESIDUAL_HH
 
 #include <cassert>
+#include <concepts>
 
 #include <dune/common/exceptions.hh>
 
@@ -89,8 +90,11 @@ public:
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& scv : scvs(fvGeometry))
-            this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVars, curElemVars, scv);
+        if constexpr (requires { scvs(fvGeometry); })
+        {
+            for (const auto& scv : scvs(fvGeometry))
+                this->asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVars, curElemVars, scv);
+        }
 
         // allow for additional contributions (e.g. hybrid CVFE / FE schemes)
         this->asImp().addToElementStorageResidual(residual, this->problem(), element, fvGeometry, prevElemVars, curElemVars);
@@ -117,12 +121,18 @@ public:
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
-        for (const auto& scv : scvs(fvGeometry))
-            this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVars, scv);
+        if constexpr (requires { scvs(fvGeometry); })
+        {
+            for (const auto& scv : scvs(fvGeometry))
+                this->asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVars, scv);
+        }
 
         // forward to the local residual specialized for the discretization methods
-        for (auto&& scvf : scvfs(fvGeometry))
-            this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVars, bcTypes, scvf);
+        if constexpr (requires { scvfs(fvGeometry); })
+        {
+            for (auto&& scvf : scvfs(fvGeometry))
+                this->asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVars, bcTypes, scvf);
+        }
 
         // allow for additional contributions (e.g. hybrid CVFE / FE schemes)
         this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, fvGeometry, elemVars, bcTypes);
