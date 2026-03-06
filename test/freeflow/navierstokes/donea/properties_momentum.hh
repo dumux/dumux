@@ -44,6 +44,10 @@
 #define NEW_VARIABLES_INTERFACE 0
 #endif
 
+#ifndef KEEP_DEFAULT_GRIDVARIABLES
+#define KEEP_DEFAULT_GRIDVARIABLES 0
+#endif
+
 #include <type_traits>
 
 #include <dune/common/std/type_traits.hh>
@@ -97,7 +101,7 @@ struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 #endif
 };
 
-#if NEW_PROBLEM_INTERFACE
+#if NEW_PROBLEM_INTERFACE && !KEEP_DEFAULT_GRIDVARIABLES
 //! The grid variables
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
