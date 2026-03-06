@@ -52,7 +52,6 @@ class CVFELocalResidual : public LocalResidual<TypeTag>
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
@@ -69,16 +68,16 @@ public:
                   const Problem& problem,
                   const Element& element,
                   const FVElementGeometry& fvGeometry,
-                  const ElementVariables& elemVolVars,
-                  const ElementBoundaryTypes& elemBcTypes,
+                  const ElementVariables& elemVars,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto flux = this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, scvf);
+        const auto flux = this->asImp().evalFlux(problem, element, fvGeometry, elemVars, scvf);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        residual[insideScv.localDofIndex()] += flux;
+
         if (!scvf.boundary())
         {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            residual[insideScv.localDofIndex()] += flux;
 
             // for control-volume finite element schemes with overlapping control volumes
             if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
@@ -89,43 +88,23 @@ public:
             else
                 residual[outsideScv.localDofIndex()] -= flux;
         }
-        else
-        {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            residual[insideScv.localDofIndex()] += flux;
-        }
     }
 
     //! evaluate flux residuals for one sub control volume face
     NumEqVector evalFlux(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
-                         const ElementVariables& elemVolVars,
-                         const ElementBoundaryTypes& elemBcTypes,
+                         const ElementVariables& elemVars,
                          const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);
 
         if (!scvf.boundary())
-            flux += this->asImp().fluxIntegral(fvGeometry, elemVolVars, scvf);
+            flux += this->asImp().fluxIntegral(fvGeometry, elemVars, scvf);
         else
-        {
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, scvf);
-
-            // Treat flux boundary conditions.
-            // For Dirichlet there is no addition to the residual here but they
-            // are enforced strongly by replacing the residual entry afterwards via global constraints.
-            if (bcTypes.hasFluxBoundary())
-            {
-                NumEqVector boundaryFluxes = problem.boundaryFluxIntegral(fvGeometry, elemVolVars, scvf);
-
-                // only add fluxes to equations for which flux boundary conditions are set
-                for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    if (bcTypes.isFluxBoundary(eqIdx))
-                        flux[eqIdx] += boundaryFluxes[eqIdx];
-            }
-        }
-
+            DUNE_THROW(Dune::InvalidStateException, "evalFlux should not be called for boundary scvfs. "
+                                                    " Boundary fluxes are added via addBoundaryFluxIntegral instead.");
+            
         return flux;
     }
 };

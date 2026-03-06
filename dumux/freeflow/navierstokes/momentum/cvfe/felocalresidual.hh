@@ -221,15 +221,12 @@ public:
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemBcTypes The element boundary types
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementBoundaryTypes>
+    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
                                       const FVElementGeometry& fvGeometry,
-                                      const ElementVariables& elemVars,
-                                      const ElementBoundaryTypes& elemBcTypes)
+                                      const ElementVariables& elemVars)
     {
         if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
@@ -289,9 +286,6 @@ public:
                     }
                 }
             }
-
-            if (elemBcTypes.hasFluxBoundary())
-                addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemBcTypes);
         }
     }
 

@@ -368,11 +368,10 @@ public:
                                            const Problem& problem,
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const ElementBoundaryTypes &elemBcTypes) const
+                                           const ElementVariables& elemVars) const
     {
         FeResidual::addFluxAndSourceTerms(
-            residual, problem, fvGeometry, elemVars, elemBcTypes
+            residual, problem, fvGeometry, elemVars
         );
     }
 
