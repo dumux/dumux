@@ -17,6 +17,7 @@
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/fem/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/eval.hh>
 
 #include "flux.hh"
 
@@ -247,16 +248,14 @@ public:
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
             const auto& element = fvGeometry.element();
-            using Cache = typename ElementVariables::InterpolationPointData;
-            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, Cache>;
             for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
                 const auto& ipData = qpData.ipData();
-                // Obtain and store shape function values and gradients at the current quad point
                 const auto& ipCache = cache(elemVars, ipData);
-                FluxFunctionContext context(problem, fvGeometry, elemVars, ipCache);
-                const auto& v = context.velocity();
-                const auto& gradV = context.gradVelocity();
+
+                const auto velocity = [&](const auto& vars) { return vars.velocity(); };
+                // Evaluate shape function values and gradients at the current quad point
+                const auto [v, gradV] = CVFE::eval(fvGeometry, elemVars, ipData, velocity, CVFE::grad(velocity));
 
                 // get viscosity from the problem
                 const Scalar mu = problem.effectiveViscosity(element, fvGeometry, ipData);
