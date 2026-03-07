@@ -97,16 +97,16 @@ private:
         MomentumCouplingContextNoCaching(ElementSolution&& elemSol)
         : elemSol_(std::move(elemSol)) {}
 
-        template<class GridVolVars, class FvElementGeometry, class SubControlVolume>
-        auto vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        template<class GridVarsCache, class FvElementGeometry, class SubControlVolume>
+        auto vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
         {
-            const auto& problem = gridVolVars.problem();
-            Variables<freeFlowMassIndex> volVars;
+            const auto& problem = gridVarsCache.problem();
+            Variables<freeFlowMassIndex> variables;
             if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
-                volVars.update(elemSol_, problem, fvGeometry.element(), scv);
+                variables.update(elemSol_, problem, fvGeometry.element(), scv);
             else
-                volVars.update(elemSol_, problem, fvGeometry, ipData(fvGeometry, scv));
-            return volVars;
+                variables.update(elemSol_, problem, fvGeometry, ipData(fvGeometry, scv));
+            return variables;
         }
 
         ElementSolution elemSol_;
@@ -114,13 +114,13 @@ private:
 
     struct MomentumCouplingContextGlobalCaching
     {
-        template<class GridVolVars, class FvElementGeometry, class SubControlVolume>
-        const auto& vars(const GridVolVars& gridVolVars, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        template<class GridVarsCache, class FvElementGeometry, class SubControlVolume>
+        const auto& vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
         {
-            if constexpr (requires { gridVolVars.volVars(scv); })
-                return gridVolVars.volVars(scv);
+            if constexpr (requires { gridVarsCache.volVars(scv); })
+                return gridVarsCache.volVars(scv);
             else
-                return gridVolVars.variables(scv);
+                return gridVarsCache.variables(scv);
         }
     };
 
@@ -271,16 +271,16 @@ public:
         auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
-        const auto& gridVolVars = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
+        const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
             const auto& scv = massFvGeometry.scv(eIdx);
 
-            const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
+            const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
 
-            return volVars.density();
+            return variables.density();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
@@ -294,8 +294,8 @@ public:
             Scalar rho = 0.0;
             for (const auto& scv : scvs(massFvGeometry))
             {
-                const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
-                rho += volVars.density()*shapeValues[scv.localDofIndex()][0];
+                const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
+                rho += variables.density()*shapeValues[scv.localDofIndex()][0];
             }
 
             return rho;
@@ -349,16 +349,16 @@ public:
         auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
-        const auto& gridVolVars = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
+        const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
 
         if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::cctpfa)
         {
             const auto eIdx = fvGeometry.elementIndex();
             const auto& scv = massFvGeometry.scv(eIdx);
 
-            const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
+            const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
 
-            return volVars.viscosity();
+            return variables.viscosity();
         }
         else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
@@ -372,8 +372,8 @@ public:
             Scalar mu = 0.0;
             for (const auto& scv : scvs(massFvGeometry))
             {
-                const auto& volVars = context.vars(gridVolVars, massFvGeometry, scv);
-                mu += volVars.viscosity()*shapeValues[scv.localDofIndex()][0];
+                const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
+                mu += variables.viscosity()*shapeValues[scv.localDofIndex()][0];
             }
 
             return mu;
