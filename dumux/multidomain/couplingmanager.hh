@@ -184,7 +184,7 @@ public:
      *
      * \param domainI the index of domain i
      * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
-     * \param elemVolVars the element volume variables (all volume variables in the element local stencil) to be updated
+     * \param elemVars the element variables (all variables in the element local stencil) to be updated
      * \param elemFluxVarsCache the element flux variable cache (all flux variables in the element local stencil) to be updated
      *
      * \note Such variables do not necessarily exist and then this function does nothing (default)
@@ -193,10 +193,10 @@ public:
      *       from domaindecomposition: the transmissibilities for fluxes of domain i to domain j depend on the permeability in domain j
      *                                 (which might depend in turn on the primary variables of domain i)
      */
-    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVolVars, class UpdatableFluxVarCache>
+    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVars, class UpdatableFluxVarCache>
     void updateCoupledVariables(Dune::index_constant<i> domainI,
                                 const LocalAssemblerI& localAssemblerI,
-                                UpdatableElementVolVars& elemVolVars,
+                                UpdatableElementVars& elemVars,
                                 UpdatableFluxVarCache& elemFluxVarsCache)
     {}
 
@@ -205,7 +205,7 @@ public:
      *
      * \param domainI the index of domain i
      * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
-     * \param elemVolVars the element volume variables (all volume variables in the element local stencil) to be updated
+     * \param elemVars the element variables (all variables in the element local stencil) to be updated
      *
      * \note Such variables do not necessarily exist and then this function does nothing (default)
      * \note some examples
