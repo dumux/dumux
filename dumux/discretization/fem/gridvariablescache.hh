@@ -171,14 +171,47 @@ private:
     class InterpolationPointDataCache
     {
     public:
+        struct ElementCache
+        {
+            std::vector<InterpolationPointData> elementCache;
+            std::unordered_map<int, std::vector<InterpolationPointData>> boundaryIntersectionCache;
+
+            template<class Problem, class ElementDiscretization, class ElementVariables>
+            void update(const Problem& problem,
+                        const typename ElementDiscretization::Element& element,
+                        const ElementDiscretization& elemDisc,
+                        const ElementVariables& elemVars)
+            {
+                const auto elemQuadRule = Dumux::CVFE::quadratureRule(elemDisc, element);
+                elementCache.resize(std::ranges::size(elemQuadRule));
+                for (const auto& qpData : elemQuadRule)
+                    elementCache[qpData.ipData().qpIndex()].update(problem, element, elemDisc, elemVars, qpData.ipData());
+
+                boundaryIntersectionCache.clear();
+                for (const auto& intersection : intersections(elemDisc.gridGeometry().gridView(), element))
+                {
+                    if (intersection.boundary())
+                    {
+                        const auto intersectionIndex = intersection.indexInInside();
+                        auto& boundaryCache = boundaryIntersectionCache[intersectionIndex];
+                        const auto quadRule = Dumux::CVFE::quadratureRule(elemDisc, intersection);
+                        boundaryCache.resize(std::ranges::size(quadRule));
+                        for (const auto& qpData : quadRule)
+                            boundaryCache[qpData.ipData().qpIndex()].update(problem,
+                                                                            element,
+                                                                            elemDisc,
+                                                                            elemVars,
+                                                                            qpData.ipData());
+                    }
+                }
+            }
+        };
+
         InterpolationPointDataCache()
         {}
 
         void resize(const std::size_t numElements)
-        {
-            elementCache_.resize(numElements);
-            boundaryIntersectionCache_.resize(numElements);
-        }
+        { elementCaches_.resize(numElements); }
 
         template<class Problem, class ElementDiscretization, class ElementVariables>
         void update(const Problem& problem,
@@ -187,65 +220,42 @@ private:
                     const ElementVariables& elemVars)
         {
             const auto eIdx = elemDisc.gridGeometry().elementMapper().index(element);
-            updateElementCache_(problem, eIdx, element, elemDisc, elemVars);
+            elementCaches_[eIdx].update(problem, element, elemDisc, elemVars);
         }
 
         // access operator
         const InterpolationPointData& elementCache(std::size_t eIdx, std::size_t qpIdx) const
-        { return elementCache_[eIdx][qpIdx]; }
+        { return elementCaches_[eIdx].elementCache[qpIdx]; }
 
         // access operator
         InterpolationPointData& elementCache(std::size_t eIdx, std::size_t qpIdx)
-        { return elementCache_[eIdx][qpIdx]; }
+        { return elementCaches_[eIdx].elementCache[qpIdx]; }
 
         // access operator
         const InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx) const
-        { return (*boundaryIntersectionCache_[eIdx]).at(intersectionIdx)[qpIdx]; }
+        { return elementCaches_[eIdx].boundaryIntersectionCache.at(intersectionIdx)[qpIdx]; }
 
         // access operator
         InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx)
-        { return (*boundaryIntersectionCache_[eIdx])[intersectionIdx][qpIdx]; }
+        { return elementCaches_[eIdx].boundaryIntersectionCache[intersectionIdx][qpIdx]; }
 
-    private:
-        template<class Problem, class ElementDiscretization, class ElementVariables>
-        void updateElementCache_(const Problem& problem,
-                                 const std::size_t eIdx,
-                                 const typename ElementDiscretization::Element& element,
-                                 const ElementDiscretization& elemDisc,
-                                 const ElementVariables& elemVars)
-        {
-            const auto elemQuadRule = Dumux::CVFE::quadratureRule(elemDisc, element);
-            elementCache_[eIdx].resize(std::ranges::size(elemQuadRule));
-            for (const auto& qpData : elemQuadRule)
-                elementCache_[eIdx][qpData.ipData().qpIndex()].update(problem, element, elemDisc, elemVars, qpData.ipData());
+        const ElementCache& cache(std::size_t eIdx) const
+        { return elementCaches_[eIdx]; }
 
-            if (!boundaryIntersectionCache_[eIdx])
-                boundaryIntersectionCache_[eIdx] = std::make_unique<std::unordered_map<int, std::vector<InterpolationPointData>>>();
-            else
-                boundaryIntersectionCache_[eIdx]->clear();
+        ElementCache& cache(std::size_t eIdx)
+        { return elementCaches_[eIdx]; }
 
-            for (const auto& intersection : intersections(elemDisc.gridGeometry().gridView(), element))
-            {
-                if (intersection.boundary())
-                {
-                    const auto intersectionIndex = intersection.indexInInside();
-                    auto& boundaryCache = (*boundaryIntersectionCache_[eIdx])[intersectionIndex];
-                    const auto quadRule = Dumux::CVFE::quadratureRule(elemDisc, intersection);
-                    boundaryCache.resize(std::ranges::size(quadRule));
-                    for (const auto& qpData : quadRule)
-                        boundaryCache[qpData.ipData().qpIndex()].update(problem,
-                                                                        element,
-                                                                        elemDisc,
-                                                                        elemVars,
-                                                                        qpData.ipData());
-                }
-            }
-        }
-
-        std::vector<std::vector<InterpolationPointData>> elementCache_; //! storage per element quadrature points
-        std::vector<std::unique_ptr<std::unordered_map<int, std::vector<InterpolationPointData>>>> boundaryIntersectionCache_; //! storage per element/boundary intersection/qp
+        std::vector<ElementCache> elementCaches_; //! storage per element
     };
 
+public:
+    const auto& cache(std::size_t eIdx) const
+    { return ipDataCache_->cache(eIdx); }
+
+    auto& cache(std::size_t eIdx)
+    { return ipDataCache_->cache(eIdx); }
+
+private:
     const Problem* problemPtr_;
     std::vector<std::vector<Variables>> variables_;
     std::shared_ptr<InterpolationPointDataCache> ipDataCache_;
