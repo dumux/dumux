@@ -239,7 +239,7 @@ public:
         // the auxiliary flux is enabled if the trait is specialized for the problem
         // this can be used, for example, to implement flux stabilization terms
         if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
-            DUNE_THROW(Dune::NotImplemented, "Auxiliary fluxes not implemented for new integral functions. Interface needs to be changed.");
+            flux += problem.auxiliaryFlux(fvGeometry.element(), fvGeometry, elemVars, scvf);
 
         return flux * insideVars.extrusionFactor();
     }
