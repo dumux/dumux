@@ -170,14 +170,53 @@ public:
 private:
     class InterpolationPointDataCache
     {
+        struct ElementCache
+        {
+            std::vector<InterpolationPointData> scvfCache;
+            std::vector<std::size_t> qpsOffset;
+
+            template<class Problem, class FVElementGeometry, class ElementVariables>
+            void update(const Problem& problem,
+                        const typename FVElementGeometry::Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVariables& elemVars)
+            {
+                qpsOffset.resize(fvGeometry.numScvf() + 1, 0);
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    const auto numQps = std::ranges::size(Dumux::CVFE::quadratureRule(fvGeometry, scvf));
+                    qpsOffset[scvf.index() + 1] = numQps;
+                }
+                for (std::size_t i = 2; i < qpsOffset.size(); ++i)
+                    qpsOffset[i] += qpsOffset[i-1];
+
+                scvfCache.resize(qpsOffset.back());
+                for (const auto& scvf : scvfs(fvGeometry))
+                {
+                    for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, scvf))
+                        cache(qpData.ipData().scvfIndex(), qpData.ipData().qpIndex()).update(problem,
+                                                                                              element,
+                                                                                              fvGeometry,
+                                                                                              elemVars,
+                                                                                              qpData.ipData());
+                }
+            }
+
+            const InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx) const
+            { return scvfCache[qpsOffset[scvfIdx] + qpIdx]; }
+
+            InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx)
+            { return scvfCache[qpsOffset[scvfIdx] + qpIdx]; }
+        };
+
     public:
+
         InterpolationPointDataCache()
         {}
 
         void resize(const std::size_t numElements)
         {
-            scvfCache_.resize(numElements);
-            qpsOffset_.resize(numElements);
+            elementCaches_.resize(numElements);
         }
 
         template<class Problem, class FVElementGeometry, class ElementVariables>
@@ -187,50 +226,35 @@ private:
                     const ElementVariables& elemVars)
         {
             const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-            updateElementCache_(problem, eIdx, element, fvGeometry, elemVars);
+            elementCaches_[eIdx].update(problem, element, fvGeometry, elemVars);
         }
 
         // access operator
         const InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
-        { return scvfCache_[eIdx][qpsOffset_[eIdx][scvfIdx] + qpIdx]; }
+        { return elementCaches_[eIdx].cache(scvfIdx, qpIdx); }
 
         // access operator
         InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
-        { return scvfCache_[eIdx][qpsOffset_[eIdx][scvfIdx] + qpIdx]; }
+        { return elementCaches_[eIdx].cache(scvfIdx, qpIdx); }
+
+        const ElementCache& cache(std::size_t eIdx) const
+        { return elementCaches_[eIdx]; }
+
+        ElementCache& cache(std::size_t eIdx)
+        { return elementCaches_[eIdx]; }
 
     private:
-        template<class Problem, class FVElementGeometry, class ElementVariables>
-        void updateElementCache_(const Problem& problem,
-                                 const std::size_t eIdx,
-                                 const typename FVElementGeometry::Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVariables& elemVars)
-        {
-            qpsOffset_[eIdx].resize(fvGeometry.numScvf() + 1, 0);
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                const auto numQps = std::ranges::size(Dumux::CVFE::quadratureRule(fvGeometry, scvf));
-                qpsOffset_[eIdx][scvf.index() + 1] = numQps;
-            }
-            for (std::size_t i = 2; i < qpsOffset_[eIdx].size(); ++i)
-                qpsOffset_[eIdx][i] += qpsOffset_[eIdx][i-1];
-
-            scvfCache_[eIdx].resize(qpsOffset_[eIdx].back());
-            for (const auto& scvf : scvfs(fvGeometry))
-            {
-                for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, scvf))
-                    cache(eIdx, qpData.ipData().scvfIndex(), qpData.ipData().qpIndex()).update(problem,
-                                                                                                element,
-                                                                                                fvGeometry,
-                                                                                                elemVars,
-                                                                                                qpData.ipData());
-            }
-        }
-
-        std::vector<std::vector<InterpolationPointData>> scvfCache_; //! storage per element
-        std::vector<std::vector<std::size_t>> qpsOffset_; //! offset[eIdx][scvfIdx] -> start index in scvfCache_[eIdx]
+        std::vector<ElementCache> elementCaches_; //! storage per element
     };
 
+public:
+    const auto& cache(std::size_t eIdx) const
+    { return ipDataCache_->cache(eIdx); }
+
+    auto& cache(std::size_t eIdx)
+    { return ipDataCache_->cache(eIdx); }
+
+private:
     const Problem* problemPtr_;
     std::vector<std::vector<Variables>> variables_;
     std::shared_ptr<InterpolationPointDataCache> ipDataCache_;
