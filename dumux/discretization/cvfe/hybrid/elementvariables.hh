@@ -62,22 +62,50 @@ class HybridCVFEElementVariables<GVC, /*cachingEnabled*/true>
         GVC& gridCache_;
     };
 
+    class MutableVariablesViewWithIpCacheAccess
+    {
+    public:
+        MutableVariablesViewWithIpCacheAccess(GVC& gridCache)
+        : gridCache_(gridCache)
+        {}
+
+        using Variables = typename GVC::Variables;
+
+        template<Dumux::Concept::LocalDof LocalDof>
+        Variables& operator [](const LocalDof& localDof) const
+        { return gridCache_.variables(localDof); }
+
+        auto& cache(std::size_t eIdx) const
+        { return gridCache_.cache(eIdx); }
+
+    private:
+        GVC& gridCache_;
+    };
+
 public:
     //! export type of the grid variables cache
     using GridVariablesCache = GVC;
 
+    //! export interpolation point data
+    using InterpolationPointData = typename GridVariablesCache::InterpolationPointData;
+
     //! export type of the mutable version of the view
-    using MutableView = MutableVariablesView;
+    using MutableView = std::conditional_t<
+        InterpolationPointData::isSolDependent,
+        MutableVariablesViewWithIpCacheAccess,
+        MutableVariablesView
+    >;
 
     //! export type of the variables
     using Variables = typename GridVariablesCache::Variables;
 
-    //! export interpolation point data
-    using InterpolationPointData = typename GridVariablesCache::InterpolationPointData;
-
     //! export type of deflection policy
     template<class FVElementGeometry>
-    using DeflectionPolicy = Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>;
+    using DeflectionPolicy = std::conditional_t<
+        InterpolationPointData::isSolDependent,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, FVElementGeometry>,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>
+    >;
 
     //! Constructor
     HybridCVFEElementVariables(const GridVariablesCache& gridVariablesCache)
@@ -202,22 +230,50 @@ class HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>
         ThisType& view_;
     };
 
+    class MutableVariablesViewWithIpCacheAccess
+    {
+    public:
+        MutableVariablesViewWithIpCacheAccess(ThisType& view)
+        : view_(view)
+        {}
+
+        using Variables = typename GVC::Variables;
+
+        template<Dumux::Concept::LocalDof LocalDof>
+        Variables& operator [](const LocalDof& localDof) const
+        { return view_[localDof]; }
+
+        auto& cache(std::size_t) const
+        { return *view_.ipDataCache_; }
+
+    private:
+        ThisType& view_;
+    };
+
 public:
     //! export type of the grid variables cache
     using GridVariablesCache = GVC;
 
+    //! export interpolation point data
+    using InterpolationPointData = typename GridVariablesCache::InterpolationPointData;
+
     //! export type of the mutable version of the view
-    using MutableView = MutableVariablesView;
+    using MutableView = std::conditional_t<
+        InterpolationPointData::isSolDependent,
+        MutableVariablesViewWithIpCacheAccess,
+        MutableVariablesView
+    >;
 
     //! export type of the variables
     using Variables = typename GridVariablesCache::Variables;
 
-    //! export interpolation point data
-    using InterpolationPointData = typename GridVariablesCache::InterpolationPointData;
-
     //! export type of deflection policy
     template<class FVElementGeometry>
-    using DeflectionPolicy = Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>;
+    using DeflectionPolicy = std::conditional_t<
+        InterpolationPointData::isSolDependent,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, FVElementGeometry>,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>
+    >;
 
     //! Constructor
     HybridCVFEElementVariables(const GridVariablesCache& gridVarsCache)
