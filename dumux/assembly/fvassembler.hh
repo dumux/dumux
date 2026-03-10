@@ -254,7 +254,7 @@ public:
             localAssembler.assembleResidual(r);
         });
 
-        enforcePeriodicConstraints_(*residual_, curSol, *gridGeometry_);
+        enforcePeriodicConstraints_(r, curSol, *gridGeometry_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
