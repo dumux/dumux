@@ -252,7 +252,7 @@ int main(int argc, char** argv)
     }
 
 #if NEW_PROBLEM_INTERFACE
-    using Assembler = Assembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = Dumux::Experimental::Assembler<TypeTag, DiffMethod::numeric>;
 #else
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
 #endif

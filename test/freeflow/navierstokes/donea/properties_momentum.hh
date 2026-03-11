@@ -107,7 +107,7 @@ private:
     using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
     using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
 public:
-    using type = Dumux::GridVariables<GG, GVC>;
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
 //! The grid variables
@@ -124,7 +124,7 @@ private:
     using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
     using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
 public:
-    using type = Dumux::GridVariables<GG, GVC>;
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
 //! The grid variables
@@ -141,7 +141,7 @@ private:
     using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
     using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
 public:
-    using type = Dumux::GridVariables<GG, GVC>;
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
 #endif

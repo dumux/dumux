@@ -44,9 +44,9 @@ namespace Dumux::Experimental {
  * \tparam TypeTag The TypeTag
  */
 template<class TypeTag>
-class CVFELocalResidual : public Dumux::LocalResidual<TypeTag>
+class CVFELocalResidual : public LocalResidual<TypeTag>
 {
-    using ParentType = Dumux::LocalResidual<TypeTag>;
+    using ParentType = LocalResidual<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -130,6 +130,6 @@ public:
     }
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

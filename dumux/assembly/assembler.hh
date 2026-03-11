@@ -41,7 +41,7 @@
 
 #include "cvfelocalassembler_.hh"
 
-namespace Dumux::Experimental {
+namespace Dumux::Experimental::Detail {
 
 template<class DiscretizationMethod>
 struct LocalAssemblerChooser;
@@ -66,9 +66,9 @@ template<class P>
 constexpr inline bool hasGlobalConstraints()
 { return Dune::Std::is_detected<ProblemConstraintsDetector, P>::value; }
 
-} // end namespace Dumux::Experimental
+} // end namespace Dumux::Experimental::Detail
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup Assembly
@@ -88,13 +88,13 @@ class Assembler
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
 
     using ThisType = Assembler<TypeTag, diffMethod, isImplicit, LocalResidual>;
-    using LocalAssembler = typename Experimental::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
+    using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, isImplicit>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using ResidualType = typename Detail::NativeDuneVectorType<SolutionVector>::type;
+    using ResidualType = typename Dumux::Detail::NativeDuneVectorType<SolutionVector>::type;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -490,7 +490,7 @@ private:
     template<class GG>
     void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
     {
-        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
@@ -533,7 +533,7 @@ private:
     template<class GG>
     void enforcePeriodicConstraints_(JacobianMatrix& jac, const SolutionVector&, const GG& gridGeometry) const
     {
-        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
@@ -572,7 +572,7 @@ private:
     template<class GG>
     void enforcePeriodicConstraints_(ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
     {
-        if constexpr (Detail::hasPeriodicDofMap<GG>())
+        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
@@ -591,7 +591,7 @@ private:
     template<class Problem, class GG, typename ApplyFunction>
     void enforceProblemConstraints_(const Problem& problem, const GG&, const ApplyFunction& applyDirichletConstraint) const
     {
-        if constexpr (Experimental::hasGlobalConstraints<Problem>())
+        if constexpr (Detail::hasGlobalConstraints<Problem>())
         {
             for (const auto& constraintData : problem.constraints())
             {
@@ -639,6 +639,6 @@ private:
     std::deque<std::vector<ElementSeed>> elementSets_;
 };
 
-} // namespace Dumux
+} // namespace Dumux::Experimental
 
 #endif

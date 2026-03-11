@@ -24,7 +24,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup Assembly
@@ -52,7 +52,7 @@ class LocalResidual
 
 public:
     //! the container storing all element residuals
-    using ElementResidualVector = ReservedBlockVector<NumEqVector, Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>()>;
+    using ElementResidualVector = ReservedBlockVector<NumEqVector, Dumux::Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>()>;
 
     //! the constructor
     LocalResidual(const Problem* problem,
@@ -85,7 +85,7 @@ public:
         assert(!this->isStationary() && "no time loop set for storage term evaluation");
 
         // initialize the residual vector for all local dofs in this element
-        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
+        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
@@ -113,7 +113,7 @@ public:
                                             const ElementBoundaryTypes& bcTypes) const
     {
         // initialize the residual vector for all local dofs in this element
-        ElementResidualVector residual(Detail::LocalDofs::numLocalDofs(fvGeometry));
+        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
         // evaluate the volume terms (storage + source terms)
         // forward to the local residual specialized for the discretization methods
@@ -371,6 +371,6 @@ private:
     const TimeLoop* timeLoop_; //!< the time loop for instationary problems
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

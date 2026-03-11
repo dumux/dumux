@@ -14,7 +14,7 @@
 
 #include <memory>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup Discretization
@@ -128,6 +128,6 @@ private:
     GridVariablesCache prevGridVars_; //!< the previous time step's variables (primary and secondary variables)
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

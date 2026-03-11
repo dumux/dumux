@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \copydoc Dumux::LocalAssemblerBase
+ * \copydoc Dumux::Experimental::LocalAssemblerBase
  */
 #ifndef DUMUX_LOCAL_ASSEMBLER_BASE_HH
 #define DUMUX_LOCAL_ASSEMBLER_BASE_HH
@@ -19,7 +19,7 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup Assembly
@@ -265,6 +265,6 @@ private:
     bool elementIsGhost_; //!< whether the element's partitionType is ghost
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif
