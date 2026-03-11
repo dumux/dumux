@@ -144,7 +144,7 @@ public:
         solveTimer.start();
 
         // set the delta vector to zero
-        ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
+        ResidualVector deltaU = LinearAlgebraNativeBackend::zerosLike(Backend::dofs(vars));
 
         // solve by calling the appropriate implementation depending on whether the linear solver
         // is capable of handling MultiType matrices or not

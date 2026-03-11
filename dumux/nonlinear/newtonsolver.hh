@@ -408,7 +408,7 @@ public:
             this->assembler().assembleResidual(initVars);
 
             // dummy vector, there is no delta before solving the linear system
-            ResidualVector delta = LinearAlgebraNativeBackend::zeros(Backend::size(initSol));
+            ResidualVector delta = LinearAlgebraNativeBackend::zerosLike(this->assembler().residual());
             convergenceWriter_->write(initSol, delta, this->assembler().residual());
         }
 
@@ -983,7 +983,7 @@ private:
 
         // the given solution is the initial guess
         auto uLastIter = Backend::dofs(vars);
-        ResidualVector deltaU = LinearAlgebraNativeBackend::zeros(Backend::size(Backend::dofs(vars)));
+        ResidualVector deltaU = LinearAlgebraNativeBackend::zerosLike(Backend::dofs(vars));
         Detail::Newton::assign(deltaU, Backend::dofs(vars));
 
         // execute the method as long as the solver thinks

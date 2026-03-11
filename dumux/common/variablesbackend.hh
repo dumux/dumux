@@ -75,7 +75,7 @@ public:
     { return 1; }
 
     //! Make a zero-initialized dof vector instance
-    static DofVector zeros(SizeType size)
+    static DofVector zerosLike(const DofVector&)
     { return 0.0; }
 
     //! Perform axpy operation (y += a * x)
@@ -105,11 +105,11 @@ public:
     { return d.size(); }
 
     //! Make a zero-initialized dof vector instance
-    static DofVector zeros(SizeType size)
+    static DofVector zerosLike(const DofVector& other)
     {
         DofVector d;
         if constexpr (Detail::DofBackend::hasResize<Vector>())
-            d.resize(size);
+            d.resize(other.size());
         return d;
     }
 
@@ -155,12 +155,12 @@ public:
     }
 
     //! Make a zero-initialized dof vector instance
-    static DofVector zeros(const SizeType& size)
+    static DofVector zerosLike(const DofVector& other)
     {
         DofVector result;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<numBlocks>{}, [&](auto i) {
-            result[Dune::index_constant<i>{}].resize(size[i]);
+            result[Dune::index_constant<i>{}].resize(other[Dune::index_constant<i>{}].size());
         });
         return result;
     }
