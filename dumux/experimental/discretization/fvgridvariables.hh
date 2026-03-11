@@ -19,7 +19,7 @@
 
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/localview.hh>
-#include <dumux/experimental/discretization/gridvariables.hh>
+#include <dumux/experimental/common/variables.hh>
 
 namespace Dumux::Experimental {
 
@@ -105,15 +105,20 @@ private:
  * \tparam GVV the type of the grid volume variables
  * \tparam GFVC the type of the grid flux variables cache
  * \tparam X the type used for solution vectors
+ * \note It is possible and good to consider that a separate lower-level 
+ *       abstraction -- grid discretization + solution/coefficients -- could be  
+ *       extracted from this higher-level class. This intermediate class has  
+ *       been recently removed due to naming conflicts in other parts of the      
+ *       development.
  */
 template<class GVV, class GFVC, class X>
 class FVGridVariables
-: public GridVariables<typename ProblemTraits<typename GVV::Problem>::GridGeometry, X>
+: public Variables<X>
 {
     using Problem = typename GVV::Problem;
     using GG = typename ProblemTraits<Problem>::GridGeometry;
 
-    using ParentType = GridVariables<GG, X>;
+    using ParentType = Variables<X>;
     using ThisType = FVGridVariables<GVV, GFVC, X>;
 
 public:
@@ -147,7 +152,8 @@ public:
      */
     FVGridVariables(std::shared_ptr<Problem> problem,
                     std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry, [problem] (auto& x) { problem->applyInitialSolution(x); })
+    : ParentType([problem] (auto& x) { problem->applyInitialSolution(x); })
+    , gridGeometry_(gridGeometry)
     , gridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
     {}
@@ -159,12 +165,15 @@ public:
      * \param solOrInitializer This can be either a reference to a solution
      *                         vector, or an initializer lambda.
      *                         See Dumux::Experimental::Variables.
+     * \param timeLevel The time level of the variables, defaults to 0.0.
      */
     template<class SolOrInitializer>
     FVGridVariables(std::shared_ptr<Problem> problem,
                     std::shared_ptr<const GridGeometry> gridGeometry,
-                    SolOrInitializer&& solOrInitializer)
-    : ParentType(gridGeometry, std::forward<SolOrInitializer>(solOrInitializer))
+                    SolOrInitializer&& solOrInitializer,
+                    const typename ParentType::TimeLevel& timeLevel = typename ParentType::TimeLevel{0.0})
+    : ParentType(std::forward<SolOrInitializer>(solOrInitializer), timeLevel)
+    , gridGeometry_(gridGeometry)
     , gridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
     {
@@ -212,7 +221,12 @@ public:
     GridVolumeVariables& gridVolVars()
     { return gridVolVars_; }
 
+    //! Return a reference to the grid geometry
+    const GridGeometry& gridGeometry() const
+    { return *gridGeometry_; }
+
 private:
+    std::shared_ptr<const GridGeometry> gridGeometry_;
     GridVolumeVariables gridVolVars_;          //!< the current volume variables (primary and secondary variables)
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
 };
