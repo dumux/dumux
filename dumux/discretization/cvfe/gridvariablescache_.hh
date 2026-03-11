@@ -158,11 +158,11 @@ public:
     Variables& variables(const std::size_t eIdx, const std::size_t localIdx)
     { return variables_[eIdx][localIdx]; }
 
-    const InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
-    { return ipDataCache_->cache(eIdx, scvfIdx, qpIdx); }
+    const InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
+    { return ipDataCache_->scvfCache(eIdx, scvfIdx, qpIdx); }
 
-    InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
-    { return ipDataCache_->cache(eIdx, scvfIdx, qpIdx); }
+    InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
+    { return ipDataCache_->scvfCache(eIdx, scvfIdx, qpIdx); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -194,19 +194,17 @@ private:
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
                     for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, scvf))
-                        cache(qpData.ipData().scvfIndex(), qpData.ipData().qpIndex()).update(problem,
-                                                                                              element,
-                                                                                              fvGeometry,
-                                                                                              elemVars,
-                                                                                              qpData.ipData());
+                    {
+                        const auto scvfIdx = qpData.ipData().scvfIndex();
+                        const auto qpIdx = qpData.ipData().qpIndex();
+                        scvfCache[qpsOffset[scvfIdx] + qpIdx].update(problem,
+                                                                     element,
+                                                                     fvGeometry,
+                                                                     elemVars,
+                                                                     qpData.ipData());
+                    }
                 }
             }
-
-            const InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx) const
-            { return scvfCache[qpsOffset[scvfIdx] + qpIdx]; }
-
-            InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx)
-            { return scvfCache[qpsOffset[scvfIdx] + qpIdx]; }
         };
 
     public:
@@ -230,12 +228,18 @@ private:
         }
 
         // access operator
-        const InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
-        { return elementCaches_[eIdx].cache(scvfIdx, qpIdx); }
+        const InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
+        {
+            const auto& elementCache = elementCaches_[eIdx];
+            return elementCache.scvfCache[elementCache.qpsOffset[scvfIdx] + qpIdx];
+        }
 
         // access operator
-        InterpolationPointData& cache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
-        { return elementCaches_[eIdx].cache(scvfIdx, qpIdx); }
+        InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
+        {
+            auto& elementCache = elementCaches_[eIdx];
+            return elementCaches_[eIdx].scvfCache[elementCache.qpsOffset[scvfIdx] + qpIdx];
+        }
 
         const ElementCache& cache(std::size_t eIdx) const
         { return elementCaches_[eIdx]; }

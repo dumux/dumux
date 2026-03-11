@@ -126,7 +126,7 @@ public:
     // access cache for given interpolation point data
     template<Concept::ScvfQpIpData IpData>
     const InterpolationPointData& operator [](const IpData& ipData) const
-    { return gridVariablesCache().cache(eIdx_, ipData.scvfIndex(), ipData.qpIndex()); }
+    { return gridVariablesCache().scvfCache(eIdx_, ipData.scvfIndex(), ipData.qpIndex()); }
 
     // access cache for given interpolation point data of a boundary intersection quadrature point
     template<Concept::IntersectionQpIpData IpData>
@@ -371,12 +371,12 @@ public:
     // access cache for a given interpolation point data
     template<Concept::ScvfQpIpData IpData>
     const InterpolationPointData& operator [](const IpData& ipData) const
-    { return ipDataCache_->cache(ipData.scvfIndex(), ipData.qpIndex()); }
+    { return ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex()); }
 
     // access cache for a given interpolation point data
     template<Concept::ScvfQpIpData IpData>
     InterpolationPointData& operator [](const IpData& ipData)
-    { return ipDataCache_->cache(ipData.scvfIndex(), ipData.qpIndex()); }
+    { return ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex()); }
 
     // access cache for a given interpolation point data of an intersection quadrature point
     template<Concept::IntersectionQpIpData IpData>
@@ -426,11 +426,11 @@ private:
         }
 
         // access operator
-        const InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx) const
+        const InterpolationPointData& scvfCache(std::size_t scvfIdx, std::size_t qpIdx) const
         { return scvfCache_[scvfIdx][qpIdx]; }
 
         // access operator
-        InterpolationPointData& cache(std::size_t scvfIdx, std::size_t qpIdx)
+        InterpolationPointData& scvfCache(std::size_t scvfIdx, std::size_t qpIdx)
         { return scvfCache_[scvfIdx][qpIdx]; }
 
         // access operator
