@@ -13,16 +13,18 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_GRID_VARIABLES_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_GRID_VARIABLES_HH
 
-#include <dumux/experimental/discretization/gridvariables.hh>
+#include <memory>
+
+#include <dumux/experimental/common/variables.hh>
 
 namespace Dumux::OnePCompressibleTest {
 
 template<class GG, class BaseGridVariables, class SolutionVector>
 class TestGridVariables
 : public BaseGridVariables
-, public Dumux::Experimental::GridVariables<GG, SolutionVector>
+, public Dumux::Experimental::Variables<SolutionVector>
 {
-    using ExperimentalBase = Dumux::Experimental::GridVariables<GG, SolutionVector>;
+    using ExperimentalBase = Dumux::Experimental::Variables<SolutionVector>;
 
 public:
     // export some types to avoid ambiguity
@@ -34,7 +36,8 @@ public:
                       std::shared_ptr<const GridGeometry> gridGeometry,
                       const SolutionVector& x)
     : BaseGridVariables(problem, gridGeometry)
-    , ExperimentalBase(gridGeometry, x)
+    , ExperimentalBase(x)
+    , gridGeometry_(gridGeometry)
     {
         BaseGridVariables::init(x);
     }
@@ -48,7 +51,10 @@ public:
 
     // overload some functions to avoid ambiguity
     decltype(auto) gridGeometry() const
-    { return ExperimentalBase::gridGeometry(); }
+    { return *gridGeometry_; }
+
+private:
+    std::shared_ptr<const GridGeometry> gridGeometry_;
 };
 
 } // end namespace Dumux::OnePCompressibleTest
