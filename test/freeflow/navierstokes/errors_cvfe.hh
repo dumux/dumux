@@ -31,7 +31,16 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
     Dune::FieldVector<double, 2> errors(0.0);
     const auto& gg = problem.gridGeometry();
     auto fvGeometry = localView(gg);
-    auto elemVolVars = localView(gridVariables.curGridVolVars());
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
     for (const auto& element : elements(gg.gridView()))
     {
         fvGeometry.bind(element);

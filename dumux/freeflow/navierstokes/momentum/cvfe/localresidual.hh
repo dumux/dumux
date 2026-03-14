@@ -17,15 +17,16 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
 
+#include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fem/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
-#include <dumux/assembly/cvfelocalresidual.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/felocalresidual.hh>
@@ -52,18 +53,15 @@ constexpr inline bool hasProblemSourceWithIpDataInterface()
  */
 template<class TypeTag>
 class NavierStokesMomentumCVFELocalResidual
-: public CVFELocalResidual<TypeTag>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = CVFELocalResidual<TypeTag>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using GridVariablesCache = typename GridVariables::GridVolumeVariables;
+    using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables>;
     using ElementVariables = typename GridVariablesCache::LocalView;
-    using Variables = typename GridVariablesCache::VolumeVariables;
-
-    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
-    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using Variables = Concept::Variables_t<GridVariables>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -87,12 +85,9 @@ class NavierStokesMomentumCVFELocalResidual
     using LocalBasis = typename GridGeometry::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BaseIpData = Dumux::CVFE::InterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate, GlobalPosition>;
-    using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVariables, ElementFluxVariablesCache>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
     using FeResidual = NavierStokesMomentumFELocalResidual<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
-    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
-    using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
     using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
 
 public:
@@ -106,17 +101,17 @@ public:
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
      * \param scv The sub-control volume over which we integrate the storage term
-     * \param volVars The volume variables associated with the scv
+     * \param vars The variables associated with the scv
      * \param isPreviousStorage If set to true, the storage term is evaluated on the previous time level.
      *
      */
     NumEqVector computeStorage(const Problem& problem,
                                const FVElementGeometry& fvGeometry,
                                const SubControlVolume& scv,
-                               const Variables& volVars,
+                               const Variables& vars,
                                const bool isPreviousStorage) const
     {
-        return problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * volVars.velocity();
+        return problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * vars.velocity();
     }
 
     /*!
@@ -133,12 +128,12 @@ public:
                                 const SubControlVolume& scv,
                                 bool isPreviousTimeLevel) const
     {
-        const auto& volVars = elemVars[scv];
+        const auto& vars = elemVars[scv];
         // We apply mass lumping
         NumEqVector storage = this->asImp().problem().density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousTimeLevel)
-                            * volVars.velocity();
+                            * vars.velocity();
 
-        storage *= Extrusion::volume(fvGeometry, scv) * volVars.extrusionFactor();
+        storage *= Extrusion::volume(fvGeometry, scv) * vars.extrusionFactor();
 
         return storage;
     }
@@ -245,6 +240,7 @@ public:
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux computation
      */
+    template<class ElementFluxVariablesCache>
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -252,6 +248,7 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
+        using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVariables, ElementFluxVariablesCache>;
         FluxContext context(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf);
         FluxHelper fluxHelper;
 
@@ -271,11 +268,17 @@ public:
      * \param scvf The sub control volume face
      *
      */
+    template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use fluxIntegral without elemFluxVarsCache instead.")]]
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
                              const ElementFluxVariablesCache& elemFluxVarsCache,
                              const SubControlVolumeFace& scvf) const
     {
+        using FluxVariablesCache = typename ElementFluxVariablesCache::FluxVariablesCache;
+        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
+
         const auto& problem = this->asImp().problem();
 
         NumEqVector flux(0.0);
@@ -291,7 +294,42 @@ public:
             flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
                                       + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
         }
-        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf, velIntegral);
+        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, scvf, velIntegral);
+
+        flux *= elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+
+        return flux;
+    }
+
+    /*!
+     * \brief Calculates the flux integral over a sub control volume face.
+     *
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVars The variables for all local dofs of the element
+     * \param scvf The sub control volume face
+     *
+     */
+    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+                             const ElementVariables& elemVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        const auto& problem = this->asImp().problem();
+
+        NumEqVector flux(0.0);
+        GlobalPosition velIntegral(0.0);
+        FluxFunctionHelper fluxFunctionHelper;
+        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, typename GridVariablesCache::InterpolationPointData>;
+
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+        {
+            const auto& cache = elemVars[qpData.ipData()];
+            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, cache);
+
+            velIntegral += context.velocity() * qpData.weight();
+            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
+                                      + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
+        }
+        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, scvf, velIntegral);
 
         flux *= elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
 
@@ -310,6 +348,9 @@ public:
         );
     }
 
+    template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use addToElementFluxAndSourceResidual without elemFluxVarsCache instead.")]]
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const Element& element,
@@ -322,6 +363,19 @@ public:
             residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes
         );
     }
+
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVariables& elemVars,
+                                           const ElementBoundaryTypes &elemBcTypes) const
+    {
+        FeResidual::addFluxAndSourceTerms(
+            residual, problem, fvGeometry, elemVars, elemBcTypes
+        );
+    }
+
 };
 
 } // end namespace Dumux

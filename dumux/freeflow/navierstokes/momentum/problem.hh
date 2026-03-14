@@ -17,6 +17,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
@@ -891,8 +892,8 @@ class CVFENavierStokesMomentumProblem
     using Element = typename GridView::template Codim<0>::Entity;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables>;
+    using ElementVariables = typename GridVariablesCache::LocalView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -964,7 +965,7 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      */
-    template<class ElementVariables, class IpData>
+    template<class IpData>
     Sources source(const FVElementGeometry& fvGeometry,
                    const ElementVariables& elemVars,
                    const IpData& ipData) const
@@ -1026,10 +1027,30 @@ public:
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
+     * \param scvf The sub-control volume face
+     */
+    BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
+                                        const ElementVariables& elemVars,
+                                        const SubControlVolumeFace& scvf) const
+    {
+        BoundaryFluxes flux(0.0);
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+            flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, qpData.ipData());
+
+        return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+    }
+
+    /*!
+     * \brief Evaluates the boundary flux integral for a scvf.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
      * \param scvf The sub-control volume face
      */
-    template<class ElementVariables, class ElementFluxVariablesCache>
+    template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use boundaryFluxIntegral without elemFluxVarsCache instead.")]]
     BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
                                         const ElementVariables& elemVars,
                                         const ElementFluxVariablesCache& elemFluxVarsCache,
@@ -1048,11 +1069,46 @@ public:
      * \param residual The residual vector to which the boundary flux contributions are added
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
+     * \param intersection The intersection
+     * \param bcTypes The boundary condition types
+     */
+    template<class ResidualVector, class BoundaryTypes>
+    void addBoundaryFluxIntegrals(ResidualVector& residual,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVariables& elemVars,
+                                  const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection,
+                                  const BoundaryTypes& bcTypes) const
+    {
+        // quadrature rule for intersections (dim-1)
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
+        {
+            const auto& ipData = qpData.ipData();
+            const auto& cache = elemVars[ipData];
+            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+            {
+                const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, ipData);
+                const auto& shapeValues = cache.shapeValues();
+                // only add fluxes to equations for which Neumann is set
+                for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
+                    if (bcTypes.isNeumann(eqIdx))
+                        residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
+            }
+        }
+    }
+
+    /*!
+     * \brief Evaluates the boundary flux integrals for an intersection related to finite element residuals.
+     *
+     * \param residual The residual vector to which the boundary flux contributions are added
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
      * \param intersection The intersection
      * \param bcTypes The boundary condition types
      */
-    template<class ResidualVector, class ElementVariables, class ElementFluxVariablesCache, class BoundaryTypes>
+    template<class ResidualVector, class ElementFluxVariablesCache, class BoundaryTypes>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use addBoundaryFluxIntegrals without elemFluxVarsCache instead.")]]
     void addBoundaryFluxIntegrals(ResidualVector& residual,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVariables& elemVars,
@@ -1082,10 +1138,27 @@ public:
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
+     * \param faceIpData Face interpolation point data
+     */
+    template<class FaceIpData>
+    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
+                                const ElementVariables& elemVars,
+                                const FaceIpData& faceIpData) const
+    {
+        return asImp_().boundaryFluxAtPos(faceIpData.global());
+    }
+
+    /*!
+     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
      * \param faceIpData Face interpolation point data
      */
-    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
+    template<class ElementFluxVariablesCache, class FaceIpData>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use boundaryFlux without elemFluxVarsCache instead.")]]
     BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
                                 const ElementVariables& elemVars,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
