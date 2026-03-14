@@ -28,6 +28,14 @@
 #define MOMENTUM_DISCRETIZATION_MODEL FaceCenteredStaggeredModel
 #endif
 
+#ifndef TYPETAG_MOMENTUM
+#define TYPETAG_MOMENTUM DoneaTestMomentum
+#endif
+
+#ifndef TYPETAG_MASS
+#define TYPETAG_MASS DoneaTestMass
+#endif
+
 #ifndef MASS_DISCRETIZATION_MODEL
 #define MASS_DISCRETIZATION_MODEL CCTpfaModel
 #endif
@@ -55,6 +63,10 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/cvfe/gridvariablescache_.hh>
+#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/gridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
@@ -76,11 +88,15 @@ namespace Dumux::Properties {
 namespace TTag {
 struct DoneaTest {};
 struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MOMENTUM_MODEL, MOMENTUM_DISCRETIZATION_MODEL>; };
+struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
+struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
+struct DoneaTestMassBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTestMomentum>
+struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 #if NEW_PROBLEM_INTERFACE
     using type = Dumux::DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>;
@@ -90,7 +106,7 @@ struct Problem<TypeTag, TTag::DoneaTestMomentum>
 };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DoneaTestMass>
+struct Problem<TypeTag, TTag::TYPETAG_MASS>
 {
 #if NEW_PROBLEM_INTERFACE
     using type = DoneaTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>;
@@ -99,6 +115,76 @@ struct Problem<TypeTag, TTag::DoneaTestMass>
 #endif
 
 };
+
+#if NEW_PROBLEM_INTERFACE
+//! The grid variables
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1Bubble>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::DoneaTestMassBox>
+{
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+#endif
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::DoneaTest>
@@ -110,7 +196,7 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
 #if NEW_VARIABLES_INTERFACE
 // the variables
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::DoneaTestMomentum>
+struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -128,10 +214,10 @@ public:
 };
 #endif
 
-#ifdef PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM
+#ifdef QUADRATURE_RULE_MOMENTUM
 // use custom quadrature rules for hybrid pq1bubble scheme
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -140,18 +226,16 @@ private:
 
     // Higher order quadrature rule only works for hybrid pq1bubble scheme
     // since we can't generate geometries for overlapping scvs
-    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM, PQ1BUBBLE_QUADRATURE_RULE_MOMENTUM>;
+    using QuadTraits = PQ1BubbleQuadratureTraits<GridView, QUADRATURE_RULE_MOMENTUM, QUADRATURE_RULE_MOMENTUM>;
     using QuadratureGridGeometryTraits = HybridPQ1BubbleCVFEGridGeometryTraits<PQ1BubbleDefaultGridGeometryTraits<GridView, PQ1BubbleMapperTraits<GridView>, QuadTraits>>;
 
 public:
     using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, QuadratureGridGeometryTraits>;
 };
-#endif
 
-#ifdef PQ2_QUADRATURE_RULE_MOMENTUM
 // use custom quadrature rules for hybrid pq2 scheme
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DoneaTestMomentum>
+struct GridGeometry<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -160,9 +244,9 @@ private:
 
     using QuadTraits = PQ2QuadratureTraits<GridView,
                                            Dumux::QuadratureRules::MidpointQuadrature,
-                                           PQ2_QUADRATURE_RULE_MOMENTUM,
-                                           PQ2_QUADRATURE_RULE_MOMENTUM,
-                                           PQ2_QUADRATURE_RULE_MOMENTUM>;
+                                           QUADRATURE_RULE_MOMENTUM,
+                                           QUADRATURE_RULE_MOMENTUM,
+                                           QUADRATURE_RULE_MOMENTUM>;
 
 public:
     using type = PQ2FVGridGeometry<Scalar, GridView, enableCache, PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
@@ -172,7 +256,7 @@ public:
 #ifdef QUADRATURE_RULE_MASS
 // use custom quadrature rules
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DoneaTestMass>
+struct GridGeometry<TypeTag, TTag::TYPETAG_MASS>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
@@ -185,7 +269,6 @@ public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, DefaultMapperTraits<GridView>, QuadTraits>>;
 };
 #endif
-
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
@@ -206,7 +289,7 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constex
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DoneaTest>
 {
-    using Traits = MultiDomainTraits<TTag::DoneaTestMomentum, TTag::DoneaTestMass>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
     using type = FreeFlowCouplingManager<Traits>;
 };
 

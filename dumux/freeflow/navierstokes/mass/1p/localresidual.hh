@@ -17,6 +17,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
@@ -43,12 +44,9 @@ class NavierStokesMassOnePLocalResidual
 {
     using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
-    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
-
-    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
-    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables>;
+    using ElementVariables = typename GridVariablesCache::LocalView;
+    using Variables = Concept::Variables_t<GridVariables>;
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -73,14 +71,14 @@ public:
      */
     NumEqVector computeStorage(const Problem& problem,
                                const SubControlVolume& scv,
-                               const VolumeVariables& volVars) const
+                               const Variables& vars) const
     {
         NumEqVector storage(0.0);
-        storage[ModelTraits::Indices::conti0EqIdx] = volVars.density();
+        storage[ModelTraits::Indices::conti0EqIdx] = vars.density();
 
         // consider energy storage for non-isothermal models
         if constexpr (ModelTraits::enableEnergyBalance())
-            storage[ModelTraits::Indices::energyEqIdx] = volVars.density() * volVars.internalEnergy();
+            storage[ModelTraits::Indices::energyEqIdx] = vars.density() * vars.internalEnergy();
 
         return storage;
     }
@@ -95,20 +93,20 @@ public:
      *
      */
     NumEqVector storageIntegral(const FVElementGeometry& fvGeometry,
-                                const ElementVolumeVariables& elemVars,
+                                const ElementVariables& elemVars,
                                 const SubControlVolume& scv,
                                 bool isPreviousTimeLevel) const
     {
-        const auto& volVars = elemVars[scv];
+        const auto& vars = elemVars[scv];
         // We apply mass lumping here
         NumEqVector storage(0.0);
-        storage[ModelTraits::Indices::conti0EqIdx] = volVars.density();
+        storage[ModelTraits::Indices::conti0EqIdx] = vars.density();
 
         // consider energy storage for non-isothermal models
         if constexpr (ModelTraits::enableEnergyBalance())
-            storage[ModelTraits::Indices::energyEqIdx] = volVars.density() * volVars.internalEnergy();
+            storage[ModelTraits::Indices::energyEqIdx] = vars.density() * vars.internalEnergy();
 
-        storage *= Extrusion::volume(fvGeometry, scv) * volVars.extrusionFactor();
+        storage *= Extrusion::volume(fvGeometry, scv) * vars.extrusionFactor();
 
         return storage;
     }
@@ -122,7 +120,7 @@ public:
      *
      */
     NumEqVector sourceIntegral(const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVars,
+                               const ElementVariables& elemVars,
                                const SubControlVolume& scv) const
     {
         const auto& problem = this->asImp().problem();
@@ -145,25 +143,26 @@ public:
      * \param problem The problem
      * \param element The element
      * \param fvGeometry The finite volume geometry context
-     * \param elemVolVars The volume variables for all flux stencil elements
+     * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux computation
      */
+    template<class ElementFluxVariablesCache>
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
+                            const ElementVariables& elemVars,
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVars, scvf, elemFluxVarsCache);
         auto flux = fluxVars.flux(0);
 
         // the auxiliary flux is enabled if the trait is specialized for the problem
         // this can be used, for example, to implement flux stabilization terms
         if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
-            flux += problem.auxiliaryFlux(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+            flux += problem.auxiliaryFlux(element, fvGeometry, elemVars, elemFluxVarsCache, scvf);
 
         return flux;
     }
@@ -177,8 +176,11 @@ public:
      * \param scvf The sub control volume face
      *
      */
+    template<class ElementFluxVariablesCache>
+    [[deprecated("This function is deprecated and will be removed after release 3.11. "
+                 "Use fluxIntegral(fvGeometry, elemVars, scvf) instead.")]]
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVars,
+                             const ElementVariables& elemVars,
                              const ElementFluxVariablesCache& elemFluxVarsCache,
                              const SubControlVolumeFace& scvf) const
     {
@@ -206,6 +208,41 @@ public:
         return flux * insideVars.extrusionFactor();
     }
 
+    /*!
+     * \brief Calculates the flux integral over a face of a sub control volume.
+     *
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemVars The variables for all local dofs of the element
+     * \param scvf The sub control volume face
+     *
+     */
+    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+                             const ElementVariables& elemVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        const auto& problem = this->asImp().problem();
+        NumEqVector flux(0.0);
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+        {
+            const auto& faceIpData = qpData.ipData();
+            flux += qpData.weight() * (problem.velocity(fvGeometry, faceIpData) * faceIpData.unitOuterNormal());
+        }
+
+        static const auto upwindWeight
+            = getParamFromGroup<Scalar>(this->problem().paramGroup(), "Flux.UpwindWeight", 1.0);
+
+        const auto& insideVars = elemVars[fvGeometry.scv(scvf.insideScvIdx())];
+        const auto& outsideVars = elemVars[fvGeometry.scv(scvf.outsideScvIdx())];
+
+        flux *= (upwindWeight * insideVars.density() + (1.0 - upwindWeight) * outsideVars.density());
+
+        // the auxiliary flux is enabled if the trait is specialized for the problem
+        // this can be used, for example, to implement flux stabilization terms
+        if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
+            flux += problem.auxiliaryFlux(fvGeometry.element(), fvGeometry, elemVars, scvf);
+
+        return flux * insideVars.extrusionFactor();
+    }
 };
 
 } // end namespace Dumux
