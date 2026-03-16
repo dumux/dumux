@@ -322,8 +322,8 @@ public:
 
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
         {
-            const auto& cache = elemVars[qpData.ipData()];
-            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, cache);
+            const auto& ipCache = cache(elemVars, qpData.ipData());
+            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, ipCache);
 
             velIntegral += context.velocity() * qpData.weight();
             flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
