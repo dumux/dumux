@@ -14,4 +14,5 @@ dumux_add_test(NAME test_ff_navierstokes_rotatingcylinders
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_rotatingcylinders params.input
                              -Problem.Name test_ff_navierstokes_rotatingcylinders -Problem.EnableInertiaTerms true")
 
-dune_symlink_to_source_files(FILES "params.input")
+# Updated to include params.json
+dune_symlink_to_source_files(FILES "params.input" "params.json")

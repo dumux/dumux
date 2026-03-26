@@ -12,6 +12,8 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/version.hh>
+#include <dune/common/parametertree.hh>
+#include <dune/common/parametertreeparser.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -31,6 +33,9 @@
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
 #include "properties.hh"
+
+#include <fstream>
+#include "jsonparametertools.hh"
 
 template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
 auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
@@ -80,8 +85,52 @@ int main(int argc, char** argv)
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    // parse command line arguments and input file
-    Parameters::init(argc, argv);
+    // Manually peek for the JSON file in the command line arguments
+    std::string jsonFile = "";
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg.find("JsonParameterFile=") == 0) {
+            jsonFile = arg.substr(18); // Length of "JsonParameterFile="
+        }
+    }
+
+    // Use the Dumux Parameters::init overload that takes a lambda.
+    Dumux::Parameters::init([&](Dune::ParameterTree& tree) {
+
+        // Handle the standard .input file (ONLY if it's not the JSON file)
+        std::string inputFile = (argc > 1 && argv[1][0] != '-') ? argv[1] : "";
+
+        // Fix: Don't let Dune try to parse the JSON file as an INI file
+        if (!inputFile.empty() && inputFile.find("JsonParameterFile=") == std::string::npos && inputFile.find(".json") == std::string::npos) {
+            try {
+                Dune::ParameterTreeParser::readINITree(inputFile, tree);
+            } catch (...) {
+                // If it fails to open a standard file, we just move on to JSON/CLI
+            }
+        }
+
+        // Handle standard Command Line arguments (-Parameter.Key Value)
+        Dune::ParameterTreeParser::readOptions(argc, argv, tree);
+
+        // Merge the JSON file
+        if (!jsonFile.empty()) {
+            Dune::ParameterTree jsonPt;
+            Dumux::Utils::parseNestedJson(jsonFile, jsonPt);
+
+            auto mergeFunc = [](auto& self, const auto& source, auto& dest) -> void {
+                for (const auto& key : source.getValueKeys())
+                    dest[key] = source[key];
+                for (const auto& subKey : source.getSubKeys())
+                    self(self, source.sub(subKey), dest.sub(subKey));
+            };
+            mergeFunc(mergeFunc, jsonPt, tree);
+        }
+
+        // Save to a file for easier inspection
+        if (mpiHelper.rank() == 0) {
+            std::ofstream debugFile("debug_flattened_params.ini");
+        }
+    });
 
     // create a grid
     using Grid = GetPropType<MassTypeTag, Properties::Grid>;

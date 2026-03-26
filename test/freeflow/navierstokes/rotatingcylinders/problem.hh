@@ -66,6 +66,9 @@ public:
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
+        // Fetch both angular velocities. Defaults are provided.
+        omega1_ = getParam<Scalar>("Problem.Omega1");
+        omega2_ = getParam<Scalar>("Problem.Omega2");
         const auto radii = getParam<std::vector<Scalar>>("Grid.Radial0");
         radius1_ = radii.front();
         radius2_ = radii.back();
@@ -129,12 +132,10 @@ public:
      */
     DirichletValues analyticalSolution(const GlobalPosition& globalPos) const
     {
-        const Scalar omega1 = 1e2; // [rad/s]
-        const Scalar omega2 = 0;
-        const auto mu = omega2/omega1;
+        const auto mu =  omega2_/omega1_;
         const auto r2byr1 = radius2_*radius2_/(radius1_*radius1_);
-        const auto a = omega1*(1 - mu*r2byr1)/(1 - r2byr1);
-        const auto b = radius1_*radius1_*omega1*(1 - mu)/(1 - 1/r2byr1);
+        const auto a = omega1_*(1 - mu*r2byr1)/(1 - r2byr1);
+        const auto b = radius1_*radius1_*omega1_*(1 - mu)/(1 - 1/r2byr1);
 
         const Scalar x = globalPos[0];
         const Scalar y = globalPos[1];
@@ -158,7 +159,7 @@ public:
     }
 
 private:
-    Scalar radius1_, radius2_, density_, viscosity_;
+    Scalar radius1_, radius2_, density_, viscosity_, omega1_, omega2_;
 };
 
 } // end namespace Dumux

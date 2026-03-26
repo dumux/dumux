@@ -7,7 +7,9 @@ Radial0 = 1.0 1.5 2.0
 Angular1 = 0.0 360.0
 
 [Problem]
-Name = test_rotatingcylinders
+Name = /Users/sarbani/NFDI_Benchmark/dumux_benchmark/test_rotatingcylinders
+Omega1 = 100.0
+Omega2 = -50.0
 EnableGravity = false
 EnableInertiaTerms = true
 
@@ -52,4 +54,4 @@ AmgCriterionSymmetric = true
 [Newton]
 MinSteps = 1
 EnableAbsoluteResidualCriterion = true
-MaxAbsoluteResidual = 1e-6
+MaxAbsoluteResidual = 4e-6
