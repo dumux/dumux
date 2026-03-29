@@ -118,33 +118,28 @@ public:
         // on interior Dirichlet boundaries use the facet pressure and evaluate flux
         else if (bcTypes.hasOnlyDirichlet())
         {
-            // create vector with nodal pressures
-            std::vector<Scalar> pressures(element.subEntities(dim));
-            for (const auto& scv : scvs(fvGeometry))
-                pressures[scv.localDofIndex()] = elemVolVars[scv].pressure(phaseIdx);
+            const auto& fluxVarCache = elemFluxVarCache[scvf];
+            const auto K = elemVolVars[scvf.insideScvIdx()].permeability();
+            const auto kn = mv(K, scvf.unitOuterNormal());
+            const auto xB = fvGeometry.scv(scvf.insideScvIdx()).dofPosition();
+            const auto pB = elemVolVars[scvf.insideScvIdx()].pressure(phaseIdx);
+            const auto pD = problem.couplingManager().getLowDimVolVars(element, scvf).pressure(phaseIdx);
+            const auto d = scvf.ipGlobal() - xB;
+            const auto c = kn.two_norm()/d.two_norm();
+            const auto x_tilde_e = scvf.ipGlobal() - 1.0/c * kn;
 
-            // substitute with facet pressures for those scvs touching this facet
-            for (const auto& scvfJ : scvfs(fvGeometry))
-                if (scvfJ.interiorBoundary() && scvfJ.facetIndexInElement() == scvf.facetIndexInElement())
-                    pressures[ fvGeometry.scv(scvfJ.insideScvIdx()).localDofIndex() ]
-                             = problem.couplingManager().getLowDimVolVars(element, scvfJ).pressure(phaseIdx);
-
-            // evaluate gradP - rho*g at integration point
             Scalar rho(0.0);
             Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
-            for (const auto& scv : scvs(fvGeometry))
-            {
+            for (auto&& scv : scvs(fvGeometry)) {
                 rho += elemVolVars[scv].density(phaseIdx)*shapeValues[scv.indexInElement()][0];
-                gradP.axpy(pressures[scv.localDofIndex()], fluxVarCache.gradN(scv.indexInElement()));
+                gradP.axpy(elemVolVars[scv].pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
             }
 
             if (enableGravity)
                 gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
-            // apply matrix permeability and return the flux
-            return -1.0*Extrusion::area(fvGeometry, scvf)
-                       *insideVolVars.extrusionFactor()
-                       *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), gradP);
+            const Scalar flux = -c * ((pD - pB) - (x_tilde_e - xB)*gradP);
+            return Extrusion::area(fvGeometry, scvf)*insideVolVars.extrusionFactor()*flux;
         }
 
         // mixed boundary types are not supported
