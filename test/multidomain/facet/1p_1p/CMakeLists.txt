@@ -4,6 +4,7 @@
 add_subdirectory(analytical)
 add_subdirectory(boundary_coupling)
 add_subdirectory(box_dof_enrichment)
+add_subdirectory(box_dirichlet)
 add_subdirectory(gravity)
 add_subdirectory(linearprofile)
 add_subdirectory(threedomain)
