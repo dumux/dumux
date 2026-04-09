@@ -1,0 +1,22 @@
+[Grid]
+File = disk.msh
+
+[Problem]
+Name = test_kirchhoff_love_plate
+E = 1.0
+Thickness = 0.1
+PoissonRatio = 0.5
+Force = 1.0
+LinearMassDensity = 0
+Radius = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1
