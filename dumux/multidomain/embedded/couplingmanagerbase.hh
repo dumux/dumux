@@ -589,7 +589,6 @@ public:
     { return asImp_().emptyStencil(bulkIdx); }
 
 protected:
-    using ParentType::curSol;
 
     //! computes the vertex indices per element for the box method
     template<std::size_t id>
