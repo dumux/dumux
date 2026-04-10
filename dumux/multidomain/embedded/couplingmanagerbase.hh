@@ -76,6 +76,10 @@ class EmbeddedCouplingManagerBase
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = typename PSTraits::PointSourceData;
 
+    template<std::size_t id>
+    using SubSolutionVector
+        = std::decay_t<decltype(std::declval<typename Traits::SolutionVector>()[Dune::index_constant<id>()])>;
+
     // the sub domain type tags
     template<std::size_t id> using PointSource = typename PSTraits::template PointSource<id>;
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
@@ -411,6 +415,24 @@ public:
     template<std::size_t i>
     const CouplingStencil<i>& emptyStencil(Dune::index_constant<i> dom) const
     { return std::get<i>(emptyStencil_); }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx)
+    { return ParentType::curSol(domainIdx); }
+
+    /*!
+     * \brief the solution vector of the subproblem
+     * \param domainIdx The domain index
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    template<std::size_t i>
+    const SubSolutionVector<i>& curSol(Dune::index_constant<i> domainIdx) const
+    { return ParentType::curSol(domainIdx); }
 
     /*!
      * \brief Compute colors for multithreaded assembly
