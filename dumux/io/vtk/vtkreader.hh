@@ -32,6 +32,7 @@
 #if DUMUX_HAVE_GRIDFORMAT
 
 #include <gridformat/gridformat.hpp>
+#include <gridformat/parallel/traits.hpp>
 #include <gridformat/traits/dune.hpp>
 #include <gridformat/reader.hpp>
 #include <gridformat/decorators/reader_polylines_subdivider.hpp>
@@ -40,10 +41,27 @@
 
 namespace Dumux::Detail::VTKReader {
 
-template<GridFormat::Concepts::Communicator C>
+template<class C>
 auto makeGridformatReaderFactory(const C& c)
 {
-    return [fac = GridFormat::AnyReaderFactory<C>{c}] (const std::string& f)
+    // Dune::No_Comm does not satisfy the GridFormat communicator concept
+    // we use GridFormat::NullCommunicator in this case
+    using Comm = std::remove_cvref_t<C>;
+    using GridFormatComm = std::conditional_t<
+        std::is_same_v<Comm, Dune::No_Comm>,
+        GridFormat::NullCommunicator,
+        Comm
+    >;
+
+    const auto comm = [&]() -> GridFormatComm
+    {
+        if constexpr (std::is_same_v<GridFormatComm, GridFormat::NullCommunicator>)
+            return {};
+        else
+            return c;
+    }();
+
+    return [fac = GridFormat::AnyReaderFactory<GridFormatComm>{comm}] (const std::string& f)
     -> std::unique_ptr<GridFormat::GridReader> {
         // use adapter for poly data that splits polylines into segments
         if (f.ends_with("vtp"))
