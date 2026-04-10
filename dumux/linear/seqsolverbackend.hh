@@ -305,7 +305,7 @@ class BlockDiagAMGPreconditioner : public Dune::Preconditioner<X, Y>
     using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
 
     template<std::size_t i>
-    using Smoother = Dune::SeqSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
+    using Smoother = Dumux::ParMTSSOR<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
 
     template<std::size_t i>
     using LinearOperator = Dune::MatrixAdapter<DiagBlockType<i>, VecBlockType<i>, VecBlockType<i>>;
@@ -436,7 +436,7 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     using VecBlockType = std::decay_t<decltype(std::declval<X>()[Dune::index_constant<i>{}])>;
 
     template<class M, class X, std::size_t i>
-    using Smoother = Dune::SeqSSOR<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
+    using Smoother = Dumux::ParMTSSOR<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
 
     template<class M, class X, std::size_t i>
     using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother<M, X, i>>::Arguments;
@@ -445,7 +445,7 @@ class BlockDiagAMGBiCGSTABSolver : public LinearSolver
     using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<DiagBlockType<M, i>, Dune::Amg::FirstDiagonal>>;
 
     template<class M, class X, std::size_t i>
-    using LinearOperator = Dune::MatrixAdapter<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
+    using LinearOperator = Dumux::ParallelMatrixAdapter<DiagBlockType<M, i>, VecBlockType<X, i>, VecBlockType<X, i>>;
 
 public:
     using LinearSolver::LinearSolver;
