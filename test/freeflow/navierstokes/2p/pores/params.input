@@ -1,0 +1,43 @@
+[Grid]
+File = channel_with_pillars.msh
+Refinement = 0
+
+[TimeLoop]
+TEnd = 10.0
+DtInitial = 0.001
+MaxTimeStepSize = 0.01
+
+[Problem]
+Name = test_ff_2p_pores_evaporation
+EnableInertiaTerms = false
+EnableGravity = false
+SurfaceTension = 0.07
+InterfaceThickness = 0.001
+Mobility = 1.0e-6
+
+# Evaporation rate coefficient [1/s]: drives phi -> -1 (gas) at the interface
+EvaporationRate = 1.0e-5
+
+# Fluid properties
+Density1 = 998.0  # water density (kg/m3)
+Density2 = 1.225  # air density (kg/m3)
+Viscosity1 = 0.001  # water viscosity (Pa*s)
+Viscosity2 = 1.8e-5  # air viscosity (Pa*s)
+
+[Component]
+LiquidDensity = 998.0
+LiquidDynamicViscosity = 0.001
+
+[Flux]
+UpwindWeight = 1.0
+
+[Newton]
+MinSteps = 1
+MaxSteps = 20
+ResidualReduction = 1e-3
+LinearSolver.Tolerance = 1e-6
+LinearSolver.MaxIterations = 1000
+
+[VTK]
+AddVelocity = true
+AddProcessRank = true
