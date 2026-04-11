@@ -9,6 +9,8 @@
 
 #include <dune/common/float_cmp.hh>
 #include <algorithm>
+#include <cmath>
+#include <vector>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/geometry/diameter.hh>
@@ -77,6 +79,46 @@ public:
         eta2_ = getParam<Scalar>("Problem.Viscosity2", 1.8e-5); // air
 
         evaporationRate_ = getParam<Scalar>("Problem.EvaporationRate", 1.0e-5);
+
+        // Contact angle on pillar surfaces (in radians). 90° gives the natural BC (∂φ/∂n = 0).
+        contactAngle_ = getParam<Scalar>("Problem.ContactAngleDegrees", 90.0) * M_PI / 180.0;
+
+        // Compute pillar centers using the same geometry as channel_with_pillars.geo
+        pillarRadius_ = getParam<Scalar>("Problem.PillarRadius", 0.025);
+        {
+            const int nx = getParam<int>("Problem.PillarNx", 6);
+            const int ny = getParam<int>("Problem.PillarNy", 4);
+            const Scalar channelL = 1.0;
+            const Scalar boxW = 0.5 * channelL;
+            const Scalar boxH = 0.4;
+            const Scalar margin = 0.1; // distance from top pillar row to gas channel
+
+            const Scalar xBoxLeft  = 0.5*(channelL - boxW);
+            const Scalar xBoxRight = xBoxLeft + boxW;
+            const Scalar yBoxTop   = 0.0;
+            const Scalar yBoxBot   = -boxH;
+
+            const Scalar xInnerLeft  = xBoxLeft  + pillarRadius_;
+            const Scalar xInnerRight = xBoxRight - pillarRadius_;
+            const Scalar yInnerTop   = yBoxTop - pillarRadius_ - margin;
+            const Scalar yInnerBot   = yBoxBot + pillarRadius_;
+
+            const Scalar dx = 3.0 * pillarRadius_;
+            const Scalar dy = std::sqrt(3.0) / 2.0 * dx;
+
+            const Scalar widthNeeded  = (nx - 1)*dx + 0.5*dx;
+            const Scalar heightNeeded = (ny - 1)*dy;
+            const Scalar xOffset = (xInnerRight - xInnerLeft - widthNeeded) / 2.0;
+            const Scalar yOffset = (yInnerTop   - yInnerBot  - heightNeeded) / 2.0;
+
+            pillarCenters_.resize(nx * ny);
+            for (int j = 0; j < ny; ++j)
+                for (int i = 0; i < nx; ++i)
+                    pillarCenters_[j*nx + i] = {
+                        xInnerLeft + xOffset + i*dx + (j%2)*0.5*dx,
+                        yInnerBot  + yOffset + j*dy
+                    };
+        }
     }
 
     Scalar mobility() const
@@ -91,19 +133,14 @@ public:
     }
 
     /*!
-     * \brief Specifies the type of boundary condition for a degree of freedom.
+     * \brief Specifies the type of boundary condition for the mass model DOFs.
+     * All boundaries are Neumann for the mass model (phase field + chemical potential).
+     * Contact angle on pillar surfaces is enforced via the Neumann flux in neumann().
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition&) const
     {
         BoundaryTypes values;
-
-        // Inlet and outlet: no-flow for phase field, Dirichlet velocity for momentum
         values.setAllNeumann();
-
-        // Top boundary: free surface with evaporation
-        if (globalPos[1] > 0.08) // near top
-            values.setAllNeumann();
-
         return values;
     }
 
@@ -129,10 +166,12 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isTop_(scv.dofPosition()))
-                values.setAllDirichlet();
-            else
+            // No-slip on all solid walls. The only non-wall boundaries are the
+            // gas channel inlet (x=0) and outlet (x=1), identified by isSide_.
+            if (isSide_(scv.dofPosition()))
                 values.setAllNeumann();
+            else
+                values.setAllDirichlet();
         }
         else
             values.setAllNeumann();
@@ -202,16 +241,20 @@ public:
         BoundaryFluxes values(0.0);
         if constexpr (!ParentType::isMomentumProblem())
         {
-            if (isSide_(scvf.ipGlobal()))
-            {
-                values[Indices::conti0EqIdx] = 0.0;
-                values[Indices::phaseFieldEqIdx] = 0.0;
-            }
-
-            else if (isBottom_(scvf.ipGlobal()))
+            if (isBottom_(scvf.ipGlobal()))
             {
                 values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)*scvf.unitOuterNormal();
-                values[Indices::phaseFieldEqIdx] = 0.0;
+            }
+            else if (isOnPillarSurface_(scvf.ipGlobal()))
+            {
+                // Contact angle BC on pillar walls (Jacqmin 2000):
+                //   γε (∂φ/∂n) = f_w'(φ)   with f_w(φ) = -(γ cos θ)(3/4)(φ - φ³/3)
+                //   → f_w'(φ) = -(γ cos θ)(3/4)(1 - φ²)
+                // This enters the chemical potential equation as a Neumann boundary flux (per unit area).
+                // Natural BC (θ = 90°) gives f_w' = 0, recovering ∂φ/∂n = 0.
+                const auto phi = elemVolVars[scvf.insideScvIdx()].phaseField();
+                values[Indices::chemicalPotentialEqIdx] =
+                    -scaledSurfaceTension_ * std::cos(contactAngle_) * (3.0/4.0) * (1.0 - phi*phi);
             }
         }
         else
@@ -289,8 +332,8 @@ public:
             return InitialValues(0.0);
 
         InitialValues values(0.0);
-        const auto& pos = vertex.geometry().corner(0);
-        values[Indices::phaseFieldIdx] = std::tanh(-pos[dimWorld-1] / (std::sqrt(2.0)*interfaceThickness_));
+        const auto pos = vertex.geometry().corner(0)[dimWorld-1] + 0.1; // shift slightly so channel is free
+        values[Indices::phaseFieldIdx] = std::tanh(-pos / (std::sqrt(2.0)*interfaceThickness_));
         values[Indices::chemicalPotentialIdx] = 0.0;
         return values;
     }
@@ -369,6 +412,16 @@ private:
     { return pos[0] < this->gridGeometry().bBoxMin()[0] + eps_ ||
              pos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
+    // A point is on a pillar surface if it lies within pillarRadius_ of any pillar center.
+    // Tolerance slightly larger than the mesh size near pillars (lc_pillar = 0.001 in the .geo).
+    bool isOnPillarSurface_(const GlobalPosition& pos, const Scalar tol = 2e-3) const
+    {
+        for (const auto& c : pillarCenters_)
+            if ((pos - c).two_norm() < pillarRadius_ + tol)
+                return true;
+        return false;
+    }
+
     static constexpr Scalar eps_ = 1e-6;
 
     Scalar energyScale_, mobility_, surfaceTension_, interfaceThickness_, scaledSurfaceTension_;
@@ -378,6 +431,9 @@ private:
     Scalar eta1_, eta2_;  // viscosities
 
     Scalar evaporationRate_;
+    Scalar contactAngle_;
+    Scalar pillarRadius_;
+    std::vector<GlobalPosition> pillarCenters_;
 };
 
 } // end namespace Dumux

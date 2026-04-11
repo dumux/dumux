@@ -1,9 +1,9 @@
 [Grid]
 File = channel_with_pillars.msh
-Refinement = 0
+Refinement = 1
 
 [TimeLoop]
-TEnd = 10.0
+TEnd = 1.0
 DtInitial = 0.001
 MaxTimeStepSize = 0.01
 
@@ -12,17 +12,25 @@ Name = test_ff_2p_pores_evaporation
 EnableInertiaTerms = false
 EnableGravity = false
 SurfaceTension = 0.07
-InterfaceThickness = 0.001
-Mobility = 1.0e-6
+InterfaceThickness = 0.01
+Mobility = 2.5e-5
 
 # Evaporation rate coefficient [1/s]: drives phi -> -1 (gas) at the interface
 EvaporationRate = 1.0e-5
 
+# Pillar geometry (must match channel_with_pillars.geo)
+PillarRadius = 0.025
+PillarNx = 6
+PillarNy = 4
+
+# Contact angle on pillar surfaces in degrees (90 = neutral/natural BC)
+ContactAngleDegrees = 90.0
+
 # Fluid properties
 Density1 = 998.0  # water density (kg/m3)
-Density2 = 1.225  # air density (kg/m3)
+Density2 = 100.225  # air density (kg/m3)
 Viscosity1 = 0.001  # water viscosity (Pa*s)
-Viscosity2 = 1.8e-5  # air viscosity (Pa*s)
+Viscosity2 = 1.8e-4  # air viscosity (Pa*s)
 
 [Component]
 LiquidDensity = 998.0
@@ -34,9 +42,11 @@ UpwindWeight = 1.0
 [Newton]
 MinSteps = 1
 MaxSteps = 20
-ResidualReduction = 1e-3
-LinearSolver.Tolerance = 1e-6
-LinearSolver.MaxIterations = 1000
+MaxRelativeShift = 1e-6
+
+[LinearSolver]
+ResidualReduction = 1e-8
+MaxIterations = 1000
 
 [VTK]
 AddVelocity = true
