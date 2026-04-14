@@ -45,8 +45,6 @@ class TwoPhaseEvaporationProblem : public BaseProblem
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using Vertex = typename GridGeometry::GridView::template Codim<dim>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
-
     using Extrusion = Extrusion_t<GridGeometry>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -79,6 +77,8 @@ public:
         eta2_ = getParam<Scalar>("Problem.Viscosity2", 1.8e-5); // air
 
         evaporationRate_ = getParam<Scalar>("Problem.EvaporationRate", 1.0e-5);
+        inletVelocity_   = getParam<Scalar>("Problem.InletVelocity", 0.0);
+        enableKortewegForce_ = getParam<bool>("Problem.EnableKortewegForce", true);
 
         // Contact angle on pillar surfaces (in radians). 90° gives the natural BC (∂φ/∂n = 0).
         contactAngle_ = getParam<Scalar>("Problem.ContactAngleDegrees", 90.0) * M_PI / 180.0;
@@ -133,23 +133,15 @@ public:
     }
 
     /*!
-     * \brief Specifies the type of boundary condition for the mass model DOFs.
-     * All boundaries are Neumann for the mass model (phase field + chemical potential).
-     * Contact angle on pillar surfaces is enforced via the Neumann flux in neumann().
-     */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition&) const
-    {
-        BoundaryTypes values;
-        values.setAllNeumann();
-        return values;
-    }
-
-    /*!
      * \brief Specifies Dirichlet boundary values.
      */
-    DirichletValues dirichletAtPos(const GlobalPosition &globalPos) const
+    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        return DirichletValues(0.0);
+        DirichletValues values(0.0);
+        if constexpr (ParentType::isMomentumProblem())
+            if (isInlet_(globalPos))
+                values[0] = parabolicProfile_(globalPos[dimWorld-1]);
+        return values;
     }
 
     /*!
@@ -166,9 +158,10 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // No-slip on all solid walls. The only non-wall boundaries are the
-            // gas channel inlet (x=0) and outlet (x=1), identified by isSide_.
-            if (isSide_(scv.dofPosition()))
+            // Inlet: Dirichlet (prescribed velocity).
+            // Outlet: Neumann (free outflow).
+            // Everything else: Dirichlet no-slip (all solid walls including pillars).
+            if (isOutlet_(scv.dofPosition()))
                 values.setAllNeumann();
             else
                 values.setAllDirichlet();
@@ -201,11 +194,13 @@ public:
         }
         else
         {
-            const auto ip = ipData(fvGeometry, scv);
-            const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
-            const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
-            source = mu * grads[CouplingManager::phaseFieldIdx];
-            source -= grads[CouplingManager::pressureIdx];
+            if (enableKortewegForce_)
+            {
+                const auto ip = ipData(fvGeometry, scv);
+                const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
+                const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
+                source = mu * grads[CouplingManager::phaseFieldIdx];
+            }
         }
 
         // if constexpr (ParentType::isMomentumProblem())
@@ -241,16 +236,19 @@ public:
         BoundaryFluxes values(0.0);
         if constexpr (!ParentType::isMomentumProblem())
         {
-            if (isBottom_(scvf.ipGlobal()))
-            {
-                values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)*scvf.unitOuterNormal();
-            }
-            else if (isOnPillarSurface_(scvf.ipGlobal()))
+            // Continuity (volume flux) at every boundary face.
+            // At no-slip walls faceVelocity = 0, so those faces contribute nothing.
+            // At the inlet (momentum Dirichlet) this provides the inflow term; without
+            // it the continuity equation has no inflow signal and the solver finds u=0.
+            // in the 2p mass model, density is not included here
+            values[Indices::conti0EqIdx] =
+                this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal();
+
+            if (isOnPillarSurface_(scvf.ipGlobal()))
             {
                 // Contact angle BC on pillar walls (Jacqmin 2000):
                 //   γε (∂φ/∂n) = f_w'(φ)   with f_w(φ) = -(γ cos θ)(3/4)(φ - φ³/3)
                 //   → f_w'(φ) = -(γ cos θ)(3/4)(1 - φ²)
-                // This enters the chemical potential equation as a Neumann boundary flux (per unit area).
                 // Natural BC (θ = 90°) gives f_w' = 0, recovering ∂φ/∂n = 0.
                 const auto phi = elemVolVars[scvf.insideScvIdx()].phaseField();
                 values[Indices::chemicalPotentialEqIdx] =
@@ -259,54 +257,15 @@ public:
         }
         else
         {
-            if (isSide_(scvf.ipGlobal()))
+            if (isOutlet_(scvf.ipGlobal()) && this->enableInertiaTerms())
             {
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                if (this->enableInertiaTerms())
-                {
-                    // advective term: vv*n
-                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
-                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
-                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-                }
-
-                // stress tensor
-                Tensor gradV(0.0);
-                for (const auto& localDof : localDofs(fvGeometry))
-                {
-                    const auto& volVars = elemVolVars[localDof];
-                    for (int dir = 0; dir < dim; ++dir)
-                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
-                }
-
-                // get viscosity from the problem
-                const auto mu = this->couplingManager().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
-                // compute -mu*gradV*n*dA
-                BoundaryFluxes momFlux = mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
-                momFlux *= -mu;
-
-                const auto pressure = this->couplingManager().pressure(element, fvGeometry, fluxVarCache.ipData());
-                momFlux += pressure * scvf.unitOuterNormal();
-
-                const auto normal = scvf.unitOuterNormal();
-                values += (momFlux * normal) * normal;
+                // advective momentum flux: ρ(v·n)v at the outlet
+                const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+                const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
+                const auto rho = this->couplingManager().density(element, fvGeometry, elemFluxVarsCache[scvf].ipData());
+                values.axpy(rho*(v*scvf.unitOuterNormal()), v);
             }
-
-            else if (isBottom_(scvf.ipGlobal()))
-            {
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                if (this->enableInertiaTerms())
-                {
-                    // advective term: vv*n
-                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
-                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
-                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-                }
-
-                // zero pressure at bottom
-            }
+            // For Stokes (no inertia): zero Neumann = do-nothing (zero traction) at outlet.
         }
 
         return values;
@@ -330,12 +289,15 @@ public:
     {
         if constexpr (ParentType::isMomentumProblem())
             return InitialValues(0.0);
-
-        InitialValues values(0.0);
-        const auto pos = vertex.geometry().corner(0)[dimWorld-1] + 0.1; // shift slightly so channel is free
-        values[Indices::phaseFieldIdx] = std::tanh(-pos / (std::sqrt(2.0)*interfaceThickness_));
-        values[Indices::chemicalPotentialIdx] = 0.0;
-        return values;
+        else
+        {
+            InitialValues values(0.0);
+            const auto pos = vertex.geometry().corner(0)[dimWorld-1] + 0.1; // shift slightly so channel is free
+            values[Indices::pressureIdx] = 0.0;
+            values[Indices::phaseFieldIdx] = std::tanh(-pos / (std::sqrt(2.0)*interfaceThickness_));
+            values[Indices::chemicalPotentialIdx] = 0.0;
+            return values;
+        }
     }
 
     /*!
@@ -402,15 +364,30 @@ public:
 
 private:
 
+    // Parabolic (Poiseuille) inlet profile with mean velocity inletVelocity_.
+    // Channel occupies y ∈ [0, channelTop]; u(y) = 6·U_mean·(y - y_bot)·(y_top - y) / H².
+    Scalar parabolicProfile_(const Scalar y) const
+    {
+        const Scalar yBot = 0.0; // channel floor (gas/liquid interface level)
+        const Scalar yTop = this->gridGeometry().bBoxMax()[dimWorld-1];
+        const Scalar H = yTop - yBot;
+        return 6.0 * inletVelocity_ * (y - yBot) * (yTop - y) / (H * H);
+    }
+
     bool isTop_(const GlobalPosition& pos, const Scalar eps = eps_) const
     { return pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps; }
 
     bool isBottom_(const GlobalPosition& pos, const Scalar eps = eps_) const
     { return pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps; }
 
+    bool isInlet_(const GlobalPosition& pos) const
+    { return pos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
+
+    bool isOutlet_(const GlobalPosition& pos) const
+    { return pos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
+
     bool isSide_(const GlobalPosition& pos) const
-    { return pos[0] < this->gridGeometry().bBoxMin()[0] + eps_ ||
-             pos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
+    { return isInlet_(pos) || isOutlet_(pos); }
 
     // A point is on a pillar surface if it lies within pillarRadius_ of any pillar center.
     // Tolerance slightly larger than the mesh size near pillars (lc_pillar = 0.001 in the .geo).
@@ -431,6 +408,8 @@ private:
     Scalar eta1_, eta2_;  // viscosities
 
     Scalar evaporationRate_;
+    Scalar inletVelocity_;
+    bool enableKortewegForce_;
     Scalar contactAngle_;
     Scalar pillarRadius_;
     std::vector<GlobalPosition> pillarCenters_;

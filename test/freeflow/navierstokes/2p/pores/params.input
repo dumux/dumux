@@ -9,11 +9,13 @@ MaxTimeStepSize = 0.01
 
 [Problem]
 Name = test_ff_2p_pores_evaporation
+InletVelocity = 0.01
 EnableInertiaTerms = false
 EnableGravity = false
 SurfaceTension = 0.07
 InterfaceThickness = 0.01
-Mobility = 2.5e-5
+Mobility = 0#2.5e-5
+EnableKortewegForce = false
 
 # Evaporation rate coefficient [1/s]: drives phi -> -1 (gas) at the interface
 EvaporationRate = 1.0e-5
