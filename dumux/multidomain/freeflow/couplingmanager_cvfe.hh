@@ -571,10 +571,12 @@ public:
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         if (scv.dofIndex() == dofIdxGlobalJ)
+                        {
                             if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
                                 this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, deflectedElement, scv);
                             else
                                 this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, fvGeometry, ipData(fvGeometry, scv));
+                        }
                     }
                 }
             }
