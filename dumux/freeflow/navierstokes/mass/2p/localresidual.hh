@@ -67,7 +67,7 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        storage[Indices::conti0EqIdx] = 0.0;
+        storage[Indices::conti0EqIdx] = volVars.density();
         storage[Indices::phaseFieldEqIdx] = volVars.phaseField();
         storage[Indices::chemicalPotentialEqIdx] = 0.0;
         return storage;
@@ -95,22 +95,25 @@ public:
         // TODO variable extrusion factor?
         const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
         const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
-        flux[Indices::conti0EqIdx] = volumeFlux;
+        flux[Indices::conti0EqIdx] = upwindSchemeMultiplier_(
+            elemVolVars, scvf, volumeFlux,
+            [](const auto& volVars) { return volVars.density(); }
+        )*volumeFlux;
 
         const auto& fluxVarCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, dimWorld> gradPhaseField(0.0);
         Dune::FieldVector<Scalar, dimWorld> gradChemicalPotential(0.0);
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& localDof : localDofs(fvGeometry))
         {
-            const auto& volVars = elemVolVars[scv];
+            const auto& volVars = elemVolVars[localDof];
             // v.axpy(a, w) means v += a*w
             gradPhaseField.axpy(
                 volVars.phaseField(),
-                fluxVarCache.gradN(scv.indexInElement())
+                fluxVarCache.gradN(localDof.index())
             );
             gradChemicalPotential.axpy(
                 volVars.chemicalPotential(),
-                fluxVarCache.gradN(scv.indexInElement())
+                fluxVarCache.gradN(localDof.index())
             );
         }
 

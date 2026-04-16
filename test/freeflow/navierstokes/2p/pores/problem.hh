@@ -139,8 +139,12 @@ public:
     {
         DirichletValues values(0.0);
         if constexpr (ParentType::isMomentumProblem())
+        {
             if (isInlet_(globalPos))
                 values[0] = parabolicProfile_(globalPos[dimWorld-1]);
+        }
+        // mass problem: no Dirichlet BCs used (all Neumann)
+
         return values;
     }
 
@@ -167,7 +171,9 @@ public:
                 values.setAllDirichlet();
         }
         else
+        {
             values.setAllNeumann();
+        }
 
         return values;
     }
@@ -188,9 +194,16 @@ public:
         {
             const auto& volVars = elemVolVars[scv];
             const auto phi = volVars.phaseField();
+
             // Double-well potential derivative: f'(φ) = (γ/ε)·φ(φ²-1)
             // f(φ) = (γ/ε)·(1/4)(φ²-1)² → f'(φ) = (γ/ε)·(1/2)·2φ(φ²-1)
             source[Indices::chemicalPotentialEqIdx] = volVars.chemicalPotential() - energyScale_*phi*(phi*phi - 1.0);
+
+            // Evaporation drives φ → -1 (gas) at the interface.
+            // The density change ∂ρ/∂t = (dρ/dφ)∂φ/∂t is handled by the ∂ρ/∂t
+            // storage term in the continuity equation — no explicit mass source needed there.
+            // Adding a mass sink in conti would create convergent inflow from boundaries.
+            source[Indices::phaseFieldEqIdx] -= evaporationRate_/rho1_ * 3.0/2.0*(1.0 - phi*phi)/interfaceThickness_;
         }
         else
         {
@@ -240,9 +253,16 @@ public:
             // At no-slip walls faceVelocity = 0, so those faces contribute nothing.
             // At the inlet (momentum Dirichlet) this provides the inflow term; without
             // it the continuity equation has no inflow signal and the solver finds u=0.
-            // in the 2p mass model, density is not included here
+            const auto rho = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] =
-                this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal();
+                rho * this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal();
+
+            // Advective outflow for phase field: let φ exit with the flow.
+            // For any backflow at the outlet, impose gas phase (φ = -1).
+            const auto phi = (values[Indices::conti0EqIdx] >= 0.0)
+                ? elemVolVars[scvf.insideScvIdx()].phaseField()
+                : -1.0;
+            values[Indices::phaseFieldEqIdx] = phi * values[Indices::conti0EqIdx] / rho;
 
             if (isOnPillarSurface_(scvf.ipGlobal()))
             {
@@ -255,18 +275,8 @@ public:
                     -scaledSurfaceTension_ * std::cos(contactAngle_) * (3.0/4.0) * (1.0 - phi*phi);
             }
         }
-        else
-        {
-            if (isOutlet_(scvf.ipGlobal()) && this->enableInertiaTerms())
-            {
-                // advective momentum flux: ρ(v·n)v at the outlet
-                const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
-                const auto rho = this->couplingManager().density(element, fvGeometry, elemFluxVarsCache[scvf].ipData());
-                values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-            }
-            // For Stokes (no inertia): zero Neumann = do-nothing (zero traction) at outlet.
-        }
+
+        // For Stokes (no inertia): zero Neumann = do-nothing (zero traction) at outlet.
 
         return values;
     }
@@ -360,6 +370,32 @@ public:
     Scalar mixtureDensityDerivative() const
     {
         return 0.5 * (rho1_  - rho2_);
+    }
+
+    template<class Solution, class GridVariables>
+    void printMassBalanceSummary(const Solution& sol, const GridVariables& gridVariables) const
+    {
+        Scalar totalMassLiquid = 0.0;
+        Scalar totalMassGas = 0.0;
+        const auto& gg = this->gridGeometry();
+        auto fvGeometry = localView(gg);
+        for (const auto& element : elements(gg.gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto phi = sol[scv.dofIndex()][Indices::phaseFieldIdx];
+                const auto volume = scv.volume();
+                // per-phase mass = phase density × volume fraction × cell volume
+                totalMassLiquid += rho1_ * 0.5 * (1.0 + phi) * volume;
+                totalMassGas    += rho2_ * 0.5 * (1.0 - phi) * volume;
+            }
+        }
+
+        std::cout << "\033[1;36m[mass] total = " << totalMassLiquid + totalMassGas
+                  << " kg/m  |  liquid = " << totalMassLiquid
+                  << " kg/m  |  gas = " << totalMassGas
+                  << " kg/m\033[0m" << std::endl;
     }
 
 private:
