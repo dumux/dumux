@@ -137,6 +137,20 @@ public:
     }
 
     /*!
+     * \brief Returns the pressure at a given interpolation point
+     */
+    template <class IpData>
+    Scalar pressure(const Element<freeFlowMomentumIndex>& element,
+                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                    const IpData& ipData,
+                    const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).pressure(
+            element, fvGeometry, ipData, considerPreviousTimeStep
+        );
+    }
+
+    /*!
      * \brief Returns the density at a given sub control volume face.
      */
     Scalar density(const Element<freeFlowMomentumIndex>& element,
@@ -146,6 +160,20 @@ public:
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).density(
             element, fvGeometry, scvf, considerPreviousTimeStep
+        );
+    }
+
+    /*!
+     * \brief Returns the density at a given interpolation point
+     */
+    template <class IpData>
+    Scalar density(const Element<freeFlowMomentumIndex>& element,
+                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                   const IpData& ipData,
+                   const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).density(
+            element, fvGeometry, ipData, considerPreviousTimeStep
         );
     }
 
@@ -173,7 +201,7 @@ public:
     }
 
     /*!
-     * \brief Returns the pressure at a given sub control volume face.
+     * \brief Returns the effective viscosity at a given sub control volume face.
      */
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
@@ -181,6 +209,20 @@ public:
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).effectiveViscosity(
             element, fvGeometry, scvf
+        );
+    }
+
+    /*!
+     * \brief Returns the effective viscosity at a interpolation point.
+     */
+    template <class IpData>
+    Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const IpData& ipData,
+                              const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).effectiveViscosity(
+            element, fvGeometry, ipData, considerPreviousTimeStep
         );
     }
 
