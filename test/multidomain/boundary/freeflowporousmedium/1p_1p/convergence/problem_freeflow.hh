@@ -230,7 +230,7 @@ public:
             //                       |
             // integration point --> o##### <-- scvf lying on coupling interface with integration point touching left Neumann boundary
             //
-            if (isCoupled_(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, element, scvf)
+            if (isCoupled_(CouplingManager::freeFlowMomentumIndex, CouplingManager::porousMediumIndex, fvGeometry, scvf)
                 && scvf.ipGlobal()[0] > this->gridGeometry().bBoxMin()[0] + eps_
                 && scvf.ipGlobal()[0] < this->gridGeometry().bBoxMax()[0] - eps_)
             {
@@ -267,7 +267,7 @@ public:
         // mass boundary conditions
         else
         {
-            if (isCoupled_(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, element, scvf))
+            if (isCoupled_(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, fvGeometry, scvf))
             {
                 values = couplingManager().massCouplingCondition(
                     CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
@@ -411,14 +411,14 @@ private:
     template<std::size_t i, std::size_t j>
     bool isCoupled_(Dune::index_constant<i> domainI,
                     Dune::index_constant<j> domainJ,
-                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
                     const SubControlVolumeFace& scvf) const
     {
         if constexpr (GridGeometry::discMethod == DiscretizationMethods::fcstaggered
                      || GridGeometry::discMethod == DiscretizationMethods::cctpfa)
             return couplingManager_->isCoupled(domainI, domainJ, scvf);
         else
-             return couplingManager_->isCoupled(domainI, domainJ, element, scvf);
+             return couplingManager_->isCoupled(domainI, domainJ, fvGeometry, scvf);
     }
 
     /*!

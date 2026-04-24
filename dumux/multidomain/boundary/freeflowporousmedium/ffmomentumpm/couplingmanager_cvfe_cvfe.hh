@@ -296,30 +296,18 @@ public:
 
     // \}
 
-    // /*!
-    //  * \brief Returns whether a given scvf is coupled to the other domain
-    //  */
-    // template<std::size_t i>
-    // bool isCoupled(Dune::index_constant<i> domainI, const SubControlVolumeFace<i>& scvf) const
-    // {
-    //     if constexpr (i == freeFlowMomentumIndex)
-    //         return couplingMapper_.isCoupled(domainI, scvf) || couplingMapper_.isCoupledLateralScvf(domainI, scvf);
-    //     else
-    //         return couplingMapper_.isCoupled(domainI, scvf);
-    // }
-
     /*!
      * \brief If the boundary entity is on a coupling boundary
      * \param domainI the domain index for which to compute the flux
-     * \param element the element
+     * \param fvGeometry the finite volume element geometry
      * \param scvf the sub control volume face
      */
     template<std::size_t i>
     bool isCoupled(Dune::index_constant<i> domainI,
-                   const Element<i>& element,
+                   const FVElementGeometry<i>& fvGeometry,
                    const SubControlVolumeFace<i>& scvf) const
     {
-        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).gridGeometry().elementMapper().index(fvGeometry.element());
         return couplingMapper_.isCoupled(domainI, eIdx, scvf.index());
     }
 

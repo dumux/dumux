@@ -206,7 +206,7 @@ public:
         }
         else
         {
-            if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, element, scvf))
+            if (couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex, fvGeometry, scvf))
                 values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
                     CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
                     fvGeometry, scvf, elemVolVars
