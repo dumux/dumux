@@ -16,10 +16,8 @@
 #include <utility>
 #include <memory>
 
-#include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/ffmomentumpm/couplingmapper_cvfe_cvfe.hh>
 
@@ -151,7 +149,7 @@ public:
     //! Initialize the coupling manager
     void init(std::shared_ptr<Problem<freeFlowMassIndex>> freeFlowMassProblem,
               std::shared_ptr<Problem<porousMediumIndex>> porousMediumProblem,
-              SolutionVectorStorage& curSol)
+              const SolutionVectorStorage& curSol)
     {
         this->setSubProblems(std::make_tuple(freeFlowMassProblem, porousMediumProblem));
         this->attachSolution(curSol);
