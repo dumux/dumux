@@ -12,6 +12,18 @@
 #ifndef DUMUX_DARCYSTOKES_PROPERTIES_HH
 #define DUMUX_DARCYSTOKES_PROPERTIES_HH
 
+#ifndef TYPETAG_FFMOMENTUM
+#define TYPETAG_FFMOMENTUM FreeFlowOnePMomentum
+#endif
+
+#ifndef TYPETAG_FFMASS
+#define TYPETAG_FFMASS FreeFlowOnePMass
+#endif
+
+#ifndef TYPETAG_PMMASS
+#define TYPETAG_PMMASS DarcyOneP
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -41,12 +53,12 @@ struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::DarcyOneP>
+struct Problem<TypeTag, TTag::TYPETAG_PMMASS>
 { using type = DarcySubProblem<TypeTag>; };
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::DarcyOneP>
+struct FluidSystem<TypeTag, TTag::TYPETAG_PMMASS>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> > ;
@@ -58,7 +70,7 @@ struct Grid<TypeTag, TTag::DarcyOneP>
 { using type = Dune::YaspGrid<2>; };
 
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::DarcyOneP>
+struct SpatialParams<TypeTag, TTag::TYPETAG_PMMASS>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -90,11 +102,11 @@ struct Grid<TypeTag, TTag::FreeFlowOneP>
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOnePMomentum>
+struct Problem<TypeTag, TTag::TYPETAG_FFMOMENTUM>
 { using type = FreeFlowSubProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::FreeFlowOnePMass>
+struct Problem<TypeTag, TTag::TYPETAG_FFMASS>
 { using type = FreeFlowSubProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
@@ -105,16 +117,16 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::DarcyOneP>
+struct CouplingManager<TypeTag, TTag::TYPETAG_PMMASS>
 {
-    using Traits = MultiDomainTraits<TTag::FreeFlowOnePMomentum, TTag::FreeFlowOnePMass, TTag::DarcyOneP>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_FFMOMENTUM, TTag::TYPETAG_FFMASS, TTag::TYPETAG_PMMASS>;
     using type = FreeFlowPorousMediumCouplingManager<Traits>;
 };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::FreeFlowOneP>
 {
-    using Traits = MultiDomainTraits<TTag::FreeFlowOnePMomentum, TTag::FreeFlowOnePMass, TTag::DarcyOneP>;
+    using Traits = MultiDomainTraits<TTag::TYPETAG_FFMOMENTUM, TTag::TYPETAG_FFMASS, TTag::TYPETAG_PMMASS>;
     using type = FreeFlowPorousMediumCouplingManager<Traits>;
 };
 
