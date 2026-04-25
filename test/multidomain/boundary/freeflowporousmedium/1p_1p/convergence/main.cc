@@ -158,9 +158,9 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using FreeFlowMomentumTypeTag = Properties::TTag::FreeFlowOnePMomentum;
-    using FreeFlowMassTypeTag = Properties::TTag::FreeFlowOnePMass;
-    using DarcyTypeTag = Properties::TTag::DarcyOneP;
+    using FreeFlowMomentumTypeTag = Properties::TTag::TYPETAG_FFMOMENTUM;
+    using FreeFlowMassTypeTag = Properties::TTag::TYPETAG_FFMASS;
+    using DarcyTypeTag = Properties::TTag::TYPETAG_PMMASS;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
