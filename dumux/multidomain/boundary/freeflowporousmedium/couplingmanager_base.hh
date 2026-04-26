@@ -260,6 +260,24 @@ public:
         });
     }
 
+    /*!
+     * \brief If the boundary entity is on a coupling boundary
+     * \param domainI the domain index of domain i for which to compute the flux
+     * \param domainJ the domain index of domain j for which to compute the flux
+     * \param fvGeometry the finite volume element geometry
+     * \param iIdx the index of the intersection
+     */
+    template<std::size_t i, std::size_t j>
+    bool isCoupled(Dune::index_constant<i> domainI,
+                   Dune::index_constant<j> domainJ,
+                   const FVElementGeometry<i>& fvGeometry,
+                   std::size_t iIdx) const
+    {
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupled(ii, fvGeometry, iIdx);
+        });
+    }
+
     using ParentType::couplingStencil;
     /*!
      * \brief returns an iterable container of all indices of degrees of freedom of domain j
