@@ -75,7 +75,10 @@ public:
                                const VolumeVariables& volVars,
                                const bool isPreviousStorage) const
     {
-        return NumEqVector(0.0);
+        NumEqVector storage(0.0);
+        if (problem.enableInertiaTerms())
+            storage = problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * volVars.velocity();
+        return storage;
     }
 
     NumEqVector computeFlux(const Problem& problem,
