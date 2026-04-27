@@ -45,7 +45,6 @@ html {
     white-space: nowrap;
 }
 
-
 @media screen and (min-width: 768px) {
     html {
         --searchbar-background: var(--page-background-color);
@@ -75,6 +74,7 @@ html {
         overflow: hidden;
         background: var(--side-nav-background);
     }
+
     #main-nav {
         float: left;
         padding-right: 0;
@@ -113,5 +113,21 @@ html {
     #MSearchResultsWindow {
         left: var(--spacing-medium) !important;
         right: auto;
+    }
+
+    #sidebar-resize-handle {
+        position: absolute;
+        top: 0;
+        right: -10px;
+        width: 20px;
+        height: 100%;
+        cursor: ew-resize;
+        z-index: 1000;
+        user-select: none;
+    }
+
+    body.sidebar-resizing {
+        cursor: ew-resize;
+        user-select: none;
     }
 }
