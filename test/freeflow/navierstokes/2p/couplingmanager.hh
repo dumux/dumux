@@ -43,7 +43,7 @@ public:
 
     static constexpr int phaseFieldIdx = VolumeVariables<freeFlowMassIndex>::Indices::phaseFieldIdx;
     static constexpr int chemicalPotentialIdx = VolumeVariables<freeFlowMassIndex>::Indices::chemicalPotentialIdx;
-    static constexpr int pressureIdx = VolumeVariables<freeFlowMomentumIndex>::Indices::pressureIdx;
+    static constexpr int pressureIdx = VolumeVariables<freeFlowMassIndex>::Indices::pressureIdx;
 
     // this can be used if the coupling manager is used inside a meta-coupling manager (e.g. multi-binary)
     // to manager the solution vector storage outside this class
