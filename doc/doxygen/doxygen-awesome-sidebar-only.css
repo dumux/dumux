@@ -124,6 +124,7 @@ html {
         cursor: ew-resize;
         z-index: 1000;
         user-select: none;
+        touch-action: none;
     }
 
     body.sidebar-resizing {
