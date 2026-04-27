@@ -771,7 +771,6 @@ public:
             for (int i = 0; i < element.subEntities(rowDofCodim); ++i)
             {
                 const auto entity = element.template subEntity<rowDofCodim>(i);
-                if (entity.partitionType() == Dune::BorderEntity)
                 {
                     const auto localRowIdx = mapper_.index(entity);
                     if (!handledDof[localRowIdx])
@@ -779,6 +778,7 @@ public:
                         IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
                         idToIndex_.emplace(dofIdxGlobal, localRowIdx);
                         indexToID_.emplace(localRowIdx, dofIdxGlobal);
+                        handledDof[localRowIdx] = true;
                     }
                 }
             }
