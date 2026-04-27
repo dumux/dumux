@@ -64,6 +64,8 @@ class ThreeDChannelTestProblem : public BaseProblem
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    enum class InitialShape { circle, square };
+
 public:
     ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
@@ -89,6 +91,18 @@ public:
         eta1_ = getParam<Scalar>("Problem.Viscosity1", 1.0);
         eta2_ = getParam<Scalar>("Problem.Viscosity2", 10.0);
         g_ = getParam<Scalar>("Problem.Gravity", 0.98);
+
+        enableDampingForce_ = getParam<bool>("Problem.EnableDampingForce", false);
+        dampingForceMagnitude_ = getParam<Scalar>("Problem.DampingForceMagnitude", 1e5);
+        enableInterfaceFlux_ = getParam<bool>("Problem.EnableInterfaceFlux", true);
+
+        const auto shapeStr = getParam<std::string>("Problem.InitialShape", "circle");
+        if (shapeStr == "circle")
+            initialShape_ = InitialShape::circle;
+        else if (shapeStr == "square")
+            initialShape_ = InitialShape::square;
+        else
+            DUNE_THROW(Dumux::ParameterException, "Unknown InitialShape: " << shapeStr);
     }
 
     /*!
@@ -139,10 +153,26 @@ public:
         else
         {
             const auto ip = ipData(fvGeometry, scv);
-            const auto gradPhi = this->couplingManager().gradients(element, fvGeometry, ip)[CouplingManager::phaseFieldIdx];
+            const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
             const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
-            source = gradPhi * mu;
+            // volumetric Korteweg force (chemical-potential / phase-field gradient form)
+            source = mu * grads[CouplingManager::phaseFieldIdx];
         }
+
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            // optional sponge-layer damping (off by default)
+            if (enableDampingForce_ && scv.dofPosition()[1] < 0.0)
+            {
+                const auto v = elemVolVars[scv].velocity();
+                source -= dampingForceMagnitude_ * v.two_norm() * v;
+            }
+
+            // Boussinesq buoyancy reference: combined with the base class' +rho_mix * g
+            // this yields the effective body force (rho_mix - rho2) * g.
+            source -= rho2_ * this->gravity();
+        }
+
         return source;
     }
 
@@ -275,16 +305,13 @@ public:
         const Scalar centerY = 0.5;
 
         const Scalar radius = 0.25;
-        //const Scalar dist = std::hypot(pos[0] - centerX, pos[1] - centerY);
-        const Scalar distX = std::abs((pos[0] - centerX));
-        const Scalar distY = std::abs((pos[1] - centerY));
 
-        // Phase field: smooth square profile. Use the infinity-norm distance
-        // max(|dx|,|dy|) so that the level set max(|dx|,|dy|)=radius describes
-        // a square of half-side length `radius`. The tanh provides a smooth
+        const Scalar dist = initialShape_ == InitialShape::circle ? std::hypot(pos[0] - centerX, pos[1] - centerY)
+            : std::max(std::abs((pos[0] - centerX)), std::abs((pos[1] - centerY)));
+
+        // The tanh provides a smooth
         // diffuse-interface transition of thickness ~interfaceThickness_.
-        const Scalar maxDist = std::max(distX, distY);
-        initial[Indices::phaseFieldIdx] = std::tanh((radius - maxDist) / interfaceThickness_);
+        initial[Indices::phaseFieldIdx] = std::tanh((radius - dist) / (std::sqrt(2.0)*interfaceThickness_));
         initial[Indices::chemicalPotentialIdx] = 0.0;
 
         return initial;
@@ -299,31 +326,34 @@ public:
     template<class Context>
     auto interfaceFlux(const Context& context) const
     {
-        const auto& element = context.element();
         const auto& fvGeometry = context.fvGeometry();
-        const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
+        using ResultType = std::decay_t<decltype(this->couplingManager().gradients(
+            context.element(), fvGeometry, fluxVarCache.ipData())[CouplingManager::phaseFieldIdx])>;
+
+        // Korteweg / mass-flux interface contribution.
+        // Off by default for pure Stokes runs; the volumetric Korteweg source
+        // (mu * grad(phi)) already represents the capillary force.
+        // Only the inertial conservative-form correction
+        //   T_diff n = v (M grad(mu) . n) * (rho1 - rho2) / 2
+        // is implemented here. Requires inertia to be physically meaningful.
+        if (!enableInterfaceFlux_ || !this->enableInertiaTerms())
+            return ResultType(0.0);
+
+        const auto& element = context.element();
+        const auto& elemVolVars = context.elemVolVars();
         const auto& shapeValues = fluxVarCache.shapeValues();
 
         const auto grads = this->couplingManager().gradients(element, fvGeometry, fluxVarCache.ipData());
-        const auto& gradPhi = grads[CouplingManager::phaseFieldIdx];
         const auto& gradChemicalPotential = grads[CouplingManager::chemicalPotentialIdx];
         const auto normal = scvf.unitOuterNormal();
-        std::decay_t<decltype(gradPhi)> v(0.0);
+        ResultType v(0.0);
         for (const auto& localDof : localDofs(fvGeometry))
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
-        // Korteweg traction (AGG07 form):
-        // T_cap n = γε[(∇φ ⊗ ∇φ)] n --> instead we do this as source term
-        // T_diff n = v ⊗ (M ∇μ) 1/2 (ρ1 - ρ2) n if considering conservative form and inertia
-
-        if (this->enableInertiaTerms())
-            return (
-                v * (gradChemicalPotential * normal) * this->mobility() * this->mixtureDensityDerivative()
-            ) * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-
-        return std::decay_t<decltype(gradPhi)>(0.0);
+        return this->mobility() * v * (gradChemicalPotential * normal) * this->mixtureDensityDerivative()
+             * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
     }
 
     Scalar mixtureViscosity(const Scalar phaseField) const
@@ -343,6 +373,31 @@ public:
         return 0.5 * (rho1_  - rho2_);
     }
 
+    template<class Solution, class GridVariables>
+    void printMassBalanceSummary(const Solution& sol, const GridVariables& gridVariables) const
+    {
+        Scalar totalMassLiquid = 0.0;
+        Scalar totalMassGas = 0.0;
+        const auto& gg = this->gridGeometry();
+        auto fvGeometry = localView(gg);
+        for (const auto& element : elements(gg.gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto phi = sol[scv.dofIndex()][Indices::phaseFieldIdx];
+                const auto volume = scv.volume();
+                totalMassLiquid += rho1_ * 0.5 * (1.0 + phi) * volume;
+                totalMassGas    += rho2_ * 0.5 * (1.0 - phi) * volume;
+            }
+        }
+
+        std::cout << "\033[1;36m[mass] total = " << totalMassLiquid + totalMassGas
+                  << " kg/m  |  liquid = " << totalMassLiquid
+                  << " kg/m  |  gas = " << totalMassGas
+                  << " kg/m\033[0m" << std::endl;
+    }
+
 private:
     bool isTop_(const GlobalPosition& pos, const Scalar eps = eps_) const
     { return pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps; }
@@ -359,6 +414,11 @@ private:
     Scalar rho1_, rho2_;
     Scalar eta1_, eta2_;
     Scalar g_;
+    bool enableDampingForce_;
+    Scalar dampingForceMagnitude_;
+    bool enableInterfaceFlux_;
+
+    InitialShape initialShape_;
 };
 
 } // end namespace Dumux

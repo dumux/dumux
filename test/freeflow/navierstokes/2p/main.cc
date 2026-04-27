@@ -35,9 +35,14 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
+#include <dumux/adaptive/adapt.hh>
+#include <dumux/adaptive/markelements.hh>
+#include <dumux/adaptive/initializationindicator.hh>
+
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include "properties.hh"
+#include "adapt.hh"
 
 int main(int argc, char** argv)
 {
@@ -123,20 +128,59 @@ int main(int argc, char** argv)
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
 
+    // initialize the vtk output module
+    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+
+    /////////////////////////////////////////////////////////
+    // adaptive grid refinement
+    /////////////////////////////////////////////////////////
+
+    // instantiate indicator & data transfer, read parameters for indicator
+    const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
+    const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
+    TwoPhaseCahnHilliardGridAdaptIndicator<MassTypeTag> indicator(massGridGeometry);
+    using GridDataTransfer = TwoDomainOneGridDataTransfer<Grid, TwoPhaseCahnHilliardMassGridDataTransfer<MassTypeTag>, TwoPhaseCahnHilliardVelocityGridDataTransfer<MomentumTypeTag>>;
+    GridDataTransfer dataTransfer(
+        std::make_shared<TwoPhaseCahnHilliardMassGridDataTransfer<MassTypeTag>>(massProblem, massGridGeometry, massGridVariables, x[massIdx]),
+        std::make_shared<TwoPhaseCahnHilliardVelocityGridDataTransfer<MomentumTypeTag>>(momentumProblem, momentumGridGeometry, momentumGridVariables, x[momentumIdx])
+    );
+
+    const Scalar initMaxLevel = getParam<std::size_t>("Adaptive.InitMaxLevel", 10);
+    for (std::size_t i = 0; i < initMaxLevel; ++i)
+    {
+        indicator.calculate(x[massIdx], refineTol, coarsenTol);
+        bool wasAdapted = false;
+        if (markElements(gridManager.grid(), indicator))
+            wasAdapted = adapt(gridManager.grid(), dataTransfer);
+
+        if (wasAdapted)
+        {
+            xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
+            couplingManager->updateSolution(x); //!< Update coupling stencils after grid adaption
+            massGridVariables->updateAfterGridAdaption(x[massIdx]);
+            momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+        }
+    }
+
+    vtkWriter.write(0.0);
+
+    /////////////////////////////////////////////////////////
+
+    // reinitialize coupling manager & grid variables after grid adaption
+    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    massGridVariables->updateAfterGridAdaption(x[massIdx]);
+    momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+
+    // linearize & assemble, solve
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager, timeLoop, xOld);
 
-    // initialize the vtk output module
-    using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    vtkWriter.write(0.0);
-
-    // the linearize and solve
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
@@ -161,6 +205,7 @@ int main(int argc, char** argv)
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
+        massProblem->printMassBalanceSummary(x[massIdx], *massGridVariables);
 
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));

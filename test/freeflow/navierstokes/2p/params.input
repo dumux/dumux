@@ -1,25 +1,44 @@
 [Grid]
-LowerLeft = 0 0
-UpperRight = 1 2
-Cells = 50 100
+#LowerLeft = 0 -0.1
+#UpperRight = 1 2
+#Cells = 100 210
+File = rect.msh
+Refinement = 4
 
 [TimeLoop]
-TEnd = 3.0
-DtInitial = 0.01
-MaxTimeStepSize = 0.05
+TEnd = 0.3
+DtInitial = 1e-7
+MaxTimeStepSize = 0.01
+
+[Adaptive]
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+InitMaxLevel = 4
+MinLevel = 1
+MaxLevel = 6
+MinElementSize = 0.01
+CoarsenTolerance = 1e-2
+RefineTolerance = 1e-2
 
 [Problem]
+InitialShape = circle # circle or square
 Name = test_ff_2p_rising_bubble
-EnableGravity = true
 EnableInertiaTerms = false
+EnableInterfaceFlux = false
+EnableDampingForce = false
+DampingForceMagnitude = 1e8
 SurfaceTension = 24.5
-InterfaceThickness = 0.04
+InterfaceThickness = 0.01
 Mobility = 1.0
-Density1 = 10.0
+Density1 = 100.0
 Density2 = 1000.0
 Viscosity1 = 1.0
 Viscosity2 = 10.0
-Gravity = 0.98
+# without gravity (Gravity=0.0 or EnableGravity=false) we expect a static bubble
+# with Laplace pressure SurfaceTension/R (R=0.25)
+Gravity = 9.81 #0.98
+EnableGravity = true
 
 [Component]
 LiquidDensity = 1000.0
@@ -31,6 +50,8 @@ UpwindWeight = 1.0
 [Newton]
 MinSteps = 1
 MaxSteps = 20
-MaxRelativeShift = 1e-7
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
 EnableAbsoluteResidualCriterion = true
-MaxAbsoluteResidual = 1e-8
+MaxAbsoluteResidual = 1e-10
