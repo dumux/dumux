@@ -1012,7 +1012,7 @@ public:
     template <class CouplingGG>
     void sumEntries(Matrix& A, const CouplingGG& couplingGG)
     {
-        if constexpr (Detail::canCommunicate<typename GridView::Grid, rowDofCodim>)
+        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Grid, rowDofCodim>::v)
         {
             if (gridView_.comm().size() <= 1)
                 return;
