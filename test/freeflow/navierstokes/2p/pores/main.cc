@@ -34,9 +34,13 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
+#include <dumux/adaptive/adapt.hh>
+#include <dumux/adaptive/markelements.hh>
+
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include "properties.hh"
+#include "adapt.hh"
 
 int main(int argc, char** argv)
 {
@@ -128,7 +132,52 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
 
+    /////////////////////////////////////////////////////////
+    // adaptive grid refinement of the initial solution
+    /////////////////////////////////////////////////////////
+
+    const Scalar refineTol = getParam<Scalar>("Adaptive.RefineTolerance");
+    const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
+    TwoPhaseCahnHilliardGridAdaptIndicator<MassTypeTag> indicator(massGridGeometry);
+
+    using GridDataTransfer = TwoDomainOneGridDataTransfer<
+        Grid,
+        TwoPhaseCahnHilliardMassGridDataTransfer<MassTypeTag>,
+        TwoPhaseCahnHilliardVelocityGridDataTransfer<MomentumTypeTag>
+    >;
+    GridDataTransfer dataTransfer(
+        std::make_shared<TwoPhaseCahnHilliardMassGridDataTransfer<MassTypeTag>>(
+            massProblem, massGridGeometry, massGridVariables, x[massIdx]),
+        std::make_shared<TwoPhaseCahnHilliardVelocityGridDataTransfer<MomentumTypeTag>>(
+            momentumProblem, momentumGridGeometry, momentumGridVariables, x[momentumIdx])
+    );
+
+    const auto initMaxLevel = getParam<std::size_t>("Adaptive.InitMaxLevel", 0);
+    for (std::size_t i = 0; i < initMaxLevel; ++i)
+    {
+        indicator.calculate(x[massIdx], refineTol, coarsenTol);
+        bool wasAdapted = false;
+        if (markElements(gridManager.grid(), indicator))
+            wasAdapted = adapt(gridManager.grid(), dataTransfer);
+
+        if (wasAdapted)
+        {
+            xOld = x;
+            couplingManager->updateSolution(x);
+            massGridVariables->updateAfterGridAdaption(x[massIdx]);
+            momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+        }
+    }
+
+    // re-initialize coupling manager & grid variables after the (possible) initial adaption
+    couplingManager->init(momentumProblem, massProblem,
+                          std::make_tuple(momentumGridVariables, massGridVariables), x);
+    massGridVariables->updateAfterGridAdaption(x[massIdx]);
+    momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+
     vtkWriter.write(0.0);
+
+    /////////////////////////////////////////////////////////
 
     // linearize & assemble, solve
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;

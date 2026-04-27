@@ -204,6 +204,9 @@ gmsh.model.mesh.generate(2)
 # Set mesh file format to version 2
 gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
 
+# Scale to meter (we had everything in mm for better control over mesh sizes, but we want output in m)
+gmsh.option.setNumber("Mesh.ScalingFactor", 1e-3)
+
 output_file = "/Users/timokoch/dumux/dumux/test/freeflow/navierstokes/2p/pores/channel_with_pillars.msh"
 gmsh.write(output_file)
 print(f"Mesh written to {output_file}")

@@ -32,7 +32,7 @@
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 
-#include <dumux/freeflow/navierstokes/mass/2p/model.hh>
+#include <dumux/freeflow/navierstokes/mass/2pvapor/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/2p/cvfe/model.hh>
@@ -51,7 +51,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct ThreeDChannelTest {};
 struct ThreeDChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumTwoPCVFE, PQ1BubbleModel>; };
-struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassTwoP, BoxModel>; };
+struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassTwoPVapor, BoxModel>; };
 } // end namespace TTag
 
 // the fluid system

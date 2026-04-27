@@ -1,7 +1,11 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+add_subdirectory(pores)
+
 dune_symlink_to_source_files(FILES params.input)
+
+#set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 dumux_add_test(NAME test_ff_stokes_2p_pq1bubble_simplex
                SOURCES main.cc
@@ -16,3 +20,7 @@ dumux_add_test(NAME test_ff_stokes_2p_pq1bubble_simplex
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_2p_pq1bubble_simplex-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_2p_pq1bubble_simplex params.input
                              -Problem.Name test_ff_stokes_2p_pq1bubble_simplex")
+
+# enable address sanitizer for this test
+#target_compile_options(test_ff_stokes_2p_pq1bubble_simplex PRIVATE -fsanitize=address)
+#target_link_options(test_ff_stokes_2p_pq1bubble_simplex PRIVATE -fsanitize=address)

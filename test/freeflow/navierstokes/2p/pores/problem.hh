@@ -76,22 +76,30 @@ public:
         eta1_ = getParam<Scalar>("Problem.Viscosity1", 0.001); // water
         eta2_ = getParam<Scalar>("Problem.Viscosity2", 1.8e-5); // air
 
-        evaporationRate_ = getParam<Scalar>("Problem.EvaporationRate", 1.0e-5);
+        enableVaporTransport_ = getParam<bool>("Problem.EnableVaporTransport", true);
+        // Evaporation mass-transfer coefficient k_evap [m/s]: ṁ = k_evap·(c_sat − c_v)·δ_ε
+        evaporationRateCoeff_ = getParam<Scalar>("Problem.EvaporationRateCoeff", 1.0e-3);
+        // Saturation vapor concentration c_sat [kg/m³] (≈ 0.0173 at 20 °C)
+        vaporSatConc_ = getParam<Scalar>("Problem.VaporSatConc", 0.0173);
+        // Vapor diffusivity in gas phase D_gas [m²/s] (≈ 2.5e-5 for water vapor in air)
+        vaporDiffusivity_ = getParam<Scalar>("Problem.VaporDiffusivity", 2.5e-5);
+
         inletVelocity_   = getParam<Scalar>("Problem.InletVelocity", 0.0);
         enableKortewegForce_ = getParam<bool>("Problem.EnableKortewegForce", true);
 
         // Contact angle on pillar surfaces (in radians). 90° gives the natural BC (∂φ/∂n = 0).
         contactAngle_ = getParam<Scalar>("Problem.ContactAngleDegrees", 90.0) * M_PI / 180.0;
 
-        // Compute pillar centers using the same geometry as channel_with_pillars.geo
-        pillarRadius_ = getParam<Scalar>("Problem.PillarRadius", 0.025);
+        // Compute pillar centers using the same geometry as channel_with_pillars.py
+        // (mesh generated in mm and scaled to SI by ScalingFactor=1e-3)
+        pillarRadius_ = getParam<Scalar>("Problem.PillarRadius", 2.5e-5);
         {
             const int nx = getParam<int>("Problem.PillarNx", 6);
             const int ny = getParam<int>("Problem.PillarNy", 4);
-            const Scalar channelL = 1.0;
+            const Scalar channelL = 1.0e-3;   // 1 mm
             const Scalar boxW = 0.5 * channelL;
-            const Scalar boxH = 0.4;
-            const Scalar margin = 0.1; // distance from top pillar row to gas channel
+            const Scalar boxH = 0.4e-3;       // 400 µm
+            const Scalar margin = 0.1e-3;     // 100 µm: distance from top pillar row to gas channel
 
             const Scalar xBoxLeft  = 0.5*(channelL - boxW);
             const Scalar xBoxRight = xBoxLeft + boxW;
@@ -121,6 +129,10 @@ public:
         }
     }
 
+    //! Gas-phase diffusivity D_gas [m²/s] for use in the local residual
+    Scalar vaporDiffusivity() const
+    { return vaporDiffusivity_; }
+
     Scalar mobility() const
     {
         return mobility_;
@@ -143,7 +155,12 @@ public:
             if (isInlet_(globalPos))
                 values[0] = parabolicProfile_(globalPos[dimWorld-1]);
         }
-        // mass problem: no Dirichlet BCs used (all Neumann)
+        else
+        {
+            // dry air at inlet: c_v = 0
+            if (isInlet_(globalPos))
+                values[Indices::vaporIdx] = 0.0;
+        }
 
         return values;
     }
@@ -173,6 +190,9 @@ public:
         else
         {
             values.setAllNeumann();
+            // dry air enters at inlet: fix c_v = 0
+            if (isInlet_(scv.dofPosition()))
+                values.setDirichlet(Indices::vaporIdx);
         }
 
         return values;
@@ -199,11 +219,23 @@ public:
             // f(φ) = (γ/ε)·(1/4)(φ²-1)² → f'(φ) = (γ/ε)·(1/2)·2φ(φ²-1)
             source[Indices::chemicalPotentialEqIdx] = volVars.chemicalPotential() - energyScale_*phi*(phi*phi - 1.0);
 
-            // Evaporation drives φ → -1 (gas) at the interface.
-            // The density change ∂ρ/∂t = (dρ/dφ)∂φ/∂t is handled by the ∂ρ/∂t
-            // storage term in the continuity equation — no explicit mass source needed there.
-            // Adding a mass sink in conti would create convergent inflow from boundaries.
-            source[Indices::phaseFieldEqIdx] -= evaporationRate_/rho1_ * 3.0/2.0*(1.0 - phi*phi)/interfaceThickness_;
+            const auto deltaEps = 3.0/2.0 * (1.0 - phi*phi) / interfaceThickness_;
+            if (enableVaporTransport_)
+            {
+                // Full evaporation: ṁ = k_evap · max(0, c_sat − c_v) · δ_ε  [kg/(m³·s)]
+                // Rate is feedback-controlled by the local vapor concentration.
+                const auto cv = volVars.vaporConcentration();
+                const auto mDot = evaporationRateCoeff_ * std::max(Scalar(0), vaporSatConc_ - cv) * deltaEps;
+                source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
+                source[Indices::vaporEqIdx]      += mDot;
+            }
+            else
+            {
+                // Simplified evaporation: ṁ = k_evap · c_sat · δ_ε  [kg/(m³·s)]
+                // Assumes maximum driving force (c_v = 0 everywhere); no vapor equation coupling.
+                const auto mDot = evaporationRateCoeff_ * vaporSatConc_ * deltaEps;
+                source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
+            }
         }
         else
         {
@@ -257,12 +289,15 @@ public:
             values[Indices::conti0EqIdx] =
                 rho * this->faceVelocity(element, fvGeometry, scvf) * scvf.unitOuterNormal();
 
-            // Advective outflow for phase field: let φ exit with the flow.
-            // For any backflow at the outlet, impose gas phase (φ = -1).
-            const auto phi = (values[Indices::conti0EqIdx] >= 0.0)
-                ? elemVolVars[scvf.insideScvIdx()].phaseField()
-                : -1.0;
-            values[Indices::phaseFieldEqIdx] = phi * values[Indices::conti0EqIdx] / rho;
+            // Advective outflow for phase field and vapor: let them exit with the flow.
+            // For backflow: impose gas phase (φ=-1) and dry air (c_v=0).
+            const auto isOutflow = values[Indices::conti0EqIdx] >= 0.0;
+            const auto phi_up = isOutflow
+                ? elemVolVars[scvf.insideScvIdx()].phaseField() : -1.0;
+            const auto cv_up  = isOutflow
+                ? elemVolVars[scvf.insideScvIdx()].vaporConcentration() : 0.0;
+            values[Indices::phaseFieldEqIdx] = phi_up * values[Indices::conti0EqIdx] / rho;
+            values[Indices::vaporEqIdx]      = cv_up  * values[Indices::conti0EqIdx] / rho;
 
             if (isOnPillarSurface_(scvf.ipGlobal()))
             {
@@ -302,10 +337,11 @@ public:
         else
         {
             InitialValues values(0.0);
-            const auto pos = vertex.geometry().corner(0)[dimWorld-1] + 0.1; // shift slightly so channel is free
+            const auto pos = vertex.geometry().corner(0)[dimWorld-1] + 1e-4; // shift 100 µm so channel starts clear
             values[Indices::pressureIdx] = 0.0;
             values[Indices::phaseFieldIdx] = std::tanh(-pos / (std::sqrt(2.0)*interfaceThickness_));
             values[Indices::chemicalPotentialIdx] = 0.0;
+            values[Indices::vaporIdx] = 0.0; // initially dry everywhere
             return values;
         }
     }
@@ -427,7 +463,7 @@ private:
 
     // A point is on a pillar surface if it lies within pillarRadius_ of any pillar center.
     // Tolerance slightly larger than the mesh size near pillars (lc_pillar = 0.001 in the .geo).
-    bool isOnPillarSurface_(const GlobalPosition& pos, const Scalar tol = 2e-3) const
+    bool isOnPillarSurface_(const GlobalPosition& pos, const Scalar tol = 2e-6) const
     {
         for (const auto& c : pillarCenters_)
             if ((pos - c).two_norm() < pillarRadius_ + tol)
@@ -443,7 +479,10 @@ private:
     Scalar rho1_, rho2_;  // densities
     Scalar eta1_, eta2_;  // viscosities
 
-    Scalar evaporationRate_;
+    bool enableVaporTransport_;
+    Scalar evaporationRateCoeff_; // k_evap [m/s]
+    Scalar vaporSatConc_;         // c_sat  [kg/m³]
+    Scalar vaporDiffusivity_;     // D_gas  [m²/s]
     Scalar inletVelocity_;
     bool enableKortewegForce_;
     Scalar contactAngle_;
