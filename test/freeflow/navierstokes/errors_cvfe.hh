@@ -78,6 +78,54 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
     return {totalVolume, errors};
 }
 
+template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, double> calculateL2Error(const Problem& problem,
+                                            const GridVariables& gridVariables,
+                                            const SolutionVector& x,
+                                            int order = 5)
+{
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    double error = 0.0;
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        fvGeometry.bind(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight = qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            error += (solDiff * solDiff) * qpVolumeWeight;
+        }
+    }
+    error = std::sqrt(error);
+
+    return {totalVolume, error};
+}
+
 } // end namespace Dumux
 
 #endif
