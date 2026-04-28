@@ -120,7 +120,7 @@ Dune::FieldMatrix<double, 2, 2> stokesStress(const Dune::FieldVector<double, 2>&
     stress[0][0] = (0.5*y - 2*M_PI*sin(M_PI*y))*sin(M_PI*x);
     stress[1][0] = 0.0;
     stress[0][1] = stress[1][0]; // symmetric
-    stress[1][1] = (0.5*y - 2*M_PI*sin(M_PI*y))*sin(M_PI*x);
+    stress[1][1] = (0.5*y + 2*M_PI*sin(M_PI*y))*sin(M_PI*x);
     return stress;
 }
 
