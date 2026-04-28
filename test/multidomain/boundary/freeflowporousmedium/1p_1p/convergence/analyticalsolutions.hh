@@ -39,6 +39,23 @@ Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos
     return sol;
 }
 
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> darcyGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    using std::sin; using std::cos;
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = 0.5*M_PI*M_PI*y*y*sin(M_PI*x);
+    grad[0][1] = -M_PI*y*cos(M_PI*x);
+    grad[1][0] = -M_PI*y*cos(M_PI*x);
+    grad[1][1] = -sin(M_PI*x);
+    grad[2][0] = 0.5*M_PI*y*y*cos(M_PI*x);
+    grad[2][1] = y*sin(M_PI*x);
+    return grad;
+}
+
 // 0: mass
 Dune::FieldVector<double, 1> darcyRHS(const Dune::FieldVector<double, 2>& globalPos)
 {
@@ -60,6 +77,23 @@ Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPo
     sol[1] = sin(M_PI*x)*cos(M_PI*y);
     sol[2] = 0.5*y*sin(M_PI*x);
     return sol;
+}
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    using std::sin; using std::cos;
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = M_PI*sin(M_PI*x)*sin(M_PI*y);
+    grad[0][1] = -M_PI*cos(M_PI*x)*cos(M_PI*y);
+    grad[1][0] = M_PI*cos(M_PI*x)*cos(M_PI*y);
+    grad[1][1] = -M_PI*sin(M_PI*x)*sin(M_PI*y);
+    grad[2][0] = 0.5*M_PI*y*cos(M_PI*x);
+    grad[2][1] = 0.5*sin(M_PI*x);
+    return grad;
 }
 
 // 0: mom-x | 1: mom-y | 2: mass
@@ -113,6 +147,23 @@ Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos
     return sol;
 }
 
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> darcyGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    using std::exp; using std::sin; using std::cos;
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = M_PI*M_PI*(-exp(1)*y + exp(y))*cos(M_PI*x);
+    grad[0][1] = M_PI*(-exp(1) + exp(y))*sin(M_PI*x);
+    grad[1][0] = -M_PI*(exp(1) - exp(y))*sin(M_PI*x);
+    grad[1][1] = -exp(y)*cos(M_PI*x);
+    grad[2][0] = -M_PI*(exp(y) - y*exp(1))*sin(M_PI*x);
+    grad[2][1] = (exp(y) - exp(1))*cos(M_PI*x);
+    return grad;
+}
+
 // 0: mass
 Dune::FieldVector<double, 1> darcyRHS(const Dune::FieldVector<double, 2>& globalPos)
 {
@@ -134,6 +185,23 @@ Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPo
     sol[1] = (exp(y) - exp(1)) * cos(M_PI*x);
     sol[2] = 2*exp(y) * cos(M_PI*x);
     return sol;
+}
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    using std::sin; using std::cos; using std::exp;
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = -exp(y)*cos(M_PI*x);
+    grad[0][1] = -1.0/M_PI*exp(y)*sin(M_PI*x);
+    grad[1][0] = -M_PI*(exp(y) - exp(1))*sin(M_PI*x);
+    grad[1][1] = exp(y)*cos(M_PI*x);
+    grad[2][0] = -2.0*M_PI*exp(y)*sin(M_PI*x);
+    grad[2][1] = 2.0*exp(y)*cos(M_PI*x);
+    return grad;
 }
 
 // 0: mom-x | 1: mom-y | 2: mass
@@ -186,6 +254,22 @@ Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos
     return sol;
 }
 
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> darcyGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = 2.0*(y - 1.0);
+    grad[0][1] = 2.0*x - 1.0;
+    grad[1][0] = 2.0*x - 1.0;
+    grad[1][1] = -2.0*(y - 1.0);
+    grad[2][0] = (1.0 - 2.0*x)*(y - 1.0) + 2.0;
+    grad[2][1] = x*(1.0 - x) + (y - 1.0)*(y - 1.0) + 2.0;
+    return grad;
+}
+
 // 0: mass
 Dune::FieldVector<double, 1> darcyRHS(const Dune::FieldVector<double, 2>& globalPos)
 { return { 0.0 }; }
@@ -201,6 +285,22 @@ Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPo
     sol[1] = x*(x-1.0) - 0.5*(y-1.0)*(y-1.0) - 3.0*y + 1.0;
     sol[2] = 2.0*x + y - 1.0;
     return sol;
+}
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = y + 2.0;
+    grad[0][1] = x + 2.0*y - 2.0;
+    grad[1][0] = 2.0*x - 1.0;
+    grad[1][1] = -y - 2.0;
+    grad[2][0] = 2.0;
+    grad[2][1] = 1.0;
+    return grad;
 }
 
 // 0: mom-x | 1: mom-y | 2: mass
@@ -252,6 +352,30 @@ Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos
     return sol;
 }
 
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> darcyGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    static constexpr double omega = M_PI;
+    using std::exp; using std::sin; using std::cos;
+
+    const double sinOmegaX = sin(omega*x);
+    const double cosOmegaX = cos(omega*x);
+    static const double expTwo = exp(2);
+    const double expYPlusOne = exp(y+1);
+    const double expYMinusOne = exp(y-1);
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = omega*omega*(expYPlusOne + 2 - expTwo)*sinOmegaX;
+    grad[0][1] = -omega*expYPlusOne*cosOmegaX;
+    grad[1][0] = -omega*expYMinusOne*cosOmegaX;
+    grad[1][1] = -expYMinusOne*sinOmegaX;
+    grad[2][0] = omega*(expYPlusOne + 2 - expTwo)*cosOmegaX;
+    grad[2][1] = expYPlusOne*sinOmegaX;
+    return grad;
+}
+
 // 0: mass
 Dune::FieldVector<double, 1> darcyRHS(const Dune::FieldVector<double, 2>& globalPos)
 {
@@ -283,6 +407,26 @@ Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPo
     sol[1] = -y*sinOmegaX;
     sol[2] = -y*y*sinOmegaX*sinOmegaX;
     return sol;
+}
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double x = globalPos[0];
+    const double y = globalPos[1];
+    using std::sin; using std::cos;
+    static constexpr double omega = M_PI;
+    const double sinOmegaX = sin(omega*x);
+    const double cosOmegaX = cos(omega*x);
+
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][0] = 0.0;
+    grad[0][1] = 1.0;
+    grad[1][0] = -omega*y*cosOmegaX;
+    grad[1][1] = -sinOmegaX;
+    grad[2][0] = -2.0*omega*y*y*sinOmegaX*cosOmegaX;
+    grad[2][1] = -2.0*y*sinOmegaX*sinOmegaX;
+    return grad;
 }
 
 // 0: mom-x | 1: mom-y | 2: mass
