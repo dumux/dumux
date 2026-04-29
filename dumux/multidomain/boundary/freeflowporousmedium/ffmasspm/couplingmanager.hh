@@ -16,7 +16,7 @@
 #include <dumux/discretization/method.hh>
 
 #include "couplingmanager_staggered_cctpfa.hh"
-
+#include <dumux/multidomain/boundary/couplingmanager_binary_cvfe.hh>
 namespace Dumux {
 
 #ifndef DOXYGEN
@@ -32,6 +32,10 @@ struct FreeFlowMassPorousMediumCouplingManagerSelector;
 template<class MDTraits>
 struct FreeFlowMassPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::CCTpfa, DiscretizationMethods::CCTpfa>
 { using type = FFMassPMCouplingManagerStaggeredCCTpfa<MDTraits>; };
+
+template<class MDTraits>
+struct FreeFlowMassPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::Box, DiscretizationMethods::Box>
+{ using type = CouplingManagerBinaryCvfe<MDTraits>; };
 
 } // end namespace FreeFlowMassPorousMediumDetail
 #endif // DOXYGEN

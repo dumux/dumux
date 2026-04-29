@@ -314,16 +314,50 @@ private:
 
         // initialize the binary sub coupling managers
         using FFMassPMSol = typename SubCouplingManager<freeFlowMassIndex, porousMediumIndex>::SolutionVectorStorage;
-        this->subCouplingManager(freeFlowMassIndex, porousMediumIndex).init(
-            freeFlowMassProblem, porousMediumProblem,
-            FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
-        );
+        auto& ffMassPmCouplingManager = this->subCouplingManager(freeFlowMassIndex, porousMediumIndex);
+
+        static constexpr bool isMassPMCVFE =
+            DiscretizationMethods::isCVFE<typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod>
+            && DiscretizationMethods::isCVFE<typename GridGeometry<porousMediumIndex>::DiscretizationMethod>;
+
+        if constexpr (isMassPMCVFE)
+        {
+            ffMassPmCouplingManager.init(
+                freeFlowMassProblem, porousMediumProblem,
+                std::make_tuple(std::get<freeFlowMassIndex>(gridVarsTuple), std::get<porousMediumIndex>(gridVarsTuple)),
+                FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
+        else
+        {
+            ffMassPmCouplingManager.init(
+                freeFlowMassProblem, porousMediumProblem,
+                FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
 
         using FFMomPMSol = typename SubCouplingManager<freeFlowMomentumIndex, porousMediumIndex>::SolutionVectorStorage;
-        this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).init(
-            freeFlowMomentumProblem, porousMediumProblem,
-            FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
-        );
+        auto& ffMomPmCouplingManager = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex);
+
+        static constexpr bool isCVFE =
+            DiscretizationMethods::isCVFE<typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod>
+            && DiscretizationMethods::isCVFE<typename GridGeometry<porousMediumIndex>::DiscretizationMethod>;
+
+        if constexpr (isCVFE)
+        {
+            ffMomPmCouplingManager.init(
+                freeFlowMomentumProblem, porousMediumProblem,
+                std::make_tuple(std::get<freeFlowMomentumIndex>(gridVarsTuple), std::get<porousMediumIndex>(gridVarsTuple)),
+                FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
+        else
+        {
+            ffMomPmCouplingManager.init(
+                freeFlowMomentumProblem, porousMediumProblem,
+                FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
     }
 };
 
