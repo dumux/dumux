@@ -30,6 +30,7 @@
 #include <dumux/io/format.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
@@ -37,6 +38,7 @@
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
+#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "testcase.hh"
 #include "properties.hh"
@@ -284,6 +286,15 @@ int main(int argc, char** argv)
     std::cout << "Stokes pressure dofs: " << dofsPS << std::endl;
     std::cout << "Darcy pressure dofs: " << dofsPD << std::endl;
     std::cout << "Total number of dofs: " << dofsVS + dofsPS + dofsPD << std::endl;
+
+    const auto setConstraints = [](auto& problem)
+    {
+        if constexpr (requires { problem->setConstraints(); })
+            problem->setConstraints();
+    };
+
+    // set Dirichlet constraints
+    setConstraints(freeFlowMomentumProblem);
 
     // solve the non-linear system
     nonLinearSolver.solve(sol);

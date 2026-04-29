@@ -24,6 +24,9 @@
 #define TYPETAG_PMMASS DarcyOneP
 #endif
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -32,10 +35,17 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/fcstaggered.hh>
+#include <dumux/discretization/box.hh>
+#include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/freeflowporousmedium/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
@@ -43,12 +53,14 @@
 #include "spatialparams.hh"
 #include "problem_darcy.hh"
 #include "problem_freeflow.hh"
+#include "problem_freeflow_newinterface.hh"
 
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
 struct DarcyOneP { using InheritsFrom = std::tuple<OneP, CCTpfaModel>; };
+struct DarcyOnePBox { using InheritsFrom = std::tuple<OneP, BoxModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -66,8 +78,14 @@ struct FluidSystem<TypeTag, TTag::TYPETAG_PMMASS>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::DarcyOneP>
-{ using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::TYPETAG_PMMASS>
+{
+#ifndef GRIDTYPE
+    using type = Dune::YaspGrid<2>;
+#else
+    using type = GRIDTYPE;
+#endif
+};
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::TYPETAG_PMMASS>
@@ -82,6 +100,10 @@ namespace TTag {
 struct FreeFlowOneP {};
 struct FreeFlowOnePMass { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, CCTpfaModel>; };
 struct FreeFlowOnePMomentum { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+struct FreeFlowOnePMassBox { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, BoxModel>; };
+struct FreeFlowOnePMomentumPQ1Bubble { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct FreeFlowOnePMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
+struct FreeFlowOnePMomentumPQ2Hybrid { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -96,18 +118,75 @@ struct FluidSystem<TypeTag, TTag::FreeFlowOneP>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::FreeFlowOneP>
 {
+#ifndef GRIDTYPE
     using Coords = Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>;
     using type = Dune::YaspGrid<2, Coords>;
+#else
+    using type = GRIDTYPE;
+#endif
 };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::TYPETAG_FFMOMENTUM>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentum>
 { using type = FreeFlowSubProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::TYPETAG_FFMASS>
+struct Problem<TypeTag, TTag::FreeFlowOnePMass>
 { using type = FreeFlowSubProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ1Bubble>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ1BubbleHybrid>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ2Hybrid>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+// the variables
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::FreeFlowOnePMomentumPQ1BubbleHybrid>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::FreeFlowOnePMomentumPQ2Hybrid>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMassBox>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
@@ -115,6 +194,22 @@ template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
+
+#ifdef QUADRATURE_RULE_FFMASS
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::FreeFlowOnePMassBox>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+
+    using QuadTraits = BoxQuadratureTraits<GridView, QUADRATURE_RULE_FFMASS, QUADRATURE_RULE_FFMASS>;
+
+public:
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, DefaultMapperTraits<GridView>, QuadTraits>>;
+};
+#endif
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::TYPETAG_PMMASS>
