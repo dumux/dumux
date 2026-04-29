@@ -4,3 +4,7 @@
 add_subdirectory(darcydarcy)
 add_subdirectory(freeflowporenetwork)
 add_subdirectory(freeflowporousmedium)
+
+file(GLOB DUMUX_MULTIDOMAIN_BOUNDARY_HEADERS *.hh *.inc)
+install(FILES ${DUMUX_MULTIDOMAIN_BOUNDARY_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/boundary)
