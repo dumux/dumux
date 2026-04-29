@@ -112,30 +112,105 @@ void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
             << std::endl;
 }
 
-template<class Problem, class SolutionVector>
-void printDarcyL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x)
+template<class MomentumProblem, class MassProblem,
+         class MomentumGridVariables, class MassGridVariables,
+         class SolutionVector, class MomentumIdx, class MassIdx>
+void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                         std::shared_ptr<MassProblem> massProblem,
+                         const MomentumGridVariables& momentumGridVariables,
+                         const MassGridVariables& massGridVariables,
+                         const SolutionVector& x,
+                         const MomentumIdx momentumIdx,
+                         const MassIdx massIdx)
 {
-    using namespace Dumux;
-    using Scalar = double;
+    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
 
-    Scalar l2error = 0.0;
-    for (const auto& element : elements(problem->gridGeometry().gridView()))
+    constexpr auto hasProblemAnalyticalSolutionGradient = []<class Problem, class GlobalCoordinate>()
     {
-        auto fvGeometry = localView(problem->gridGeometry());
-        fvGeometry.bindElement(element);
-
-        for (auto&& scv : scvs(fvGeometry))
+        return requires (const Problem& p, const GlobalCoordinate& globalPos)
         {
-            const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.center())[2/*pressureIdx*/];
-            l2error += scv.volume()*(delta*delta);
+            p.gradAnalyticalSolution(globalPos);
+        };
+    };
+
+    constexpr bool hasMomentumGradAnalyticalSolution
+        = hasProblemAnalyticalSolutionGradient.template operator()<MomentumProblem, typename MomentumGridGeometry::GlobalCoordinate>();
+    constexpr bool hasMassGradAnalyticalSolution
+        = hasProblemAnalyticalSolutionGradient.template operator()<MassProblem, typename MassGridGeometry::GlobalCoordinate>();
+
+    if constexpr (Dumux::DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
+                  && Dumux::DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>)
+    {
+        if constexpr (hasMomentumGradAnalyticalSolution && hasMassGradAnalyticalSolution)
+        {
+            const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, H1(p) = {:.8e}, L2(v) = {:.8e}, H1(v) = {:.8e}",
+                                            massErrors[0], massErrors[1], momentumErrors[0], momentumErrors[1])
+                      << std::endl;
+
+            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
+            logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
+                    << " L2(vx) = " << momentumErrors[0]
+                    << " L2(vy) = " << momentumErrors[0]
+                    << std::endl;
+        }
+        else
+        {
+            const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, L2(v) = {:.8e}",
+                                            massL2Error, momentumL2Error)
+                      << std::endl;
+
+            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
+            logFile << "[ConvergenceTest] L2(p) = " << massL2Error
+                    << " L2(vx) = " << momentumL2Error
+                    << " L2(vy) = " << momentumL2Error
+                    << std::endl;
         }
     }
-    using std::sqrt;
-    l2error = sqrt(l2error);
+    else
+        printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
+void printDarcyL2Error(std::shared_ptr<Problem> problem,
+                       const GridVariables& gridVariables,
+                       const SolutionVector& x)
+{
+    using namespace Dumux;
+    using GridGeometry = typename GridVariables::GridGeometry;
+
+    double l2error = 0.0;
+    if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+    {
+        const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
+        l2error = cvfeL2Error;
+    }
+    else
+    {
+        for (const auto& element : elements(problem->gridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(problem->gridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const auto dofIdx = scv.dofIndex();
+                const double delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
+                l2error += scv.volume()*(delta*delta);
+            }
+        }
+        using std::sqrt;
+        l2error = sqrt(l2error);
+    }
 
     const auto numDofs = problem->gridGeometry().numDofs();
-    std::cout << Fmt::format("** L2 error (abs) for {} cc dofs", numDofs)
+    std::cout << Fmt::format("** L2 error (abs) for {} dofs ", numDofs)
               << Fmt::format("L2 error = {:.8e}", l2error)
               << std::endl;
 
@@ -304,8 +379,14 @@ int main(int argc, char** argv)
     darcyVtkWriter.write(1.0);
 
     // print L2 errors
-    printFreeFlowL2Error(freeFlowMomentumProblem, freeFlowMassProblem, partial(sol, freeFlowMomentumIndex, freeFlowMassIndex));
-    printDarcyL2Error(darcyProblem, sol[porousMediumIndex]);
+    printFreeFlowErrors(freeFlowMomentumProblem,
+                        freeFlowMassProblem,
+                        *freeFlowMomentumGridVariables,
+                        *freeFlowMassGridVariables,
+                        sol,
+                        freeFlowMomentumIndex,
+                        freeFlowMassIndex);
+    printDarcyL2Error(darcyProblem, *darcyGridVariables, sol[porousMediumIndex]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
