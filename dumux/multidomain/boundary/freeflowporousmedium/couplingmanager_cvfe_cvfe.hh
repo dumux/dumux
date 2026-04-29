@@ -13,8 +13,15 @@
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_CVFE_CVFE_HH
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_CVFE_CVFE_HH
 
+#include <deque>
+
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
+#include <dumux/parallel/parallel_for.hh>
+#include <dumux/assembly/coloring.hh>
 
 #include "couplingmanager_base.hh"
 #include "couplingconditions_cvfe_cvfe.hh"
@@ -49,7 +56,10 @@ class FreeFlowPorousMediumCouplingManagerCvfe
 
     template<std::size_t id> using GridView = typename GridDiscretization<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using ElementSeed = typename GridView<id>::Grid::template Codim<0>::EntitySeed;
     using SolutionVector = typename MDTraits::SolutionVector;
+
+    using MomentumDiscretizationMethod = typename GridDiscretization<ParentType::freeFlowMomentumIndex>::DiscretizationMethod;
 
     using CouplingConditions = FFPMCouplingConditionsCvfe<MDTraits, FreeFlowPorousMediumCouplingManagerCvfe<MDTraits>>;
 
@@ -273,7 +283,78 @@ public:
             elemDisc
         );
     }
+
+    /*!
+     * \brief Compute colors for multithreaded assembly
+     */
+    void computeColorsForAssembly()
+    {
+        if constexpr (MomentumDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+        {
+            // use coloring of the mass discretization for both domains
+            // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
+            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMassIndex))).sets;
+        }
+        else
+        {
+            // use coloring of the momentum discretization for both domains
+            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex))).sets;
+        }
+
+        // color the porous medium domain independently
+        elementSetsPM_ = computeColoring(Dumux::gridDiscretization(this->problem(porousMediumIndex))).sets;
+    }
+
+    /*!
+     * \brief Execute assembly kernel in parallel
+     *
+     * \param domainId the domain index of domain i
+     * \param assembleElement kernel function to execute for one element
+     */
+    template<std::size_t i, class AssembleElementFunc>
+    void assembleMultithreaded(Dune::index_constant<i> domainId, AssembleElementFunc&& assembleElement) const
+    {
+        if constexpr (i == porousMediumIndex)
+        {
+            if (elementSetsPM_.empty())
+                DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");
+
+            const auto& grid = Dumux::gridDiscretization(this->problem(porousMediumIndex)).gridView().grid();
+            for (const auto& elements : elementSetsPM_)
+            {
+                Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
+                {
+                    const auto element = grid.entity(elements[eIdx]);
+                    assembleElement(element);
+                });
+            }
+        }
+        else
+        {
+            if (elementSets_.empty())
+                DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");
+
+            const auto& grid = Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex)).gridView().grid();
+            for (const auto& elements : elementSets_)
+            {
+                Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
+                {
+                    const auto element = grid.entity(elements[eIdx]);
+                    assembleElement(element);
+                });
+            }
+        }
+    }
+
+private:
+    std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
+    std::deque<std::vector<ElementSeed<porousMediumIndex>>> elementSetsPM_;
 };
+
+template<class T>
+struct CouplingManagerSupportsMultithreadedAssembly<FreeFlowPorousMediumCouplingManagerCvfe<T>>
+: public std::true_type
+{};
 
 } // end namespace Dumux
 
