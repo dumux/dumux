@@ -805,10 +805,7 @@ html.dark-mode iframe#MSearchResults {
 }
 
 #nav-sync {
-    bottom: 12px;
-    right: 12px;
-    top: auto !important;
-    user-select: none;
+    display: none !important;
 }
 
 #nav-tree .selected {

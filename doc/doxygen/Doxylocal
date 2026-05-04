@@ -54,7 +54,8 @@ HTML_EXTRA_FILES       = @srcdir@/doxygen-awesome-darkmode-toggle.js \
                          @srcdir@/doxygen-awesome-fragment-copy-button.js \
                          @srcdir@/doxygen-awesome-paragraph-link.js \
                          @srcdir@/doxygen-awesome-interactive-toc.js \
-                         @srcdir@/dumux-custom.js
+                         @srcdir@/dumux-custom.js \
+                         @srcdir@/sidebar-slider.js
 
 HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \
                          @srcdir@/doxygen-awesome-sidebar-only.css \
