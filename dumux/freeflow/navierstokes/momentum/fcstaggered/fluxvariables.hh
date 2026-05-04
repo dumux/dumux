@@ -13,6 +13,7 @@
 #define DUMUX_NAVIERSTOKES_MOMENTUM_FCSTAGGERED_FLUXVARIABLES_HH
 
 #include <array>
+#include <bitset>
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/math.hh>
@@ -177,13 +178,21 @@ public:
         static const bool enableDilatationTerm = getParamFromGroup<bool>(this->problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
         {
+            // Seed the already-computed velGradII for the current direction,
+            // then add one contribution per remaining direction. A visited bitset
+            // indexed by dofAxis ensures each direction is counted exactly once.
             Scalar divergence = velGradII;
+            const auto& scvSelf = fvGeometry.scv(scvf.insideScvIdx());
+            std::bitset<GridView::dimension> visited{};
+            visited[scvSelf.dofAxis()] = true;
             for (const auto& scv : scvs(fvGeometry))
             {
+                if (visited[scv.dofAxis()])
+                    continue;
+                visited[scv.dofAxis()] = true;
                 const auto otherFrontalScvf = *(scvfs(fvGeometry, scv).begin());
                 assert(otherFrontalScvf.isFrontal() && !otherFrontalScvf.boundary());
-                if (otherFrontalScvf.index() != scvf.index())
-                    divergence += VelocityGradients::velocityGradII(fvGeometry, otherFrontalScvf, elemVolVars);
+                divergence += VelocityGradients::velocityGradII(fvGeometry, otherFrontalScvf, elemVolVars);
             }
 
             result += 2.0/3.0 * mu * divergence * scvf.directionSign() * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
