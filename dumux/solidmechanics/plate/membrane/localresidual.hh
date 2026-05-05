@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Local residual for the membrane plate model
  */
 #ifndef DUMUX_MEMBRANE_PLATE_LOCAL_RESIDUAL_HH
@@ -20,7 +20,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Local residual for the membrane plate model
  *
  * Implements \f$ \nabla\cdot(T\,\nabla w) = F \f$ as a finite-volume flux:
