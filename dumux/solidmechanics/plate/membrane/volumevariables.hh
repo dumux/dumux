@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Volume variables for the membrane plate model
  */
 #ifndef DUMUX_MEMBRANE_PLATE_VOLUME_VARIABLES_HH
@@ -17,7 +17,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Volume variables for the membrane plate model
  */
 template<class Traits>

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup MembraneModel
+ * \ingroup MembranePlate
  * \brief Default spatial parameters for the membrane plate model
  */
 #ifndef DUMUX_MEMBRANE_PLATE_SPATIAL_PARAMS_HH
@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Spatial parameters for the membrane plate model
  *
  * Reads the membrane tension \f$ T \f$ from the parameter `Problem.Tension`.

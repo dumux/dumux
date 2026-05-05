@@ -18,7 +18,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Test problem: clamped circular membrane under uniform load
  *
  * Solves \f$ T\,\nabla^2 w = F \f$ on a disk of radius \f$ R \f$

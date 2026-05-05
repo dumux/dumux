@@ -48,7 +48,7 @@ struct MembranePlateIndices
 };
 
 /*!
- * \ingroup MembranePlateModel
+ * \ingroup MembranePlate
  * \brief Model traits for the membrane plate model
  */
 struct MembranePlateModelTraits
