@@ -3,3 +3,4 @@
 
 add_subdirectory(elastic)
 add_subdirectory(hyperelastic)
+add_subdirectory(plate)

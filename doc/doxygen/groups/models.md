@@ -171,6 +171,25 @@
 @copydoc dumux/solidmechanics/hyperelastic/model.hh
 @ingroup SolidMechanicsModels
 
+@defgroup Plate Plate mechanics
+@brief Models for thin-plate structural mechanics (Kirchhoff-Love and Mindlin-Reissner).
+@ingroup SolidMechanicsModels
+
+@defgroup KirchhoffLovePlate Kirchhoff-Love plate
+@brief Models bending of a thin plate using the Kirchhoff-Love theory.
+@copydoc dumux/solidmechanics/plate/kirchhoff_love/model.hh
+@ingroup Plate
+
+@defgroup MindlinReissnerPlate Mindlin-Reissner plate
+@brief Models bending of a thick plate using the Mindlin-Reissner theory.
+@copydoc dumux/solidmechanics/plate/mindlin_reissner/model.hh
+@ingroup Plate
+
+@defgroup MembranePlate Membrane plate
+@brief Models bending of a membrane plate (no bending stiffness).
+@copydoc dumux/solidmechanics/plate/membrane/model.hh
+@ingroup Plate
+
 <!-- PoroMechanicsModels -->
 
 @defgroup PoroMechanicsModels Poro-mechanics
