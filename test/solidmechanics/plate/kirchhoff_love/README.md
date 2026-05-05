@@ -37,14 +37,14 @@ where $r = \sqrt{x^2 + y^2}$.
 
 **Parameters**
 
-| Parameter | Symbol | Value |
-|-----------|--------|-------|
-| Young's modulus | $E$ | 1.0 |
-| Poisson ratio | $\nu$ | 0.3 |
-| Plate thickness | $t$ | 0.1 |
-| Bending modulus | $D = Et^3/(12(1-\nu^2))$ | $\approx 9.16 \times 10^{-5}$ |
-| Load | $F$ | $4 \times 10^{-5}$ |
-| Radius | $R$ | 1.0 |
+| Parameter | Symbol | Value | Unit |
+|-----------|--------|-------|------|
+| Young's modulus | $E$ | 1.0 | Pa |
+| Poisson ratio | $\nu$ | 0.3 | - |
+| Plate thickness | $t$ | 0.1 | m |
+| Bending modulus | $D = Et^3/(12(1-\nu^2))$ | $\approx 9.16 \times 10^{-5}$ | Pa·m³ |
+| Load | $F$ | $4 \times 10^{-5}$ | N/m² |
+| Radius | $R$ | 1.0 | m |
 
 **Setup**
 

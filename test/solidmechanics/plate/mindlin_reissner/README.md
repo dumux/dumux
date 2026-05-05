@@ -39,14 +39,14 @@ As $t/R \to 0$ the Kirchhoff-Love result is recovered.
 
 **Parameters**
 
-| Parameter | Symbol | Value |
-|-----------|--------|-------|
-| Young's modulus | $E$ | 1.0 |
-| Poisson ratio | $\nu$ | 0.3 |
-| Plate thickness | $t$ | 0.1 |
-| Shear correction factor | $\kappa$ | 5/6 |
-| Load | $F$ | $4 \times 10^{-5}$ |
-| Radius | $R$ | 1.0 |
+| Parameter | Symbol | Value | Unit |
+|-----------|--------|-------|------|
+| Young's modulus | $E$ | 1.0 | Pa |
+| Poisson ratio | $\nu$ | 0.3 | - |
+| Plate thickness | $t$ | 0.1 | m |
+| Shear correction factor | $\kappa$ | 5/6 | - |
+| Load | $F$ | $4 \times 10^{-5}$ | N/m² |
+| Radius | $R$ | 1.0 | m |
 
 The parameters match the Kirchhoff-Love benchmark. The thickness-to-radius ratio
 $t/R = 0.1$ keeps the shear correction term $8(t/R)^2/[3\kappa(1-\nu)] \approx 4.6\%$
