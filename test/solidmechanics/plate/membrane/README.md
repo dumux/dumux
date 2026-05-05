@@ -28,7 +28,7 @@ where $r = \sqrt{x^2 + y^2}$ is the radial coordinate.
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
 | Load | $F$ | 1.0 | N/m² |
-| Tension | $T$ | 1.0 | N/m |
+| Tension | $T$ | 10.0 | N/m |
 | Radius | $R$ | 1.0 | m |
 
 **Setup**

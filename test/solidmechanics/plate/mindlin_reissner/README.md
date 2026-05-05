@@ -41,15 +41,15 @@ As $t/R \to 0$ the Kirchhoff-Love result is recovered.
 
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
-| Young's modulus | $E$ | 1.0 | Pa |
+| Young's modulus | $E$ | $10^6$ | Pa |
 | Poisson ratio | $\nu$ | 0.3 | - |
-| Plate thickness | $t$ | 0.1 | m |
+| Plate thickness | $t$ | 0.05 | m |
 | Shear correction factor | $\kappa$ | 5/6 | - |
-| Load | $F$ | $4 \times 10^{-5}$ | N/m² |
+| Load | $F$ | 1.0 | N/m² |
 | Radius | $R$ | 1.0 | m |
 
 The parameters match the Kirchhoff-Love benchmark. The thickness-to-radius ratio
-$t/R = 0.1$ keeps the shear correction term $8(t/R)^2/[3\kappa(1-\nu)] \approx 4.6\%$
+$t/R = 0.05$ keeps the shear correction term $8(t/R)^2/[3\kappa(1-\nu)] \approx 1.1\%$
 small, so the Mindlin-Reissner and Kirchhoff-Love solutions differ only slightly.
 
 **Setup**

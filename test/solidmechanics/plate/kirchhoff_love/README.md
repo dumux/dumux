@@ -39,11 +39,11 @@ where $r = \sqrt{x^2 + y^2}$.
 
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
-| Young's modulus | $E$ | 1.0 | Pa |
+| Young's modulus | $E$ | $10^6$ | Pa |
 | Poisson ratio | $\nu$ | 0.3 | - |
-| Plate thickness | $t$ | 0.1 | m |
-| Bending modulus | $D = Et^3/(12(1-\nu^2))$ | $\approx 9.16 \times 10^{-5}$ | Pa·m³ |
-| Load | $F$ | $4 \times 10^{-5}$ | N/m² |
+| Plate thickness | $t$ | 0.05 | m |
+| Bending modulus | $D = Et^3/(12(1-\nu^2))$ | $\approx 11.45$ | Pa·m³ |
+| Load | $F$ | 1.0 | N/m² |
 | Radius | $R$ | 1.0 | m |
 
 **Setup**
