@@ -29,6 +29,10 @@ Control-volume finite element schemes are based on finite element basis function
 @brief Control-volume finite element scheme based on P1/Q1 basis function with enrichment by a bubble function
 @ingroup CVFEDiscretization
 
+@defgroup PQ2Discretization PQ2 CVFE scheme
+@brief Control-volume finite element scheme based on P2/Q2 basis function
+@ingroup CVFEDiscretization
+
 @defgroup FaceCenteredStaggeredDiscretization Staggered Grid Finite Volume Method
 @brief Discretization for the momentum balance of the Navier-Stokes equations. Can be used to build a marker-and-cell scheme (MAC) together with Tpfa for the discretization of the mass balance equation.
 @ingroup Discretization
