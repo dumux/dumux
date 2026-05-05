@@ -13,6 +13,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/geometry/diameter.hh>
 
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -100,13 +101,15 @@ int main(int argc, char** argv)
 
     vtkWriter.write(1.0);
 
-    // Compute relative L2-error in vertical deformation w
+    // Compute max element diameter (mesh size) and relative L2-error in vertical deformation w
+    double hMax = 0.0;
     double l2norm2(0.0), l2norm2Ref(0.0);
     const auto& gg = *deformationGridGeometry;
     for (const auto& element : elements(gg.gridView()))
     {
-        const auto elemSol = elementSolution(element, x[deformationIdx], gg);
         const auto geometry = element.geometry();
+        hMax = std::max(hMax, Dumux::diameter(geometry));
+        const auto elemSol = elementSolution(element, x[deformationIdx], gg);
         const auto& quad = Dune::QuadratureRules<double, Grid::dimension>::rule(geometry.type(), 3);
         for (const auto& qp : quad)
         {
@@ -120,6 +123,7 @@ int main(int argc, char** argv)
     }
 
     const auto relL2Error = std::sqrt(l2norm2/l2norm2Ref);
+    std::cout << "Max element diameter: " << hMax << std::endl;
     std::cout << "Relative L2-error deformation w: " << relL2Error << std::endl;
 
     return 0;

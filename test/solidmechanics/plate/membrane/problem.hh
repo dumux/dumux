@@ -21,10 +21,10 @@ namespace Dumux {
  * \ingroup MembranePlateModel
  * \brief Test problem: clamped circular membrane under uniform load
  *
- * Solves \f$ -T\,\nabla^2 w = F \f$ on a disk of radius \f$ R \f$
+ * Solves \f$ T\,\nabla^2 w = F \f$ on a disk of radius \f$ R \f$
  * with homogeneous Dirichlet conditions \f$ w = 0 \f$ on \f$ \partial\Omega \f$.
  * The analytic solution is
- * \f[ w(r) = \frac{F}{4T}(R^2 - r^2). \f]
+ * \f[ w(r) = -\frac{F}{4T}(R^2 - r^2). \f]
  */
 template<class TypeTag>
 class MembranePlateTestProblem : public FVProblemWithSpatialParams<TypeTag>
@@ -73,7 +73,7 @@ public:
     Scalar analyticDeformation(const GlobalPosition& globalPos) const
     {
         const auto r2 = globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1];
-        return force_/(4*tension_) * (radius_*radius_ - r2);
+        return -force_/(4*tension_) * (radius_*radius_ - r2);
     }
 
 private:

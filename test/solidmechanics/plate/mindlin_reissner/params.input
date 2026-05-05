@@ -3,9 +3,9 @@ File = disk.msh
 
 [Problem]
 Name = test_mindlin_reissner_plate
-E = 1.0
-Thickness = 0.01
-PoissonRatio = 0.4
+E = 1e6
+Thickness = 0.05
+PoissonRatio = 0.3
 Force = 1.0
 LinearMassDensity = 0
 Radius = 1.0
@@ -19,4 +19,4 @@ EnableDynamicOutput = false
 MaxRelativeShift = 1e-6
 
 [Assembly.NumericDifference]
-BaseEpsilon = 1
+BaseEpsilon = 1e-5

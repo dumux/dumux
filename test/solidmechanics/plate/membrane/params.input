@@ -4,7 +4,7 @@ File = disk.msh
 [Problem]
 Name = test_membrane_plate
 Force = 1.0
-Tension = 1.0
+Tension = 10.0
 Radius = 1.0
 
 [Vtk]

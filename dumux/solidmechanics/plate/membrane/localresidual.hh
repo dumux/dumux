@@ -23,8 +23,8 @@ namespace Dumux {
  * \ingroup MembranePlateModel
  * \brief Local residual for the membrane plate model
  *
- * Implements \f$ -\nabla\cdot(T\,\nabla w) = F \f$ as a finite-volume flux:
- * the flux over a face is \f$ -T\,(\nabla w \cdot \mathbf{n})\,|\Gamma| \f$.
+ * Implements \f$ \nabla\cdot(T\,\nabla w) = F \f$ as a finite-volume flux:
+ * the flux over a face is \f$ T\,(\nabla w \cdot \mathbf{n})\,|\Gamma| \f$.
  */
 template<class TypeTag>
 class MembranePlateLocalResidual
@@ -74,7 +74,7 @@ public:
         const auto tension = problem.spatialParams().tension(scvf.ipGlobal());
 
         NumEqVector flux(0.0);
-        flux[Indices::deformationEqIdx] = -tension * gradWn * scvf.area();
+        flux[Indices::deformationEqIdx] = tension * gradWn * scvf.area();
         return flux;
     }
 };

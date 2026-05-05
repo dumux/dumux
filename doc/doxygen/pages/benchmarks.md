@@ -17,9 +17,9 @@ for more information.
 | ![richards](https://dumux.org/images/mod-richards.png) | @ref benchmark-richards-equation-evaportion "↗️ Richards Evaporation"  | 1D, soil evaporation, @ref RichardsModel, @ref CCTpfaDiscretization | A verification benchmark with (approximate) analytical solution from Vanderborght et al (2005) @cite Vanderborght2005 |
 | ![richards](https://dumux.org/images/mod-richards.png) | TODO (link/readme)  | 1D, soil column infiltration front, @ref RichardsModel, @ref CCTpfaDiscretization | A verification benchmark with (approximate) analytical solution from Vanderborght et al (2005) @cite Vanderborght2005 |
 | ![1d rotsym](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/1protationsymmetry/img/result.png) | ↗️ Laplace Annulus Rotational Symmetry (TODO link/readme)  | rotational symmetry, @ref OnePModel | A simple annulus domain with known analytical solution for the Laplace equation with Dirichlet boundary conditions |
-
-
-
+| ![membrane plate](plate_membrane_deformation_3d.png) | @ref benchmark-membrane-plate "↗️ Clamped Circular Membrane" | plate mechanics, @ref MembranePlate, @ref BoxDiscretization | Clamped circular membrane under uniform load; convergence against analytical solution |
+| ![kirchhoff-love plate](plate_kirchhoff_love_deformation_3d.png) | @ref benchmark-kirchhoff-love-plate "↗️ Clamped Circular Plate (Kirchhoff-Love)" | plate mechanics, @ref KirchhoffLovePlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load; convergence against analytical solution |
+| ![mindlin-reissner plate](plate_mindlin_reissner_deformation_3d.png) | @ref benchmark-mindlin-reissner-plate "↗️ Clamped Circular Plate (Mindlin-Reissner)" | plate mechanics, @ref MindlinReissnerPlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load with shear correction; convergence against analytical solution |
 
 ## Benchmarks in external modules
 
