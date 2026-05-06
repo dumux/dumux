@@ -118,17 +118,17 @@ public:
     { return unitOuterNormal_; }
 
     //! Index of the inside sub control volume
-    GridIndexType insideScvIdx() const
+    LocalIndexType insideScvIdx() const
     { return scvIndices_[0]; }
 
     //! index of the outside sub control volume
-    GridIndexType outsideScvIdx() const
+    LocalIndexType outsideScvIdx() const
     { return scvIndices_[1]; }
 
     std::size_t numOutsideScvs() const
     { return static_cast<std::size_t>(!boundary()); }
 
-    GridIndexType index() const
+    LocalIndexType index() const
     { return localScvfIdx_; }
 
     bool boundary() const
