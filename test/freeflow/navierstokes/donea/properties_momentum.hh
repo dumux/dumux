@@ -44,6 +44,9 @@
 #define NEW_VARIABLES_INTERFACE 0
 #endif
 
+#include <type_traits>
+
+#include <dune/common/std/type_traits.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
@@ -95,7 +98,7 @@ struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 #if NEW_PROBLEM_INTERFACE
 //! The grid variables
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1Bubble>
+struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -104,42 +107,16 @@ private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
     using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+    using Traits = std::conditional_t<
+            GG::enableHybridCVFE,
+            Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>,
+            Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>
+        >;
+    using GVC = std::conditional_t<
+            GG::enableHybridCVFE,
+            Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>,
+            Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>
+        >;
 public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
