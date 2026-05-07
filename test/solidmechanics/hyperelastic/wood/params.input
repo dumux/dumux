@@ -1,0 +1,59 @@
+[TimeLoop]
+TEnd = 5e6
+DtInitial = 1.0
+MaxTimeStepSize = 2.0e5
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1.0 0.1
+Cells = 80 16
+
+[Problem]
+Name = test_wood
+
+# Cyclic humidity settings (for moisture cycling experiments)
+UseCyclicMoisture = true
+CyclicMoistureMin = 0.05
+CyclicMoistureMax = 0.30
+CyclePeriodSeconds = 1e6
+
+[SpatialParams]
+# 2D plane is the transverse cross-section: in-plane = (R,T), L is out-of-plane
+# orthotropic stiffness (plane-stress) in the local (R,T) frame
+YoungsModulusR = 1500
+YoungsModulusT = 800
+PoissonRatioRT = 0.4
+ShearModulusRT = 600
+
+# hygroscopic shrinkage in the local frame; F_g_local = diag(1+α_R Δm, 1+α_T Δm)
+ShrinkageR = 0.10
+ShrinkageT = 0.20
+ReferenceMoisture = 0.30
+
+# pith location (far below the blank ⇒ outer-cut piece, R nearly vertical)
+PithX = 0.5
+PithY = -1.5
+
+# moisture transport: anisotropic diffusivity in the local (R,T) frame,
+# rotated to the global frame via Q(x) at each integration point.
+# units (if length in m and time in s): D in m^2/s, h_m in m/s
+MoistureDiffusivityR = 2e-9
+MoistureDiffusivityT = 1e-9
+MassTransferCoefficient = 1e-5
+AirMoisture = 0.05
+InitialMoisture = 0.30
+
+[VTKOutput]
+Every = 1
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-8
+PriVarMagnitude = 1e-3 1e-3 1e-1

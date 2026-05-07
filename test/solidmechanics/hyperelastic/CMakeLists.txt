@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(growth)
+add_subdirectory(wood)
 
 dune_symlink_to_source_files(FILES "params.input")
 
