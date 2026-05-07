@@ -1,0 +1,68 @@
+# SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# ----------------------------------------------------------------
+# Gripper hydrogel actuator — parameter file
+# Bilayer cantilever: 100 mm x 2 mm
+#   Active layer (y > H/2): soft hydrogel, osmotic swelling
+#   Passive layer (y <= H/2): stiff polymer, bending resistance
+# ----------------------------------------------------------------
+
+[TimeLoop]
+TEnd = 50.0
+DtInitial = 0.5
+MaxTimeStepSize = 0.75
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 0.1 0.002 # 100 mm x 2 mm
+Cells = 150 10
+
+[SpatialParams]
+# --- Active (hydrogel) layer ---
+# Young's modulus ≈ 20 kPa, ν ≈ 0.45  →  mu ≈ 6.9 kPa, λ ≈ 51.7 kPa
+ShearModulusActive = 6900.0
+FirstLameActive = 51700.0
+PermeabilityActive = 1.0e-14
+
+# --- Passive (stiff) layer ---
+# Young's modulus ≈ 100 kPa, ν ≈ 0.45  →  mu ≈ 34.5 kPa, λ ≈ 259 kPa
+ShearModulusPassive = 34500.0
+FirstLamePassive = 259000.0
+PermeabilityPassive = 5.0e-15
+
+# Kozeny-Carman exponential factor
+PermeabilityExponent = 3.0
+
+# Solvent viscosity [Pa·s]
+FluidViscosity = 1.0e-3
+
+# Effective solid density [kg/m^3] for dynamic momentum time integration
+SolidDensity = 1000.0
+
+# Flory-Huggins osmotic parameters
+SolidVolumeFraction = 0.10 # φ₀
+FloryHugginsParameter = 0.30 # χ
+Temperature = 298.15 # [K]
+MolarVolume = 18.0e-6 # Vm — molar volume of water [m³/mol]
+
+[Newton]
+MaxRelativeShift = 1e-6
+UseLineSearch = false
+
+[Momentum]
+ViscousDamping = 2000
+
+[Problem]
+ActiveRegionStart = 0.2   # Fraction of beam length where active (hydrogel) layer starts
+SwellingActiveTime = 10.0  # Time at which solvent contact begins [s]
+SwellingRampTime = 500.0
+EnablePearlContact = true
+PearlRadius = 0.01
+PearlCenterX = 0.06
+PearlCenterY = -0.0105
+ContactPenalty = 1.0e11
+
+[Vtk]
+OutputEvery = 1
+AddProcessRank = false
