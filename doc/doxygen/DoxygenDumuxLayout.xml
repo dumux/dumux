@@ -32,6 +32,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- Add subpages here manually if they are supposed to appear in the navigation sidebar -->
     <tab type="usergroup" url="@ref benchmarks" visible="yes" title="Benchmarks" intro="">
       <tab type="user" url="@ref benchmark-richards-benchmarks" visible="yes" title="Richards Infiltration &amp; Evaporation" intro=""/>
+      <tab type="user" url="@ref benchmark-membrane-plate" visible="yes" title="Membrane deformation" intro=""/>
+      <tab type="user" url="@ref benchmark-kirchhoff-love-plate" visible="yes" title="Kirchhoff-Love Plate" intro=""/>
+      <tab type="user" url="@ref benchmark-mindlin-reissner-plate" visible="yes" title="Mindlin-Reissner Plate" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
     </tab>
