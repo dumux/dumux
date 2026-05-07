@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+import re
 import sys
 import string
 import subprocess
@@ -37,6 +38,8 @@ def _add_header_label(line: str) -> str:
     if not line.startswith("#"):
         return line
     line = line.rstrip("\n")
+    if re.search(r'\{#[^}]+\}', line):
+        return line + "\n"
     label = _filter_characters(line)
     label = label.strip(" ").replace(" ", "-").lower()
     return f"{line} {{#{label}}}\n"
