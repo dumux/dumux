@@ -130,7 +130,7 @@ public:
 
             // handle dofs per codimension
             const auto& gridGeometry = this->asImp_().problem().gridGeometry();
-            Dune::Hybrid::forEach(std::make_integer_sequence<int, dim>{}, [&](auto d)
+            Dune::Hybrid::forEach(std::make_integer_sequence<int, dim+1>{}, [&](auto d)
             {
                 constexpr int codim = dim - d;
                 const auto& localCoeffs = gridGeometry.feCache().get(this->element().type()).localCoefficients();
