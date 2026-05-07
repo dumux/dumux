@@ -130,6 +130,23 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad params.input
                              -Problem.Name donea_momentum_quad -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
 
+dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad_new_interface
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_quad-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_quad_new_interface_fcdiamond_1.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_quad_new_interface params.input
+                             -Problem.Name donea_momentum_quad_new_interface -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
+
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad_parallel
                TARGET test_ff_stokes_donea_momentum_diamond_quad
                LABELS freeflow navierstokes donea

@@ -50,6 +50,7 @@ public:
      * \param fvGeometry The local finite volume geometry
      * \param ipData The interpolation point data
      */
+    using VolumeVariables::update;
     template<class ElementSolution, class Problem, class FVElementGeometry, Concept::LocalDofIpData IpData>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,

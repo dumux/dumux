@@ -100,6 +100,8 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod{};
     static constexpr bool cachingEnabled = true;
 
+    static constexpr bool enableHybridCVFE = false;
+
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume

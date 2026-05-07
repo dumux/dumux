@@ -18,16 +18,21 @@
 #include <type_traits>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/problem.hh>
 
 #include <dumux/assembly/cvfelocalresidual.hh>
+#include <dumux/assembly/cvfelocalresidual_.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
+#include <dumux/discretization/elementboundarytypes.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
-#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
@@ -59,10 +64,10 @@ struct GridVolumeVariables<TypeTag, TTag::FaceCenteredDiamondModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
 public:
-    using type = CVFEGridVolumeVariables<Traits, enableCache>;
+    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
 };
 
 //! Set the global flux variables cache vector class
@@ -110,9 +115,16 @@ struct ElementBoundaryTypes<TypeTag, TTag::FaceCenteredDiamondModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
-    using type = CVFEElementBoundaryTypes<BoundaryTypes>;
+    // Check if problem has new boundaryTypes interface
+    // then use ElementIntersectionBoundaryTypes
+    using type = std::conditional_t<
+        Dumux::Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, typename GG::LocalView, typename GG::GridView::Intersection>(),
+        Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
+        Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
+    >;
 };
 
 } // namespace Dumux::Properties
@@ -124,12 +136,10 @@ struct ProblemTraits<Problem, DiscretizationMethods::FCDiamond>
 {
 private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
-    using Element = typename GG::GridView::template Codim<0>::Entity;
-    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
 public:
     using GridGeometry = GG;
-    // BoundaryTypes is whatever the problem returns from boundaryTypes(element, scv)
-    using BoundaryTypes = std::decay_t<decltype(std::declval<Problem>().boundaryTypes(std::declval<Element>(), std::declval<SubControlVolumeFace>()))>;
+    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, intersection)
+    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView, typename GG::GridView::Intersection>::type;
 };
 
 template<class TypeTag>
@@ -141,7 +151,14 @@ concept FaceCenteredDiamondModel = std::is_same_v<
 template<FaceCenteredDiamondModel TypeTag>
 struct DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using type = CVFELocalResidual<TypeTag>;
+private:
+    using GV = GetPropType<TypeTag, Properties::GridVariables>;
+    static constexpr bool usesGeneralGridVariables =
+        Dumux::Concept::GridVariables<GV> && !Dumux::Concept::FVGridVariables<GV>;
+public:
+    using type = std::conditional_t<usesGeneralGridVariables,
+                                    Dumux::Experimental::CVFELocalResidual<TypeTag>,
+                                    Dumux::CVFELocalResidual<TypeTag>>;
 };
 
 } // end namespace Dumux::Detail

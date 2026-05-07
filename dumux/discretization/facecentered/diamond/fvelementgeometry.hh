@@ -14,6 +14,7 @@
 
 #include <type_traits>
 #include <optional>
+#include <ranges>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/iteratorrange.hh>
@@ -190,6 +191,13 @@ public:
     std::size_t elementIndex() const
     { return eIdx_; }
 
+    //! The intersection index the scvf belongs to
+    std::size_t intersectionIndex(const SubControlVolumeFace& scvf) const
+    {
+        // Since scvs are constructed around intersections, they have the same index
+        return scvf.insideScvIdx();
+    }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
@@ -220,6 +228,19 @@ public:
                 GeometryHelper(*elementGeometry_).getScvfCorners(scvf.index())
             };
         }
+    }
+
+    //! an iterator over all local dofs related to an intersection
+    template<class Intersection>
+    friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry,
+                                 const Intersection& intersection)
+    {
+        const auto localDofIdx = intersection.indexInInside();
+        return std::views::single(CVFE::LocalDof{
+            static_cast<LocalIndexType>(localDofIdx),
+            static_cast<GridIndexType>(fvGeometry.scv(localDofIdx).dofIndex()),
+            static_cast<GridIndexType>(fvGeometry.elementIndex())
+        });
     }
 
     //! Interpolation point data for an scv
