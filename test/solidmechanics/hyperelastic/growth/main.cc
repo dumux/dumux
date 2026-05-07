@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 
     auto oldSol = x;
     double growth = 0.0;
-    double stepSize = 0.03;
+    double stepSize = -0.03;
     for (int i = 0; i < 100; ++i)
     {
         bool converged = false;

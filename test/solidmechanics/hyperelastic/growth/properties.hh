@@ -11,9 +11,10 @@
 
 #include <dune/alugrid/grid.hh>
 #include <dumux/discretization/box.hh>
-#include <dumux/geomechanics/hyperelastic/model.hh>
+#include <dumux/solidmechanics/hyperelastic/model.hh>
 
 #include "problem.hh"
+#include "spatialparams.hh"
 
 namespace Dumux::Properties::TTag {
 
@@ -29,6 +30,12 @@ struct HyperelasticityTest
 
     template<class TypeTag>
     using Problem = HyperelasticityProblem<TypeTag>;
+
+    template<class TypeTag>
+    using SpatialParams = HyperelasticGrowthSpatialParams<
+        GetPropType<TypeTag, Properties::GridGeometry>,
+        GetPropType<TypeTag, Properties::Scalar>
+    >;
 };
 
 } // end namespace Dumux::Properties

@@ -2,9 +2,13 @@
 File = annulus3d.msh
 
 [Problem]
-Name = test_hyperelastic_box
-YoungsModulus = 1000
-PoissonRatio = 0.48
+Name = test_hyperelastic_growth_box
+
+[SpatialParams]
+YoungsModulusCore = 1000
+YoungsModulusShell = 100000
+PoissonRatio = 0.40
+TransitionRadius = 0.95
 
 [Vtk]
 Precision = Float64

@@ -16,9 +16,6 @@
 
 namespace Dumux {
 
-// This test case is adapted from
-// https://fenicsproject.org/olddocs/dolfin/1.6.0/python/demo/documented/hyperelasticity/python/documentation.html
-// using a slightly different material law and finite volumes
 template<class TypeTag>
 class HyperelasticityProblem : public FVProblemWithSpatialParams<TypeTag>
 {
@@ -48,7 +45,6 @@ public:
         mu_.resize(this->gridGeometry().gridView().size(0), 0.0);
         theta_.resize(this->gridGeometry().gridView().size(0), GlobalPosition(0.0));
         radial_.resize(this->gridGeometry().gridView().size(0), GlobalPosition(0.0));
-        std::cout << "mu_s: " << this->spatialParams().shearModulus() << std::endl;
     }
 
 
@@ -129,7 +125,7 @@ public:
 
             const auto eIdx = gg.elementMapper().index(element);
             detJ_[eIdx] = F.determinant();
-            mu_[eIdx] = this->spatialParams().shearModulus();
+            mu_[eIdx] = this->spatialParams().shearModulusAtPos(center);
 
             auto sigma = firstPiolaKirchhoffStressTensor(element, fvGeometry, F);
             sigma *= 1.0/detJ_[eIdx];
@@ -159,30 +155,33 @@ public:
     const std::vector<GlobalPosition>& radial() const
     { return radial_; }
 
-    // Some Neo-Hookean material
-    // from Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
-    // ψ = K(0.5(J*J - 1) - ln J) + 0.5µ (J^(-2/3) tr(C) - 3)
-    // P = 2F∂ψ/∂C = µ J^(-2/3) (F - 1/3*tr(C)*F^-T) + K*(J*J - 1)F^-T
+    /*!
+     * \brief First Piola-Kirchhoff stress tensor for a compressible Neo-Hookean material with multiplicative growth.
+     *
+     * Neo-Hookean strain energy and stress (Simo & Armero, 1992,
+     * https://doi.org/10.1002/nme.1620330705, Eq. 77/78):
+     * \f[
+     *     \psi = K\left(\tfrac{1}{2}(J^2 - 1) - \ln J\right) + \tfrac{1}{2}\mu\left(J^{-2/3}\,\mathrm{tr}\,\mathbf{C} - 3\right),
+     * \f]
+     * \f[
+     *     \mathbf{P} = 2\mathbf{F}\,\frac{\partial\psi}{\partial\mathbf{C}}
+     *                = \mu\, J^{-2/3}\left(\mathbf{F} - \tfrac{1}{3}\mathrm{tr}(\mathbf{C})\,\mathbf{F}^{-T}\right)
+     *                + K\,(J^2 - 1)\,\mathbf{F}^{-T}.
+     * \f]
+     * Multiplicative growth is applied as \f$\mathbf{F}_e = \mathbf{F}\,\mathbf{G}^{-1}\f$ with
+     * \f$\mathbf{G} = (1 + g)\,\mathbf{I}\f$ inside the core (\f$g < 0\f$ shrinks) and
+     * \f$\mathbf{G} = \mathbf{I}\f$ in the stiff shell.
+     */
     Tensor firstPiolaKirchhoffStressTensor(const Element& element, const FVElementGeometry& fvGeometry, Tensor F) const
     {
         const auto center = element.geometry().center();
-        // const auto r = std::hypot(center[0], center[1]);
-        const auto phi = std::atan2(center[1], center[0]);
-        GlobalPosition theta(0.0), radial(0.0);
-        theta[0] = std::cos(-0.5*phi);
-        theta[1] = std::sin(-0.5*phi);
-        radial[0] = theta[1];
-        radial[1] = -theta[0];
+        const bool isCore = this->spatialParams().isCoreAtPos(center);
 
-        // G = I + a * (theta x theta)
-        // F_elastic = F*G^-1
-        auto G = F; G = 0.0;
-        for (int i = 0; i < dimWorld; ++i)
-            G[i][i] = 1.0;
-
-        for (int i = 0; i < dimWorld; ++i)
-            for (int j = 0; j < dimWorld; ++j)
-                G[i][j] += growth_*theta[i]*theta[j];
+        Tensor G(0.0);
+        const Scalar g = isCore ? growth_ : 0.0;
+        for (int i = 0; i < dimWorld-1; ++i)
+            G[i][i] = 1.0 + g;
+        G[dimWorld-1][dimWorld-1] = 1.0;
 
         G.invert();
 
@@ -206,8 +205,8 @@ public:
         }();
 
         // material parameters
-        auto mu = this->spatialParams().shearModulus();
-        auto K = this->spatialParams().bulkModulus();
+        auto mu = this->spatialParams().shearModulusAtPos(center);
+        auto K = this->spatialParams().bulkModulusAtPos(center);
 
         // assemble 1st Piola Kirchhoff stress tensor
         Tensor P(0.0);
