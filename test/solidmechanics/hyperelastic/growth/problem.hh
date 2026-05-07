@@ -46,11 +46,9 @@ public:
         detJ_.resize(this->gridGeometry().gridView().size(0), 0.0);
         magnSigma_.resize(this->gridGeometry().gridView().size(0), 0.0);
         mu_.resize(this->gridGeometry().gridView().size(0), 0.0);
-        muFactor_ = getParam<double>("Problem.MuFactor");
+        theta_.resize(this->gridGeometry().gridView().size(0), GlobalPosition(0.0));
+        radial_.resize(this->gridGeometry().gridView().size(0), GlobalPosition(0.0));
         std::cout << "mu_s: " << this->spatialParams().shearModulus() << std::endl;
-        std::cout << "mu: " << this->spatialParams().shearModulus()*muFactor_ << std::endl;
-        std::cout << "wave length estimate: " << 2*M_PI*thickness_*std::cbrt(muFactor_/3.0) << std::endl;
-        std::cout << "num waves estimate: " << 1.0/(thickness_*std::cbrt(muFactor_/3.0)) << std::endl;
     }
 
 
@@ -58,7 +56,7 @@ public:
     {
         BoundaryTypes values;
         const auto r = std::hypot(globalPos[0], globalPos[1]);
-        if (r < 0.5 + 1e-2)
+        if (r < 0.1 + 1e-2)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -96,7 +94,7 @@ public:
         {
             const auto geometry = element.geometry();
             const auto center = geometry.center();
-            const auto r = std::hypot(center[0], center[1]);
+            // const auto r = std::hypot(center[0], center[1]);
             fvGeometry.bindElement(element);
             elemVolVars.bindElement(element, fvGeometry, sol);
 
@@ -126,24 +124,23 @@ public:
                 for (int dir = 0; dir < dimWorld; ++dir)
                     F[dir][dir] += 1;
 
-                // compute elastic part of F
-                if (r < 1.0-thickness_)
-                    F *= 1.0/growth_;
-
                 return F;
             }();
 
             const auto eIdx = gg.elementMapper().index(element);
             detJ_[eIdx] = F.determinant();
-
             mu_[eIdx] = this->spatialParams().shearModulus();
-            if (r > 1.0-thickness_)
-                mu_[eIdx] *= muFactor_;
 
             auto sigma = firstPiolaKirchhoffStressTensor(element, fvGeometry, F);
             sigma *= 1.0/detJ_[eIdx];
             sigma.rightmultiply(transpose(F));
             magnSigma_[eIdx] = sigma.infinity_norm();
+
+            const auto phi = std::atan2(center[1], center[0]);
+            theta_[eIdx][0] = -std::sin(phi);
+            theta_[eIdx][1] = std::cos(phi);
+            radial_[eIdx][0] = theta_[eIdx][1];
+            radial_[eIdx][1] = -theta_[eIdx][0];
         }
     }
 
@@ -156,6 +153,12 @@ public:
     const std::vector<double>& mu() const
     { return mu_; }
 
+    const std::vector<GlobalPosition>& theta() const
+    { return theta_; }
+
+    const std::vector<GlobalPosition>& radial() const
+    { return radial_; }
+
     // Some Neo-Hookean material
     // from Simo and Armero, 1992 (https://doi.org/10.1002/nme.1620330705) Eq. 77/78
     // ψ = K(0.5(J*J - 1) - ln J) + 0.5µ (J^(-2/3) tr(C) - 3)
@@ -163,11 +166,28 @@ public:
     Tensor firstPiolaKirchhoffStressTensor(const Element& element, const FVElementGeometry& fvGeometry, Tensor F) const
     {
         const auto center = element.geometry().center();
-        const auto r = std::hypot(center[0], center[1]);
+        // const auto r = std::hypot(center[0], center[1]);
+        const auto phi = std::atan2(center[1], center[0]);
+        GlobalPosition theta(0.0), radial(0.0);
+        theta[0] = std::cos(-0.5*phi);
+        theta[1] = std::sin(-0.5*phi);
+        radial[0] = theta[1];
+        radial[1] = -theta[0];
+
+        // G = I + a * (theta x theta)
+        // F_elastic = F*G^-1
+        auto G = F; G = 0.0;
+        for (int i = 0; i < dimWorld; ++i)
+            G[i][i] = 1.0;
+
+        for (int i = 0; i < dimWorld; ++i)
+            for (int j = 0; j < dimWorld; ++j)
+                G[i][j] += growth_*theta[i]*theta[j];
+
+        G.invert();
 
         // compute elastic part of F
-        if (r < 1.0-thickness_)
-            F *= 1.0/growth_;
+        F = F*G;
 
         // invariants
         const auto J = F.determinant();
@@ -188,11 +208,6 @@ public:
         // material parameters
         auto mu = this->spatialParams().shearModulus();
         auto K = this->spatialParams().bulkModulus();
-        if (r > 1.0-thickness_)
-        {
-            mu *= muFactor_;
-            K *= muFactor_;
-        }
 
         // assemble 1st Piola Kirchhoff stress tensor
         Tensor P(0.0);
@@ -205,10 +220,9 @@ public:
 
 private:
     static constexpr Scalar eps_ = 1e-7;
-    Scalar growth_ = 1.0;
-    Scalar thickness_ = 0.05;
-    Scalar muFactor_;
+    Scalar growth_ = 0.0;
     std::vector<Scalar> detJ_, magnSigma_, mu_;
+    std::vector<GlobalPosition> theta_, radial_;
 };
 
 } // end namespace Dumux
