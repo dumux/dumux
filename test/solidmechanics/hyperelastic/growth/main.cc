@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 //
-// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 #include <config.h>
@@ -19,11 +19,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
-
-#if USE_GRIDFORMAT
-#include <dumux/io/gridwriter.hh>
-#endif
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include "properties.hh"
 
@@ -66,12 +62,12 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // initialize the vtk output module
-#if USE_GRIDFORMAT
-    IO::OutputModule vtkWriter(*gridVariables, x, problem->name());
-#else
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-#endif
     vtkWriter.addField(x, "d");
+    vtkWriter.addField(problem->detJ(), "detJ");
+    vtkWriter.addField(problem->magnSigma(), "sigma");
+    vtkWriter.addField(problem->mu(), "mu");
+    vtkWriter.write(0.0);
 
     // the assembler with time loop for a transient problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -79,18 +75,44 @@ int main(int argc, char** argv)
 
     // the linear solver
     using LAT = LinearAlgebraTraitsFromAssembler<Assembler>;
-    using LinearSolver = ILUBiCGSTABIstlSolver<SeqLinearSolverTraits, LAT>;
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LAT>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
-    for (int i = 1; i < 10+1; ++i)
+    auto oldSol = x;
+    double growth = 0.0;
+    double stepSize = 0.03;
+    for (int i = 0; i < 100; ++i)
     {
-        problem->setGrowth(i);
-        nonLinearSolver->solve(x);
-        vtkWriter.write(i);
+        bool converged = false;
+        int maxReduce = 10;
+        while (!converged && maxReduce > 0)
+        {
+            problem->setGrowth(1.0-(growth+stepSize));
+            try {
+                nonLinearSolver->solve(x);
+                converged = true;
+            } catch (Dumux::NumericalProblem& e)
+            {
+                std::cout << "Retry" << std::endl;
+                stepSize = 0.5*stepSize;
+                --maxReduce;
+                x = oldSol;
+                gridVariables->update(x);
+            }
+
+            if (maxReduce == 0)
+                DUNE_THROW(Dumux::NumericalProblem, "Newton didn't converge.");
+        }
+
+        problem->updateOutput(*gridVariables, x);
+        vtkWriter.write(i+1);
+        oldSol = x;
+        growth += stepSize;
+        stepSize = nonLinearSolver->suggestTimeStepSize(stepSize);
     }
 
     return 0;
