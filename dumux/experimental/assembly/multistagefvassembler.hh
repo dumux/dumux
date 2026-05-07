@@ -292,6 +292,22 @@ public:
             {
                 spatialOperatorEvaluations_.push_back(*residual_);
                 temporalOperatorEvaluations_.push_back(*residual_);
+            }
+            // don't delete old stage so it can be reused in a newly
+            // started time integration. The evaluations are only deleted
+            // when explicitly requested by calling clearStages()
+            else if (spatialOperatorEvaluations_.size() > 0)
+            {
+                updateGridVariables(x);
+                spatialOperatorEvaluations_.resize(1);
+                temporalOperatorEvaluations_.resize(1);
+            }
+
+            assert(spatialOperatorEvaluations_.size() >= 0);
+            if (spatialOperatorEvaluations_.size() == 0)
+            {
+                spatialOperatorEvaluations_.push_back(*residual_);
+                temporalOperatorEvaluations_.push_back(*residual_);
 
                 // assemble stage 0 residuals
                 assemble_([&](const auto& element)
@@ -326,7 +342,6 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                 "Invalid state. Maybe you forgot to call clearStages()");
 
-        // allocate memory for this stage
         spatialOperatorEvaluations_.push_back(*residual_);
         temporalOperatorEvaluations_.push_back(*residual_);
     }
