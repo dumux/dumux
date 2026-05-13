@@ -71,6 +71,8 @@ class L2Projection
     using Scalar = typename FiniteElement::Traits::LocalBasisType::Traits::RangeFieldType;
     using ShapeValue = typename FiniteElement::Traits::LocalBasisType::Traits::RangeType;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, 1, 1>>;
+    static_assert(ShapeValue::dimension == 1, "Only scalar-valued shape functions are supported for L2 projection.");
+
 public:
     using CoefficientVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
 
@@ -153,7 +155,7 @@ private:
             localView.bind(element);
 
             const auto& localFiniteElement = localView.tree().finiteElement();
-            const int order = 2*(dim*localFiniteElement.localBasis().order()-1);
+            const int order = 2*dim*localFiniteElement.localBasis().order();
             const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(element.type(), order);
             const auto geometry = element.geometry();
 
