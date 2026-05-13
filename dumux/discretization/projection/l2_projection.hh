@@ -11,7 +11,6 @@
  */
 #ifndef DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 #define DUMUX_DISCRETIZATION_L2_PROJECTION_HH
-#if HAVE_DUNE_FUNCTIONS
 
 #include <vector>
 
@@ -21,8 +20,9 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
+#ifdef HAVE_DUNE_FUNCTIONS
 #include <dune/functions/gridfunctions/gridviewfunction.hh>
-
+#endif
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -30,6 +30,38 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+/*!
+ * \brief Create a local function from a given function.
+ */
+template<class Function, class GridView>
+auto makeLocalFunction(Function&& f, const GridView& gridView)
+{
+    using Element = typename GridView::template Codim<0>::Entity;
+    using LocalCoord = typename Element::Geometry::LocalCoordinate;
+    constexpr bool hasLocalInterface =
+        requires(std::decay_t<Function>& lf, const Element& e, const LocalCoord& x)
+        {
+            lf.bind(e);
+            lf(x);
+        };
+
+    // If f already provides the local-function interface, use it directly.
+    // This must be checked first to avoid incorrectly re-wrapping it via dune-functions.
+    if constexpr (hasLocalInterface)
+        return std::forward<Function>(f);
+#ifdef HAVE_DUNE_FUNCTIONS
+    else
+        return localFunction(Dune::Functions::makeGridViewFunction(std::forward<Function>(f), gridView));
+#else
+    else
+        DUNE_THROW(Dune::InvalidStateException, "Function must provide bind(element) and operator()(localCoord), "
+                                                "or dune-functions must be available to wrap a global f(globalPos) callable.");
+#endif
+}
+
+} // end namespace Detail
 
 template <class FEBasis>
 class L2Projection
@@ -65,9 +97,9 @@ public:
         rhs.resize(feBasis_.size());
         rhs = 0.0;
 
-        // assemble right hand size
-        auto localFunc = localFunction(Dune::Functions::makeGridViewFunction(function, feBasis_.gridView()));
+        // assemble right hand side
         auto localView = feBasis_.localView();
+        auto localFunc = Detail::makeLocalFunction(std::forward<Function>(function), feBasis_.gridView());
         for (const auto& element : elements(feBasis_.gridView()))
         {
             localView.bind(element);
@@ -82,10 +114,9 @@ public:
             {
                 const auto weight = qp.weight();
                 const auto ie = geometry.integrationElement(qp.position());
-                const auto globalPos = geometry.global(qp.position());
 
                 std::vector<ShapeValue> shapeValues;
-                localFiniteElement.localBasis().evaluateFunction(geometry.local(globalPos), shapeValues);
+                localFiniteElement.localBasis().evaluateFunction(qp.position(), shapeValues);
                 const auto functionValue = localFunc(qp.position());
 
                 for (int i = 0; i < localFiniteElement.localBasis().size(); ++i)
@@ -130,14 +161,12 @@ private:
             {
                 const auto weight = qp.weight();
                 const auto ie = geometry.integrationElement(qp.position());
-                const auto globalPos = geometry.global(qp.position());
 
                 std::vector<ShapeValue> shapeValues;
-                localFiniteElement.localBasis().evaluateFunction(geometry.local(globalPos), shapeValues);
+                localFiniteElement.localBasis().evaluateFunction(qp.position(), shapeValues);
 
                 for (int i = 0; i < localFiniteElement.localBasis().size(); ++i)
                 {
-
                     const auto globalI = localView.index(i);
                     massMatrix[globalI][globalI] += ie*weight*shapeValues[i]*shapeValues[i];
 
@@ -163,5 +192,4 @@ private:
 
 } // end namespace Dumux
 
-#endif // HAVE_DUNE_FUNCTIONS
 #endif
