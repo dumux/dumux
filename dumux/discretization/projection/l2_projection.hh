@@ -12,6 +12,7 @@
 #ifndef DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 #define DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 
+#include <optional>
 #include <vector>
 
 #include <dune/common/fvector.hh>
@@ -62,6 +63,69 @@ auto makeLocalFunction(Function&& f, const GridView& gridView)
 }
 
 } // end namespace Detail
+
+/*!
+ * \ingroup Discretization
+ * \brief Wraps a CVFE grid discretization to expose the FE basis interface expected by L2Projection.
+ *
+ * Wraps a CVFE GridDiscretization to expose the minimal interface expected by L2Projection:
+ * - size(), gridView(), localView()
+ * - localView provides bind(element), tree().finiteElement(), index(i)
+ */
+template<class GridDiscretization>
+class FEBasisFromCVFEGridDiscretization
+{
+    using GV = typename GridDiscretization::GridView;
+    using Element = typename GV::template Codim<0>::Entity;
+    using FE = typename GridDiscretization::FeCache::FiniteElementType;
+
+public:
+    using GridView = GV;
+
+    struct LocalTree
+    {
+        using FiniteElement = FE;
+        const FE* fe_ = nullptr;
+        const FiniteElement& finiteElement() const { return *fe_; }
+    };
+
+    struct LocalView
+    {
+        using Tree = LocalTree;
+
+        explicit LocalView(const GridDiscretization& gg) : gg_(gg) {}
+
+        void bind(const Element& element)
+        {
+            element_ = element;
+            tree_.fe_ = &gg_.feCache().get(element.type());
+        }
+
+        const Tree& tree() const { return tree_; }
+
+        std::size_t index(std::size_t index) const
+        {
+            const auto& localKey = tree_.fe_->localCoefficients().localKey(index);
+            // TODO: Currently we assume that this is the default dof mapping when having multiple dofs per sub-entity
+            // meaning that they are localKey.index() larger than 0
+            return gg_.dofMapper().subIndex(*element_, localKey.subEntity(), localKey.codim()) + localKey.index();
+        }
+
+    private:
+        const GridDiscretization& gg_;
+        std::optional<Element> element_;
+        Tree tree_;
+    };
+
+    explicit FEBasisFromCVFEGridDiscretization(const GridDiscretization& gg) : gg_(gg) {}
+
+    std::size_t size() const { return gg_.numDofs(); }
+    const GridView& gridView() const { return gg_.gridView(); }
+    LocalView localView() const { return LocalView(gg_); }
+
+private:
+    const GridDiscretization& gg_;
+};
 
 template <class FEBasis>
 class L2Projection
