@@ -12,12 +12,15 @@
 #ifndef DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 #define DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 
+#include <array>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/parametertree.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
@@ -28,6 +31,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/parallel/parallel_for.hh>
 
 namespace Dumux {
 
@@ -134,11 +138,12 @@ class L2Projection
     using FiniteElement = typename FEBasis::LocalView::Tree::FiniteElement;
     using Scalar = typename FiniteElement::Traits::LocalBasisType::Traits::RangeFieldType;
     using ShapeValue = typename FiniteElement::Traits::LocalBasisType::Traits::RangeType;
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, 1, 1>>;
     static_assert(ShapeValue::dimension == 1, "Only scalar-valued shape functions are supported for L2 projection.");
+    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, 1, 1>>;
 
 public:
-    using CoefficientVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
+    template<int numEq = 1>
+    using CoefficientVector = Dune::BlockVector<Dune::FieldVector<Scalar, numEq>>;
 
     //! Parameters that can be passed to project()
     struct Params
@@ -156,16 +161,24 @@ public:
     }
 
     template <class Function>
-    CoefficientVector project(Function&& function, const Params& params = Params{}) const
+    auto project(Function&& function, const Params& params = Params{}) const
     {
-        CoefficientVector projection, rhs;
-        projection.resize(feBasis_.size());
-        rhs.resize(feBasis_.size());
-        rhs = 0.0;
+        auto localFunc = Detail::makeLocalFunction(std::forward<Function>(function), feBasis_.gridView());
+        using LocalPosition = typename FEBasis::GridView::template Codim<0>::Entity::Geometry::LocalCoordinate;
+        using ReturnType = std::invoke_result_t<Function, LocalPosition>;
+        constexpr int numEq = []() {
+            if constexpr (Dune::IsNumber<ReturnType>::value) return 1;
+            else return ReturnType::dimension;
+        }();
+        using CoeffVec = CoefficientVector<numEq>;
+
+        const auto numDofs = feBasis_.size();
+        // assemble one RHS per equation component
+        std::array<CoefficientVector<1>, numEq> rhs;
+        for (auto& r : rhs) { r.resize(numDofs); r = 0.0; }
 
         // assemble right hand side
         auto localView = feBasis_.localView();
-        auto localFunc = Detail::makeLocalFunction(std::forward<Function>(function), feBasis_.gridView());
         for (const auto& element : elements(feBasis_.gridView()))
         {
             localView.bind(element);
@@ -188,21 +201,36 @@ public:
                 for (int i = 0; i < localFiniteElement.localBasis().size(); ++i)
                 {
                     const auto globalI = localView.index(i);
-                    rhs[globalI] += ie*weight*shapeValues[i]*functionValue;
+                    const auto w = ie*weight*shapeValues[i][0];
+                    if constexpr (numEq == 1)
+                        rhs[0][globalI][0] += w*functionValue;
+                    else
+                        for (int compIdx = 0; compIdx < numEq; compIdx++)
+                            rhs[compIdx][globalI][0] += w*functionValue[compIdx];
                 }
             }
         }
 
-        // solve projection
-        Dune::ParameterTree solverParams;
-        solverParams["maxit"] = std::to_string(params.maxIterations);
-        solverParams["reduction"] = std::to_string(params.residualReduction);
-        solverParams["verbose"] = std::to_string(params.verbosity);
-        auto solver = solver_; // copy the solver to modify the parameters
-        solver.setParams(solverParams);
-        solver.solve(projection, rhs);
+        // solve numEq independent systems in parallel (same matrix, different RHS)
+        CoeffVec coeffs(numDofs);
+        Dumux::parallelFor(numEq, [&](std::size_t compIdx)
+        {
+            // each thread needs its own solver copy (not thread-safe to share)
+            auto solver = solver_;
+            Dune::ParameterTree solverParams;
+            solverParams["maxit"] = std::to_string(params.maxIterations);
+            solverParams["reduction"] = std::to_string(params.residualReduction);
+            solverParams["verbose"] = std::to_string(params.verbosity);
+            solver.setParams(solverParams);
 
-        return projection;
+            CoefficientVector<1> sol(numDofs);
+            solver.solve(sol, rhs[compIdx]);
+
+            for (std::size_t i = 0; i < numDofs; ++i)
+                coeffs[i][compIdx] = sol[i][0];
+        });
+
+        return coeffs;
     }
 
 private:
@@ -252,7 +280,7 @@ private:
 
     const FEBasis& feBasis_;
     SSORCGIstlSolver<
-        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, CoefficientVector>
+        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, CoefficientVector<1>>
     > solver_;
 };
 
