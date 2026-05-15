@@ -139,7 +139,7 @@ class L2Projection
     using Scalar = typename FiniteElement::Traits::LocalBasisType::Traits::RangeFieldType;
     using ShapeValue = typename FiniteElement::Traits::LocalBasisType::Traits::RangeType;
     static_assert(ShapeValue::dimension == 1, "Only scalar-valued shape functions are supported for L2 projection.");
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, 1, 1>>;
+    using Matrix = Dune::BCRSMatrix<Scalar>;
 
 public:
     template<int numEq = 1>
@@ -174,7 +174,7 @@ public:
 
         const auto numDofs = feBasis_.size();
         // assemble one RHS per equation component
-        std::array<CoefficientVector<1>, numEq> rhs;
+        std::array<Dune::BlockVector<Scalar>, numEq> rhs;
         for (auto& r : rhs) { r.resize(numDofs); r = 0.0; }
 
         // assemble right hand side
@@ -203,10 +203,10 @@ public:
                     const auto globalI = localView.index(i);
                     const auto w = ie*weight*shapeValues[i][0];
                     if constexpr (numEq == 1)
-                        rhs[0][globalI][0] += w*functionValue;
+                        rhs[0][globalI] += w*functionValue;
                     else
                         for (int compIdx = 0; compIdx < numEq; compIdx++)
-                            rhs[compIdx][globalI][0] += w*functionValue[compIdx];
+                            rhs[compIdx][globalI] += w*functionValue[compIdx];
                 }
             }
         }
@@ -223,11 +223,11 @@ public:
             solverParams["verbose"] = std::to_string(params.verbosity);
             solver.setParams(solverParams);
 
-            CoefficientVector<1> sol(numDofs);
+            Dune::BlockVector<Scalar> sol(numDofs); sol = 0.0;
             solver.solve(sol, rhs[compIdx]);
 
             for (std::size_t i = 0; i < numDofs; ++i)
-                coeffs[i][compIdx] = sol[i][0];
+                coeffs[i][compIdx] = sol[i];
         });
 
         return coeffs;
@@ -240,6 +240,7 @@ private:
 
         auto pattern = getFEJacobianPattern(feBasis);
         pattern.exportIdx(massMatrix);
+        massMatrix = 0.0;
 
         auto localView = feBasis.localView();
         for (const auto& element : elements(feBasis.gridView()))
@@ -280,7 +281,7 @@ private:
 
     const FEBasis& feBasis_;
     SSORCGIstlSolver<
-        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, CoefficientVector<1>>
+        SeqLinearSolverTraits, LinearAlgebraTraits<Matrix, Dune::BlockVector<Scalar>>
     > solver_;
 };
 
