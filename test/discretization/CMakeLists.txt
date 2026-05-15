@@ -10,6 +10,10 @@ add_subdirectory(projection)
 add_subdirectory(rotationsymmetry)
 add_input_file_links()
 
+dumux_add_test(NAME test_interpolate
+               LABELS unit discretization
+               SOURCES test_interpolate.cc)
+
 dumux_add_test(NAME test_facetgridmapper
                LABELS unit
                SOURCES test_facetgridmapper.cc

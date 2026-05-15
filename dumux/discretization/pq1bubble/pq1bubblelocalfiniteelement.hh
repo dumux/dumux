@@ -143,7 +143,7 @@ public:
      */
     static constexpr unsigned int order()
     {
-        return 1;
+        return dim;
     }
 
     /*!

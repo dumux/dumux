@@ -23,7 +23,9 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/indextraits.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 namespace Dumux {
 
@@ -117,6 +119,19 @@ public:
         using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::array<GridIndexType, 1>, ThisType>;
         return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_.begin(), fvGeometry),
                                                 ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
+    }
+
+    //! Interpolation point data for a localDof.
+    template<class LocalDof>
+    friend inline auto ipData(const CCTpfaFVElementGeometry& fvGeometry, const LocalDof& localDof)
+    {
+        using Geometry = typename Element::Geometry;
+        using Scalar = typename Geometry::ctype;
+        static constexpr int dim = Geometry::mydimension;
+        const auto& scv = fvGeometry.scv(fvGeometry.scvIndices_[localDof.index()]);
+        const auto& globalPos = scv.dofPosition();
+        const auto localPos = Dune::referenceElement<Scalar, dim>(fvGeometry.element().type()).position(0, 0);
+        return CVFE::LocalDofInterpolationPointData{ localPos, globalPos, localDof.index() };
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -312,6 +327,18 @@ public:
     {
         using IteratorType = typename std::array<SubControlVolume, 1>::const_iterator;
         return Dune::IteratorRange<IteratorType>(g.scvs_.begin(), g.scvs_.end());
+    }
+
+    //! Interpolation point data for a localDof.
+    template<class LocalDof>
+    friend inline auto ipData(const ThisType& fvGeometry, const LocalDof& localDof)
+    {
+        using Geometry = typename Element::Geometry;
+        using Scalar = typename Geometry::ctype;
+        static constexpr int dim = Geometry::mydimension;
+        const auto& globalPos = fvGeometry.scvs_[localDof.index()].dofPosition();
+        const auto localPos = Dune::referenceElement<Scalar, dim>(fvGeometry.element().type()).position(0, 0);
+        return CVFE::LocalDofInterpolationPointData{ localPos, globalPos, localDof.index() };
     }
 
     //! iterator range for sub control volumes faces. Iterates over
