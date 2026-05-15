@@ -24,6 +24,7 @@
  *   - PQ2          – quadratic on a simplex grid (requires dune-alugrid)
  *   - FCDiamond    – affine on a cube grid
  *   - FCDiamond    – affine on a simplex grid (requires dune-alugrid)
+ *   - CCTpfa       – affine on a cube grid (dof interpolation only; dofs at cell centroids)
  *
  * Additionally, vector-valued (2-component) functions are tested on Box and PQ2
  * cube grids to verify that multi-component L2 projection works correctly.
@@ -52,6 +53,7 @@
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/interpolate.hh>
 
 namespace Dumux {
@@ -267,6 +269,32 @@ int main(int argc, char* argv[])
         };
         runTests(gg, fQuadraticVec, fNotInSpaceVec,
             "PQ2-Cube (vec2)", "(x+2y+3z, x²+2y²+3z²)", "(sin*cos*exp, cos*sin*exp)"); }
+
+    // --- CCTpfa dof interpolation test ---
+    // CCTpfa dofs are located at element centroids, so affine functions are reproduced exactly.
+    // L2 projection is not tested here as CCTpfa is not a CVFE scheme.
+    // Note: computeL2Error is CVFE-specific (uses feLocalBasis()), so we check
+    // coefficient values directly against f(dofPosition) for each dof.
+    {
+        using GG = CCTpfaFVGridGeometry<GridView, true>;
+        GG gg(leafGridView);
+        std::vector<Scalar> coeffsDofInSpace(gg.numDofs(), Scalar(0.0));
+        CVFE::interpolate(gg, coeffsDofInSpace, fAffine);
+
+        double maxErr = 0.0;
+        auto elemDisc = localView(gg);
+        for (const auto& element : elements(gg.gridView()))
+        {
+            elemDisc.bind(element);
+            for (const auto& scv : scvs(elemDisc))
+                maxErr = std::max(maxErr, std::abs(coeffsDofInSpace[scv.dofIndex()] - fAffine(scv.dofPosition())));
+        }
+        std::cout << Fmt::format("[{:<20}] dof-interp  {:<35}  max error = {:.3e}\n",
+            "CCTpfa-Cube", "x + 2y + 3z", maxErr);
+        if (maxErr > 1e-10)
+            DUNE_THROW(Dune::Exception,
+                "[CCTpfa-Cube] Dof interpolation error for in-space function is not zero: " << maxErr);
+    }
 
     std::cout << "All tests passed.\n";
     return 0;
