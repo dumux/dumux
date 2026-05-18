@@ -952,96 +952,6 @@ public:
     {}
 
     /*!
-     * \brief Evaluate the source term at a given interpolation point, related to the residual of a local dof
-     *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All volume variables for the element
-     * \param ipData Interpolation point data
-     *
-     * For this method, the return parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     */
-    template<class IpData>
-    Sources source(const FVElementGeometry& fvGeometry,
-                   const ElementVariables& elemVars,
-                   const IpData& ipData) const
-    {
-        return asImp_().sourceAtPos(ipData.global());
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases at a given position
-     *
-     * \param globalPos The position of the center of the finite volume
-     *            for which the source term ought to be
-     *            specified in global coordinates
-     *
-     * For this method, the values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
-     */
-    Sources sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        //! As a default, i.e. if the user's problem does not overload any source method
-        //! return 0.0 (no source terms)
-        return Sources(0.0);
-    }
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary face.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param boundaryFace The boundary face
-     */
-    BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
-                                const FVElementGeometry::BoundaryFace& boundaryFace) const
-    {
-        // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(boundaryFace.center());
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet
-     *        control volume.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param faceIpData Face interpolation point data
-     */
-    template<class FaceIpData>
-    DirichletValues dirichlet(const FVElementGeometry& fvGeometry,
-                              const FaceIpData& faceIpData) const
-    {
-        // forward it to the method which only takes the global coordinate
-        return asImp_().dirichletAtPos(faceIpData.global());
-    }
-
-    /*!
-     * \brief Evaluates the boundary flux integral for a scvf.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param scvf The sub-control volume face
-     */
-    template<class SubControlVolumeFace>
-    BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                        const ElementVariables& elemVars,
-                                        const SubControlVolumeFace& scvf) const
-    {
-        BoundaryFluxes flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-
-        return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-    }
-
-    /*!
      * \brief Evaluates the boundary flux integral for a scvf.
      *
      * \param fvGeometry The finite-volume geometry
@@ -1062,39 +972,6 @@ public:
             flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, qpData.ipData());
 
         return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-    }
-
-    /*!
-     * \brief Evaluates the boundary flux integrals for an intersection related to finite element residuals.
-     *
-     * \param residual The residual vector to which the boundary flux contributions are added
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param boundaryFace The boundary face
-     * \param bcTypes The boundary condition types
-     */
-    template<class ResidualVector, class BoundaryTypes>
-    void addBoundaryFluxIntegrals(ResidualVector& residual,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVariables& elemVars,
-                                  const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
-                                  const BoundaryTypes& bcTypes) const
-    {
-        // quadrature rule for boundary face
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, boundaryFace))
-        {
-            const auto& ipData = qpData.ipData();
-            const auto& ipCache = cache(elemVars, ipData);
-            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
-            {
-                const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, ipData);
-                const auto& shapeValues = ipCache.shapeValues();
-                // only add fluxes to equations for which flux boundary conditions are set
-                for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
-                    if (bcTypes.isFluxBoundary(eqIdx))
-                        residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
-            }
-        }
     }
 
     /*!
@@ -1139,21 +1016,6 @@ public:
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
-     * \param faceIpData Face interpolation point data
-     */
-    template<class FaceIpData>
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
-                                const ElementVariables& elemVars,
-                                const FaceIpData& faceIpData) const
-    {
-        return asImp_().boundaryFluxAtPos(faceIpData.global());
-    }
-
-    /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
      * \param faceIpData Face interpolation point data
      */
@@ -1167,12 +1029,6 @@ public:
     {
         return asImp_().boundaryFluxAtPos(faceIpData.global());
     }
-
-    /*!
-     * \brief Returns the boundary flux at a given position.
-     */
-    BoundaryFluxes boundaryFluxAtPos(const GlobalPosition& globalPos) const
-    { return BoundaryFluxes(0.0); } //! A default, i.e. if the user's does not overload any boundaryFlux method
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -1269,40 +1125,6 @@ public:
     Scalar effectiveViscosityAtPos(const GlobalPosition&) const
     {
         DUNE_THROW(Dune::NotImplemented, "effectiveViscosityAtPos not implemented");
-    }
-
-    /*!
-     * \brief Applies the initial solution for all degrees of freedom of the grid.
-     * \param sol the initial solution vector
-     */
-    template<class SolutionVector>
-    void applyInitialSolution(SolutionVector& sol) const
-    {
-        sol.resize(this->gridGeometry().numDofs());
-        std::vector<bool> dofHandled(this->gridGeometry().numDofs(), false);
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
-        {
-            fvGeometry.bindElement(element);
-            for (const auto& localDof : localDofs(fvGeometry))
-            {
-                const auto dofIdx = localDof.dofIndex();
-                if (!dofHandled[dofIdx])
-                {
-                    dofHandled[dofIdx] = true;
-                    sol[dofIdx] = asImp_().initial(fvGeometry, ipData(fvGeometry, localDof));
-                }
-            }
-        }
-    }
-
-    /*!
-     * \brief Evaluate the initial value at an interpolation point
-     */
-    template<class IpData>
-    InitialValues initial(const FVElementGeometry& fvGeometry, const IpData& ipData) const
-    {
-        return asImp_().initialAtPos(ipData.global());
     }
 
 private:
