@@ -294,37 +294,7 @@ public:
             }
         }
     }
-
-    /*!
-     * \brief Evaluate flux boundary contributions
-     *
-     * \param residual The element residual vector to add to
-     * \param problem The problem to solve
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param elemVars The variables for all local dofs of the element
-     * \param elemBcTypes The element boundary types
-     */
-    template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementBoundaryTypes>
-    static void addBoundaryFluxes(ResidualVector& residual,
-                                  const Problem& problem,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVariables& elemVars,
-                                  const ElementBoundaryTypes& elemBcTypes)
-    {
-        ResidualVector flux(0.0);
-
-        const auto& element = fvGeometry.element();
-        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
-        {
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
-            if (!bcTypes.hasFluxBoundary())
-                continue;
-
-            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, boundaryFace, bcTypes);
-        }
-        residual += flux;
-    }
+    
 };
 
 } // end namespace Dumux
