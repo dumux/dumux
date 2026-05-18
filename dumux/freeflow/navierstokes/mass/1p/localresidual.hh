@@ -112,32 +112,6 @@ public:
     }
 
     /*!
-     * \brief Calculate the source integral
-     *
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param elemVars The variables for all local dofs of the element
-     * \param scv The sub control volume
-     *
-     */
-    NumEqVector sourceIntegral(const FVElementGeometry& fvGeometry,
-                               const ElementVariables& elemVars,
-                               const SubControlVolume& scv) const
-    {
-        const auto& problem = this->asImp().problem();
-
-        NumEqVector source(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scv))
-            source += qpData.weight() * problem.source(fvGeometry, elemVars, qpData.ipData());
-
-        // ToDo: point source data with ipData
-        // add contribution from possible point sources
-        if (!problem.pointSourceMap().empty())
-            source += Extrusion::volume(fvGeometry, scv) * problem.scvPointSources(fvGeometry.element(), fvGeometry, elemVars, scv);
-
-        return source * elemVars[scv].extrusionFactor();
-    }
-
-    /*!
      * \brief Evaluate the mass flux over a face of a sub control volume.
      *
      * \param problem The problem
