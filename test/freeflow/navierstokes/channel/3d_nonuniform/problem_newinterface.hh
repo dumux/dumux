@@ -100,12 +100,10 @@ public:
         {
             const auto flag = BoundaryFlag{ intersection };
             if (isMomentumFluxBoundary_(flag.get()))
-                values.setAllNeumann();
-            else
-                values.setAllDirichlet();
+                values.setAllFluxBoundary();
         }
         else
-            values.setNeumann(Indices::conti0EqIdx);
+            values.setFluxBoundary(Indices::conti0EqIdx);
 
         return values;
     }
