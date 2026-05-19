@@ -122,18 +122,15 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity and pressure everywhere
         if constexpr (ParentType::isMomentumProblem())
         {
             if (isMomentumFluxBoundary_(globalPos))
             {
-                values.setAllNeumann();
+                values.setAllFluxBoundary();
             }
-            else
-                values.setAllDirichlet();
         }
         else
-            values.setNeumann(Indices::conti0EqIdx);
+            values.setFluxBoundary(Indices::conti0EqIdx);
 
         return values;
     }
