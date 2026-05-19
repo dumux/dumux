@@ -160,7 +160,7 @@ public:
                     // add pressure term
                     fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * cache.gradN(localDofIdx);
 
-                    // finally add source and Neumann term and add everything to residual
+                    // finally add source and flux boundary terms and add everything to residual
                     auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
@@ -174,13 +174,13 @@ public:
                 }
             }
 
-            if (elemBcTypes.hasNeumann())
+            if (elemBcTypes.hasFluxBoundary())
                 addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes);
         }
     }
 
     /*!
-     * \brief Evaluate Neumann boundary contributions
+     * \brief Evaluate flux boundary contributions
      *
      * \param residual The element residual vector to add to
      * \param problem The problem to solve
@@ -206,7 +206,7 @@ public:
         for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
             const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
-            if (!bcTypes.hasNeumann())
+            if (!bcTypes.hasFluxBoundary())
                 continue;
 
             problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, boundaryFace, bcTypes);
@@ -276,7 +276,7 @@ public:
                     // add pressure term
                     fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * ipCache.gradN(localDofIdx);
 
-                    // finally add source and Neumann term and add everything to residual
+                    // finally add source and flux boundary term and add everything to residual
                     auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
@@ -290,13 +290,13 @@ public:
                 }
             }
 
-            if (elemBcTypes.hasNeumann())
+            if (elemBcTypes.hasFluxBoundary())
                 addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemBcTypes);
         }
     }
 
     /*!
-     * \brief Evaluate Neumann boundary contributions
+     * \brief Evaluate flux boundary contributions
      *
      * \param residual The element residual vector to add to
      * \param problem The problem to solve
@@ -318,7 +318,7 @@ public:
         for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
             const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
-            if (!bcTypes.hasNeumann())
+            if (!bcTypes.hasFluxBoundary())
                 continue;
 
             problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, boundaryFace, bcTypes);

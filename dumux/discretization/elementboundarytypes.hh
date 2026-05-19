@@ -49,8 +49,7 @@ public:
         // Resize according to the number of faces (intersections)
         bcTypes_.resize(Dune::referenceElement<Scalar, dim>(element.type()).size(dim-1));
 
-        hasDirichlet_ = false;
-        hasNeumann_ = false;
+        hasFluxBoundary_ = false;
 
         for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
         {
@@ -60,25 +59,17 @@ public:
             if (intersection.boundary() && !intersection.neighbor())
             {
                 bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, intersection);
-                hasDirichlet_ = hasDirichlet_ || bcTypes_[localIdx].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || bcTypes_[localIdx].hasNeumann();
+                hasFluxBoundary_ = hasFluxBoundary_ || bcTypes_[localIdx].hasFluxBoundary();
             }
         }
     }
 
     /*!
-     * \brief Returns whether the element has an intersection
-     *        with Dirichlet conditions
-     */
-    bool hasDirichlet() const
-    { return hasDirichlet_; }
-
-    /*!
      * \brief Returns whether the element potentially features a
-     *        Neumann boundary segment.
+     *        flux boundary segment.
      */
-    bool hasNeumann() const
-    { return hasNeumann_; }
+    bool hasFluxBoundary() const
+    { return hasFluxBoundary_; }
 
     /*
      * \brief Access operator
@@ -122,8 +113,7 @@ public:
 
 private:
     std::vector<BoundaryTypes> bcTypes_;
-    bool hasDirichlet_ = false;
-    bool hasNeumann_ = false;
+    bool hasFluxBoundary_ = false;
 };
 
 

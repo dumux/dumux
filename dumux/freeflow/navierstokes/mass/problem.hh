@@ -16,6 +16,7 @@
 #include <dune/common/typetraits.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/boundarytypes_.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
@@ -179,7 +180,7 @@ public:
     using BoundaryFluxes = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
 
     //! Export the boundary types.
-    using BoundaryTypes = Dumux::BoundaryTypes<ModelTraits::numEq()>;
+    using BoundaryTypes = Dumux::Experimental::BoundaryTypes<ModelTraits::numEq()>;
 
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }

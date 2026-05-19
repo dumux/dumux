@@ -15,6 +15,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
+#include <dumux/common/boundarytypes_.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/concepts/variables_.hh>
@@ -915,7 +916,7 @@ public:
     using BoundaryFluxes = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
 
     //! Export the boundary types.
-    using BoundaryTypes = NavierStokesMomentumBoundaryTypes<ModelTraits::dim()>;
+    using BoundaryTypes = typename Dumux::Experimental::BoundaryTypes<ModelTraits::numEq()>;
 
     //! This problem is used for the momentum balance model.
     static constexpr bool isMomentumProblem() { return true; }
@@ -1088,9 +1089,9 @@ public:
             {
                 const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, ipData);
                 const auto& shapeValues = ipCache.shapeValues();
-                // only add fluxes to equations for which Neumann is set
+                // only add fluxes to equations for which flux boundary conditions are set
                 for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
-                    if (bcTypes.isNeumann(eqIdx))
+                    if (bcTypes.isFluxBoundary(eqIdx))
                         residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
             }
         }
@@ -1125,9 +1126,9 @@ public:
             {
                 const BoundaryFluxes& boundaryFlux = qpData.weight()*asImp_().boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, ipData);
                 const auto& shapeValues = cache.shapeValues();
-                // only add fluxes to equations for which Neumann is set
+                // only add fluxes to equations for which flux boundary conditions are set
                 for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
-                    if (bcTypes.isNeumann(eqIdx))
+                    if (bcTypes.isFluxBoundary(eqIdx))
                         residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
             }
         }

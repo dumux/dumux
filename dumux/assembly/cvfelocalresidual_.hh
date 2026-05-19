@@ -112,16 +112,16 @@ public:
         {
             const auto& bcTypes = elemBcTypes.get(fvGeometry, scvf);
 
-            // Treat Neumann and Robin ("solution dependent Neumann") boundary conditions.
+            // Treat flux boundary conditions.
             // For Dirichlet there is no addition to the residual here but they
-            // are enforced strongly by replacing the residual entry afterwards.
-            if (bcTypes.hasNeumann())
+            // are enforced strongly by replacing the residual entry afterwards via global constraints.
+            if (bcTypes.hasFluxBoundary())
             {
                 NumEqVector boundaryFluxes = problem.boundaryFluxIntegral(fvGeometry, elemVolVars, scvf);
 
-                // only add fluxes to equations for which Neumann is set
+                // only add fluxes to equations for which flux boundary conditions are set
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    if (bcTypes.isNeumann(eqIdx))
+                    if (bcTypes.isFluxBoundary(eqIdx))
                         flux[eqIdx] += boundaryFluxes[eqIdx];
             }
         }
