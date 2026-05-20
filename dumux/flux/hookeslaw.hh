@@ -29,6 +29,6 @@
 #define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
 
 #include <dumux/flux/hookeslaw_fwd.hh>
-#include <dumux/flux/box/hookeslaw.hh>
+#include <dumux/flux/cvfe/hookeslaw.hh>
 
 #endif
