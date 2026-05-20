@@ -79,13 +79,15 @@ template<class GridView,
          class ScvRule = QuadratureRules::MidpointQuadrature,
          class ScvfRule = QuadratureRules::MidpointQuadrature,
          class ElementRule = QuadratureRules::MidpointQuadrature,
-         class IntersectionRule = QuadratureRules::MidpointQuadrature>
+         class IntersectionRule = QuadratureRules::MidpointQuadrature,
+         class BoundaryFaceRule = QuadratureRules::MidpointQuadrature>
 struct DefaultQuadratureTraits
 {
     using ScvQuadratureRule = ScvRule;
     using ScvfQuadratureRule = ScvfRule;
     using ElementQuadratureRule = ElementRule;
     using IntersectionQuadratureRule = IntersectionRule;
+    using BoundaryFaceQuadratureRule = BoundaryFaceRule;
 };
 
 namespace Detail {
@@ -101,6 +103,9 @@ using DefinesElementQuadratureRuleType = typename FVElementGeometry::ElementQuad
 
 template<class FVElementGeometry>
 using DefinesIntersectionQuadratureRuleType = typename FVElementGeometry::IntersectionQuadratureRule;
+
+template<class FVElementGeometry>
+using DefinesBoundaryFaceQuadratureRuleType = typename FVElementGeometry::BoundaryFaceQuadratureRule;
 
 //! Get ScvQuadratureRule type (default is MidpointQuadrature)
 template<class FVElementGeometry>
@@ -125,6 +130,12 @@ template<class FVElementGeometry>
 using IntersectionQuadratureRuleType = Dune::Std::detected_or_t<QuadratureRules::MidpointQuadrature,
                                                                 DefinesIntersectionQuadratureRuleType,
                                                                 FVElementGeometry>;
+
+//! Get BoundaryFaceQuadratureRule type (default is MidpointQuadrature)
+template<class FVElementGeometry>
+using BoundaryFaceQuadratureRuleType = Dune::Std::detected_or_t<QuadratureRules::MidpointQuadrature,
+                                                                 DefinesBoundaryFaceQuadratureRuleType,
+                                                                 FVElementGeometry>;
 
 //! Default LocalDofInterpolationPointData type
 template<class GridView>
@@ -350,6 +361,59 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
         });
 }
 
+//! Midpoint quadrature for boundary face
+template<class FVElementGeometry>
+auto quadratureRule(const FVElementGeometry& fvGeometry,
+                    const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
+                    QuadratureRules::MidpointQuadrature)
+{
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
+    using LocalIndex = typename IndexTraits<GridView>::LocalIndex;
+    using BFIpData = FEBoundaryFaceInterpolationPointData<Detail::BaseIpData<GridView>, LocalIndex>;
+    using QBFIpData = IndexedQuadratureInterpolationPointData<BFIpData>;
+
+    const auto& elementGeo = fvGeometry.elementGeometry();
+    const auto ipGlobal = boundaryFace.center();
+    const auto ipLocal = elementGeo.local(ipGlobal);
+
+    std::array<QuadraturePointData<QBFIpData>, 1> result{{
+        {boundaryFace.area(), QBFIpData(0, boundaryFace.unitOuterNormal(), boundaryFace.index(), ipLocal, ipGlobal)}
+    }};
+    return result;
+}
+
+//! Dune quadrature for boundary face
+template<int order, class FVElementGeometry>
+auto quadratureRule(const FVElementGeometry& fvGeometry,
+                    const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
+                    QuadratureRules::DuneQuadrature<order>)
+{
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
+    using LocalIndex = typename IndexTraits<GridView>::LocalIndex;
+    using BFIpData = FEBoundaryFaceInterpolationPointData<Detail::BaseIpData<GridView>, LocalIndex>;
+    using QBFIpData = IndexedQuadratureInterpolationPointData<BFIpData>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+
+    auto bfGeo = fvGeometry.geometry(boundaryFace);
+    const auto& elementGeo = fvGeometry.elementGeometry();
+    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(bfGeo.type(), order);
+    auto normal = boundaryFace.unitOuterNormal();
+    const auto bfIdx = boundaryFace.index();
+
+    return std::views::iota(0u, quad.size())
+         | std::views::transform([quad = std::move(quad), bfGeo = std::move(bfGeo), &elementGeo, normal = std::move(normal), bfIdx](const auto idx) {
+            const auto& qp = quad[idx];
+            const auto ipGlobal = bfGeo.global(qp.position());
+            const auto ipLocal = elementGeo.local(ipGlobal);
+            return QuadraturePointData<QBFIpData>{
+                qp.weight() * Extrusion::integrationElement(bfGeo, qp.position()),
+                QBFIpData(idx, normal, bfIdx, ipLocal, ipGlobal)
+            };
+        });
+}
+
 //! Generic quadrature rule for scv that uses ScvQuadratureRule type of FVElementGeometry
 template<class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::SubControlVolume& scv)
@@ -376,6 +440,13 @@ template<class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection)
 {
     return quadratureRule(fvGeometry, intersection, typename Detail::IntersectionQuadratureRuleType<FVElementGeometry>{});
+}
+
+//! Generic quadrature rule for boundary face that uses BoundaryFaceQuadratureRule type of FVElementGeometry
+template<class FVElementGeometry>
+auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace)
+{
+    return quadratureRule(fvGeometry, boundaryFace, typename Detail::BoundaryFaceQuadratureRuleType<FVElementGeometry>{});
 }
 
 } // end namespace CVFE
