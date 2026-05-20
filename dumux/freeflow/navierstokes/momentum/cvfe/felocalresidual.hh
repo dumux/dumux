@@ -203,16 +203,13 @@ public:
         ResidualVector flux(0.0);
 
         const auto& element = fvGeometry.element();
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
-            if (!intersection.boundary())
-                continue;
-
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, intersection);
+            const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
             if (!bcTypes.hasNeumann())
                 continue;
 
-            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, intersection, bcTypes);
+            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, elemFluxVarsCache, boundaryFace, bcTypes);
         }
         residual += flux;
     }
@@ -318,16 +315,13 @@ public:
         ResidualVector flux(0.0);
 
         const auto& element = fvGeometry.element();
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
-            if (!intersection.boundary())
-                continue;
-
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, intersection);
+            const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
             if (!bcTypes.hasNeumann())
                 continue;
 
-            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, intersection, bcTypes);
+            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, boundaryFace, bcTypes);
         }
         residual += flux;
     }

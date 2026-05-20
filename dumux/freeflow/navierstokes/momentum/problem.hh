@@ -1069,18 +1069,18 @@ public:
      * \param residual The residual vector to which the boundary flux contributions are added
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
-     * \param intersection The intersection
+     * \param boundaryFace The boundary face
      * \param bcTypes The boundary condition types
      */
     template<class ResidualVector, class BoundaryTypes>
     void addBoundaryFluxIntegrals(ResidualVector& residual,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVariables& elemVars,
-                                  const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection,
+                                  const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
                                   const BoundaryTypes& bcTypes) const
     {
-        // quadrature rule for intersections (dim-1)
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
+        // quadrature rule for boundary face
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, boundaryFace))
         {
             const auto& ipData = qpData.ipData();
             const auto& ipCache = cache(elemVars, ipData);
@@ -1103,7 +1103,7 @@ public:
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables for the element
      * \param elemFluxVarsCache The element flux variables cache
-     * \param intersection The intersection
+     * \param boundaryFace The boundary face
      * \param bcTypes The boundary condition types
      */
     template<class ResidualVector, class ElementFluxVariablesCache, class BoundaryTypes>
@@ -1113,11 +1113,11 @@ public:
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVariables& elemVars,
                                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                                  const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection,
+                                  const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
                                   const BoundaryTypes& bcTypes) const
     {
-        // quadrature rule for intersections (dim-1)
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
+        // quadrature rule for boundary face
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, boundaryFace))
         {
             const auto& ipData = qpData.ipData();
             const auto& cache = elemFluxVarsCache[ipData];
