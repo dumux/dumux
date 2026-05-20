@@ -94,8 +94,9 @@ template<class GridView,
          class ScvRule = Dumux::QuadratureRules::MidpointQuadrature,
          class ScvfRule = Dumux::QuadratureRules::MidpointQuadrature,
          class ElementRule = Dumux::QuadratureRules::DuneQuadrature<4>,
-         class IntersectionRule = Dumux::QuadratureRules::MidpointQuadrature>
-using PQ1BubbleQuadratureTraits = CVFE::DefaultQuadratureTraits<GridView, ScvRule, ScvfRule, ElementRule, IntersectionRule>;
+         class IntersectionRule = Dumux::QuadratureRules::MidpointQuadrature,
+         class BoundaryFaceRule = Dumux::QuadratureRules::MidpointQuadrature>
+using PQ1BubbleQuadratureTraits = CVFE::DefaultQuadratureTraits<GridView, ScvRule, ScvfRule, ElementRule, IntersectionRule, BoundaryFaceRule>;
 
 /*!
  * \ingroup PQ1BubbleDiscretization
@@ -190,6 +191,8 @@ public:
     using ElementQuadratureRule = typename Traits::ElementQuadratureRule;
     //! the quadrature rule type for intersections
     using IntersectionQuadratureRule = typename Traits::IntersectionQuadratureRule;
+    //! the quadrature rule type for boundary faces
+    using BoundaryFaceQuadratureRule = typename Traits::BoundaryFaceQuadratureRule;
 
     //! Constructor with basic grid geometry used to share state with another grid geometry on the same grid view
     PQ1BubbleFVGridGeometry(std::shared_ptr<BasicGridGeometry> gg)
