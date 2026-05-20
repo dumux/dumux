@@ -21,7 +21,7 @@
  \f{align*}{
  \frac{\partial \phi \sum_\alpha \varrho_\alpha S_\alpha (u_\alpha - \mathbf{g}\cdot\mathbf{x})}{\partial t}
  & +
- \frac{\partial \left( 1 - \phi \right) \varrho_s c_s T}{\partial t}
+ \frac{\partial \left( \left( 1 - \phi \right) \varrho_s c_s T \right)}{\partial t}
  -
  \sum_\alpha \nabla \cdot
  \left\{
