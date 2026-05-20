@@ -246,6 +246,18 @@ public:
         }
     }
 
+    //! Geometry of a boundary face
+    typename BoundaryFace::Traits::Geometry geometry(const BoundaryFace& boundaryFace) const
+    {
+        assert(isBound());
+        const auto& elemGeo = elementGeometry();
+        const auto faceGeoInRef = referenceElement(elemGeo).template geometry<1>(boundaryFace.intersectionIndex());
+        typename BoundaryFace::Traits::CornerStorage corners;
+        for (int i = 0; i < faceGeoInRef.corners(); ++i)
+            corners.push_back(elemGeo.global(faceGeoInRef.corner(i)));
+        return { faceGeoInRef.type(), corners };
+    }
+
     //! an iterator over all local dofs related to an intersection
     template<class Intersection>
     friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry,

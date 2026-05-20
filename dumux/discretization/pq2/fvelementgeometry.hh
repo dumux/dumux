@@ -347,6 +347,18 @@ public:
         }
     }
 
+    //! Geometry of a boundary face
+    typename BoundaryFace::Traits::Geometry geometry(const BoundaryFace& boundaryFace) const
+    {
+        assert(isBound());
+        const auto& elemGeo = elementGeometry();
+        const auto faceGeoInRef = referenceElement(elemGeo).template geometry<1>(boundaryFace.intersectionIndex());
+        typename BoundaryFace::Traits::CornerStorage corners;
+        for (int i = 0; i < faceGeoInRef.corners(); ++i)
+            corners.push_back(elemGeo.global(faceGeoInRef.corner(i)));
+        return { faceGeoInRef.type(), corners };
+    }
+
     //! Interpolation point data for an scv
     friend inline auto ipData(const PQ2FVElementGeometry& fvGeometry, const SubControlVolume& scv)
     {
