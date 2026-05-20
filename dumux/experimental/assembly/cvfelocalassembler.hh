@@ -411,7 +411,7 @@ private:
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
 
-        auto deflectionPolicy = Detail::CVFE::makeVariablesDeflectionPolicy(
+        auto deflectionPolicy = Dumux::Detail::CVFE::makeVariablesDeflectionPolicy(
             gridVariables.curGridVolVars(),
             curElemVolVars,
             fvGeometry,
