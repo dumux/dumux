@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <optional>
 #include <ranges>
+#include <span>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/iteratorrange.hh>
@@ -60,6 +61,7 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    using BoundaryFace = typename GG::BoundaryFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GG;
     //! the quadrature rule type for scvs
@@ -135,6 +137,20 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
+
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
+
+    //! iterator range for boundary faces
+    friend inline std::span<const BoundaryFace>
+    boundaryFaces(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
+    {
+        if (!fvGeometry.hasBoundaryFaces())
+            return {};
+        const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+        return { v.data(), v.size() };
+    }
 
     /*!
      * \brief bind the local view (r-value overload)

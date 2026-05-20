@@ -15,6 +15,7 @@
 #define DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <span>
 #include <utility>
 #include <unordered_map>
 #include <array>
@@ -71,6 +72,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
     //! export the scv interpolation point data type
     using ScvQuadratureRule = typename GG::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
@@ -121,6 +124,19 @@ public:
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
         const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
+    }
+
+    //! iterator range for boundary faces of the bound element.
+    //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
+    friend inline std::span<const BoundaryFace>
+    boundaryFaces(const BoxFVElementGeometry& fvGeometry)
+    {
+        if (fvGeometry.hasBoundaryFaces())
+        {
+            const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+            return { v.data(), v.size() };
+        }
+        return {};
     }
 
     //! an iterator over all local dofs related to an intersection
@@ -236,6 +252,10 @@ public:
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
 
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
@@ -332,6 +352,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
     //! the quadrature rule type for scvs
     using ScvQuadratureRule = typename GG::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
@@ -381,6 +403,12 @@ public:
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<Iter>(fvGeometry.scvfs_.begin(), fvGeometry.scvfs_.end());
     }
+
+    //! iterator range for boundary faces of the bound element.
+    //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
+    friend inline std::span<const BoundaryFace>
+    boundaryFaces(const BoxFVElementGeometry& fvGeometry)
+    { return { fvGeometry.boundaryFaces_.data(), fvGeometry.boundaryFaces_.size() }; }
 
     //! an iterator over all local dofs related to an intersection
     template<class Intersection>
@@ -496,6 +524,10 @@ public:
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
 
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
@@ -559,6 +591,7 @@ private:
     void makeElementGeometries_()
     {
         hasBoundaryScvf_ = false;
+        boundaryFaces_.clear();
 
         // get the element geometry
         const auto& element = *element_;
@@ -609,12 +642,23 @@ private:
         }
 
         // construct the sub control volume faces on the domain boundary
+        LocalIndexType numBoundaryFaces = 0;
         for (const auto& intersection : intersections(gridGeometry().gridView(), element))
         {
             if (intersection.boundary() && !intersection.neighbor())
             {
                 const auto isGeometry = intersection.geometry();
                 hasBoundaryScvf_ = true;
+
+                // add one boundary face per boundary intersection
+                boundaryFaces_.push_back(BoundaryFace{
+                    isGeometry.center(),
+                    isGeometry.volume(),
+                    intersection.centerUnitOuterNormal(),
+                    numBoundaryFaces++,
+                    static_cast<LocalIndexType>(intersection.indexInInside()),
+                    typename BoundaryFace::Traits::BoundaryFlag{intersection}
+                });
 
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
@@ -655,6 +699,7 @@ private:
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::array<LocalIndexType, 2>> scvfBoundaryGeometryKeys_;
+    Dune::ReservedVector<BoundaryFace, 2*dim> boundaryFaces_;
 
     bool hasBoundaryScvf_ = false;
 };

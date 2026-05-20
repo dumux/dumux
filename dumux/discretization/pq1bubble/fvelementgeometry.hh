@@ -15,6 +15,7 @@
 #define DUMUX_DISCRETIZATION_PQ1BUBBLE_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <span>
 #include <utility>
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
@@ -69,6 +70,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
     //! the quadrature rule type for scvs
     using ScvQuadratureRule = typename GG::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
@@ -189,6 +192,19 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! iterator range for boundary faces of the bound element.
+    //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
+    friend inline std::span<const BoundaryFace>
+    boundaryFaces(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        if (fvGeometry.hasBoundaryFaces())
+        {
+            const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+            return { v.data(), v.size() };
+        }
+        return {};
+    }
+
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
@@ -277,6 +293,10 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
+
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
 
     //! The bound element index
     std::size_t elementIndex() const
