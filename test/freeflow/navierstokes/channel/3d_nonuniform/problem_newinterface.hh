@@ -88,18 +88,17 @@ public:
      *        used for which equation on a given boundary face.
      *
      * \param fvGeometry The finite-volume geometry
-     * \param intersection The boundary intersection
+     * \param boundaryFace The boundary face
      */
-    template<class Intersection>
     BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
-                                const Intersection& intersection) const
+                                const FVElementGeometry::BoundaryFace& boundaryFace) const
     {
         BoundaryTypes values;
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto flag = BoundaryFlag{ intersection };
-            if (isMomentumFluxBoundary_(flag.get()))
+            const auto flag = boundaryFace.boundaryFlag();
+            if (isMomentumFluxBoundary_(flag))
                 values.setAllFluxBoundary();
         }
         else

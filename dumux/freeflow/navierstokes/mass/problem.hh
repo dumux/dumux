@@ -238,14 +238,13 @@ public:
      *        used for which equation on a given boundary face.
      *
      * \param fvGeometry The finite-volume geometry
-     * \param intersection The boundary intersection
+     * \param boundaryFace The boundary face
      */
-    template<class Intersection>
     BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
-                                const Intersection& intersection) const
+                                const FVElementGeometry::BoundaryFace& boundaryFace) const
     {
         // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(intersection.geometry().center());
+        return asImp_().boundaryTypesAtPos(boundaryFace.center());
     }
 
     using ParentType::dirichlet;

@@ -51,16 +51,13 @@ public:
 
         hasFluxBoundary_ = false;
 
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
-            const auto localIdx = intersection.indexInInside();
+            const auto localIdx = boundaryFace.intersectionIndex();
             bcTypes_[localIdx].reset();
 
-            if (intersection.boundary() && !intersection.neighbor())
-            {
-                bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, intersection);
-                hasFluxBoundary_ = hasFluxBoundary_ || bcTypes_[localIdx].hasFluxBoundary();
-            }
+            bcTypes_[localIdx] = problem.boundaryTypes(fvGeometry, boundaryFace);
+            hasFluxBoundary_ = hasFluxBoundary_ || bcTypes_[localIdx].hasFluxBoundary();
         }
     }
 
@@ -81,20 +78,6 @@ public:
     {
         assert(scvf.boundary());
         const auto localIdx = fvGeometry.intersectionIndex(scvf);
-        assert(localIdx < bcTypes_.size());
-        return bcTypes_[localIdx];
-    }
-
-    /*
-     * \brief Access operator
-     * \return BoundaryTypes
-     * \note yields undefined behaviour if the intersection is not on the boundary
-     */
-    template<class FVElementGeometry>
-    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection) const
-    {
-        assert(intersection.boundary());
-        const auto localIdx = intersection.indexInInside();
         assert(localIdx < bcTypes_.size());
         return bcTypes_[localIdx];
     }
