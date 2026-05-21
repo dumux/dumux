@@ -28,27 +28,27 @@ constexpr inline bool hasProblemBoundaryFluxFunction()
 { return Dune::Std::is_detected<BoundaryFluxFunctionDetector, P, FVG, EV, EFVC, IP>::value; }
 
 //! helper struct detecting if a problem has boundaryTypes function
-template<class P, class FVG, class INT>
-using BoundaryTypesForIntersectionFunctionDetector = decltype(
-    std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<INT>())
+template<class P, class FVG, class FACE>
+using BoundaryTypesForFaceFunctionDetector = decltype(
+    std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<FACE>())
 );
 
-template<class P, class FVG, class INT>
-constexpr inline bool hasProblemBoundaryTypesForIntersectionFunction()
-{ return Dune::Std::is_detected<BoundaryTypesForIntersectionFunctionDetector, P, FVG, INT>::value; }
+template<class P, class FVG>
+constexpr inline bool hasProblemBoundaryTypesForFaceFunction()
+{ return Dune::Std::is_detected<BoundaryTypesForFaceFunctionDetector, P, FVG, typename FVG::BoundaryFace>::value; }
 
 //! helper struct to determine BoundaryTypes related to provided boundaryTypes(...) function of the problem
-template<class P, class FVG, class INT, bool newInterface = hasProblemBoundaryTypesForIntersectionFunction<P, FVG, INT>()>
+template<class P, class FVG, bool newInterface = hasProblemBoundaryTypesForFaceFunction<P, FVG>()>
 struct BoundaryTypes;
 
-template<class P, class FVG, class INT>
-struct BoundaryTypes<P, FVG, INT, false>
+template<class P, class FVG>
+struct BoundaryTypes<P, FVG, false>
 { using type = std::decay_t< decltype( std::declval<P>().boundaryTypes(std::declval<typename FVG::Element>(), std::declval<typename FVG::SubControlVolume>()) ) >; };
 
 //! helper struct to determine boundary type
-template<class P, class FVG, class INT>
-struct BoundaryTypes<P, FVG, INT, true>
-{ using type = std::decay_t< decltype( std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<INT>()) ) >; };
+template<class P, class FVG>
+struct BoundaryTypes<P, FVG, true>
+{ using type = std::decay_t< decltype( std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<typename FVG::BoundaryFace>()) ) >; };
 
 } // end namespace Dumux::Detail
 

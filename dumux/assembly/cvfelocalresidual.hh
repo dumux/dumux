@@ -394,9 +394,9 @@ private:
                   const SubControlVolumeFace& scvf,
                   const ElementBoundaryTypes& elemBcTypes) const
     {
-        // Check if problem supports the new boundaryTypes function for element intersections
-        // then we can always get bcTypes for intersections and the associated scvfs
-        if constexpr (Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridView::Intersection>())
+        // Check if problem supports the new boundaryTypes function for element faces
+        // then we can always get bcTypes for faces and the associated scvfs
+        if constexpr (Detail::hasProblemBoundaryTypesForFaceFunction<Problem, FVElementGeometry>())
             return elemBcTypes.get(fvGeometry, scvf);
         else
             return elemBcTypes.get(fvGeometry, fvGeometry.scv(scvf.insideScvIdx()));

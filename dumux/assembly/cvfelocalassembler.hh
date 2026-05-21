@@ -261,7 +261,7 @@ public:
         // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
         // and set the residual to (privar - dirichletvalue)
         // when having the new boundary interface Dirichlet conditions are incorporated via constraints
-        if constexpr (!Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridGeometry::GridView::Intersection>())
+        if constexpr (!Detail::hasProblemBoundaryTypesForFaceFunction<Problem, FVElementGeometry>())
         {
             if (this->elemBcTypes().hasDirichlet())
             {
