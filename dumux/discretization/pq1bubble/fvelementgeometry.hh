@@ -300,6 +300,10 @@ public:
     bool hasBoundaryFaces() const
     { return hasBoundaryScvf(); }
 
+    //! Get a boundary face with a local boundary face index
+    const BoundaryFace& boundaryFace(LocalIndexType bfIdx) const
+    { return ggCache_->boundaryFaces(eIdx_)[bfIdx]; }
+
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }

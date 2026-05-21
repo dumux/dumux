@@ -256,6 +256,10 @@ public:
     bool hasBoundaryFaces() const
     { return hasBoundaryScvf(); }
 
+    //! Get a boundary face with a local boundary face index
+    const BoundaryFace& boundaryFace(LocalIndexType bfIdx) const
+    { return ggCache_->boundaryFaces(eIdx_)[bfIdx]; }
+
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
     {
@@ -539,6 +543,10 @@ public:
     //! Returns whether the element has boundary faces
     bool hasBoundaryFaces() const
     { return hasBoundaryScvf(); }
+
+    //! Get a boundary face with a local boundary face index
+    const BoundaryFace& boundaryFace(LocalIndexType bfIdx) const
+    { return boundaryFaces_[bfIdx]; }
 
     //! Geometry of a sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
