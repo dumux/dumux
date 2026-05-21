@@ -33,9 +33,17 @@ using BoundaryTypesForFaceFunctionDetector = decltype(
     std::declval<P>().boundaryTypes(std::declval<FVG>(), std::declval<FACE>())
 );
 
+template<class FVG>
+using BoundaryFaceTypeDetector = typename FVG::BoundaryFace;
+
 template<class P, class FVG>
 constexpr inline bool hasProblemBoundaryTypesForFaceFunction()
-{ return Dune::Std::is_detected<BoundaryTypesForFaceFunctionDetector, P, FVG, typename FVG::BoundaryFace>::value; }
+{
+    if constexpr (Dune::Std::is_detected<BoundaryFaceTypeDetector, FVG>::value)
+        return Dune::Std::is_detected<BoundaryTypesForFaceFunctionDetector, P, FVG, typename FVG::BoundaryFace>::value;
+    else
+        return false;
+}
 
 //! helper struct to determine BoundaryTypes related to provided boundaryTypes(...) function of the problem
 template<class P, class FVG, bool newInterface = hasProblemBoundaryTypesForFaceFunction<P, FVG>()>
