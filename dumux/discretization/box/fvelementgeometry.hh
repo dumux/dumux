@@ -135,15 +135,14 @@ public:
         return std::ranges::views::all(v);
     }
 
-    //! an iterator over all local dofs related to an intersection
-    template<class Intersection>
-    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const Intersection& intersection)
+    //! an iterator over all local dofs related to a boundary face
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
     {
         return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(intersection.indexInInside(), 1, dim)),
+            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
             [&](const auto i)
             {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(intersection.indexInInside(), 1, i, dim);
+                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
                 return CVFE::LocalDof
                 {
                     static_cast<LocalIndexType>(localDofIdx),
@@ -422,15 +421,14 @@ public:
     boundaryFaces(const BoxFVElementGeometry& fvGeometry)
     { return std::ranges::views::all(fvGeometry.boundaryFaces_); }
 
-    //! an iterator over all local dofs related to an intersection
-    template<class Intersection>
-    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const Intersection& intersection)
+    //! an iterator over all local dofs related to a boundary face
+    friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
     {
         return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(intersection.indexInInside(), 1, dim)),
+            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
             [&](const auto i)
             {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(intersection.indexInInside(), 1, i, dim);
+                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
                 return CVFE::LocalDof
                 {
                     static_cast<LocalIndexType>(localDofIdx),

@@ -161,15 +161,14 @@ public:
         );
     }
 
-    //! an iterator over all local dofs related to an intersection
-    template<class Intersection>
-    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry, const Intersection& intersection)
+    //! an iterator over all local dofs related to a boundary face
+    friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
     {
         return Dune::transformedRangeView(
-            Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), intersection.indexInInside())),
+            Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), boundaryFace.intersectionIndex())),
             [&](const auto i)
             {
-                auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), intersection.indexInInside(), i);
+                auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), boundaryFace.intersectionIndex(), i);
                 return CVFE::LocalDof
                 {
                     static_cast<LocalIndexType>(localDofIdx),
