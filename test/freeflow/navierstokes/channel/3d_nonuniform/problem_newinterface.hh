@@ -80,14 +80,7 @@ public:
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
 
         if constexpr (ParentType::isMomentumProblem())
-        {
-            CVFE::appendDirichletConstraints(*this,
-                [&, this](const auto& fvGeometry, const auto&, const auto& localDof) {
-                    return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-                },
-                constraints_
-            );
-        }
+            appendDirichletConstraints_();
     }
 
     /*!
@@ -106,7 +99,7 @@ public:
         if constexpr (ParentType::isMomentumProblem())
         {
             const auto flag = BoundaryFlag{ intersection };
-            if (isOutlet_( flag.get() ) || isInlet_( flag.get()))
+            if (isMomentumFluxBoundary_(flag.get()))
                 values.setAllNeumann();
             else
                 values.setAllDirichlet();
@@ -148,7 +141,7 @@ public:
         BoundaryFluxes values(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isOutlet_(boundaryFlag_(fvGeometry, faceIpData)) || isInlet_(boundaryFlag_(fvGeometry, faceIpData)))
+            if (isMomentumFluxBoundary_(boundaryFlag_(fvGeometry, faceIpData)))
             {
                 const auto p = isInlet_(boundaryFlag_(fvGeometry, faceIpData)) ? deltaP_ : 0.0;
                 values.axpy(-p, faceIpData.unitOuterNormal());
@@ -223,6 +216,35 @@ private:
             return fvGeometry.boundaryFace(ipData.boundaryFaceIndex()).boundaryFlag();
         else
             DUNE_THROW(Dune::InvalidStateException, "Unknown type of interpolation point data!");
+    }
+
+    template<class BoundaryFlag>
+    bool isMomentumFluxBoundary_(const BoundaryFlag& bFlag) const
+    { return (isOutlet_(bFlag) || isInlet_(bFlag)); }
+
+    void appendDirichletConstraints_()
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+
+            for(const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                if(!isMomentumFluxBoundary_(boundaryFace.boundaryFlag()))
+                {
+                    for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    {
+                        const auto& globalPos = ipData(fvGeometry, localDof).global();
+                        ConstraintInfo info;
+                        info.setAll();
+
+                        DirichletValues dirichletValues(this->dirichletAtPos(globalPos));
+                        constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
+                    }
+                }
+            }
+        }
     }
 
     bool isInlet_(int flag) const

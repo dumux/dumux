@@ -70,14 +70,7 @@ public:
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
         if constexpr (ParentType::isMomentumProblem())
-        {
-            CVFE::appendDirichletConstraints(*this,
-                [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
-                    return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-                },
-                constraints_
-            );
-        }
+            appendDirichletConstraints_();
         else if(!useNeumann_)
             appendInternalConstraints_();
     }
@@ -88,12 +81,7 @@ public:
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
-        CVFE::appendDirichletConstraints(*this,
-            [&, this](const auto& fvGeometry, const auto&, const auto& localDof){
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            },
-            constraints_
-        );
+        appendDirichletConstraints_();
     }
 
     /*!
@@ -137,13 +125,9 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (useNeumann_)
+            if (isMomentumFluxBoundary_(globalPos))
             {
-                static constexpr Scalar eps = 1e-8;
-                if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) || (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps))
-                    values.setAllNeumann();
-                else
-                    values.setAllDirichlet();
+                values.setAllNeumann();
             }
             else
                 values.setAllDirichlet();
@@ -338,6 +322,45 @@ private:
 
     Scalar dxxV_ (Scalar x, Scalar y) const
     { return -f2_(y)*dddf2_(x); }
+
+    bool isMomentumFluxBoundary_(const GlobalPosition& globalPos) const
+    {
+        if (useNeumann_)
+        {
+            static constexpr Scalar eps = 1e-8;
+            if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) || (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps))
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+
+    void appendDirichletConstraints_()
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+
+            for(const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                if(!isMomentumFluxBoundary_(boundaryFace.center()))
+                {
+                    for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    {
+                        const auto& globalPos = ipData(fvGeometry, localDof).global();
+                        ConstraintInfo info;
+                        info.setAll();
+
+                        DirichletValues dirichletValues(this->dirichletAtPos(globalPos));
+                        constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
+                    }
+                }
+            }
+        }
+    }
 
     void appendInternalConstraints_()
     {
