@@ -302,6 +302,10 @@ private:
             return {};
         }
 
+        //! For each boundary face of element eIdx, the {offset, count} subrange of scvfs(eIdx) belonging to that boundary face
+        const auto& boundaryFaceScvfRanges(GridIndexType eIdx) const
+        { return boundaryFaceScvfRanges_.at(eIdx); }
+
     private:
         void clear_()
         {
@@ -310,6 +314,7 @@ private:
             hasBoundaryScvf_.clear();
             scvfBoundaryGeometryKeys_.clear();
             boundaryFaces_.clear();
+            boundaryFaceScvfRanges_.clear();
         }
 
         std::vector<std::vector<SubControlVolume>> scvs_;
@@ -317,6 +322,7 @@ private:
         std::vector<bool> hasBoundaryScvf_;
         std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
         std::unordered_map<GridIndexType, Dune::ReservedVector<typename PQ2FVGridGeometry::BoundaryFace, 2*dim>> boundaryFaces_;
+        std::unordered_map<GridIndexType, Dune::ReservedVector<std::array<LocalIndexType, 2>, 2*dim>> boundaryFaceScvfRanges_;
 
         const PQ2FVGridGeometry* gridGeometry_;
     };
@@ -431,6 +437,12 @@ private:
                     const auto numBoundaryScvf = GeometryHelper::numBoundaryScvf(elementGeometry.type(), localFacetIndex);
                     numScvf_ += numBoundaryScvf;
                     numBoundaryScvf_ += numBoundaryScvf;
+
+                    // record the scvf subrange for this boundary face: {offset, count}
+                    cache_.boundaryFaceScvfRanges_[eIdx].push_back(std::array<LocalIndexType, 2>{{
+                        scvfLocalIdx,
+                        static_cast<LocalIndexType>(numBoundaryScvf)
+                    }});
 
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < numBoundaryScvf; ++isScvfLocalIdx)
                     {

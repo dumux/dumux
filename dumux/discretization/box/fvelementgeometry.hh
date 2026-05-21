@@ -127,6 +127,17 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! iterator range over scvfs belonging to a specific boundary face.
+    //! To iterate: for (auto&& scvf : scvfs(fvGeometry, boundaryFace))
+    friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
+    scvfs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
+    {
+        using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
+        const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
+        const auto& range = fvGeometry.ggCache_->boundaryFaceScvfRanges(fvGeometry.eIdx_)[boundaryFace.index()];
+        return Dune::IteratorRange<Iter>(s.begin() + range[0], s.begin() + range[0] + range[1]);
+    }
+
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
     friend inline std::ranges::view auto
@@ -416,6 +427,16 @@ public:
         return Dune::IteratorRange<Iter>(fvGeometry.scvfs_.begin(), fvGeometry.scvfs_.end());
     }
 
+    //! iterator range over scvfs belonging to a specific boundary face.
+    //! To iterate: for (auto&& scvf : scvfs(fvGeometry, boundaryFace))
+    friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
+    scvfs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
+    {
+        using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
+        const auto& range = fvGeometry.boundaryFaceScvfRanges_[boundaryFace.index()];
+        return Dune::IteratorRange<Iter>(fvGeometry.scvfs_.begin() + range[0], fvGeometry.scvfs_.begin() + range[0] + range[1]);
+    }
+
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
     friend inline std::ranges::view auto
@@ -619,6 +640,7 @@ private:
     {
         hasBoundaryScvf_ = false;
         boundaryFaces_.clear();
+        boundaryFaceScvfRanges_.clear();
 
         // get the element geometry
         const auto& element = *element_;
@@ -687,6 +709,12 @@ private:
                     typename BoundaryFace::Traits::BoundaryFlag{intersection}
                 });
 
+                // record the scvf subrange for this boundary face: {offset, count}
+                boundaryFaceScvfRanges_.push_back(std::array<LocalIndexType, 2>{{
+                    scvfLocalIdx,
+                    static_cast<LocalIndexType>(isGeometry.corners())
+                }});
+
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
                     // find the scv this scvf is connected to
@@ -727,6 +755,7 @@ private:
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::array<LocalIndexType, 2>> scvfBoundaryGeometryKeys_;
     Dune::ReservedVector<BoundaryFace, 2*dim> boundaryFaces_;
+    Dune::ReservedVector<std::array<LocalIndexType, 2>, 2*dim> boundaryFaceScvfRanges_;
 
     bool hasBoundaryScvf_ = false;
 };

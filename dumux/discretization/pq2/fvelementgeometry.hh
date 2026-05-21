@@ -193,6 +193,17 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! iterator range over scvfs belonging to a specific boundary face.
+    //! To iterate: for (auto&& scvf : scvfs(fvGeometry, boundaryFace))
+    friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
+    scvfs(const PQ2FVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
+    {
+        using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
+        const auto& s = fvGeometry.ggCache_->scvfs(fvGeometry.eIdx_);
+        const auto& range = fvGeometry.ggCache_->boundaryFaceScvfRanges(fvGeometry.eIdx_)[boundaryFace.index()];
+        return Dune::IteratorRange<Iter>(s.begin() + range[0], s.begin() + range[0] + range[1]);
+    }
+
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
     friend inline std::ranges::view auto
