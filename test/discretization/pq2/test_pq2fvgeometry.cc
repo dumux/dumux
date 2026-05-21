@@ -183,19 +183,15 @@ int main (int argc, char *argv[])
             std::cout << std::endl;
         }
 
-        for (const auto& intersection : intersections(leafGridView, element))
+        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
-            // Local dof intersection range only properly works for boundary intersection
-            if(!intersection.boundary())
-                continue;
-
             std::size_t numLocalDofsOnIntersection = 0;
-            for (const auto& localDof : localDofs(fvGeometry, intersection))
+            for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
             {
                 ++numLocalDofsOnIntersection;
                 const auto intIpData = ipData(fvGeometry, localDof);
-                const auto iCenter = intersection.geometry().center();
-                if ( std::abs( (intIpData.global()-iCenter) * intersection.centerUnitOuterNormal() ) > 1e-12)
+                const auto iCenter = boundaryFace.center();
+                if ( std::abs( (intIpData.global()-iCenter) * boundaryFace.unitOuterNormal() ) > 1e-12)
                     DUNE_THROW(Dune::Exception, "ipData(fvGeometry, localDof).global() is not on intersection.");
             }
 
