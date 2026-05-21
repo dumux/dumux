@@ -33,13 +33,14 @@ template <class ct>
 struct PQ2MLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
 {
     // we use static vectors to store the corners as we know
-    // the maximum number of corners in advance
+    // the maximum number of corners in advance (2^dim for box-type sub-cells)
     template< int mydim, int cdim >
     struct CornerStorage
     {
-        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<mydim)+ mydim*(1<<(mydim-1))>;
+        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<mydim)>;
     };
 };
+
 
 /*!
  * \ingroup PQ2Discretization

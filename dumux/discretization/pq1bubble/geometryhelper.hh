@@ -34,13 +34,15 @@ template <class ct>
 struct PQ1BubbleMLGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
 {
     // we use static vectors to store the corners as we know
-    // the maximum number of corners in advance (2^dim)
+    // the maximum number of corners in advance (2^dim for box-type sub-cells,
+    // overlapping sub-cells never exceed this count)
     template< int mydim, int cdim >
     struct CornerStorage
     {
-        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<mydim)+1>;
+        using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<mydim)>;
     };
 };
+
 
 namespace Detail::PQ1Bubble {
 
