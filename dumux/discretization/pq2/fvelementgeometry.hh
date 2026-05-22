@@ -162,14 +162,13 @@ public:
         );
     }
 
-    //! an iterator over all local dofs related to an intersection
-    template<class Intersection>
-    friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const Intersection& intersection)
+    //! an iterator over all local dofs related to a boundary face
+    friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
     {
         return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
             | std::views::filter([&](size_t i) {
                 return GeometryHelper::localDofOnIntersection(fvGeometry.element().type(),
-                                                              intersection.indexInInside(),
+                                                              boundaryFace.intersectionIndex(),
                                                               fvGeometry.feLocalCoefficients().localKey(i)); })
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{

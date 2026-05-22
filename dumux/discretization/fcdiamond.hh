@@ -121,7 +121,7 @@ public:
     // Check if problem has new boundaryTypes interface
     // then use ElementIntersectionBoundaryTypes
     using type = std::conditional_t<
-        Dumux::Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, typename GG::LocalView, typename GG::GridView::Intersection>(),
+        Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GG::LocalView>(),
         Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
         Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
     >;
@@ -138,8 +138,8 @@ private:
     using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
 public:
     using GridGeometry = GG;
-    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, intersection)
-    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView, typename GG::GridView::Intersection>::type;
+    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, boundaryFace)
+    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView>::type;
 };
 
 template<class TypeTag>

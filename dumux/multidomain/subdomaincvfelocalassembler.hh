@@ -378,7 +378,7 @@ public:
 
                         // For the old boundary interface we set them for each scv
                         // for the new interface we enforce them globally by constraints, i.e. do nothing here
-                        if constexpr (!Detail::hasProblemBoundaryTypesForIntersectionFunction<Problem, FVElementGeometry, typename GridGeometry::GridView::Intersection>())
+                        if constexpr (!Detail::hasProblemBoundaryTypesForFaceFunction<Problem, FVElementGeometry>())
                         {
                             // If the dof is coupled by a Dirichlet condition,
                             // set the derived value only once (i.e. overwrite existing values).

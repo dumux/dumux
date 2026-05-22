@@ -69,25 +69,17 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
     dirichletDofs = 0.0;
 
-    auto fvGeometry = localView(*momentumGridGeometry);
-    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    // We only have Dirichlet dofs for the momentum problem
+    if constexpr (requires {momentumProblem->constraints();})
     {
-        fvGeometry.bind(element);
-
-        for (const auto& intersection : intersections(momentumGridGeometry->gridView(), element))
+        for (const auto& constraintData : momentumProblem->constraints())
         {
-            if(intersection.boundary() == false)
-                continue;
-
-            const auto bcTypes = momentumProblem->boundaryTypes(fvGeometry, intersection);
-            if (bcTypes.hasDirichlet())
+            const auto& constraintInfo = constraintData.constraintInfo();
+            const auto dofIdx = constraintData.dofIndex();
+            for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
             {
-                for (auto&& localDof : localDofs(fvGeometry, intersection))
-                {
-                        for (int i = 0; i < bcTypes.size(); ++i)
-                            if (bcTypes.isDirichlet(i))
-                                dirichletDofs[momentumIdx][localDof.index()][i] = 1.0;
-                }
+                if (constraintInfo.isConstraintEquation(eqIdx))
+                    dirichletDofs[momentumIdx][dofIdx][eqIdx] = 1.0;
             }
         }
     }

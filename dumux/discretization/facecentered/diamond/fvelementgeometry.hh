@@ -260,12 +260,11 @@ public:
         return { faceGeoInRef.type(), corners };
     }
 
-    //! an iterator over all local dofs related to an intersection
-    template<class Intersection>
+    //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry,
-                                 const Intersection& intersection)
+                                 const BoundaryFace& boundaryFace)
     {
-        const auto localDofIdx = intersection.indexInInside();
+        const auto localDofIdx = boundaryFace.intersectionIndex();
         return std::views::single(CVFE::LocalDof{
             static_cast<LocalIndexType>(localDofIdx),
             static_cast<GridIndexType>(fvGeometry.scv(localDofIdx).dofIndex()),
