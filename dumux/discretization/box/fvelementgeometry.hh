@@ -128,15 +128,11 @@ public:
 
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
-    friend inline std::span<const BoundaryFace>
+    friend inline std::ranges::view auto
     boundaryFaces(const BoxFVElementGeometry& fvGeometry)
     {
-        if (fvGeometry.hasBoundaryFaces())
-        {
-            const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
-            return { v.data(), v.size() };
-        }
-        return {};
+        const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+        return std::ranges::views::all(v);
     }
 
     //! an iterator over all local dofs related to an intersection
@@ -422,9 +418,9 @@ public:
 
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
-    friend inline std::span<const BoundaryFace>
+    friend inline std::ranges::view auto
     boundaryFaces(const BoxFVElementGeometry& fvGeometry)
-    { return { fvGeometry.boundaryFaces_.data(), fvGeometry.boundaryFaces_.size() }; }
+    { return std::ranges::views::all(fvGeometry.boundaryFaces_); }
 
     //! an iterator over all local dofs related to an intersection
     template<class Intersection>

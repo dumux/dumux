@@ -147,13 +147,11 @@ public:
     { return ggCache_->boundaryFaces(eIdx_)[bfIdx]; }
 
     //! iterator range for boundary faces
-    friend inline std::span<const BoundaryFace>
+    friend inline std::ranges::view auto
     boundaryFaces(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
     {
-        if (!fvGeometry.hasBoundaryFaces())
-            return {};
         const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
-        return { v.data(), v.size() };
+        return std::ranges::views::all(v);
     }
 
     /*!

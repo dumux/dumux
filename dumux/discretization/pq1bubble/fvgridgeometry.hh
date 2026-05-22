@@ -17,6 +17,7 @@
 #include <utility>
 #include <unordered_map>
 #include <type_traits>
+#include <span>
 
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -298,9 +299,13 @@ private:
         const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
         { return scvfBoundaryGeometryKeys_.at(eIdx); }
 
-        //! Returns the boundary faces of an element (only valid if hasBoundaryScvf is true)
-        const auto& boundaryFaces(GridIndexType eIdx) const
-        { return boundaryFaces_.at(eIdx); }
+        //! Returns the boundary faces of an element
+        auto boundaryFaces(GridIndexType eIdx) const -> std::span<const BoundaryFace>
+        {
+            if (auto it = boundaryFaces_.find(eIdx); it != boundaryFaces_.end())
+                return {it->second};
+            return {};
+        }
 
     private:
         void clear_()

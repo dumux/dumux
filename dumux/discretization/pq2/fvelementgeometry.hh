@@ -196,15 +196,11 @@ public:
 
     //! iterator range for boundary faces of the bound element.
     //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
-    friend inline std::span<const BoundaryFace>
+    friend inline std::ranges::view auto
     boundaryFaces(const PQ2FVElementGeometry& fvGeometry)
     {
-        if (fvGeometry.hasBoundaryFaces())
-        {
-            const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
-            return { v.data(), v.size() };
-        }
-        return {};
+        const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+        return std::ranges::views::all(v);
     }
 
     //! Get a local finite element basis
