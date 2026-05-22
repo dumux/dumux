@@ -40,6 +40,12 @@ namespace Dumux::Concept::Detail{
         a.intersectionIndex();
     };
 
+    template<class T>
+    concept BoundaryFaceIndexProvider = requires(T a)
+    {
+        a.boundaryFaceIndex();
+    };
+
 } // end namespace Dumux::Concept::Detail
 
 namespace Dumux::Concept {
@@ -68,6 +74,12 @@ concept IntersectionIpData = IpData<T> && Detail::IntersectionIndexProvider<T>;
 
 template<class T>
 concept IntersectionQpIpData = IntersectionIpData<T> && Detail::QpIndexProvider<T>;
+
+template<class T>
+concept BoundaryFaceIpData = IpData<T> && Detail::BoundaryFaceIndexProvider<T>;
+
+template<class T>
+concept BoundaryFaceQpIpData = BoundaryFaceIpData<T> && Detail::QpIndexProvider<T>;
 
 } // end namespace Dumux::Concept
 

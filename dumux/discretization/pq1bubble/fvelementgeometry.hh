@@ -15,6 +15,7 @@
 #define DUMUX_DISCRETIZATION_PQ1BUBBLE_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <span>
 #include <utility>
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
@@ -69,6 +70,8 @@ public:
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
     using GridGeometry = GG;
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
     //! the quadrature rule type for scvs
     using ScvQuadratureRule = typename GG::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
@@ -77,6 +80,8 @@ public:
     using ElementQuadratureRule = typename GG::ElementQuadratureRule;
     //! the quadrature rule type for intersections
     using IntersectionQuadratureRule = typename GG::IntersectionQuadratureRule;
+    //! the quadrature rule type for boundary faces
+    using BoundaryFaceQuadratureRule = typename GG::BoundaryFaceQuadratureRule;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementDofs = GridGeometry::maxNumElementDofs;
 
@@ -189,6 +194,15 @@ public:
         return Dune::IteratorRange<Iter>(s.begin(), s.end());
     }
 
+    //! iterator range for boundary faces of the bound element.
+    //! To iterate: for (auto&& bf : boundaryFaces(fvGeometry))
+    friend inline std::ranges::view auto
+    boundaryFaces(const PQ1BubbleFVElementGeometry& fvGeometry)
+    {
+        const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+        return std::ranges::views::all(v);
+    }
+
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
@@ -278,6 +292,14 @@ public:
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
 
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
+
+    //! Get a boundary face with a local boundary face index
+    const BoundaryFace& boundaryFace(LocalIndexType bfIdx) const
+    { return ggCache_->boundaryFaces(eIdx_)[bfIdx]; }
+
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }
@@ -326,6 +348,18 @@ public:
                 helper.getScvfCorners(scvf.index())
             };
         }
+    }
+
+    //! Geometry of a boundary face
+    typename BoundaryFace::Traits::Geometry geometry(const BoundaryFace& boundaryFace) const
+    {
+        assert(isBound());
+        const auto& elemGeo = elementGeometry();
+        const auto faceGeoInRef = referenceElement(elemGeo).template geometry<1>(boundaryFace.intersectionIndex());
+        typename BoundaryFace::Traits::CornerStorage corners;
+        for (int i = 0; i < faceGeoInRef.corners(); ++i)
+            corners.push_back(elemGeo.global(faceGeoInRef.corner(i)));
+        return { faceGeoInRef.type(), corners };
     }
 
     //! Interpolation point data for an scv

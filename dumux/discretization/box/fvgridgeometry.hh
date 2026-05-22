@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <array>
 #include <vector>
+#include <span>
 
 #include <dune/localfunctions/lagrange/lagrangelfecache.hh>
 
@@ -29,6 +30,7 @@
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
+#include <dumux/discretization/boundaryface.hh>
 #include <dumux/discretization/extrusion.hh>
 
 #include <dumux/io/grid/periodicgridtraits.hh>
@@ -113,6 +115,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the boundary face type
+    using BoundaryFace = Experimental::BoundaryFace<GV>;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type
@@ -235,6 +239,14 @@ private:
         const std::vector<std::array<LocalIndexType, 2>>& scvfBoundaryGeometryKeys(GridIndexType eIdx) const
         { return scvfBoundaryGeometryKeys_.at(eIdx); }
 
+        //! Returns the boundary faces of an element
+        auto boundaryFaces(GridIndexType eIdx) const -> std::span<const BoundaryFace>
+        {
+            if (auto it = boundaryFaces_.find(eIdx); it != boundaryFaces_.end())
+                return {it->second};
+            return {};
+        }
+
     private:
         void clear_()
         {
@@ -242,12 +254,14 @@ private:
             scvfs_.clear();
             hasBoundaryScvf_.clear();
             scvfBoundaryGeometryKeys_.clear();
+            boundaryFaces_.clear();
         }
 
         std::vector<std::vector<SubControlVolume>> scvs_;
         std::vector<std::vector<SubControlVolumeFace>> scvfs_;
         std::vector<bool> hasBoundaryScvf_;
         std::unordered_map<GridIndexType, std::vector<std::array<LocalIndexType, 2>>> scvfBoundaryGeometryKeys_;
+        std::unordered_map<GridIndexType, Dune::ReservedVector<typename BoxFVGridGeometry::BoundaryFace, 2*dim>> boundaryFaces_;
 
         const BoxFVGridGeometry* gridGeometry_;
     };
@@ -327,12 +341,23 @@ private:
             }
 
             // construct the sub control volume faces on the domain boundary
+            LocalIndexType numBoundaryFaces = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 if (intersection.boundary() && !intersection.neighbor())
                 {
                     const auto isGeometry = intersection.geometry();
                     cache_.hasBoundaryScvf_[eIdx] = true;
+
+                    // add one boundary face per boundary intersection
+                    cache_.boundaryFaces_[eIdx].push_back(BoundaryFace{
+                        isGeometry.center(),
+                        isGeometry.volume(),
+                        intersection.centerUnitOuterNormal(),
+                        numBoundaryFaces++,
+                        static_cast<LocalIndexType>(intersection.indexInInside()),
+                        typename BoundaryFace::Traits::BoundaryFlag{intersection}
+                    });
 
                     // count
                     numScvf_ += isGeometry.corners();
@@ -469,6 +494,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the boundary face type
+    using BoundaryFace = Experimental::BoundaryFace<GV>;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export dof mapper type

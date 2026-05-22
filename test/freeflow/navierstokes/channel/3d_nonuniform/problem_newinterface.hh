@@ -219,8 +219,8 @@ private:
     {
         if constexpr (Dumux::Concept::ScvfIpData<IpData>)
             return fvGeometry.scvf(ipData.scvfIndex()).boundaryFlag();
-        else if constexpr (Dumux::Concept::IntersectionIpData<IpData>)
-            return ipData.boundaryFlag();
+        else if constexpr (Dumux::Concept::BoundaryFaceIpData<IpData>)
+            return fvGeometry.boundaryFace(ipData.boundaryFaceIndex()).boundaryFlag();
         else
             DUNE_THROW(Dune::InvalidStateException, "Unknown type of interpolation point data!");
     }

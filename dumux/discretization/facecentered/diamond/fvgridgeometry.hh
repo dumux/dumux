@@ -33,6 +33,7 @@
 #include <dumux/discretization/facecentered/diamond/subcontrolvolumeface.hh>
 #include <dumux/discretization/facecentered/diamond/fvelementgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
+#include <dumux/discretization/boundaryface.hh>
 
 #include <dumux/io/grid/periodicgridtraits.hh>
 
@@ -122,6 +123,8 @@ public:
     using ScvQuadratureRule = typename Traits::ScvQuadratureRule;
     //! the quadrature rule type for scvfs
     using ScvfQuadratureRule = typename Traits::ScvfQuadratureRule;
+    //! export boundary face type
+    using BoundaryFace = Experimental::BoundaryFace<GV>;
 
     //! Constructor
     FaceCenteredDiamondFVGridGeometry(const GridView& gridView, const std::string& paramGroup = "")
@@ -219,17 +222,23 @@ private:
         bool hasBoundaryScvf(GridIndexType eIdx) const
         { return hasBoundaryScvf_[eIdx]; }
 
+        //! Get the boundary faces of an element
+        const auto& boundaryFaces(GridIndexType eIdx) const
+        { return boundaryFaces_[eIdx]; }
+
     private:
         void clear_()
         {
             scvs_.clear();
             scvfs_.clear();
             hasBoundaryScvf_.clear();
+            boundaryFaces_.clear();
         }
 
         std::vector<std::vector<SubControlVolume>> scvs_;
         std::vector<std::vector<SubControlVolumeFace>> scvfs_;
         std::vector<bool> hasBoundaryScvf_;
+        std::vector<Dune::ReservedVector<BoundaryFace, 2*dim>> boundaryFaces_;
 
         const FaceCenteredDiamondFVGridGeometry* gridGeometry_;
     };
@@ -253,6 +262,7 @@ private:
         cache_.scvs_.resize(numElements);
         cache_.scvfs_.resize(numElements);
         cache_.hasBoundaryScvf_.resize(numElements, false);
+        cache_.boundaryFaces_.resize(numElements);
 
         boundaryDofIndices_.assign(numDofs(), false);
 
@@ -313,6 +323,7 @@ private:
             }
 
             // build boundary scvfs
+            LocalIndexType numBoundaryFaces = 0;
             for (const auto& intersection : intersections(this->gridView(), element))
             {
                 if (onDomainBoundary_(intersection))
@@ -324,6 +335,19 @@ private:
 
                     // and that the element has a boundary face
                     cache_.hasBoundaryScvf_[eIdx] = true;
+
+                    // add boundary face
+                    {
+                        const auto geo = intersection.geometry();
+                        cache_.boundaryFaces_[eIdx].push_back(BoundaryFace{
+                            geo.center(),
+                            geo.volume(),
+                            intersection.centerUnitOuterNormal(),
+                            numBoundaryFaces++,
+                            static_cast<LocalIndexType>(localFacetIndex),
+                            typename BoundaryFace::Traits::BoundaryFlag{intersection}
+                        });
+                    }
 
                     // add boundary scvf
                     const auto geo = intersection.geometry();

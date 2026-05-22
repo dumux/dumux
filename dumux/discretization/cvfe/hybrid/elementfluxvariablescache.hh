@@ -131,11 +131,11 @@ public:
         return gridFluxVarsCache().cache(eIdx_, ipData.scvfIndex(), ipData.qpIndex());
     }
 
-    // access cache for given interpolation point data of a boundary intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
+    // access cache for given interpolation point data of a boundary face quadrature point
+    template<Concept::BoundaryFaceQpIpData IpData>
     const FluxVariablesCache& operator [](const IpData& ipData) const
     {
-        return gridFluxVarsCache().boundaryIntersectionCache(eIdx_, ipData.intersectionIndex(), ipData.qpIndex());
+        return gridFluxVarsCache().boundaryFaceCache(eIdx_, ipData.boundaryFaceIndex(), ipData.qpIndex());
     }
 
     // access cache for given interpolation point data of an element quadrature point
@@ -164,8 +164,8 @@ class HybridCVFEElementFluxVariablesCache<GFVC, false>
     using GridGeometry = std::decay_t<decltype(std::declval<GFVC>().problem().gridGeometry())>;
     using GridView = typename GridGeometry::GridView;
 
-    //!< maximum number of boundary intersections per element, here assumed to be the number of faces of a dim-dimensional hypercube
-    static constexpr std::size_t maxNumIntersections = GridView::dimension << 1;
+    //!< maximum number of boundary faces per element, here assumed to be the number of faces of a dim-dimensional hypercube
+    static constexpr std::size_t maxNumBoundaryFaces = GridView::dimension << 1;
 
 public:
     //! export the type of the grid flux variables cache
@@ -224,25 +224,18 @@ public:
         for (const auto& qpData : elemQuadRule)
             elementCache_[qpData.ipData().qpIndex()].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, qpData.ipData());
 
-        // Set boundary intersection cache entries and reset non-boundary ones
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+        // Rebuild boundary face cache
+        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
         {
-            const auto iIdx = intersection.indexInInside();
-            if (intersection.boundary())
-            {
-                auto& boundaryCache = boundaryIntersectionCache_[iIdx];
-                boundaryCache.emplace();
-                const auto quadRule = CVFE::quadratureRule(fvGeometry, intersection);
-                boundaryCache->resize(quadRule.size());
-                for (const auto& qpData : quadRule)
-                    (*boundaryCache)[qpData.ipData().qpIndex()].update(gridFluxVarsCache().problem(),
-                                                                       element,
-                                                                       fvGeometry,
-                                                                       elemVolVars,
-                                                                       qpData.ipData());
-            }
-            else
-                boundaryIntersectionCache_[iIdx].reset();
+            auto& bfCache = boundaryFaceCache_[boundaryFace.index()];
+            const auto quadRule = CVFE::quadratureRule(fvGeometry, boundaryFace);
+            bfCache.resize(std::ranges::size(quadRule));
+            for (const auto& qpData : quadRule)
+                bfCache[qpData.ipData().qpIndex()].update(gridFluxVarsCache().problem(),
+                                                          element,
+                                                          fvGeometry,
+                                                          elemVolVars,
+                                                          qpData.ipData());
         }
     }
 
@@ -313,15 +306,15 @@ public:
     FluxVariablesCache& operator [](const IpData& ipData)
     { return fluxVarsCache_[ipData.scvfIndex()][ipData.qpIndex()]; }
 
-    // access cache for a given interpolation point data of an intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
+    // access cache for a given interpolation point data of a boundary face quadrature point
+    template<Concept::BoundaryFaceQpIpData IpData>
     const FluxVariablesCache& operator [](const IpData& ipData) const
-    { return (*boundaryIntersectionCache_[ipData.intersectionIndex()])[ipData.qpIndex()]; }
+    { return boundaryFaceCache_[ipData.boundaryFaceIndex()][ipData.qpIndex()]; }
 
-    // access cache for a given interpolation point data of an intersection quadrature point
-    template<Concept::IntersectionQpIpData IpData>
+    // access cache for a given interpolation point data of a boundary face quadrature point
+    template<Concept::BoundaryFaceQpIpData IpData>
     FluxVariablesCache& operator [](const IpData& ipData)
-    { return (*boundaryIntersectionCache_[ipData.intersectionIndex()])[ipData.qpIndex()]; }
+    { return boundaryFaceCache_[ipData.boundaryFaceIndex()][ipData.qpIndex()]; }
 
     // access cache for a given interpolation point data of an element quadrature point
     template<Concept::QIpData IpData>
@@ -341,7 +334,7 @@ private:
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
     std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
     std::vector<FluxVariablesCache> elementCache_;
-    std::array<std::optional<std::vector<FluxVariablesCache>>, maxNumIntersections> boundaryIntersectionCache_;
+    std::array<std::vector<FluxVariablesCache>, maxNumBoundaryFaces> boundaryFaceCache_;
 };
 
 } // end namespace Dumux

@@ -86,7 +86,7 @@ public:
             fluxVarsCache_.resize(gridGeometry.gridView().size(0));
             scvfOffset_.resize(gridGeometry.gridView().size(0));
             elementCache_.resize(gridGeometry.gridView().size(0));
-            boundaryIntersectionCache_.resize(gridGeometry.gridView().size(0));
+            boundaryFaceCache_.resize(gridGeometry.gridView().size(0));
             Dumux::parallelFor(gridGeometry.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
             {
                 // Prepare the geometries within the elements of the stencil
@@ -121,27 +121,24 @@ public:
                 for (const auto& qpData : elemQuadRule)
                     elementCache_[eIdx][qpData.ipData().qpIndex()].update(problem, element, fvGeometry, elemVolVars, qpData.ipData());
 
-                // Rebuild boundary intersection cache for this element
-                if (!boundaryIntersectionCache_[eIdx])
-                    boundaryIntersectionCache_[eIdx] = std::make_unique<std::unordered_map<int, std::vector<FluxVariablesCache>>>();
+                // Rebuild boundary face cache for this element
+                if (!boundaryFaceCache_[eIdx])
+                    boundaryFaceCache_[eIdx] = std::make_unique<std::unordered_map<int, std::vector<FluxVariablesCache>>>();
                 else
-                    boundaryIntersectionCache_[eIdx]->clear();
+                    boundaryFaceCache_[eIdx]->clear();
 
-                for (const auto& intersection : intersections(gridGeometry.gridView(), element))
+                for (const auto& boundaryFace : boundaryFaces(fvGeometry))
                 {
-                    if (intersection.boundary())
-                    {
-                        const auto quadRule = CVFE::quadratureRule(fvGeometry, intersection);
-                        const auto iIdx = intersection.indexInInside();
-                        (*boundaryIntersectionCache_[eIdx])[iIdx].resize(std::ranges::size(quadRule));
+                    const auto quadRule = CVFE::quadratureRule(fvGeometry, boundaryFace);
+                    const auto bfIdx = boundaryFace.index();
+                    (*boundaryFaceCache_[eIdx])[bfIdx].resize(std::ranges::size(quadRule));
 
-                        for (const auto& qpData : quadRule)
-                            (*boundaryIntersectionCache_[eIdx])[iIdx][qpData.ipData().qpIndex()].update(problem,
-                                                                                                        element,
-                                                                                                        fvGeometry,
-                                                                                                        elemVolVars,
-                                                                                                        qpData.ipData());
-                    }
+                    for (const auto& qpData : quadRule)
+                        (*boundaryFaceCache_[eIdx])[bfIdx][qpData.ipData().qpIndex()].update(problem,
+                                                                                             element,
+                                                                                             fvGeometry,
+                                                                                             elemVolVars,
+                                                                                             qpData.ipData());
                 }
             });
         }
@@ -183,27 +180,24 @@ public:
             for (const auto& qpData : elemQuadRule)
                 elementCache_[eIdx][qpData.ipData().qpIndex()].update(problem(), element, fvGeometry, elemVolVars, qpData.ipData());
 
-            // Rebuild boundary intersection cache for this element
-            if (!boundaryIntersectionCache_[eIdx])
-                boundaryIntersectionCache_[eIdx] = std::make_unique<std::unordered_map<int, std::vector<FluxVariablesCache>>>();
+            // Rebuild boundary face cache for this element
+            if (!boundaryFaceCache_[eIdx])
+                boundaryFaceCache_[eIdx] = std::make_unique<std::unordered_map<int, std::vector<FluxVariablesCache>>>();
             else
-                boundaryIntersectionCache_[eIdx]->clear();
+                boundaryFaceCache_[eIdx]->clear();
 
-            for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
             {
-                if (intersection.boundary())
-                {
-                    const auto quadRule = CVFE::quadratureRule(fvGeometry, intersection);
-                    const auto iIdx = intersection.indexInInside();
-                    (*boundaryIntersectionCache_[eIdx])[iIdx].resize(std::ranges::size(quadRule));
+                const auto quadRule = CVFE::quadratureRule(fvGeometry, boundaryFace);
+                const auto bfIdx = boundaryFace.index();
+                (*boundaryFaceCache_[eIdx])[bfIdx].resize(std::ranges::size(quadRule));
 
-                    for (const auto& qpData : quadRule)
-                        (*boundaryIntersectionCache_[eIdx])[iIdx][qpData.ipData().qpIndex()].update(problem(),
-                                                                                                    element,
-                                                                                                    fvGeometry,
-                                                                                                    elemVolVars,
-                                                                                                    qpData.ipData());
-                }
+                for (const auto& qpData : quadRule)
+                    (*boundaryFaceCache_[eIdx])[bfIdx][qpData.ipData().qpIndex()].update(problem(),
+                                                                                         element,
+                                                                                         fvGeometry,
+                                                                                         elemVolVars,
+                                                                                         qpData.ipData());
             }
         }
     }
@@ -223,9 +217,9 @@ public:
     const FluxVariablesCache& elementCache(std::size_t eIdx, std::size_t qpIdx) const { return elementCache_[eIdx][qpIdx]; }
     FluxVariablesCache& elementCache(std::size_t eIdx, std::size_t qpIdx) { return elementCache_[eIdx][qpIdx]; }
 
-    // access operator for boundary intersection cache
-    FluxVariablesCache& boundaryIntersectionCache(std::size_t eIdx, int iIdx, std::size_t qpIdx) { return (*boundaryIntersectionCache_[eIdx])[iIdx][qpIdx]; }
-    const FluxVariablesCache& boundaryIntersectionCache(std::size_t eIdx, int iIdx, std::size_t qpIdx) const { return (*boundaryIntersectionCache_[eIdx]).at(iIdx)[qpIdx]; }
+    // access operator for boundary face cache
+    FluxVariablesCache& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx) { return (*boundaryFaceCache_[eIdx])[bfIdx][qpIdx]; }
+    const FluxVariablesCache& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx) const { return (*boundaryFaceCache_[eIdx]).at(bfIdx)[qpIdx]; }
 
 private:
     // currently bound element
@@ -233,7 +227,7 @@ private:
     std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_; //! flat storage per element
     std::vector<std::vector<std::size_t>> scvfOffset_; //! scvfOffset_[eIdx][scvfIdx] -> offset in fluxVarsCache_[eIdx]
     std::vector<std::vector<FluxVariablesCache>> elementCache_; //! storage per element/qp
-    std::vector<std::unique_ptr<std::unordered_map<int, std::vector<FluxVariablesCache>>>> boundaryIntersectionCache_; //! storage per element/boundary intersection/qp
+    std::vector<std::unique_ptr<std::unordered_map<int, std::vector<FluxVariablesCache>>>> boundaryFaceCache_; //! storage per element/boundary face/qp
 };
 
 /*!

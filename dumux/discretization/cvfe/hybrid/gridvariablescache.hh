@@ -173,11 +173,11 @@ public:
     InterpolationPointData& elementCache(std::size_t eIdx, std::size_t qpIdx)
     { return ipDataCache_->elementCache(eIdx, qpIdx); }
 
-    const InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx) const
-    { return ipDataCache_->boundaryIntersectionCache(eIdx, intersectionIdx, qpIdx); }
+    const InterpolationPointData& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx) const
+    { return ipDataCache_->boundaryFaceCache(eIdx, bfIdx, qpIdx); }
 
-    InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx)
-    { return ipDataCache_->boundaryIntersectionCache(eIdx, intersectionIdx, qpIdx); }
+    InterpolationPointData& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx)
+    { return ipDataCache_->boundaryFaceCache(eIdx, bfIdx, qpIdx); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -190,7 +190,7 @@ private:
             std::vector<InterpolationPointData> scvfCache;
             std::vector<std::size_t> qpsOffset;
             std::vector<InterpolationPointData> elementCache;
-            std::unordered_map<int, std::vector<InterpolationPointData>> boundaryIntersectionCache;
+            std::unordered_map<int, std::vector<InterpolationPointData>> boundaryFaceCache;
 
             template<class Problem, class FVElementGeometry, class ElementVariables>
             void update(const Problem& problem,
@@ -227,22 +227,18 @@ private:
                 for (const auto& qpData : elemQuadRule)
                     elementCache[qpData.ipData().qpIndex()].update(problem, element, fvGeometry, elemVars, qpData.ipData());
 
-                boundaryIntersectionCache.clear();
-                for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+                boundaryFaceCache.clear();
+                for (const auto& boundaryFace : boundaryFaces(fvGeometry))
                 {
-                    if (intersection.boundary())
-                    {
-                        const auto intersectionIndex = intersection.indexInInside();
-                        auto& boundaryCache = boundaryIntersectionCache[intersectionIndex];
-                        const auto quadRule = Dumux::CVFE::quadratureRule(fvGeometry, intersection);
-                        boundaryCache.resize(std::ranges::size(quadRule));
-                        for (const auto& qpData : quadRule)
-                            boundaryCache[qpData.ipData().qpIndex()].update(problem,
-                                                                            element,
-                                                                            fvGeometry,
-                                                                            elemVars,
-                                                                            qpData.ipData());
-                    }
+                    auto& bfCache = boundaryFaceCache[boundaryFace.index()];
+                    const auto quadRule = Dumux::CVFE::quadratureRule(fvGeometry, boundaryFace);
+                    bfCache.resize(std::ranges::size(quadRule));
+                    for (const auto& qpData : quadRule)
+                        bfCache[qpData.ipData().qpIndex()].update(problem,
+                                                                  element,
+                                                                  fvGeometry,
+                                                                  elemVars,
+                                                                  qpData.ipData());
                 }
             }
         };
@@ -290,12 +286,12 @@ private:
         { return elementCaches_[eIdx].elementCache[qpIdx]; }
 
         // access operator
-        const InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx) const
-        { return elementCaches_[eIdx].boundaryIntersectionCache.at(intersectionIdx)[qpIdx]; }
+        const InterpolationPointData& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx) const
+        { return elementCaches_[eIdx].boundaryFaceCache.at(bfIdx)[qpIdx]; }
 
         // access operator
-        InterpolationPointData& boundaryIntersectionCache(std::size_t eIdx, int intersectionIdx, std::size_t qpIdx)
-        { return elementCaches_[eIdx].boundaryIntersectionCache[intersectionIdx][qpIdx]; }
+        InterpolationPointData& boundaryFaceCache(std::size_t eIdx, int bfIdx, std::size_t qpIdx)
+        { return elementCaches_[eIdx].boundaryFaceCache[bfIdx][qpIdx]; }
 
         const ElementCache& cache(std::size_t eIdx) const
         { return elementCaches_[eIdx]; }

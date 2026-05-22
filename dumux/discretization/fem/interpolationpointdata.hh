@@ -130,9 +130,41 @@ public:
     { return index_; }
 
 private:
-    const GlobalPosition& normal_;
+    GlobalPosition normal_;
     BoundaryFlag boundaryFlag_;
     LocalIndex index_;
+};
+
+/*!
+ * \ingroup FEMDiscretization
+ * \brief An interpolation point related to a boundary face.
+ */
+template<class BaseClass, class LocalIndex>
+class FEBoundaryFaceInterpolationPointData : public BaseClass
+{
+public:
+    using GlobalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().global())>;
+    using LocalPosition = std::remove_cvref_t<decltype(std::declval<BaseClass>().local())>;
+
+    template<class... Args>
+    FEBoundaryFaceInterpolationPointData(GlobalPosition&& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(std::move(n)), boundaryFaceIndex_(index) {}
+
+    template<class... Args>
+    FEBoundaryFaceInterpolationPointData(const GlobalPosition& n, LocalIndex index, Args&&... args)
+    : BaseClass(std::forward<Args>(args)...), normal_(n), boundaryFaceIndex_(index) {}
+
+    //! The unit outer normal vector at the interpolation point
+    const GlobalPosition& unitOuterNormal() const
+    { return normal_; }
+
+    //! The sequential local index of the boundary face (0...numBoundaryFaces-1)
+    LocalIndex boundaryFaceIndex() const
+    { return boundaryFaceIndex_; }
+
+private:
+    GlobalPosition normal_;
+    LocalIndex boundaryFaceIndex_;
 };
 
 } // end namespace Dumux

@@ -128,10 +128,10 @@ public:
                                                const IpData& ipData)
     { return elemVars.gridVariablesCache().scvfCache(elemVars.eIdx_, ipData.scvfIndex(), ipData.qpIndex()); }
 
-    template<Concept::IntersectionQpIpData IpData>
+    template<Concept::BoundaryFaceQpIpData IpData>
     friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.gridVariablesCache().boundaryIntersectionCache(elemVars.eIdx_, ipData.intersectionIndex(), ipData.qpIndex()); }
+    { return elemVars.gridVariablesCache().boundaryFaceCache(elemVars.eIdx_, ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
     template<Concept::QIpData IpData>
     friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
@@ -213,7 +213,7 @@ class HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>
     using GridView = typename GridGeometry::GridView;
 
     //!< maximum number of boundary intersections per element, here assumed to be the number of faces of a dim-dimensional hypercube
-    static constexpr std::size_t maxNumIntersections = GridView::dimension << 1;
+    static constexpr std::size_t maxNumBoundaryFaces = GridView::dimension << 1;
 
     class MutableVariablesView
     {
@@ -373,10 +373,10 @@ public:
                                                const IpData& ipData)
     { return elemVars.ipDataCache_->scvfCache(ipData.scvfIndex(), ipData.qpIndex()); }
 
-    template<Concept::IntersectionQpIpData IpData>
+    template<Concept::BoundaryFaceQpIpData IpData>
     friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.ipDataCache_->boundaryIntersectionCache(ipData.intersectionIndex(), ipData.qpIndex()); }
+    { return elemVars.ipDataCache_->boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
     template<Concept::QIpData IpData>
     friend const InterpolationPointData& cache(const HybridCVFEElementVariables& elemVars,
@@ -427,12 +427,12 @@ private:
         { return elementCache_[qpIdx]; }
 
         // access operator
-        const InterpolationPointData& boundaryIntersectionCache(std::size_t intersectionIdx, std::size_t qpIdx) const
-        { return (*boundaryIntersectionCache_[intersectionIdx])[qpIdx]; }
+        const InterpolationPointData& boundaryFaceCache(std::size_t bfIdx, std::size_t qpIdx) const
+        { return boundaryFaceCache_[bfIdx][qpIdx]; }
 
         // access operator
-        InterpolationPointData& boundaryIntersectionCache(std::size_t intersectionIdx, std::size_t qpIdx)
-        { return (*boundaryIntersectionCache_[intersectionIdx])[qpIdx]; }
+        InterpolationPointData& boundaryFaceCache(std::size_t bfIdx, std::size_t qpIdx)
+        { return boundaryFaceCache_[bfIdx][qpIdx]; }
 
     private:
         template<class Problem, class FVElementGeometry, class ElementVariables>
@@ -457,30 +457,23 @@ private:
             for (const auto& qpData : elemQuadRule)
                 elementCache_[qpData.ipData().qpIndex()].update(problem, element, fvGeometry, elemVars, qpData.ipData());
 
-            for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
             {
-                const auto intersectionIndex = intersection.indexInInside();
-                if (intersection.boundary())
-                {
-                    auto& boundaryCache = boundaryIntersectionCache_[intersectionIndex];
-                    boundaryCache.emplace();
-                    const auto quadRule = Dumux::CVFE::quadratureRule(fvGeometry, intersection);
-                    boundaryCache->resize(std::ranges::size(quadRule));
-                    for (const auto& qpData : quadRule)
-                        (*boundaryCache)[qpData.ipData().qpIndex()].update(problem,
-                                                                           element,
-                                                                           fvGeometry,
-                                                                           elemVars,
-                                                                           qpData.ipData());
-                }
-                else
-                    boundaryIntersectionCache_[intersectionIndex].reset();
+                auto& bfCache = boundaryFaceCache_[boundaryFace.index()];
+                const auto quadRule = Dumux::CVFE::quadratureRule(fvGeometry, boundaryFace);
+                bfCache.resize(std::ranges::size(quadRule));
+                for (const auto& qpData : quadRule)
+                    bfCache[qpData.ipData().qpIndex()].update(problem,
+                                                              element,
+                                                              fvGeometry,
+                                                              elemVars,
+                                                              qpData.ipData());
             }
         }
 
         std::vector<std::vector<InterpolationPointData>> scvfCache_;
         std::vector<InterpolationPointData> elementCache_;
-        std::array<std::optional<std::vector<InterpolationPointData>>, maxNumIntersections> boundaryIntersectionCache_;
+        std::array<std::vector<InterpolationPointData>, maxNumBoundaryFaces> boundaryFaceCache_;
     };
 
     const GridVariablesCache* gridVariablesCachePtr_;

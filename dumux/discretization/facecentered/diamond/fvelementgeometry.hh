@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <optional>
 #include <ranges>
+#include <span>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/iteratorrange.hh>
@@ -60,6 +61,7 @@ public:
     //! export type of subcontrol volume face
     using SubControlVolume = typename GG::SubControlVolume;
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    using BoundaryFace = typename GG::BoundaryFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridGeometry = GG;
     //! the quadrature rule type for scvs
@@ -135,6 +137,22 @@ public:
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
+
+    //! Returns whether the element has boundary faces
+    bool hasBoundaryFaces() const
+    { return hasBoundaryScvf(); }
+
+    //! Get a boundary face with a local boundary face index
+    const BoundaryFace& boundaryFace(LocalIndexType bfIdx) const
+    { return ggCache_->boundaryFaces(eIdx_)[bfIdx]; }
+
+    //! iterator range for boundary faces
+    friend inline std::ranges::view auto
+    boundaryFaces(const FaceCenteredDiamondFVElementGeometry& fvGeometry)
+    {
+        const auto& v = fvGeometry.ggCache_->boundaryFaces(fvGeometry.eIdx_);
+        return std::ranges::views::all(v);
+    }
 
     /*!
      * \brief bind the local view (r-value overload)
@@ -228,6 +246,18 @@ public:
                 GeometryHelper(*elementGeometry_).getScvfCorners(scvf.index())
             };
         }
+    }
+
+    //! Geometry of a boundary face
+    typename BoundaryFace::Traits::Geometry geometry(const BoundaryFace& boundaryFace) const
+    {
+        assert(isBound());
+        const auto& elemGeo = elementGeometry();
+        const auto faceGeoInRef = referenceElement(elemGeo).template geometry<1>(boundaryFace.intersectionIndex());
+        typename BoundaryFace::Traits::CornerStorage corners;
+        for (int i = 0; i < faceGeoInRef.corners(); ++i)
+            corners.push_back(elemGeo.global(faceGeoInRef.corner(i)));
+        return { faceGeoInRef.type(), corners };
     }
 
     //! an iterator over all local dofs related to an intersection

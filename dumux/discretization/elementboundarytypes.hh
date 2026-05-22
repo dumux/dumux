@@ -108,6 +108,18 @@ public:
         return bcTypes_[localIdx];
     }
 
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     */
+    template<class FVElementGeometry>
+    const BoundaryTypes& get(const FVElementGeometry&, const typename FVElementGeometry::BoundaryFace& boundaryFace) const
+    {
+        const auto localIdx = boundaryFace.intersectionIndex();
+        assert(localIdx < bcTypes_.size());
+        return bcTypes_[localIdx];
+    }
+
 private:
     std::vector<BoundaryTypes> bcTypes_;
     bool hasDirichlet_ = false;
