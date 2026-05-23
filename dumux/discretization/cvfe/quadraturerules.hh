@@ -160,7 +160,9 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolume& scv,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridView = typename FVElementGeometry::GridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::LocalDofIpData<GridView>>;
     const auto& elementGeo = fvGeometry.elementGeometry();
     const auto ipGlobal = scv.center();
@@ -168,7 +170,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     const auto localDofIdx = scv.localDofIndex();
 
     std::array<QuadraturePointData<QIpData>, 1> result{{
-        {scv.volume(), QIpData(0, ipLocal, ipGlobal, localDofIdx)}
+        {Extrusion::volume(fvGeometry, scv), QIpData(0, ipLocal, ipGlobal, localDofIdx)}
     }};
     return result;
 }
@@ -207,7 +209,9 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridView = typename FVElementGeometry::GridGeometry::GridView;
+    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridView = typename GridGeometry::GridView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using FaceIpData = FaceInterpolationPointData<Detail::BaseIpData<GridView>, typename IndexTraits<GridView>::LocalIndex>;
     using QFaceIpData = IndexedQuadratureInterpolationPointData<FaceIpData>;
     const auto& elementGeo = fvGeometry.elementGeometry();
@@ -215,7 +219,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     const auto ipLocal = elementGeo.local(ipGlobal);
 
     std::array<QuadraturePointData<QFaceIpData>, 1> result{{
-        {scvf.area(), QFaceIpData(0, scvf.unitOuterNormal(), scvf.index(), ipLocal, ipGlobal)}
+        {Extrusion::area(fvGeometry, scvf), QFaceIpData(0, scvf.unitOuterNormal(), scvf.index(), ipLocal, ipGlobal)}
     }};
     return result;
 }
@@ -259,6 +263,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 {
     using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::BaseIpData<GridView>>;
 
     const auto& elementGeo = fvGeometry.elementGeometry();
@@ -266,7 +271,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     const auto ipLocal = elementGeo.local(ipGlobal);
 
     std::array<Dumux::QuadraturePointData<QIpData>, 1> result{{
-        {elementGeo.volume(), QIpData(0, ipLocal, ipGlobal)}
+        {Extrusion::volume(fvGeometry, elementGeo), QIpData(0, ipLocal, ipGlobal)}
     }};
     return result;
 }
@@ -306,6 +311,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     // per default we don't add any intersection information to the ipData
     using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using BFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
     using FaceIpData = FEFaceInterpolationPointData<Detail::BaseIpData<GridView>,
                                                     BFlag,
@@ -318,7 +324,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     const auto ipLocal = elementGeo.local(ipGlobal);
 
     std::array<Dumux::QuadraturePointData<QFaceIpData>, 1> result{{
-        {isGeometry.volume(),
+        {Extrusion::area(fvGeometry, isGeometry),
             QFaceIpData(0, is.centerUnitOuterNormal(), BFlag{ is }, is.indexInInside(), ipLocal, ipGlobal)}
     }};
     return result;
@@ -369,6 +375,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 {
     using GridGeometry = typename FVElementGeometry::GridGeometry;
     using GridView = typename GridGeometry::GridView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using LocalIndex = typename IndexTraits<GridView>::LocalIndex;
     using BFIpData = FEBoundaryFaceInterpolationPointData<Detail::BaseIpData<GridView>, LocalIndex>;
     using QBFIpData = IndexedQuadratureInterpolationPointData<BFIpData>;
@@ -378,7 +385,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     const auto ipLocal = elementGeo.local(ipGlobal);
 
     std::array<QuadraturePointData<QBFIpData>, 1> result{{
-        {boundaryFace.area(), QBFIpData(0, boundaryFace.unitOuterNormal(), boundaryFace.index(), ipLocal, ipGlobal)}
+        {Extrusion::area(fvGeometry, boundaryFace), QBFIpData(0, boundaryFace.unitOuterNormal(), boundaryFace.index(), ipLocal, ipGlobal)}
     }};
     return result;
 }
