@@ -25,9 +25,13 @@ namespace Dumux {
  */
 struct NoExtrusion
 {
-    template<class FVGeo, class SCVF>
-    static constexpr auto area(const FVGeo&, const SCVF& scvf)
-    { return scvf.area(); }
+    template<class FVGeo, class Face>
+    static constexpr auto area(const FVGeo&, const Face& face)
+    { return face.area(); }
+
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<1>::Entity::Geometry& geo)
+    { return geo.volume(); }
 
     template<class FVGeo, class SCV>
     static constexpr auto volume(const FVGeo&, const SCV& scv)
@@ -53,18 +57,33 @@ struct RotationalExtrusion
     static constexpr int radialAxis = radAx;
 
     /*!
-     * \brief Transformed sub-control-volume face area
+     * \brief Transformed face area
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class FVGeo, class SCVF>
-    static constexpr auto area(const FVGeo&, const SCVF& scvf)
+    template<class FVGeo, class Face>
+    static constexpr auto area(const FVGeo&, const Face& face)
     {
-        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
-        static_assert(SCVF::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
-        static_assert(radialAxis < int(SCVF::Traits::Geometry::coorddimension), "Illegal radial axis!");
+        static_assert(int(Face::Traits::Geometry::mydimension) == int(Face::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
+        static_assert(Face::Traits::Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
+        static_assert(radialAxis < int(Face::Traits::Geometry::coorddimension), "Illegal radial axis!");
 
         // Guldinus theorem
-        return scvf.area()*2.0*M_PI*scvf.center()[radialAxis];
+        return face.area()*2.0*M_PI*face.center()[radialAxis];
+    }
+
+    /*!
+     * \brief Transformed intersection area
+     * \note Mid-point rule integrals are only exact for constants
+     */
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<1>::Entity::Geometry& geo)
+    {
+        using Geometry = typename FVGeo::GridGeometry::GridView::template Codim<1>::Entity::Geometry;
+        static_assert(Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
+        static_assert(radialAxis < int(Geometry::coorddimension), "Illegal radial axis!");
+
+        // Guldinus theorem
+        return geo.volume()*2.0*M_PI*geo.center()[radialAxis];
     }
 
     /*!
@@ -118,17 +137,32 @@ struct RotationalExtrusion
 struct SphericalExtrusion
 {
     /*!
-     * \brief Transformed sub-control-volume face area
+     * \brief Transformed face area
      * \note Mid-point rule integrals are only exact for constants
      */
-    template<class FVGeo, class SCVF>
-    static constexpr auto area(const FVGeo&, const SCVF& scvf)
+    template<class FVGeo, class Face>
+    static constexpr auto area(const FVGeo&, const Face& face)
     {
-        static_assert(int(SCVF::Traits::Geometry::mydimension) == int(SCVF::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
-        static_assert(SCVF::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
+        static_assert(int(Face::Traits::Geometry::mydimension) == int(Face::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
+        static_assert(Face::Traits::Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
 
         // sphere surface area
-        const auto radius = scvf.center()[0];
+        const auto radius = face.center()[0];
+        return 4.0*M_PI*radius*radius;
+    }
+
+    /*!
+     * \brief Transformed intersection area
+     * \note Mid-point rule integrals are only exact for constants
+     */
+    template<class FVGeo>
+    static constexpr auto area(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<1>::Entity::Geometry& geo)
+    {
+        using Geometry = typename FVGeo::GridGeometry::GridView::template Codim<1>::Entity::Geometry;
+        static_assert(Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
+
+        // sphere surface area
+        const auto radius = geo.center()[0];
         return 4.0*M_PI*radius*radius;
     }
 
