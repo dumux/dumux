@@ -33,6 +33,10 @@ struct NoExtrusion
     static constexpr auto volume(const FVGeo&, const SCV& scv)
     { return scv.volume(); }
 
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<0>::Entity::Geometry& geo)
+    { return geo.volume(); }
+
     template<class Geometry>
     static constexpr auto integrationElement(const Geometry& geo, const typename Geometry::LocalCoordinate& x)
     { return geo.integrationElement(x); }
@@ -76,6 +80,21 @@ struct RotationalExtrusion
 
         // Guldinus theorem
         return scv.volume()*2.0*M_PI*scv.center()[radialAxis];
+    }
+
+    /*!
+     * \brief Transformed element volume
+     * \note Mid-point rule integrals are only exact for constants
+     */
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<0>::Entity::Geometry& geo)
+    {
+        using Geometry = typename FVGeo::GridGeometry::GridView::template Codim<0>::Entity::Geometry;
+        static_assert(Geometry::coorddimension <= 2, "Axis rotation only makes sense for geometries up to 2D!");
+        static_assert(radialAxis < int(Geometry::coorddimension), "Illegal radial axis!");
+
+        // Guldinus theorem
+        return geo.volume()*2.0*M_PI*geo.center()[radialAxis];
     }
 
     /*!
@@ -125,6 +144,23 @@ struct SphericalExtrusion
 
         // subtract two balls
         const auto geo = fvGeometry.geometry(scv);
+        const auto radius0 = geo.corner(0)[0];
+        const auto radius1 = geo.corner(1)[0];
+        using std::abs;
+        return 4.0/3.0*M_PI*abs(radius1*radius1*radius1 - radius0*radius0*radius0);
+    }
+
+    /*!
+     * \brief Transformed element volume
+     * \note Mid-point rule integrals are only exact for constants
+     */
+    template<class FVGeo>
+    static constexpr auto volume(const FVGeo&, const typename FVGeo::GridGeometry::GridView::template Codim<0>::Entity::Geometry& geo)
+    {
+        using Geometry = typename FVGeo::GridGeometry::GridView::template Codim<0>::Entity::Geometry;
+        static_assert(Geometry::coorddimension == 1, "Spherical rotation only makes sense for 1D geometries!");
+
+        // subtract two balls
         const auto radius0 = geo.corner(0)[0];
         const auto radius1 = geo.corner(1)[0];
         using std::abs;
