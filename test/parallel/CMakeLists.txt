@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(partition)
+add_subdirectory(vectorcommdatahandle)
