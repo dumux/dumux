@@ -120,6 +120,9 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
     { return gridView.overlapSize(0) == 0; }
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
 };
 
 template<class GridGeometry>

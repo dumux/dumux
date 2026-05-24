@@ -108,7 +108,7 @@ struct ElementBoundaryTypes<TypeTag, TTag::BoxModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
     // Check if problem has new boundaryTypes interface
@@ -128,7 +128,7 @@ template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethods::Box>
 {
 private:
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
 public:
     using GridGeometry = GG;
     // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, boundaryFace)

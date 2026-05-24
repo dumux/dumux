@@ -21,6 +21,23 @@ namespace Dumux {
 namespace Detail {
 template<class Problem, class DiscretizationMethod>
 struct ProblemTraits;
+
+template<class Problem>
+struct ProblemGridGeometryHelper
+{
+private:
+    template<class P>
+    static auto deduce(int) -> std::decay_t<decltype(std::declval<const P&>().gridGeometry())>;
+
+    template<class P>
+    static auto deduce(long) -> std::decay_t<decltype(std::declval<const P&>().gridDiscretization())>;
+
+public:
+    using type = decltype(deduce<Problem>(0));
+};
+
+template<class Problem>
+using ProblemGridGeometry = typename ProblemGridGeometryHelper<Problem>::type;
 } // end namespace Detail
 
 /*!
@@ -30,7 +47,7 @@ struct ProblemTraits;
 template<class Problem>
 struct ProblemTraits
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = Detail::ProblemGridGeometry<Problem>;
     using BoundaryTypes = typename Detail::template ProblemTraits<Problem, typename GridGeometry::DiscretizationMethod>::BoundaryTypes;
 };
 

@@ -228,6 +228,32 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_pq1bubble_simplex params.input
                             -Problem.Name donea_momentum_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
+dumux_add_test(NAME test_ff_stokes_donea_momentum_box_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_box_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_box_simplex_box_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_box_simplex params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_box_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_box_simplex_parallel
+               TARGET test_ff_stokes_donea_momentum_box_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy --ignore "rank"
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_box_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_momentum_box_simplex_parallel_box_1.pvtu
+                           --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_box_simplex params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_box_simplex_parallel -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex
                SOURCES main_momentum.cc
                LABELS freeflow navierstokes donea

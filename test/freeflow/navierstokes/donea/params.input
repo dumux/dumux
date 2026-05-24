@@ -18,15 +18,19 @@ LiquidDensity = 1.0
 LiquidKinematicViscosity = 1.0
 
 [ Newton ]
+MinSteps = 1
 MaxSteps = 10
 MaxRelativeShift = 1e-8
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-12
 
 [LinearSolver]
 Type = bicgstabsolver
-ResidualReduction = 1e-15
+ResidualReduction = 1e-13
+Verbosity = 0
 
 [LinearSolver.Preconditioner]
-Type = ilu
+Type = amg
 AmgAccumulationMode = atOnce
 
 [Assembly]
