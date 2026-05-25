@@ -1,0 +1,33 @@
+[Grid]
+# Quarter model: [0,50] x [0,50] x [0,50] mm
+UpperRight = 50 50 50
+Cells = 10 10 10
+
+[Problem]
+Name = test_hyperelastic_incompressible_block
+EnableGravity = false
+# Applied load q = 3 MPa (downward); neumann = +q per DuMux sign convention
+Load = 3.0
+
+[LoadStepping]
+NSteps = 1
+
+[SpatialParams]
+# SPP-1748 benchmark (Table 3.2): λ = 499.92568 MPa, µ = 1.61148 MPa (ν ≈ 0.4983)
+Lambda = 499.92568
+Mu = 1.61148
+
+[Component]
+SolidDensity = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[LinearSolver]
+MaxIterations = 3000
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+MaxSteps = 25

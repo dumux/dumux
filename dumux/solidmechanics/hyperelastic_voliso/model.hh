@@ -13,11 +13,11 @@
  *
  * # Physical model
  *
- * This model solves the finite-strain quasi-static momentum balance for a
- * hyperelastic solid using a **mixed displacement-pressure (u–p) formulation**.
- * The split between volumetric and isochoric (deviatoric) response is handled
- * by an independent pressure-like variable \f$ p_s \f$, which prevents
- * volumetric locking for (nearly-)incompressible materials.
+ * This model solves the finite-strain quasi-static balance laws for a
+ * hyperelastic solid using a mixed displacement-pressure formulation.
+ * The split between volumetric and isochoric response is handled by an
+ * independent pressure-like variable \f$ p_s \f$, which prevents volumetric
+ * locking for (nearly-)incompressible materials.
  *
  * ## Kinematics
  *
@@ -31,35 +31,23 @@
  *
  * ## Governing equations
  *
- * **Subdomain 0 — Momentum** (displacement \f$ \mathbf{d} \f$, PQ1Bubble or PQ2):
+ * **Momentum subproblem** (displacement \f$ \mathbf{d} \f$):
  * \f[
- *   -\nabla_X \cdot \mathbf{P} = \mathbf{0}, \quad
- *   \mathbf{P} = \mu\!\left(\mathbf{F} - \mathbf{F}^{-T}\right) + J p_s \mathbf{F}^{-T},
+ *   -\nabla_X \cdot \mathbf{P} = \mathbf{0},
  * \f]
- * where \f$ \mu \f$ is the shear modulus (read from `spatialParams().shearModulus()`).
- * This stress corresponds to the isochoric part of the neo-Hookean energy
- * \f$ \psi_{\mathrm{iso}} = \tfrac{\mu}{2}(\mathrm{tr}\,\mathbf{C} - 3 - 2\ln J) \f$
- * augmented by the volumetric pressure contribution.
+ * where the stress tensor \f$ \mathbf{P} \f$ is supplied by the problem via
+ * `firstPiolaKirchhoffStressTensor(F, ...)`.
  *
- * **Subdomain 1 — Bulk pressure** (\f$ p_s \f$, Box/P1):
+ * **Pressure subproblem** (pressure \f$ p_s \f$):
  * \f[
  *   p_s^{\mathrm{eq}}(J) - p_s = 0,
  * \f]
- * where the equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) = \partial W_{\mathrm{vol}}/\partial J \f$
- * is defined by the strain energy function and must be supplied by the pressure problem via
- * `problem.volumetricPressure(J)`.  Two common choices are:
- * - \f$ W_{\mathrm{vol}} = \tfrac{\lambda}{2}(J-1)^2 \f$:
- *   \f$ p_s^{\mathrm{eq}} = \lambda(J-1) \f$
- * - Ogden \f$ \psi_1 \f$:
- *   \f$ p_s^{\mathrm{eq}} = \lambda(J^2-1)/(2J) \f$
+ * where the equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) \f$ is supplied by
+ * the pressure problem via `problem.volumetricPressure(J)`.
  *
- * ## Discretization schemes
- *
- * The two type tags `HyperelasticVolIsoMomentumModel` and
- * `HyperelasticVolIsoPressureModel` must be combined with a suitable
- * discretization tag (e.g. `PQ1BubbleModel`/`BoxModel` for MINI or
- * `PQ2HybridModel`/`BoxModel` for Taylor-Hood) in the application's
- * properties file, and coupled via `HyperelasticVolIsoCouplingManager`.
+ * The type tags `HyperelasticVolIsoMomentumModel` and
+ * `HyperelasticVolIsoPressureModel` are coupled via
+ * `HyperelasticVolIsoCouplingManager`.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_MODEL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_MODEL_HH
@@ -68,7 +56,7 @@
 #include <dumux/common/properties/model.hh>
 
 #include "localresidual.hh"
-#include "volumevariables.hh"
+#include "variables.hh"
 
 namespace Dumux {
 
@@ -156,32 +144,37 @@ struct ModelTraits<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
     using type = HyperelasticVolIsoMomentumModelTraits<
         GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension>;
 };
+
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
 { using type = HyperelasticVolIsoMomentumLocalResidual<TypeTag>; };
+
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using type = HyperelasticVolIsoMomentumVolumeVariables<
+    using type = HyperelasticVolIsoMomentumVariables<
         HyperelasticVolIsoMomentumVVTraits<PV, MT>>;
 };
 
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 { using type = HyperelasticVolIsoPressureModelTraits; };
+
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 { using type = HyperelasticVolIsoPressureLocalResidual<TypeTag>; };
+
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using type = HyperelasticVolIsoPressureVolumeVariables<
+    using type = HyperelasticVolIsoPressureVariables<
         HyperelasticVolIsoPressureVVTraits<PV, MT>>;
 };
 
 } // end namespace Dumux::Properties
+
 #endif
