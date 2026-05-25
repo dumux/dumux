@@ -1,0 +1,27 @@
+[Grid]
+File = cooksmembrane3d.msh
+Refinement = 2
+
+[Problem]
+Name = test_hyperelastic_cooks_membrane3d
+EnableGravity = false
+ShearTraction = 20.0
+
+[SpatialParams]
+Mu = 185.185
+Lambda = 432.099
+LambdaValues = 432.099 750 9260 92600 926000
+
+[Component]
+SolidDensity = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+MaxSteps = 25
+UseLineSearch = true

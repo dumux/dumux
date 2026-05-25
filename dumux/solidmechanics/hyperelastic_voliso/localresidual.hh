@@ -12,8 +12,8 @@
  * Two local residual classes are provided:
  *
  * - `HyperelasticVolIsoMomentumLocalResidual`: Momentum equation
- *   \f[ -\nabla_X \cdot \mathbf{P} = \mathbf{0}, \quad
- *       \mathbf{P} = \mu(\mathbf{F} - \mathbf{F}^{-T}) + J p_s \mathbf{F}^{-T} \f]
+ *   \f[ -\nabla_X \cdot \mathbf{P} = \mathbf{0} \f]
+ *   where the stress tensor \f$ \mathbf{P} \f$ is supplied by the problem.
  *
  * - `HyperelasticVolIsoPressureLocalResidual`: Algebraic pressure constraint
  *   \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
@@ -30,6 +30,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
+#include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
@@ -39,13 +40,9 @@ namespace Dumux {
  * \brief Momentum local residual for the mixed u–p hyperelastic model.
  *
  * Uses the Experimental::GridVariables concept so that `ElementVariables`
- * covers all local DOFs (vertex SCVs + bubble / edge-midpoint DOFs).
- * The first Piola–Kirchhoff stress is
- * \f[ \mathbf{P} = \mu(\mathbf{F} - \mathbf{F}^{-T}) + J p_s \mathbf{F}^{-T}, \f]
- * with the pressure \f$ p_s \f$ obtained from the coupling manager.
- *
- * The shear modulus \f$ \mu \f$ is read from `problem.spatialParams().shearModulus()`.
- * Neumann boundary conditions and non-CV (PQ2 edge-midpoint) DOFs are also handled.
+ * covers all local DOFs. The stress tensor is obtained from the problem via
+ * `firstPiolaKirchhoffStressTensor(...)`. Neumann boundary conditions and
+ * non-CV DOFs are also handled.
  */
 template<class TypeTag>
 class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
@@ -81,13 +78,7 @@ public:
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief FE contributions for non-CV (edge-midpoint) DOFs — only active for hybrid schemes (PQ2).
-     *
-     * For MINI (PQ1Bubble), `hasNonCVLocalDofsInterface` is false and this is a no-op.
-     * For Taylor-Hood (PQ2), assembles:
-     * \f[ \int_K \mathbf{P} : \nabla\phi_i \, dX
-     *     + \int_{\partial K_N} \mathbf{T} \cdot \phi_i \, dA \f]
-     * for each edge-midpoint DOF \f$ i \f$.
+     * \brief FE contributions for non-CV DOFs.
      */
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
@@ -102,8 +93,6 @@ public:
         if (nonCVLocalDofs(fvGeometry).empty())
             return;
 
-        const Scalar mu = problem.spatialParams().shearModulus();
-
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
         {
             const auto& ipCache = cache(elemVars, qpData.ipData());
@@ -115,16 +104,7 @@ public:
                     F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
             for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
 
-            const Scalar J  = F.determinant();
-            const Scalar ps = problem.couplingManager().pressureAtPoint(fvGeometry, ipGlobal);
-
-            Tensor Finv = F; Finv.invert();
-            const Tensor FinvT = transpose(Finv);
-
-            Tensor P(0.0);
-            for (int i = 0; i < dim; ++i)
-                for (int j = 0; j < dim; ++j)
-                    P[i][j] = mu*(F[i][j] - FinvT[i][j]) + J*ps*FinvT[i][j];
+            const auto P = problem.firstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
 
             for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
             {
@@ -166,7 +146,7 @@ public:
     }
 
     /*!
-     * \brief Interior flux integral: \f$ -\mathbf{P} \cdot \mathbf{n} \f$ integrated over an scvf.
+     * \brief Interior flux integral.
      *
      * Called by Experimental::CVFELocalResidual::evalFlux for interior faces.
      */
@@ -176,7 +156,6 @@ public:
     {
         const auto& problem = this->asImp().problem();
         const auto& n = scvf.unitOuterNormal();
-        const Scalar mu = problem.spatialParams().shearModulus();
         NumEqVector f(0.0);
 
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
@@ -190,17 +169,11 @@ public:
                     F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
             for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
 
-            const Scalar J  = F.determinant();
-            const Scalar ps = problem.couplingManager().pressureAtPoint(fvGeometry, ipGlobal);
-
-            Tensor Finv = F; Finv.invert();
-            const Tensor FinvT = transpose(Finv);
+            const auto P = problem.firstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
 
             for (int i = 0; i < dim; ++i)
                 for (int j = 0; j < dim; ++j)
-                    f[Indices::momentum(i)] -=
-                        (mu*(F[i][j] - FinvT[i][j]) + J*ps*FinvT[i][j])
-                        * n[j] * qpData.weight();
+                    f[Indices::momentum(i)] -= P[i][j] * n[j] * qpData.weight();
         }
         return f;
     }
@@ -212,15 +185,8 @@ public:
  *
  * Enforces the algebraic pressure constraint
  * \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
- * averaged over each SCV.  The equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) \f$
- * is material-specific and must be supplied by the pressure problem via
- * `problem.volumetricPressure(J)`.  For example:
- * - \f$ W_{\mathrm{vol}} = \tfrac{\lambda}{2}(J-1)^2 \f$:
- *   \f$ p_s^{\mathrm{eq}} = \lambda(J-1) \f$
- * - Ogden \f$ \psi_1 \f$:
- *   \f$ p_s^{\mathrm{eq}} = \lambda(J^2-1)/(2J) \f$
- *
- * The deformation gradient \f$ \mathbf{F} \f$ is obtained from the coupling manager.
+ * averaged over each SCV. The equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) \f$
+ * is supplied by the pressure problem via `problem.volumetricPressure(J)`.
  */
 template<class TypeTag>
 class HyperelasticVolIsoPressureLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
@@ -253,7 +219,7 @@ public:
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Pressure constraint averaged over an SCV.
+     * \brief Pressure constraint integrated over an SCV.
      *
      * Returns \f$ -(p_s^{\mathrm{eq}}(\bar J) - p_s) \f$ (negated because
      * `evalSource` subtracts the source, so the residual contribution is
@@ -264,22 +230,27 @@ public:
                                const ElementVariables& elemVars,
                                const SubControlVolume_& scv) const
     {
-        const auto& problem = this->asImp().problem();
-        const Scalar ps = elemVars[scv].pressure();
+        NumEqVector source(0.0);
 
-        Scalar integral = 0.0, totalWeight = 0.0;
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scv))
+        const auto& problem = this->asImp().problem();
+        const auto& localBasis = fvGeometry.gridGeometry().feCache().get(fvGeometry.element().type()).localBasis();
+        std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
+
+        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scv, QuadratureRules::DuneQuadrature<3>{}))
         {
             const Tensor F = problem.couplingManager().deformationGradientAtPoint(
                 fvGeometry, qpData.ipData().global());
             const Scalar J = F.determinant();
             const Scalar psEq = problem.volumetricPressure(J);
-            integral    += (psEq - ps) * qpData.weight();
-            totalWeight += qpData.weight();
+
+            localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
+            Scalar ps = 0.0;
+            for (const auto& localDof : localDofs(fvGeometry))
+                ps += elemVars[localDof].pressure() * shapeValues[localDof.index()][0];
+
+            source[0] -= (psEq - ps) * qpData.weight();
         }
 
-        NumEqVector source(0.0);
-        source[0] = (totalWeight > 0.0) ? -integral/totalWeight : 0.0;
         return source;
     }
 };
