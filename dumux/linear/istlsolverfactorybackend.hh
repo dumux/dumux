@@ -15,6 +15,7 @@
 #define DUMUX_LINEAR_ISTL_SOLVERFACTORYBACKEND_HH
 
 #include <memory>
+#include <type_traits>
 
 #include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -202,7 +203,10 @@ public:
                 using GV = typename LinearSolverTraits::GridView;
                 using DM = typename LinearSolverTraits::DofMapper;
                 ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
-                vectorHelper.makeNonOverlappingConsistent(y);
+                if constexpr (requires { LinearSolverTraits::dofCodims; })
+                    vectorHelper.makeNonOverlappingConsistent(y, LinearSolverTraits::dofCodims);
+                else
+                    vectorHelper.makeNonOverlappingConsistent(y);
                 return scalarProduct_->norm(y);
             }
         }
