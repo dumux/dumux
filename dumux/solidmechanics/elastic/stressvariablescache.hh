@@ -34,6 +34,12 @@ class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::Box>
 : public CVFEFluxVariablesCache< Scalar, GridGeometry >
 {};
 
+//! Reuse the same cache for the pq1bubble scheme (same CVFE infrastructure).
+template< class Scalar, class GridGeometry >
+class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::PQ1Bubble>
+: public CVFEFluxVariablesCache< Scalar, GridGeometry >
+{};
+
 // specialization for the cell centered tpfa method
 template< class Scalar, class GridGeometry >
 class StressVariablesCache<Scalar, GridGeometry, DiscretizationMethods::CCTpfa>
