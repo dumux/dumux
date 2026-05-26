@@ -12,6 +12,7 @@
 #ifndef DUMUX_LINEAR_PARALLELHELPERS_HH
 #define DUMUX_LINEAR_PARALLELHELPERS_HH
 
+#include <algorithm>
 #include <dune/common/exceptions.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -22,6 +23,10 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/common/gridcapabilities.hh>
+#include <dumux/common/parameters.hh>
+
+#include <string>
+#include <utility>
 
 namespace Dumux::Detail {
 
@@ -40,6 +45,16 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
 
     class BaseGatherScatter
     {
+        static constexpr int numCodims_ = GridView::dimension + 1;
+
+        static constexpr auto getActiveCodims_()
+        {
+            if constexpr (requires { LinearSolverTraits::dofCodims; })
+                return LinearSolverTraits::dofCodims;
+            else
+                return std::bitset<numCodims_>{ 1UL << dofCodim };
+        }
+
     public:
         BaseGatherScatter(const DofMapper& mapper)
         : mapper_(mapper) {}
@@ -49,7 +64,7 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         { return mapper_.index(e); }
 
         bool contains(int dim, int codim) const
-        { return dofCodim == codim; }
+        { return codim >= 0 && codim < numCodims_ && activeCodims_.test(codim); }
 
         //! returns true if size per entity of given dim and codim is a constant
         bool fixedSize(int dim, int codim) const
@@ -65,6 +80,7 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
 
     private:
         const DofMapper& mapper_;
+        static constexpr auto activeCodims_ = getActiveCodims_();
     };
 
     /*!
@@ -494,6 +510,29 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
+    //! \brief Make a vector consistent for non-overlapping domain decomposition methods on multiple codims
+    template<class Block, class Alloc, std::size_t numCodims>
+    void makeNonOverlappingConsistent(
+        Dune::BlockVector<Block, Alloc>& v,
+        const std::bitset<numCodims>& activeCodims
+    ) const
+    {
+        static_assert(numCodims == GridView::dimension + 1,
+            "Number of codims must match GridView::dimension+1");
+
+        if (gridView_.comm().size() > 1)
+        {
+            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
+                mapper_, v, activeCodims
+            );
+            gridView_.communicate(
+                gs,
+                Dune::InteriorBorder_InteriorBorder_Interface,
+                Dune::ForwardCommunication
+            );
+        }
+    }
+
     //! \brief Make a vector consistent for overlapping domain decomposition methods
     template<class Block, class Alloc>
     void makeOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
@@ -517,6 +556,29 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
+    //! \brief Make a vector consistent for overlapping domain decomposition methods on multiple codims
+    template<class Block, class Alloc, std::size_t numCodims>
+    void makeOverlappingConsistent(
+        Dune::BlockVector<Block, Alloc>& v,
+        const std::bitset<numCodims>& activeCodims
+    ) const
+    {
+        static_assert(numCodims == GridView::dimension + 1,
+            "Number of codims must match GridView::dimension+1");
+
+        // Zero overlap entries on all active codims so the sum communication remains well-defined.
+        zeroOverlapEntries_<0>(v, activeCodims);
+
+        if (gridView_.comm().size() > 1)
+        {
+            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
+                mapper_, v, activeCodims
+            );
+            gridView_.communicate(gs, Dune::Overlap_All_Interface,
+                                Dune::ForwardCommunication);
+        }
+    }
+
     //! \brief Make a vector consistent for non-overlapping domain decomposition methods
     template<class... Blocks>
     void makeNonOverlappingConsistent(Dune::MultiTypeBlockVector<Blocks...>& v) const
@@ -525,6 +587,29 @@ public:
     }
 
 private:
+    template<int codim, class Block, class Alloc, std::size_t numCodims>
+    void zeroOverlapEntries_(Dune::BlockVector<Block, Alloc>& v,
+                             const std::bitset<numCodims>& activeCodims) const
+    {
+        if constexpr (codim <= GridView::dimension)
+        {
+            if (activeCodims.test(codim))
+            {
+                for (const auto& element : elements(gridView_))
+                {
+                    for (int i = 0; i < element.subEntities(codim); ++i)
+                    {
+                        const auto entity = element.template subEntity<codim>(i);
+                        if (entity.partitionType() == Dune::OverlapEntity)
+                            v[mapper_.index(entity)] = 0;
+                    }
+                }
+            }
+
+            zeroOverlapEntries_<codim + 1>(v, activeCodims);
+        }
+    }
+
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
 };
@@ -542,6 +627,19 @@ template<class Matrix, class GridView,
 class ParallelMatrixHelper
 {
     using IdType = typename GridView::Traits::Grid::Traits::GlobalIdSet::IdType;
+
+    struct DofIdKey
+    {
+        int codim;
+        IdType id;
+
+        friend bool operator<(const DofIdKey& a, const DofIdKey& b)
+        {
+            if (a.codim != b.codim)
+                return a.codim < b.codim;
+            return a.id < b.id;
+        }
+    };
 
     /*!
      * \brief A DataHandle class to exchange matrix sparsity patterns.
@@ -566,10 +664,10 @@ class ParallelMatrixHelper
      */
     template<class ColIsGhostFunc>
     struct MatrixPatternExchange
-    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, IdType>
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, DofIdKey>
     {
         //! Export type of data for message buffer
-        using DataType = IdType;
+        using DataType = DofIdKey;
 
         /*!
          * \brief Construct a new sparsity pattern exchange handle
@@ -582,12 +680,13 @@ class ParallelMatrixHelper
          * \param isGhostColumDof a function that returns whether a given column index is associated with a ghost entity
          */
         MatrixPatternExchange(const RowDofMapper& rowEntityMapper,
-                              const std::map<IdType,int>& globalToLocal,
-                              const std::map<int,IdType>& localToGlobal,
+                              const std::map<DofIdKey,int>& globalToLocal,
+                              const std::map<int,DofIdKey>& localToGlobal,
                               Matrix& A,
                               std::vector<std::set<int>>& sparsityPattern,
                               const ColIsGhostFunc& isGhostColumDof)
-        : rowEntityMapper_(rowEntityMapper), idToIndex_(globalToLocal), indexToID_(localToGlobal)
+        : rowEntityMapper_(rowEntityMapper)
+        , idToIndex_(globalToLocal), indexToID_(localToGlobal)
         , sparsityPattern_(sparsityPattern), A_(A), isGhostColumDof_(isGhostColumDof)
         {
             sparsityPattern_.resize(A.N());
@@ -614,8 +713,10 @@ class ParallelMatrixHelper
             // all column entity indices of this row that are in the index set
             std::size_t n = 0;
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
                 if (indexToID_.count(colIt.index()))
-                    n++;
+                    ++n;
+            }
 
             return n;
         }
@@ -630,8 +731,10 @@ class ParallelMatrixHelper
 
             // send all column entity ids of this row that are in the index set
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
                 if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
                     buff.write(it->second);
+            }
         }
 
         /*!
@@ -644,17 +747,14 @@ class ParallelMatrixHelper
             for (std::size_t k = 0; k < n; k++)
             {
                 // receive n column entity IDs
-                IdType id;
-                buff.read(id);
+                DofIdKey key;
+                buff.read(key);
 
                 // only add entries that are contained in the index set
-                if (const auto it = idToIndex_.find(id); it != idToIndex_.end())
+                if (const auto it = idToIndex_.find(key); it != idToIndex_.end())
                 {
-                    const auto colIdx = it->second; // get local column index
-                    // add this entry (if it doesn't exist yet)
-                    // (and only if the column dof is not associated with a ghost entity)
+                    const auto colIdx = it->second;
                     if (!isGhostColumDof_(colIdx))
-                        // std::set takes care that each index only is inserted once
                         sparsityPattern_[rowIdx].insert(colIdx);
                 }
             }
@@ -662,8 +762,8 @@ class ParallelMatrixHelper
 
     private:
         const RowDofMapper& rowEntityMapper_;
-        const std::map<IdType, int>& idToIndex_;
-        const std::map<int, IdType>& indexToID_;
+        const std::map<DofIdKey, int>& idToIndex_;
+        const std::map<int, DofIdKey>& indexToID_;
         std::vector<std::set<int>>& sparsityPattern_;
         Matrix& A_;
         const ColIsGhostFunc& isGhostColumDof_;
@@ -673,7 +773,7 @@ class ParallelMatrixHelper
     //! Local matrix blocks associated with the global id set
     struct MatrixEntry
     {
-        IdType first;
+        DofIdKey first;
         typename Matrix::block_type second;
     };
 
@@ -685,10 +785,12 @@ class ParallelMatrixHelper
         using DataType = MatrixEntry;
 
         MatrixEntryExchange(const RowDofMapper& rowEntityMapper,
-                            const std::map<IdType, int>& globalToLocal,
-                            const std::map<int, IdType>& localToGlobal,
+                            const std::map<DofIdKey, int>& globalToLocal,
+                            const std::map<int, DofIdKey>& localToGlobal,
                             Matrix& A)
-        : rowEntityMapper_(rowEntityMapper), idToIndex_(globalToLocal), indexToID_(localToGlobal), A_(A)
+        : rowEntityMapper_(rowEntityMapper)
+        , idToIndex_(globalToLocal), indexToID_(localToGlobal)
+        , A_(A)
         {}
 
         /*!
@@ -710,8 +812,10 @@ class ParallelMatrixHelper
             const auto rowIdx = rowEntityMapper_.index(e);
             std::size_t n = 0;
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
                 if (indexToID_.count(colIt.index()))
-                    n++;
+                    ++n;
+            }
 
             return n;
         }
@@ -725,8 +829,10 @@ class ParallelMatrixHelper
             const auto rowIdx = rowEntityMapper_.index(e);
             // send all matrix entries for which the column index is in the index set
             for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
                 if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
                     buff.write(MatrixEntry{ it->second, *colIt });
+            }
         }
 
         /*!
@@ -744,15 +850,17 @@ class ParallelMatrixHelper
 
                 // only add entries in the index set and for which A has allocated memory
                 if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                {
                     if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
                         A_[rowIdx][it->second] += matrixBlock;
+                }
             }
         }
 
     private:
         const RowDofMapper& rowEntityMapper_;
-        const std::map<IdType, int>& idToIndex_;
-        const std::map<int, IdType>& indexToID_;
+        const std::map<DofIdKey, int>& idToIndex_;
+        const std::map<int, DofIdKey>& indexToID_;
         Matrix& A_;
 
     }; // class MatrixEntryExchange
@@ -765,23 +873,30 @@ public:
         idToIndex_.clear();
         indexToID_.clear();
 
-        std::vector<bool> handledDof(gridView_.size(rowDofCodim), false);
-        for (const auto& element : elements(gridView_))
+        initMapsForCodim_<0>();
+    }
+
+    template<int codim>
+    void initMapsForCodim_()
+    {
+        if constexpr (codim <= GridView::dimension)
         {
-            for (int i = 0; i < element.subEntities(rowDofCodim); ++i)
+            for (const auto& element : elements(gridView_))
             {
-                const auto entity = element.template subEntity<rowDofCodim>(i);
-                if (entity.partitionType() == Dune::BorderEntity)
+                for (int i = 0; i < element.subEntities(codim); ++i)
                 {
-                    const auto localRowIdx = mapper_.index(entity);
-                    if (!handledDof[localRowIdx])
+                    const auto entity = element.template subEntity<codim>(i);
+                    if (entity.partitionType() == Dune::BorderEntity)
                     {
-                        IdType dofIdxGlobal = gridView_.grid().globalIdSet().id(entity);
-                        idToIndex_.emplace(dofIdxGlobal, localRowIdx);
-                        indexToID_.emplace(localRowIdx, dofIdxGlobal);
+                        const auto localIdx = mapper_.index(entity);
+                        const DofIdKey key{codim, gridView_.grid().globalIdSet().id(entity)};
+                        idToIndex_.emplace(key, localIdx);
+                        indexToID_.emplace(localIdx, key);
                     }
                 }
             }
+
+            initMapsForCodim_<codim + 1>();
         }
     }
 
@@ -876,9 +991,292 @@ public:
 private:
     const GridView gridView_;
     const RowDofMapper& mapper_;
-    std::map<IdType, int> idToIndex_;
-    std::map<int, IdType> indexToID_;
+    std::map<DofIdKey, int> idToIndex_;
+    std::map<int, DofIdKey> indexToID_;
 
+};
+
+/*!
+ * \ingroup Linear
+ * \brief Dedicated helper that exchanges matrix pattern and entries for multiple active codims in one pass
+ */
+template<class Matrix, class GridView, class DofMapper, std::size_t numCodims>
+class MultiCodimParallelMatrixHelper
+{
+    using IdType = typename GridView::Traits::Grid::Traits::GlobalIdSet::IdType;
+
+    struct DofIdKey
+    {
+        int codim;
+        IdType id;
+
+        friend bool operator<(const DofIdKey& a, const DofIdKey& b)
+        {
+            if (a.codim != b.codim)
+                return a.codim < b.codim;
+            return a.id < b.id;
+        }
+    };
+
+    template<class ColIsGhostFunc>
+    struct MatrixPatternExchange
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, DofIdKey>
+    {
+        using DataType = DofIdKey;
+
+        MatrixPatternExchange(const DofMapper& dofMapper,
+                              const std::map<DofIdKey, int>& globalToLocal,
+                              const std::map<int, DofIdKey>& localToGlobal,
+                              Matrix& A,
+                              std::vector<std::set<int>>& sparsityPattern,
+                              const ColIsGhostFunc& isGhostColumDof,
+                              const std::bitset<numCodims>& activeCodims)
+        : dofMapper_(dofMapper)
+        , idToIndex_(globalToLocal)
+        , indexToID_(localToGlobal)
+        , sparsityPattern_(sparsityPattern)
+        , A_(A)
+        , isGhostColumDof_(isGhostColumDof)
+        , activeCodims_(activeCodims)
+        {
+            sparsityPattern_.resize(A.N());
+        }
+
+        bool contains(int dim, int codim) const
+        {
+            if (codim < 0 || codim >= static_cast<int>(numCodims))
+                return false;
+            return activeCodims_.test(codim);
+        }
+
+        bool fixedSize(int dim, int codim) const
+        { return false; }
+
+        template<class EntityType>
+        std::size_t size(EntityType& e) const
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            std::size_t n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
+                if (indexToID_.count(colIt.index()))
+                    ++n;
+            }
+
+            return n;
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void gather(MessageBuffer& buff, const EntityType& e) const
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
+                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                    buff.write(it->second);
+            }
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
+            {
+                DofIdKey key;
+                buff.read(key);
+                if (const auto it = idToIndex_.find(key); it != idToIndex_.end())
+                {
+                    const auto colIdx = it->second;
+                    if (!isGhostColumDof_(colIdx))
+                        sparsityPattern_[rowIdx].insert(colIdx);
+                }
+            }
+        }
+
+    private:
+        const DofMapper& dofMapper_;
+        const std::map<DofIdKey, int>& idToIndex_;
+        const std::map<int, DofIdKey>& indexToID_;
+        std::vector<std::set<int>>& sparsityPattern_;
+        Matrix& A_;
+        const ColIsGhostFunc& isGhostColumDof_;
+        const std::bitset<numCodims>& activeCodims_;
+    };
+
+    struct MatrixEntry
+    {
+        DofIdKey first;
+        typename Matrix::block_type second;
+    };
+
+    struct MatrixEntryExchange
+    : public Dune::CommDataHandleIF<MatrixEntryExchange, MatrixEntry>
+    {
+        using DataType = MatrixEntry;
+
+        MatrixEntryExchange(const DofMapper& dofMapper,
+                            const std::map<DofIdKey, int>& globalToLocal,
+                            const std::map<int, DofIdKey>& localToGlobal,
+                            Matrix& A,
+                            const std::bitset<numCodims>& activeCodims)
+        : dofMapper_(dofMapper)
+        , idToIndex_(globalToLocal)
+        , indexToID_(localToGlobal)
+        , A_(A)
+        , activeCodims_(activeCodims)
+        {}
+
+        bool contains(int dim, int codim) const
+        {
+            if (codim < 0 || codim >= static_cast<int>(numCodims))
+                return false;
+            return activeCodims_.test(codim);
+        }
+
+        bool fixedSize(int dim, int codim) const
+        { return false; }
+
+        template<class EntityType>
+        std::size_t size(EntityType& e) const
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            std::size_t n = 0;
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
+                if (indexToID_.count(colIt.index()))
+                    ++n;
+            }
+            return n;
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void gather(MessageBuffer& buff, const EntityType& e) const
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            {
+                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                    buff.write(MatrixEntry{it->second, *colIt});
+            }
+        }
+
+        template<class MessageBuffer, class EntityType>
+        void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
+        {
+            const auto rowIdx = dofMapper_.index(e);
+            for (std::size_t k = 0; k < n; k++)
+            {
+                MatrixEntry m;
+                buff.read(m);
+                const auto& [colDofID, matrixBlock] = m;
+                if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                {
+                    if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
+                        A_[rowIdx][it->second] += matrixBlock;
+                }
+            }
+        }
+
+    private:
+        const DofMapper& dofMapper_;
+        const std::map<DofIdKey, int>& idToIndex_;
+        const std::map<int, DofIdKey>& indexToID_;
+        Matrix& A_;
+        const std::bitset<numCodims>& activeCodims_;
+    };
+
+public:
+    MultiCodimParallelMatrixHelper(const GridView& gridView,
+                                   const DofMapper& mapper,
+                                   const std::bitset<numCodims>& activeCodims)
+    : gridView_(gridView)
+    , mapper_(mapper)
+    , activeCodims_(activeCodims)
+    {
+        initMapsForCodim_<0>();
+    }
+
+    template<class IsGhostFunc>
+    void extendMatrix(Matrix& A, const IsGhostFunc& isGhost)
+    {
+        if (gridView_.comm().size() <= 1)
+            return;
+
+        Matrix matrixAsAssembled(A);
+        std::size_t numNonZeroEntries = 0;
+        std::vector<std::set<int>> sparsityPattern;
+        MatrixPatternExchange<IsGhostFunc> dataHandle(mapper_, idToIndex_, indexToID_, A, sparsityPattern, isGhost, activeCodims_);
+        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const auto colEndIt = A[rowIt.index()].end();
+            for (auto colIt = rowIt->begin(); colIt != colEndIt; ++colIt)
+            {
+                if (!sparsityPattern[rowIt.index()].count(colIt.index()))
+                    sparsityPattern[rowIt.index()].insert(colIt.index());
+            }
+
+            numNonZeroEntries += sparsityPattern[rowIt.index()].size();
+        }
+
+        A.setSize(matrixAsAssembled.N(), matrixAsAssembled.M(), numNonZeroEntries);
+        A.setBuildMode(Matrix::row_wise);
+        auto citer = A.createbegin();
+        for (auto i = sparsityPattern.begin(), end = sparsityPattern.end(); i != end; ++i, ++citer)
+            for (auto si = i->begin(), send = i->end(); si != send; ++si)
+                citer.insert(*si);
+
+        A = 0;
+        const auto rowEndIt = matrixAsAssembled.end();
+        for (auto rowIt = matrixAsAssembled.begin(); rowIt != rowEndIt; ++rowIt)
+            for (auto colIt = matrixAsAssembled[rowIt.index()].begin(); colIt != matrixAsAssembled[rowIt.index()].end(); ++colIt)
+                A[rowIt.index()][colIt.index()] = *colIt;
+    }
+
+    void sumEntries(Matrix& A)
+    {
+        if (gridView_.comm().size() <= 1)
+            return;
+
+        MatrixEntryExchange dataHandle(mapper_, idToIndex_, indexToID_, A, activeCodims_);
+        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+    }
+
+private:
+    template<std::size_t codim>
+    void initMapsForCodim_()
+    {
+        if constexpr (codim <= GridView::dimension)
+        {
+            if (activeCodims_.test(codim))
+            {
+                for (const auto& element : elements(gridView_))
+                {
+                    for (int i = 0; i < element.subEntities(codim); ++i)
+                    {
+                        const auto entity = element.template subEntity<codim>(i);
+                        if (entity.partitionType() == Dune::BorderEntity)
+                        {
+                            const auto localIdx = mapper_.index(entity);
+                            const DofIdKey key{static_cast<int>(codim), gridView_.grid().globalIdSet().id(entity)};
+                            idToIndex_.emplace(key, localIdx);
+                            indexToID_.emplace(localIdx, key);
+                        }
+                    }
+                }
+            }
+
+            initMapsForCodim_<codim + 1>();
+        }
+    }
+
+    const GridView gridView_;
+    const DofMapper& mapper_;
+    std::bitset<numCodims> activeCodims_;
+    std::map<DofIdKey, int> idToIndex_;
+    std::map<int, DofIdKey> indexToID_;
 };
 
 /*!
@@ -890,14 +1288,25 @@ void prepareMatrixParallel(Matrix& A, ParallelHelper& pHelper)
 {
     if constexpr (ParallelTraits::isNonOverlapping)
     {
-        // extend the matrix pattern such that it is usable for a parallel solver
-        // and make right-hand side consistent
         using GridView = typename LinearSolverTraits::GridView;
         using DofMapper = typename LinearSolverTraits::DofMapper;
-        static constexpr int dofCodim = LinearSolverTraits::dofCodim;
-        ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
-        matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
-        matrixHelper.sumEntries(A);
+
+        if constexpr (requires { LinearSolverTraits::dofCodims; })
+        {
+            constexpr auto dofCodims = LinearSolverTraits::dofCodims;
+            MultiCodimParallelMatrixHelper<Matrix, GridView, DofMapper, GridView::dimension + 1> matrixHelper(
+                pHelper.gridView(), pHelper.dofMapper(), dofCodims
+            );
+            matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
+            matrixHelper.sumEntries(A);
+        }
+        else
+        {
+            static constexpr int dofCodim = LinearSolverTraits::dofCodim;
+            ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim> matrixHelper(pHelper.gridView(), pHelper.dofMapper());
+            matrixHelper.extendMatrix(A, [&pHelper](auto idx){ return pHelper.isGhost(idx); });
+            matrixHelper.sumEntries(A);
+        }
     }
 }
 
@@ -916,7 +1325,15 @@ void prepareVectorParallel(Vector& b, ParallelHelper& pHelper)
         using DofMapper = typename LinearSolverTraits::DofMapper;
         static constexpr int dofCodim = LinearSolverTraits::dofCodim;
         ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
-        vectorHelper.makeNonOverlappingConsistent(b);
+
+        if constexpr (requires { LinearSolverTraits::dofCodims; })
+        {
+            vectorHelper.makeNonOverlappingConsistent(b, LinearSolverTraits::dofCodims);
+        }
+        else
+        {
+            vectorHelper.makeNonOverlappingConsistent(b);
+        }
     }
 }
 

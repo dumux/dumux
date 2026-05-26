@@ -151,7 +151,8 @@ void updateVelocities(
                 faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
         }
         else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble
-                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2)
+                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2
+                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::box)
         {
             const auto elemGeo = element.geometry();
             const auto elemSol = elementSolution(element, x, gridGeometry);
@@ -240,7 +241,8 @@ int main(int argc, char** argv)
     ConformingIntersectionWriter faceVtk(gridGeometry->gridView());
     // face quantities have no special significance for the PQ1Bubble scheme
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
-                  && GridGeometry::discMethod != DiscretizationMethods::pq2)
+                  && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::box)
     {
         faceVtk.addField(dofIdx, "dofIdx");
         faceVtk.addField(faceVelocity, "velocityVector");
@@ -274,7 +276,8 @@ int main(int argc, char** argv)
     writer.write(baseName + discSuffix + "_1");
 
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
-                  && GridGeometry::discMethod != DiscretizationMethods::pq2)
+                  && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::box)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
 
     Dumux::printErrors(problem, *gridVariables, x);

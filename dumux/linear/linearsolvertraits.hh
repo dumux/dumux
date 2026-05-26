@@ -20,6 +20,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
+#include <dune/geometry/type.hh>
 
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/method.hh>
@@ -120,6 +121,9 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::Box>
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
     { return gridView.overlapSize(0) == 0; }
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return { gg.dofMapper() }; }
 };
 
 template<class GridGeometry>
@@ -144,7 +148,16 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
     using Grid = typename GridGeometry::GridView::Traits::Grid;
 
     static constexpr int dofCodim = Grid::dimension;
-    static constexpr std::bitset<Grid::dimension+1> dofCodims{ (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) };
+
+    // Q2 on cube elements also has an interior (codim-0) DOF at the element center
+    static constexpr bool hasElementDofs =
+        Dune::Capabilities::hasSingleGeometryType<Grid>::v &&
+        (Dune::Capabilities::hasSingleGeometryType<Grid>::topologyId ==
+         Dune::GeometryTypes::cube(Grid::dimension).id());
+
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{
+        (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) + (hasElementDofs ? 1UL : 0UL)
+    };
 
     static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
                                           && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;

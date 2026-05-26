@@ -61,6 +61,7 @@
 #include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
+#include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
@@ -79,6 +80,7 @@ namespace Dumux::Properties {
 namespace TTag {
 struct DoneaTest { };
 struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MODEL, DISCRETIZATION_MODEL>; };
+struct DoneaTestMomentumBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, BoxModel>; };
 struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
@@ -102,18 +104,32 @@ struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    template<class T, class = void>
+    struct HasEnableHybridCVFE : std::false_type {};
+
+    template<class T>
+    struct HasEnableHybridCVFE<T, std::void_t<decltype(T::enableHybridCVFE)>> : std::true_type {};
+
+    static constexpr bool enableHybridCVFE = []()
+    {
+        if constexpr (HasEnableHybridCVFE<GG>::value)
+            return GG::enableHybridCVFE;
+        else
+            return false;
+    }();
+
     // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
     using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
     using Traits = std::conditional_t<
-            GG::enableHybridCVFE,
+            enableHybridCVFE,
             Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>,
             Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>
         >;
     using GVC = std::conditional_t<
-            GG::enableHybridCVFE,
+            enableHybridCVFE,
             Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>,
             Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>
         >;

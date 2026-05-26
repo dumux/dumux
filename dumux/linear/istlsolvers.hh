@@ -314,7 +314,10 @@ public:
                 using GV = typename LinearSolverTraits::GridView;
                 using DM = typename LinearSolverTraits::DofMapper;
                 ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
-                vectorHelper.makeNonOverlappingConsistent(y);
+                if constexpr (requires { LinearSolverTraits::dofCodims; })
+                    vectorHelper.makeNonOverlappingConsistent(y, LinearSolverTraits::dofCodims);
+                else
+                    vectorHelper.makeNonOverlappingConsistent(y);
                 return scalarProduct_->norm(y);
             }
         }
